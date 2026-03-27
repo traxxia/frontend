@@ -12,6 +12,7 @@ const TeamRankingsView = ({
   sortedProjects,
   rankMap,
   businessId,
+  userRole,
 }) => {
   const { t } = useTranslation();
 
@@ -181,7 +182,7 @@ const TeamRankingsView = ({
                   ) : (
                     <th>{t("project_name")}</th>
                   )}
-                  {!isSuperAdmin && <th className="text-center">{t("my_rank")}</th>}
+                  {(!isSuperAdmin && userRole !== 'viewer') && <th className="text-center">{t("my_rank")}</th>}
                   {consensusMode === "ai" && <th className="text-center">{t("ai_rank")}</th>}
                   {isSuperAdmin && consensusMode === "ai" && <th className="text-center">{t("consensus")}</th>}
                 </tr>
@@ -212,7 +213,7 @@ const TeamRankingsView = ({
                           <div className="name-wrapper" style={{ fontSize: '0.95rem' }}>
                             {p.project_name}
                           </div>
-                        </td>     {!isSuperAdmin && (
+                        </td>     {(!isSuperAdmin && userRole !== 'viewer') && (
                           <td className="text-center">
                             {userRank ? <Badge bg="primary" className="rank-badge">{userRank}</Badge> : <span className="text-muted">-</span>}
                           </td>

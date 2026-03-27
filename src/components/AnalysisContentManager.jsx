@@ -40,7 +40,8 @@ const MemoizedAnalysisCard = React.memo(
     onToggleCard,
     streamingManager,
     hideRegenerateButtons,
-    canRegenerate
+    canRegenerate,
+    hasInsightAccess
   }) => {
     const getStatusIcon = () => {
       if (isRegenerating || isLoading) {
@@ -73,20 +74,22 @@ const MemoizedAnalysisCard = React.memo(
 
           <div className="modern-card-header-right">
             {getStatusIcon()}
-            <div onClick={(e) => e.stopPropagation()}>
-              <RegenerateButton
-                onRegenerate={() => {
-                  if (!canRegenerate) return;
-                  streamingManager.startStreaming(id);
-                  onRegenerate?.();
-                }}
-                isRegenerating={isRegenerating || isLoading}
-                canRegenerate={canRegenerate}
-                sectionName={title}
-                size="small"
-                hideRegenerateButtons={hideRegenerateButtons}
-              />
-            </div>
+            {hasInsightAccess && (
+              <div onClick={(e) => e.stopPropagation()}>
+                <RegenerateButton
+                  onRegenerate={() => {
+                    if (!canRegenerate) return;
+                    streamingManager.startStreaming(id);
+                    onRegenerate?.();
+                  }}
+                  isRegenerating={isRegenerating || isLoading}
+                  canRegenerate={canRegenerate}
+                  sectionName={title}
+                  size="small"
+                  hideRegenerateButtons={hideRegenerateButtons}
+                />
+              </div>
+            )}
             <button className="modern-expand-btn">
               {isExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
             </button>
@@ -95,7 +98,13 @@ const MemoizedAnalysisCard = React.memo(
 
         <div className={`modern-card-content ${isExpanded ? 'expanded' : 'collapsed'}`}>
           <div className="modern-card-content-inner">
-            {(isLoading || isRegenerating) && !hasData ? (
+            {!hasInsightAccess ? (
+              <div className="locked-analysis-placeholder" style={{ padding: '20px', textAlign: 'center', color: '#64748b' }}>
+                <Lock size={32} style={{ marginBottom: '10px', opacity: 0.5 }} />
+                <p style={{ margin: 0, fontWeight: 500 }}>Access Restricted</p>
+                <p style={{ fontSize: '12px', marginTop: '4px' }}>You do not have permission to view or regenerate this insight please upgrade your plan.</p>
+              </div>
+            ) : (isLoading || isRegenerating) && !hasData ? (
               <div className="loading-placeholder">
                 <Loader className="animate-spin" size={24} />
                 <p>Generating Insight...</p>
@@ -115,10 +124,10 @@ const MemoizedAnalysisCard = React.memo(
       prevProps.isRegenerating === nextProps.isRegenerating &&
       prevProps.isLoading === nextProps.isLoading &&
       prevProps.hasData === nextProps.hasData &&
-      prevProps.isHighlighted === nextProps.isHighlighted &&
       prevProps.title === nextProps.title &&
       prevProps.description === nextProps.description &&
-      prevProps.hideRegenerateButtons === nextProps.hideRegenerateButtons
+      prevProps.hideRegenerateButtons === nextProps.hideRegenerateButtons &&
+      prevProps.hasInsightAccess === nextProps.hasInsightAccess
     );
   }
 );
@@ -419,7 +428,8 @@ const AnalysisContentManager = (props) => {
     highlightedCard,
     hideRegenerateButtons = false,
     isAnalysisRegenerating = false,
-    isStrategicRegenerating = false
+    isStrategicRegenerating = false,
+    hasInsightAccess = true
   } = props;
 
   const streamingManager = useStreamingManager();
@@ -511,6 +521,7 @@ const AnalysisContentManager = (props) => {
         streamingManager={streamingManager}
         hideRegenerateButtons={hideRegenerateButtons}
         canRegenerate={props.canRegenerate && (!!data || (config.category !== 'costs-financial' || analysisKey === 'productivityMetrics'))}
+        hasInsightAccess={hasInsightAccess}
       >
         <div ref={ref} data-component={pdfComponent}>
           <Component

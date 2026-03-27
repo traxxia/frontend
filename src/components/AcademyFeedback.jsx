@@ -1,47 +1,94 @@
 import React, { useState } from 'react';
+import { useTranslation } from '../hooks/useTranslation';
 import '../styles/academy.css';
 
-/**
- * AcademyFeedback Component
- * 
- * Provides "Was this helpful?" feedback mechanism for articles
- */
 const AcademyFeedback = ({ articleId }) => {
     const [submitted, setSubmitted] = useState(false);
     const [feedbackType, setFeedbackType] = useState(null); // 'yes' or 'no'
     const [feedbackText, setFeedbackText] = useState('');
     const [showTextarea, setShowTextarea] = useState(false);
+    const [error, setError] = useState('');
+    const { t } = useTranslation();
 
     const handleFeedback = (type) => {
         setFeedbackType(type);
+        // Show textarea for both positive and negative feedback
+        setShowTextarea(true);
+    };
 
-        if (type === 'no') {
-            // Show textarea for negative feedback
-            setShowTextarea(true);
-        } else {
-            // Submit immediately for positive feedback
-            submitFeedback(type, '');
+    const submitFeedback = async (type, text) => {
+        const payload = {
+            articleId,
+            helpful: type === 'yes',
+            feedback: text
+        };
+        try {
+            // App stores ID in sessionStorage as "userId" during login
+            const storedUserId = sessionStorage.getItem('userId');
+            if (storedUserId) {
+                payload.userId = storedUserId;
+            }
+        } catch (e) {
+            console.warn('Could not read userId from sessionStorage', e);
+        }
+
+        try {
+            // Using the base URL from the environment variables
+            const baseUrl = process.env.REACT_APP_BACKEND_URL || '';
+            const response = await fetch(`${baseUrl}/api/academy-feedback`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(payload)
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                const errorMessage = errorData.message || t('feedback_submit_error');
+                setError(errorMessage);
+                console.error('Failed to submit feedback', errorMessage);
+                return;
+            }
+            
+            setSubmitted(true);
+            setTimeout(() => {
+                setShowTextarea(false);
+            }, 2000);
+        } catch (error) {
+            console.error('Error submitting feedback:', error);
+            setError(t('feedback_submit_error'));
         }
     };
 
-    const submitFeedback = (type, text) => {
-        // TODO: In future phase, send to analytics/backend
-        console.log('Feedback submitted:', {
-            articleId,
-            helpful: type === 'yes',
-            feedback: text,
-            timestamp: new Date().toISOString()
-        });
-
-        setSubmitted(true);
-
-        // Hide textarea after submission
-        setTimeout(() => {
-            setShowTextarea(false);
-        }, 2000);
+    const validateFeedback = (text) => {
+        const trimmedText = text.trim();
+        
+        if (!trimmedText) {
+            return ''; // Optional
+        }
+        if (trimmedText.length < 10) {
+            return t('feedback_min_length') || 'Feedback must be at least 10 characters long';
+        }
+        if (!/[A-Za-z]/.test(trimmedText)) {
+            return t('feedback_alphabetic_required') || 'Feedback must contain at least one letter';
+        }
+        if (/[0-9]{5,}/.test(trimmedText)) {
+            return t('feedback_consecutive_numbers') || 'Too many consecutive numbers are not allowed';
+        }
+        if (/[^A-Za-z0-9\s]{5,}/.test(trimmedText)) {
+            return t('feedback_consecutive_special') || 'Too many consecutive special characters are not allowed';
+        }
+        return '';
     };
 
     const handleSubmitText = () => {
+        const validationError = validateFeedback(feedbackText);
+        if (validationError) {
+            setError(validationError);
+            return;
+        }
+        setError('');
         submitFeedback(feedbackType, feedbackText);
     };
 
@@ -81,11 +128,19 @@ const AcademyFeedback = ({ articleId }) => {
                 <div className="feedback-textarea-wrapper">
                     <textarea
                         className="feedback-textarea"
-                        placeholder="What could we improve? (optional)"
+                        placeholder={
+                            feedbackType === 'yes'
+                                ? "What did you like about it? (optional)"
+                                : "What could we improve? (optional)"
+                        }
                         value={feedbackText}
-                        onChange={(e) => setFeedbackText(e.target.value)}
+                        onChange={(e) => {
+                            setFeedbackText(e.target.value);
+                            if (error) setError('');
+                        }}
                         rows={3}
                     />
+                    {error && <div className="feedback-error-message" style={{ color: '#dc3545', fontSize: '0.85rem', marginTop: '5px', marginBottom: '5px' }}>{error}</div>}
                     <button
                         className="feedback-submit-btn"
                         onClick={handleSubmitText}

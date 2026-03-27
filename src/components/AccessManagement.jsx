@@ -41,9 +41,9 @@ const AccessManagement = ({ onToast }) => {
 
             const data = Array.isArray(res.data)
                 ? res.data
-                : res.data.businesses || [];
+                : [...(res.data.businesses || []), ...(res.data.collaborating_businesses || [])];
 
-            const launchedBusinesses = data.filter(b => b.has_launched_projects);
+            const launchedBusinesses = data.filter(b => (b.status || "").toLowerCase() === 'launched' || b.has_launched_projects === true);
             setBusinesses(launchedBusinesses);
 
             if (launchedBusinesses.length > 0 && !selectedBusinessId) {

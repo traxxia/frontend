@@ -1,0 +1,760 @@
+.plan-management-wrapper .admin-header {
+    display: flex;
+    justify-content: end;
+    align-items: center; 
+    background-color: transparent;
+    border-bottom: none;
+}
+
+.plan-management-wrapper .create-plan-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background-color: var(--primary-color, #4f46e5);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 8px 16px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.plan-management-wrapper .create-plan-btn:hover {
+    background-color: var(--primary-color-dark, #4338ca);
+}
+
+/* Modal Styles */
+.plan-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    backdrop-filter: blur(4px);
+}
+
+.plan-modal-content {
+    background: white;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 500px;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+.plan-modal-header {
+    padding: 20px 24px;
+    border-bottom: 1px solid #e5e7eb;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.plan-modal-header h3 {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #111827;
+}
+
+.plan-modal-close {
+    background: none;
+    border: none;
+    color: #6b7280;
+    cursor: pointer;
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    transition: all 0.2s;
+}
+
+.plan-modal-close:hover {
+    background-color: #f3f4f6;
+    color: #111827;
+}
+
+.plan-modal-body {
+    padding: 24px;
+    overflow-y: auto;
+}
+
+.plan-form-group {
+    margin-bottom: 20px;
+}
+
+.plan-form-group label {
+    display: block;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #374151;
+    margin-bottom: 8px;
+}
+
+.plan-form-input {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.plan-form-input:focus {
+    outline: none;
+    border-color: #4f46e5;
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+}
+
+textarea.plan-form-input {
+    resize: vertical;
+    min-height: 80px;
+}
+
+.plan-modal-footer {
+    padding: 16px 24px;
+    border-top: 1px solid #e5e7eb;
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+}
+
+.plan-btn-cancel {
+    background: white;
+    border: 1px solid #d1d5db;
+    color: #374151;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.plan-btn-cancel:hover {
+    background-color: #f9fafb;
+}
+
+.plan-btn-submit {
+    background-color: #4f46e5;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: background-color 0.2s;
+}
+
+.plan-btn-submit:hover {
+    background-color: #4338ca;
+}
+
+.plan-btn-submit:disabled {
+    background-color: #9ca3af;
+    cursor: not-allowed;
+}
+
+/* Responsive Styles */
+@media (max-width: 768px) {
+    .plan-management-wrapper {
+        padding: var(--spacing-sm, 12px);
+    }
+
+    .plan-modal-content {
+        width: 95%;
+        max-height: 95vh;
+        border-radius: 8px;
+    }
+
+    .plan-modal-header {
+        padding: 16px;
+    }
+
+    .plan-modal-body {
+        padding: 16px;
+    }
+
+    .plan-modal-footer {
+        padding: 12px 16px;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .plan-btn-cancel,
+    .plan-btn-submit {
+        width: 100%;
+        text-align: center;
+        justify-content: center;
+    }
+
+    .plan-form-group {
+        margin-bottom: 16px;
+    }
+}
+
+/* Plan Status Toggle */
+.plan-status-switch {
+    cursor: pointer;
+    width: 2.5em !important;
+    height: 1.25em !important;
+}
+
+.plan-status-label {
+    font-weight: 500;
+    cursor: pointer;
+    user-select: none;
+}
+
+.plan-status-label.active {
+    color: #10b981;
+}
+
+.plan-status-label.inactive {
+    color: #6b7280;
+}
+
+.toggle-status {
+    margin-left: 50px;
+}
+
+/* Status Confirm Modal */
+.status-confirm-modal-container {
+    z-index: 1060 !important;
+}
+
+.status-confirm-modal .modal-content {
+    height: auto !important;
+    min-height: auto !important;
+}
+
+.status-confirm-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: #111827;
+}
+
+.status-confirm-text-primary {
+    font-size: 15px;
+    font-weight: 500;
+    color: #1f2937;
+    margin-bottom: 12px;
+}
+
+.status-confirm-text-secondary {
+    font-size: 14px;
+    color: #4b5563;
+    margin: 0;
+    line-height: 1.5;
+}
+
+.status-confirm-btn {
+    font-weight: 500;
+}
+
+/* ─────────────────────────────────────────────
+   PlanManagement.css
+   ───────────────────────────────────────────── */
+
+/* ── Page wrapper ── */
+.plan-management-wrapper {
+    padding: 8px 0;
+} 
+
+/* ── Create Plan button ── */
+.create-plan-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 9px 18px;
+    background: #4f46e5;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.18s, box-shadow 0.18s;
+    letter-spacing: 0.01em;
+}
+.create-plan-btn:hover {
+    background: #4338ca;
+    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.28);
+}
+
+/* ── Table action button ── */
+.admin-action-btn.edit-plan-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 13px;
+    background: #f3f4f6;
+    color: #374151;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+}
+.admin-action-btn.edit-plan-btn:hover {
+    background: #e5e7eb;
+    border-color: #9ca3af;
+}
+
+/* ═══════════════════════════════════════
+   MODAL — overall shell
+═══════════════════════════════════════ */
+.plan-modal-dialog {
+    max-width: 680px;
+}
+
+/* ── Modal Header ── */
+.plan-modal-header {
+    padding: 18px 24px 16px;
+    border-bottom: 1px solid #e5e7eb;
+    background: #fff;
+}
+
+/* Flex row: title on left, status toggle on right */
+.plan-modal-header-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding-right: 6px;   /* breathing room before the × button */
+}
+
+.plan-modal-title {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #111827;
+    margin: 0;
+}
+
+/* Status toggle cluster */
+.plan-status-toggle-wrap {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    background: #f8fafc;
+    padding: 6px 14px;
+    border-radius: 50px;
+    border: 1px solid #e2e8f0;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+    margin-right: 4px;
+}
+
+.plan-status-toggle-wrap:hover {
+    background: #f1f5f9;
+    border-color: #cbd5e1;
+}
+
+.plan-status-label {
+    font-size: 0.65rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #64748b;
+    user-select: none;
+    white-space: nowrap;
+    flex-shrink: 0;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+.plan-status-switch {
+    width: 2.8em !important;
+    height: 1.5em !important;
+    cursor: pointer;
+    background-color: #cbd5e1 !important;
+    border: none !important;
+    background-image: none !important;
+    position: relative;
+    border-radius: 50px !important;
+    appearance: none !important;
+    -webkit-appearance: none !important;
+    transition: background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    margin: 0 !important;  /* CRITICAL: Override Bootstrap -1.5rem margin */
+    padding: 0 !important;
+    flex-shrink: 0;
+}
+
+.plan-status-switch::after {
+    content: '';
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 1.1em;
+    height: 1.1em;
+    background: white;
+    border-radius: 50%;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+}
+
+.plan-status-switch:checked {
+    background-color: #10b981 !important;
+}
+
+.plan-status-switch:checked::after {
+    transform: translateX(1.3em);
+}
+
+.plan-status-switch:focus {
+    outline: none !important;
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1) !important;
+}
+
+.plan-status-text {
+    font-size: 0.75rem;
+    font-weight: 700;
+    min-width: 50px;
+    transition: color 0.2s ease;
+    white-space: nowrap;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+.plan-status-text.text-active {
+    color: #059669;
+}
+
+.plan-status-text.text-inactive {
+    color: #64748b;
+}
+
+/* ── Modal Body ── */
+.plan-modal-body {
+    padding: 6px 24px 10px;
+    max-height: 66vh;
+    overflow-y: auto;
+    overflow-x: hidden;
+    background: #fafafa;
+}
+
+/* Subtle scrollbar */
+.plan-modal-body::-webkit-scrollbar { width: 5px; }
+.plan-modal-body::-webkit-scrollbar-track { background: transparent; }
+.plan-modal-body::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 4px; }
+
+/* ═══════════════════════════════════════
+   SECTIONS inside the modal body
+═══════════════════════════════════════ */
+.plan-section {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    padding: 16px 18px;
+    margin: 14px 0 0;
+}
+.plan-section--last {
+    margin-bottom: 6px;
+}
+
+/* Section heading (replaces <h6>) */
+.plan-section-label {
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #6b7280;
+    margin: 0 0 14px;
+}
+
+/* ── Field labels ── */
+.plan-field-label {
+    display: block;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 5px;
+}
+.required-star {
+    color: #ef4444;
+    margin-left: 2px;
+}
+.plan-currency-tag {
+    font-size: 0.72rem;
+    font-weight: 500;
+    color: #6b7280;
+    background: #f3f4f6;
+    border: 1px solid #e5e7eb;
+    border-radius: 4px;
+    padding: 1px 5px;
+    margin-left: 4px;
+    vertical-align: middle;
+}
+.plan-readonly-note {
+    font-size: 0.72rem;
+    color: #9ca3af;
+    margin-left: 6px;
+    font-weight: 400;
+}
+
+/* ── Form inputs ── */
+.plan-form-input {
+    width: 100%;
+    padding: 8px 11px;
+    border: 1px solid #d1d5db;
+    border-radius: 7px;
+    font-size: 0.875rem;
+    color: #111827;
+    background: #fff;
+    transition: border-color 0.15s, box-shadow 0.15s;
+    outline: none;
+}
+.plan-form-input:focus {
+    border-color: #4f46e5;
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12);
+}
+.plan-form-input::placeholder {
+    color: #9ca3af;
+}
+
+/* Textarea */
+.plan-textarea {
+    resize: vertical;
+    min-height: 72px;
+    line-height: 1.5;
+}
+
+/* Select arrow */
+.plan-form-input[type="number"]::-webkit-inner-spin-button,
+.plan-form-input[type="number"]::-webkit-outer-spin-button {
+    opacity: 0.6;
+}
+
+/* ── Price input with $ prefix ── */
+.plan-price-input-wrap {
+    position: relative;
+}
+.plan-price-symbol {
+    position: absolute;
+    left: 11px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #6b7280;
+    font-size: 0.875rem;
+    pointer-events: none;
+    z-index: 1;
+}
+.plan-price-input {
+    padding-left: 24px;
+}
+
+/* ═══════════════════════════════════════
+   FEATURE ACCESS cards
+═══════════════════════════════════════ */
+.plan-access-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+/* Each toggle card */
+.plan-access-card {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 14px;
+    border: 1.5px solid #e5e7eb;
+    border-radius: 8px;
+    cursor: pointer;
+    background: #fff;
+    transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
+    user-select: none;
+    min-width: 130px;
+}
+.plan-access-card:hover {
+    border-color: #a5b4fc;
+    background: #f5f3ff;
+}
+
+/* Active state — driven by JS via :has selector fallback on the indicator */
+.plan-access-checkbox {
+    display: none;   /* hidden; state shown via indicator */
+}
+
+.plan-access-indicator {
+    width: 16px;
+    height: 16px;
+    border-radius: 4px;
+    border: 2px solid #d1d5db;
+    background: #fff;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: border-color 0.15s, background 0.15s;
+    position: relative;
+}
+
+/* Checked state via :has (modern browsers) */
+.plan-access-card:has(.plan-access-checkbox:checked) {
+    border-color: #4f46e5;
+    background: #eef2ff;
+}
+.plan-access-card:has(.plan-access-checkbox:checked) .plan-access-indicator {
+    background: #4f46e5;
+    border-color: #4f46e5;
+}
+.plan-access-card:has(.plan-access-checkbox:checked) .plan-access-indicator::after {
+    content: '';
+    display: block;
+    width: 4px;
+    height: 8px;
+    border: 2px solid #fff;
+    border-top: none;
+    border-left: none;
+    transform: rotate(45deg) translate(-1px, -1px);
+}
+.plan-access-card:has(.plan-access-checkbox:checked) .plan-access-name {
+    color: #3730a3;
+    font-weight: 600;
+}
+
+/* Sub-card (Projects, shown only when PMF is on) */
+.plan-access-card--sub {
+    border-style: dashed;
+    border-color: #c7d2fe;
+    background: #f5f3ff;
+}
+
+.plan-access-name {
+    font-size: 0.83rem;
+    font-weight: 500;
+    color: #374151;
+    transition: color 0.15s;
+}
+
+/* ═══════════════════════════════════════
+   FEATURES PREVIEW
+═══════════════════════════════════════ */
+.plan-features-preview {
+    border: 1px dashed #d1d5db;
+    border-radius: 8px;
+    padding: 12px 14px;
+    background: #f9fafb;
+    min-height: 52px;
+}
+
+.plan-features-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 14px;
+}
+
+.plan-features-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.82rem;
+    color: #374151;
+}
+
+.plan-features-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #4f46e5;
+    flex-shrink: 0;
+}
+
+.plan-features-empty {
+    font-size: 0.82rem;
+    color: #9ca3af;
+    margin: 0;
+    font-style: italic;
+}
+
+/* ── Modal Footer ── */
+.plan-modal-footer {
+    padding: 14px 24px;
+    border-top: 1px solid #e5e7eb;
+    background: #fff;
+    gap: 10px;
+}
+
+.plan-btn-cancel {
+    font-size: 0.875rem;
+    font-weight: 500;
+    padding: 8px 18px;
+    border-radius: 7px;
+}
+.plan-btn-save {
+    font-size: 0.875rem;
+    font-weight: 600;
+    padding: 8px 22px;
+    border-radius: 7px;
+    background: #4f46e5;
+    border-color: #4f46e5;
+    transition: background 0.18s, box-shadow 0.18s;
+}
+.plan-btn-save:hover:not(:disabled) {
+    background: #4338ca;
+    border-color: #4338ca;
+    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.28);
+}
+
+/* ── Spinner ── */
+.spinner {
+    animation: spin 0.8s linear infinite;
+}
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* ═══════════════════════════════════════
+   STATUS CONFIRM MODAL
+═══════════════════════════════════════ */
+.status-confirm-modal {
+    max-width: 400px;
+}
+
+.status-confirm-title {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #111827;
+}
+
+.status-confirm-text-primary {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 6px;
+}
+
+.status-confirm-text-secondary {
+    font-size: 0.82rem;
+    color: #6b7280;
+    margin-bottom: 0;
+    line-height: 1.5;
+}
+
+.status-confirm-btn {
+    font-size: 0.83rem;
+    font-weight: 500;
+    padding: 7px 16px;
+    border-radius: 6px;
+}
+
+/* ─── z-index fix: nested modal sits above parent ─── */
+.status-confirm-modal-container {
+    z-index: 1060 !important;
+}

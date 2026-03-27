@@ -1,6 +1,6 @@
 ## Editing & Auto-save
 
-Strategizing is an iterative process. As your business evolves, you can easily update your answers in the **Advanced** tab.
+Strategizing is an iterative process. As your business evolves, you can easily update your answers in the **Analysis** tab.
 
 ## 1. Editing Answers
 To update an answer:

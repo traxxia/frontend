@@ -56,7 +56,7 @@ const Login = () => {
       sessionStorage.setItem("userName", res.data.user.name);
       sessionStorage.setItem("userEmail", res.data.user.email);
       sessionStorage.setItem("userRole", res.data.user.role);
-      sessionStorage.setItem("userPlan", res.data.user.plan_name || "essential");
+      sessionStorage.setItem("userPlan", res.data.user.plan_name || "");
       sessionStorage.setItem("userCompany", res.data.user.company?.name || "");
       if (res.data.user.company) {
         sessionStorage.setItem("companyId", res.data.user.company.id || "");
@@ -64,7 +64,8 @@ const Login = () => {
         sessionStorage.setItem("companyLogo", res.data.user.company.logo || "");
         sessionStorage.setItem("companyIndustry", res.data.user.company.industry || "");
       }
-
+      // Store feature-access limits from the login response directly
+      sessionStorage.setItem("userLimits", JSON.stringify(res.data.user.limits || {}));
       sessionStorage.setItem(
         "isAdmin",
         ["super_admin", "company_admin"].includes(res.data.user.role) ? "true" : "false"

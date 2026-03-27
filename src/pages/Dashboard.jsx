@@ -24,12 +24,12 @@ import 'react-circular-progressbar/dist/styles.css';
 import { useTranslation } from '../hooks/useTranslation';
 import UpgradeModal from '../components/UpgradeModal';
 import PlanLimitModal from '../components/PlanLimitModal';
-
-const ENABLE_PMF = process.env.REACT_APP_ENABLE_PMF === 'true';
+import { getUserLimits } from '../utils/authUtils';
 
 const Dashboard = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const ENABLE_PMF = getUserLimits().pmf;
   const [businesses, setBusinesses] = useState([]);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showPMFOnboarding, setShowPMFOnboarding] = useState(false);
@@ -48,6 +48,7 @@ const Dashboard = () => {
   const userRole = sessionStorage.getItem("userRole");
   const isViewer = userRole?.toLowerCase() === "viewer";
   const isCollaborator = userRole?.toLowerCase() === "collaborator";
+  const isAdmin = ["super_admin", "company_admin"].includes(userRole?.toLowerCase());
 
 
   // Delete business state
@@ -62,6 +63,7 @@ const Dashboard = () => {
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
   const [collaboratingBusinesses, setCollaboratingBusinesses] = useState([]);
+  const [deletedBusinesses, setDeletedBusinesses] = useState([]);
 
   // Deletion cooldown state
   const [showCooldownModal, setShowCooldownModal] = useState(false);
@@ -74,6 +76,7 @@ const Dashboard = () => {
 
   // Plan Limit Modal state
   const [showPlanLimitModal, setShowPlanLimitModal] = useState(false);
+  const [usage, setUsage] = useState(null);
 
   // Custom menu state for alternatives
   const [showCustomMenu, setShowCustomMenu] = useState({});
@@ -92,8 +95,30 @@ const Dashboard = () => {
   // Fetch businesses on component mount
   useEffect(() => {
     fetchBusinesses();
+    fetchPlanDetails();
     //fetchSubscriptionDetails();
   }, []);
+
+  const fetchPlanDetails = async () => {
+    try {
+      const token = sessionStorage.getItem('token');
+      if (!token) return;
+
+      const response = await fetch(`${API_BASE_URL}/api/subscription/plan-details`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setUsage(data.usage);
+      }
+    } catch (error) {
+      console.error('Error fetching plan details:', error);
+    }
+  };
 
   const fetchSubscriptionDetails = async () => {
     try {
@@ -145,6 +170,7 @@ const Dashboard = () => {
         const collabList = data.collaboratingBusinesses || data.collaborating_businesses || [];
         setBusinesses(data.businesses || []);
         setCollaboratingBusinesses(Array.isArray(collabList) ? collabList : []);
+        setDeletedBusinesses(data.deleted_businesses || []);
         setBusinessError('');
       } else {
         const errorData = await response.json();
@@ -225,6 +251,7 @@ const Dashboard = () => {
 
       if (response.ok) {
         await fetchBusinesses();
+        await fetchPlanDetails();
         setShowDeleteModal(false);
         setBusinessToDelete(null);
 
@@ -301,6 +328,7 @@ const Dashboard = () => {
         });
 
         await fetchBusinesses();
+        await fetchPlanDetails();
         setShowCreateModal(false);
 
         // Show PMF Onboarding modal after successful business creation (only if enabled)
@@ -316,8 +344,8 @@ const Dashboard = () => {
           sessionStorage.clear();
           navigate('/login');
         } else if (response.status === 403 && data.error && data.error.includes('limit reached')) {
-          handleShowCreateModal();
-          //setShowUpgradeModal(true);
+          handleCloseCreateModal();
+          setShowPlanLimitModal(true);
         } else {
           setBusinessError(data.error || t('failed_to_create_business'));
         }
@@ -375,21 +403,27 @@ else if (/[^A-Za-z0-9\s]{5,}/.test(businessPurpose)) {
 }
 
     // City validation (optional but if provided, must be valid)
-    const cityTrimmed = businessFormData.city.trim();
-    const cityHasSpecialChars = /[^a-zA-ZÀ-ÿ\s.-]/.test(cityTrimmed);
+const cityTrimmed = businessFormData.city.trim();
+const cityHasSpecialChars = /[^a-zA-ZÀ-ÿ\s.-]/.test(cityTrimmed);
 
-    if (businessFormData.city && cityTrimmed.length === 0) {
-      errors.city = t('city_cannot_contain_only_spaces');
-    } else if (cityTrimmed.length > 0 && cityTrimmed.length < 2) {
-      errors.city = t('city_min_length');
-    } else if (cityTrimmed.length > 20) {
-      errors.city = t('city_max_length');
-    } 
-    else if (/\d/.test(cityTrimmed)) {  
-      errors.city = "Numeric values not allowed.";
-    }else if (cityHasSpecialChars) {
-      errors.city = t('city_cannot_contain_special_characters');
-    }
+if (businessFormData.city && cityTrimmed.length === 0) {
+  errors.city = t('city_cannot_contain_only_spaces');
+} else if (cityTrimmed.length > 0 && cityTrimmed.length < 2) {
+  errors.city = t('city_min_length');
+} else if (cityTrimmed.length > 20) {
+  errors.city = t('city_max_length');
+} else {
+  const hasNumber = /\d/.test(cityTrimmed);  
+  const hasSpecial = cityHasSpecialChars;    
+
+  if (hasNumber && hasSpecial) {
+    errors.city = "Numeric and special characters are not allowed"; 
+  } else if (hasNumber) {
+    errors.city = "Numeric values not allowed.";
+  } else if (hasSpecial) {
+    errors.city = t('city_cannot_contain_special_characters');
+  }
+}
 
     // Country validation (optional but if provided, must be valid)
     const countryTrimmed = businessFormData.country.trim();
@@ -401,17 +435,38 @@ else if (/[^A-Za-z0-9\s]{5,}/.test(businessPurpose)) {
       errors.country = t('country_min_length');
     } else if (countryTrimmed.length > 20) {
       errors.country = t('country_max_length');
-    } else if (/\d/.test(countryTrimmed)) {  
-      errors.country = t('Numeric_values_not_allowed');
-    
-    }else if (countryHasSpecialChars) {
-      errors.country = t('country_cannot_contain_special_characters');
-    }
+    } else {
+  const hasNumber = /\d/.test(countryTrimmed);
+  const hasSpecial = countryHasSpecialChars;
 
+  if (hasNumber && hasSpecial) {
+    errors.country = "Numeric and special characters are not allowed";
+  } else if (hasNumber) {
+    errors.country = t('Numeric_values_not_allowed');
+  } else if (hasSpecial) {
+    errors.country = t('country_cannot_contain_special_characters');
+  }
+}
 
-    if (businessFormData.description && /\s{3,}/.test(businessFormData.description)) {
-      errors.description = t('description_no_continuous_spaces');
-    }
+    const description = businessFormData.description?.trim() || "";
+
+if (description) {
+  if (description.length < 10) {
+    errors.description = t('description_min_length');
+  }
+  else if (!/[A-Za-z]/.test(description)) {
+    errors.description = t('description_alphabetic_required');
+  }
+  else if (/[0-9]{5,}/.test(description)) {
+    errors.description = t('description_consecutive_numbers');
+  }
+  else if (/[^A-Za-z0-9\s]{5,}/.test(description)) {
+    errors.description = t('description_consecutive_special');
+  }
+  else if (/\s{3,}/.test(description)) {
+    errors.description = t('description_consecutive_spaces');
+  }
+}
 
 
     setFormErrors(errors);
@@ -438,30 +493,12 @@ else if (/[^A-Za-z0-9\s]{5,}/.test(businessPurpose)) {
 
   // Business Modal Functions
   const handleShowCreateModal = () => {
-    const userPlan = sessionStorage.getItem("userPlan");
-    const activeBusinessesCount = businesses.filter(b => b.status !== 'deleted').length;
+    if (usage) {
+      const current = usage.workspaces?.current || 0;
+      const limit = usage.workspaces?.limit || 0;
 
-    if (userPlan === 'essential' && activeBusinessesCount >= 1) {
-      setShowPlanLimitModal(true); // Show limit modal instead of upgrade modal directly
-      return;
-    }
-
-    if (userPlan === 'advanced' && activeBusinessesCount >= 3) { // Assuming 3 is the limit for advanced.
-      const features = [
-        "Up to 3 Workspaces",
-        "Initiative to Project Conversion",
-
-      ];
-
-      if (userPlan === 'advanced' && activeBusinessesCount >= 3) {
-        const exhaustedFeatures = features.map((f, i) => `• ${f}`).join('\n');
-
-        setBusinessError(`You have exhausted the plan:\n${exhaustedFeatures}`);
-        setShowSuccessPopup(true); // Using common popup but now it will show as error
-        setTimeout(() => {
-          setShowSuccessPopup(false);
-          setBusinessError('');
-        }, 5000);
+      if (current >= limit) {
+        setShowPlanLimitModal(true);
         return;
       }
     }
@@ -573,7 +610,7 @@ else if (/[^A-Za-z0-9\s]{5,}/.test(businessPurpose)) {
 
     const getStatusInfo = () => {
       if (business.status === 'deleted') return { label: t('deleted'), className: 'status-deleted' };
-      if (business.access_mode === t('archived') || business.access_mode === 'hidden') return { label: 'Archived', className: 'status-archived' };
+      if (business.access_mode === 'archived' || business.access_mode === 'hidden') return { label: t('archived'), className: 'status-archived' };
       return { label: t('active'), className: 'status-active' };
     };
 
@@ -703,6 +740,9 @@ else if (/[^A-Za-z0-9\s]{5,}/.test(businessPurpose)) {
       <PlanLimitModal
         show={showPlanLimitModal}
         onHide={() => setShowPlanLimitModal(false)}
+        plan={usage?.plan}
+        limit={usage?.workspaces?.limit}
+        isAdmin={isAdmin}
       />
 
 
@@ -740,7 +780,7 @@ else if (/[^A-Za-z0-9\s]{5,}/.test(businessPurpose)) {
                       </div>
                       <Accordion className="px-4 mb-4">
                         {/* My Businesses */}
-                        {!isCollaborator && (
+                        {!isCollaborator && !isViewer && (
                           <Accordion.Item eventKey="0">
                             <Accordion.Header>
                               <div className="accordion-header-content">
@@ -763,7 +803,7 @@ else if (/[^A-Za-z0-9\s]{5,}/.test(businessPurpose)) {
                         )}
 
                         {/* Project Phase */}
-                        {!isCollaborator && projectPhaseBusinesses.length > 0 && (
+                        {!isCollaborator && !isViewer && projectPhaseBusinesses.length > 0 && (
                           <Accordion.Item eventKey="1">
                             <Accordion.Header>
                               <div className="accordion-header-content">
@@ -787,7 +827,7 @@ else if (/[^A-Za-z0-9\s]{5,}/.test(businessPurpose)) {
                         )}
 
                         {/* Collaborating Businesses */}
-                        {collaboratingBusinesses.length > 0 && (
+                        {(isCollaborator || isViewer || collaboratingBusinesses.length > 0) && (
                           <Accordion.Item eventKey="2">
                             <Accordion.Header>
                               <div className="accordion-header-content">
@@ -809,6 +849,30 @@ else if (/[^A-Za-z0-9\s]{5,}/.test(businessPurpose)) {
                             </Accordion.Body>
                           </Accordion.Item>
                         )}
+                        
+                        {/* Deleted Businesses */}
+                        {!isCollaborator && !isViewer && deletedBusinesses.length > 0 && (
+                          <Accordion.Item eventKey="3">
+                            <Accordion.Header>
+                              <div className="accordion-header-content">
+                                <span className="accordion-title-text">
+                                  Deleted Business
+                                </span>
+                                <span className="accordion-count-pill">
+                                  {deletedBusinesses.length}
+                                </span>
+                              </div>
+                            </Accordion.Header>
+
+                            <Accordion.Body>
+                              <BusinessList
+                                businesses={deletedBusinesses}
+                                viewType="mobile"
+                                canDelete={false}
+                              />
+                            </Accordion.Body>
+                          </Accordion.Item>
+                        )}
 
                       </Accordion>
 
@@ -818,6 +882,7 @@ else if (/[^A-Za-z0-9\s]{5,}/.test(businessPurpose)) {
                             variant="primary"
                             className="flex-grow-1 create-business-btn"
                             onClick={handleShowCreateModal}
+                            disabled={(usage && usage.workspaces?.current >= usage.workspaces?.limit) || isLoadingBusinesses}
                           >
                             {t('create_business')}
                           </Button>
@@ -853,6 +918,7 @@ else if (/[^A-Za-z0-9\s]{5,}/.test(businessPurpose)) {
                                   variant="primary"
                                   className="create-business-btn"
                                   onClick={handleShowCreateModal}
+                                  disabled={(usage && usage.workspaces?.current >= usage.workspaces?.limit) || isLoadingBusinesses}
                                 >
                                   {t('create_business')}
                                 </Button>
@@ -874,7 +940,7 @@ else if (/[^A-Za-z0-9\s]{5,}/.test(businessPurpose)) {
                         <Col md={6} className="businesses-section">
                           <Accordion>
                             {/* My Businesses */}
-                            {!isCollaborator && (
+                            {!isCollaborator && !isViewer && (
                               <Accordion.Item eventKey="0">
                                 <Accordion.Header>
                                   <div className="accordion-header-content">
@@ -896,7 +962,7 @@ else if (/[^A-Za-z0-9\s]{5,}/.test(businessPurpose)) {
                             )}
 
                             {/* Project Phase */}
-                            {!isCollaborator && projectPhaseBusinesses.length > 0 && (
+                            {!isCollaborator && !isViewer && projectPhaseBusinesses.length > 0 && (
                               <Accordion.Item eventKey="1">
                                 <Accordion.Header>
                                   <div className="accordion-header-content">
@@ -919,7 +985,7 @@ else if (/[^A-Za-z0-9\s]{5,}/.test(businessPurpose)) {
                             )}
 
                             {/* Collaborating Businesses */}
-                            {collaboratingBusinesses.length > 0 && (
+                            {(isCollaborator || isViewer || collaboratingBusinesses.length > 0) && (
                               <Accordion.Item eventKey="2">
                                 <Accordion.Header>
                                   <div className="accordion-header-content">
@@ -934,6 +1000,29 @@ else if (/[^A-Za-z0-9\s]{5,}/.test(businessPurpose)) {
                                 <Accordion.Body>
                                   <BusinessList
                                     businesses={collaboratingBusinesses}
+                                    viewType="desktop"
+                                    canDelete={false}
+                                  />
+                                </Accordion.Body>
+                              </Accordion.Item>
+                            )}
+
+                            {/* Deleted Businesses */}
+                            {!isCollaborator && !isViewer && deletedBusinesses.length > 0 && (
+                              <Accordion.Item eventKey="3">
+                                <Accordion.Header>
+                                  <div className="accordion-header-content">
+                                    <span className="accordion-title-text">
+                                      Deleted Business
+                                    </span>
+                                    <span className="accordion-count-pill">
+                                      {deletedBusinesses.length}
+                                    </span>
+                                  </div>
+                                </Accordion.Header>
+                                <Accordion.Body>
+                                  <BusinessList
+                                    businesses={deletedBusinesses}
                                     viewType="desktop"
                                     canDelete={false}
                                   />

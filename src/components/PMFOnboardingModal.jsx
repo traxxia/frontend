@@ -104,10 +104,7 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId, onToastMessage
     (completedSteps / TOTAL_STEPS) * 100;
 
   const percentToComplete = 100 - Math.round(progressPercentage);
-  const countryOptions = COUNTRIES.map(c => ({
-    value: c,
-    label: t(c) || c
-  }));
+  const countryOptions = COUNTRIES;
 
   const industryOptions = INDUSTRIES_BY_CATEGORY.map(group => ({
     label: t(group.category) || group.category,
@@ -654,11 +651,11 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId, onToastMessage
                 classNamePrefix="pmf-select"
                 placeholder={t('select country') || 'Select country'}
                 options={countryOptions}
-                value={countryOptions.find(o => o.value === formData.country)}
+                value={countryOptions.find(o => o.label === formData.country)}
                 onChange={(selected) => {
                   setFormData(prev => ({
                     ...prev,
-                    country: selected?.value || ''
+                    country: selected?.label || ''
                   }));
                   if (errors.country) {
                     setErrors(prev => ({ ...prev, country: '' }));

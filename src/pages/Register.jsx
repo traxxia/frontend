@@ -104,6 +104,9 @@ const PaymentStep = ({ onBack, onSubmit, isSubmitting, error, selectedPlanPrice 
 const Register = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const companyErrorRef = React.useRef(null);
+  const plansErrorRef = React.useRef(null);
+  const termsErrorRef = React.useRef(null);
 
   const [activeTab, setActiveTab] = useState(1);
   const [form, setForm] = useState({
@@ -155,8 +158,9 @@ const Register = () => {
       const response = await axios.get(`${API_BASE_URL}/api/plans`);
       if (response.data.plans) {
         setPlans(response.data.plans);
-        const essential = response.data.plans.find(p => p.name === 'Essential');
-        if (essential) setSelectedPlanId(essential._id);
+        // Auto-select the cheapest available plan instead of hardcoding a name
+        const sorted = [...response.data.plans].sort((a, b) => a.price - b.price);
+        if (sorted.length > 0) setSelectedPlanId(sorted[0]._id);
       }
     } catch (error) {
       console.error('Error fetching plans:', error);
@@ -253,7 +257,7 @@ const Register = () => {
     if (!form.terms) newErrors.terms = t('You_must_agree_to_the_Terms_&_Conditions_and_Privacy_Policy_to_proceed') || 'You must agree to the Terms & Conditions and Privacy Policy to proceed';
 
     setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    return newErrors;
   };
 
   const handleNext = async () => {
@@ -273,12 +277,24 @@ const Register = () => {
         }
       }
     } else if (activeTab === 2) {
-      if (validateTab2()) {
+      const tab2Errors = validateTab2();
+      if (Object.keys(tab2Errors).length === 0) {
         if (isNewCompany) {
           setActiveTab(3);
         } else {
           handleSubmit(null, null);
         }
+      } else {
+        // Scroll to the first error found
+        setTimeout(() => {
+          if (tab2Errors.company_name || tab2Errors.company_id) {
+            companyErrorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          } else if (tab2Errors.selectedPlanId) {
+            plansErrorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          } else if (tab2Errors.terms) {
+            termsErrorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+        }, 100);
       }
     }
   };
@@ -600,7 +616,9 @@ const Register = () => {
                                 )}
                               </AnimatePresence>
                             </div>
-                            {(errors.company_name || errors.company_id) && <div className="error-message">{errors.company_name || errors.company_id}</div>}
+                            <div ref={companyErrorRef}>
+                              {(errors.company_name || errors.company_id) && <div className="error-message">{errors.company_name || errors.company_id}</div>}
+                            </div>
                           </div>
 
                           <AnimatePresence>
@@ -619,7 +637,9 @@ const Register = () => {
                                     <PricingPlanCard key={p._id} plan={p} isSelected={selectedPlanId === p._id} onSelect={setSelectedPlanId} />
                                   ))}
                                 </div>
-                                {errors.selectedPlanId && <div className="error-message">{errors.selectedPlanId}</div>}
+                                <div ref={plansErrorRef}>
+                                  {errors.selectedPlanId && <div className="error-message">{errors.selectedPlanId}</div>}
+                                </div>
                               </motion.div>
                             )}
                           </AnimatePresence>
@@ -639,7 +659,9 @@ const Register = () => {
                               </label>
                               <span className="required">*</span>
                             </div>
-                            {errors.terms && <div className="error-message centered-error">{errors.terms}</div>}
+                            <div ref={termsErrorRef}>
+                              {errors.terms && <div className="error-message centered-error">{errors.terms}</div>}
+                            </div>
                           </div>
 
                           <div className="tab-navigation full-width-field">
@@ -681,14 +703,14 @@ const Register = () => {
       </div>
 
       <Modal show={showSuccessModal} onHide={() => setShowSuccessModal(false)} centered dialogClassName="compact-success-modal">
-        <Modal.Body className="text-center py-4">
-          <div className={`mb-3 ${isError ? 'text-danger' : 'text-success'}`}>
-            {isError ? <FaTimes size={48} /> : <FaCheck size={48} />}
+        <Modal.Body className="text-center">
+          <div className={`registration-icon-container mb-3 ${isError ? 'text-danger' : 'text-success'}`}>
+            {isError ? <FaTimes size={32} /> : <FaCheck size={32} />}
           </div>
-          <h5 className="mb-2">
+          <h5 className="registration-status-title mb-2">
             {isError ? t('oops') : t('success')}
           </h5>
-          <p className="mb-0">{modalMessage}</p>
+          <p className="mb-0 registration-success-message">{modalMessage}</p>
         </Modal.Body>
         {isError && (
           <Modal.Footer className="justify-content-center">

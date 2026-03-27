@@ -18,7 +18,7 @@ On the left side you will see the the welcome message along with create business
 ![Create Business](/academy-screenshots/business-management/business-creation-form.png)
 *Screenshot of Traxxia Dashboard with business creation form*
 
-![How it works](/academy-screenshots/getting-started/how-to-use.png)
+![How it works](/academy-screenshots/getting-started/how-it-works.png)
 *Screenshot of Traxxia Dashboard with How it works section*
 
 > [!TIP] How it works is the short version of the Traxxia Academy.
@@ -27,6 +27,6 @@ On the left side you will see the the welcome message along with create business
 
 On the right side you will see the list of all the businesses you have created in the accordion.
 
-![Business List](/academy-screenshots/getting-started/dashboard-with-created-business.png)
+![Business List](/academy-screenshots/getting-started/dashboard-with-created-business1.png)
 *Screenshot of Traxxia Dashboard with created business list*
   

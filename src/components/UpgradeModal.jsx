@@ -1,16 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Modal, Button, Row, Col, Spinner, Alert, Form } from 'react-bootstrap';
-import { ArrowRight, Zap, CreditCard, Check } from 'lucide-react';
+import { ArrowRight, Zap, CreditCard, Check, AlertTriangle } from 'lucide-react';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements, useStripe, useElements, CardNumberElement } from '@stripe/react-stripe-js';
 import PricingPlanCard from './PricingPlanCard';
-import DowngradeSelectionModal from './DowngradeSelectionModal';
-import UpgradeReactivationModal from './UpgradeReactivationModal';
+import PlanConfigurationModal from './PlanConfigurationModal';
 import PaymentForm from './PaymentForm';
 import '../styles/UpgradeModal.css';
 import { useTranslation } from '../hooks/useTranslation';
 
 // Stripe initialization will be handled inside the component for lazy loading
+
+// Removed hardcoded TIER_ORDER. Plans are now compared via price and limits for dynamism.
 
 const UpgradeModalContent = ({
     onHide,
@@ -34,6 +35,17 @@ const UpgradeModalContent = ({
     const [selectedMethodId, setSelectedMethodId] = useState('new');
     const [localError, setLocalError] = useState(null);
     const [cardHolderName, setCardHolderName] = useState('');
+    const scrollAnchorRef = useRef(null);
+
+    // Auto-scroll to bottom when an error appears
+    useEffect(() => {
+        if ((error || localError) && scrollAnchorRef.current) {
+            // Delay slightly to allow the element to render and animate
+            setTimeout(() => {
+                scrollAnchorRef.current.scrollIntoView({ behavior: 'smooth', block: 'end' });
+            }, 100);
+        }
+    }, [error, localError]);
 
     useEffect(() => {
         if (defaultPaymentMethodId) {
@@ -107,24 +119,37 @@ const UpgradeModalContent = ({
                     </div>
                 ) : (
                     <>
-                        {error && <Alert variant="danger">{error}</Alert>}
 
-                        {selectedPlan?.name?.toLowerCase() === 'essential' && subscription?.plan?.toLowerCase() !== 'essential' && (
+                        {selectedPlan && subscription?.plan && selectedPlan.price < (subscription.plan_price || 0) && (
                             <Alert variant="warning" className="mb-3 border-0 shadow-sm">
                                 <div className="d-flex align-items-start">
                                     <ArrowRight className="me-2 flex-shrink-0 mt-1" size={18} />
                                     <div className="small">
-                                        <h6 className="mb-2 fw-bold">⚠️ {t("Downgrade Warning")}</h6>
+                                        <h6 className="mb-2 fw-bold">⚠️ {t("Plan Change Notice")}</h6>
                                         <p className="mb-2">
-                                            {t("Downgrading to")} <strong>{t("Essential")}</strong> {t("will impact your current setup")}:
+                                            {t("Transitioning to")} <strong>{t(selectedPlan.name)}</strong> {t("will impact your current setup")}:
                                         </p>
                                         <ul className="mb-0 ps-3">
-                                            {subscription.usage.workspaces.current > 1 && (
+                                            {subscription.usage.workspaces.current > (selectedPlan.limits?.workspaces || 0) && (
                                                 <li className="mb-1">
-                                                <strong>{t("Workspaces")}:</strong> {t("You currently have")}{" "}
-                                                <strong>{subscription.usage.workspaces.current}</strong> {t("active workspace(s)")}.
-                                                {t("Only")} <strong>1</strong> {t("will remain active")}.
-                                            </li>
+                                                    <strong>{t("Workspaces")}:</strong> {t("You currently have")}{" "}
+                                                    <strong>{subscription.usage.workspaces.current}</strong> {t("active workspace(s)")}.
+                                                    {t("Only")} <strong>{selectedPlan.limits?.workspaces || 0}</strong> {t("will remain active")}.
+                                                </li>
+                                            )}
+                                            {subscription.usage.collaborators.current > (selectedPlan.limits?.collaborators || 0) && (
+                                                <li className="mb-1">
+                                                    <strong>{t("Collaborators")}:</strong> {t("You have")}{" "}
+                                                    <strong>{subscription.usage.collaborators.current}</strong>.
+                                                    {t("The new plan only allows")} <strong>{selectedPlan.limits?.collaborators || 0}</strong>.
+                                                </li>
+                                            )}
+                                            {subscription.usage.users.current > (selectedPlan.limits?.users || 0) && (
+                                                <li className="mb-1">
+                                                    <strong>{t("Users")}:</strong> {t("You have")}{" "}
+                                                    <strong>{subscription.usage.users.current}</strong>.
+                                                    {t("The new plan only allows")} <strong>{selectedPlan.limits?.users || 0}</strong>.
+                                                </li>
                                             )}
                                         </ul>
                                     </div>
@@ -208,6 +233,15 @@ const UpgradeModalContent = ({
                                 }}
                             />
                         </div>
+
+                        {error && (
+                            <Alert variant="danger" className="mt-3 animate-fade-in shadow-sm border-0 d-flex align-items-center">
+                                <AlertTriangle size={18} className="me-2 flex-shrink-0" />
+                                {error}
+                            </Alert>
+                        )}
+
+                        <div ref={scrollAnchorRef} />
                     </>
                 )}
             </Modal.Body>
@@ -218,11 +252,11 @@ const UpgradeModalContent = ({
                 <Button
                     variant="primary"
                     onClick={handleConfirm}
-                    disabled={submitting || !selectedPlanId || (subscription?.plan?.toLowerCase() === selectedPlan?.name?.toLowerCase()) || (selectedMethodId === 'new' && !stripe)}
+                    disabled={submitting || !selectedPlanId || (selectedMethodId === 'new' && !stripe)}
                     className="px-4 py-2 fw-bold"
                 >
                     {submitting ? <Spinner animation="border" size="sm" /> :
-                        t(selectedPlan?.name?.toLowerCase() === 'essential' ? 'Process Downgrade' : 'Confirm Upgrade')}
+                        (selectedPlan?.name?.toLowerCase() === subscription?.plan?.toLowerCase() ? t('Renew Plan') : t('Confirm Plan Change'))}
                     {!submitting && <ArrowRight size={18} className="ms-2" />}
                 </Button>
             </Modal.Footer>
@@ -230,7 +264,7 @@ const UpgradeModalContent = ({
     );
 };
 
-const UpgradeModal = ({ show, onHide, onUpgradeSuccess, paymentMethod }) => {
+const UpgradeModal = ({ show, onHide, onUpgradeSuccess, paymentMethod, initialPlanId }) => {
     // Lazy load Stripe only when the modal is active
     const stripePromise = React.useMemo(() => {
         if (!show) return null;
@@ -244,13 +278,9 @@ const UpgradeModal = ({ show, onHide, onUpgradeSuccess, paymentMethod }) => {
     const [subscription, setSubscription] = useState(null);
     const [selectedPlanId, setSelectedPlanId] = useState(null);
 
-    // Downgrade selection state
-    const [showSelectionModal, setShowSelectionModal] = useState(false);
-    const [selectionData, setSelectionData] = useState(null);
-
-    // Reactivation selection state
-    const [showReactivationModal, setShowReactivationModal] = useState(false);
-    const [reactivationData, setReactivationData] = useState(null);
+    // Plan configuration state
+    const [showConfigurationModal, setShowConfigurationModal] = useState(false);
+    const [configurationData, setConfigurationData] = useState(null);
 
     const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -281,10 +311,12 @@ const UpgradeModal = ({ show, onHide, onUpgradeSuccess, paymentMethod }) => {
             setPlans(plansData.plans || []);
             setSubscription(subData);
 
-            if (isDowngradeMode) {
-                const essentialPlan = plansData.plans.find(p => p.name.toLowerCase() === 'essential');
-                if (essentialPlan) {
-                    setSelectedPlanId(essentialPlan._id);
+            if (initialPlanId) {
+                setSelectedPlanId(initialPlanId);
+            } else if (isDowngradeMode) {
+                const cheapestPlan = [...plansData.plans].sort((a, b) => a.price - b.price)[0];
+                if (cheapestPlan) {
+                    setSelectedPlanId(cheapestPlan._id);
                 }
             } else {
                 const currentPlanName = subData.plan.toLowerCase();
@@ -326,15 +358,13 @@ const UpgradeModal = ({ show, onHide, onUpgradeSuccess, paymentMethod }) => {
                 throw new Error(data.error || 'Upgrade failed');
             }
 
-            if (data.requires_selection) {
-                setSelectionData({ ...data, plan_id: selectedPlanId });
-                setShowSelectionModal(true);
-                return;
-            }
-
-            if (data.requires_reactivation_selection) {
-                setReactivationData({ ...data, plan_id: selectedPlanId });
-                setShowReactivationModal(true);
+            if (data.requires_configuration) {
+                setConfigurationData({ ...data, plan_id: selectedPlanId });
+                // Sequential modal transition: Close this one, then open config
+                onHide();
+                setTimeout(() => {
+                    setShowConfigurationModal(true);
+                }, 100); // Small delay to let Bootstrap modal backdrop clean up
                 return;
             }
 
@@ -348,13 +378,13 @@ const UpgradeModal = ({ show, onHide, onUpgradeSuccess, paymentMethod }) => {
         }
     };
 
-    const handleProcessReactivation = async (selection) => {
+    const handleProcessConfiguration = async (selection) => {
         try {
             setSubmitting(true);
             setError(null);
             const token = sessionStorage.getItem('token');
 
-            const response = await fetch(`${API_BASE_URL}/api/subscription/process-reactivation`, {
+            const response = await fetch(`${API_BASE_URL}/api/subscription/process-configuration`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -366,48 +396,12 @@ const UpgradeModal = ({ show, onHide, onUpgradeSuccess, paymentMethod }) => {
             const data = await response.json();
 
             if (!response.ok) {
-                throw new Error(data.error || 'Reactivation failed');
+                throw new Error(data.error || 'Configuration failed');
             }
 
-            sessionStorage.setItem('userPlan', data.plan);
+            sessionStorage.setItem('userPlan', data.subscription_plan || data.plan || selectedPlan?.name || 'unknown');
             if (onUpgradeSuccess) onUpgradeSuccess(data);
-            setShowReactivationModal(false);
-            onHide();
-        } catch (err) {
-            setError(err.message);
-        } finally {
-            setSubmitting(false);
-        }
-    };
-
-    const handleProcessDowngrade = async (selection) => {
-        try {
-            setSubmitting(true);
-            setError(null);
-            const token = sessionStorage.getItem('token');
-
-            const response = await fetch(`${API_BASE_URL}/api/subscription/process-downgrade`, {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    plan_id: selectionData.plan_id,
-                    active_business_id: selection.active_business_id,
-                    active_collaborator_ids: selection.active_collaborator_ids
-                })
-            });
-
-            const data = await response.json();
-
-            if (!response.ok) {
-                throw new Error(data.error || 'Downgrade failed');
-            }
-
-            sessionStorage.setItem('userPlan', data.plan);
-            if (onUpgradeSuccess) onUpgradeSuccess(data);
-            setShowSelectionModal(false);
+            setShowConfigurationModal(false);
             onHide();
         } catch (err) {
             setError(err.message);
@@ -439,20 +433,11 @@ const UpgradeModal = ({ show, onHide, onUpgradeSuccess, paymentMethod }) => {
                 </Elements>
             </Modal>
 
-            <DowngradeSelectionModal
-                show={showSelectionModal}
-                onHide={() => setShowSelectionModal(false)}
-                data={selectionData}
-                onConfirm={handleProcessDowngrade}
-                submitting={submitting}
-                externalError={error}
-            />
-
-            <UpgradeReactivationModal
-                show={showReactivationModal}
-                onHide={() => setShowReactivationModal(false)}
-                data={reactivationData}
-                onConfirm={handleProcessReactivation}
+            <PlanConfigurationModal
+                show={showConfigurationModal}
+                onHide={() => setShowConfigurationModal(false)}
+                data={configurationData}
+                onConfirm={handleProcessConfiguration}
                 submitting={submitting}
                 externalError={error}
             />

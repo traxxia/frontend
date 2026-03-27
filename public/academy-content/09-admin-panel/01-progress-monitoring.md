@@ -6,7 +6,7 @@ For **Super Admins**, Traxxia offers a powerful **Admin Panel** to monitor the p
 The Admin Panel provides a bird's-eye view of:
 -   **Company Activity**: See which companies are actively completing questionnaires and launching projects.
 -   **User Engagement**: Monitor login frequency and platform usage.
--   **Plan Distribution**: Track how many users are on Essential vs. Advanced plans.
+-   **Plan Distribution**: Track how many users are on different plan configurations.
 
 ## 2. Business Management
 Super Admins can drill down into specific businesses to:

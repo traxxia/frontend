@@ -22,6 +22,7 @@ import {
   Clock,
 } from "lucide-react";
 import { useTranslation } from "../hooks/useTranslation";
+import { getUserLimits } from "../utils/authUtils";
 
 // Helper to get strategic signal
 const getStrategicSignal = (project) => {
@@ -87,7 +88,7 @@ const ProjectCard = ({
     <div className={`project-card ${project.status === "Killed" ? "killed" : ""} ${(project.status?.toLowerCase() === "launched" ? "draft" : (project.status?.toLowerCase().replace(" ", "-") || "draft"))}-border`}>
       <div className="project-header">
         <div className="project-header-content">
-          {isAdmin && !isArchived && sessionStorage.getItem("userPlan") !== 'essential' && (
+          {isAdmin && !isArchived && getUserLimits().project && (
             <input
               type="checkbox"
               checked={isSelected}
@@ -103,7 +104,7 @@ const ProjectCard = ({
             />
           )}
 
-          {rankMap && rankMap[String(project._id)] !== null && rankMap[String(project._id)] !== undefined && (
+          {rankMap && rankMap[String(project._id)] !== null && rankMap[String(project._id)] !== undefined && !isViewer && (
             <div className="project-rank-badge">
               Rank {rankMap[String(project._id)]}
             </div>
@@ -181,7 +182,7 @@ const ProjectCard = ({
       {/* Footer Info */}
       <div style={{ marginTop: "auto", paddingTop: "12px", borderTop: "1px solid #f3f4f6", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <span className="status-badge">
-          {project.status?.toLowerCase() === "launched" ? t("Draft") : (project.status && t(project.status) !== project.status ? t(project.status) : (project.status || t("Draft")))}
+          {project.status && t(project.status) !== project.status ? t(project.status) : (project.status || t("Draft"))}
         </span>
         <div className="project-card-footer" style={{ borderTop: "none", fontSize: "10px", color: "#94a3b8" }}>
           {t("Created")} {new Date(project.created_at).toLocaleDateString()}

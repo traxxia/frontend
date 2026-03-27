@@ -10,6 +10,7 @@ import { useAccessControl } from "../hooks/useAccessControl";
 import { useProjectForm } from "../hooks/useProjectForm";
 import { callMLRankingAPI, saveAIRankings } from "../services/aiRankingService";
 import { AI_PAGE_CONTEXTS } from "../utils/aiContexts";
+import { getUserLimits } from "../utils/authUtils";
 
 import { MdArrowDownward } from "react-icons/md";
 import { Users, CheckCircle, Plus, ListOrdered, Lock, Rocket, Briefcase } from "lucide-react";
@@ -163,7 +164,7 @@ const ProjectsSection = ({
   } = useProjectForm();
 
   const isViewer = userRole === "viewer";
-  const isEditor = userRole === "super_admin" || userRole === "company_admin" || userRole === "collaborator";
+  const isEditor = userRole === "super_admin" || userRole === "company_admin" || userRole === "collaborator" || userRole === "user";
   const isSuperAdmin = userRole === "super_admin" || userRole === "company_admin";
 
   const allCollaboratorsLocked =
@@ -731,8 +732,7 @@ const ProjectsSection = ({
   };
 
   const renderProjectList = () => {
-    const userPlan = sessionStorage.getItem("userPlan");
-    const isReadOnly = apiIsArchived || userPlan === 'essential';
+    // isReadOnly is now defined at the top level of the component
 
     return (
       <>
@@ -776,7 +776,13 @@ const ProjectsSection = ({
           <button
             onClick={() => {
               setViewMode("ranking");
-              setShowRankScreen(true);
+              if (userRole === 'viewer') {
+                setShowRankScreen(false);
+                setShowTeamRankings(true);
+              } else {
+                setShowRankScreen(true);
+                setShowTeamRankings(false);
+              }
             }}
             className={`view-mode-tab ${viewMode === "ranking" ? "active" : ""}`}
             style={{
@@ -848,37 +854,47 @@ const ProjectsSection = ({
               )}
             </div>
 
-            {showRankScreen && !isLoading && !isRankingsLoading && (
-              <RankProjectsPanel
-                show={showRankScreen}
-                projects={rankedProjects}
-                businessId={selectedBusinessId}
-                onLockRankings={handleLockProjectRanking}
-                onRankSaved={() => {
-                  refreshTeamRankings();
-                  onToggleTeamRankings();
-                }}
-                isAdmin={isSuperAdmin}
-                isRankingLocked={isRankingLocked}
-                businessStatus={businessStatus}
-                userHasRerankAccess={userHasRerankAccess}
-                onShowToast={handleShowToast}
-                isArchived={apiIsArchived}
-              />
-            )}
+            {isLoading || isRankingsLoading ? (
+              <div className="d-flex justify-content-center align-items-center py-5" style={{ minHeight: "300px" }}>
+                <div className="spinner-border text-primary" role="status">
+                  <span className="visually-hidden">Loading...</span>
+                </div>
+              </div>
+            ) : (
+              <>
+                {showRankScreen && (
+                  <RankProjectsPanel
+                    show={showRankScreen}
+                    projects={rankedProjects}
+                    businessId={selectedBusinessId}
+                    onLockRankings={handleLockProjectRanking}
+                    onRankSaved={() => {
+                      refreshTeamRankings();
+                      onToggleTeamRankings();
+                    }}
+                    isAdmin={isSuperAdmin}
+                    isRankingLocked={isRankingLocked}
+                    businessStatus={businessStatus}
+                    userHasRerankAccess={userHasRerankAccess}
+                    onShowToast={handleShowToast}
+                    isArchived={apiIsArchived}
+                  />
+                )}
 
-            {showTeamRankings && !isViewer && !isLoading && !isRankingsLoading && (
-              <TeamRankingsView
-                activeAccordionKey={activeAccordionKey}
-                onAccordionSelect={handleAccordionSelect}
-                isSuperAdmin={isSuperAdmin}
-                user={user}
-                sortedProjects={sortedProjects}
-                rankMap={rankMap}
-                adminRankMap={adminRankMap}
-                userRole={userRole}
-                businessId={selectedBusinessId}
-              />
+                {showTeamRankings && (
+                  <TeamRankingsView
+                    activeAccordionKey={activeAccordionKey}
+                    onAccordionSelect={handleAccordionSelect}
+                    isSuperAdmin={isSuperAdmin}
+                    user={user}
+                    sortedProjects={sortedProjects}
+                    rankMap={rankMap}
+                    adminRankMap={adminRankMap}
+                    userRole={userRole}
+                    businessId={selectedBusinessId}
+                  />
+                )}
+              </>
             )}
           </>
         ) : (
@@ -904,7 +920,7 @@ const ProjectsSection = ({
               </div>
 
               <div className="management-buttons d-flex gap-2">
-                {selectedProjectIds.length > 0 && !isViewer && !isArchived && sessionStorage.getItem("userPlan") !== 'essential' && isSuperAdmin && (
+                {selectedProjectIds.length > 0 && !isViewer && !isArchived && getUserLimits().project && isSuperAdmin && (
                   <button
                     onClick={handleLaunchProjects}
                     disabled={isSubmitting}
@@ -928,7 +944,7 @@ const ProjectsSection = ({
                   </button>
                 )}
 
-                {!isViewer && !isArchived && sessionStorage.getItem("userPlan") !== 'essential' && (
+                {!isViewer && !isArchived && getUserLimits().project && (
                   <button
                     onClick={handleNewProject}
                     style={{

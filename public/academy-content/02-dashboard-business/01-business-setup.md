@@ -4,10 +4,9 @@ The Dashboard is where your journey truly begins. From here, you can see all you
 
 ## 1. Understanding Workspace Limits
 A "Workspace" in Traxxia represents a single Business Entity. The number of workspaces you can maintain is governed by your plan:
--   **Essential**: Hard cap of **1 Workspace**.
--   **Advanced**: Hard cap of **3 Workspaces**.
+-   **Workspace Limits**: These are set by your selected plan.
 
-> [!NOTE] These limits are enforced at the backend level. Attempting to add a second business in Essential or a fourth in Advanced will trigger an upgrade or contact-sales prompt.
+> [!NOTE] These limits are enforced at the backend level. Attempting to exceed your workspace limit will trigger an upgrade or contact-sales prompt.
 
 ## 2. Anti-Abuse & Workspace Integrity
 To maintain the integrity of our workspace management system, Traxxia implements specific safety rules:

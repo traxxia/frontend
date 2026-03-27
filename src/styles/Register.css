@@ -805,19 +805,49 @@
   min-height: unset !important;
 }
 
-.compact-success-modal .modal-content-data {
-  border-radius: 12px;
-  border: none;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
-  background: #ffffff;
+.compact-success-modal .modal-content {
+  border-radius: 12px !important;
+  border: none !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15) !important;
+  background: #ffffff !important;
   height: auto !important;
   min-height: unset !important;
-  width: auto !important;
+  width: 100% !important;
+  margin: 0 !important;
+  overflow: hidden !important;
 }
 
 .compact-success-modal .modal-body {
-  padding: 1.5rem 2rem;
-  /* Comfortable padding but not excessive */
-  display: block;
-  text-align: center;
+  padding: 1rem 1.25rem !important;
+  display: block !important;
+  text-align: center !important;
+  margin: 0 !important;
+}
+
+.compact-success-modal .registration-icon-container {
+  margin-bottom: 0.5rem !important;
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+}
+
+.compact-success-modal .registration-status-title {
+  margin-bottom: 0.25rem !important;
+  font-size: 1.1rem !important;
+  font-weight: 600 !important;
+}
+
+.registration-success-message {
+  font-weight: 500 !important;
+  font-size: 0.95rem !important;
+  line-height: 1.4 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* Ensure no footer extra space if it exists */
+.compact-success-modal .modal-footer {
+  padding: 0.75rem !important;
+  margin-top: 0 !important;
+  border-top: 1px solid var(--color-border-light) !important;
 }

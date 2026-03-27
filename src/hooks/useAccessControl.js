@@ -1,5 +1,6 @@
 import { useState, useCallback } from "react";
 import axios from "axios";
+import { getUserLimits } from '../utils/authUtils';
 
 export const useAccessControl = (selectedBusinessId) => {
   const [userHasRerankAccess, setUserHasRerankAccess] = useState(false);
@@ -76,20 +77,22 @@ export const useAccessControl = (selectedBusinessId) => {
   const canEditProject = useCallback(
     (project, isEditor, myUserId, businessStatus, isArchived) => {
       // PROMPT: Essential users cannot edit projects (Downgrade Protocol)
-      const userPlan = sessionStorage.getItem("userPlan");
-      if (userPlan === 'essential' || isArchived) return false;
+      if (!getUserLimits().project || isArchived) return false;
 
       if (!project) return false;
 
-      // Explicit check: if project is active or launched, only allow if backend says true (which is only for admins)
-      const isProjectLaunched = project.launch_status?.toLowerCase() === 'launched' || project.status?.toLowerCase() === 'launched';
+      const isProjectLaunched = 
+        project.launch_status?.toLowerCase() === 'launched' || 
+        project.launch_status?.toLowerCase() === 'pending_launch' || 
+        project.status?.toLowerCase() === 'launched';
       const isProjectActive = project.status?.toLowerCase() === 'active';
 
-      if (isProjectActive || isProjectLaunched) {
-         return userHasProjectEditAccess[project._id] === true;
+      // For launched projects, check if user has been granted access (admins always have true from backend)
+      if (businessStatus === "launched" || isProjectLaunched || isProjectActive) {
+        return userHasProjectEditAccess[project._id] === true;
       }
 
-      // Admins and Collaborators can always edit if project is Draft or business is not launched
+      // Admins, Collaborators, and Users can edit if project is Draft or business is not launched
       const isProjectDraft = !project.status || project.status.toLowerCase() === 'draft';
       if (isEditor && (businessStatus !== "launched" || isProjectDraft)) return true;
 
@@ -104,10 +107,6 @@ export const useAccessControl = (selectedBusinessId) => {
           return true;
         }
       }
-      // For launched projects, check if user has been granted access
-      if (businessStatus === "launched") {
-        return userHasProjectEditAccess[project._id] === true;
-      }
 
       return false;
     },
@@ -115,8 +114,7 @@ export const useAccessControl = (selectedBusinessId) => {
   );
 
   const isReadOnlyMode = useCallback((isArchived) => {
-    const userPlan = sessionStorage.getItem("userPlan");
-    return userPlan === 'essential' || isArchived;
+    return !getUserLimits().project || isArchived;
   }, []);
 
   const checkAllAccess = useCallback(async () => {

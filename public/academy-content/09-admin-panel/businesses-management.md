@@ -13,7 +13,7 @@ The Businesses table displays:
 - Collaborators
 - Created Date
 
-![Businesses Overview](/academy-screenshots/admin-panel/businesses.png)
+![Businesses Overview](/academy-screenshots/admin-panel/businesses1.png)
  
 
 ## Monitoring Business Activity

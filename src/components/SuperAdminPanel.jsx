@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { useLocation } from "react-router-dom";
+import { createPortal } from "react-dom";
+import { useLocation, useSearchParams, useNavigate } from "react-router-dom";
 import {
   Building2,
   Users,
@@ -17,6 +18,8 @@ import {
   CircleUserRound,
   Key,
   CreditCard,
+  ClipboardList,
+  MessageSquareText,
 } from "lucide-react";
 import CompanyManagement from "./CompanyManagement";
 import QuestionManagement from "./QuestionManagement";
@@ -27,13 +30,20 @@ import Usermanagement from "./Usermanagement";
 import AccessManagement from "./AccessManagement";
 import BusinessOverview from "./BusinessOverview";
 import SubscriptionTab from "./SubscriptionTab";
+import AcademyFeedbackAdmin from "./AcademyFeedbackAdmin";
+import PlanManagement from "./PlanManagement";
 import { useTranslation } from "../hooks/useTranslation";
 import "../styles/superadmin.css";
 
 const SuperAdminPanel = () => {
   const { t } = useTranslation();
   const location = useLocation();
-  const [activeTab, setActiveTab] = useState("companies");
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+
+  // Derive activeTab from URL 'tab' parameter, default to "companies"
+  const activeTab = searchParams.get('tab') || "companies";
+
   const [showToast, setShowToast] = useState({
     show: false,
     message: "",
@@ -46,14 +56,14 @@ const SuperAdminPanel = () => {
     setUserRole(userRoleStored || "");
   }, []);
 
-  // Check for tab query parameter on mount
+  const isSuperAdmin = userRole === "super_admin";
+
+  // Status check for questions tab
   useEffect(() => {
-    const params = new URLSearchParams(location.search);
-    const tabParam = params.get('tab');
-    if (tabParam) {
-      setActiveTab(tabParam);
+    if (activeTab === "questions" && !isSuperAdmin) {
+      navigate("?tab=companies", { replace: true });
     }
-  }, [location.search]);
+  }, [activeTab, isSuperAdmin, navigate]);
 
   const showToastMessage = (message, type = "success") => {
     setShowToast({ show: true, message, type });
@@ -65,8 +75,6 @@ const SuperAdminPanel = () => {
   const handleBack = () => {
     window.history.back();
   };
-
-  const isSuperAdmin = userRole === "super_admin";
 
   const allTabs = [
     { id: "companies", label: isSuperAdmin ? t('companies') : t('company'), icon: Building2 },
@@ -88,10 +96,22 @@ const SuperAdminPanel = () => {
       superAdminOnly: true,
     },
     {
+      id: "academy_feedback",
+      label: "Academy Feedback",
+      icon: MessageSquareText,
+      superAdminOnly: true,
+    },
+    {
       id: "subscription",
       label: t('subscription') || "Subscription",
       icon: CreditCard,
       superAdminHidden: true  // Hide for super admin
+    },
+    {
+      id: "plans",
+      label: t('Plan management') || "Plan Management",
+      icon: ClipboardList,
+      superAdminOnly: true,
     }
   ];
 
@@ -130,6 +150,10 @@ const SuperAdminPanel = () => {
         return <BusinessOverview onToast={showToastMessage} />;
       case "subscription":
         return <SubscriptionTab onToast={showToastMessage} />;
+      case "academy_feedback":
+        return <AcademyFeedbackAdmin onToast={showToastMessage} />;
+      case "plans":
+        return <PlanManagement onToast={showToastMessage} />;
       default:
         return <CompanyManagement onToast={showToastMessage} />;
     }
@@ -138,11 +162,7 @@ const SuperAdminPanel = () => {
   const panelTitle = isSuperAdmin ? t("super_admin_panel") : t("Admin_Panel");
   const HeaderIcon = isSuperAdmin ? Shield : Settings;
 
-  useEffect(() => {
-    if (activeTab === "questions" && !isSuperAdmin) {
-      setActiveTab("companies");
-    }
-  }, [activeTab, isSuperAdmin]);
+
 
   return (
     <div className="super-admin-container">
@@ -184,7 +204,7 @@ const SuperAdminPanel = () => {
             <button
               key={tab.id}
               className={`nav-tab ${activeTab === tab.id ? "active" : ""}`}
-              onClick={() => setActiveTab(tab.id)}
+              onClick={() => navigate(`?tab=${tab.id}`, { replace: true })}
             >
               <IconComponent size={20} />
               <span>{tab.label}</span>

@@ -91,12 +91,22 @@ const UserManagement = ({ onToast }) => {
 
   axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
   const currentRole = sessionStorage.getItem("userRole");
+  const isAdmin = ["super_admin", "company_admin"].includes(currentRole?.toLowerCase());
   const userPlan = sessionStorage.getItem("userPlan");
   const isSuperAdmin = currentRole === "super_admin";
-  const hasPlan = userPlan === 'essential' || userPlan === 'advanced';
   const [companies, setCompanies] = useState([]);
   const [selectedCompanyId, setSelectedCompanyId] = useState("");
   const [isLoading, setIsLoading] = useState(true);
+  const [usage, setUsage] = useState(null);
+
+  const fetchPlanDetails = async () => {
+    try {
+      const res = await axios.get(`${BACKEND_URL}/api/subscription/plan-details`);
+      setUsage(res.data.usage);
+    } catch (err) {
+      console.error("Failed to fetch plan details", err);
+    }
+  };
 
   const handleOpenModal = () => {
     setNewName("");
@@ -181,6 +191,26 @@ const UserManagement = ({ onToast }) => {
   const handleAddUser = async (e) => {
     e.preventDefault();
     if (!validateForm()) return;
+
+    // Dynamic Limit Check
+    if (usage) {
+      const roleKey = newRole.toLowerCase() === 'collaborator' ? 'collaborators' :
+        (newRole.toLowerCase() === 'viewer' ? 'viewers' : 'users');
+
+      const current = usage[roleKey]?.current || 0;
+      const limit = usage[roleKey]?.limit || 0;
+
+      if (current >= limit) {
+        setPlanLimitConfig({
+          title: t("plan_limit_reached") || "Plan Limit Reached",
+          message: `${t("Upgrade to add more")} ${t(newRole)}s`,
+          subMessage: `${t("Your plan allows for")} ${limit} ${t(newRole)}${limit !== 1 ? 's' : ''}. ${t("Please upgrade to add more.")}`
+        });
+        setShowPlanLimitModal(true);
+        return;
+      }
+    }
+
     setIsSubmitting(true);
     const payload = {
       name: newName.trim(),
@@ -193,12 +223,11 @@ const UserManagement = ({ onToast }) => {
       await axios.post(`${BACKEND_URL}/api/admin/users`, payload);
       onToast(t("User_added_successfully"), "success");
       await fetchUsers();
+      await fetchPlanDetails(); // Refresh usage after adding user
       handleCloseModal();
     } catch (error) {
       const message = error.response?.data?.message || error.response?.data?.error || t("Failed_to_add_user");
       setErrors(prev => ({ ...prev, apiError: message }));
-      // Optional: still show toast as backup, or remove it as requested
-      // onToast(message, "error");
     } finally {
       setIsSubmitting(false);
     }
@@ -219,15 +248,30 @@ const UserManagement = ({ onToast }) => {
   }, [isSuperAdmin]);
 
   const handleRoleUpdate = async (userId, role) => {
-    const userPlan = sessionStorage.getItem("userPlan");
-    if (userPlan === 'essential' && role.toLowerCase() === 'collaborator') {
-      onToast(t("Your_plan_doesnt_support_collaborators"), "error");
-      return;
+    // Dynamic Limit Check for role update
+    if (usage) {
+      const roleKey = role.toLowerCase() === 'collaborator' ? 'collaborators' :
+        (role.toLowerCase() === 'viewer' ? 'viewers' : 'users');
+
+      const current = usage[roleKey]?.current || 0;
+      const limit = usage[roleKey]?.limit || 0;
+
+      if (current >= limit) {
+        setPlanLimitConfig({
+          title: t("plan_limit_reached") || "Plan Limit Reached",
+          message: `${t("Upgrade to add more")} ${t(role)}s`,
+          subMessage: `${t("Your plan allows for")} ${limit} ${t(role)}${limit !== 1 ? 's' : ''}. ${t("Please upgrade to add more.")}`
+        });
+        setShowPlanLimitModal(true);
+        return;
+      }
     }
+
     try {
       await axios.put(`${BACKEND_URL}/api/admin/users/${userId}/role`, { role });
       onToast(t("User_role_updated_successfully"), "success");
       fetchUsers();
+      fetchPlanDetails();
     } catch (error) {
       console.error(error);
       onToast(error.response?.data?.error || t("Failed_to_update_role"), "error");
@@ -254,9 +298,6 @@ const UserManagement = ({ onToast }) => {
   const handleGiveProjectAccess = async () => {
     setIsGrantingAccess(true);
     try {
-      if (accessType === "projectEdit") {
-        await axios.put(`${BACKEND_URL}/api/projects/edit-access`, { scope: "projectEdit", business_id: accessBusinessId, project_id: selectedProjectId });
-      }
       if (accessType === "reRanking") {
         await axios.put(`${BACKEND_URL}/api/projects/edit-access`, { scope: "reRanking", business_id: accessBusinessId });
       }
@@ -282,19 +323,24 @@ const UserManagement = ({ onToast }) => {
   const handleAssign = async (e) => {
     e.preventDefault();
     const newErrors = {};
-    if (!assignUserId) newErrors.collaborator = t("select_collaborator_required");
+    if (!assignUserId) newErrors.collaborator = t("select_user_required");
     if (!assignBusinessId) newErrors.business = t("select_business_required");
     if (Object.keys(newErrors).length > 0) {
       setAssignErrors(newErrors);
       return;
     }
+
+    // Assigning usually means they are already a user/collaborator.
+    // The total seat limit is checked when adding a user or changing their role.
+
     try {
       await axios.post(`${BACKEND_URL}/api/businesses/${assignBusinessId}/collaborators`, { user_id: assignUserId });
-      onToast(t("Collaborator_assigned_successfully"), "success");
+      onToast(t("User_assigned_successfully"), "success");
       handleCloseAssignModal();
+      fetchPlanDetails();
     } catch (error) {
       console.error(error);
-      onToast(error.response?.data?.message || t("Failed_to_assign_collaborator"), "error");
+      onToast(error.response?.data?.message || error.response?.data?.error || t("Failed_to_assign_user"), "error");
     }
   };
 
@@ -310,6 +356,7 @@ const UserManagement = ({ onToast }) => {
   useEffect(() => {
     fetchUsers();
     fetchBusinesses();
+    fetchPlanDetails();
   }, []);
 
   const fetchUsers = async () => {
@@ -328,7 +375,9 @@ const UserManagement = ({ onToast }) => {
   const fetchBusinesses = async () => {
     try {
       const res = await axios.get(`${BACKEND_URL}/api/businesses`);
-      const data = Array.isArray(res.data) ? res.data : res.data.businesses || [];
+      const data = Array.isArray(res.data) 
+        ? res.data 
+        : [...(res.data.businesses || []), ...(res.data.collaborating_businesses || [])];
       setAllBusinesses(data);
     } catch (error) {
       console.error("Failed to fetch businesses", error);
@@ -348,13 +397,16 @@ const UserManagement = ({ onToast }) => {
     setCurrentPage(1);
   };
 
+  // Filtered users for the table
   const filteredUsers = users.filter((user) => {
     const search = searchTerm.toLowerCase();
-
     const matchSearch =
       user.name?.toLowerCase().includes(search) ||
       user.email?.toLowerCase().includes(search) ||
-      user.company_name?.toLowerCase().includes(search);
+      user.company_name?.toLowerCase().includes(search) ||
+      formatRole(user.role_name || user.role).toLowerCase().includes(search) ||
+      user.status?.toLowerCase().includes(search) ||
+      user.access_mode?.toLowerCase().includes(search);
 
     const uiRole = formatRole(user.role_name || user.role);
     const matchRole = selectedRole === "All Roles" || uiRole === selectedRole;
@@ -387,20 +439,16 @@ const UserManagement = ({ onToast }) => {
   const loadLaunchedBusinessAndProjects = async () => {
     try {
       setLoadingProjects(true);
-      const projectRes = await axios.get(`${BACKEND_URL}/api/projects`, { params: { launch_status: "launched" } });
-      const launchedProjects = projectRes.data.projects || [];
       const businessRes = await axios.get(`${BACKEND_URL}/api/businesses`);
-      const allBiz = businessRes.data.businesses || businessRes.data || [];
-      const map = {};
-      launchedProjects.forEach((p) => {
-        const bId = p.business_id?.toString();
-        if (!bId) return;
-        if (!map[bId]) map[bId] = [];
-        map[bId].push(p);
-      });
-      const validBusinesses = allBiz.filter((b) => map[b._id.toString()]);
+      const allBiz = Array.isArray(businessRes.data) 
+        ? businessRes.data 
+        : [...(businessRes.data.businesses || []), ...(businessRes.data.collaborating_businesses || [])];
+      
+      const validBusinesses = allBiz.filter((b) => 
+        (b.status || "").toLowerCase() === 'launched' || b.has_launched_projects === true
+      );
+      
       setLaunchedBusinesses(validBusinesses);
-      setLaunchedProjectMap(map);
       setAccessBusinessId("");
       setProjects([]);
       setSelectedProjectId("");
@@ -413,9 +461,43 @@ const UserManagement = ({ onToast }) => {
     }
   };
 
+  const fetchProjectsByBusiness = async (businessId) => {
+    if (!businessId) {
+      setProjects([]);
+      return;
+    }
+    try {
+      setLoadingProjects(true);
+      const res = await axios.get(`${BACKEND_URL}/api/projects`, { params: { business_id: businessId } });
+      const allProjects = res.data.projects || [];
+      
+      const biz = launchedBusinesses.find(b => b._id === businessId);
+      const isBizLaunched = (biz?.status || "").toLowerCase() === 'launched';
+      
+      const filtered = allProjects.filter(p => {
+        const lp = (p.launch_status || "").toLowerCase();
+        const s = (p.status || "").toLowerCase();
+        return lp === 'launched' || lp === 'pending_launch' || (isBizLaunched && s === 'active');
+      });
+      
+      setProjects(filtered);
+    } catch (err) {
+      console.error("Failed to fetch projects", err);
+      setProjects([]);
+    } finally {
+      setLoadingProjects(false);
+    }
+  };
+
   useEffect(() => {
-    setProjects(launchedProjectMap[accessBusinessId] || []);
-  }, [accessBusinessId, launchedProjectMap]);
+    if (accessBusinessId) {
+      fetchCollaboratorsByBusiness(accessBusinessId);
+      fetchProjectsByBusiness(accessBusinessId);
+    } else {
+      setCollaborators([]);
+      setProjects([]);
+    }
+  }, [accessBusinessId]);
 
   const fetchCollaboratorsByBusiness = async (businessId) => {
     if (!businessId) return;
@@ -431,9 +513,6 @@ const UserManagement = ({ onToast }) => {
     }
   };
 
-  useEffect(() => {
-    if (accessBusinessId) fetchCollaboratorsByBusiness(accessBusinessId);
-  }, [accessBusinessId]);
 
   const getSelectedCollaboratorNames = () => collaborators.filter(c => selectedCollaboratorIds.includes(c._id)).map(c => c.name);
   const getSelectedProjectName = () => projects.find(p => p._id === selectedProjectId)?.project_name || "";
@@ -443,9 +522,11 @@ const UserManagement = ({ onToast }) => {
   };
 
   // Metrics calculation
-  const orgAdminsCount = users.filter(u => formatRole(u.role_name || u.role) === "Org Admin").length;
-  const collaboratorsCount = users.filter(u => formatRole(u.role_name || u.role) === "Collaborator").length;
-  const viewersCount = users.filter(u => formatRole(u.role_name || u.role) === "Viewer").length;
+  const activeUsers = users.filter(u => u.status !== 'inactive' && u.status !== 'deleted' && u.access_mode !== 'archived');
+  const orgAdminsCount = activeUsers.filter(u => formatRole(u.role_name || u.role) === "Org Admin").length;
+  const collaboratorsCount = activeUsers.filter(u => formatRole(u.role_name || u.role) === "Collaborator").length;
+  const viewersCount = activeUsers.filter(u => formatRole(u.role_name || u.role) === "Viewer").length;
+  const usersCount = activeUsers.filter(u => formatRole(u.role_name || u.role) === "User").length;
 
   const columns = [
     {
@@ -478,12 +559,42 @@ const UserManagement = ({ onToast }) => {
       label: t("joined"),
       render: (val) => <span className="admin-cell-secondary">{formatDate(val)}</span>
     },
-    ...((!hasPlan || isSuperAdmin) ? [{
+    {
+      key: "status",
+      label: t("Status"),
+      render: (_, row) => {
+        const isArchived = row.status === 'inactive' || row.status === 'deleted' || row.access_mode === 'archived';
+        const label = isArchived ? t('archived') : t('active');
+        let statusColor = "#16a34a";
+        let statusBg = "#dcfce7";
+        if (isArchived) {
+          statusColor = "#ecaa1cff";
+          statusBg = "#FCF9C3";
+        }
+        return (
+          <span style={{
+            padding: "4px 8px",
+            borderRadius: "12px",
+            fontSize: "12px",
+            fontWeight: 500,
+            color: statusColor,
+            backgroundColor: statusBg,
+            display: "inline-block"
+          }}>
+            {label}
+          </span>
+        );
+      }
+    },
+    ...(currentRole === "company_admin" ? [{
       key: "actions",
       label: t("Action"),
       render: (_, row) => {
-        const statusValue = row.access_mode === 'archived' ? 'Archived' : (row.status === 'inactive' ? 'Inactive' : 'Active');
-        const disabled = statusValue === "Archived" || statusValue === "Inactive";
+        const roleName = (row.role_name || row.role)?.toLowerCase();
+        if (roleName === "company_admin" || roleName === "super_admin") return null;
+
+        const isArchived = row.status === 'inactive' || row.status === 'deleted' || row.access_mode === 'archived';
+        const disabled = isArchived;
         return (
           <>
             <Dropdown>
@@ -516,12 +627,6 @@ const UserManagement = ({ onToast }) => {
     <div>
       {/* ---- Metric Cards ---- */}
       <div className="admin-metrics-grid">
-        <MetricCard
-          label={t("Total_Users")}
-          value={users.length}
-          icon={Users}
-          iconColor="blue"
-        />
         {currentRole !== "company_admin" && (
           <MetricCard
             label={t("org_admins")}
@@ -537,6 +642,12 @@ const UserManagement = ({ onToast }) => {
           iconColor="green"
         />
         <MetricCard
+          label={t("Users")}
+          value={usersCount}
+          icon={ShieldCheck}
+          iconColor="cyan"
+        />
+        <MetricCard
           label={t("Viewers")}
           value={viewersCount}
           icon={User}
@@ -550,19 +661,19 @@ const UserManagement = ({ onToast }) => {
           {!isSuperAdmin && (
             <>
               <Button className="admin-primary-btn" onClick={() => {
-                if (userPlan === "essential") {
+                // If usage has loaded, we check if they can add ANY role.
+                // If they have 0 limit for ALL roles (which shouldn't happen), then show modal.
+                // Otherwise, let them open the modal and check specifically on submit.
+                if (usage &&
+                  usage.users.current >= usage.users.limit &&
+                  usage.collaborators.current >= usage.collaborators.limit &&
+                  usage.viewers.current >= usage.viewers.limit) {
                   setPlanLimitConfig({
-                    title: t("plan_limit_reached") || "Plan Limit Reached",
-                    message: t("upgrade_to_add_users") || "Upgrade to Add Users",
-                    subMessage: t("essential_plan_add_user_msg") || "The Essential plan does not support adding users. Please upgrade your plan to add users."
+                    title: t("plan_limit_reached"),
+                    message: t("upgrade_to_add_users"),
+                    subMessage: t("plan_user_limit_reached", { plan: usage.plan })
                   });
                   setShowPlanLimitModal(true);
-                } else if (userPlan === "advanced" && collaboratorsCount >= 3) {
-                  setErrorModalConfig({
-                    title: t("Alert") || "Alert",
-                    message: t("exhausted_plan_collaborators_msg") || "You have exhausted the plan by adding three collaborators"
-                  });
-                  setShowErrorModal(true);
                 } else {
                   handleOpenModal();
                 }
@@ -570,18 +681,9 @@ const UserManagement = ({ onToast }) => {
                 <Plus size={16} /> {t("Add_User")}
               </Button>
               <Button className="admin-secondary-btn" onClick={() => {
-                if (userPlan === 'essential') {
-                  setPlanLimitConfig({
-                    title: t("plan_limit_reached") || "Plan Limit Reached",
-                    message: t("upgrade_to_assign_collaborators") || "Upgrade to Assign Collaborators",
-                    subMessage: t("essential_plan_assign_collab_msg") || "The Essential plan does not support assigning collaborators. Please upgrade your plan to assign collaborators."
-                  });
-                  setShowPlanLimitModal(true);
-                } else {
-                  handleOpenAssignModal();
-                }
+                handleOpenAssignModal();
               }}>
-                <UserCog size={16} /> {t("Assign_Collaborator")}
+                <UserCog size={16} /> {t("Assign_Business_Access")}
               </Button>
               <Button className="admin-secondary-btn" onClick={() => { loadLaunchedBusinessAndProjects(); setShowGiveAccessModal(true); }}>
                 <ShieldCheck size={16} /> {t("Project_Access")}
@@ -593,8 +695,8 @@ const UserManagement = ({ onToast }) => {
 
       <AdminTable
         title={t("User_Management")}
-        count={filteredUsers.length}
-        countLabel={filteredUsers.length === 1 ? t("User") : t("Users")}
+        count={activeUsers.length}
+        countLabel={activeUsers.length === 1 ? t("User") : t("Users")}
         columns={columns}
         data={paginatedUsers}
         searchTerm={searchTerm}
@@ -745,12 +847,8 @@ const UserManagement = ({ onToast }) => {
                   >
                     <option value="">{t("Select_Role")}</option>
                     <option value="collaborator">{t("Collaborator")}</option>
-                    {!hasPlan && (
-                      <>
-                        <option value="user">{t("User")}</option>
-                        <option value="viewer">{t("Viewer")}</option>
-                      </>
-                    )}
+                    <option value="user">{t("User")}</option>
+                    <option value="viewer">{t("Viewer")}</option>
                   </Form.Select>
                   <Form.Control.Feedback type="invalid">{errors.role}</Form.Control.Feedback>
                 </Col>
@@ -796,10 +894,30 @@ const UserManagement = ({ onToast }) => {
 
       {/* --- Modals for Assign, Access, Confirm --- */}
       <Modal show={showAssignModal} onHide={handleCloseAssignModal} centered>
-        <Modal.Header closeButton><Modal.Title>{t("Assign_Collaborator")}</Modal.Title></Modal.Header>
+        <Modal.Header closeButton><Modal.Title>{t("Assign_Business_Access")}</Modal.Title></Modal.Header>
         <Modal.Body>
           <Form onSubmit={handleAssign} noValidate>
-            <Form.Group className="mb-3"><Form.Label>{t("Collaborator")}</Form.Label><Form.Select value={assignUserId} onChange={(e) => setAssignUserId(e.target.value)} isInvalid={!!assignErrors.collaborator}><option value="">{t("Select_collaborator")}</option>{users.filter(u => formatRole(u.role_name) === "Collaborator").map(u => <option key={u._id} value={u._id}>{u.name}</option>)}</Form.Select><Form.Control.Feedback type="invalid">{assignErrors.collaborator}</Form.Control.Feedback></Form.Group>
+             <Form.Group className="mb-3">
+               <Form.Label>{t("User")}</Form.Label>
+               <Form.Select
+                 value={assignUserId}
+                 onChange={(e) => setAssignUserId(e.target.value)}
+                 isInvalid={!!assignErrors.collaborator}
+               >
+                 <option value="">{t("Select_user")}</option>
+                 {users
+                   .filter(u => {
+                     const isArchivedOrDeleted = u.status === 'inactive' || u.status === 'deleted' || u.access_mode === 'archived';
+                     const roleName = formatRole(u.role_name || u.role);
+                     return !isArchivedOrDeleted && ["Collaborator", "User", "Viewer"].includes(roleName);
+                   })
+                   .map(u => (
+                     <option key={u._id} value={u._id}>{u.name}</option>
+                   ))
+                 }
+               </Form.Select>
+               <Form.Control.Feedback type="invalid">{assignErrors.collaborator}</Form.Control.Feedback>
+             </Form.Group>
             <Form.Group className="mb-3"><Form.Label>{t("business")}</Form.Label><Form.Select value={assignBusinessId} onChange={(e) => setAssignBusinessId(e.target.value)} isInvalid={!!assignErrors.business}><option value="">{t("Select_Business")}</option>{allBusinesses.map(b => <option key={b._id} value={b._id}>{b.business_name || b.name}</option>)}</Form.Select><Form.Control.Feedback type="invalid">{assignErrors.business}</Form.Control.Feedback></Form.Group>
             <div className="d-flex justify-content-end"><Button variant="secondary" className="me-2" onClick={handleCloseAssignModal}>{t("cancel")}</Button><Button variant="primary" type="submit">{t("save")}</Button></div>
           </Form>
@@ -831,9 +949,12 @@ const UserManagement = ({ onToast }) => {
       <PlanLimitModal
         show={showPlanLimitModal}
         onHide={() => setShowPlanLimitModal(false)}
+        onAction={handleCloseModal}
         title={planLimitConfig.title}
         message={planLimitConfig.message}
         subMessage={planLimitConfig.subMessage}
+        plan={usage?.plan}
+        isAdmin={isAdmin}
       />
       <ErrorModal
         show={showErrorModal}

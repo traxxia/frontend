@@ -7,6 +7,7 @@ import { AnalysisApiService } from "../services/analysisApiService";
 import { useTranslation } from "../hooks/useTranslation";
 import PlanLimitModal from "./PlanLimitModal";
 import "../styles/PrioritiesProjects.css";
+import { getUserLimits } from "../utils/authUtils";
 
 const PrioritiesProjects = ({ selectedBusinessId, companyAdminIds, onSuccess, onToastMessage, onStartOnboarding }) => {
   const { t } = useTranslation();
@@ -17,13 +18,14 @@ const PrioritiesProjects = ({ selectedBusinessId, companyAdminIds, onSuccess, on
   const [kickstarting, setKickstarting] = useState(false);
   const [showPlanLimitModal, setShowPlanLimitModal] = useState(false);
   const navigate = useNavigate();
-  const userPlan = sessionStorage.getItem("userPlan")?.toLowerCase() || "essential";
   const userRole = (
     sessionStorage.getItem("role") ||
     sessionStorage.getItem("userRole") ||
     ""
   ).toLowerCase();
   const isAdmin = userRole === "company_admin" || userRole === "super_admin";
+  const isViewer = userRole === "viewer";
+  const hasProjectsAccess = getUserLimits().project === true;
 
   // API Service setup
   const ML_API_BASE_URL = process.env.REACT_APP_ML_BACKEND_URL;
@@ -65,7 +67,7 @@ const PrioritiesProjects = ({ selectedBusinessId, companyAdminIds, onSuccess, on
   const handleKickstart = async () => {
     if (selected.length === 0) return;
 
-    if (userPlan === 'essential') {
+    if (!hasProjectsAccess) {
       setShowPlanLimitModal(true);
       return;
     }
@@ -125,7 +127,7 @@ const PrioritiesProjects = ({ selectedBusinessId, companyAdminIds, onSuccess, on
         <div className="container" style={{ maxWidth: '600px' }}>
           <h3 className="fw-bold mb-3">{t("noInsightsAvailable") || "No results available yet."}</h3>
           <p className="text-muted mb-4">{t("completeOnboardingPrompt") || "Please complete the PMF Onboarding to see results here."}</p>
-          {onStartOnboarding && (
+          {onStartOnboarding && !isViewer && (
             <button
               className="btn btn-primary rounded-pill px-5 py-2 fw-semibold"
               onClick={onStartOnboarding}
@@ -141,7 +143,7 @@ const PrioritiesProjects = ({ selectedBusinessId, companyAdminIds, onSuccess, on
   return (
     <div className="container my-4 priorities-container">
 
-      {isAdmin && (
+      {isAdmin && hasProjectsAccess && (
         <Card className="kickstart-card mb-4">
           <Card.Body className="d-flex justify-content-between align-items-center">
             <div>
@@ -153,13 +155,13 @@ const PrioritiesProjects = ({ selectedBusinessId, companyAdminIds, onSuccess, on
               </small>
             </div>
             <Button
-              className={`kickstart-button d-flex align-items-center gap-2 ${userPlan === 'essential' ? 'upgrade-needed' : ''}`}
-              variant={userPlan === 'essential' ? "warning" : "success"}
-              disabled={(selected.length === 0 && userPlan !== 'essential') || kickstarting}
+              className={`kickstart-button d-flex align-items-center gap-2 ${!hasProjectsAccess ? 'upgrade-needed' : ''}`}
+              variant={!hasProjectsAccess ? "warning" : "success"}
+              disabled={(selected.length === 0 && hasProjectsAccess) || kickstarting}
               onClick={handleKickstart}
             >
-              {kickstarting ? <Spinner size="sm" /> : <span>{userPlan === 'essential' ? "⭐" : "🚀"}</span>}
-              <span>{userPlan === 'essential' ? t("Upgrade to Kickstart") : t("Kickstart_Projects")}</span>
+              {kickstarting ? <Spinner size="sm" /> : <span>{!hasProjectsAccess ? "⭐" : "🚀"}</span>}
+              <span>{!hasProjectsAccess ? t("Upgrade to Kickstart") : t("Kickstart_Projects")}</span>
             </Button>
           </Card.Body>
         </Card>
@@ -169,7 +171,7 @@ const PrioritiesProjects = ({ selectedBusinessId, companyAdminIds, onSuccess, on
         show={showPlanLimitModal}
         onHide={() => setShowPlanLimitModal(false)}
         title={t("upgrade_required") || "Upgrade Required"}
-        message={t("kickstart_limit_msg") || "Project kickstarting is only available on Advanced plans."}
+        message={t("kickstart_limit_msg") || "Project kickstarting is only available on upgraded plans."}
         subMessage={t("upgrade_to_execute") || "Upgrade to Advanced to execute your strategy with AI-powered kickstart."}
       />
 
@@ -185,7 +187,7 @@ const PrioritiesProjects = ({ selectedBusinessId, companyAdminIds, onSuccess, on
   {/* TOP SECTION */}
   <div className="priority-top">
 
-    {isAdmin && (
+    {isAdmin && hasProjectsAccess && (
       <Form.Check
   type="checkbox"
   disabled={isAlreadyKickstarted || kickstarting}

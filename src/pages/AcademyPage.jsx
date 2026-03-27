@@ -383,7 +383,7 @@ const AcademyPage = () => {
 
                             <MarkdownRenderer content={content} articleId={article} />
 
-                            {/* <AcademyFeedback articleId={article} /> */}
+                            <AcademyFeedback articleId={currentArticle?.title || article} />
 
                             {/* Bottom Pagination */}
                             {(prevArticle || nextArticle) && (
