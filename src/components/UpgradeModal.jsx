@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Modal, Button, Row, Col, Spinner, Alert, Form } from 'react-bootstrap';
-import { ArrowRight, Zap, CreditCard, Check } from 'lucide-react';
+import { ArrowRight, Zap, CreditCard, Check, AlertTriangle } from 'lucide-react';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements, useStripe, useElements, CardNumberElement } from '@stripe/react-stripe-js';
 import PricingPlanCard from './PricingPlanCard';
@@ -35,6 +35,17 @@ const UpgradeModalContent = ({
     const [selectedMethodId, setSelectedMethodId] = useState('new');
     const [localError, setLocalError] = useState(null);
     const [cardHolderName, setCardHolderName] = useState('');
+    const scrollAnchorRef = useRef(null);
+
+    // Auto-scroll to bottom when an error appears
+    useEffect(() => {
+        if ((error || localError) && scrollAnchorRef.current) {
+            // Delay slightly to allow the element to render and animate
+            setTimeout(() => {
+                scrollAnchorRef.current.scrollIntoView({ behavior: 'smooth', block: 'end' });
+            }, 100);
+        }
+    }, [error, localError]);
 
     useEffect(() => {
         if (defaultPaymentMethodId) {
@@ -108,7 +119,6 @@ const UpgradeModalContent = ({
                     </div>
                 ) : (
                     <>
-                        {error && <Alert variant="danger">{error}</Alert>}
 
                         {selectedPlan && subscription?.plan && selectedPlan.price < (subscription.plan_price || 0) && (
                             <Alert variant="warning" className="mb-3 border-0 shadow-sm">
@@ -223,6 +233,15 @@ const UpgradeModalContent = ({
                                 }}
                             />
                         </div>
+
+                        {error && (
+                            <Alert variant="danger" className="mt-3 animate-fade-in shadow-sm border-0 d-flex align-items-center">
+                                <AlertTriangle size={18} className="me-2 flex-shrink-0" />
+                                {error}
+                            </Alert>
+                        )}
+
+                        <div ref={scrollAnchorRef} />
                     </>
                 )}
             </Modal.Body>
