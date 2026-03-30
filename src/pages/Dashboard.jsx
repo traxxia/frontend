@@ -723,8 +723,8 @@ if (description) {
     if (businessId) {
       sessionStorage.setItem('activeBusinessId', businessId);
     }
-    // Navigate directly to business page with AHA tab active
-    navigate('/businesspage', { state: { business, initialTab: 'aha' } });
+    // Navigate directly to business page with Executive Summary tab active
+    navigate('/businesspage', { state: { business, initialTab: 'executive' } });
   };
 
   const handleCloseModal = () => {

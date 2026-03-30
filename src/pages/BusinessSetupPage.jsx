@@ -1,6 +1,22 @@
 import React, { useEffect, useRef, useState } from "react";
 import axios from "axios";
-import { ArrowLeft, Loader, RefreshCw, ChevronDown, AlertTriangle, Menu, X } from "lucide-react";
+import { 
+  ArrowLeft, 
+  Loader, 
+  RefreshCw, 
+  ChevronDown, 
+  AlertTriangle, 
+  Menu, 
+  X,
+  LayoutDashboard,
+  HelpCircle,
+  TrendingUp,
+  Target,
+  ListTodo,
+  Briefcase,
+  Layers,
+  MessageSquare
+} from "lucide-react";
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from "../hooks/useTranslation";
 
@@ -201,10 +217,23 @@ const BusinessSetupPage = () => {
     showDropdown, setShowDropdown
   } = state;
 
+  const [activeNavDropdown, setActiveNavDropdown] = useState(null);
+  const navDropdownRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (navDropdownRef.current && !navDropdownRef.current.contains(event.target)) {
+        setActiveNavDropdown(null);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   const isArchived = (currentBusiness?.access_mode === 'archived' || currentBusiness?.access_mode === 'hidden') || (businessData?.access_mode === 'archived' || businessData?.access_mode === 'hidden');
   const canShowRegenerateButtons = canRegenerate && !isArchived;
 
-  // Set initial tab from URL query param (?tab=aha) or navigation state.
+  // Set initial tab from URL query param (?tab=executive) or navigation state.
   // URL param takes priority so page refresh / shared URLs restore the correct tab.
   useEffect(() => {
     const urlTab = searchParams.get('tab');
@@ -212,14 +241,14 @@ const BusinessSetupPage = () => {
 
     // Helper to determine the best default tab based on plan limits
     const getDefaultTab = () => {
-      if (hasPmfAccess) return "aha";
+      if (hasPmfAccess) return "executive";
       if (hasProjectAccess) return "projects";
       return "advanced";
     };
 
     if (initialTab) {
       // Check if user has access to the requested initial tab
-      const isPmfTab = ["aha", "executive", "priorities"].includes(initialTab);
+      const isPmfTab = ["executive", "priorities"].includes(initialTab);
       const isProjectTab = initialTab === "projects";
       
       if ((isPmfTab && !hasPmfAccess) || (isProjectTab && !hasProjectAccess)) {
@@ -1300,61 +1329,74 @@ const BusinessSetupPage = () => {
                     <X size={24} />
                   </button>
                 </div>
-                <div className="mobile-menu-items">
-                  {hasPmfAccess && (
-                    <button
-                      className={`mobile-menu-item ${activeTab === "aha" ? "active" : ""}`}
-                      onClick={() => { handleAhaTabClick(); setShowMobileMenu(false); }}
-                    >
-                      {t("aha")}
-                    </button>
-                  )}
-                  {hasPmfAccess && (
-                    <button
-                      className={`mobile-menu-item ${activeTab === "executive" ? "active" : ""}`}
-                      onClick={() => { handleExecutiveTabClick(); setShowMobileMenu(false); }}
-                    >
-                      {t("Executive Summary")}
-                    </button>
-                  )}
-                  {hasPmfAccess && (
-                    <button
-                      className={`mobile-menu-item ${activeTab === "priorities" ? "active" : ""}`}
-                      onClick={() => { setActiveTab("priorities"); setShowMobileMenu(false); }}
-                    >
-                      {t("Priorities & Projects")}
-                    </button>
-                  )}
-                  {showProjectsTab && hasProjectAccess && (
-                    <button
-                      className={`mobile-menu-item ${activeTab === "projects" ? "active" : ""}`}
-                      onClick={() => { setActiveTab("projects"); setShowMobileMenu(false); }}
-                    >
-                      {t("Projects")}
-                    </button>
-                  )}
-                  <button
-                    className={`mobile-menu-item ${activeTab === "advanced" ? "active" : ""}`}
-                    onClick={() => { handleBriefTabClick(); setShowMobileMenu(false); }}
-                  >
-                    {t("Questions and Answers")}
-                  </button>
-                  {hasInsightAccess && (
-                    <button
-                      className={`mobile-menu-item ${activeTab === "insights" ? "active" : ""}`}
-                      onClick={() => { handleAnalysisTabClick(); setShowMobileMenu(false); }}
-                    >
-                      {hasPmfAccess ? t("Insight (6 C's)") : "Insights (6 Cs)"}
-                    </button>
-                  )}
-                  {hasStrategicAccess && (
-                    <button
-                      className={`mobile-menu-item ${activeTab === "strategic" ? "active" : ""}`}
-                      onClick={() => { handleStrategicTabClick(); setShowMobileMenu(false); }}
-                    >
-                      {hasPmfAccess ? t("strategic") : "S.T.R.A.T.E.G.I.C"}
-                    </button>
-                  )}
+                <div className="mobile-nav-groups">
+                  <div className="mobile-nav-group">
+                    <div className="mobile-nav-group-header">{t("Insights & Recommendations")}</div>
+
+                    <div className="mobile-nav-sub-group">
+                      <div className="mobile-nav-sub-group-header">{t("Basic")}</div>
+                      {hasPmfAccess && (
+                        <button
+                          className={`mobile-menu-item ${activeTab === "executive" ? "active" : ""}`}
+                          onClick={() => { handleExecutiveTabClick(); setShowMobileMenu(false); }}
+                        >
+                          <LayoutDashboard size={18} />
+                          <span>{t("Executive Summary")}</span>
+                        </button>
+                      )}
+                    </div>
+
+                    <div className="mobile-nav-sub-group mobile-nav-sub-group-dark mt-3">
+                      <div className="mobile-nav-sub-group-header">{t("Advanced")}</div>
+                      <button
+                        className={`mobile-menu-item ${activeTab === "advanced" ? "active" : ""}`}
+                        onClick={() => { handleBriefTabClick(); setShowMobileMenu(false); }}
+                      >
+                        <HelpCircle size={18} />
+                        <span>{t("Answers/Brief")}</span>
+                      </button>
+                      {hasInsightAccess && (
+                        <button
+                          className={`mobile-menu-item ${activeTab === "insights" ? "active" : ""}`}
+                          onClick={() => { handleAnalysisTabClick(); setShowMobileMenu(false); }}
+                        >
+                          <TrendingUp size={18} />
+                          <span>{t("Insights")}</span>
+                        </button>
+                      )}
+                      {hasStrategicAccess && (
+                        <button
+                          className={`mobile-menu-item ${activeTab === "strategic" ? "active" : ""}`}
+                          onClick={() => { handleStrategicTabClick(); setShowMobileMenu(false); }}
+                        >
+                          <Target size={18} />
+                          <span>{t("STRATEGIC_LABEL") || "S.T.R.A.T.E.G.I.C."}</span>
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="mobile-nav-group mt-4">
+                    <div className="mobile-nav-group-header">{t("Execution")}</div>
+                    {hasPmfAccess && (
+                      <button
+                        className={`mobile-menu-item ${activeTab === "priorities" ? "active" : ""}`}
+                        onClick={() => { setActiveTab("priorities"); setShowMobileMenu(false); }}
+                      >
+                        <ListTodo size={18} />
+                        <span>{t("Priorities")}</span>
+                      </button>
+                    )}
+                    {showProjectsTab && hasProjectAccess && (
+                      <button
+                        className={`mobile-menu-item ${activeTab === "projects" ? "active" : ""}`}
+                        onClick={() => { setActiveTab("projects"); setShowMobileMenu(false); }}
+                      >
+                        <Briefcase size={18} />
+                        <span>{t("Projects")}</span>
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
@@ -1369,8 +1411,8 @@ const BusinessSetupPage = () => {
             {!isMobile && isAnalysisExpanded && (
               <div className="desktop-expanded-analysis">
                 <div className="expanded-analysis-view">
-                  <div className="desktop-tabs">
-                    <div className="desktop-tabs-left">
+                  <div className="desktop-tabs" ref={navDropdownRef}>
+                    <div className="desktop-tabs-main">
                       <div className="business-header-container">
                         <button className="back-button" onClick={handleBackFromAnalysis} aria-label="Go Back">
                           <ArrowLeft size={18} />
@@ -1382,52 +1424,105 @@ const BusinessSetupPage = () => {
                           </div>
                         )}
                       </div>
-                      {hasPmfAccess && (
-                        <button
-                          className={`desktop-tab ${activeTab === "aha" ? "active" : ""}`}
-                          onClick={handleAhaTabClick}
-                        >
-                          {t("aha")}
-                        </button>
-                      )}
-                      {hasPmfAccess && (
-                        <button
-                          className={`desktop-tab ${activeTab === "executive" ? "active" : ""}`}
-                          onClick={handleExecutiveTabClick}
-                        >
-                          {t("Executive Summary")}
-                        </button>
-                      )}
-                      {hasPmfAccess && (
-                        <button
-                          className={`desktop-tab ${activeTab === "priorities" ? "active" : ""}`}
-                          onClick={handlePrioritiesTabClick}
-                        >
-                          {t("Priorities & Projects")}
-                        </button>
-                      )}
-                      {showProjectsTab && hasProjectAccess && (
-                        <button className={`desktop-tab ${activeTab === "projects" ? "active" : ""}`} onClick={() => setActiveTab("projects")}>
-                          {t("Projects")}
-                        </button>
-                      )}
-                      <button
-                        className={`desktop-tab ${activeTab === "advanced" ? "active" : ""}`}
-                        onClick={handleBriefTabClick}
-                      >
-                        {t("Questions and Answers")}
-                      </button>
 
-                      {hasInsightAccess && (
-                        <button className={`desktop-tab ${activeTab === "insights" ? "active" : ""}`} onClick={() => setActiveTab("insights")}>
-                          {hasPmfAccess ? t("Insight (6 C's)") : "Insights (6 Cs)"}
-                        </button>
-                      )}
-                      {hasStrategicAccess && (
-                        <button className={`desktop-tab ${activeTab === "strategic" ? "active" : ""}`} onClick={() => setActiveTab("strategic")}>
-                          {hasPmfAccess ? t("strategic") : "S.T.R.A.T.E.G.I.C"}
-                        </button>
-                      )}
+                      <div className="desktop-nav-main">
+                        {/* Insights & Recommendations Dropdown */}
+                        <div className={`nav-dropdown-wrapper ${activeNavDropdown === 'insights' ? 'open' : ''}`}>
+                          <button 
+                            className={`nav-dropdown-trigger ${['executive', 'advanced', 'insights', 'strategic'].includes(activeTab) ? 'active' : ''}`}
+                            onClick={() => setActiveNavDropdown(activeNavDropdown === 'insights' ? null : 'insights')}
+                          >
+                            {/* Dynamically show active tab target name or category name */}
+                            {(() => {
+                              if (activeTab === "executive") return t("Executive Summary");
+                              if (activeTab === "advanced") return t("Answers/Brief");
+                              if (activeTab === "insights") return t("Insights");
+                              if (activeTab === "strategic") return t("STRATEGIC_LABEL") || "S.T.R.A.T.E.G.I.C.";
+                              return t("Insights & Recommendations");
+                            })()}
+                            <ChevronDown size={14} className={`chevron-icon ${activeNavDropdown === 'insights' ? 'rotated' : ''}`} />
+                          </button>
+                          {activeNavDropdown === 'insights' && (
+                            <div className="nav-dropdown-menu">
+                              <div className="dropdown-section-label">{t("Basic")}</div>
+                              {hasPmfAccess && (
+                                <button 
+                                  className={`dropdown-item ${activeTab === 'executive' ? 'active' : ''}`} 
+                                  onClick={() => { handleExecutiveTabClick(); setActiveNavDropdown(null); }}
+                                >
+                                  <LayoutDashboard size={14} />
+                                  <span>{t("Executive Summary")}</span>
+                                </button>
+                              )}
+
+                              <div className="dropdown-section-label mt-2">{t("Advanced")}</div>
+                              <button 
+                                className={`dropdown-item ${activeTab === 'advanced' ? 'active' : ''}`} 
+                                onClick={() => { handleBriefTabClick(); setActiveNavDropdown(null); }}
+                              >
+                                <HelpCircle size={14} />
+                                <span>{t("Answers/Brief")}</span>
+                              </button>
+                              {hasInsightAccess && (
+                                <button 
+                                  className={`dropdown-item ${activeTab === 'insights' ? 'active' : ''}`} 
+                                  onClick={() => { setActiveTab('insights'); setActiveNavDropdown(null); }}
+                                >
+                                  <TrendingUp size={14} />
+                                  <span>{t("Insights")}</span>
+                                </button>
+                              )}
+                              {hasStrategicAccess && (
+                                <button 
+                                  className={`dropdown-item ${activeTab === 'strategic' ? 'active' : ''}`} 
+                                  onClick={() => { setActiveTab('strategic'); setActiveNavDropdown(null); }}
+                                >
+                                  <Target size={14} />
+                                  <span>{t("STRATEGIC_LABEL") || "S.T.R.A.T.E.G.I.C."}</span>
+                                </button>
+                              )}
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Execution Dropdown */}
+                        <div className={`nav-dropdown-wrapper ${activeNavDropdown === 'execution' ? 'open' : ''}`}>
+                          <button 
+                            className={`nav-dropdown-trigger ${['priorities', 'projects'].includes(activeTab) ? 'active' : ''}`}
+                            onClick={() => setActiveNavDropdown(activeNavDropdown === 'execution' ? null : 'execution')}
+                          >
+                            {/* Dynamically show active tab target name or category name */}
+                            {(() => {
+                              if (activeTab === "priorities") return t("Priorities");
+                              if (activeTab === "projects") return t("Projects");
+                              return t("Execution");
+                            })()}
+                            <ChevronDown size={14} className={`chevron-icon ${activeNavDropdown === 'execution' ? 'rotated' : ''}`} />
+                          </button>
+                          {activeNavDropdown === 'execution' && (
+                            <div className="nav-dropdown-menu">
+                              {hasPmfAccess && (
+                                <button 
+                                  className={`dropdown-item ${activeTab === 'priorities' ? 'active' : ''}`} 
+                                  onClick={() => { handlePrioritiesTabClick(); setActiveNavDropdown(null); }}
+                                >
+                                  <ListTodo size={14} />
+                                  <span>{t("Priorities")}</span>
+                                </button>
+                              )}
+                              {showProjectsTab && hasProjectAccess && (
+                                <button 
+                                  className={`dropdown-item ${activeTab === 'projects' ? 'active' : ''}`} 
+                                  onClick={() => { setActiveTab('projects'); setActiveNavDropdown(null); }}
+                                >
+                                  <Briefcase size={14} />
+                                  <span>{t("Projects")}</span>
+                                </button>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      </div>
                     </div>
 
                     <div className="desktop-tabs-buttons">
@@ -1636,53 +1731,53 @@ const BusinessSetupPage = () => {
             {!isMobile && !isAnalysisExpanded && (
               <>
                 <div className="desktop-tabs">
-                  <div className="desktop-tabs-controls">
-                    {hasPmfAccess && (
-                      <button
-                        className={`desktop-tab ${activeTab === "aha" ? "active" : ""}`}
-                        onClick={handleAhaTabClick}
-                      >
-                        {t("aha")}
-                      </button>
-                    )}
-                    {hasPmfAccess && (
-                      <button
-                        className={`desktop-tab ${activeTab === "executive" ? "active" : ""}`}
-                        onClick={handleExecutiveTabClick}
-                      >
-                        {t("Executive Summary")}
-                      </button>
-                    )}
-                    {hasPmfAccess && (
-                      <button
-                        className={`desktop-tab ${activeTab === "priorities" ? "active" : ""}`}
-                        onClick={handlePrioritiesTabClick}
-                      >
-                        {t("Priorities & Projects")}
-                      </button>
-                    )}
-                    {showProjectsTab && hasProjectAccess && (
-                      <button className={`desktop-tab ${activeTab === "projects" ? "active" : ""}`} onClick={() => setActiveTab("projects")}>
-                        {t("Projects")}
-                      </button>
-                    )}
-                    <button
-                      className={`desktop-tab ${activeTab === "advanced" ? "active" : ""}`}
-                      onClick={handleBriefTabClick}
-                    >
-                      {t("Questions and Answers")}
-                    </button>
-                    {hasInsightAccess && (
-                      <button className={`desktop-tab ${activeTab === "insights" ? "active" : ""}`} onClick={handleAnalysisTabClick}>
-                        {hasPmfAccess ? t("Insight (6 C's)") : "Insights (6 Cs)"}
-                      </button>
-                    )}
-                    {hasStrategicAccess && (
-                      <button className={`desktop-tab ${activeTab === "strategic" ? "active" : ""}`} onClick={handleStrategicTabClick}>
-                        {hasPmfAccess ? t("strategic") : "S.T.R.A.T.E.G.I.C"}
-                      </button>
-                    )}
-                  </div>
+                    <div className="desktop-tabs-controls">
+                      <div className="nav-group-minimal">
+                        {hasPmfAccess && (
+                          <button
+                            className={`desktop-tab ${activeTab === "executive" ? "active" : ""}`}
+                            onClick={handleExecutiveTabClick}
+                          >
+                            <LayoutDashboard size={16} />
+                            <span>{t("Executive Summary")}</span>
+                          </button>
+                        )}
+                        <button
+                          className={`desktop-tab ${activeTab === "advanced" ? "active" : ""}`}
+                          onClick={handleBriefTabClick}
+                        >
+                          <HelpCircle size={16} />
+                          <span>{t("Answers/Brief")}</span>
+                        </button>
+                        {hasInsightAccess && (
+                          <button className={`desktop-tab ${activeTab === "insights" ? "active" : ""}`} onClick={handleAnalysisTabClick}>
+                            <TrendingUp size={16} />
+                            <span>{t("Insights")}</span>
+                          </button>
+                        )}
+                        {hasStrategicAccess && (
+                          <button className={`desktop-tab ${activeTab === "strategic" ? "active" : ""}`} onClick={handleStrategicTabClick}>
+                            <Target size={16} />
+                            <span>{t("STRATEGIC_LABEL") || "S.T.R.A.T.E.G.I.C."}</span>
+                          </button>
+                        )}
+                        {hasPmfAccess && (
+                          <button
+                            className={`desktop-tab ${activeTab === "priorities" ? "active" : ""}`}
+                            onClick={handlePrioritiesTabClick}
+                          >
+                            <ListTodo size={16} />
+                            <span>{t("Priorities")}</span>
+                          </button>
+                        )}
+                        {showProjectsTab && hasProjectAccess && (
+                          <button className={`desktop-tab ${activeTab === "projects" ? "active" : ""}`} onClick={() => setActiveTab("projects")}>
+                            <Briefcase size={16} />
+                            <span>{t("Projects")}</span>
+                          </button>
+                        )}
+                      </div>
+                    </div>
 
                   {activeTab === "insights" && unlockedFeatures.analysis && (
                     <div className="desktop-tabs-buttons">

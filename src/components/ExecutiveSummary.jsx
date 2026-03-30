@@ -14,6 +14,8 @@ const ExecutiveSummary = ({ businessId, onStartOnboarding }) => {
     topPriorities: false,
   });
 
+  const [ahaData, setAhaData] = useState(null);
+
   // API Service setup
   const ML_API_BASE_URL = process.env.REACT_APP_ML_BACKEND_URL;
   const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
@@ -30,19 +32,23 @@ const ExecutiveSummary = ({ businessId, onStartOnboarding }) => {
     if (!businessId) return;
     try {
       setLoading(true);
-      const summaryResult = await analysisService.getPMFExecutiveSummary(businessId);
+      // Fetch both Executive Summary and PMF Insights (AHA)
+      const [summaryResult, ahaResult] = await Promise.all([
+        analysisService.getPMFExecutiveSummary(businessId),
+        analysisService.getPMFAnalysis(businessId)
+      ]);
 
-      // Extract content from 'summary' field if it exists, otherwise use whole result
+      // Handle Executive Summary Data
       let summaryContent = summaryResult?.summary || summaryResult;
-
-      // Ensure onboarding_data is included if it was at the root
       if (summaryResult?.onboarding_data && !summaryContent.onboarding_data) {
         summaryContent = { ...summaryContent, onboarding_data: summaryResult.onboarding_data };
       }
-
       setData(summaryContent);
+
+      // Handle AHA Data
+      setAhaData(ahaResult);
     } catch (error) {
-      console.error("Error fetching executive summary:", error);
+      console.error("Error fetching data:", error);
     } finally {
       setLoading(false);
     }
@@ -57,6 +63,22 @@ const ExecutiveSummary = ({ businessId, onStartOnboarding }) => {
       ...prev,
       [section]: !prev[section],
     }));
+  };
+
+  // Helper to extract Aha Insights
+  const getTopAhaInsights = () => {
+    if (!ahaData) return [];
+    let rawInsights = [];
+    if (Array.isArray(ahaData)) {
+      rawInsights = ahaData;
+    } else if (ahaData.insights) {
+      if (Array.isArray(ahaData.insights)) {
+        rawInsights = ahaData.insights;
+      } else if (ahaData.insights.insights && Array.isArray(ahaData.insights.insights)) {
+        rawInsights = ahaData.insights.insights;
+      }
+    }
+    return rawInsights.slice(0, 4); // Limit to top 3-4
   };
 
   if (loading) {
@@ -117,9 +139,36 @@ const ExecutiveSummary = ({ businessId, onStartOnboarding }) => {
   const newAdjacencies = whereToCompete?.new_adjacencies_to_explore || whereToCompete?.new_adjacencies || whereToCompete?.["New Adjacencies"];
   const existingAdjacencies = whereToCompete?.existing_adjacencies || whereToCompete?.["Existing Adjacencies"];
 
+  const topAhaInsights = getTopAhaInsights();
+
   return (
     <div className="exc-executive-summary-container">
       <div className="exc-executive-content">
+        {/* AHA INSIGHTS STRIP */}
+        {topAhaInsights.length > 0 && (
+          <div className="exc-aha-strip-container mb-4">
+            <div className="exc-aha-strip-header d-flex align-items-center gap-2 mb-3">
+              <div className="exc-aha-dot"></div>
+              <h4 className="exc-aha-strip-title mb-0">{t("AHA Insights")}</h4>
+            </div>
+            <div className="exc-aha-tiles">
+              {topAhaInsights.map((insight, idx) => (
+                <div key={idx} className="exc-aha-tile">
+                  <div className="exc-aha-tile-header">
+                    <span className="exc-aha-tile-category">{insight.type || t("Insight")}</span>
+                  </div>
+                  <h5 className="exc-aha-tile-title">{insight.title}</h5>
+                  <ul className="exc-aha-tile-details">
+                    {(insight.details || insight.key_points || []).slice(0, 2).map((detail, dIdx) => (
+                      <li key={dIdx}>{detail}</li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* WHERE TO COMPETE */}
         <div className="exc-section-card">
           <div className="exc-section-header" onClick={() => toggleSection("whereToCompete")}>
