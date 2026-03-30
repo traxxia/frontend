@@ -378,7 +378,13 @@ const UserManagement = ({ onToast }) => {
       const data = Array.isArray(res.data) 
         ? res.data 
         : [...(res.data.businesses || []), ...(res.data.collaborating_businesses || [])];
-      setAllBusinesses(data);
+      
+      // Filter out archived businesses
+      const activeBusinesses = data.filter(b => 
+        (b.status || "").toLowerCase() !== 'archived' && 
+        (b.access_mode || "").toLowerCase() !== 'archived'
+      );
+      setAllBusinesses(activeBusinesses);
     } catch (error) {
       console.error("Failed to fetch businesses", error);
     }
@@ -445,7 +451,9 @@ const UserManagement = ({ onToast }) => {
         : [...(businessRes.data.businesses || []), ...(businessRes.data.collaborating_businesses || [])];
       
       const validBusinesses = allBiz.filter((b) => 
-        (b.status || "").toLowerCase() === 'launched' || b.has_launched_projects === true
+        ((b.status || "").toLowerCase() === 'launched' || b.has_launched_projects === true) &&
+        (b.status || "").toLowerCase() !== 'archived' &&
+        (b.access_mode || "").toLowerCase() !== 'archived'
       );
       
       setLaunchedBusinesses(validBusinesses);

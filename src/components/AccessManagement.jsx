@@ -43,7 +43,11 @@ const AccessManagement = ({ onToast }) => {
                 ? res.data
                 : [...(res.data.businesses || []), ...(res.data.collaborating_businesses || [])];
 
-            const launchedBusinesses = data.filter(b => (b.status || "").toLowerCase() === 'launched' || b.has_launched_projects === true);
+            const launchedBusinesses = data.filter(b => 
+                ((b.status || "").toLowerCase() === 'launched' || b.has_launched_projects === true) &&
+                (b.status || "").toLowerCase() !== 'archived' &&
+                (b.access_mode || "").toLowerCase() !== 'archived'
+            );
             setBusinesses(launchedBusinesses);
 
             if (launchedBusinesses.length > 0 && !selectedBusinessId) {

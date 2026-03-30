@@ -180,6 +180,48 @@ const BusinessOverview = ({ onToast }) => {
             },
         },
         {
+            key: "status",
+            label: t("status"),
+            render: (_, row) => {
+                const s = row.status?.toLowerCase();
+                const isArchived = s === "archived" || (row.access_mode || "").toLowerCase() === "archived";
+                const isDeleted = s === "deleted";
+                const isActiveState = s === "launched" || s === "lauched" || s === "prioritizing" || s === "prioritization";
+
+                let label = getStatusLabel(row.status);
+                let statusColor = "#16a34a"; // Default active green
+                let statusBg = "#dcfce7";
+
+                if (isDeleted) {
+                    label = t("deleted") || "Deleted";
+                    statusColor = "#dc2626";
+                    statusBg = "#fee2e2";
+                } else if (isArchived) {
+                    label = t("archived");
+                    statusColor = "#ecaa1cff";
+                    statusBg = "#FCF9C3";
+                } else if (isActiveState) {
+                    label = t("active") || "Active";
+                    statusColor = "#16a34a";
+                    statusBg = "#dcfce7";
+                }
+                return (
+                    <span style={{
+                        padding: "4px 8px",
+                        borderRadius: "12px",
+                        fontSize: "12px",
+                        fontWeight: 500,
+                        color: statusColor,
+                        backgroundColor: statusBg,
+                        display: "inline-block",
+                        textTransform: "capitalize"
+                    }}>
+                        {label}
+                    </span>
+                );
+            },
+        },
+        {
             key: "created_at",
             label: t("created"),
             render: (val) => <span className="admin-cell-secondary">{formatDate(val)}</span>,

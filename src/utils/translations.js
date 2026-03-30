@@ -19,6 +19,9 @@ export const staticTranslations = {
     'try_again': 'Try Again',
     'login_email_required': 'Email is required',
     'login_password_required': 'Password is required',
+    'active': 'Active',
+    'deleted': 'Deleted',
+    'archived': 'Archived',
 
     // ===========================
     // REGISTRATION
@@ -1981,6 +1984,9 @@ export const staticTranslations = {
     'try_again': 'Intentar de Nuevo',
     'login_email_required': 'Se requiere usuario/correo electrónico',
     'login_password_required': 'Se requiere contraseña',
+    'active': 'Activo',
+    'deleted': 'Eliminado',
+    'archived': 'Archivado',
 
     // ===========================
     // REGISTRO
