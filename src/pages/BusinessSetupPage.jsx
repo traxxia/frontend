@@ -1500,7 +1500,7 @@ const BusinessSetupPage = () => {
                             <ChevronDown size={14} className={`chevron-icon ${activeNavDropdown === 'execution' ? 'rotated' : ''}`} />
                           </button>
                           {activeNavDropdown === 'execution' && (
-                            <div className="nav-dropdown-menu">
+                            <div className="nav-dropdown-menu align-right">
                               {hasPmfAccess && (
                                 <button 
                                   className={`dropdown-item ${activeTab === 'priorities' ? 'active' : ''}`} 
