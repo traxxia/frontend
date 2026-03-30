@@ -382,7 +382,8 @@ const UserManagement = ({ onToast }) => {
       // Filter out archived businesses
       const activeBusinesses = data.filter(b => 
         (b.status || "").toLowerCase() !== 'archived' && 
-        (b.access_mode || "").toLowerCase() !== 'archived'
+        (b.access_mode || "").toLowerCase() !== 'archived' &&
+        (b.status || "").toLowerCase() !== 'deleted'
       );
       setAllBusinesses(activeBusinesses);
     } catch (error) {
@@ -453,7 +454,8 @@ const UserManagement = ({ onToast }) => {
       const validBusinesses = allBiz.filter((b) => 
         ((b.status || "").toLowerCase() === 'launched' || b.has_launched_projects === true) &&
         (b.status || "").toLowerCase() !== 'archived' &&
-        (b.access_mode || "").toLowerCase() !== 'archived'
+        (b.access_mode || "").toLowerCase() !== 'archived' &&
+        (b.status || "").toLowerCase() !== 'deleted'
       );
       
       setLaunchedBusinesses(validBusinesses);
