@@ -288,17 +288,17 @@ const ProjectDetails = ({
                             <label className="detail-label">{t("Next_Review_Date")}</label>
                             <div className="detail-value" style={{ display: 'flex', alignItems: 'center' }}>
                                 <span style={{
-                                    color: (project.is_stale || (project.next_review_date && new Date(project.next_review_date).getTime() < new Date().setHours(0, 0, 0, 0))) ? '#ef4444' : (project.next_review_date && new Date(project.next_review_date).toDateString() === new Date().toDateString() ? '#d97706' : 'inherit'),
+                                    color: project.launch_status === 'launched' && (project.is_stale || (project.next_review_date && new Date(project.next_review_date).getTime() < new Date().setHours(0, 0, 0, 0))) ? '#ef4444' : (project.launch_status === 'launched' && project.next_review_date && new Date(project.next_review_date).toDateString() === new Date().toDateString() ? '#d97706' : 'inherit'),
                                     fontWeight: '600'
                                 }}>
                                     {project.next_review_date ? new Date(project.next_review_date).toLocaleDateString() : t("Not_Available")}
                                 </span>
-                                {(project.is_stale || (project.next_review_date && new Date(project.next_review_date).getTime() < new Date().setHours(0, 0, 0, 0))) && (
+                                {project.launch_status === 'launched' && (project.is_stale || (project.next_review_date && new Date(project.next_review_date).getTime() < new Date().setHours(0, 0, 0, 0))) && (
                                     <span className="review-badge stale">
                                         <AlertTriangle size={12} /> {t("Stale")}
                                     </span>
                                 )}
-                                {!project.is_stale && !(project.next_review_date && new Date(project.next_review_date).getTime() < new Date().setHours(0, 0, 0, 0)) && project.next_review_date && new Date(project.next_review_date).toDateString() === new Date().toDateString() && (
+                                {project.launch_status === 'launched' && !project.is_stale && !(project.next_review_date && new Date(project.next_review_date).getTime() < new Date().setHours(0, 0, 0, 0)) && project.next_review_date && new Date(project.next_review_date).toDateString() === new Date().toDateString() && (
                                     <span className="review-badge due">
                                         <Clock size={12} /> {t("Review_Due")}
                                     </span>

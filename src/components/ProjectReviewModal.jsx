@@ -15,7 +15,9 @@ const ProjectReviewModal = ({
     const [status, setStatus] = useState("");
     const [learningState, setLearningState] = useState("");
     const [noChanges, setNoChanges] = useState(false);
+    const [decision, setDecision] = useState("Continue");
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [showConfirmation, setShowConfirmation] = useState(false);
 
     useEffect(() => {
         if (project) {
@@ -23,6 +25,8 @@ const ProjectReviewModal = ({
             setLearningState(project.learning_state || "Testing");
             setJustification("");
             setNoChanges(false);
+            setDecision("Continue");
+            setShowConfirmation(false);
         }
     }, [project, isOpen]);
 
@@ -35,14 +39,21 @@ const ProjectReviewModal = ({
             return;
         }
 
+        if (!showConfirmation) {
+            setShowConfirmation(true);
+            return;
+        }
+
         setIsSubmitting(true);
         try {
             await onSubmit({
-                status,
-                learning_state: learningState,
+                status: noChanges ? undefined : status,
+                learning_state: noChanges ? undefined : learningState,
                 justification,
-                no_changes: type === "review" ? noChanges : false
+                no_changes: type === "review" ? noChanges : false,
+                decision: type === "review" && !noChanges ? decision : null
             });
+            setShowConfirmation(false);
             onClose();
         } catch (err) {
             console.error("Submit error:", err);
@@ -53,6 +64,7 @@ const ProjectReviewModal = ({
 
     const statusOptions = ["Active", "At Risk", "Paused", "Killed", "Scaled"];
     const learningOptions = ["Testing", "Validated", "Invalidated"];
+    const decisionOptions = ["Continue", "Pivot", "Increase Investment", "Kill"];
 
     return (
         <div className="review-modal-overlay">
@@ -62,16 +74,42 @@ const ProjectReviewModal = ({
                         {type === "review" ? t("Perform_Review") : t("Ad_Hoc_Update")}
                         <span className="project-name-hint">: {project.project_name}</span>
                     </h2>
-                    <button className="close-btn" onClick={onClose}><X size={20} /></button>
+                    <button className="close-btn" onClick={() => { setShowConfirmation(false); onClose(); }}><X size={20} /></button>
                 </div>
 
                 <form onSubmit={handleSubmit} className="review-modal-body">
-                    <div className="review-info-section">
+                    {showConfirmation ? (
+                        <div className="confirmation-view" style={{ padding: '20px 0', textAlign: 'center' }}>
+                            <AlertTriangle size={48} color="#d97706" style={{ margin: '0 auto 16px' }} />
+                            <h3 style={{ fontSize: '18px', marginBottom: '12px', color: '#1f2937' }}>{t("Confirm_Submission") || "Confirm Submission"}</h3>
+                            <p style={{ color: '#4b5563', marginBottom: '24px', lineHeight: '1.5' }}>
+                                {type === "review" 
+                                    ? t("Confirm_Review_Message") || "You are about to log this Strategic Review. This action will be permanently recorded in the project's Decision Log. Are you sure you want to proceed?"
+                                    : t("Confirm_AdHoc_Message") || "You are about to log an Ad-Hoc Update. This will be recorded in the project's Decision Log. Are you sure you want to proceed?"}
+                            </p>
+                            
+                            <div className="review-modal-footer" style={{ justifyContent: 'center', marginTop: '20px' }}>
+                                <button type="button" className="btn-cancel" onClick={() => setShowConfirmation(false)} disabled={isSubmitting}>
+                                    {t("Back") || "Back"}
+                                </button>
+                                <button type="submit" className="btn-submit" disabled={isSubmitting}>
+                                    {isSubmitting ? t("Saving...") || "Saving..." : (
+                                        <>
+                                            <CheckCircle size={16} />
+                                            {t("Confirm") || "Confirm"}
+                                        </>
+                                    )}
+                                </button>
+                            </div>
+                        </div>
+                    ) : (
+                        <>
+                            <div className="review-info-section">
                         <div className="info-card">
                             <Info size={16} color="#4b5563" />
                             <div>
                                 <div className="info-label">{t("Review_Cadence")}</div>
-                                <div className="info-value">{t(project.review_cadence || "Monthly")}</div>
+                                <div className="info-value">{project.review_cadence ? t(project.review_cadence) : t("Not_Available")}</div>
                             </div>
                         </div>
                         <div className="info-card">
@@ -107,6 +145,21 @@ const ProjectReviewModal = ({
                     )}
 
                     <div className={`form-section ${noChanges ? 'disabled' : ''}`}>
+                        {type === "review" && (
+                            <div className="form-group" style={{ marginBottom: "16px" }}>
+                                <label>{t("Strategic_Decision") || "Strategic Decision"} *</label>
+                                <select
+                                    value={decision}
+                                    onChange={(e) => setDecision(e.target.value)}
+                                    disabled={noChanges}
+                                    style={{ width: "100%" }}
+                                >
+                                    {decisionOptions.map(opt => (
+                                        <option key={opt} value={opt}>{t(opt) || opt}</option>
+                                    ))}
+                                </select>
+                            </div>
+                        )}
                         <div className="grid-2">
                             <div className="form-group">
                                 <label>{t("Status")}</label>
@@ -152,14 +205,11 @@ const ProjectReviewModal = ({
                     <div className="review-modal-footer">
                         <button type="button" className="btn-cancel" onClick={onClose}>{t("Cancel")}</button>
                         <button type="submit" className="btn-submit" disabled={isSubmitting}>
-                            {isSubmitting ? t("Saving...") : (
-                                <>
-                                    <Save size={16} />
-                                    {t("Submit_Review")}
-                                </>
-                            )}
+                            {t("Next") || "Next"}
                         </button>
                     </div>
+                        </>
+                    )}
                 </form>
             </div>
         </div>
