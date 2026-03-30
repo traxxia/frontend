@@ -32,6 +32,7 @@ import BusinessOverview from "./BusinessOverview";
 import SubscriptionTab from "./SubscriptionTab";
 import AcademyFeedbackAdmin from "./AcademyFeedbackAdmin";
 import PlanManagement from "./PlanManagement";
+import StaleBetsAdmin from "./StaleBetsAdmin";
 import { useTranslation } from "../hooks/useTranslation";
 import "../styles/superadmin.css";
 
@@ -112,6 +113,11 @@ const SuperAdminPanel = () => {
       label: t('Plan management') || "Plan Management",
       icon: ClipboardList,
       superAdminOnly: true,
+    },
+    {
+      id: "stale_bets",
+      label: t('stale_bets') || "Stale Bets",
+      icon: AlertCircle
     }
   ];
 
@@ -154,6 +160,8 @@ const SuperAdminPanel = () => {
         return <AcademyFeedbackAdmin onToast={showToastMessage} />;
       case "plans":
         return <PlanManagement onToast={showToastMessage} />;
+      case "stale_bets":
+        return <StaleBetsAdmin onToast={showToastMessage} />;
       default:
         return <CompanyManagement onToast={showToastMessage} />;
     }
