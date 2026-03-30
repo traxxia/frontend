@@ -24,6 +24,10 @@ const ProjectsList = ({
   selectedProjectIds = [],
   onToggleSelection,
   selectionDisabled = false,
+  onPerformReview,
+  onAdhocUpdate,
+  canReviewProject,
+  myUserId,
 }) => {
   const { t } = useTranslation();
   const [showMenuId, setShowMenuId] = useState(null);
@@ -110,7 +114,11 @@ const ProjectsList = ({
               isAdmin={isAdmin}
               isSelected={selectedProjectIds.includes(project._id)}
               onToggleSelection={onToggleSelection}
-              isCheckboxDisabled={isArchived || selectionDisabled || !getUserLimits().project}
+              onPerformReview={onPerformReview}
+              onAdhocUpdate={onAdhocUpdate}
+              canReviewProject={canReviewProject}
+              myUserId={myUserId}
+              isCheckboxDisabled={isArchived || selectionDisabled || !getUserLimits().project || sessionStorage.getItem("userPlan") === 'essential'}
             />
           </Col>
         ))}
