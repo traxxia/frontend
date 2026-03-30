@@ -11,6 +11,7 @@ const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
 const PlanModal = ({ show, plan, onClose, onSave, isSubmitting, onToast }) => {
     const { t } = useTranslation();
     const [showStatusConfirm, setShowStatusConfirm] = useState(false);
+    const [pendingData, setPendingData] = useState(null);
     const [formData, setFormData] = useState({
         name: '',
         description: '',
@@ -135,10 +136,8 @@ const PlanModal = ({ show, plan, onClose, onSave, isSubmitting, onToast }) => {
 
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
-        if (name === 'isActive' && !checked) {
-            setShowStatusConfirm(true);
-            return;
-        }
+        // Immediate status toggle confirmation removed as per requirement: 
+        // Confirmation now happens on Save for all edits.
 
         let processedValue = type === 'checkbox' ? checked : value;
 
@@ -160,11 +159,15 @@ const PlanModal = ({ show, plan, onClose, onSave, isSubmitting, onToast }) => {
     };
 
     const confirmStatusChange = () => {
-        setFormData(prev => ({ ...prev, isActive: false }));
+        if (pendingData) {
+            onSave(pendingData);
+            setPendingData(null);
+        }
         setShowStatusConfirm(false);
     };
 
     const cancelStatusChange = () => {
+        setPendingData(null);
         setShowStatusConfirm(false);
     };
 
@@ -238,6 +241,14 @@ const PlanModal = ({ show, plan, onClose, onSave, isSubmitting, onToast }) => {
             status: formData.isActive ? 'active' : 'inactive'
         };
 
+        if (plan) {
+            // Edit mode: trigger confirmation before saving
+            setPendingData(submitData);
+            setShowStatusConfirm(true);
+            return;
+        }
+
+        // Create mode: proceed immediately
         onSave(submitData);
     };
 
@@ -506,16 +517,32 @@ const PlanModal = ({ show, plan, onClose, onSave, isSubmitting, onToast }) => {
             >
                 <Modal.Header closeButton className="border-0 pb-0">
                     <Modal.Title className="status-confirm-title">
-                        {t('Confirm Status Change') || 'Confirm Status Change'}
+                        {formData.isActive 
+                            ? (t('confirm_plan_update') || 'Confirm Plan Update')
+                            : (t('Confirm Status Change') || 'Confirm Status Change')
+                        }
                     </Modal.Title>
                 </Modal.Header>
                 <Modal.Body className="pt-2 pb-3">
-                    <p className="status-confirm-text-primary">
-                        {t('status_change_active_msg') || "Set this plan to Inactive?"}
-                    </p>
-                    <p className="status-confirm-text-secondary">
-                        {t('status_change_secondary_msg') || "Existing subscribers keep their current period, but new signups will be blocked."}
-                    </p>
+                    {formData.isActive ? (
+                        <>
+                            <p className="status-confirm-text-primary">
+                                {t('plan_update_active_msg') || t('Are you sure you want to save the changes to this plan?')}
+                            </p>
+                            <p className="status-confirm-text-secondary">
+                                {t('plan_update_secondary_msg') || t('Existing subscribers will not be affected.')}
+                            </p>
+                        </>
+                    ) : (
+                        <>
+                            <p className="status-confirm-text-primary">
+                                {t('status_change_active_msg') || "Set this plan to Inactive?"}
+                            </p>
+                            <p className="status-confirm-text-secondary">
+                                {t('status_change_secondary_msg') || "Existing subscribers keep their current period, but new signups will be blocked."}
+                            </p>
+                        </>
+                    )}
                 </Modal.Body>
                 <Modal.Footer className="border-0 pt-0">
                     <Button variant="light" onClick={cancelStatusChange} className="status-confirm-btn">

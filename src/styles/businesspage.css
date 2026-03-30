@@ -395,6 +395,7 @@ body {
   align-items: center;
   gap: 1.5rem;
   height: 100%;
+  margin: 0px 10px;
 }
 
 .nav-dropdown-wrapper {
@@ -3000,7 +3001,7 @@ body {
   color: #3b82f6;
   border: 1px solid #e1e5e9;
   border-radius: 10px;
-  padding: 10px 18px;
+  padding: 10px;
   font-size: 14px;
   font-weight: 600;
   display: flex;

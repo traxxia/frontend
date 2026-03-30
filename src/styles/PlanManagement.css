@@ -426,6 +426,7 @@ textarea.plan-form-input {
     white-space: nowrap;
     margin: 0 !important;
     padding: 0 !important;
+    text-transform: uppercase;
 }
 
 .plan-status-text.text-active {

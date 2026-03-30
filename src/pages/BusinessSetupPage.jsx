@@ -1443,16 +1443,18 @@ const BusinessSetupPage = () => {
                             <ChevronDown size={14} className={`chevron-icon ${activeNavDropdown === 'insights' ? 'rotated' : ''}`} />
                           </button>
                           {activeNavDropdown === 'insights' && (
-                            <div className="nav-dropdown-menu">
-                              <div className="dropdown-section-label">{t("Basic")}</div>
+                            <div className={`nav-dropdown-menu ${!(hasPmfAccess || (showProjectsTab && hasProjectAccess)) ? 'align-right' : ''}`}>
                               {hasPmfAccess && (
-                                <button 
-                                  className={`dropdown-item ${activeTab === 'executive' ? 'active' : ''}`} 
-                                  onClick={() => { handleExecutiveTabClick(); setActiveNavDropdown(null); }}
-                                >
-                                  <LayoutDashboard size={14} />
-                                  <span>{t("Executive Summary")}</span>
-                                </button>
+                                <>
+                                  <div className="dropdown-section-label">{t("Basic")}</div>
+                                  <button 
+                                    className={`dropdown-item ${activeTab === 'executive' ? 'active' : ''}`} 
+                                    onClick={() => { handleExecutiveTabClick(); setActiveNavDropdown(null); }}
+                                  >
+                                    <LayoutDashboard size={14} />
+                                    <span>{t("Executive Summary")}</span>
+                                  </button>
+                                </>
                               )}
 
                               <div className="dropdown-section-label mt-2">{t("Advanced")}</div>
@@ -1486,42 +1488,44 @@ const BusinessSetupPage = () => {
                         </div>
 
                         {/* Execution Dropdown */}
-                        <div className={`nav-dropdown-wrapper ${activeNavDropdown === 'execution' ? 'open' : ''}`}>
-                          <button 
-                            className={`nav-dropdown-trigger ${['priorities', 'projects'].includes(activeTab) ? 'active' : ''}`}
-                            onClick={() => setActiveNavDropdown(activeNavDropdown === 'execution' ? null : 'execution')}
-                          >
-                            {/* Dynamically show active tab target name or category name */}
-                            {(() => {
-                              if (activeTab === "priorities") return t("Priorities");
-                              if (activeTab === "projects") return t("Projects");
-                              return t("Execution");
-                            })()}
-                            <ChevronDown size={14} className={`chevron-icon ${activeNavDropdown === 'execution' ? 'rotated' : ''}`} />
-                          </button>
-                          {activeNavDropdown === 'execution' && (
-                            <div className="nav-dropdown-menu align-right">
-                              {hasPmfAccess && (
-                                <button 
-                                  className={`dropdown-item ${activeTab === 'priorities' ? 'active' : ''}`} 
-                                  onClick={() => { handlePrioritiesTabClick(); setActiveNavDropdown(null); }}
-                                >
-                                  <ListTodo size={14} />
-                                  <span>{t("Priorities")}</span>
-                                </button>
-                              )}
-                              {showProjectsTab && hasProjectAccess && (
-                                <button 
-                                  className={`dropdown-item ${activeTab === 'projects' ? 'active' : ''}`} 
-                                  onClick={() => { setActiveTab('projects'); setActiveNavDropdown(null); }}
-                                >
-                                  <Briefcase size={14} />
-                                  <span>{t("Projects")}</span>
-                                </button>
-                              )}
-                            </div>
-                          )}
-                        </div>
+                        {(hasPmfAccess || (showProjectsTab && hasProjectAccess)) && (
+                          <div className={`nav-dropdown-wrapper ${activeNavDropdown === 'execution' ? 'open' : ''}`}>
+                            <button 
+                              className={`nav-dropdown-trigger ${['priorities', 'projects'].includes(activeTab) ? 'active' : ''}`}
+                              onClick={() => setActiveNavDropdown(activeNavDropdown === 'execution' ? null : 'execution')}
+                            >
+                              {/* Dynamically show active tab target name or category name */}
+                              {(() => {
+                                if (activeTab === "priorities") return t("Priorities");
+                                if (activeTab === "projects") return t("Projects");
+                                return t("Execution");
+                              })()}
+                              <ChevronDown size={14} className={`chevron-icon ${activeNavDropdown === 'execution' ? 'rotated' : ''}`} />
+                            </button>
+                            {activeNavDropdown === 'execution' && (
+                              <div className="nav-dropdown-menu align-right">
+                                {hasPmfAccess && (
+                                  <button 
+                                    className={`dropdown-item ${activeTab === 'priorities' ? 'active' : ''}`} 
+                                    onClick={() => { handlePrioritiesTabClick(); setActiveNavDropdown(null); }}
+                                  >
+                                    <ListTodo size={14} />
+                                    <span>{t("Priorities")}</span>
+                                  </button>
+                                )}
+                                {showProjectsTab && hasProjectAccess && (
+                                  <button 
+                                    className={`dropdown-item ${activeTab === 'projects' ? 'active' : ''}`} 
+                                    onClick={() => { setActiveTab('projects'); setActiveNavDropdown(null); }}
+                                  >
+                                    <Briefcase size={14} />
+                                    <span>{t("Projects")}</span>
+                                  </button>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        )}
                       </div>
                     </div>
 
