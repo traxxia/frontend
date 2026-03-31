@@ -472,6 +472,11 @@
   background: #f5f3ff;
 }
 
+.completed-border {
+  border: 2px solid #2563eb;
+  background: #eff6ff;
+}
+
 .draft-border {
   border: 1px solid #d1d5db;
 }
@@ -689,6 +694,12 @@
   background-color: #8b5cf6;
   color: #fff;
   border-color: #6d28d9;
+}
+
+.completed-border .status-badge {
+  background-color: #2563eb;
+  color: #fff;
+  border-color: #1d4ed8;
 }
 
 

@@ -71,6 +71,7 @@ const ProjectCard = ({
       case 'Active': return <PlayCircle size={14} color="green" />;
       case 'At Risk': return <AlertTriangle size={14} color="red" />;
       case 'Paused': return <PauseCircle size={14} color="orange" />;
+      case 'Completed': return <CheckCircle size={14} color="#2563eb" />;
       case 'Killed': return <XCircle size={14} color="grey" />;
       case 'Scaled': return <CheckCircle size={14} color="purple" />;
       default: return <Edit2 size={14} color="grey" />; // Draft

@@ -332,6 +332,8 @@ const ProjectForm = ({
   selectedBusinessId,
   projectId,
   isAdmin = false,
+  initialStatus,
+  decisionLog,
 }) => {
   const { t } = useTranslation();
   const isReadOnly = mode === "view" || readOnly;
@@ -428,8 +430,9 @@ const ProjectForm = ({
     );
   };
 
+  const initialStatusLower = (initialStatus || "").toLowerCase();
   const isLaunched = (launchStatus || "").toLowerCase() === "launched" || ["active", "at risk", "paused", "completed", "scaled"].includes((status || "").toLowerCase());
-  const isTerminal = (status || "").toLowerCase() === "completed" || (status || "").toLowerCase() === "scaled" || ((status || "").toLowerCase() === "killed" && !isAdmin);
+  const isTerminal = initialStatusLower === "completed" || initialStatusLower === "scaled" || (initialStatusLower === "killed" && !isAdmin);
 
   const getSubmitButtonText = () => {
     if (isSubmitting) {
@@ -815,6 +818,60 @@ const ProjectForm = ({
   return (
     <>
       <fieldset disabled={isSubmitting || isReadOnly} style={{ border: 'none', padding: 0, margin: 0, minWidth: 0 }}>
+        {isTerminal && (
+          <div className="terminal-status-banner" style={{
+            backgroundColor: "#fef2f2",
+            border: "1px solid #fee2e2",
+            borderRadius: "8px",
+            padding: "16px 20px",
+            marginBottom: "24px",
+            display: "flex",
+            flexDirection: "column",
+            gap: "12px",
+            color: "#991b1b"
+          }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+              <AlertTriangle size={24} color="#dc2626" />
+              <div>
+                <strong style={{ display: "block", fontSize: "16px", marginBottom: "2px" }}>
+                  {(() => {
+                    if (initialStatusLower === "completed") return "Project is in Completed state";
+                    if (initialStatusLower === "scaled") return "Project is in Scaled state";
+                    if (initialStatusLower === "killed") return "Project is in Killed state";
+                    return "Project in Final State";
+                  })()}
+                </strong>
+                <span style={{ fontSize: "14px", fontWeight: "500" }}>
+                  This project reached a final state and cannot be edited further.
+                </span>
+              </div>
+            </div>
+            {decisionLog && decisionLog.length > 0 && (() => {
+              const latestTerminalLog = [...decisionLog]
+                .reverse()
+                .find(log => (log.to_status || "").toLowerCase() === initialStatusLower);
+              
+              if (latestTerminalLog) {
+                return (
+                  <div style={{ 
+                    marginTop: "4px", 
+                    paddingTop: "12px", 
+                    borderTop: "1px solid #fee2e2",
+                    fontSize: "13px"
+                  }}>
+                    <strong style={{ display: "block", marginBottom: "4px", color: "#7f1d1d" }}>
+                      {t("Justification") || "Justification"}:
+                    </strong>
+                    <p style={{ margin: 0, fontStyle: "italic", color: "#b91c1c" }}>
+                      "{latestTerminalLog.justification || t("No_justification_provided")}"
+                    </p>
+                  </div>
+                );
+              }
+              return null;
+            })()}
+          </div>
+        )}
         {/* Breadcrumb & Actions Header */}
         <div className="projects-breadcrumb">
           <Breadcrumb style={{ margin: 0 }}>
