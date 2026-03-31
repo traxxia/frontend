@@ -42,6 +42,7 @@ import PMFOnboardingModal from "../components/PMFOnboardingModal";
 import { answerService } from "../services/answerService";
 import { AI_PAGE_CONTEXTS } from "../utils/aiContexts";
 import { getUserLimits } from '../utils/authUtils';
+import CustomTooltip from "../components/CustomTooltip";
 
 const CARD_TO_CATEGORY_MAP = {
   "profitability-analysis": "costs-financial",
@@ -1268,7 +1269,7 @@ const BusinessSetupPage = () => {
                     })()}
                   </div>
 
-                  {unlockedFeatures.analysis && (
+                  <CustomTooltip align="right" message={t("download_insights_tooltip") || "Export the insights into PDF report."}>
                     <PDFExportButton
                       className="pdf-export-button"
                       businessName={businessData.name}
@@ -1288,21 +1289,22 @@ const BusinessSetupPage = () => {
                       investmentPerformanceData={investmentPerformanceData}
                       leverageRiskData={leverageRiskData}
                     />
-                  )}
+                  </CustomTooltip>
 
                   {canShowRegenerateButtons && unlockedFeatures.analysis && hasInsightAccess && (
-                    <button
-                      onClick={() => canRegenerate && handleRegeneratePhase(currentPhase)}
-                      disabled={isAnalysisRegenerating || !unlockedFeatures.analysis || !canRegenerate || !hasInsightAccess}
-                      className={`regenerate-button ${isAnalysisRegenerating ? 'disabled' : ''}`}
-                      title={t('RegenerateAll') || 'Regenerate All'}
-                    >
-                      {isAnalysisRegenerating ? (
-                        <Loader size={16} className="animate-spin" />
-                      ) : (
-                        <RefreshCw size={16} />
-                      )}
-                    </button>
+                    <CustomTooltip align="right" message={t("regenerate_all_tooltip") || "Re-generate all insights."}>
+                      <button
+                        onClick={() => canRegenerate && handleRegeneratePhase(currentPhase)}
+                        disabled={isAnalysisRegenerating || !unlockedFeatures.analysis || !canRegenerate || !hasInsightAccess}
+                        className={`regenerate-button ${isAnalysisRegenerating ? 'disabled' : ''}`}
+                      >
+                        {isAnalysisRegenerating ? (
+                          <Loader size={16} className="animate-spin" />
+                        ) : (
+                          <RefreshCw size={16} />
+                        )}
+                      </button>
+                    </CustomTooltip>
                   )}
                 </>
               )}
@@ -1310,28 +1312,31 @@ const BusinessSetupPage = () => {
               {activeTab === "strategic" && (
                 <>
                   {unlockedFeatures.analysis && (
-                    <PDFExportButton
-                      className="pdf-export-button"
-                      businessName={businessData.name}
-                      onToastMessage={showToastMessage}
-                      disabled={isAnalysisRegenerating || isStrategicRegenerating}
-                      exportType="strategic"
-                      strategicData={strategicData}
-                    />
+                    <CustomTooltip align="right" message={t("download_strategic_tooltip") || "Export the strategic into PDF report."}>
+                      <PDFExportButton
+                        className="pdf-export-button"
+                        businessName={businessData.name}
+                        onToastMessage={showToastMessage}
+                        disabled={isAnalysisRegenerating || isStrategicRegenerating}
+                        exportType="strategic"
+                        strategicData={strategicData}
+                      />
+                    </CustomTooltip>
                   )}
                   {unlockedFeatures.analysis && hasStrategicAccess && (
-                    <button
-                      onClick={() => canRegenerate && handleStrategicAnalysisRegenerate()}
-                      disabled={isStrategicRegenerating || isAnalysisRegenerating || !canRegenerate || !unlockedFeatures.analysis || !hasStrategicAccess}
-                      className={`regenerate-button ${isStrategicRegenerating || isAnalysisRegenerating || !unlockedFeatures.analysis ? 'disabled' : ''}`}
-                      title={t("regenerate") || "Regenerate Strategic Analysis"}
-                    >
-                      {isStrategicRegenerating ? (
-                        <Loader size={16} className="animate-spin" />
-                      ) : (
-                        <RefreshCw size={16} />
-                      )}
-                    </button>
+                    <CustomTooltip align="right" message={t("regenerate_strategic_tooltip") || "Re-generate the S.T.R.A.T.E.G.I.C. analysis."}>
+                      <button
+                        onClick={() => canRegenerate && handleStrategicAnalysisRegenerate()}
+                        disabled={isStrategicRegenerating || isAnalysisRegenerating || !canRegenerate || !unlockedFeatures.analysis || !hasStrategicAccess}
+                        className={`regenerate-button ${isStrategicRegenerating || isAnalysisRegenerating || !unlockedFeatures.analysis ? 'disabled' : ''}`}
+                      >
+                        {isStrategicRegenerating ? (
+                          <Loader size={16} className="animate-spin" />
+                        ) : (
+                          <RefreshCw size={16} />
+                        )}
+                      </button>
+                    </CustomTooltip>
                   )}
                 </>
               )}
@@ -1581,7 +1586,7 @@ const BusinessSetupPage = () => {
                             })()}
                           </div>
 
-                          {unlockedFeatures.analysis && (
+                          <CustomTooltip align="right" message={t("download_insights_tooltip") || "Export the insights into PDF report."}>
                             <PDFExportButton
                               className="pdf-export-button"
                               businessName={businessData.name}
@@ -1601,21 +1606,22 @@ const BusinessSetupPage = () => {
                               investmentPerformanceData={investmentPerformanceData}
                               leverageRiskData={leverageRiskData}
                             />
-                          )}
+                          </CustomTooltip>
 
                           {canShowRegenerateButtons && unlockedFeatures.analysis && hasInsightAccess && (
-                            <button
-                              onClick={() => canRegenerate && handleRegeneratePhase(currentPhase)}
-                              disabled={isAnalysisRegenerating || !unlockedFeatures.analysis || !canRegenerate || !hasInsightAccess}
-                              className={`regenerate-button ${isAnalysisRegenerating ? 'disabled' : ''}`}
-                              title={t('RegenerateAll') || 'Regenerate All'}
-                            >
-                              {isAnalysisRegenerating ? (
-                                <Loader size={16} className="animate-spin" />
-                              ) : (
-                                <RefreshCw size={16} />
-                              )}
-                            </button>
+                            <CustomTooltip align="right" message={t("regenerate_all_tooltip") || "Re-generate all insights."}>
+                              <button
+                                onClick={() => canRegenerate && handleRegeneratePhase(currentPhase)}
+                                disabled={isAnalysisRegenerating || !unlockedFeatures.analysis || !canRegenerate || !hasInsightAccess}
+                                className={`regenerate-button ${isAnalysisRegenerating ? 'disabled' : ''}`}
+                              >
+                                {isAnalysisRegenerating ? (
+                                  <Loader size={16} className="animate-spin" />
+                                ) : (
+                                  <RefreshCw size={16} />
+                                )}
+                              </button>
+                            </CustomTooltip>
                           )}
                         </>
                       )}
@@ -1623,28 +1629,31 @@ const BusinessSetupPage = () => {
                       {activeTab === "strategic" && (
                         <>
                           {unlockedFeatures.analysis && (
-                            <PDFExportButton
-                              className="pdf-export-button"
-                              businessName={businessData.name}
-                              onToastMessage={showToastMessage}
-                              disabled={isAnalysisRegenerating || isStrategicRegenerating}
-                              exportType="strategic"
-                              strategicData={strategicData}
-                            />
+                            <CustomTooltip align="right" message={t("download_strategic_tooltip") || "Export the strategic into PDF report."}>
+                              <PDFExportButton
+                                className="pdf-export-button"
+                                businessName={businessData.name}
+                                onToastMessage={showToastMessage}
+                                disabled={isAnalysisRegenerating || isStrategicRegenerating}
+                                exportType="strategic"
+                                strategicData={strategicData}
+                              />
+                            </CustomTooltip>
                           )}
                           {unlockedFeatures.analysis && hasStrategicAccess && (
-                            <button
-                              onClick={() => canRegenerate && handleStrategicAnalysisRegenerate()}
-                              disabled={isStrategicRegenerating || isAnalysisRegenerating || !canRegenerate || !unlockedFeatures.analysis || !hasStrategicAccess}
-                              className={`regenerate-button ${isStrategicRegenerating || isAnalysisRegenerating || !unlockedFeatures.analysis ? 'disabled' : ''}`}
-                              title={t("regenerate") || "Regenerate Strategic Analysis"}
-                            >
-                              {isStrategicRegenerating ? (
-                                <Loader size={16} className="animate-spin" />
-                              ) : (
-                                <RefreshCw size={16} />
-                              )}
-                            </button>
+                            <CustomTooltip align="right" message={t("regenerate_strategic_tooltip") || "Re-generate the S.T.R.A.T.E.G.I.C. analysis."}>
+                              <button
+                                onClick={() => canRegenerate && handleStrategicAnalysisRegenerate()}
+                                disabled={isStrategicRegenerating || isAnalysisRegenerating || !canRegenerate || !unlockedFeatures.analysis || !hasStrategicAccess}
+                                className={`regenerate-button ${isStrategicRegenerating || isAnalysisRegenerating || !unlockedFeatures.analysis ? 'disabled' : ''}`}
+                              >
+                                {isStrategicRegenerating ? (
+                                  <Loader size={16} className="animate-spin" />
+                                ) : (
+                                  <RefreshCw size={16} />
+                                )}
+                              </button>
+                            </CustomTooltip>
                           )}
                         </>
                       )}
@@ -1807,18 +1816,19 @@ const BusinessSetupPage = () => {
                   {activeTab === "insights" && unlockedFeatures.analysis && (
                     <div className="desktop-tabs-buttons">
                       {canShowRegenerateButtons && hasAnalysisData && (
-                        <button
-                          onClick={() => canRegenerate && handleRegeneratePhase(currentPhase)}
-                          disabled={isAnalysisRegenerating || !unlockedFeatures.analysis || !canRegenerate}
-                          className={`regenerate-button ${isAnalysisRegenerating ? 'disabled' : ''}`}
-                          title={t('RegenerateAll') || 'Regenerate All'}
-                        >
-                          {isAnalysisRegenerating ? (
-                            <Loader size={16} className="animate-spin" />
-                          ) : (
-                            <RefreshCw size={16} />
-                          )}
-                        </button>
+                        <CustomTooltip align="right" message={t("regenerate_all_tooltip") || "Re-generate all insights."}>
+                          <button
+                            onClick={() => canRegenerate && handleRegeneratePhase(currentPhase)}
+                            disabled={isAnalysisRegenerating || !unlockedFeatures.analysis || !canRegenerate}
+                            className={`regenerate-button ${isAnalysisRegenerating ? 'disabled' : ''}`}
+                          >
+                            {isAnalysisRegenerating ? (
+                              <Loader size={16} className="animate-spin" />
+                            ) : (
+                              <RefreshCw size={16} />
+                            )}
+                          </button>
+                        </CustomTooltip>
                       )}
                     </div>
                   )}
