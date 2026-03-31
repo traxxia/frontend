@@ -150,7 +150,7 @@ export const useAccessControl = (selectedBusinessId) => {
       const isProjectLaunched = project.launch_status?.toLowerCase() === 'launched' || project.status?.toLowerCase() === 'launched';
       if (!isProjectLaunched) return false;
 
-      if (isAdmin) return true;
+      //if (isAdmin) return true;
 
       const isOwner = project.accountable_owner_id && project.accountable_owner_id.toString() === myUserId;
       return isOwner === true;

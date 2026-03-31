@@ -32,6 +32,7 @@ import BusinessOverview from "./BusinessOverview";
 import SubscriptionTab from "./SubscriptionTab";
 import AcademyFeedbackAdmin from "./AcademyFeedbackAdmin";
 import PlanManagement from "./PlanManagement";
+import StaleBetsAdmin from "./StaleBetsAdmin";
 import { useTranslation } from "../hooks/useTranslation";
 import "../styles/superadmin.css";
 
@@ -112,7 +113,7 @@ const SuperAdminPanel = () => {
       label: t('Plan management') || "Plan Management",
       icon: ClipboardList,
       superAdminOnly: true,
-    }
+    },
   ];
 
   const tabs = allTabs.filter((tab) => {

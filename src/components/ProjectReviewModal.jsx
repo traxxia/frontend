@@ -15,7 +15,6 @@ const ProjectReviewModal = ({
     const [status, setStatus] = useState("");
     const [learningState, setLearningState] = useState("");
     const [noChanges, setNoChanges] = useState(false);
-    const [decision, setDecision] = useState("Continue");
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [showConfirmation, setShowConfirmation] = useState(false);
 
@@ -25,7 +24,6 @@ const ProjectReviewModal = ({
             setLearningState(project.learning_state || "Testing");
             setJustification("");
             setNoChanges(false);
-            setDecision("Continue");
             setShowConfirmation(false);
         }
     }, [project, isOpen]);
@@ -34,8 +32,21 @@ const ProjectReviewModal = ({
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        if (!justification.trim()) {
+        const trimmedJustification = justification.trim();
+
+        if (!trimmedJustification) {
             alert(t("Justification_is_required"));
+            return;
+        }
+
+        const words = trimmedJustification.split(/\s+/);
+        if (words.length < 3) {
+            alert(t("Justification_minimum_words") || "Justification must be at least 3 words.");
+            return;
+        }
+
+        if (!/^[a-zA-Z]/.test(trimmedJustification)) {
+            alert(t("Justification_starts_with_letter") || "Justification must start with a letter.");
             return;
         }
 
@@ -50,8 +61,7 @@ const ProjectReviewModal = ({
                 status: noChanges ? undefined : status,
                 learning_state: noChanges ? undefined : learningState,
                 justification,
-                no_changes: type === "review" ? noChanges : false,
-                decision: type === "review" && !noChanges ? decision : null
+                no_changes: type === "review" ? noChanges : false
             });
             setShowConfirmation(false);
             onClose();
@@ -64,7 +74,6 @@ const ProjectReviewModal = ({
 
     const statusOptions = ["Active", "At Risk", "Paused", "Killed", "Scaled"];
     const learningOptions = ["Testing", "Validated", "Invalidated"];
-    const decisionOptions = ["Continue", "Pivot", "Increase Investment", "Kill"];
 
     return (
         <div className="review-modal-overlay">
@@ -74,7 +83,7 @@ const ProjectReviewModal = ({
                         {type === "review" ? t("Perform_Review") : t("Ad_Hoc_Update")}
                         <span className="project-name-hint">: {project.project_name}</span>
                     </h2>
-                    <button className="close-btn" onClick={() => { setShowConfirmation(false); onClose(); }}><X size={20} /></button>
+                    <button className="close-btn" onClick={onClose}><X size={20} /></button>
                 </div>
 
                 <form onSubmit={handleSubmit} className="review-modal-body">
@@ -145,21 +154,6 @@ const ProjectReviewModal = ({
                     )}
 
                     <div className={`form-section ${noChanges ? 'disabled' : ''}`}>
-                        {type === "review" && (
-                            <div className="form-group" style={{ marginBottom: "16px" }}>
-                                <label>{t("Strategic_Decision") || "Strategic Decision"} *</label>
-                                <select
-                                    value={decision}
-                                    onChange={(e) => setDecision(e.target.value)}
-                                    disabled={noChanges}
-                                    style={{ width: "100%" }}
-                                >
-                                    {decisionOptions.map(opt => (
-                                        <option key={opt} value={opt}>{t(opt) || opt}</option>
-                                    ))}
-                                </select>
-                            </div>
-                        )}
                         <div className="grid-2">
                             <div className="form-group">
                                 <label>{t("Status")}</label>
