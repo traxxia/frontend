@@ -96,7 +96,8 @@ const ProjectCard = ({
     <div className={`project-card ${project.status === "Killed" ? "killed" : ""} ${(project.status?.toLowerCase() === "launched" ? "draft" : (project.status?.toLowerCase().replace(" ", "-") || "draft"))}-border`}>
       <div className="project-header">
         <div className="project-header-content">
-          {isAdmin && !isArchived && getUserLimits().project && (
+          {isAdmin && !isArchived && getUserLimits().project && 
+            !["completed", "scaled", "killed"].includes(project.status?.toLowerCase()) && (
             <input
               type="checkbox"
               checked={isSelected}
@@ -164,7 +165,7 @@ const ProjectCard = ({
           {showMenuId === project._id && (
             <div className="menu-dropdown">
               {isTerminal ? (
-                <div onClick={() => onEdit(project)} className="menu-item"><Eye size={14} /> {t("view")}</div>
+                <div onClick={() => onView(project)} className="menu-item"><Eye size={14} /> {t("view")}</div>
               ) : (!userCanEdit || isViewer || isArchived) ? (
                 <div onClick={() => onView(project)} className="menu-item"><Eye size={14} /> {t("view")}</div>
               ) : (

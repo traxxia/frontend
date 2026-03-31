@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, forwardRef } from "react";
 import { useTranslation } from "../hooks/useTranslation";
 import { Breadcrumb } from "react-bootstrap";
-import { TrendingUp, Zap, AlertTriangle, Circle, Diamond, Rocket, Bolt, Lightbulb, Heart, Shield, Boxes, Clock, DollarSign, Lock, CheckCircle, XCircle, Edit2, ShieldCheck, Users } from "lucide-react";
+import { TrendingUp, Zap, AlertTriangle, Circle, Diamond, Rocket, Bolt, Lightbulb, Heart, Shield, Boxes, Clock, DollarSign, Lock, CheckCircle, XCircle, Edit2, ShieldCheck, Users, Info } from "lucide-react";
 import { validateField } from "../utils/validation";
 import "../styles/NewProjectPage.css";
 
@@ -820,56 +820,43 @@ const ProjectForm = ({
       <fieldset disabled={isSubmitting || isReadOnly} style={{ border: 'none', padding: 0, margin: 0, minWidth: 0 }}>
         {isTerminal && (
           <div className="terminal-status-banner" style={{
-            backgroundColor: "#fef2f2",
-            border: "1px solid #fee2e2",
+            backgroundColor: "#eff6ff",
+            border: "1px solid #dbeafe",
             borderRadius: "8px",
-            padding: "16px 20px",
-            marginBottom: "24px",
+            padding: "10px 16px",
+            marginBottom: "20px",
             display: "flex",
-            flexDirection: "column",
-            gap: "12px",
-            color: "#991b1b"
+            alignItems: "center",
+            gap: "10px",
+            color: "#1e40af"
           }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-              <AlertTriangle size={24} color="#dc2626" />
-              <div>
-                <strong style={{ display: "block", fontSize: "16px", marginBottom: "2px" }}>
-                  {(() => {
-                    if (initialStatusLower === "completed") return "Project is in Completed state";
-                    if (initialStatusLower === "scaled") return "Project is in Scaled state";
-                    if (initialStatusLower === "killed") return "Project is in Killed state";
-                    return "Project in Final State";
-                  })()}
-                </strong>
-                <span style={{ fontSize: "14px", fontWeight: "500" }}>
-                  This project reached a final state and cannot be edited further.
-                </span>
-              </div>
+            <Info size={18} color="#2563eb" style={{ flexShrink: 0 }} />
+            <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap", fontSize: "14px" }}>
+              <span style={{ fontWeight: "600" }}>
+                {(() => {
+                  if (initialStatusLower === "completed") return "Project reached Completed state cannot be edited further.";
+                  if (initialStatusLower === "scaled") return "Project reached Scaled state cannot be edited further.";
+                  if (initialStatusLower === "killed") return "Project reached Killed state cannot be edited further.";
+                  return "Project reached a final state cannot be edited further.";
+                })()}
+              </span>
+              {decisionLog && decisionLog.length > 0 && (() => {
+                const latestTerminalLog = [...decisionLog]
+                  .reverse()
+                  .find(log => (log.to_status || "").toLowerCase() === initialStatusLower);
+                if (latestTerminalLog) {
+                  return (
+                    <>
+                      <span style={{ color: "#3b82f6", opacity: 0.8 }}>•</span>
+                      <span style={{ fontStyle: "italic", color: "#1d4ed8" }}>
+                        "{latestTerminalLog.justification || t("No_justification_provided")}"
+                      </span>
+                    </>
+                  );
+                }
+                return null;
+              })()}
             </div>
-            {decisionLog && decisionLog.length > 0 && (() => {
-              const latestTerminalLog = [...decisionLog]
-                .reverse()
-                .find(log => (log.to_status || "").toLowerCase() === initialStatusLower);
-              
-              if (latestTerminalLog) {
-                return (
-                  <div style={{ 
-                    marginTop: "4px", 
-                    paddingTop: "12px", 
-                    borderTop: "1px solid #fee2e2",
-                    fontSize: "13px"
-                  }}>
-                    <strong style={{ display: "block", marginBottom: "4px", color: "#7f1d1d" }}>
-                      {t("Justification") || "Justification"}:
-                    </strong>
-                    <p style={{ margin: 0, fontStyle: "italic", color: "#b91c1c" }}>
-                      "{latestTerminalLog.justification || t("No_justification_provided")}"
-                    </p>
-                  </div>
-                );
-              }
-              return null;
-            })()}
           </div>
         )}
         {/* Breadcrumb & Actions Header */}
