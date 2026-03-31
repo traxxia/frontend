@@ -160,7 +160,7 @@ body {
 .business-header-container {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 0px;
   background: #fff;
   padding: 2px 4px;
   border-radius: 8px;
@@ -169,7 +169,7 @@ body {
 .business-breadcrumb {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 0px;
 }
 
 .breadcrumb-separator {
@@ -377,16 +377,13 @@ body {
 .business-header-container {
   display: flex;
   align-items: center;
-  gap: 1.5rem;
+  gap: 0px;
   flex-shrink: 0;
 }
 
 .business-breadcrumb {
   display: flex;
-  align-items: center;
-  margin-left: 0.5rem;
-  padding-left: 1.5rem;
-  border-left: 1px solid #e5e7eb;
+  align-items: center;  
   height: 24px;
 }
 
