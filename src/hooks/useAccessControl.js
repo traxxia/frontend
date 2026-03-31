@@ -147,13 +147,17 @@ export const useAccessControl = (selectedBusinessId) => {
       if (isArchived) return false;
       if (!project) return false;
 
-      const isProjectLaunched = project.launch_status?.toLowerCase() === 'launched' || project.status?.toLowerCase() === 'launched';
+      const isProjectLaunched = 
+        project.launch_status?.toLowerCase() === 'launched' || 
+        project.status?.toLowerCase() === 'launched' || 
+        project.status?.toLowerCase() === 'active';
       if (!isProjectLaunched) return false;
 
       //if (isAdmin) return true;
 
       const isOwner = project.accountable_owner_id && project.accountable_owner_id.toString() === myUserId;
-      return isOwner === true;
+      const isCollaborator = Array.isArray(project.allowed_collaborators) && project.allowed_collaborators.includes(myUserId);
+      return isOwner || isCollaborator;
     },
     []
   );
