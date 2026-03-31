@@ -42,7 +42,8 @@
     border-bottom: 1px solid #e5e7eb;
     display: flex;
     justify-content: space-between;
-    align-items: center;
+    align-items: flex-start;
+    gap: 1rem;
 }
 
 .review-modal-header h2 {
@@ -63,9 +64,16 @@
     border: none;
     cursor: pointer;
     color: #9ca3af;
-    padding: 0.25rem;
+    padding: 0;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     border-radius: 50%;
     transition: background 0.2s;
+    margin-top: 0;
+    flex-shrink: 0;
 }
 
 .close-btn:hover {
