@@ -1808,7 +1808,7 @@ export const staticTranslations = {
     "no_stale_bets_found": "No stale bets found. Great job on keeping up with reviews!",
     "failed_to_fetch_stale_projects": "Failed to fetch stale projects",
     "cadence": "Cadence",
-    "last_reviewed": "Last Reviewed"
+    "last_reviewed": "Last Reviewed",
     "Confirm Status Change": "Confirm Status Change",
     "confirm_plan_update": "Confirm Plan Update",
     "status_change_active_msg": "Are you sure you want to change this plan's status to Inactive?",
