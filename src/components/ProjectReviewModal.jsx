@@ -32,8 +32,21 @@ const ProjectReviewModal = ({
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        if (!justification.trim()) {
+        const trimmedJustification = justification.trim();
+
+        if (!trimmedJustification) {
             alert(t("Justification_is_required"));
+            return;
+        }
+
+        const words = trimmedJustification.split(/\s+/);
+        if (words.length < 3) {
+            alert(t("Justification_minimum_words") || "Justification must be at least 3 words.");
+            return;
+        }
+
+        if (!/^[a-zA-Z]/.test(trimmedJustification)) {
+            alert(t("Justification_starts_with_letter") || "Justification must start with a letter.");
             return;
         }
 

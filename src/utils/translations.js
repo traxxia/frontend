@@ -1520,6 +1520,8 @@ export const staticTranslations = {
     'Learning_State': 'Learning State',
     'Justification_placeholder': 'Why is this change/review being made?',
     'Justification_is_required': 'Justification is required',
+    'Justification_minimum_words': 'Justification must be at least 3 words.',
+    'Justification_starts_with_letter': 'Justification must start with a letter.',
     'Submit_Review': 'Submit Review',
     'Never': 'Never',
     'Cancel': 'Cancel',
