@@ -127,7 +127,7 @@ const BusinessSetupPage = () => {
   const [documentInfo, setDocumentInfo] = useState(null);
   const [phaseAnalysisArray, setPhaseAnalysisArray] = useState([]);
   const [collapsedCategories, setCollapsedCategories] = useState(
-    new Set(['costs-financial', 'context-industry', 'customer', 'capabilities', 'competition', 'current-strategy'])
+    new Set(['current-strategy', 'costs-financial', 'context-industry', 'customer', 'capabilities', 'competition'])
   );
 
   const getLoggedInRole = () => {
@@ -998,20 +998,20 @@ const BusinessSetupPage = () => {
         "Customer": ["Purchase_Criteria", "Loyalty_&_NPS"]
       },
       essential: {
+        "Current Strategy": ["Core"],
         "Costs/Financial": ["Productivity_Metrics"],
         "Context/Industry": ["Porters_Five_Forces", "PESTEL_Analysis", "Full_SWOT_Portfolio", "Strategic_Positioning_Radar"],
         "Customer": ["Purchase_Criteria", "Loyalty_&_NPS", "Competitive_Advantage_Matrix"],
         "Capabilities": ["Capability_Heatmap", "Maturity_Score"],
-        "Competition": ["Competitive_Landscape"],
-        "Current Strategy": ["Core"]
+        "Competition": ["Competitive_Landscape"]
       },
       advanced: {
+        "Current Strategy": ["Core"],
         "Costs/Financial": ["Productivity_Metrics"],
         "Context/Industry": ["Porters_Five_Forces", "PESTEL_Analysis", "Full_SWOT_Portfolio", "Strategic_Positioning_Radar"],
         "Customer": ["Purchase_Criteria", "Loyalty_&_NPS", "Competitive_Advantage_Matrix"],
         "Capabilities": ["Capability_Heatmap", "Maturity_Score"],
-        "Competition": ["Competitive_Landscape"],
-        "Current Strategy": ["Core"]
+        "Competition": ["Competitive_Landscape"]
       }
     };
 

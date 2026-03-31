@@ -177,6 +177,12 @@ const AnalysisContentManager = (props) => {
 
   const CATEGORIES = [
     {
+      id: 'current-strategy',
+      title: t('Current Strategy'),
+      subtitle: t('Strategic_focus_areas_and_growth_opportunities'),
+      icon: Target
+    },
+    {
       id: 'costs-financial',
       title: t('Costs/Financial'),
       subtitle: t('Financial_performance,_profitability,_and_resource_efficiency_metrics'),
@@ -205,12 +211,6 @@ const AnalysisContentManager = (props) => {
       title: t('Competition'),
       subtitle: t('Competitive_landscape_and_market_positioning_analysis'),
       icon: Award
-    },
-    {
-      id: 'current-strategy',
-      title: t('Current Strategy'),
-      subtitle: t('Strategic_focus_areas_and_growth_opportunities'),
-      icon: Target
     }
   ];
 
