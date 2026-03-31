@@ -262,7 +262,8 @@
 
 /* Dropdown Toggle Arrows - Hide them */
 .hamburger-menu::after,
-.user-menu::after {
+.user-menu::after,
+.notification-menu::after {
   display: none !important;
 }
 
@@ -344,4 +345,37 @@
   padding: 6px 18px !important;
   gap: 1px !important;
   width: 100%;
+}
+
+/* Notification Empty State Animation */
+@keyframes emptyStateFloatPulse {
+  0% {
+    transform: translateY(0) scale(1);
+    box-shadow: 0 0 0 0 rgba(0,0,0,0.05);
+  }
+  50% {
+    transform: translateY(-6px) scale(1.05);
+    box-shadow: 0 12px 20px -5px rgba(0,0,0,0.08);
+  }
+  100% {
+    transform: translateY(0) scale(1);
+    box-shadow: 0 0 0 0 rgba(0,0,0,0.05);
+  }
+}
+
+@keyframes emptyStateSoftSwing {
+  0% { transform: rotate(0deg); }
+  25% { transform: rotate(-8deg); }
+  50% { transform: rotate(0deg); }
+  75% { transform: rotate(8deg); }
+  100% { transform: rotate(0deg); }
+}
+
+.notification-empty-bell {
+  animation: emptyStateFloatPulse 3s ease-in-out infinite;
+  transition: all 0.3s ease;
+}
+
+.notification-empty-bell svg {
+  animation: emptyStateSoftSwing 4s ease-in-out infinite;
 }
