@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, forwardRef } from "react";
 import { useTranslation } from "../hooks/useTranslation";
 import { Breadcrumb } from "react-bootstrap";
-import { TrendingUp, Zap, AlertTriangle, Circle, Diamond, Rocket, Bolt, Lightbulb, Heart, Shield, Boxes, Clock, DollarSign, Lock, CheckCircle, XCircle, Edit2, ShieldCheck, Users } from "lucide-react";
+import { TrendingUp, Zap, AlertTriangle, Circle, Diamond, Rocket, Bolt, Lightbulb, Heart, Shield, Boxes, Clock, DollarSign, Lock, CheckCircle, XCircle, Edit2, ShieldCheck, Users, Info } from "lucide-react";
 import { validateField } from "../utils/validation";
 import "../styles/NewProjectPage.css";
 
@@ -332,6 +332,8 @@ const ProjectForm = ({
   selectedBusinessId,
   projectId,
   isAdmin = false,
+  initialStatus,
+  decisionLog,
 }) => {
   const { t } = useTranslation();
   const isReadOnly = mode === "view" || readOnly;
@@ -428,8 +430,9 @@ const ProjectForm = ({
     );
   };
 
+  const initialStatusLower = (initialStatus || "").toLowerCase();
   const isLaunched = (launchStatus || "").toLowerCase() === "launched" || ["active", "at risk", "paused", "completed", "scaled"].includes((status || "").toLowerCase());
-  const isTerminal = (status || "").toLowerCase() === "completed" || (status || "").toLowerCase() === "scaled" || ((status || "").toLowerCase() === "killed" && !isAdmin);
+  const isTerminal = initialStatusLower === "completed" || initialStatusLower === "scaled" || (initialStatusLower === "killed" && !isAdmin);
 
   const getSubmitButtonText = () => {
     if (isSubmitting) {
@@ -815,6 +818,47 @@ const ProjectForm = ({
   return (
     <>
       <fieldset disabled={isSubmitting || isReadOnly} style={{ border: 'none', padding: 0, margin: 0, minWidth: 0 }}>
+        {isTerminal && (
+          <div className="terminal-status-banner" style={{
+            backgroundColor: "#eff6ff",
+            border: "1px solid #dbeafe",
+            borderRadius: "8px",
+            padding: "10px 16px",
+            marginBottom: "20px",
+            display: "flex",
+            alignItems: "center",
+            gap: "10px",
+            color: "#1e40af"
+          }}>
+            <Info size={18} color="#2563eb" style={{ flexShrink: 0 }} />
+            <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap", fontSize: "14px" }}>
+              <span style={{ fontWeight: "600" }}>
+                {(() => {
+                  if (initialStatusLower === "completed") return "Project reached Completed state cannot be edited further.";
+                  if (initialStatusLower === "scaled") return "Project reached Scaled state cannot be edited further.";
+                  if (initialStatusLower === "killed") return "Project reached Killed state cannot be edited further.";
+                  return "Project reached a final state cannot be edited further.";
+                })()}
+              </span>
+              {decisionLog && decisionLog.length > 0 && (() => {
+                const latestTerminalLog = [...decisionLog]
+                  .reverse()
+                  .find(log => (log.to_status || "").toLowerCase() === initialStatusLower);
+                if (latestTerminalLog) {
+                  return (
+                    <>
+                      <span style={{ color: "#3b82f6", opacity: 0.8 }}>•</span>
+                      <span style={{ fontStyle: "italic", color: "#1d4ed8" }}>
+                        "{latestTerminalLog.justification || t("No_justification_provided")}"
+                      </span>
+                    </>
+                  );
+                }
+                return null;
+              })()}
+            </div>
+          </div>
+        )}
         {/* Breadcrumb & Actions Header */}
         <div className="projects-breadcrumb">
           <Breadcrumb style={{ margin: 0 }}>

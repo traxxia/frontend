@@ -22,7 +22,7 @@ const GlobalAiAssistant = () => {
   const [projectId, setProjectId] = useState(null);
   const [pageContext, setPageContext] = useState(null);
   const [isArchived, setIsArchived] = useState(false);
-
+  const [isDisabled, setIsDisabled] = useState(false);
   useEffect(() => {
     const handleContextChange = (event) => {
       if (event.detail && event.detail.projectId !== undefined) {
@@ -33,6 +33,9 @@ const GlobalAiAssistant = () => {
       }
       if (event.detail && event.detail.isArchived !== undefined) {
         setIsArchived(event.detail.isArchived);
+      }
+      if (event.detail && event.detail.isDisabled !== undefined) {
+        setIsDisabled(event.detail.isDisabled);
       }
     };
 
@@ -48,6 +51,7 @@ const GlobalAiAssistant = () => {
     setProjectId(null);
     setPageContext(null);
     setIsArchived(false);
+    setIsDisabled(false);
   }, [location.pathname]);
 
   const isExcluded =
@@ -57,7 +61,7 @@ const GlobalAiAssistant = () => {
 
   if (isExcluded) return null;
 
-  return <Aiassistant projectId={projectId} pageContext={pageContext} />;
+  return <Aiassistant projectId={projectId} pageContext={pageContext} isDisabled={isDisabled} />;
 };
 
 const Register = React.lazy(() => import('./pages/Register'));

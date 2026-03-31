@@ -65,12 +65,15 @@ const ProjectCard = ({
   // Determine if user can edit this project
   const userCanEdit = canEditProject ? canEditProject(project) : true;
   const userCanReview = canReviewProject ? canReviewProject(project, isAdmin, myUserId, isArchived) : false;
+  const statusLower = project.status?.toLowerCase();
+  const isTerminal = ["completed", "scaled", "killed"].includes(statusLower);
 
   const getStatusIcon = (status) => {
     switch (status) {
       case 'Active': return <PlayCircle size={14} color="green" />;
       case 'At Risk': return <AlertTriangle size={14} color="red" />;
       case 'Paused': return <PauseCircle size={14} color="orange" />;
+      case 'Completed': return <CheckCircle size={14} color="#2563eb" />;
       case 'Killed': return <XCircle size={14} color="grey" />;
       case 'Scaled': return <CheckCircle size={14} color="purple" />;
       default: return <Edit2 size={14} color="grey" />; // Draft
@@ -93,7 +96,8 @@ const ProjectCard = ({
     <div className={`project-card ${project.status === "Killed" ? "killed" : ""} ${(project.status?.toLowerCase() === "launched" ? "draft" : (project.status?.toLowerCase().replace(" ", "-") || "draft"))}-border`}>
       <div className="project-header">
         <div className="project-header-content">
-          {isAdmin && !isArchived && getUserLimits().project && (
+          {isAdmin && !isArchived && getUserLimits().project && 
+            !["completed", "scaled", "killed"].includes(project.status?.toLowerCase()) && (
             <input
               type="checkbox"
               checked={isSelected}
@@ -160,15 +164,19 @@ const ProjectCard = ({
           </button>
           {showMenuId === project._id && (
             <div className="menu-dropdown">
-              {(!userCanEdit || isViewer || isArchived) ? (
+              {isTerminal ? (
+                <div onClick={() => onView(project)} className="menu-item"><Eye size={14} /> {t("view")}</div>
+              ) : (!userCanEdit || isViewer || isArchived) ? (
                 <div onClick={() => onView(project)} className="menu-item"><Eye size={14} /> {t("view")}</div>
               ) : (
                 <div onClick={() => onEdit(project)} className="menu-item"><Edit2 size={14} /> {t("edit")}</div>
               )}
-              {!isViewer && !isArchived && isAdmin && (!projectCreationLocked || project.status?.toLowerCase() === "draft" || !project.status) && (
+              {!isViewer && !isArchived && isAdmin && 
+                (!projectCreationLocked || project.status?.toLowerCase() === "draft" || !project.status) && 
+                !isTerminal && (
                 <div onClick={() => onDelete(project._id)} className="menu-item delete"><Trash2 size={14} /> {t("delete")}</div>
               )}
-              {userCanReview && !isArchived && (
+              {userCanReview && !isArchived && !['completed', 'scaled'].includes(project.status?.toLowerCase()) && (
                 <>
                   <div onClick={() => onPerformReview(project)} className="menu-item"><CheckCircle size={14} /> {t("Perform_Review")}</div>
                   <div onClick={() => onAdhocUpdate(project)} className="menu-item"><Edit2 size={14} /> {t("Ad_Hoc_Update")}</div>

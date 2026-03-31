@@ -58,6 +58,7 @@ const ProjectsList = ({
       "At Risk": [],
       "Paused": [],
       "Killed": [],
+      "Completed": [],
       "Scaled": []
     };
 
@@ -71,10 +72,14 @@ const ProjectsList = ({
         groups["Paused"].push(p);
       } else if (statusValue === "killed") {
         groups["Killed"].push(p);
+      } else if (statusValue === "completed") {
+        groups["Completed"].push(p);
       } else if (statusValue === "scaled") {
         groups["Scaled"].push(p);
+      } else if (statusValue === "draft") {
+        groups["Draft"].push(p);
       } else {
-        // Includes 'draft', 'launched', and any unknown fallback
+        // Unknown fallback
         groups["Draft"].push(p);
       }
     });

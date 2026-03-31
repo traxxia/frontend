@@ -43,11 +43,17 @@ const AccessManagement = ({ onToast }) => {
                 ? res.data
                 : [...(res.data.businesses || []), ...(res.data.collaborating_businesses || [])];
 
-            const launchedBusinesses = data.filter(b => (b.status || "").toLowerCase() === 'launched' || b.has_launched_projects === true);
-            setBusinesses(launchedBusinesses);
+            const businessesWithGrants = data.filter(b => 
+                ((b.status || "").toLowerCase() === 'launched' || b.has_launched_projects === true) &&
+                (b.status || "").toLowerCase() !== 'archived' &&
+                (b.access_mode || "").toLowerCase() !== 'archived' &&
+                (b.status || "").toLowerCase() !== 'deleted' &&
+                b.has_access_grants === true
+            );
+            setBusinesses(businessesWithGrants);
 
-            if (launchedBusinesses.length > 0 && !selectedBusinessId) {
-                setSelectedBusinessId(launchedBusinesses[0]._id);
+            if (businessesWithGrants.length > 0 && !selectedBusinessId) {
+                setSelectedBusinessId(businessesWithGrants[0]._id);
             }
         } catch (err) {
             console.error("Failed to fetch businesses", err);
