@@ -194,8 +194,7 @@ const EditableField = ({
                   height: '32px',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '6px',
-                  backgroundColor: 'white',
+                  gap: '6px', 
                   color: '#374151',
                   border: '1px solid #d1d5db',
                   borderRadius: '6px',
@@ -1425,7 +1424,7 @@ const EditableBriefSection = ({
                 <div key="feature-blocks-row" style={{
                   display: 'flex',
                   gap: '20px',
-                  marginBottom: '28px',
+                  marginBottom: '10px',
                   flexWrap: 'wrap'
                 }}>
                   {hasPmfAccess && (
