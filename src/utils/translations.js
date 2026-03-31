@@ -179,7 +179,8 @@ export const staticTranslations = {
     "STRATEGIC_LABEL": "S.T.R.A.T.E.G.I.C.",
 
     "Appendix (6 C's)": "Appendix (6 C's)",
-    "backToOverview": "Back",
+    "backToOverview": "Back to Dashboard",
+    "backToDashboard_B3": "Back to Dashboard",
 
     // PMF Insights Tab
     "AHA Insights": "AHA Insights",
@@ -404,8 +405,8 @@ export const staticTranslations = {
     // BUSINESS DETAIL PAGE
     // ===========================
     'questions': 'Questions',
-    'insights': 'Insights (6 Cs)',
-    'strategic': 'S.T.R.A.T.E.G.I.C',
+    'insights': 'Insights',
+    'strategic': 'S.T.R.A.T.E.G.I.C.',
     'saving': 'Saving...',
     'save_successful': 'Save successful!',
     'save_failed': 'Save failed',
@@ -918,7 +919,8 @@ export const staticTranslations = {
     'yourBusiness': 'Your Business',
     'whatWeDo': 'Business description will appear here after answering questions in the chat.',
     'businessInfoMessage': 'Your business information will appear here as you answer questions in the chat.',
-    'backToOverview': 'Back',
+    'backToOverview': 'Back to Dashboard',
+    'backToDashboard_B3': 'Back to Dashboard',
     'goToSection': 'Go to Section',
     'RegenerateAll': 'Regenerate All',
     'assistant': 'Assistant',
@@ -1985,9 +1987,10 @@ export const staticTranslations = {
     // ===========================
     'Priorities & Projects': 'Prioridades y Proyectos',
     'Questions and Answers': 'Preguntas y Respuestas',
-    "Insight (6 C's)": "Insight (6 C's)",
+    "Insight (6 C's)": "Insights",
     "Appendix (6 C's)": "Apéndice (6 C's)",
-    "backToOverview": "Volver",
+    "backToOverview": "Volver al Panel",
+    "backToDashboard_B3": "Volver al Panel",
 
     // PMF Insights Tab
     "AHA Insights": "Perspectivas AHA",
@@ -2228,8 +2231,8 @@ export const staticTranslations = {
     // PÁGINA DE DETALLE DEL NEGOCIO
     // ===========================
     'questions': 'Preguntas',
-    'insights': 'Perspectivas (6 Cs)',
-    'strategic': 'E.S.T.R.A.T.É.G.I.C.O',
+    'insights': 'Insights',
+    'strategic': 'S.T.R.A.T.E.G.I.C.',
     'Not Answered': 'No Respondida',
     'saving': 'Guardando...',
 
@@ -2415,7 +2418,8 @@ export const staticTranslations = {
     'yourBusiness': 'Tu Negocio',
     'whatWeDo': 'La descripción del negocio aparecerá aquí después de responder a las preguntas en el chat.',
     'businessInfoMessage': 'La información de tu negocio aparecerá aquí a medida que respondas preguntas en el chat.',
-    'backToOverview': 'Atrás',
+    'backToOverview': 'Volver al Panel',
+    'backToDashboard_B3': 'Volver al Panel',
     'goToSection': 'Ir a la Sección',
     'RegenerateAll': 'Regenerar Todo',
     'assistant': 'Asistente',

@@ -1208,96 +1208,19 @@ const BusinessSetupPage = () => {
               </button>
             </div>
 
-            <div className="mobile-active-tab" ref={navDropdownRef}>
+            <div className="mobile-active-tab">
               {(['executive', 'advanced', 'insights', 'strategic', 'priorities', 'projects'].includes(activeTab)) ? (
                 <div className="mobile-tab-selector">
-                  <button 
-                    className="mobile-tab-trigger" 
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      const category = ['executive', 'advanced', 'insights', 'strategic'].includes(activeTab) ? 'insights' : 'execution';
-                      setActiveNavDropdown(activeNavDropdown === category ? null : category);
-                    }}
-                  >
+                  <div className="mobile-tab-trigger no-dropdown">
                     <span>
                       {activeTab === "executive" && t("Executive Summary")}
                       {activeTab === "priorities" && t("Priorities")}
                       {activeTab === "advanced" && t("Answers/Brief")}
-                      {activeTab === "insights" && (hasPmfAccess ? t("Insight (6 C's)") : "Insights (6 Cs)")}
+                      {activeTab === "insights" && (hasPmfAccess ? t("insights") : "Insights")}
                       {activeTab === "strategic" && (hasPmfAccess ? t("strategic") : "S.T.R.A.T.E.G.I.C")}
                       {activeTab === "projects" && t("Projects")}
                     </span>
-                    <ChevronDown size={14} className={`chevron-icon ${activeNavDropdown ? 'rotated' : ''}`} />
-                  </button>
-
-                  {activeNavDropdown === 'insights' && (
-                    <div className="nav-dropdown-menu mobile-dropdown">
-                      <div className="dropdown-main-header">{t("Insights & Recommendations")}</div>
-                      {hasPmfAccess && (
-                        <>
-                          <div className="dropdown-section-label">{t("Basic")}</div>
-                          <button 
-                            className={`dropdown-item ${activeTab === 'executive' ? 'active' : ''}`} 
-                            onClick={() => { handleExecutiveTabClick(); setActiveNavDropdown(null); }}
-                          >
-                            <LayoutDashboard size={14} />
-                            <span>{t("Executive Summary")}</span>
-                          </button>
-                        </>
-                      )}
-
-                      <div className="dropdown-section-label mt-2">{t("Advanced")}</div>
-                      <button 
-                        className={`dropdown-item ${activeTab === 'advanced' ? 'active' : ''}`} 
-                        onClick={() => { handleBriefTabClick(); setActiveNavDropdown(null); }}
-                      >
-                        <HelpCircle size={14} />
-                        <span>{t("Answers/Brief")}</span>
-                      </button>
-                      {hasInsightAccess && (
-                        <button 
-                          className={`dropdown-item ${activeTab === 'insights' ? 'active' : ''}`} 
-                          onClick={() => { setActiveTab('insights'); setActiveNavDropdown(null); }}
-                        >
-                          <TrendingUp size={14} />
-                          <span>{t("Insights")}</span>
-                        </button>
-                      )}
-                      {hasStrategicAccess && (
-                        <button 
-                          className={`dropdown-item ${activeTab === 'strategic' ? 'active' : ''}`} 
-                          onClick={() => { setActiveTab('strategic'); setActiveNavDropdown(null); }}
-                        >
-                          <Target size={14} />
-                          <span>{t("STRATEGIC_LABEL") || "S.T.R.A.T.E.G.I.C."}</span>
-                        </button>
-                      )}
-                    </div>
-                  )}
-
-                  {activeNavDropdown === 'execution' && (
-                    <div className="nav-dropdown-menu mobile-dropdown">
-                      <div className="dropdown-main-header">{t("Execution")}</div>
-                      {hasPmfAccess && (
-                        <button 
-                          className={`dropdown-item ${activeTab === 'priorities' ? 'active' : ''}`} 
-                          onClick={() => { handlePrioritiesTabClick(); setActiveNavDropdown(null); }}
-                        >
-                          <ListTodo size={14} />
-                          <span>{t("Priorities")}</span>
-                        </button>
-                      )}
-                      {showProjectsTab && hasProjectAccess && (
-                        <button 
-                          className={`dropdown-item ${activeTab === 'projects' ? 'active' : ''}`} 
-                          onClick={() => { setActiveTab('projects'); setActiveNavDropdown(null); }}
-                        >
-                          <Briefcase size={14} />
-                          <span>{t("Projects")}</span>
-                        </button>
-                      )}
-                    </div>
-                  )}
+                  </div>
                 </div>
               ) : (
                 <>
@@ -1305,7 +1228,7 @@ const BusinessSetupPage = () => {
                   {activeTab === "executive" && t("Executive Summary")}
                   {activeTab === "priorities" && t("Priorities & Projects")}
                   {activeTab === "advanced" && t("Questions and Answers")}
-                  {activeTab === "insights" && (hasPmfAccess ? t("Insight (6 C's)") : "Insights (6 Cs)")}
+                  {activeTab === "insights" && (hasPmfAccess ? t("Insights") : "Insights")}
                   {activeTab === "strategic" && (hasPmfAccess ? t("strategic") : "S.T.R.A.T.E.G.I.C")}
                   {activeTab === "projects" && t("Projects")}
                 </>
@@ -1511,10 +1434,11 @@ const BusinessSetupPage = () => {
                       <div className="business-header-container">
                         <button className="back-button" onClick={handleBackFromAnalysis} aria-label="Go Back">
                           <ArrowLeft size={18} />
-                          {t("backToOverview")}
+                          <span className="breadcrumb-back">{t("backToDashboard_B3") || "Back to Dashboard"}</span>
                         </button>
                         {selectedBusinessName && (
                           <div className="business-breadcrumb">
+                            <span className="breadcrumb-separator">/</span>
                             <span className="business-header-name">{selectedBusinessName}</span>
                           </div>
                         )}
