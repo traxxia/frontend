@@ -916,20 +916,22 @@ const ProjectsSection = ({
                       {t("Rank_Projects")}
                     </button>
 
-                    <button
-                      onClick={onToggleTeamRankings}
-                      className={`status-tab ${showTeamRankings ? 'active' : ''}`}
-                    >
-                      <Users size={16} />
-                      {t("Rankings_View")}
-                    </button>
+                    {lockSummary.total_users > 0 && (
+                      <button
+                        onClick={onToggleTeamRankings}
+                        className={`status-tab ${showTeamRankings ? 'active' : ''}`}
+                      >
+                        <Users size={16} />
+                        {t("Rankings_View")}
+                      </button>
+                    )}
                   </div>
                 )}
 
               </div>
 
               {/* Repositioned Collaborator Progress - Admin Only */}
-              {isSuperAdmin && (
+              {isSuperAdmin && lockSummary.total_users > 0 && (
                 <div className="collaborator-progress-compact d-flex align-items-center gap-2 px-3 py-2 mt-md-0 mt-2" style={{
                   backgroundColor: '#f8fafc',
                   borderRadius: '100px', // Matches status-tabs

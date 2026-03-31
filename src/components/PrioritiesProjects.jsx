@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Card, Button, Form, Row, Col, Badge, Spinner, ProgressBar, Modal } from "react-bootstrap";
 import { ChevronRight, ArrowRight } from "react-bootstrap-icons";
-import { Folder, CheckCircle, Rocket, Info } from "lucide-react";
+import { Folder, CheckCircle, Rocket, Info, AlertTriangle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { AnalysisApiService } from "../services/analysisApiService";
 import { useTranslation } from "../hooks/useTranslation";
@@ -19,6 +19,8 @@ const PrioritiesProjects = ({ selectedBusinessId, companyAdminIds, onSuccess, on
   const [showPlanLimitModal, setShowPlanLimitModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [lastKickstartedCount, setLastKickstartedCount] = useState(0);
+  const [hasCollaborators, setHasCollaborators] = useState(true);
+  const [showNoCollaboratorsModal, setShowNoCollaboratorsModal] = useState(false);
   const navigate = useNavigate();
   const userRole = (
     sessionStorage.getItem("role") ||
@@ -43,6 +45,9 @@ const PrioritiesProjects = ({ selectedBusinessId, companyAdminIds, onSuccess, on
         const data = await apiService.getKickstartData(selectedBusinessId);
         if (data && data.priorities) {
           setPriorities(data.priorities);
+          if (data.hasCollaborators !== undefined) {
+            setHasCollaborators(data.hasCollaborators);
+          }
         }
       } catch (error) {
         console.error("Error fetching kickstart data:", error);
@@ -74,6 +79,12 @@ const PrioritiesProjects = ({ selectedBusinessId, companyAdminIds, onSuccess, on
       return;
     }
 
+    // Check for collaborators if admin
+    if (isAdmin && !hasCollaborators && !showNoCollaboratorsModal) {
+      setShowNoCollaboratorsModal(true);
+      return;
+    }
+
     try {
       setKickstarting(true);
       const selectedPriorities = selected.map(idx => priorities[idx]);
@@ -96,10 +107,14 @@ const PrioritiesProjects = ({ selectedBusinessId, companyAdminIds, onSuccess, on
       const data = await apiService.getKickstartData(selectedBusinessId);
       if (data && data.priorities) {
         setPriorities(data.priorities);
+        if (data.hasCollaborators !== undefined) {
+          setHasCollaborators(data.hasCollaborators);
+        }
       }
       setSelected([]);
       setLastKickstartedCount(totalProjectsCreated);
       setShowSuccessModal(true);
+      setShowNoCollaboratorsModal(false);
 
     } catch (error) {
       console.error("Error kickstarting projects:", error);
@@ -302,6 +317,40 @@ const PrioritiesProjects = ({ selectedBusinessId, companyAdminIds, onSuccess, on
             </Button>
             <Button variant="link" onClick={() => setShowSuccessModal(false)} className="text-muted text-decoration-none">
               {t("Stay on Priorities")}
+            </Button>
+          </div>
+        </Modal.Body>
+      </Modal>
+
+      {/* NO COLLABORATORS CONFIRMATION MODAL */}
+      <Modal
+        show={showNoCollaboratorsModal}
+        onHide={() => setShowNoCollaboratorsModal(false)}
+        centered
+        className="kickstart-confirm-modal"
+      >
+        <Modal.Body className="text-center p-4">
+          <div className="warning-icon-wrapper mb-3">
+            <AlertTriangle size={48} className="text-warning" />
+          </div>
+          <h4 className="fw-bold mb-2">{t("Kickstart without Collaborators")}?</h4>
+          <p className="text-muted mb-4">
+            {t("You haven't added any collaborators to this business yet. Projects will be created but won't have assigned owners.")}
+          </p>
+          <div className="d-grid gap-2">
+            <Button 
+              variant="success" 
+              onClick={() => handleKickstart()} 
+              className="d-flex align-items-center justify-content-center gap-2 py-2 fw-semibold"
+            >
+              {t("Yes, Kickstart Projects")}
+            </Button>
+            <Button 
+              variant="outline-secondary" 
+              onClick={() => setShowNoCollaboratorsModal(false)} 
+              className="py-2"
+            >
+              {t("No, I'll add collaborators first")}
             </Button>
           </div>
         </Modal.Body>

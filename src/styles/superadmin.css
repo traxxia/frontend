@@ -530,7 +530,7 @@
   border-radius: 0.75rem;
   width: 90%;
   max-width: 600px;
-  min-height: 90vh;
+  min-height: fit-content;
   overflow-y: auto;
 }
 
@@ -2164,7 +2164,7 @@
   border-radius: 0.75rem;
   width: 90%;
   max-width: 600px;
-  max-height: 90vh;
+  max-height: fit-content;
   overflow-y: auto;
 }
 
