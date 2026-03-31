@@ -19,8 +19,8 @@ export const useBusinessSetup = (business, selectedBusinessId) => {
       if (navState.initialTab === 'analysis') return 'insights';
       return navState.initialTab;
     }
-    // Default: aha on all screens (AHA is the landing tab from Dashboard)
-    return 'aha';
+    // Default: executive summary on all screens (Executive Summary is the landing tab from Dashboard)
+    return 'executive';
   });
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [isAnalysisExpanded, setIsAnalysisExpanded] = useState(false);
