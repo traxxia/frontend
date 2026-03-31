@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { ChevronDown, ChevronUp, CheckCircle2, AlertCircle, Info, Target, FileText, ListChecks, Loader2 } from "lucide-react";
+import { ChevronDown, ChevronUp, CheckCircle2, AlertCircle, Info, Target, FileText, ListChecks, Loader2, Zap } from "lucide-react";
 import { AnalysisApiService } from "../services/analysisApiService";
 import "../styles/executiveSummary.css";
 import { useTranslation } from "../hooks/useTranslation";
@@ -9,6 +9,7 @@ const ExecutiveSummary = ({ businessId, onStartOnboarding }) => {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [expandedSections, setExpandedSections] = useState({
+    ahaInsights: false,
     whereToCompete: false,
     howToCompete: false,
     topPriorities: false,
@@ -144,28 +145,45 @@ const ExecutiveSummary = ({ businessId, onStartOnboarding }) => {
   return (
     <div className="exc-executive-summary-container">
       <div className="exc-executive-content">
-        {/* AHA INSIGHTS STRIP */}
+        {/* AHA INSIGHTS SECTION */}
         {topAhaInsights.length > 0 && (
-          <div className="exc-aha-strip-container mb-4">
-            <div className="exc-aha-strip-header d-flex align-items-center gap-2 mb-3">
-              <div className="exc-aha-dot"></div>
-              <h4 className="exc-aha-strip-title mb-0">{t("AHA Insights")}</h4>
-            </div>
-            <div className="exc-aha-tiles">
-              {topAhaInsights.map((insight, idx) => (
-                <div key={idx} className="exc-aha-tile">
-                  <div className="exc-aha-tile-header">
-                    <span className="exc-aha-tile-category">{insight.type || t("Insight")}</span>
-                  </div>
-                  <h5 className="exc-aha-tile-title">{insight.title}</h5>
-                  <ul className="exc-aha-tile-details">
-                    {(insight.details || insight.key_points || []).slice(0, 2).map((detail, dIdx) => (
-                      <li key={dIdx}>{detail}</li>
-                    ))}
-                  </ul>
+          <div className="exc-section-card">
+            <div className="exc-section-header" onClick={() => toggleSection("ahaInsights")}>
+              <div className="exc-section-title-wrapper">
+                <div className="exc-section-icon exc-aha-icon">
+                  <Zap size={20} />
                 </div>
-              ))}
+                <div>
+                  <h3 className="exc-section-title">{t("AHA Insights")}</h3>
+                  <p className="exc-section-subtitle">
+                    {t("Key strategic insights based on your onboarding")}
+                  </p>
+                </div>
+              </div>
+              <button className="exc-section-toggle">
+                {expandedSections.ahaInsights ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+              </button>
             </div>
+
+            {expandedSections.ahaInsights && (
+              <div className="exc-section-body">
+                <div className="exc-aha-vertical-tiles">
+                  {topAhaInsights.map((insight, idx) => (
+                    <div key={idx} className="exc-aha-tile full-width">
+                      <div className="exc-aha-tile-header">
+                        <span className="exc-aha-tile-category">{insight.type || t("Insight")}</span>
+                      </div>
+                      <h5 className="exc-aha-tile-title">{insight.title}</h5>
+                      <ul className="exc-aha-tile-details">
+                        {(insight.details || insight.key_points || []).slice(0, 3).map((detail, dIdx) => (
+                          <li key={dIdx}>{detail}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )}
 

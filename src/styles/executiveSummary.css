@@ -21,55 +21,22 @@
   gap: 10px;
 }
 
-/* AHA Insights Strip */
-.exc-aha-strip-container {
-  background: white;
-  padding: 1.5rem;
-  border-radius: 12px;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  border: 1px solid #e5e7eb;
+/* AHA Insights Section Styles */
+.exc-section-icon.exc-aha-icon {
+  background: #e0f2fe;
+  color: #0284c7;
 }
 
-[data-theme="dark"] .exc-aha-strip-container {
-  background-color: #333946 !important;
-  border-color: #4b5563 !important;
-}
-
-.exc-aha-dot {
-  width: 10px;
-  height: 10px;
-  background-color: #2563eb;
-  border-radius: 50%;
-}
-
-.exc-aha-strip-title {
-  font-size: 1.1rem;
-  font-weight: 700;
-  color: #1f2937;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-[data-theme="dark"] .exc-aha-strip-title {
-  color: #ffffff !important;
-}
-
-.exc-aha-tiles {
+.exc-aha-vertical-tiles {
   display: flex;
+  flex-direction: column;
   gap: 1rem;
-  overflow-x: auto;
-  padding-bottom: 5px;
-  scrollbar-width: thin;
-  scrollbar-color: #d1d5db transparent;
 }
 
-.exc-aha-tiles::-webkit-scrollbar {
-  height: 6px;
-}
-
-.exc-aha-tiles::-webkit-scrollbar-thumb {
-  background-color: #d1d5db;
-  border-radius: 10px;
+.exc-aha-tile.full-width {
+  min-width: 100%;
+  max-width: 100%;
+  flex: none;
 }
 
 .exc-aha-tile {
