@@ -114,11 +114,6 @@ const SuperAdminPanel = () => {
       icon: ClipboardList,
       superAdminOnly: true,
     },
-    {
-      id: "stale_bets",
-      label: t('stale_bets') || "Stale Bets",
-      icon: AlertCircle
-    }
   ];
 
   const tabs = allTabs.filter((tab) => {
@@ -160,8 +155,6 @@ const SuperAdminPanel = () => {
         return <AcademyFeedbackAdmin onToast={showToastMessage} />;
       case "plans":
         return <PlanManagement onToast={showToastMessage} />;
-      case "stale_bets":
-        return <StaleBetsAdmin onToast={showToastMessage} />;
       default:
         return <CompanyManagement onToast={showToastMessage} />;
     }
