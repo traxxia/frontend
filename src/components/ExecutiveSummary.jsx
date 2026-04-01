@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { ChevronDown, ChevronUp, CheckCircle2, AlertCircle, Info, Target, FileText, ListChecks, Loader2 } from "lucide-react";
+import { ChevronDown, ChevronUp, CheckCircle2, AlertCircle, Info, Target, FileText, ListChecks, Loader2, Zap } from "lucide-react";
 import { AnalysisApiService } from "../services/analysisApiService";
 import "../styles/executiveSummary.css";
 import { useTranslation } from "../hooks/useTranslation";
@@ -9,10 +9,13 @@ const ExecutiveSummary = ({ businessId, onStartOnboarding }) => {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [expandedSections, setExpandedSections] = useState({
+    ahaInsights: false,
     whereToCompete: false,
     howToCompete: false,
     topPriorities: false,
   });
+
+  const [ahaData, setAhaData] = useState(null);
 
   // API Service setup
   const ML_API_BASE_URL = process.env.REACT_APP_ML_BACKEND_URL;
@@ -30,19 +33,23 @@ const ExecutiveSummary = ({ businessId, onStartOnboarding }) => {
     if (!businessId) return;
     try {
       setLoading(true);
-      const summaryResult = await analysisService.getPMFExecutiveSummary(businessId);
+      // Fetch both Executive Summary and PMF Insights (AHA)
+      const [summaryResult, ahaResult] = await Promise.all([
+        analysisService.getPMFExecutiveSummary(businessId),
+        analysisService.getPMFAnalysis(businessId)
+      ]);
 
-      // Extract content from 'summary' field if it exists, otherwise use whole result
+      // Handle Executive Summary Data
       let summaryContent = summaryResult?.summary || summaryResult;
-
-      // Ensure onboarding_data is included if it was at the root
       if (summaryResult?.onboarding_data && !summaryContent.onboarding_data) {
         summaryContent = { ...summaryContent, onboarding_data: summaryResult.onboarding_data };
       }
-
       setData(summaryContent);
+
+      // Handle AHA Data
+      setAhaData(ahaResult);
     } catch (error) {
-      console.error("Error fetching executive summary:", error);
+      console.error("Error fetching data:", error);
     } finally {
       setLoading(false);
     }
@@ -57,6 +64,22 @@ const ExecutiveSummary = ({ businessId, onStartOnboarding }) => {
       ...prev,
       [section]: !prev[section],
     }));
+  };
+
+  // Helper to extract Aha Insights
+  const getTopAhaInsights = () => {
+    if (!ahaData) return [];
+    let rawInsights = [];
+    if (Array.isArray(ahaData)) {
+      rawInsights = ahaData;
+    } else if (ahaData.insights) {
+      if (Array.isArray(ahaData.insights)) {
+        rawInsights = ahaData.insights;
+      } else if (ahaData.insights.insights && Array.isArray(ahaData.insights.insights)) {
+        rawInsights = ahaData.insights.insights;
+      }
+    }
+    return rawInsights.slice(0, 4); // Limit to top 3-4
   };
 
   if (loading) {
@@ -117,9 +140,53 @@ const ExecutiveSummary = ({ businessId, onStartOnboarding }) => {
   const newAdjacencies = whereToCompete?.new_adjacencies_to_explore || whereToCompete?.new_adjacencies || whereToCompete?.["New Adjacencies"];
   const existingAdjacencies = whereToCompete?.existing_adjacencies || whereToCompete?.["Existing Adjacencies"];
 
+  const topAhaInsights = getTopAhaInsights();
+
   return (
     <div className="exc-executive-summary-container">
       <div className="exc-executive-content">
+        {/* AHA INSIGHTS SECTION */}
+        {topAhaInsights.length > 0 && (
+          <div className="exc-section-card">
+            <div className="exc-section-header" onClick={() => toggleSection("ahaInsights")}>
+              <div className="exc-section-title-wrapper">
+                <div className="exc-section-icon exc-aha-icon">
+                  <Zap size={20} />
+                </div>
+                <div>
+                  <h3 className="exc-section-title">{t("AHA Insights")}</h3>
+                  <p className="exc-section-subtitle">
+                    {t("Key strategic insights based on your onboarding")}
+                  </p>
+                </div>
+              </div>
+              <button className="exc-section-toggle">
+                {expandedSections.ahaInsights ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+              </button>
+            </div>
+
+            {expandedSections.ahaInsights && (
+              <div className="exc-section-body">
+                <div className="exc-aha-vertical-tiles">
+                  {topAhaInsights.map((insight, idx) => (
+                    <div key={idx} className="exc-aha-tile full-width">
+                      <div className="exc-aha-tile-header">
+                        <span className="exc-aha-tile-category">{insight.type || t("Insight")}</span>
+                      </div>
+                      <h5 className="exc-aha-tile-title">{insight.title}</h5>
+                      <ul className="exc-aha-tile-details">
+                        {(insight.details || insight.key_points || []).slice(0, 3).map((detail, dIdx) => (
+                          <li key={dIdx}>{detail}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* WHERE TO COMPETE */}
         <div className="exc-section-card">
           <div className="exc-section-header" onClick={() => toggleSection("whereToCompete")}>

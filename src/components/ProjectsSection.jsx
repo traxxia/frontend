@@ -13,7 +13,7 @@ import { AI_PAGE_CONTEXTS } from "../utils/aiContexts";
 import { getUserLimits } from "../utils/authUtils";
 
 import { MdArrowDownward } from "react-icons/md";
-import { Users, CheckCircle, Plus, ListOrdered, Lock, Rocket, Briefcase } from "lucide-react";
+import { Users, CheckCircle, Plus, ListOrdered, Lock, Rocket, Briefcase, Edit2 } from "lucide-react";
 import CollaborationCard from "../components/CollaborationCard";
 import PortfolioOverview from "../components/PortfolioOverview";
 import RankProjectsPanel from "../components/RankProjectsPanel";
@@ -21,8 +21,11 @@ import TeamRankingsView from "../components/TeamRankingsView";
 import ProjectsList from "../components/ProjectsList";
 import ProjectForm from "../components/ProjectForm";
 import ProjectDetails from "../components/ProjectDetails";
+import ProjectReviewModal from "../components/ProjectReviewModal";
 import ToastNotifications from "../components/ToastNotifications";
+import StateChangeModal from "../components/StateChangeModal";
 import "../styles/ProjectsSection.css";
+import "../styles/ProjectReviewModal.css";
 
 const ProjectsSection = ({
   selectedBusinessId,
@@ -61,6 +64,12 @@ const ProjectsSection = ({
   const [showRankScreen, setShowRankScreen] = useState(false);
   const [showTeamRankings, setShowTeamRankings] = useState(false); // New state for Team Rankings Panel
   const [activeAccordionKey, setActiveAccordionKey] = useState(null);
+  const [showStateChangeModal, setShowStateChangeModal] = useState(false);
+  const [pendingSavePayload, setPendingSavePayload] = useState(null);
+
+  const [showReviewModal, setShowReviewModal] = useState(false);
+  const [reviewType, setReviewType] = useState("review");
+  const [selectedReviewProject, setSelectedReviewProject] = useState(null);
 
   const [projects, setProjects] = useState([]);
   const [teamRankings, setTeamRankings] = useState([]);
@@ -103,6 +112,7 @@ const ProjectsSection = ({
     { id: "At Risk", label: t("At Risk") || "At Risk" },
     { id: "Paused", label: t("Paused") || "Paused" },
     { id: "Killed", label: t("Killed") || "Killed" },
+    { id: "Completed", label: t("Completed") || "Completed" },
     { id: "Scaled", label: t("Scaled") || "Scaled" },
   ];
 
@@ -152,7 +162,8 @@ const ProjectsSection = ({
     checkBusinessAccess,
     checkProjectsAccess,
     checkAllAccess,
-    canEditProject
+    canEditProject,
+    canReviewProject
   } = useAccessControl(selectedBusinessId);
   const {
     formState,
@@ -244,6 +255,7 @@ const ProjectsSection = ({
       "At Risk": 0,
       Paused: 0,
       Killed: 0,
+      Completed: 0,
       Scaled: 0
     };
 
@@ -257,10 +269,14 @@ const ProjectsSection = ({
         counts.Paused++;
       } else if (statusValue === "killed") {
         counts.Killed++;
+      } else if (statusValue === "completed") {
+        counts.Completed++;
       } else if (statusValue === "scaled") {
         counts.Scaled++;
+      } else if (statusValue === "draft") {
+        counts.Draft++;
       } else {
-        // Includes 'draft', 'launched', and any unknown fallback
+        // Unknown fallback
         counts.Draft++;
       }
     });
@@ -637,10 +653,34 @@ const ProjectsSection = ({
       return;
     }
 
-    setIsSubmitting(true);
     try {
       const userId = sessionStorage.getItem("userId");
       const payload = getPayload(userId, selectedBusinessId);
+
+      // Check if status changed
+      const oldStatus = (currentProject.status || "Draft").toLowerCase();
+      const newStatus = (payload.status || "Draft").toLowerCase();
+
+      if (oldStatus !== newStatus) {
+        setPendingSavePayload(payload);
+        setShowStateChangeModal(true);
+        setIsSubmitting(false);
+        return;
+      }
+
+      await executeSave(payload);
+    } catch (err) {
+      console.error("Error in prepare save:", err);
+      setIsSubmitting(false);
+    }
+  };
+
+  const executeSave = async (payload, justification = null) => {
+    setIsSubmitting(true);
+    try {
+      if (justification) {
+        payload.justification = justification;
+      }
 
       const { success, error } = await updateProject(currentProject._id, payload);
       if (success) {
@@ -665,6 +705,53 @@ const ProjectsSection = ({
       await loadProjects(); // Reload to get updated status/sorting
     } else {
       handleShowToast(error || "Failed to kill project.", "error");
+    }
+  };
+
+  const handlePerformReview = (project) => {
+    setSelectedReviewProject(project);
+    setReviewType("review");
+    setShowReviewModal(true);
+  };
+
+  const handleAdhocUpdate = (project) => {
+    setSelectedReviewProject(project);
+    setReviewType("adhoc");
+    setShowReviewModal(true);
+  };
+
+  const submitReview = async (data) => {
+    if (!selectedReviewProject?._id) return;
+
+    try {
+      const token = getToken();
+      const endpoint = reviewType === "review" ? "review" : "adhoc-update";
+      const method = reviewType === "review" ? "post" : "patch";
+
+      const response = await axios({
+        method,
+        url: `${process.env.REACT_APP_BACKEND_URL}/api/projects/${selectedReviewProject._id}/${endpoint}`,
+        data,
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        }
+      });
+
+      handleShowToast(reviewType === "review" ? "Review submitted successfully!" : "Update submitted successfully!", "success");
+      await loadProjects();
+
+      // If we are in view mode, update the current project to reflect changes
+      if (activeView === "view" && currentProject?._id === selectedReviewProject._id) {
+        // We can either fetch single project or just update from list
+        // Let's just find it in the newly fetched projects
+        // Wait, loadProjects is async but doesn't return projects directly to local state yet
+      }
+
+    } catch (err) {
+      console.error("Review submit error:", err);
+      const errorMsg = err.response?.data?.error || "Failed to process update";
+      handleShowToast(errorMsg, "error");
     }
   };
 
@@ -703,7 +790,10 @@ const ProjectsSection = ({
           project={currentProject}
           onBack={handleBackToList}
           onEdit={(project) => handleEditProject(project, "edit")}
+          onPerformReview={handlePerformReview}
+          onAdhocUpdate={handleAdhocUpdate}
           canEdit={currentProject && canEditProject(currentProject, isEditor, myUserId, businessStatus, apiIsArchived)}
+          canReview={currentProject && canReviewProject(currentProject, isSuperAdmin, myUserId, apiIsArchived)}
         />
       );
     }
@@ -714,10 +804,12 @@ const ProjectsSection = ({
         mode={activeView}
         readOnly={
           activeView === "view" ||
-          (currentProject && !canEditProject(currentProject, isEditor, myUserId, businessStatus, apiIsArchived))
+          (currentProject && !canEditProject(currentProject, isEditor, myUserId, businessStatus, apiIsArchived, isSuperAdmin))
         }
         {...formState}
         {...formSetters}
+        accountableOwnerId={formState.accountableOwnerId}
+        setAccountableOwnerId={formSetters.setAccountableOwnerId}
         onBack={handleBackToList}
         onSubmit={activeView === "new" ? handleCreate : handleSave}
         isLockedByOther={isLockedByOther}
@@ -727,6 +819,11 @@ const ProjectsSection = ({
         isSubmitting={isSubmitting}
         selectedBusinessId={selectedBusinessId}
         projectId={currentProject?._id}
+        launchStatus={currentProject?.launch_status}
+        initialStatus={currentProject?.status}
+        decisionLog={currentProject?.decision_log}
+        isAdmin={isSuperAdmin}
+        validateForm={validateForm}
       />
     );
   };
@@ -981,11 +1078,15 @@ const ProjectsSection = ({
               projectCreationLocked={projectCreationLocked}
               isFinalizedView={isFinalizedView}
               canEditProject={(project) =>
-                canEditProject(project, isEditor, myUserId, businessStatus, apiIsArchived)
+                canEditProject(project, isEditor, myUserId, businessStatus, apiIsArchived, isSuperAdmin)
               }
               onEdit={(project) => handleEditProject(project, "edit")}
               onView={(project) => handleEditProject(project, "view")}
               onDelete={handleDelete}
+              onPerformReview={handlePerformReview}
+              onAdhocUpdate={handleAdhocUpdate}
+              canReviewProject={canReviewProject}
+              myUserId={myUserId}
               selectedCategory={selectedCategory}
               isArchived={apiIsArchived}
               selectedProjectIds={selectedProjectIds}
@@ -1015,6 +1116,22 @@ const ProjectsSection = ({
         validationMessageType={validationMessageType}
         showAIRankingToast={showAIRankingToast}
         setShowAIRankingToast={setShowAIRankingToast}
+      />
+
+      <StateChangeModal
+        show={showStateChangeModal}
+        onHide={() => {
+          setShowStateChangeModal(false);
+          setPendingSavePayload(null);
+        }}
+        onConfirm={(justification) => {
+          setShowStateChangeModal(false);
+          if (pendingSavePayload) {
+            executeSave(pendingSavePayload, justification);
+          }
+        }}
+        oldState={currentProject?.status || t("Draft")}
+        newState={pendingSavePayload?.status || t("Unknown")}
       />
 
       {isGeneratingAIRankings && (
@@ -1049,6 +1166,14 @@ const ProjectsSection = ({
       <Container fluid className="projects-wrapper" ref={containerRef}>
         {activeView === "list" ? renderProjectList() : renderProjectForm()}
       </Container>
+
+      <ProjectReviewModal
+        isOpen={showReviewModal}
+        onClose={() => setShowReviewModal(false)}
+        project={selectedReviewProject}
+        type={reviewType}
+        onSubmit={submitReview}
+      />
     </>
   );
 };

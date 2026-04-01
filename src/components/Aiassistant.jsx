@@ -4,7 +4,7 @@ import axios from "axios";
 import "../styles/Ai.css";
 import { useTranslation } from "../hooks/useTranslation";
 
-const Aiassistant = ({ businessId: propBusinessId, projectId, pageContext }) => {
+const Aiassistant = ({ businessId: propBusinessId, projectId, pageContext, isDisabled }) => {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -279,8 +279,9 @@ const Aiassistant = ({ businessId: propBusinessId, projectId, pageContext }) => 
       {/* Floating Trigger Button — hidden when panel is open */}
       <button
         className={`ai-fab${open ? " ai-fab--hidden" : ""}`}
-        onClick={() => setOpen(true)}
-        title="AI Assistant"
+        onClick={() => !isDisabled && setOpen(true)}
+        disabled={isDisabled}
+        title={isDisabled ? "Complete onboarding to use AI Assistant" : "AI Assistant"}
       >
         <Sparkles size={22} color="#fff" />
       </button>

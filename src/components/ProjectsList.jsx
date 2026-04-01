@@ -24,6 +24,10 @@ const ProjectsList = ({
   selectedProjectIds = [],
   onToggleSelection,
   selectionDisabled = false,
+  onPerformReview,
+  onAdhocUpdate,
+  canReviewProject,
+  myUserId,
 }) => {
   const { t } = useTranslation();
   const [showMenuId, setShowMenuId] = useState(null);
@@ -54,6 +58,7 @@ const ProjectsList = ({
       "At Risk": [],
       "Paused": [],
       "Killed": [],
+      "Completed": [],
       "Scaled": []
     };
 
@@ -67,10 +72,14 @@ const ProjectsList = ({
         groups["Paused"].push(p);
       } else if (statusValue === "killed") {
         groups["Killed"].push(p);
+      } else if (statusValue === "completed") {
+        groups["Completed"].push(p);
       } else if (statusValue === "scaled") {
         groups["Scaled"].push(p);
+      } else if (statusValue === "draft") {
+        groups["Draft"].push(p);
       } else {
-        // Includes 'draft', 'launched', and any unknown fallback
+        // Unknown fallback
         groups["Draft"].push(p);
       }
     });
@@ -110,7 +119,11 @@ const ProjectsList = ({
               isAdmin={isAdmin}
               isSelected={selectedProjectIds.includes(project._id)}
               onToggleSelection={onToggleSelection}
-              isCheckboxDisabled={isArchived || selectionDisabled || !getUserLimits().project}
+              onPerformReview={onPerformReview}
+              onAdhocUpdate={onAdhocUpdate}
+              canReviewProject={canReviewProject}
+              myUserId={myUserId}
+              isCheckboxDisabled={isArchived || selectionDisabled || !getUserLimits().project || sessionStorage.getItem("userPlan") === 'essential'}
             />
           </Col>
         ))}

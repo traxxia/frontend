@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Row, Col, Card, Form, Button, Dropdown, Modal, Alert } from "react-bootstrap";
+import { Row, Col, Card, Form, Button, Dropdown, Modal, Alert, Spinner } from "react-bootstrap";
 import { Crown, UserCog, User, ShieldCheck, MoreVertical, Plus, Eye, EyeOff, Activity, Users, Shield, History } from "lucide-react";
 import "../styles/usermanagement.css";
 import UpgradeModal from "./UpgradeModal";
@@ -98,6 +98,7 @@ const UserManagement = ({ onToast }) => {
   const [selectedCompanyId, setSelectedCompanyId] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [usage, setUsage] = useState(null);
+  const [isAssigning, setIsAssigning] = useState(false);
 
   const fetchPlanDetails = async () => {
     try {
@@ -269,7 +270,7 @@ const UserManagement = ({ onToast }) => {
 
     try {
       await axios.put(`${BACKEND_URL}/api/admin/users/${userId}/role`, { role });
-      onToast(t("User_role_updated_successfully"), "success");
+      onToast(t("User_updated_successfully"), "success");
       fetchUsers();
       fetchPlanDetails();
     } catch (error) {
@@ -279,7 +280,17 @@ const UserManagement = ({ onToast }) => {
   };
 
   const handleCollaboratorToggle = (collaboratorId) => {
-    setSelectedCollaboratorIds(prev => prev.includes(collaboratorId) ? prev.filter(id => id !== collaboratorId) : [...prev, collaboratorId]);
+    setSelectedCollaboratorIds(prev => {
+      const next = prev.includes(collaboratorId) ? prev.filter(id => id !== collaboratorId) : [...prev, collaboratorId];
+      if (next.length > 0 && accessErrors.collaborators) {
+        setAccessErrors(curr => {
+          const updated = { ...curr };
+          delete updated.collaborators;
+          return updated;
+        });
+      }
+      return next;
+    });
   };
 
   const handleProceedToConfirmation = () => {
@@ -333,6 +344,7 @@ const UserManagement = ({ onToast }) => {
     // Assigning usually means they are already a user/collaborator.
     // The total seat limit is checked when adding a user or changing their role.
 
+    setIsAssigning(true);
     try {
       await axios.post(`${BACKEND_URL}/api/businesses/${assignBusinessId}/collaborators`, { user_id: assignUserId });
       onToast(t("User_assigned_successfully"), "success");
@@ -341,6 +353,8 @@ const UserManagement = ({ onToast }) => {
     } catch (error) {
       console.error(error);
       onToast(error.response?.data?.message || error.response?.data?.error || t("Failed_to_assign_user"), "error");
+    } finally {
+      setIsAssigning(false);
     }
   };
 
@@ -378,7 +392,14 @@ const UserManagement = ({ onToast }) => {
       const data = Array.isArray(res.data) 
         ? res.data 
         : [...(res.data.businesses || []), ...(res.data.collaborating_businesses || [])];
-      setAllBusinesses(data);
+      
+      // Filter out archived businesses
+      const activeBusinesses = data.filter(b => 
+        (b.status || "").toLowerCase() !== 'archived' && 
+        (b.access_mode || "").toLowerCase() !== 'archived' &&
+        (b.status || "").toLowerCase() !== 'deleted'
+      );
+      setAllBusinesses(activeBusinesses);
     } catch (error) {
       console.error("Failed to fetch businesses", error);
     }
@@ -445,7 +466,10 @@ const UserManagement = ({ onToast }) => {
         : [...(businessRes.data.businesses || []), ...(businessRes.data.collaborating_businesses || [])];
       
       const validBusinesses = allBiz.filter((b) => 
-        (b.status || "").toLowerCase() === 'launched' || b.has_launched_projects === true
+        ((b.status || "").toLowerCase() === 'launched' || b.has_launched_projects === true) &&
+        (b.status || "").toLowerCase() !== 'archived' &&
+        (b.access_mode || "").toLowerCase() !== 'archived' &&
+        (b.status || "").toLowerCase() !== 'deleted'
       );
       
       setLaunchedBusinesses(validBusinesses);
@@ -594,25 +618,24 @@ const UserManagement = ({ onToast }) => {
         if (roleName === "company_admin" || roleName === "super_admin") return null;
 
         const isArchived = row.status === 'inactive' || row.status === 'deleted' || row.access_mode === 'archived';
-        const disabled = isArchived;
         return (
           <>
             <Dropdown>
-              <Dropdown.Toggle as={CustomToggle} disabled={disabled} />
+              <Dropdown.Toggle as={CustomToggle} />
               <Dropdown.Menu align="end">
-                {row.role_name?.toLowerCase() !== "collaborator" && (
+                {(row.role_name?.toLowerCase() !== "collaborator" || isArchived) && (
                   <Dropdown.Item onClick={() => { setPendingUserId(row._id); setPendingRole("collaborator"); setShowConfirm(true); }}>
-                    <UserCog size={16} className="me-2" /> {t("Collaborator")}
+                    <UserCog size={16} className="me-2" /> {isArchived && row.role_name?.toLowerCase() === "collaborator" ? t("Reactivate_Collaborator") : t("Collaborator")}
                   </Dropdown.Item>
                 )}
-                {row.role_name?.toLowerCase() !== "viewer" && (
+                {(row.role_name?.toLowerCase() !== "viewer" || isArchived) && (
                   <Dropdown.Item onClick={() => { setPendingUserId(row._id); setPendingRole("viewer"); setShowConfirm(true); }}>
-                    <User size={16} className="me-2" /> {t("Viewer")}
+                    <User size={16} className="me-2" /> {isArchived && row.role_name?.toLowerCase() === "viewer" ? t("Reactivate_Viewer") : t("Viewer")}
                   </Dropdown.Item>
                 )}
-                {row.role_name?.toLowerCase() !== "user" && (
+                {(row.role_name?.toLowerCase() !== "user" || isArchived) && (
                   <Dropdown.Item onClick={() => { setPendingUserId(row._id); setPendingRole("user"); setShowConfirm(true); }}>
-                    <ShieldCheck size={16} className="me-2" /> {t("User")}
+                    <ShieldCheck size={16} className="me-2" /> {isArchived && row.role_name?.toLowerCase() === "user" ? t("Reactivate_User") : t("User")}
                   </Dropdown.Item>
                 )}
               </Dropdown.Menu>
@@ -919,7 +942,7 @@ const UserManagement = ({ onToast }) => {
                <Form.Control.Feedback type="invalid">{assignErrors.collaborator}</Form.Control.Feedback>
              </Form.Group>
             <Form.Group className="mb-3"><Form.Label>{t("business")}</Form.Label><Form.Select value={assignBusinessId} onChange={(e) => setAssignBusinessId(e.target.value)} isInvalid={!!assignErrors.business}><option value="">{t("Select_Business")}</option>{allBusinesses.map(b => <option key={b._id} value={b._id}>{b.business_name || b.name}</option>)}</Form.Select><Form.Control.Feedback type="invalid">{assignErrors.business}</Form.Control.Feedback></Form.Group>
-            <div className="d-flex justify-content-end"><Button variant="secondary" className="me-2" onClick={handleCloseAssignModal}>{t("cancel")}</Button><Button variant="primary" type="submit">{t("save")}</Button></div>
+            <div className="d-flex justify-content-end"><Button variant="secondary" className="me-2" onClick={handleCloseAssignModal} disabled={isAssigning}>{t("cancel")}</Button><Button variant="primary" type="submit" disabled={isAssigning}>{isAssigning ? <Spinner as="span" animation="border" size="sm" role="status" aria-hidden="true" className="me-2" /> : null}{isAssigning ? t("Saving...") : t("save")}</Button></div>
           </Form>
         </Modal.Body>
       </Modal>
@@ -929,9 +952,74 @@ const UserManagement = ({ onToast }) => {
         <Modal.Body>
           <Form noValidate>
             <Form.Group className="mb-3"><Form.Label className="fw-bold">{t("Access_Type")}</Form.Label><div className="mt-2 ms-3"><Form.Check type="radio" label={t("Enable_Reranking_Project")} checked={accessType === "reRanking"} onChange={() => setAccessType("reRanking")} /><Form.Check type="radio" label={t("Edit_the_Project")} checked={accessType === "projectEdit"} onChange={() => setAccessType("projectEdit")} /></div></Form.Group>
-            <Form.Group className="mb-3"><Form.Label>{t("business")}</Form.Label><Form.Select value={accessBusinessId} onChange={(e) => setAccessBusinessId(e.target.value)} isInvalid={!!accessErrors.business}><option value="">{t("Select_Business")}</option>{launchedBusinesses.map(b => <option key={b._id} value={b._id}>{b.business_name || b.name}</option>)}</Form.Select><Form.Control.Feedback type="invalid">{accessErrors.business}</Form.Control.Feedback></Form.Group>
-            {accessType === "projectEdit" && (<Form.Group className="mb-3"><Form.Label>{t("Project")}</Form.Label><Form.Select value={selectedProjectId} onChange={(e) => setSelectedProjectId(e.target.value)} isInvalid={!!accessErrors.project} disabled={!accessBusinessId}><option value="">{loadingProjects ? t("Loading_projects") : t("Select_Project")}</option>{projects.map(p => <option key={p._id} value={p._id}>{p.project_name}</option>)}</Form.Select><Form.Control.Feedback type="invalid">{accessErrors.project}</Form.Control.Feedback></Form.Group>)}
-            <Form.Group className="mb-3"><Form.Label>{t("Collaborators")}</Form.Label><div className="collaborator-checkbox-list" style={{ maxHeight: "350px", overflowY: "auto", border: "1px solid #dee2e6", borderRadius: "4px", padding: "17px" }}>{collaborators.map(c => <Form.Check key={c._id} label={c.name} checked={selectedCollaboratorIds.includes(c._id)} onChange={() => handleCollaboratorToggle(c._id)} />)}</div></Form.Group>
+            <Form.Group className="mb-3">
+              <Form.Label>{t("business")}</Form.Label>
+              <Form.Select 
+                value={accessBusinessId} 
+                onChange={(e) => {
+                  setAccessBusinessId(e.target.value);
+                  if (accessErrors.business) {
+                    setAccessErrors(curr => {
+                      const next = { ...curr };
+                      delete next.business;
+                      return next;
+                    });
+                  }
+                }} 
+                isInvalid={!!accessErrors.business}
+              >
+                <option value="">{t("Select_Business")}</option>
+                {launchedBusinesses.map(b => <option key={b._id} value={b._id}>{b.business_name || b.name}</option>)}
+              </Form.Select>
+              <Form.Control.Feedback type="invalid">{accessErrors.business}</Form.Control.Feedback>
+            </Form.Group>
+            {accessType === "projectEdit" && (
+              <Form.Group className="mb-3">
+                <Form.Label>{t("Project")}</Form.Label>
+                <Form.Select 
+                  value={selectedProjectId} 
+                  onChange={(e) => {
+                    setSelectedProjectId(e.target.value);
+                    if (accessErrors.project) {
+                      setAccessErrors(curr => {
+                        const next = { ...curr };
+                        delete next.project;
+                        return next;
+                      });
+                    }
+                  }} 
+                  isInvalid={!!accessErrors.project} 
+                  disabled={!accessBusinessId}
+                >
+                  <option value="">{loadingProjects ? t("Loading_projects") : t("Select_Project")}</option>
+                  {projects.map(p => <option key={p._id} value={p._id}>{p.project_name}</option>)}
+                </Form.Select>
+                <Form.Control.Feedback type="invalid">{accessErrors.project}</Form.Control.Feedback>
+              </Form.Group>
+            )}
+            <Form.Group className="mb-3">
+              <Form.Label>{t("Collaborators")}</Form.Label>
+              <div className="collaborator-checkbox-list" style={{ maxHeight: "350px", overflowY: "auto", border: "1px solid #dee2e6", borderRadius: "4px", padding: "17px" }}>
+                {collaborators
+                  .filter(c => {
+                    if (accessType === "reRanking") {
+                      const biz = launchedBusinesses.find(b => b._id === accessBusinessId);
+                      const existing = biz?.allowed_ranking_collaborators || [];
+                      return !existing.some(id => id.toString() === c._id.toString());
+                    }
+                    if (accessType === "projectEdit" && selectedProjectId) {
+                      const project = projects.find(p => p._id === selectedProjectId);
+                      const existing = project?.allowed_collaborators || [];
+                      return !existing.some(id => id.toString() === c._id.toString());
+                    }
+                    return true;
+                  })
+                  .map(c => (
+                    <Form.Check key={c._id} label={c.name} checked={selectedCollaboratorIds.includes(c._id)} onChange={() => handleCollaboratorToggle(c._id)} />
+                  ))}
+              </div>
+              {accessErrors.collaborators && <div className="text-danger mt-1" style={{ fontSize: '0.875em' }}>{accessErrors.collaborators}</div>}
+            </Form.Group>
             <div className="d-flex justify-content-end"><Button variant="secondary" className="me-2" onClick={() => setShowGiveAccessModal(false)}>{t("cancel")}</Button><Button variant="primary" onClick={handleProceedToConfirmation}>{t("Continue")}</Button></div>
           </Form>
         </Modal.Body>

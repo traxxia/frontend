@@ -84,6 +84,7 @@ export const validateField = (fieldName, value, rules = {}) => {
     max = null,
     pattern = null,
     allowSpecialChars = null,
+    skipStrict = false,
   } = rules;
 
   // Required validation
@@ -179,18 +180,20 @@ export const validateField = (fieldName, value, rules = {}) => {
   }
 
   // Stricter consecutive limits matching Dashboard.jsx
-  if (/[0-9]{5,}/.test(stringValue)) {
-    return {
-      isValid: false,
-      message: `Too many consecutive numbers are not allowed`,
-    };
-  }
+  if (!skipStrict) {
+    if (/[0-9]{5,}/.test(stringValue)) {
+      return {
+        isValid: false,
+        message: `Too many consecutive numbers are not allowed`,
+      };
+    }
 
-  if (/[^A-Za-z0-9\s]{5,}/.test(stringValue)) {
-    return {
-      isValid: false,
-      message: `Too many consecutive special characters are not allowed`,
-    };
+    if (/[^A-Za-z0-9\s]{5,}/.test(stringValue)) {
+      return {
+        isValid: false,
+        message: `Too many consecutive special characters are not allowed`,
+      };
+    }
   }
 
   return { isValid: true, message: '' };

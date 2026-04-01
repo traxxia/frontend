@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { Card, Button, Form, Row, Col, Badge, Spinner } from "react-bootstrap";
-import { ChevronRight } from "react-bootstrap-icons";
-import { Folder, CheckCircle } from "lucide-react";
+import { Card, Button, Form, Row, Col, Badge, Spinner, ProgressBar, Modal } from "react-bootstrap";
+import { ChevronRight, ArrowRight } from "react-bootstrap-icons";
+import { Folder, CheckCircle, Rocket, Info } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { AnalysisApiService } from "../services/analysisApiService";
 import { useTranslation } from "../hooks/useTranslation";
@@ -17,6 +17,8 @@ const PrioritiesProjects = ({ selectedBusinessId, companyAdminIds, onSuccess, on
   const [loading, setLoading] = useState(true);
   const [kickstarting, setKickstarting] = useState(false);
   const [showPlanLimitModal, setShowPlanLimitModal] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [lastKickstartedCount, setLastKickstartedCount] = useState(0);
   const navigate = useNavigate();
   const userRole = (
     sessionStorage.getItem("role") ||
@@ -75,13 +77,19 @@ const PrioritiesProjects = ({ selectedBusinessId, companyAdminIds, onSuccess, on
     try {
       setKickstarting(true);
       const selectedPriorities = selected.map(idx => priorities[idx]);
+      let totalProjectsCreated = 0;
 
       // Process projects sequentially or wait for all, but ensure we handle errors
       for (const priority of selectedPriorities) {
-        await apiService.kickstartProject({
+        const response = await apiService.kickstartProject({
           businessId: selectedBusinessId,
           priority: priority
         });
+        if (response && response.projectIds) {
+          totalProjectsCreated += response.projectIds.length;
+        } else if (priority.actions) {
+          totalProjectsCreated += priority.actions.length;
+        }
       }
 
       // Refresh data to show kickstarted status
@@ -90,15 +98,9 @@ const PrioritiesProjects = ({ selectedBusinessId, companyAdminIds, onSuccess, on
         setPriorities(data.priorities);
       }
       setSelected([]);
+      setLastKickstartedCount(totalProjectsCreated);
+      setShowSuccessModal(true);
 
-      // Redirect to projects if callback provided
-      if (onSuccess) {
-        onSuccess();
-      } else if (onToastMessage) {
-        onToastMessage(t("Projects kickstarted successfully!"), "success");
-      } else {
-        alert(t("Projects kickstarted successfully!"));
-      }
     } catch (error) {
       console.error("Error kickstarting projects:", error);
       const errorMsg = error.message || t("Failed to kickstart projects. Please try again.");
@@ -109,6 +111,15 @@ const PrioritiesProjects = ({ selectedBusinessId, companyAdminIds, onSuccess, on
       }
     } finally {
       setKickstarting(false);
+    }
+  };
+
+  const handleConfirmRedirect = () => {
+    setShowSuccessModal(false);
+    if (onSuccess) {
+      onSuccess();
+    } else {
+      navigate(`/projects?business_id=${selectedBusinessId}`);
     }
   };
 
@@ -179,75 +190,61 @@ const PrioritiesProjects = ({ selectedBusinessId, companyAdminIds, onSuccess, on
         const isExpanded = expandedId === idx;
         const isAlreadyKickstarted = item.isKickstarted;
         const actions = item.actions || [];
+        
+        // Calculate granular progress
+        const totalActions = actions.length;
+        const kickstartedActions = actions.filter(a => a.isKickstarted).length;
+        const progressPercent = totalActions > 0 ? (kickstartedActions / totalActions) * 100 : 0;
+        const isFullyKickstarted = progressPercent === 100 && totalActions > 0;
+        const isPartiallyKickstarted = progressPercent > 0 && progressPercent < 100;
 
         return (
-          <Card key={idx} className={`priority-card mb-3 ${isAlreadyKickstarted ? 'kickstarted' : ''}`}>
-            <Card.Body>
+          <Card key={idx} className={`priority-card mb-3 ${isFullyKickstarted ? 'kickstarted' : isPartiallyKickstarted ? 'partially-kickstarted' : ''}`}>
+            <Card.Body onClick={() => toggleExpand(idx)} className="expand-trigger">
               <div className="priority-card-inner">
-  {/* TOP SECTION */}
-  <div className="priority-top">
+                {/* TOP SECTION */}
+                <div className="priority-top justify-content-between">
+                  <div className="d-flex align-items-center gap-3">
+                    {isAdmin && hasProjectsAccess && (
+                      <div onClick={(e) => e.stopPropagation()}>
+                        <Form.Check
+                          type="checkbox"
+                          disabled={isFullyKickstarted || kickstarting}
+                          checked={selected.includes(idx)}
+                          onChange={() => toggleSelection(idx)}
+                        />
+                      </div>
+                    )}
+                    <h6 className="priority-title mb-0">{item.title}</h6>
+                  </div>
 
-    {isAdmin && hasProjectsAccess && (
-      <Form.Check
-  type="checkbox"
-  disabled={isAlreadyKickstarted || kickstarting}
-  checked={selected.includes(idx)}
-  onChange={() => toggleSelection(idx)}
-/>
-    )}
+                  {progressPercent > 0 && (
+                    <div className={`minimal-status-badge ${isFullyKickstarted ? 'fully' : 'partial'}`}>
+                      {isFullyKickstarted ? <CheckCircle size={12} /> : <Rocket size={12} />}
+                      <span>{isFullyKickstarted ? t("Kickstarted") : `${kickstartedActions}/${totalActions}`}</span>
+                    </div>
+                  )}
+                </div>
 
-    <div
-      className="priority-title-area expand-trigger"
-      onClick={() => !kickstarting && toggleExpand(idx)}
-    >
-      <h6 className="priority-title mb-0">{item.title}</h6>
-      {isAlreadyKickstarted && (
-        <span className="priority-status">
-          <CheckCircle size={14} />
-          {t("Kickstarted")}
-        </span>
-      )}
-    </div>
-  </div>
-
-  {/* DESCRIPTION */}
-  <div
-    className="priority-description expand-trigger"
-    onClick={() => {
-    if (!kickstarting) toggleExpand(idx);
-  }}
-  >
-    {actions.length > 0
-      ? (typeof actions[0].action === 'string' ? actions[0].action :t("View Projects")):
-      t("View Projects")}
-  </div>
-
-  {/* BOTTOM SECTION */}
-  <div
-    className="priority-bottom expand-trigger"
-    onClick={() => {
-    if (!kickstarting) toggleExpand(idx);
-  }}
-  >
-    <div className="priority-project-count">
-      <Folder size={14} />
-      <span>
-        {actions.length} {t("Projects")}
-      </span>
-    </div>
-
-    <ChevronRight
-      size={18}
-      className={`priority-chevron ${isExpanded ? "rotate" : ""}`}
-    />
-  </div>
-
-</div>
+                {/* BOTTOM SECTION */}
+                <div className="priority-bottom mt-1">
+                  <div className="priority-meta text-muted">
+                    <Folder size={12} className="me-1" />
+                    <span>{actions.length} {t("Tactical Actions")}</span>
+                  </div>
+                  
+                  <ChevronRight
+                    size={16}
+                    className={`priority-chevron ${isExpanded ? "rotate" : ""}`}
+                  />
+                </div>
+              </div>
 
               {isExpanded && actions.length > 0 && (
-                <div className="projects-section mt-3">
+                <div className="projects-section mt-3" onClick={(e) => e.stopPropagation()}>
                   <div className="projects-title mb-2 d-flex align-items-center gap-2">
-
+                    <Info size={14} className="text-muted" />
+                    <span>{t("Individual Projects")}</span>
                   </div>
 
                   {actions.map((action, actionIdx) => {
@@ -257,12 +254,12 @@ const PrioritiesProjects = ({ selectedBusinessId, companyAdminIds, onSuccess, on
                       <div key={actionIdx} className={`project-row ${isActionKickstarted ? 'kickstarted' : ''}`}>
                         <div className="d-flex align-items-center justify-content-between w-100">
                           <div className="d-flex align-items-start gap-2">
-                            <CheckCircle size={16} className={`${isActionKickstarted ? 'text-success' : 'text-muted'} mt-1 flex-shrink-0`} />
-                            <span>{actionText}</span>
+                            <CheckCircle size={14} className={`${isActionKickstarted ? 'text-success' : 'text-muted'} mt-1 flex-shrink-0`} />
+                            <span className={isActionKickstarted ? "text-success small fw-medium" : "small"}>{actionText}</span>
                           </div>
                           {isActionKickstarted && (
-                            <Badge bg="success" className="ms-2">
-                              {t("Status_Completed") || "Kickstarted"}
+                            <Badge bg="success" className="minimal-kickstart-badge">
+                              {t("Kickstarted")}
                             </Badge>
                           )}
                         </div>
@@ -283,6 +280,32 @@ const PrioritiesProjects = ({ selectedBusinessId, companyAdminIds, onSuccess, on
           </small>
         </Card.Body>
       </Card>
+
+      {/* SUCCESS MODAL (New) */}
+      <Modal 
+        show={showSuccessModal} 
+        onHide={() => setShowSuccessModal(false)}
+        centered
+        className="kickstart-success-modal"
+      >
+        <Modal.Body className="text-center p-4">
+          <div className="success-icon-wrapper mb-3">
+            <Rocket size={48} className="text-success" />
+          </div>
+          <h4 className="fw-bold mb-2">{t("Project Kickstart Successful")}!</h4>
+          <p className="text-muted mb-4">
+            {lastKickstartedCount} {t("new draft projects have been created in your Projects tab. You can now define their scope, metrics, and start execution.")}
+          </p>
+          <div className="d-grid gap-2">
+            <Button variant="success" onClick={handleConfirmRedirect} className="d-flex align-items-center justify-content-center gap-2 py-2 fw-semibold">
+              {t("Go to Projects")} <ArrowRight size={18} />
+            </Button>
+            <Button variant="link" onClick={() => setShowSuccessModal(false)} className="text-muted text-decoration-none">
+              {t("Stay on Priorities")}
+            </Button>
+          </div>
+        </Modal.Body>
+      </Modal>
     </div>
   );
 };

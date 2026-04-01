@@ -23,12 +23,13 @@ export const useProjectForm = () => {
   // Strategic Core Fields (v2)
   const [strategicDecision, setStrategicDecision] = useState("");
   const [accountableOwner, setAccountableOwner] = useState("");
+  const [accountableOwnerId, setAccountableOwnerId] = useState("");
   const [keyAssumptions, setKeyAssumptions] = useState(["", "", ""]); // Max 3
   const [successCriteria, setSuccessCriteria] = useState("");
   const [killCriteria, setKillCriteria] = useState("");
   const [reviewCadence, setReviewCadence] = useState("");
   const [learningState, setLearningState] = useState("");
-  const [status, setStatus] = useState("");
+  const [status, setStatus] = useState("Draft");
   const [lastReviewed, setLastReviewed] = useState(null);
 
   const resetForm = useCallback(() => {
@@ -50,12 +51,13 @@ export const useProjectForm = () => {
     // Reset Strategic Core
     setStrategicDecision("");
     setAccountableOwner("");
+    setAccountableOwnerId("");
     setKeyAssumptions(["", "", ""]);
     setSuccessCriteria("");
     setKillCriteria("");
     setReviewCadence("");
     setLearningState("");
-    setStatus("");
+    setStatus("Draft");
     setLastReviewed(null);
 
     setOpenDropdown(null);
@@ -87,6 +89,7 @@ export const useProjectForm = () => {
     // Ensure strategic decision field shows the project name for consistency in v2
     setStrategicDecision(project.strategic_decision || project.project_name || "");
     setAccountableOwner(project.accountable_owner || project.created_by || "");
+    setAccountableOwnerId(project.accountable_owner_id || "");
     setKeyAssumptions(project.key_assumptions && project.key_assumptions.length > 0 ? project.key_assumptions : ["", "", ""]);
     setSuccessCriteria(project.success_criteria || "");
     setKillCriteria(project.kill_criteria || "");
@@ -136,6 +139,7 @@ export const useProjectForm = () => {
       // Strategic Core Payload
       strategic_decision: strategicDecision,
       accountable_owner: accountableOwner,
+      accountable_owner_id: accountableOwnerId || null,
       key_assumptions: keyAssumptions.filter(a => a.trim() !== ""),
       success_criteria: successCriteria,
       kill_criteria: killCriteria,
@@ -161,6 +165,7 @@ export const useProjectForm = () => {
       budget,
       strategicDecision,
       accountableOwner,
+      accountableOwnerId,
       keyAssumptions,
       successCriteria,
       killCriteria,
@@ -171,7 +176,8 @@ export const useProjectForm = () => {
     ]
   );
 
-  const validateForm = useCallback(() => {
+  const validateForm = useCallback((options = {}) => {
+    const { isNew = true } = options;
     const newErrors = {};
 
     const isEmpty = (val) => !val || val.trim().length === 0;
@@ -182,7 +188,7 @@ export const useProjectForm = () => {
     const hasTooManyConsecutiveSpecial = (val) => /[^A-Za-z0-9\s]{5,}/.test(val);
 
     const validateField = (val, fieldKey, options = {}) => {
-      const { minLength = 3, label = "Field", required = false } = options;
+      const { minLength = 3, label = "Field", required = false, skipStrict = false } = options;
       const trimmed = (val || "").trim();
 
       if (required && isEmpty(trimmed)) {
@@ -192,19 +198,21 @@ export const useProjectForm = () => {
           newErrors[fieldKey] = t(`${label} must be at least ${minLength} characters`);
         } else if (!hasLetter(trimmed)) {
           newErrors[fieldKey] = t(`${label} must contain at least one letter`);
-        } else if (hasTooManyConsecutiveNumbers(trimmed)) {
+        } else if (!skipStrict && hasTooManyConsecutiveNumbers(trimmed)) {
           newErrors[fieldKey] = t("Too many consecutive numbers are not allowed");
-        } else if (hasTooManyConsecutiveSpecial(trimmed)) {
+        } else if (!skipStrict && hasTooManyConsecutiveSpecial(trimmed)) {
           newErrors[fieldKey] = t("Too many consecutive special characters are not allowed");
         }
       }
     };
 
-    validateField(projectName, "projectName", { label: "Project name", minLength: 3, required: true });
+    if (isNew) {
+      validateField(projectName, "projectName", { label: "Project name", minLength: 3, required: true });
+    }
     validateField(description, "description", { label: "Description", minLength: 10, required: true });
     validateField(importance, "importance", { label: "Why This Matters", minLength: 10, required: true });
-    validateField(strategicDecision, "strategicDecision", { label: "Strategic Decision", minLength: 3, required: true });
-    validateField(accountableOwner, "accountableOwner", { label: "Accountable Owner", minLength: 2, required: true });
+    validateField(strategicDecision, "strategicDecision", { label: "Strategic Decision", minLength: 10, required: true });
+    validateField(accountableOwner, "accountableOwner", { label: "Accountable Owner", minLength: 2, required: true, skipStrict: true });
     validateField(successCriteria, "successCriteria", { label: "Success criteria", minLength: 10, required: true });
     validateField(killCriteria, "killCriteria", { label: "Kill criteria", minLength: 10, required: true });
 
@@ -222,16 +230,36 @@ export const useProjectForm = () => {
       }
     });
 
-    setErrors(newErrors);
+    if (isEmpty(status)) {
+      newErrors.status = t("Status is required");
+    }
 
+    if (isEmpty(reviewCadence)) {
+      newErrors.reviewCadence = t("Review cadence is required");
+    }
+
+    if (isEmpty(accountableOwnerId)) {
+      newErrors.accountableOwnerId = t("Owner selection is required");
+    }
+
+    if (isEmpty(successCriteria)) {
+      newErrors.successCriteria = t("Success criteria is required");
+    }
+
+    if (isEmpty(killCriteria)) {
+      newErrors.killCriteria = t("Kill criteria is required");
+    }
+
+    setErrors(newErrors); 
     return {
       isValid: Object.keys(newErrors).length === 0,
+      errors: newErrors,
       firstError: Object.values(newErrors)[0] || null,
     };
   }, [
     projectName, description, importance, strategicDecision, accountableOwner,
-    successCriteria, killCriteria, dependencies, highLevelReq, scope,
-    outcome, successMetrics, keyAssumptions, t
+    accountableOwnerId, successCriteria, killCriteria, dependencies,
+    highLevelReq, scope, outcome, successMetrics, keyAssumptions, t, status, reviewCadence
   ]);
 
   return {
@@ -255,6 +283,7 @@ export const useProjectForm = () => {
       // Strategic Core
       strategicDecision,
       accountableOwner,
+      accountableOwnerId,
       keyAssumptions,
       successCriteria,
       killCriteria,
@@ -282,6 +311,7 @@ export const useProjectForm = () => {
       // Strategic Core
       setStrategicDecision,
       setAccountableOwner,
+      setAccountableOwnerId,
       setKeyAssumptions,
       setSuccessCriteria,
       setKillCriteria,
