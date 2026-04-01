@@ -581,7 +581,6 @@ pdf.save(filename);
           boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)",
           ...style
         }}
-        title={`Export ${phaseLabel} Phase PDF`}
       >
         {isExportingPDF ? (
           <>

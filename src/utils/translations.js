@@ -180,6 +180,10 @@ export const staticTranslations = {
     "Priorities": "Priorities",
     "Projects": "Projects",
     "STRATEGIC_LABEL": "S.T.R.A.T.E.G.I.C.",
+    "download_insights_tooltip": "Export the insights into PDF report.",
+    "regenerate_all_tooltip": "Re-generate all insights.",
+    "download_strategic_tooltip": "Export the strategic into PDF report.",
+    "regenerate_strategic_tooltip": "Re-generate the S.T.R.A.T.E.G.I.C. analysis.",
 
     "Appendix (6 C's)": "Appendix (6 C's)",
     "backToOverview": "Back to Dashboard",
@@ -1996,6 +2000,10 @@ export const staticTranslations = {
     "backToDashboard_B3": "Volver al Panel",
 
     // PMF Insights Tab
+    "download_insights_tooltip": "Exporte el análisis completo de insights para esta fase a un informe PDF profesional.",
+    "regenerate_all_tooltip": "Vuelva a ejecutar todo el análisis para la fase actual basado en los datos actualizados.",
+    "download_strategic_tooltip": "Descargue un informe PDF completo que contiene Direction & Positioning, Execution y Sustainability.",
+    "regenerate_strategic_tooltip": "Vuelva a generar el análisis S.T.R.A.T.E.G.I.C. con los últimos insights.",
     "AHA Insights": "Perspectivas AHA",
     "Key strategic insights based on your onboarding": "Perspectivas estratégicas clave basadas en tu incorporación",
     "noInsightsAvailable": "No hay perspectivas disponibles aún.",
