@@ -29,7 +29,7 @@ export const useProjectForm = () => {
   const [killCriteria, setKillCriteria] = useState("");
   const [reviewCadence, setReviewCadence] = useState("");
   const [learningState, setLearningState] = useState("");
-  const [status, setStatus] = useState("");
+  const [status, setStatus] = useState("Draft");
   const [lastReviewed, setLastReviewed] = useState(null);
 
   const resetForm = useCallback(() => {
@@ -57,7 +57,7 @@ export const useProjectForm = () => {
     setKillCriteria("");
     setReviewCadence("");
     setLearningState("");
-    setStatus("");
+    setStatus("Draft");
     setLastReviewed(null);
 
     setOpenDropdown(null);
@@ -176,7 +176,8 @@ export const useProjectForm = () => {
     ]
   );
 
-  const validateForm = useCallback(() => {
+  const validateForm = useCallback((options = {}) => {
+    const { isNew = true } = options;
     const newErrors = {};
 
     const isEmpty = (val) => !val || val.trim().length === 0;
@@ -205,10 +206,12 @@ export const useProjectForm = () => {
       }
     };
 
-    validateField(projectName, "projectName", { label: "Project name", minLength: 3, required: true });
+    if (isNew) {
+      validateField(projectName, "projectName", { label: "Project name", minLength: 3, required: true });
+    }
     validateField(description, "description", { label: "Description", minLength: 10, required: true });
     validateField(importance, "importance", { label: "Why This Matters", minLength: 10, required: true });
-    validateField(strategicDecision, "strategicDecision", { label: "Strategic Decision", minLength: 3, required: true });
+    validateField(strategicDecision, "strategicDecision", { label: "Strategic Decision", minLength: 10, required: true });
     validateField(accountableOwner, "accountableOwner", { label: "Accountable Owner", minLength: 2, required: true, skipStrict: true });
     validateField(successCriteria, "successCriteria", { label: "Success criteria", minLength: 10, required: true });
     validateField(killCriteria, "killCriteria", { label: "Kill criteria", minLength: 10, required: true });
@@ -227,6 +230,14 @@ export const useProjectForm = () => {
       }
     });
 
+    if (isEmpty(status)) {
+      newErrors.status = t("Status is required");
+    }
+
+    if (isEmpty(reviewCadence)) {
+      newErrors.reviewCadence = t("Review cadence is required");
+    }
+
     if (isEmpty(accountableOwnerId)) {
       newErrors.accountableOwnerId = t("Owner selection is required");
     }
@@ -239,16 +250,16 @@ export const useProjectForm = () => {
       newErrors.killCriteria = t("Kill criteria is required");
     }
 
-    setErrors(newErrors);
-
+    setErrors(newErrors); 
     return {
       isValid: Object.keys(newErrors).length === 0,
+      errors: newErrors,
       firstError: Object.values(newErrors)[0] || null,
     };
   }, [
     projectName, description, importance, strategicDecision, accountableOwner,
     accountableOwnerId, successCriteria, killCriteria, dependencies,
-    highLevelReq, scope, outcome, successMetrics, keyAssumptions, t
+    highLevelReq, scope, outcome, successMetrics, keyAssumptions, t, status, reviewCadence
   ]);
 
   return {

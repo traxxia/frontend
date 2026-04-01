@@ -823,6 +823,7 @@ const ProjectsSection = ({
         initialStatus={currentProject?.status}
         decisionLog={currentProject?.decision_log}
         isAdmin={isSuperAdmin}
+        validateForm={validateForm}
       />
     );
   };
