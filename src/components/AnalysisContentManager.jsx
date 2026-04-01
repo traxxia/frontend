@@ -144,7 +144,7 @@ const CategorySection = React.memo(
             <div className="category-title-group">
               <h2 className="category-title">{title}</h2>
               {subtitle && (
-                <p style={{ fontSize: '13px', color: '#6b7280', margin: '4px 0 0 0', fontWeight: '500' }}>
+                <p style={{ fontSize: '12px', color: '#6b7280', margin: '4px 0 0 0', fontWeight: '500' }}>
                   {subtitle}
                 </p>
               )}
@@ -177,6 +177,12 @@ const AnalysisContentManager = (props) => {
 
   const CATEGORIES = [
     {
+      id: 'current-strategy',
+      title: t('Current Strategy'),
+      subtitle: t('Strategic_focus_areas_and_growth_opportunities'),
+      icon: Target
+    },
+    {
       id: 'costs-financial',
       title: t('Costs/Financial'),
       subtitle: t('Financial_performance,_profitability,_and_resource_efficiency_metrics'),
@@ -205,12 +211,6 @@ const AnalysisContentManager = (props) => {
       title: t('Competition'),
       subtitle: t('Competitive_landscape_and_market_positioning_analysis'),
       icon: Award
-    },
-    {
-      id: 'current-strategy',
-      title: t('Current Strategy'),
-      subtitle: t('Strategic_focus_areas_and_growth_opportunities'),
-      icon: Target
     }
   ];
 
@@ -743,7 +743,37 @@ const AnalysisContentManager = (props) => {
           <span>{t("Regenerating Insights...")}</span>
         </div>
       )}
+      <div className="six-cs-framework-overview">
+        <div className="overview-header">
+          <div className="overview-icon-wrapper">
+            <Zap size={20} className="overview-main-icon" strokeWidth={2.5} />
+          </div>
+          <div className="overview-text">
+            <h3>{t("six_cs_overview_title")}</h3>
+            <p>{t("six_cs_overview_description")}</p>
+          </div>
+        </div>
+        <ul className="overview-bullets">
+          {[
+            { id: 'costs-financial', title: t('Costs/Financial'), desc: t('six_cs_cost_desc') },
+            { id: 'context-industry', title: t('Context/Industry'), desc: t('six_cs_context_desc') },
+            { id: 'customer', title: t('Customer'), desc: t('six_cs_customer_desc') },
+            { id: 'capabilities', title: t('Capabilities'), desc: t('six_cs_capabilities_desc') },
+            { id: 'competition', title: t('Competition'), desc: t('six_cs_competition_desc') },
+            { id: 'current-strategy', title: t('Current Strategy'), desc: t('six_cs_strategy_desc') },
+          ].map((item) => (
+            <li
+              key={item.id}
+              className="overview-bullet-item"
+            >
+              <span className="bullet-title">{item.title}:</span>
+              <span className="bullet-desc">{item.desc}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
       <div className="modern-analysis-content">
+
         <div className="categorized-analysis">
           {CATEGORIES.map(category => {
             const analyses = categorizedAnalyses[category.id];

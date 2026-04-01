@@ -59,7 +59,6 @@ const RegenerateButton = ({
         transition: "all 0.2s ease",
         marginLeft: "auto"
       }}
-      title={`Regenerate ${sectionName}`}
     >
       <RefreshCw size={currentSize.iconSize} />
       {t("regenerate")}
