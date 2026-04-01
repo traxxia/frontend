@@ -157,6 +157,7 @@ const BusinessSetupPage = () => {
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [pmfRefreshTrigger, setPmfRefreshTrigger] = useState(0);
   const [answerIds, setAnswerIds] = useState({}); // Mapping of question_id to answer document _id
+  const [isPmfOnboardingComplete, setIsPmfOnboardingComplete] = useState(true);
 
   // hasInsightAccess and hasStrategicAccess are now derived from getUserLimits() above (line 79)
 
@@ -288,14 +289,15 @@ const BusinessSetupPage = () => {
       contextPayload.page_content = qaData;
     }
 
-    if (pageContext) {
-      window.dispatchEvent(
-        new CustomEvent("ai_context_changed", {
-          detail: { pageContext: contextPayload, isArchived }
-        })
-      );
-    }
-  }, [activeTab, questions, userAnswers, isArchived]);
+    const isStrategicTab = ["aha", "executive", "priorities"].includes(activeTab);
+    const isDisabled = isStrategicTab && !isPmfOnboardingComplete;
+
+    window.dispatchEvent(
+      new CustomEvent("ai_context_changed", {
+        detail: { pageContext: contextPayload, isArchived, isDisabled }
+      })
+    );
+  }, [activeTab, questions, userAnswers, isArchived, isPmfOnboardingComplete]);
 
   // Effect to handle business context recovery on refresh
   useEffect(() => {
@@ -334,6 +336,22 @@ const BusinessSetupPage = () => {
 
     recoverBusinessContext();
   }, [selectedBusinessId, currentBusiness, activeTab, selectedBusinessName]);
+
+  //PMF onboarding check
+  useEffect(() => {
+    const checkPmf = async () => {
+      if (!selectedBusinessId) return;
+      try {
+        const pmfData = await apiService.getPMFAnalysis(selectedBusinessId);
+        // Onboarding is complete if we have any insights data
+        const hasAha = !!pmfData && (Array.isArray(pmfData) ? pmfData.length > 0 : (pmfData.insights && (Array.isArray(pmfData.insights) ? pmfData.insights.length > 0 : (pmfData.insights.insights && pmfData.insights.insights.length > 0))));
+        setIsPmfOnboardingComplete(hasAha);
+      } catch (e) {
+        setIsPmfOnboardingComplete(false);
+      }
+    };
+    checkPmf();
+  }, [selectedBusinessId, pmfRefreshTrigger]);
 
   // Sync businessData in useBusinessSetup when currentBusiness changes
   useEffect(() => {

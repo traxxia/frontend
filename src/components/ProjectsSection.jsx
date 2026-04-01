@@ -112,6 +112,7 @@ const ProjectsSection = ({
     { id: "At Risk", label: t("At Risk") || "At Risk" },
     { id: "Paused", label: t("Paused") || "Paused" },
     { id: "Killed", label: t("Killed") || "Killed" },
+    { id: "Completed", label: t("Completed") || "Completed" },
     { id: "Scaled", label: t("Scaled") || "Scaled" },
   ];
 
@@ -254,6 +255,7 @@ const ProjectsSection = ({
       "At Risk": 0,
       Paused: 0,
       Killed: 0,
+      Completed: 0,
       Scaled: 0
     };
 
@@ -267,10 +269,14 @@ const ProjectsSection = ({
         counts.Paused++;
       } else if (statusValue === "killed") {
         counts.Killed++;
+      } else if (statusValue === "completed") {
+        counts.Completed++;
       } else if (statusValue === "scaled") {
         counts.Scaled++;
+      } else if (statusValue === "draft") {
+        counts.Draft++;
       } else {
-        // Includes 'draft', 'launched', and any unknown fallback
+        // Unknown fallback
         counts.Draft++;
       }
     });
@@ -814,7 +820,10 @@ const ProjectsSection = ({
         selectedBusinessId={selectedBusinessId}
         projectId={currentProject?._id}
         launchStatus={currentProject?.launch_status}
+        initialStatus={currentProject?.status}
+        decisionLog={currentProject?.decision_log}
         isAdmin={isSuperAdmin}
+        validateForm={validateForm}
       />
     );
   };

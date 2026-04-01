@@ -21,7 +21,8 @@ import {
     PauseCircle,
     XCircle,
     CheckCircle,
-    Edit2
+    Edit2,
+    Info
 } from "lucide-react";
 import "../styles/ProjectDetails.css";
 
@@ -150,11 +151,58 @@ const ProjectDetails = ({
                 </Breadcrumb>
             </div>
 
+            {(() => {
+                const statusLower = (project.status || "").toLowerCase();
+                const isTerminal = statusLower === "completed" || statusLower === "scaled" || statusLower === "killed";
+                if (!isTerminal) return null;
+                return (
+                    <div className="terminal-status-banner" style={{
+                        backgroundColor: "#eff6ff",
+                        border: "1px solid #dbeafe",
+                        borderRadius: "8px",
+                        padding: "10px 16px",
+                        marginBottom: "20px",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "10px",
+                        color: "#1e40af"
+                    }}>
+                        <Info size={18} color="#2563eb" style={{ flexShrink: 0 }} />
+                        <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap", fontSize: "14px" }}>
+                            <span style={{ fontWeight: "600" }}>
+                                {(() => {
+                                    if (statusLower === "completed") return "Project reached Completed state cannot be edited further.";
+                                    if (statusLower === "scaled") return "Project reached Scaled state cannot be edited further.";
+                                    if (statusLower === "killed") return "Project reached Killed state cannot be edited further.";
+                                    return "Project reached a final state cannot be edited further.";
+                                })()}
+                            </span>
+                            {project.decision_log && project.decision_log.length > 0 && (() => {
+                                const latestTerminalLog = [...project.decision_log]
+                                    .reverse()
+                                    .find(log => (log.to_status || "").toLowerCase() === statusLower);
+                                if (latestTerminalLog) {
+                                    return (
+                                        <>
+                                            <span style={{ color: "#3b82f6", opacity: 0.8 }}>•</span>
+                                            <span style={{ fontStyle: "italic", color: "#1d4ed8" }}>
+                                                "{latestTerminalLog.justification || t("No_justification_provided")}"
+                                            </span>
+                                        </>
+                                    );
+                                }
+                                return null;
+                            })()}
+                        </div>
+                    </div>
+                );
+            })()}
+
             {/* Header with Title and Actions */}
             <div className="details-header mb-4">
                 <h1 className="details-title">{project.project_name}</h1>
                 <div className="details-actions">
-                    {canEdit && (
+                    {canEdit && !["completed", "scaled", "killed"].includes(project.status?.toLowerCase()) && (
                         <button className="btn-edit" onClick={() => onEdit(project)}>
                             <Edit2 size={16} /> {t("Edit")}
                         </button>
@@ -288,7 +336,7 @@ const ProjectDetails = ({
                             <label className="detail-label">{t("Next_Review_Date")}</label>
                             <div className="detail-value" style={{ display: 'flex', alignItems: 'center' }}>
                                 <span style={{
-                                    color:(project.is_stale || (project.next_review_date && new Date(project.next_review_date).getTime() < new Date().setHours(0, 0, 0, 0))) ? '#ef4444' : (project.next_review_date && new Date(project.next_review_date).toDateString() === new Date().toDateString() ? '#d97706' : 'inherit'),
+                                    color: (project.is_stale || (project.next_review_date && new Date(project.next_review_date).getTime() < new Date().setHours(0, 0, 0, 0))) ? '#ef4444' : (project.next_review_date && new Date(project.next_review_date).toDateString() === new Date().toDateString() ? '#d97706' : 'inherit'),
                                     fontWeight: '600'
                                 }}>
                                     {project.next_review_date ? new Date(project.next_review_date).toLocaleDateString() : t("Not_Available")}
@@ -313,12 +361,12 @@ const ProjectDetails = ({
                             <p className="detail-value">{project.last_reviewed ? new Date(project.last_reviewed).toLocaleDateString() : t("Never")}</p>
                         </div>
                         <div className="detail-item" style={{ display: 'flex', alignItems: 'flex-end', gap: '8px' }}>
-                            {canEdit && (
+                            {canEdit && !["completed", "scaled", "killed"].includes(project.status?.toLowerCase()) && (
                                 <button className="btn-edit" onClick={() => onEdit(project)} style={{ padding: '6px 12px', fontSize: '13px' }}>
                                     <Edit2 size={14} /> {t("Edit")}
                                 </button>
                             )}
-                            {canReview && (
+                            {canReview && !["completed", "scaled"].includes(project.status?.toLowerCase()) && (
                                 <>
                                     <button className="btn-review" onClick={() => onPerformReview(project)} style={{ background: '#059669', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '4px', fontSize: '13px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}>
                                         <CheckCircle size={14} /> {t("Perform_Review")}

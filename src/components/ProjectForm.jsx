@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, forwardRef } from "react";
 import { useTranslation } from "../hooks/useTranslation";
 import { Breadcrumb } from "react-bootstrap";
-import { TrendingUp, Zap, AlertTriangle, Circle, Diamond, Rocket, Bolt, Lightbulb, Heart, Shield, Boxes, Clock, DollarSign, Lock, CheckCircle, XCircle, Edit2, ShieldCheck, Users } from "lucide-react";
+import { TrendingUp, Zap, AlertTriangle, Circle, Diamond, Rocket, Bolt, Lightbulb, Heart, Shield, Boxes, Clock, DollarSign, Lock, CheckCircle, XCircle, Edit2, ShieldCheck, Users, Info } from "lucide-react";
 import { validateField } from "../utils/validation";
 import "../styles/NewProjectPage.css";
 
@@ -332,6 +332,10 @@ const ProjectForm = ({
   selectedBusinessId,
   projectId,
   isAdmin = false,
+  initialStatus,
+  decisionLog,
+  errors: hookErrors,
+  validateForm,
 }) => {
   const { t } = useTranslation();
   const isReadOnly = mode === "view" || readOnly;
@@ -428,8 +432,9 @@ const ProjectForm = ({
     );
   };
 
+  const initialStatusLower = (initialStatus || "").toLowerCase();
   const isLaunched = (launchStatus || "").toLowerCase() === "launched" || ["active", "at risk", "paused", "completed", "scaled"].includes((status || "").toLowerCase());
-  const isTerminal = (status || "").toLowerCase() === "completed" || (status || "").toLowerCase() === "scaled" || ((status || "").toLowerCase() === "killed" && !isAdmin);
+  const isTerminal = initialStatusLower === "completed" || initialStatusLower === "scaled" || (initialStatusLower === "killed" && !isAdmin);
 
   const getSubmitButtonText = () => {
     if (isSubmitting) {
@@ -590,6 +595,7 @@ const ProjectForm = ({
     if (showErrors) {
       const validation = validateField('Success Criteria', value, {
         required: true,
+        minLength: 10,
         requiresText: true
       });
       setFieldErrors(prev => ({
@@ -607,6 +613,7 @@ const ProjectForm = ({
     if (showErrors) {
       const validation = validateField('Kill Criteria', value, {
         required: true,
+        minLength: 10,
         requiresText: true
       });
       setFieldErrors(prev => ({
@@ -707,88 +714,22 @@ const ProjectForm = ({
   };
 
   const handleSubmit = () => {
-    // Validate project name only for new projects
-    const projectNameValidation = mode === "new"
-      ? validateField('Project Name', projectName || '', {
-        required: true,
-        minLength: 3,
-        maxLength: 100,
-        requiresText: true
-      })
-      : { isValid: true, message: null };
+    // Unified validation from hook
+    const validation = validateForm({ isNew: mode === "new" });
+    const errors = validation.errors || {};
 
-    // Validate all required fields
-    const descValidation = validateField('Description', description || '', {
-      required: true,
-      minLength: 10,
-      maxLength: 500,
-      requiresText: true
-    });
-
-    const impValidation = validateField('Why This Matters', importance || '', {
-      required: true,
-      minLength: 10,
-      maxLength: 1000,
-      requiresText: true
-    });
-
-    // Strategic Core Validation
-    const decisionValidation = validateField('Strategic Decision', strategicDecision || '', { required: true, minLength: 10, requiresText: true });
-    const ownerValidation = validateField('Accountable Owner', accountableOwnerId || '', { required: true, skipStrict: true });
-    const successValidation = validateField('Success Criteria', successCriteria || '', { required: true, requiresText: true });
-    const killValidation = validateField('Kill Criteria', killCriteria || '', { required: true, requiresText: true });
-
-    const budgetValidation = validateField('Budget Estimate', budget || '', {
-      numeric: true,
-      min: 0,
-      allowSpecialChars: ['.', ',', '-', '$', 'K', 'M']
-    });
-
-    const depValidation = validateField('Dependencies', dependencies || '', { minLength: 10 });
-    const hlValidation = validateField('Constraints / Non-Negotiables', highLevelReq || '', { minLength: 10 });
-    const scopeValidation = validateField('Explicitly Out of Scope', scope || '', { minLength: 10 });
-    const outcomeValidation = validateField('Expected Outcome', outcome || '', { minLength: 10 });
-    const smValidation = validateField('Success Metrics (KPIs)', successMetrics || '', { minLength: 10 });
-
-    const errors = {
-      projectName: projectNameValidation.isValid ? null : t(projectNameValidation.message),
-      description: descValidation.isValid ? null : t(descValidation.message),
-      importance: impValidation.isValid ? null : t(impValidation.message),
-      strategicDecision: decisionValidation.isValid ? null : t(decisionValidation.message),
-      accountableOwnerId: ownerValidation.isValid ? null : t(ownerValidation.message),
-      successCriteria: successValidation.isValid ? null : t(successValidation.message),
-      killCriteria: killValidation.isValid ? null : t(killValidation.message),
-      budget: budgetValidation.isValid ? null : t(budgetValidation.message),
-      status: (status && status.trim()) ? null : t("Status_is_required"),
-      reviewCadence: (reviewCadence && reviewCadence.trim()) ? null : t("Review_cadence_is_required"),
-      dependencies: depValidation.isValid ? null : t(depValidation.message),
-      highLevelReq: hlValidation.isValid ? null : t(hlValidation.message),
-      scope: scopeValidation.isValid ? null : t(scopeValidation.message),
-      outcome: outcomeValidation.isValid ? null : t(outcomeValidation.message),
-      successMetrics: smValidation.isValid ? null : t(smValidation.message),
-    };
-
-    // Add Key Assumptions errors
-    keyAssumptions.forEach((assumption, idx) => {
-      if (assumption && assumption.trim().length > 0) {
-        const val = validateField(`Assumption ${idx + 1}`, assumption, { minLength: 10 });
-        if (!val.isValid) {
-          errors[`keyAssumptions_${idx}`] = t(val.message);
-        }
-      }
-    });
     setFieldErrors(errors);
     setShowErrors(true);
 
-    // Check if there are any errors
-    const hasErrors = Object.values(errors).some(error => error !== null);
+    const hasErrors = Object.keys(errors).length > 0;
 
     if (hasErrors) {
       if (errors.projectName) scrollToError(projectNameRef);
       else if (errors.description) scrollToError(descriptionRef);
       else if (errors.importance) scrollToError(importanceRef);
       else if (errors.strategicDecision) scrollToError(strategicDecisionRef);
-      else if (errors.accountableOwnerId) scrollToError(accountableOwnerRef);
+      // Map both hook's 'accountableOwner' and 'accountableOwnerId' to the owner ref
+      else if (errors.accountableOwnerId || errors.accountableOwner) scrollToError(accountableOwnerRef);
       else if (errors.successCriteria) scrollToError(successCriteriaRef);
       else if (errors.killCriteria) scrollToError(killCriteriaRef);
       else if (errors.status) scrollToError(statusRef);
@@ -815,6 +756,47 @@ const ProjectForm = ({
   return (
     <>
       <fieldset disabled={isSubmitting || isReadOnly} style={{ border: 'none', padding: 0, margin: 0, minWidth: 0 }}>
+        {isTerminal && (
+          <div className="terminal-status-banner" style={{
+            backgroundColor: "#eff6ff",
+            border: "1px solid #dbeafe",
+            borderRadius: "8px",
+            padding: "10px 16px",
+            marginBottom: "20px",
+            display: "flex",
+            alignItems: "center",
+            gap: "10px",
+            color: "#1e40af"
+          }}>
+            <Info size={18} color="#2563eb" style={{ flexShrink: 0 }} />
+            <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap", fontSize: "14px" }}>
+              <span style={{ fontWeight: "600" }}>
+                {(() => {
+                  if (initialStatusLower === "completed") return "Project reached Completed state cannot be edited further.";
+                  if (initialStatusLower === "scaled") return "Project reached Scaled state cannot be edited further.";
+                  if (initialStatusLower === "killed") return "Project reached Killed state cannot be edited further.";
+                  return "Project reached a final state cannot be edited further.";
+                })()}
+              </span>
+              {decisionLog && decisionLog.length > 0 && (() => {
+                const latestTerminalLog = [...decisionLog]
+                  .reverse()
+                  .find(log => (log.to_status || "").toLowerCase() === initialStatusLower);
+                if (latestTerminalLog) {
+                  return (
+                    <>
+                      <span style={{ color: "#3b82f6", opacity: 0.8 }}>•</span>
+                      <span style={{ fontStyle: "italic", color: "#1d4ed8" }}>
+                        "{latestTerminalLog.justification || t("No_justification_provided")}"
+                      </span>
+                    </>
+                  );
+                }
+                return null;
+              })()}
+            </div>
+          </div>
+        )}
         {/* Breadcrumb & Actions Header */}
         <div className="projects-breadcrumb">
           <Breadcrumb style={{ margin: 0 }}>
@@ -1107,10 +1089,8 @@ const ProjectForm = ({
                     if (target === currentStatus) {
                       isDisabled = false;
                     } else if (!isLaunched) {
-                      // Unlaunched: Draft -> Killed is allowed. Active is handled via Launch mechanism.
-                      if (currentStatus === 'draft') {
-                        if (target === 'killed') isDisabled = false;
-                      }
+                      // Unlaunched: Draft and Killed are allowed. Active is handled via Launch mechanism.
+                      if (['draft', 'killed'].includes(target)) isDisabled = false;
                     } else {
                       // Launched
                       if (currentStatus === 'active' || currentStatus === 'at risk') {
