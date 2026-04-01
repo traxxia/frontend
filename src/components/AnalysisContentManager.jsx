@@ -143,11 +143,11 @@ const CategorySection = React.memo(
             <IconComponent size={24} className="category-icon" />
             <div className="category-title-group">
               <h2 className="category-title">{title}</h2>
-              {subtitle && (
+              {/* {subtitle && (
                 <p style={{ fontSize: '12px', color: '#6b7280', margin: '4px 0 0 0', fontWeight: '500' }}>
                   {subtitle}
                 </p>
-              )}
+              )} */}
             </div>
           </div>
           <div className="category-toggle">
