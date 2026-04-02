@@ -33,20 +33,104 @@ const NotificationBell = () => {
   };
 
   const handleNotificationClick = async (notif) => {
-    try {
-      if (!notif.is_read) {
-        const token = sessionStorage.getItem('token');
-        await fetch(`${REACT_APP_BACKEND_URL}/api/notifications/${notif._id}/read`, {
-          method: 'PUT',
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
+    console.log("Notification clicked:", notif);
+    
+    // 1. Mark as read in the background asynchronously, don't block navigation
+    if (!notif.is_read) {
+      const token = sessionStorage.getItem('token');
+      fetch(`${REACT_APP_BACKEND_URL}/api/notifications/${notif._id}/read`, {
+        method: 'PUT',
+        headers: { 'Authorization': `Bearer ${token}` }
+      }).catch(err => console.error('Error marking as read', err));
 
-        setNotifications(prev => prev.map(n => n._id === notif._id ? { ...n, is_read: true } : n));
-        setUnreadCount(prev => Math.max(0, prev - 1));
+      setNotifications(prev => prev.map(n => n._id === notif._id ? { ...n, is_read: true } : n));
+      setUnreadCount(prev => Math.max(0, prev - 1));
+    }
+
+    try {
+      const isStaleProject = notif.type === 'stale_bet' || notif.type === 'stale_project' || notif.type === 'review_reminder' || 
+                             (notif.title && (notif.title.toLowerCase().includes('stale') || notif.title.toLowerCase().includes('atrasada') || notif.title.toLowerCase().includes('reminder')));
+
+      console.log("Is stale project?", isStaleProject);
+
+      // Extract explicit business ID if available to set the correct business context
+      const targetBusinessId = notif.business_id || notif.metadata?.business_id || notif.project?.business_id || notif.reference_id;
+      
+      if (targetBusinessId) {
+         console.log("Setting active business:", targetBusinessId);
+         sessionStorage.setItem('activeBusinessId', targetBusinessId);
+      } else if (isStaleProject && notif.message) {
+         // Attempt to extract the business name from the message to aid the user
+         const nameMatch = notif.message.match(/under\s+"([^"]+)"/i) || notif.message.match(/project.*under\s+([^ ]+)/i);
+         if (nameMatch && nameMatch[1]) {
+             const businessName = nameMatch[1].trim();
+             console.log("Extracted business name from message:", businessName);
+             try {
+                // We must map this name to a business ID because the backend payload lacks it
+                const token = sessionStorage.getItem('token');
+                const res = await fetch(`${REACT_APP_BACKEND_URL}/api/businesses`, {
+                  headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (res.ok) {
+                   const data = await res.json();
+                   const ownedBusinesses = data.businesses || [];
+                   const collabBusinesses = data.collaboratingBusinesses || data.collaborating_businesses || [];
+                   const allBusinesses = [...ownedBusinesses, ...collabBusinesses];
+                   
+                   const found = allBusinesses.find(b => b.business_name === businessName);
+                   if (found) {
+                      const foundId = found._id || found.id;
+                      console.log("Matched business name to ID:", foundId);
+                      sessionStorage.setItem('activeBusinessId', foundId);
+                   } else {
+                      console.log("Could not find a business matching the name:", businessName);
+                   }
+                }
+             } catch (e) {
+                console.error("Failed to resolve business name to ID", e);
+             }
+         }
       }
-      navigate('/dashboard');
-    } catch (err) {
-      console.error('Error marking as read', err);
+
+      if (notif.action_link) {
+         try {
+           const url = new URL(notif.action_link, window.location.origin);
+           const bId = url.searchParams.get('business_id') || url.searchParams.get('businessId');
+           if (bId) {
+              console.log("Setting active business from URL:", bId);
+              sessionStorage.setItem('activeBusinessId', bId);
+           }
+         } catch (e) {
+           console.error("URL parsing error:", e);
+         }
+      }
+
+      let navPath = notif.action_link || '/dashboard';
+      let navOptions = {};
+
+      if (isStaleProject) {
+        // Force routing to the business page -> projects tab for stale project alerts
+        if (!navPath.includes('/businesspage')) {
+           navPath = '/businesspage';
+        }
+        navOptions = { state: { initialTab: 'projects' } };
+      }
+
+      // If action link explicitly requests a tab via query params, use it
+      if (navPath.includes('tab=')) {
+          try {
+             const url = new URL(navPath, window.location.origin);
+             const tab = url.searchParams.get('tab');
+             if (tab) navOptions = { state: { initialTab: tab } };
+             navPath = url.pathname;
+          } catch(e) {}
+      }
+
+      console.log("Navigating to:", navPath, navOptions);
+      navigate(navPath, navOptions);
+    } catch (routeErr) {
+      console.error("Routing error:", routeErr);
+      navigate('/dashboard'); // Fallback
     }
   };
 
@@ -88,12 +172,12 @@ const NotificationBell = () => {
   return (
     <Dropdown className="me-3">
       <Dropdown.Toggle variant="link" id="dropdown-notifications" className="notification-menu p-0 border-0 shadow-none d-flex align-items-center" style={{ pointerEvents: 'auto' }}>
-        <div className={`position-relative d-inline-block notification-bell-container ${unreadCount > 0 ? 'notification-bell-active' : ''}`}>
+        <div className={`position-relative notification-bell-container ${unreadCount > 0 ? 'notification-bell-active' : ''}`}>
           <Bell size={22} className="navbar_icon text-dark" />
           {unreadCount > 0 && (
             <span 
-              className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger border border-white border-2" 
-              style={{ fontSize: '0.6rem', padding: '0.35em 0.5em', transform: 'translate(-30%, -10%)' }}
+              className="position-absolute badge rounded-pill bg-danger border border-white border-2 notification-badge-blink"
+              style={{ top: '4px', right: '4px', fontSize: '0.6rem', padding: '0.25em 0.4em' }}
             >
               {unreadCount > 9 ? '9+' : unreadCount}
             </span>
