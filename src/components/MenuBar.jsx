@@ -120,7 +120,7 @@ const MenuBar = () => {
           {/* Right side - User Menu */}
           <div className="navbar-right d-flex align-items-center">
             
-            <NotificationBell />
+            {!isSuperAdmin && <NotificationBell />}
 
             <Dropdown>
               <Dropdown.Toggle

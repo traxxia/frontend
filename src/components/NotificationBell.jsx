@@ -44,11 +44,7 @@ const NotificationBell = () => {
         setNotifications(prev => prev.map(n => n._id === notif._id ? { ...n, is_read: true } : n));
         setUnreadCount(prev => Math.max(0, prev - 1));
       }
-      if (notif.action_data && notif.action_data.project_id) {
-        navigate(`/projects/${notif.action_data.project_id}`);
-      } else {
-        navigate('/dashboard');
-      }
+      navigate('/dashboard');
     } catch (err) {
       console.error('Error marking as read', err);
     }
