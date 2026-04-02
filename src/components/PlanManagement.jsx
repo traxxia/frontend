@@ -176,35 +176,35 @@ const PlanModal = ({ show, plan, onClose, onSave, isSubmitting, onToast }) => {
 
         const name = formData.name.trim();
         if (!name) {
-            onToast(t('plan_name_required') || 'Plan name is required', 'error');
+            onToast(t('plan_name_required'), 'error');
             return;
         }
 
         if (!/[a-zA-Z]/.test(name)) {
-            onToast(t('plan_name_invalid') || 'Plan name must contain at least one letter', 'error');
+            onToast(t('plan_name_invalid'), 'error');
             return;
         }
 
         const description = formData.description.trim();
         if (!description) {
-            onToast(t('plan_description_required') || 'Description is required', 'error');
+            onToast(t('plan_description_required'), 'error');
             return;
         }
 
         if (!/[a-zA-Z]/.test(description)) {
-            onToast(t('plan_description_invalid') || 'Description must contain at least one letter', 'error');
+            onToast(t('plan_description_invalid'), 'error');
             return;
         }
 
         if (!formData.period) {
-            onToast(t('period_required') || 'Billing period is required', 'error');
+            onToast(t('period_required'), 'error');
             return;
         }
 
         // Strict regex for price: non-negative, up to 2 decimal places
         const priceStr = formData.price.toString().trim();
         if (priceStr === '' || !/^\d+(\.\d{1,2})?$/.test(priceStr)) {
-            onToast(t('price_invalid') || 'Please enter a valid price (e.g. 10.99)', 'error');
+            onToast(t('price_invalid'), 'error');
             return;
         }
 
@@ -217,7 +217,7 @@ const PlanModal = ({ show, plan, onClose, onSave, isSubmitting, onToast }) => {
             (maxCollaborators !== undefined && (isNaN(maxCollaborators) || maxCollaborators < 0)) ||
             (maxViewers !== undefined && (isNaN(maxViewers) || maxViewers < 0)) ||
             (maxUsers !== undefined && (isNaN(maxUsers) || maxUsers < 0))) {
-            onToast(t('limits_negative') || 'Limits must be non-negative numbers', 'error');
+            onToast(t('limits_negative'), 'error');
             return;
         }
 
@@ -258,10 +258,10 @@ const PlanModal = ({ show, plan, onClose, onSave, isSubmitting, onToast }) => {
             <Modal.Header closeButton className="plan-modal-header">
                 <div className="plan-modal-header-inner">
                     <Modal.Title className="plan-modal-title">
-                        {plan ? t('edit_plan') || 'Edit Plan' : t('create_plan') || 'Create Plan'}
+                        {plan ? t('edit_plan') : t('create_plan')}
                     </Modal.Title>
                     <div className="plan-status-toggle-wrap">
-                        <span className="plan-status-label">{t('status') || 'Status'}</span>
+                        <span className="plan-status-label">{t('status')}</span>
                         <input
                             className="form-check-input plan-status-switch"
                             type="checkbox"
@@ -274,7 +274,7 @@ const PlanModal = ({ show, plan, onClose, onSave, isSubmitting, onToast }) => {
                             style={(!plan && !formData.name.trim()) ? { cursor: 'not-allowed', opacity: 0.6 } : {}}
                         />
                         <span className={`plan-status-text ${formData.isActive ? 'text-active' : 'text-inactive'}`}>
-                            {formData.isActive ? (t('active') || 'Active') : (t('inactive') || 'Inactive')}
+                            {formData.isActive ? t('active') : t('inactive')}
                         </span>
                     </div>
                 </div>
@@ -285,10 +285,10 @@ const PlanModal = ({ show, plan, onClose, onSave, isSubmitting, onToast }) => {
 
                     {/* ── Section 1: Basic Info ── */}
                     <div className="plan-section">
-                        <p className="plan-section-label">{'Basic Info'}</p>
+                        <p className="plan-section-label">{t('basic_info')}</p>
                         <div className="row g-3">
                             <div className="col-md-6">
-                                <label className="plan-field-label">{t('plan_name') || 'Plan Name'} <span className="required-star">*</span></label>
+                                <label className="plan-field-label">{t('plan_name')} <span className="required-star">*</span></label>
                                 <input
                                     type="text"
                                     name="name"
@@ -300,7 +300,7 @@ const PlanModal = ({ show, plan, onClose, onSave, isSubmitting, onToast }) => {
                                 />
                             </div>
                             <div className="col-md-6">
-                                <label className="plan-field-label">{t('description') || 'Description'} <span className="required-star">*</span></label>
+                                <label className="plan-field-label">{t('description')} <span className="required-star">*</span></label>
                                 <textarea
                                     name="description"
                                     className="plan-form-input plan-textarea"
@@ -316,12 +316,12 @@ const PlanModal = ({ show, plan, onClose, onSave, isSubmitting, onToast }) => {
 
                     {/* ── Section 2: Pricing ── */}
                     <div className="plan-section">
-                        <p className="plan-section-label">{t('pricing') || 'Pricing'}</p>
+                        <p className="plan-section-label">{t('pricing')}</p>
                         <div className="row g-3">
                             <div className="col-md-6">
                                 <label className="plan-field-label">
-                                    {t('Price') || 'Price'} <span className="required-star">*</span> <span className="plan-currency-tag">USD</span>
-                                    {plan && <span className="plan-readonly-note">{t('not_editable') || '(not editable)'}</span>}
+                                    {t('Price')} <span className="required-star">*</span> <span className="plan-currency-tag">USD</span>
+                                    {plan && <span className="plan-readonly-note">{t('not_editable')}</span>}
                                 </label>
                                 <div className="plan-price-input-wrap">
                                     <span className="plan-price-symbol">$</span>
@@ -342,15 +342,15 @@ const PlanModal = ({ show, plan, onClose, onSave, isSubmitting, onToast }) => {
                                 </div>
                             </div>
                             <div className="col-md-6">
-                                <label className="plan-field-label">{t('period') || 'Billing Period'} <span className="required-star">*</span></label>
+                                <label className="plan-field-label">{t('billing_period')} <span className="required-star">*</span></label>
                                 <select
                                     name="period"
                                     className="plan-form-input"
                                     value={formData.period}
                                     onChange={handleChange}
                                 >
-                                    <option value="month">{t('Month') || 'Monthly'}</option>
-                                    <option value="year">{t('Year') || 'Yearly'}</option>
+                                    <option value="month">{t('month')}</option>
+                                    <option value="year">{t('year')}</option>
                                 </select>
                             </div>
                         </div>
@@ -358,10 +358,10 @@ const PlanModal = ({ show, plan, onClose, onSave, isSubmitting, onToast }) => {
 
                     {/* ── Section 3: Limits ── */}
                     <div className="plan-section">
-                        <p className="plan-section-label">{t('plan_limits') || 'Plan Limits'}</p>
+                        <p className="plan-section-label">{t('plan_limits')}</p>
                         <div className="row g-3">
                             <div className="col-md-3 col-6">
-                                <label className="plan-field-label">{t('workspace_limit') || 'Workspaces'}</label>
+                                <label className="plan-field-label">{t('workspace_limit')}</label>
                                 <input
                                     type="number"
                                     name="workspace_limit"
@@ -374,7 +374,7 @@ const PlanModal = ({ show, plan, onClose, onSave, isSubmitting, onToast }) => {
                                 />
                             </div>
                             <div className="col-md-3 col-6">
-                                <label className="plan-field-label">{t('users') || 'Users'}</label>
+                                <label className="plan-field-label">{t('users')}</label>
                                 <input
                                     type="number"
                                     name="limit_users"
@@ -387,7 +387,7 @@ const PlanModal = ({ show, plan, onClose, onSave, isSubmitting, onToast }) => {
                                 />
                             </div>
                             <div className="col-md-3 col-6">
-                                <label className="plan-field-label">{t('collaborators') || 'Collaborators'}</label>
+                                <label className="plan-field-label">{t('collaborators')}</label>
                                 <input
                                     type="number"
                                     name="limit_collaborators"
@@ -400,7 +400,7 @@ const PlanModal = ({ show, plan, onClose, onSave, isSubmitting, onToast }) => {
                                 />
                             </div>
                             <div className="col-md-3 col-6">
-                                <label className="plan-field-label">{t('viewers') || 'Viewers'}</label>
+                                <label className="plan-field-label">{t('viewers')}</label>
                                 <input
                                     type="number"
                                     name="limit_viewers"
@@ -417,7 +417,7 @@ const PlanModal = ({ show, plan, onClose, onSave, isSubmitting, onToast }) => {
 
                     {/* ── Section 4: Feature Access ── */}
                     <div className="plan-section">
-                        <p className="plan-section-label">{t('feature_access') || 'Feature Access'}</p>
+                        <p className="plan-section-label">{t('feature_access')}</p>
                         <div className="plan-access-grid">
                             <label className="plan-access-card">
                                 <input
@@ -428,7 +428,7 @@ const PlanModal = ({ show, plan, onClose, onSave, isSubmitting, onToast }) => {
                                     className="plan-access-checkbox"
                                 />
                                 <span className="plan-access-indicator" />
-                                <span className="plan-access-name">{t('insight_access') || 'Insight'}</span>
+                                <span className="plan-access-name">{t('insight_access')}</span>
                             </label>
 
                             <label className="plan-access-card">
@@ -440,7 +440,7 @@ const PlanModal = ({ show, plan, onClose, onSave, isSubmitting, onToast }) => {
                                     className="plan-access-checkbox"
                                 />
                                 <span className="plan-access-indicator" />
-                                <span className="plan-access-name">{t('strategic_access') || 'Strategic'}</span>
+                                <span className="plan-access-name">{t('strategic_access')}</span>
                             </label>
 
                             <label className="plan-access-card">
@@ -452,7 +452,7 @@ const PlanModal = ({ show, plan, onClose, onSave, isSubmitting, onToast }) => {
                                     className="plan-access-checkbox"
                                 />
                                 <span className="plan-access-indicator" />
-                                <span className="plan-access-name">{t('pmf_access') || 'PMF'}</span>
+                                <span className="plan-access-name">{t('pmf_access')}</span>
                             </label>
 
                             {formData.pmf && (
@@ -465,7 +465,7 @@ const PlanModal = ({ show, plan, onClose, onSave, isSubmitting, onToast }) => {
                                         className="plan-access-checkbox"
                                     />
                                     <span className="plan-access-indicator" />
-                                    <span className="plan-access-name">{t('projects_access') || 'Projects'}</span>
+                                    <span className="plan-access-name">{t('projects_access')}</span>
                                 </label>
                             )}
                         </div>
@@ -473,7 +473,7 @@ const PlanModal = ({ show, plan, onClose, onSave, isSubmitting, onToast }) => {
 
                     {/* ── Section 5: Generated Features Preview ── */}
                     <div className="plan-section plan-section--last">
-                        <p className="plan-section-label">{t('features_preview') || 'Generated Features Preview'}</p>
+                        <p className="plan-section-label">{t('features_preview')}</p>
                         <div className="plan-features-preview">
                             {formData.features.length > 0 ? (
                                 <ul className="plan-features-list">
@@ -486,7 +486,7 @@ const PlanModal = ({ show, plan, onClose, onSave, isSubmitting, onToast }) => {
                                 </ul>
                             ) : (
                                 <p className="plan-features-empty">
-                                    {t('no_features_generated') || 'No features yet — adjust limits and access above.'}
+                                    {t('no_features_generated')}
                                 </p>
                             )}
                         </div>
@@ -496,11 +496,11 @@ const PlanModal = ({ show, plan, onClose, onSave, isSubmitting, onToast }) => {
 
                 <Modal.Footer className="plan-modal-footer">
                     <Button variant="secondary" onClick={onClose} disabled={isSubmitting} className="plan-btn-cancel">
-                        {t('cancel') || 'Cancel'}
+                        {t('cancel')}
                     </Button>
                     <Button variant="primary" type="submit" disabled={isSubmitting} className="plan-btn-save d-flex align-items-center gap-2">
                         {isSubmitting && <Loader size={15} className="spinner" />}
-                        {t('save') || 'Save Plan'}
+                        {t('save')}
                     </Button>
                 </Modal.Footer>
             </form>
@@ -527,29 +527,29 @@ const PlanModal = ({ show, plan, onClose, onSave, isSubmitting, onToast }) => {
                     {formData.isActive ? (
                         <>
                             <p className="status-confirm-text-primary">
-                                {t('plan_update_active_msg') || t('Are you sure you want to save the changes to this plan?')}
+                                {t('plan_update_active_msg')}
                             </p>
                             <p className="status-confirm-text-secondary">
-                                {t('plan_update_secondary_msg') || t('Existing subscribers will not be affected.')}
+                                {t('plan_update_secondary_msg')}
                             </p>
                         </>
                     ) : (
                         <>
                             <p className="status-confirm-text-primary">
-                                {t('status_change_active_msg') || "Set this plan to Inactive?"}
+                                {t('status_change_active_msg')}
                             </p>
                             <p className="status-confirm-text-secondary">
-                                {t('status_change_secondary_msg') || "Existing subscribers keep their current period, but new signups will be blocked."}
+                                {t('status_change_secondary_msg')}
                             </p>
                         </>
                     )}
                 </Modal.Body>
                 <Modal.Footer className="border-0 pt-0">
                     <Button variant="light" onClick={cancelStatusChange} className="status-confirm-btn">
-                        {t('cancel') || 'Cancel'}
+                        {t('cancel')}
                     </Button>
                     <Button variant="danger" onClick={confirmStatusChange} className="status-confirm-btn">
-                        {t('proceed') || 'Proceed'}
+                        {t('proceed')}
                     </Button>
                 </Modal.Footer>
             </Modal>
@@ -613,7 +613,7 @@ const PlanManagement = ({ onToast }) => {
         } catch (error) {
             console.error('Error saving plan:', error);
             const defaultError = !!modalState.plan ? t('failed_to_update_plan') : t('failed_to_create_plan');
-            const errorMsg = error.response?.data?.error || defaultError || `Failed to ${!!modalState.plan ? 'update' : 'create'} plan`;
+            const errorMsg = error.response?.data?.error || defaultError;
             onToast(errorMsg, 'error');
             setModalState(prev => ({ ...prev, isSubmitting: false }));
         }
@@ -630,13 +630,13 @@ const PlanManagement = ({ onToast }) => {
     const columns = [
         {
             key: 'name',
-            label: t('plan_name') || 'Plan Name',
+            label: t('plan_name'),
             render: (val) => <span className="admin-cell-primary">{val}</span>,
         },
         {
             key: 'price',
-            label: t('price') || 'Price',
-            render: (val, row) => <span className="admin-cell-primary">${val} / {t(row.period) || row.period || t('month')}</span>,
+            label: t('price'),
+            render: (val, row) => <span className="admin-cell-primary">${val} / {t(row.period) || row.period}</span>,
         },
         {
             key: 'description',
@@ -677,26 +677,26 @@ const PlanManagement = ({ onToast }) => {
                     className="create-plan-btn"
                     onClick={() => setModalState({ show: true, plan: null, isSubmitting: false })}
                 >
-                    <Plus size={16} /> {t('create_plan') || 'Create Plan'}
+                    <Plus size={16} /> {t('create_plan')}
                 </button>
             </div>
 
             <AdminTable
-                title={t('plan_management') || 'Plan Management'}
+                title={t('plan_management')}
                 count={filteredPlans.length}
-                countLabel={t('plans') || 'Plans'}
+                countLabel={t('plans')}
                 columns={columns}
                 data={paginatedPlans}
                 searchTerm={searchTerm}
                 onSearchChange={setSearchTerm}
-                searchPlaceholder={t('search plans') || 'Search plans...'}
+                searchPlaceholder={t('search plans')}
                 currentPage={currentPage}
                 totalPages={totalPages}
                 onPageChange={setCurrentPage}
                 totalItems={filteredPlans.length}
                 itemsPerPage={pageSize}
-                emptyMessage={t('no_plans_found') || 'No Plans Found'}
-                emptySubMessage={t('no_plans_matching_criteria') || 'There are no plans matching your criteria'}
+                emptyMessage={t('no_plans_found')}
+                emptySubMessage={t('no_plans_matching_criteria')}
                 loading={loading}
             />
 

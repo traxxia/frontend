@@ -679,15 +679,6 @@ export class AnalysisApiService {
         await Promise.allSettled(retryPromises);
       }
 
-      if (failures > 0) {
-        showToastMessage(
-          `${successes}/${analysisTypes.length} ${phase} phase analyses completed successfully.`,
-          failures < successes ? "warning" : "error"
-        );
-      } else {
-        showToastMessage(`All ${phase} phase analyses generated successfully!`, "success");
-      }
-
       return { success: true, phase };
     } catch (error) {
       console.error(`Error generating ${phase} phase analysis:`, error);
