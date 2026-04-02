@@ -379,3 +379,34 @@
 .notification-empty-bell svg {
   animation: emptyStateSoftSwing 4s ease-in-out infinite;
 }
+
+/* Premium Active Bell Styling */
+.notification-bell-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  transition: all 0.2s ease-in-out;
+  background-color: transparent;
+}
+
+.notification-bell-container:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+@keyframes activeBellSwing {
+  0% { transform: rotate(0deg); }
+  15% { transform: rotate(15deg); }
+  30% { transform: rotate(-10deg); }
+  45% { transform: rotate(5deg); }
+  60% { transform: rotate(-3deg); }
+  75% { transform: rotate(0deg); }
+  100% { transform: rotate(0deg); }
+}
+
+.notification-bell-active svg {
+  animation: activeBellSwing 3s ease-in-out infinite;
+  color: var(--color-primary, #0B5ED7) !important;
+}

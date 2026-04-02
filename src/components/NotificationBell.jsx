@@ -88,10 +88,13 @@ const NotificationBell = () => {
   return (
     <Dropdown className="me-3">
       <Dropdown.Toggle variant="link" id="dropdown-notifications" className="notification-menu p-0 border-0 shadow-none d-flex align-items-center" style={{ pointerEvents: 'auto' }}>
-        <div className="position-relative d-inline-block">
-          <Bell size={20} className="navbar_icon text-dark" />
+        <div className={`position-relative d-inline-block notification-bell-container ${unreadCount > 0 ? 'notification-bell-active' : ''}`}>
+          <Bell size={22} className="navbar_icon text-dark" />
           {unreadCount > 0 && (
-            <span className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style={{ fontSize: '0.55rem', padding: '0.25em 0.4em' }}>
+            <span 
+              className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger border border-white border-2" 
+              style={{ fontSize: '0.6rem', padding: '0.35em 0.5em', transform: 'translate(-30%, -10%)' }}
+            >
               {unreadCount > 9 ? '9+' : unreadCount}
             </span>
           )}
