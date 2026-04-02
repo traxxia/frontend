@@ -1583,8 +1583,10 @@ const BusinessSetupPage = () => {
                             </button>
                             {showDropdown && (() => {
                               const categoryOptions = getPhaseSpecificOptions(currentPhase);
-                              return Object.keys(categoryOptions).length > 0 && (<div className="dropdown-menu-options">
-                                {Object.entries(categoryOptions).map(([category, items]) =>
+                              return Object.keys(categoryOptions).length > 0 && (
+                                <div className="dropdown-menu-options">
+                                  <div className="dropdown-main-header">{t("Insights & Recommendations")}</div>
+                                  {Object.entries(categoryOptions).map(([category, items]) =>
                                   items.length > 0 && (
                                     <div key={category}>
                                       <div className="dropdown-category-header">{t(category)}</div>

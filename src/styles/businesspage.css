@@ -2779,7 +2779,7 @@ body {
 
   .dropdown-wrapper {
     position: relative;
-    right: 20%;
+    right: 5%;
     width: 100%;
   }
 
@@ -3088,6 +3088,20 @@ body {
   flex-shrink: 0;
 }
 
+.dropdown-category-header {
+  padding: 12px 16px 4px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.dropdown-option.dropdown-sub-option {
+  padding-left: 28px;
+  font-size: 13.5px;
+}
+
 /* Analysis section mobile controls */
 .analysis-section-mobile-controls {
   padding: 0rem;
@@ -3131,6 +3145,10 @@ body {
 [data-theme="dark"] .dropdown-option .bullet {
   background-color: #60a5fa !important;
   /* blue bullet for selected */
+}
+
+[data-theme="dark"] .dropdown-category-header {
+  color: #94a3b8;
 }
 
 /* ========== MOBILE HAMBURGER MENU ========== */
@@ -3474,18 +3492,19 @@ body {
 
 .mobile-action-bar {
   display: flex;
-  justify-content: center;
+  justify-content: space-between;
   align-items: center;
   gap: 12px;
   margin-top: 8px;
-  padding-top: 8px;
+  padding: 8px 16px;
   border-top: 1px solid #f3f4f6;
   flex-wrap: wrap;
 }
 
 .mobile-action-bar .dropdown-wrapper {
-  margin-left: 2rem;
-  max-width: 150px;
+  margin-left: 0;
+  flex: 1;
+  min-width: 0;
 }
 
 .mobile-action-bar .dropdown-button {
@@ -3502,30 +3521,30 @@ body {
 /* Ensure mobile dropdown options don't overflow */
 @media (max-width: 768px) {
   .dropdown-menu-options {
-    position: fixed;
-    top: auto;
-    bottom: 0;
+    position: absolute;
+    top: 100%;
     left: 0;
-    right: 0;
-    width: 100%;
-    max-height: 50vh;
-    border-radius: 20px 20px 0 0;
-    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15);
+    right: auto;
+    width: 260px;
+    max-height: 400px;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
     z-index: 1000;
+    transform: none;
+    margin-top: 8px;
   }
 
   .mobile-action-bar .dropdown-wrapper .dropdown-menu-options {
-    position: fixed;
-    top: auto;
-    bottom: 0;
+    position: absolute;
+    top: 100%;
     left: 0;
-    right: 0;
-    width: 100%;
+    right: auto;
+    width: 260px;
     transform: none;
-    margin-bottom: 0;
-    border-radius: 20px 20px 0 0;
-    max-height: 60vh;
-    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15);
+    margin-top: 8px;
+    border-radius: 12px;
+    max-height: 400px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
   }
 }
 
