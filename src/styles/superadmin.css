@@ -2164,7 +2164,6 @@
   border-radius: 0.75rem;
   width: 90%;
   max-width: 600px;
-  max-height: fit-content;
   overflow-y: auto;
 }
 
