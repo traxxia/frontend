@@ -1006,6 +1006,15 @@ const BusinessSetupPage = () => {
     } catch { }
   };
 
+  const handleStayOnPriorities = () => {
+    setShowProjectsTab(true);
+    try {
+      if (selectedBusinessId) {
+        sessionStorage.setItem(`showProjectsTab_${selectedBusinessId}`, 'true');
+      }
+    } catch { }
+  };
+
 
   const getPhaseSpecificOptions = (phase) => {
     const unlockedFeatures = phaseManager.getUnlockedFeatures();
@@ -1772,6 +1781,7 @@ const BusinessSetupPage = () => {
                           selectedBusinessId={selectedBusinessId}
                           companyAdminIds={companyAdminIds}
                           onSuccess={handleKickstartSuccess}
+                          onStayOnPriorities={handleStayOnPriorities}
                           onToastMessage={showToastMessage}
                           onStartOnboarding={() => setShowPMFOnboarding(true)}
                         />
@@ -1954,6 +1964,7 @@ const BusinessSetupPage = () => {
                       selectedBusinessId={selectedBusinessId}
                       companyAdminIds={companyAdminIds}
                       onSuccess={handleKickstartSuccess}
+                      onStayOnPriorities={handleStayOnPriorities}
                       onToastMessage={showToastMessage}
                       onStartOnboarding={() => setShowPMFOnboarding(true)}
                     />
@@ -2061,6 +2072,7 @@ const BusinessSetupPage = () => {
                     selectedBusinessId={selectedBusinessId}
                     companyAdminIds={companyAdminIds}
                     onSuccess={handleKickstartSuccess}
+                    onStayOnPriorities={handleStayOnPriorities}
                     onToastMessage={showToastMessage}
                     onStartOnboarding={() => setShowPMFOnboarding(true)}
                   />
