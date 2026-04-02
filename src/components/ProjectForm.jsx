@@ -334,6 +334,8 @@ const ProjectForm = ({
   isAdmin = false,
   initialStatus,
   decisionLog,
+  errors: hookErrors,
+  validateForm,
 }) => {
   const { t } = useTranslation();
   const isReadOnly = mode === "view" || readOnly;
@@ -593,6 +595,7 @@ const ProjectForm = ({
     if (showErrors) {
       const validation = validateField('Success Criteria', value, {
         required: true,
+        minLength: 10,
         requiresText: true
       });
       setFieldErrors(prev => ({
@@ -610,6 +613,7 @@ const ProjectForm = ({
     if (showErrors) {
       const validation = validateField('Kill Criteria', value, {
         required: true,
+        minLength: 10,
         requiresText: true
       });
       setFieldErrors(prev => ({
@@ -710,88 +714,22 @@ const ProjectForm = ({
   };
 
   const handleSubmit = () => {
-    // Validate project name only for new projects
-    const projectNameValidation = mode === "new"
-      ? validateField('Project Name', projectName || '', {
-        required: true,
-        minLength: 3,
-        maxLength: 100,
-        requiresText: true
-      })
-      : { isValid: true, message: null };
+    // Unified validation from hook
+    const validation = validateForm({ isNew: mode === "new" });
+    const errors = validation.errors || {};
 
-    // Validate all required fields
-    const descValidation = validateField('Description', description || '', {
-      required: true,
-      minLength: 10,
-      maxLength: 500,
-      requiresText: true
-    });
-
-    const impValidation = validateField('Why This Matters', importance || '', {
-      required: true,
-      minLength: 10,
-      maxLength: 1000,
-      requiresText: true
-    });
-
-    // Strategic Core Validation
-    const decisionValidation = validateField('Strategic Decision', strategicDecision || '', { required: true, minLength: 10, requiresText: true });
-    const ownerValidation = validateField('Accountable Owner', accountableOwnerId || '', { required: true, skipStrict: true });
-    const successValidation = validateField('Success Criteria', successCriteria || '', { required: true, requiresText: true });
-    const killValidation = validateField('Kill Criteria', killCriteria || '', { required: true, requiresText: true });
-
-    const budgetValidation = validateField('Budget Estimate', budget || '', {
-      numeric: true,
-      min: 0,
-      allowSpecialChars: ['.', ',', '-', '$', 'K', 'M']
-    });
-
-    const depValidation = validateField('Dependencies', dependencies || '', { minLength: 10 });
-    const hlValidation = validateField('Constraints / Non-Negotiables', highLevelReq || '', { minLength: 10 });
-    const scopeValidation = validateField('Explicitly Out of Scope', scope || '', { minLength: 10 });
-    const outcomeValidation = validateField('Expected Outcome', outcome || '', { minLength: 10 });
-    const smValidation = validateField('Success Metrics (KPIs)', successMetrics || '', { minLength: 10 });
-
-    const errors = {
-      projectName: projectNameValidation.isValid ? null : t(projectNameValidation.message),
-      description: descValidation.isValid ? null : t(descValidation.message),
-      importance: impValidation.isValid ? null : t(impValidation.message),
-      strategicDecision: decisionValidation.isValid ? null : t(decisionValidation.message),
-      accountableOwnerId: ownerValidation.isValid ? null : t(ownerValidation.message),
-      successCriteria: successValidation.isValid ? null : t(successValidation.message),
-      killCriteria: killValidation.isValid ? null : t(killValidation.message),
-      budget: budgetValidation.isValid ? null : t(budgetValidation.message),
-      status: (status && status.trim()) ? null : t("Status_is_required"),
-      reviewCadence: (reviewCadence && reviewCadence.trim()) ? null : t("Review_cadence_is_required"),
-      dependencies: depValidation.isValid ? null : t(depValidation.message),
-      highLevelReq: hlValidation.isValid ? null : t(hlValidation.message),
-      scope: scopeValidation.isValid ? null : t(scopeValidation.message),
-      outcome: outcomeValidation.isValid ? null : t(outcomeValidation.message),
-      successMetrics: smValidation.isValid ? null : t(smValidation.message),
-    };
-
-    // Add Key Assumptions errors
-    keyAssumptions.forEach((assumption, idx) => {
-      if (assumption && assumption.trim().length > 0) {
-        const val = validateField(`Assumption ${idx + 1}`, assumption, { minLength: 10 });
-        if (!val.isValid) {
-          errors[`keyAssumptions_${idx}`] = t(val.message);
-        }
-      }
-    });
     setFieldErrors(errors);
     setShowErrors(true);
 
-    // Check if there are any errors
-    const hasErrors = Object.values(errors).some(error => error !== null);
+    const hasErrors = Object.keys(errors).length > 0;
 
     if (hasErrors) {
       if (errors.projectName) scrollToError(projectNameRef);
       else if (errors.description) scrollToError(descriptionRef);
       else if (errors.importance) scrollToError(importanceRef);
       else if (errors.strategicDecision) scrollToError(strategicDecisionRef);
-      else if (errors.accountableOwnerId) scrollToError(accountableOwnerRef);
+      // Map both hook's 'accountableOwner' and 'accountableOwnerId' to the owner ref
+      else if (errors.accountableOwnerId || errors.accountableOwner) scrollToError(accountableOwnerRef);
       else if (errors.successCriteria) scrollToError(successCriteriaRef);
       else if (errors.killCriteria) scrollToError(killCriteriaRef);
       else if (errors.status) scrollToError(statusRef);
@@ -1151,10 +1089,8 @@ const ProjectForm = ({
                     if (target === currentStatus) {
                       isDisabled = false;
                     } else if (!isLaunched) {
-                      // Unlaunched: Draft -> Killed is allowed. Active is handled via Launch mechanism.
-                      if (currentStatus === 'draft') {
-                        if (target === 'killed') isDisabled = false;
-                      }
+                      // Unlaunched: Draft and Killed are allowed. Active is handled via Launch mechanism.
+                      if (['draft', 'killed'].includes(target)) isDisabled = false;
                     } else {
                       // Launched
                       if (currentStatus === 'active' || currentStatus === 'at risk') {

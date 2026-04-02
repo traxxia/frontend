@@ -43,7 +43,7 @@ const AccessManagement = ({ onToast }) => {
                 ? res.data
                 : [...(res.data.businesses || []), ...(res.data.collaborating_businesses || [])];
 
-            const businessesWithGrants = data.filter(b => 
+            const businessesWithGrants = data.filter(b =>
                 ((b.status || "").toLowerCase() === 'launched' || b.has_launched_projects === true) &&
                 (b.status || "").toLowerCase() !== 'archived' &&
                 (b.access_mode || "").toLowerCase() !== 'archived' &&
@@ -52,7 +52,10 @@ const AccessManagement = ({ onToast }) => {
             );
             setBusinesses(businessesWithGrants);
 
-            if (businessesWithGrants.length > 0 && !selectedBusinessId) {
+            // Handle selection if current is gone or none selected
+            if (businessesWithGrants.length === 0) {
+                setSelectedBusinessId("");
+            } else if (!selectedBusinessId || !businessesWithGrants.find(b => b._id === selectedBusinessId)) {
                 setSelectedBusinessId(businessesWithGrants[0]._id);
             }
         } catch (err) {
@@ -117,7 +120,8 @@ const AccessManagement = ({ onToast }) => {
             setShowRevokeModal(false);
             setRevokeDetails(null);
 
-            // Refresh data
+            // Refresh both businesses list (in case no grants left) and current access data
+            await fetchBusinesses();
             await fetchAccessData();
         } catch (err) {
             console.error("Failed to revoke access", err);
@@ -234,34 +238,6 @@ const AccessManagement = ({ onToast }) => {
 
     return (
         <div>
-            {/* ---- Metric Cards ---- */}
-            <div className="admin-metrics-grid">
-                <MetricCard
-                    label={t("Total Users with Access") || "Users with Access"}
-                    value={accessData?.total_users_with_access || 0}
-                    icon={Users}
-                    iconColor="blue"
-                />
-                <MetricCard
-                    label={t("Reranking Access") || "Reranking Access"}
-                    value={rerankCount}
-                    icon={ListOrdered}
-                    iconColor="orange"
-                />
-                <MetricCard
-                    label={t("Project Edit Access") || "Project Edit Access"}
-                    value={editCount}
-                    icon={FileEdit}
-                    iconColor="green"
-                />
-                <MetricCard
-                    label={t("active_permissions") || "Active Permissions"}
-                    value={rerankCount + editCount}
-                    icon={Key}
-                    iconColor="purple"
-                />
-            </div>
-
             {/* ---- Tool Actions ---- */}
             <div className="admin-toolbar-row mb-3 mt-4">
                 <div className="d-flex align-items-center gap-3">
@@ -274,13 +250,21 @@ const AccessManagement = ({ onToast }) => {
                             onChange={(e) => setSelectedBusinessId(e.target.value)}
                             className="role-select"
                             style={{ minWidth: '220px' }}
-                            disabled={isLoading}
+                            disabled={isLoading || businesses.length === 0}
                         >
-                            {businesses.map((b) => (
-                                <option key={b._id} value={b._id}>
-                                    {b.business_name || b.name}
-                                </option>
-                            ))}
+                            {businesses.length === 0 ? (
+                                <option value="">{t("No_Business_Found")}</option>
+                            ) : (
+                                <>
+                                    {/* No placeholder here as it auto-selects the first one in the original logic, 
+                                        but if businesses > 0 we keep the original mapping */}
+                                    {businesses.map((b) => (
+                                        <option key={b._id} value={b._id}>
+                                            {b.business_name || b.name}
+                                        </option>
+                                    ))}
+                                </>
+                            )}
                         </Form.Select>
                     </div>
                 </div>
@@ -294,9 +278,9 @@ const AccessManagement = ({ onToast }) => {
                 data={accessData?.access_list || []}
                 loading={isLoading}
                 emptyMessage={
-                   businesses.length === 0
-                   ? t("no_launched_businesses_found") || "No Launched Businesses Found"
-                   : t("no_users_granted_access") || "No users have been granted access yet for this business."
+                    businesses.length === 0
+                        ? t("no_launched_businesses_found") || "No Launched Businesses Found"
+                        : t("no_users_granted_access") || "No users have been granted access yet for this business."
                 }
                 emptySubMessage={businesses.length === 0 ? t("Access management is only available for launched businesses.") : ""}
                 searchPlaceholder={t("Search users...")}
