@@ -151,8 +151,9 @@ const BusinessSetupPage = () => {
   const [expandedCards, setExpandedCards] = useState(new Set());
   const [shouldScrollToUpload, setShouldScrollToUpload] = useState(false);
   const [selectedDropdownValue, setSelectedDropdownValue] = useState(t("Go_to_Section"));
-  const hasLoadedAnalysis = useRef(false);
   const streamingManager = useStreamingManager();
+  const isBusinessFetching = useRef(false);
+  const isPmfFetching = useRef(false);
   const [showProjectsTab, setShowProjectsTab] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [pmfRefreshTrigger, setPmfRefreshTrigger] = useState(0);
@@ -312,14 +313,20 @@ const BusinessSetupPage = () => {
       sessionStorage.setItem('activeBusinessId', selectedBusinessId);
 
       // If we don't have the full business object, fetch it
-      // Skip fetch if we are on Priorities tab and already have basic info or if tab is projects (as requested for optimization)
       if (!currentBusiness) {
-        // Only skip if we already have the name, otherwise we must fetch for the header
+        // Skip fetch if we are on Priorities tab and already have basic info or if tab is projects (as requested for optimization)
         if ((activeTab === 'priorities' || activeTab === 'projects') && selectedBusinessName && selectedBusinessName !== "") {
           console.log("Skipping business recovery fetch for tab:", activeTab);
           return;
         }
+
+        if (isBusinessFetching.current) {
+          console.log("Business fetch already in progress for:", selectedBusinessId);
+          return;
+        }
+
         try {
+          isBusinessFetching.current = true;
           console.log("Recovering business data for:", selectedBusinessId);
           const businessDataResult = await apiService.getBusiness(selectedBusinessId);
           if (businessDataResult) {
@@ -330,24 +337,31 @@ const BusinessSetupPage = () => {
           }
         } catch (error) {
           console.error("Failed to recover business context:", error);
+        } finally {
+          isBusinessFetching.current = false;
         }
       }
     };
 
     recoverBusinessContext();
-  }, [selectedBusinessId, currentBusiness, activeTab, selectedBusinessName]);
+  }, [selectedBusinessId, currentBusiness]); // Minimal dependencies to prevent redundant calls on tab switch
 
   //PMF onboarding check
   useEffect(() => {
     const checkPmf = async () => {
       if (!selectedBusinessId) return;
+      if (isPmfFetching.current) return;
+
       try {
+        isPmfFetching.current = true;
         const pmfData = await apiService.getPMFAnalysis(selectedBusinessId);
         // Onboarding is complete if we have any insights data
         const hasAha = !!pmfData && (Array.isArray(pmfData) ? pmfData.length > 0 : (pmfData.insights && (Array.isArray(pmfData.insights) ? pmfData.insights.length > 0 : (pmfData.insights.insights && pmfData.insights.insights.length > 0))));
         setIsPmfOnboardingComplete(hasAha);
       } catch (e) {
         setIsPmfOnboardingComplete(false);
+      } finally {
+        isPmfFetching.current = false;
       }
     };
     checkPmf();
@@ -492,9 +506,9 @@ const BusinessSetupPage = () => {
   }, [activeTab, showProjectsTab, selectedBusinessId, hasProjectAccess]);
 
   // Automatically show Projects tab if this business already has projects
-  // Skip this check when on tabs that never show the projects button (aha / executive)
+  // Skip this check when on the projects tab itself (handled by ProjectsSection) or if already visible
   useEffect(() => {
-    if (showProjectsTab || !selectedBusinessId) return;
+    if (showProjectsTab || !selectedBusinessId || activeTab === 'projects') return;
 
     const fetchProjectsForBusiness = async () => {
       if (!selectedBusinessId) return;
@@ -536,7 +550,7 @@ const BusinessSetupPage = () => {
 
     fetchProjectsForBusiness();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedBusinessId, API_BASE_URL, activeTab]);
+  }, [selectedBusinessId, API_BASE_URL]);
 
   //const showToastMessage = createToastMessage(setShowToast);
 
