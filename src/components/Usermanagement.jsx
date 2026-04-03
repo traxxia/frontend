@@ -508,9 +508,8 @@ const UserManagement = ({ onToast }) => {
       const isBizLaunched = (biz?.status || "").toLowerCase() === 'launched';
       
       const filtered = allProjects.filter(p => {
-        const lp = (p.launch_status || "").toLowerCase();
-        const s = (p.status || "").toLowerCase();
-        return lp === 'launched' || lp === 'pending_launch' || (isBizLaunched && s === 'active');
+        const s = (p.status || "").toLowerCase().trim().replace(/[-_\s]/g, '');
+        return s === 'active' || s === 'atrisk' || s === 'paused';
       });
       
       setProjects(filtered);
