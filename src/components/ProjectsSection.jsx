@@ -149,7 +149,7 @@ const ProjectsSection = ({
   const [isLoading, setIsLoading] = useState(true);
   const isProjectsLoadingRef = useRef(false);
 
-  const { locks } = useFieldLockPolling(currentProject?._id);
+  const { locks } = useFieldLockPolling(currentProject?._id, activeView === "edit");
   const { fetchProjects, deleteProject, createProject, updateProject, launchProjects } =
     useProjectOperations(selectedBusinessId, onProjectCountChange);
   const { fetchTeamRankings, fetchAdminRankings, lockRanking } =

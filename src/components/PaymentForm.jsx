@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { CardNumberElement, CardExpiryElement, CardCvcElement, useStripe, useElements } from '@stripe/react-stripe-js';
+// Stripe imports removed for lazy loading
 import { FaCreditCard, FaPaypal, FaUniversity, FaCheck, FaLock, FaMicrochip, FaCcVisa, FaCcMastercard, FaCcAmex, FaCcDiscover, FaCcDinersClub, FaCcJcb } from 'react-icons/fa';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from "../hooks/useTranslation";
@@ -16,11 +16,14 @@ const PaymentForm = ({
     onMethodSelect,
     cardHolderName = '',
     onCardHolderNameChange = () => { },
-    onCardChange = () => { }
+    onCardChange = () => { },
+    stripe,
+    elements,
+    stripeComponents
 }) => {
     const { t } = useTranslation();
-    const stripe = useStripe();
-    const elements = useElements();
+    const { CardNumberElement, CardExpiryElement, CardCvcElement } = stripeComponents || {};
+    
     const [localError, setLocalError] = useState(null);
     const [paymentMethodType, setPaymentMethodType] = useState('card');
     const [cardBrand, setCardBrand] = useState('unknown');

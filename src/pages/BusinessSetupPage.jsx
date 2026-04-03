@@ -90,6 +90,9 @@ const CARD_ID_MAP = {
 const toSlug = (name = '') =>
   name.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 
+// Module-level cache to deduplicate project requests across re-renders
+const projectRequestCache = new Map();
+
 const BusinessSetupPage = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -513,39 +516,59 @@ const BusinessSetupPage = () => {
     const fetchProjectsForBusiness = async () => {
       if (!selectedBusinessId) return;
 
-      try {
-        const token = sessionStorage.getItem('token');
-        if (!token) return;
-
-        const res = await axios.get(
-          `${API_BASE_URL}/api/projects`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`
-            },
-            params: {
-              business_id: selectedBusinessId
-            }
-          }
-        );
-
-        const projects = res.data?.projects || [];
+      const cacheKey = `projects-${selectedBusinessId}`;
+      if (projectRequestCache.has(cacheKey)) {
+        const projects = await projectRequestCache.get(cacheKey);
         const hasProjects = projects.length > 0;
-        // Only show Projects tab if the plan allows it
         setShowProjectsTab(hasProjects && hasProjectAccess);
-        try {
-          if (selectedBusinessId) {
-            const key = `showProjectsTab_${selectedBusinessId}`;
-            if (hasProjects) {
-              sessionStorage.setItem(key, 'true');
-            } else {
-              sessionStorage.removeItem(key);
-            }
-          }
-        } catch { }
-      } catch (err) {
-        console.error('Failed to check existing projects for business:', err);
+        return;
       }
+
+      const fetchPromise = (async () => {
+        try {
+          const token = sessionStorage.getItem('token');
+          if (!token) return [];
+
+          const res = await axios.get(
+            `${API_BASE_URL}/api/projects`,
+            {
+              headers: {
+                Authorization: `Bearer ${token}`
+              },
+              params: {
+                business_id: selectedBusinessId
+              }
+            }
+          );
+
+          const projects = res.data?.projects || [];
+          const hasProjects = projects.length > 0;
+          
+          // SIDE EFFECT: Still need to update tab visibility for the initiating instance
+          setShowProjectsTab(hasProjects && hasProjectAccess);
+          
+          try {
+            if (selectedBusinessId) {
+              const key = `showProjectsTab_${selectedBusinessId}`;
+              if (hasProjects) {
+                sessionStorage.setItem(key, 'true');
+              } else {
+                sessionStorage.removeItem(key);
+              }
+            }
+          } catch { }
+          
+          return projects;
+        } catch (err) {
+          console.error('Failed to check existing projects for business:', err);
+          return [];
+        }
+      })();
+
+      projectRequestCache.set(cacheKey, fetchPromise);
+      await fetchPromise;
+      // After promise settles, we might want to keep it or clear it.
+      // Keeping it is fine as it acts as a per-session cache.
     };
 
     fetchProjectsForBusiness();

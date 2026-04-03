@@ -4,13 +4,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import { initializeTranslations } from './utils/translations';
 
 import Login from './pages/Login';
-import Dashboard from './pages/Dashboard';
-import Admin from './pages/Admin';
-import SuperAdminPage from './pages/SuperAdminPage'; // NEW: Import Super Admin Panel
 import ProtectedRoute from './components/ProtectedRoute';
-
-import BusinessSetupPage from './pages/BusinessSetupPage';
-import AcademyPage from './pages/AcademyPage'; // Traxxia Academy documentation
 import Aiassistant from './components/Aiassistant';
 
 // Pages where the AI assistant should NOT appear
@@ -64,8 +58,12 @@ const GlobalAiAssistant = () => {
   return <Aiassistant projectId={projectId} pageContext={pageContext} isDisabled={isDisabled} />;
 };
 
+const Dashboard = React.lazy(() => import('./pages/Dashboard'));
+const BusinessSetupPage = React.lazy(() => import('./pages/BusinessSetupPage'));
+const Admin = React.lazy(() => import('./pages/Admin'));
+const SuperAdminPage = React.lazy(() => import('./pages/SuperAdminPage'));
 const Register = React.lazy(() => import('./pages/Register'));
-
+const AcademyPage = React.lazy(() => import('./pages/AcademyPage'));
 
 const App = () => {
   useEffect(() => {
@@ -73,28 +71,15 @@ const App = () => {
     initializeTranslations();
 
     // Check if user has a session language preference and apply it
-    const sessionLang = sessionStorage.getItem('appLanguage');
-    const localLang = localStorage.getItem('appLanguage');
-
-    // Priority: session storage > local storage > default 'en'
-    const preferredLang = sessionLang || localLang || 'en';
+    const preferredLang = sessionStorage.getItem('appLanguage') || localStorage.getItem('appLanguage') || 'en';
 
     // Set the language if it's different from current
     if (window.currentAppLanguage !== preferredLang) {
       window.currentAppLanguage = preferredLang;
-
-      // Update the global translation function
-      if (window.appTranslations) {
-        window.getTranslation = function (key) {
-          const result = window.appTranslations[window.currentAppLanguage][key] || key;
-          return typeof result === 'string' ? result : String(key);
-        };
+      if (window.appTranslations && window.appTranslations[preferredLang]) {
+        window.getTranslation = (key) => window.appTranslations[preferredLang][key] || key;
       }
-
-      // Dispatch language change event for components
-      window.dispatchEvent(new CustomEvent('languageChanged', {
-        detail: { language: preferredLang }
-      }));
+      window.dispatchEvent(new CustomEvent('languageChanged', { detail: { language: preferredLang } }));
     }
   }, []);
 
@@ -102,39 +87,34 @@ const App = () => {
     <Router>
       <div className="App">
         <GlobalAiAssistant />
-        <Routes>
-          <Route path="/" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/businesspage" element={<BusinessSetupPage />} />
-
-          {/* Traxxia Academy Routes */}
-          <Route path="/academy" element={<AcademyPage />} />
-          <Route path="/academy/:category" element={<AcademyPage />} />
-          <Route path="/academy/:category/:article" element={<AcademyPage />} />
-
-          {/* Admin Route - renders unified SuperAdminPage */}
-          <Route
-            path="/admin"
-            element={
-              <ProtectedRoute adminOnly={true}>
-                <SuperAdminPage />
-              </ProtectedRoute>
-            }
-          />
-
-          {/* Super Admin Route - accessible by both admins and super admins */}
-          <Route
-            path="/super-admin"
-            element={
-              <ProtectedRoute adminOnly={true}>
-                <SuperAdminPage />
-              </ProtectedRoute>
-            }
-          />
-
-        </Routes>
+        <React.Suspense fallback={<div className="p-5 text-center"><div className="spinner-border text-primary" role="status"><span className="visually-hidden">Loading...</span></div></div>}>
+          <Routes>
+            <Route path="/" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/businesspage" element={<BusinessSetupPage />} />
+            <Route path="/academy" element={<AcademyPage />} />
+            <Route path="/academy/:category" element={<AcademyPage />} />
+            <Route path="/academy/:category/:article" element={<AcademyPage />} />
+            <Route
+              path="/admin"
+              element={
+                <ProtectedRoute adminOnly={true}>
+                  <SuperAdminPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/super-admin"
+              element={
+                <ProtectedRoute adminOnly={true}>
+                  <SuperAdminPage />
+                </ProtectedRoute>
+              }
+            />
+          </Routes>
+        </React.Suspense>
       </div>
     </Router>
   );

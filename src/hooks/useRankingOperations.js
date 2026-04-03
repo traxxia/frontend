@@ -1,11 +1,14 @@
-import { useCallback } from "react";
+import { useCallback, useRef, useEffect } from "react";
 import axios from "axios";
 
 export const useRankingOperations = (selectedBusinessId, companyAdminIds) => {
   const getToken = () => sessionStorage.getItem("token");
+  const isRankingsFetching = useRef(false);
 
   const fetchTeamRankings = useCallback(async () => {
+    if (isRankingsFetching.current) return null;
     try {
+      isRankingsFetching.current = true;
       const token = getToken();
       const userId = sessionStorage.getItem("userId");
 
@@ -26,7 +29,13 @@ export const useRankingOperations = (selectedBusinessId, companyAdminIds) => {
     } catch (err) {
       console.error("Failed to fetch team rankings", err);
       return null;
+    } finally {
+      isRankingsFetching.current = false;
     }
+  }, [selectedBusinessId]);
+
+  useEffect(() => {
+    isRankingsFetching.current = false;
   }, [selectedBusinessId]);
 
   const fetchAdminRankings = useCallback(async () => {
