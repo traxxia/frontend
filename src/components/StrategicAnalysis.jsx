@@ -486,7 +486,7 @@ const StrategicAnalysis = ({
               <h2 className="category-title">{title}</h2>
               {description && (
                 <p style={{
-                  fontSize: '13px',
+                  fontSize: '12px',
                   color: '#000000',
                   margin: '4px 0 0 0',
                   fontWeight: '500'

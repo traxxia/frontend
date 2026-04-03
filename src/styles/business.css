@@ -271,7 +271,7 @@
 }
 
 .modern-card-text h3 {
-  font-size: 1.3rem;
+  font-size: 1rem;
   font-weight: 600;
   color: #1e293b;
   margin: 0 0 0.25rem 0;
@@ -586,7 +586,7 @@
 /* Responsive Design */
 @media (max-width: 1024px) {
   .modern-analysis-content {
-    padding: 1.5rem;
+    padding: 0px;
   }
 
   .modern-phase-header {
@@ -1072,6 +1072,111 @@
 
 
 
+
+
+/* 6 C's Framework Overview - Bullet Version */
+.six-cs-framework-overview {
+  background: white;
+  border-radius: 12px;
+  padding: 20px 24px;
+  margin: 10px 10px 20px 10px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.six-cs-framework-overview .overview-header {
+  display: inline-flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.six-cs-framework-overview .overview-icon-wrapper {
+  margin-top: 3px;
+  color: #3b82f6;
+  flex-shrink: 0;
+}
+
+.six-cs-framework-overview .overview-text h3 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0 0 2px 0;
+}
+
+.six-cs-framework-overview .overview-text p {
+  font-size: 0.875rem;
+  color: #64748b;
+  margin: 0;
+}
+
+.six-cs-framework-overview .overview-bullets {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 6px 24px;
+}
+
+@media (max-width: 768px) {
+  .six-cs-framework-overview .overview-bullets {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+  
+  .six-cs-framework-overview {
+    padding: 16px;
+    margin: 10px;
+  }
+}
+
+.six-cs-framework-overview .overview-bullet-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 0.85rem;
+  padding: 2px 0;
+  cursor: default;
+  line-height: 1.4;
+}
+
+.six-cs-framework-overview .overview-bullet-item::before {
+  content: "•";
+  color: #3b82f6;
+  font-weight: bold;
+  font-size: 1.1rem;
+  line-height: 1;
+  margin-top: 1px;
+}
+
+
+.six-cs-framework-overview .bullet-title {
+  font-weight: 600;
+  color: #334155;
+  white-space: nowrap;
+  font-size: 14.6px;
+}
+
+.six-cs-framework-overview .bullet-desc {
+  color: #64748b;
+}
+
+
+[data-theme="dark"] .six-cs-framework-overview {
+  background: #1e293b !important;
+  border-color: #334155 !important;
+}
+
+[data-theme="dark"] .six-cs-framework-overview .overview-text h3,
+[data-theme="dark"] .six-cs-framework-overview .bullet-title {
+  color: #f1f5f9 !important;
+}
+
+[data-theme="dark"] .six-cs-framework-overview .overview-text p,
+[data-theme="dark"] .six-cs-framework-overview .bullet-desc {
+  color: #94a3b8 !important;
+}
 
 tbody{
     border-color: inherit;

@@ -2,6 +2,7 @@
 import React from 'react';
 import { ChevronDown } from "lucide-react";
 import PDFExportButton from "./PDFExportButton";
+import CustomTooltip from "./CustomTooltip";
 
 const PhaseTabsComponent = ({
   phaseManager,
@@ -253,18 +254,20 @@ const PhaseTabsComponent = ({
             </div>
 
             {/* PDF Export Button */}
-            <PDFExportButton
-              className="pdf-export-button"
-              style={{
-                marginRight: "10px"
-              }}
-              businessName={businessData.name}
-              onToastMessage={showToastMessage}
-              currentPhase={selectedPhase}
-              disabled={isAnalysisRegenerating}
-              isChannelHeatmapReady={isChannelHeatmapReady}
-              isCapabilityHeatmapReady={isCapabilityHeatmapReady}
-            />
+            <CustomTooltip align="right" message={t("download_insights_tooltip") || "Export the insights into PDF report."}>
+              <PDFExportButton
+                className="pdf-export-button"
+                style={{
+                  marginRight: "10px"
+                }}
+                businessName={businessData.name}
+                onToastMessage={showToastMessage}
+                currentPhase={selectedPhase}
+                disabled={isAnalysisRegenerating}
+                isChannelHeatmapReady={isChannelHeatmapReady}
+                isCapabilityHeatmapReady={isCapabilityHeatmapReady}
+              />
+            </CustomTooltip>
           </div>
         </div>
       </div>

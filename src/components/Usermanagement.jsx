@@ -71,7 +71,10 @@ const UserManagement = ({ onToast }) => {
   const [showGiveAccessModal, setShowGiveAccessModal] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [pendingUserId, setPendingUserId] = useState(null);
+  const [pendingUserName, setPendingUserName] = useState("");
   const [pendingRole, setPendingRole] = useState(null);
+  const [isReactivating, setIsReactivating] = useState(false);
+  const [isRoleChanging, setIsRoleChanging] = useState(false);
 
   const [accessType, setAccessType] = useState("reRanking");
   const [allBusinesses, setAllBusinesses] = useState([]);
@@ -99,6 +102,8 @@ const UserManagement = ({ onToast }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [usage, setUsage] = useState(null);
   const [isAssigning, setIsAssigning] = useState(false);
+  const [assigningBusinessCollaborators, setAssigningBusinessCollaborators] = useState([]);
+
 
   const fetchPlanDetails = async () => {
     try {
@@ -143,7 +148,19 @@ const UserManagement = ({ onToast }) => {
     setShowAssignModal(false);
     setAssignUserId("");
     setAssignBusinessId("");
+    setAssigningBusinessCollaborators([]);
     setAssignErrors({});
+  };
+
+  const handleOpenGiveAccessModal = () => {
+    setAccessBusinessId("");
+    setProjects([]);
+    setSelectedProjectId("");
+    setSelectedCollaboratorIds([]);
+    setAccessErrors({});
+    setAccessType("reRanking");
+    loadLaunchedBusinessAndProjects();
+    setShowGiveAccessModal(true);
   };
 
   const validateForm = () => {
@@ -177,7 +194,7 @@ const UserManagement = ({ onToast }) => {
     if (!confirmPassword) {
       newErrors.confirmPassword = t("confirm_password_required");
     } else if (newPassword !== confirmPassword) {
-      newErrors.confirmPassword = t("Passwords do not match");
+      newErrors.confirmPassword = t("passwords_do_not_match");
     }
     if (isSuperAdmin && !selectedCompanyId) {
       newErrors.company = t("Company_is_required");
@@ -473,11 +490,6 @@ const UserManagement = ({ onToast }) => {
       );
       
       setLaunchedBusinesses(validBusinesses);
-      setAccessBusinessId("");
-      setProjects([]);
-      setSelectedProjectId("");
-      setSelectedCollaboratorIds([]);
-      setAccessErrors({});
     } catch (err) {
       console.error("Failed to load launched data", err);
     } finally {
@@ -499,9 +511,8 @@ const UserManagement = ({ onToast }) => {
       const isBizLaunched = (biz?.status || "").toLowerCase() === 'launched';
       
       const filtered = allProjects.filter(p => {
-        const lp = (p.launch_status || "").toLowerCase();
-        const s = (p.status || "").toLowerCase();
-        return lp === 'launched' || lp === 'pending_launch' || (isBizLaunched && s === 'active');
+        const s = (p.status || "").toLowerCase().trim().replace(/[-_\s]/g, '');
+        return s === 'active' || s === 'atrisk' || s === 'paused';
       });
       
       setProjects(filtered);
@@ -536,6 +547,27 @@ const UserManagement = ({ onToast }) => {
       setLoadingCollaborators(false);
     }
   };
+
+  const fetchCurrentBusinessCollaborators = async (businessId) => {
+    if (!businessId) {
+      setAssigningBusinessCollaborators([]);
+      return;
+    }
+    try {
+      const res = await axios.get(`${BACKEND_URL}/api/businesses/${businessId}/collaborators`);
+      setAssigningBusinessCollaborators(res.data.collaborators || []);
+    } catch (err) {
+      console.error("Failed to fetch current business collaborators", err);
+    }
+  };
+
+  useEffect(() => {
+    if (showAssignModal && assignBusinessId) {
+      fetchCurrentBusinessCollaborators(assignBusinessId);
+    } else if (!showAssignModal) {
+      setAssigningBusinessCollaborators([]);
+    }
+  }, [assignBusinessId, showAssignModal]);
 
 
   const getSelectedCollaboratorNames = () => collaborators.filter(c => selectedCollaboratorIds.includes(c._id)).map(c => c.name);
@@ -588,7 +620,7 @@ const UserManagement = ({ onToast }) => {
       label: t("Status"),
       render: (_, row) => {
         const isArchived = row.status === 'inactive' || row.status === 'deleted' || row.access_mode === 'archived';
-        const label = isArchived ? t('archived') : t('active');
+        const label = (isArchived ? t('archived') : t('active'))?.toUpperCase();
         let statusColor = "#16a34a";
         let statusBg = "#dcfce7";
         if (isArchived) {
@@ -624,17 +656,38 @@ const UserManagement = ({ onToast }) => {
               <Dropdown.Toggle as={CustomToggle} />
               <Dropdown.Menu align="end">
                 {(row.role_name?.toLowerCase() !== "collaborator" || isArchived) && (
-                  <Dropdown.Item onClick={() => { setPendingUserId(row._id); setPendingRole("collaborator"); setShowConfirm(true); }}>
+                  <Dropdown.Item onClick={() => { 
+                    setPendingUserId(row._id); 
+                    setPendingUserName(row.name);
+                    setPendingRole("collaborator"); 
+                    setIsReactivating(isArchived); 
+                    setIsRoleChanging((row.role_name || row.role)?.toLowerCase() !== "collaborator");
+                    setShowConfirm(true); 
+                  }}>
                     <UserCog size={16} className="me-2" /> {isArchived && row.role_name?.toLowerCase() === "collaborator" ? t("Reactivate_Collaborator") : t("Collaborator")}
                   </Dropdown.Item>
                 )}
                 {(row.role_name?.toLowerCase() !== "viewer" || isArchived) && (
-                  <Dropdown.Item onClick={() => { setPendingUserId(row._id); setPendingRole("viewer"); setShowConfirm(true); }}>
+                  <Dropdown.Item onClick={() => { 
+                    setPendingUserId(row._id); 
+                    setPendingUserName(row.name);
+                    setPendingRole("viewer"); 
+                    setIsReactivating(isArchived); 
+                    setIsRoleChanging((row.role_name || row.role)?.toLowerCase() !== "viewer");
+                    setShowConfirm(true); 
+                  }}>
                     <User size={16} className="me-2" /> {isArchived && row.role_name?.toLowerCase() === "viewer" ? t("Reactivate_Viewer") : t("Viewer")}
                   </Dropdown.Item>
                 )}
                 {(row.role_name?.toLowerCase() !== "user" || isArchived) && (
-                  <Dropdown.Item onClick={() => { setPendingUserId(row._id); setPendingRole("user"); setShowConfirm(true); }}>
+                  <Dropdown.Item onClick={() => { 
+                    setPendingUserId(row._id); 
+                    setPendingUserName(row.name);
+                    setPendingRole("user"); 
+                    setIsReactivating(isArchived); 
+                    setIsRoleChanging((row.role_name || row.role)?.toLowerCase() !== "user");
+                    setShowConfirm(true); 
+                  }}>
                     <ShieldCheck size={16} className="me-2" /> {isArchived && row.role_name?.toLowerCase() === "user" ? t("Reactivate_User") : t("User")}
                   </Dropdown.Item>
                 )}
@@ -708,7 +761,7 @@ const UserManagement = ({ onToast }) => {
               }}>
                 <UserCog size={16} /> {t("Assign_Business_Access")}
               </Button>
-              <Button className="admin-secondary-btn" onClick={() => { loadLaunchedBusinessAndProjects(); setShowGiveAccessModal(true); }}>
+              <Button className="admin-secondary-btn" onClick={handleOpenGiveAccessModal}>
                 <ShieldCheck size={16} /> {t("Project_Access")}
               </Button>
             </>
@@ -920,28 +973,53 @@ const UserManagement = ({ onToast }) => {
         <Modal.Header closeButton><Modal.Title>{t("Assign_Business_Access")}</Modal.Title></Modal.Header>
         <Modal.Body>
           <Form onSubmit={handleAssign} noValidate>
-             <Form.Group className="mb-3">
-               <Form.Label>{t("User")}</Form.Label>
-               <Form.Select
-                 value={assignUserId}
-                 onChange={(e) => setAssignUserId(e.target.value)}
-                 isInvalid={!!assignErrors.collaborator}
-               >
-                 <option value="">{t("Select_user")}</option>
-                 {users
-                   .filter(u => {
-                     const isArchivedOrDeleted = u.status === 'inactive' || u.status === 'deleted' || u.access_mode === 'archived';
-                     const roleName = formatRole(u.role_name || u.role);
-                     return !isArchivedOrDeleted && ["Collaborator", "User", "Viewer"].includes(roleName);
-                   })
-                   .map(u => (
-                     <option key={u._id} value={u._id}>{u.name}</option>
-                   ))
-                 }
-               </Form.Select>
-               <Form.Control.Feedback type="invalid">{assignErrors.collaborator}</Form.Control.Feedback>
-             </Form.Group>
-            <Form.Group className="mb-3"><Form.Label>{t("business")}</Form.Label><Form.Select value={assignBusinessId} onChange={(e) => setAssignBusinessId(e.target.value)} isInvalid={!!assignErrors.business}><option value="">{t("Select_Business")}</option>{allBusinesses.map(b => <option key={b._id} value={b._id}>{b.business_name || b.name}</option>)}</Form.Select><Form.Control.Feedback type="invalid">{assignErrors.business}</Form.Control.Feedback></Form.Group>
+            <Form.Group className="mb-3">
+              <Form.Label>{t("business")}</Form.Label>
+              <Form.Select 
+                value={assignBusinessId} 
+                onChange={(e) => setAssignBusinessId(e.target.value)} 
+                isInvalid={!!assignErrors.business}
+                disabled={allBusinesses.length === 0}
+              >
+                <option value="">
+                  {allBusinesses.length > 0 ? t("Select_Business") : t("No_Business_Found")}
+                </option>
+                {allBusinesses.map(b => (
+                  <option key={b._id} value={b._id}>{b.business_name || b.name}</option>
+                ))}
+              </Form.Select>
+              <Form.Control.Feedback type="invalid">{assignErrors.business}</Form.Control.Feedback>
+            </Form.Group>
+            <Form.Group className="mb-3">
+              <Form.Label>{t("User")}</Form.Label>
+              <Form.Select
+                value={assignUserId}
+                onChange={(e) => setAssignUserId(e.target.value)}
+                isInvalid={!!assignErrors.collaborator}
+                disabled={!assignBusinessId}
+              >
+                {(() => {
+                  const filtered = users.filter(u => {
+                    const isArchivedOrDeleted = u.status === 'inactive' || u.status === 'deleted' || u.access_mode === 'archived';
+                    const roleName = formatRole(u.role_name || u.role);
+                    const isAlreadyAssigned = assigningBusinessCollaborators.some(c => c._id === u._id);
+                    return !isArchivedOrDeleted && ["Collaborator", "User", "Viewer"].includes(roleName) && !isAlreadyAssigned;
+                  });
+                  
+                  const showNoUsers = assignBusinessId && filtered.length === 0;
+                  
+                  return (
+                    <>
+                      <option value="">{showNoUsers ? t("No_Users_Found") : t("Select_user")}</option>
+                      {!showNoUsers && filtered.map(u => (
+                        <option key={u._id} value={u._id}>{u.name}</option>
+                      ))}
+                    </>
+                  );
+                })()}
+              </Form.Select>
+              <Form.Control.Feedback type="invalid">{assignErrors.collaborator}</Form.Control.Feedback>
+            </Form.Group>
             <div className="d-flex justify-content-end"><Button variant="secondary" className="me-2" onClick={handleCloseAssignModal} disabled={isAssigning}>{t("cancel")}</Button><Button variant="primary" type="submit" disabled={isAssigning}>{isAssigning ? <Spinner as="span" animation="border" size="sm" role="status" aria-hidden="true" className="me-2" /> : null}{isAssigning ? t("Saving...") : t("save")}</Button></div>
           </Form>
         </Modal.Body>
@@ -968,8 +1046,12 @@ const UserManagement = ({ onToast }) => {
                 }} 
                 isInvalid={!!accessErrors.business}
               >
-                <option value="">{t("Select_Business")}</option>
-                {launchedBusinesses.map(b => <option key={b._id} value={b._id}>{b.business_name || b.name}</option>)}
+                <option value="">
+                  {launchedBusinesses.length > 0 ? t("Select_Business") : t("No_Business_Found")}
+                </option>
+                {launchedBusinesses.map(b => (
+                  <option key={b._id} value={b._id}>{b.business_name || b.name}</option>
+                ))}
               </Form.Select>
               <Form.Control.Feedback type="invalid">{accessErrors.business}</Form.Control.Feedback>
             </Form.Group>
@@ -1000,8 +1082,8 @@ const UserManagement = ({ onToast }) => {
             <Form.Group className="mb-3">
               <Form.Label>{t("Collaborators")}</Form.Label>
               <div className="collaborator-checkbox-list" style={{ maxHeight: "350px", overflowY: "auto", border: "1px solid #dee2e6", borderRadius: "4px", padding: "17px" }}>
-                {collaborators
-                  .filter(c => {
+                {(() => {
+                  const filteredCollaborators = collaborators.filter(c => {
                     if (accessType === "reRanking") {
                       const biz = launchedBusinesses.find(b => b._id === accessBusinessId);
                       const existing = biz?.allowed_ranking_collaborators || [];
@@ -1013,10 +1095,16 @@ const UserManagement = ({ onToast }) => {
                       return !existing.some(id => id.toString() === c._id.toString());
                     }
                     return true;
-                  })
-                  .map(c => (
-                    <Form.Check key={c._id} label={c.name} checked={selectedCollaboratorIds.includes(c._id)} onChange={() => handleCollaboratorToggle(c._id)} />
-                  ))}
+                  });
+
+                  return filteredCollaborators.length > 0 ? (
+                    filteredCollaborators.map(c => (
+                      <Form.Check key={c._id} label={c.name} checked={selectedCollaboratorIds.includes(c._id)} onChange={() => handleCollaboratorToggle(c._id)} />
+                    ))
+                  ) : (
+                    <div className="text-muted text-center py-3">{t("No_Collaborators_Found")}</div>
+                  );
+                })()}
               </div>
               {accessErrors.collaborators && <div className="text-danger mt-1" style={{ fontSize: '0.875em' }}>{accessErrors.collaborators}</div>}
             </Form.Group>
@@ -1031,7 +1119,38 @@ const UserManagement = ({ onToast }) => {
         <Modal.Footer><Button variant="secondary" onClick={() => setShowAccessConfirmation(false)}>{t("Back")}</Button><Button variant="primary" onClick={handleGiveProjectAccess} disabled={isGrantingAccess}>{isGrantingAccess ? t("Granting") : t("Yes_Grant_Access")}</Button></Modal.Footer>
       </Modal>
 
-      <Modal show={showConfirm} onHide={() => setShowConfirm(false)} centered dialogClassName="compact-confirm-modal"><Modal.Header closeButton><Modal.Title>{t("Confirm_Role_Change")}</Modal.Title></Modal.Header><Modal.Body><p>{t("Change_role_to")} <strong>{t(pendingRole?.charAt(0).toUpperCase() + pendingRole?.slice(1))}</strong>?</p></Modal.Body><Modal.Footer><Button variant="light" onClick={() => setShowConfirm(false)}>{t("cancel")}</Button><Button variant="primary" onClick={() => { handleRoleUpdate(pendingUserId, pendingRole); setShowConfirm(false); }}>{t("Yes_Change_Role")}</Button></Modal.Footer></Modal>
+      <Modal show={showConfirm} onHide={() => setShowConfirm(false)} centered dialogClassName="compact-confirm-modal">
+        <Modal.Header closeButton>
+          <Modal.Title>{isReactivating ? t("Confirm_Reactivation") || t("Confirm_Role_Change") : t("Confirm_Role_Change")}</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          {(() => {
+            const roleName = t(pendingRole?.charAt(0).toUpperCase() + pendingRole?.slice(1));
+            const msgKey = isReactivating 
+              ? (isRoleChanging ? "Reactivate_And_Change_Role_Confirm_Msg" : "Reactivate_User_Confirm_Msg") 
+              : "Change_role_confirm_msg";
+            
+            const message = t(msgKey, { user: "__USER__", role: "__ROLE__" });
+            const parts = message.split(/(__USER__|__ROLE__)/);
+
+            return (
+              <p>
+                {parts.map((part, i) => {
+                  if (part === "__USER__") return <strong key={i} style={{ color: "#4f46e5" }}>{pendingUserName}</strong>;
+                  if (part === "__ROLE__") return <strong key={i} style={{ color: "#0ea5e9" }}>{roleName}</strong>;
+                  return part;
+                })}
+              </p>
+            );
+          })()}
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="light" onClick={() => { setShowConfirm(false); setIsReactivating(false); setIsRoleChanging(false); setPendingUserName(""); }}>{t("cancel")}</Button>
+          <Button variant="primary" onClick={() => { handleRoleUpdate(pendingUserId, pendingRole); setShowConfirm(false); setIsReactivating(false); setIsRoleChanging(false); setPendingUserName(""); }}>
+            {isReactivating ? t("reactivate") : t("Yes_Change_Role")}
+          </Button>
+        </Modal.Footer>
+      </Modal>
 
       <UpgradeModal show={showUpgradeModal} onHide={() => setShowUpgradeModal(false)} onUpgradeSuccess={() => fetchUsers()} />
       <PlanLimitModal
