@@ -14,7 +14,7 @@ export const extractBusinessName = (text) => {
 };
 
 export const showToastMessage = (setShowToast) => (message, type = "success", options = {}) => {
-  const { duration = 4000 } = options;
+  const { duration = 5000 } = options;
   setShowToast({ show: true, message, type });
 
   

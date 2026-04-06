@@ -631,7 +631,7 @@ export class AnalysisApiService {
             showToastMessage(
               `${completed}/${total}  analyses — "${displayName}" completed successfully`,
               "info",
-              { duration: 0 }
+              { duration: 5000 }
             );
 
             return { status: "fulfilled", analysisType, value: res };
@@ -644,7 +644,7 @@ export class AnalysisApiService {
             showToastMessage(
               `${completed}/${total} ${phase} phase analyses — "${displayName}" failed`,
               "warning",
-              { duration: 0 }
+              { duration: 5000 }
             );
 
             throw { status: "rejected", analysisType, reason: err };
@@ -680,7 +680,7 @@ export class AnalysisApiService {
               showToastMessage(
                 `${successes}/${total} analyses — "${displayName}" completed successfully (after retry)`,
                 "info",
-                { duration: 0 }
+                { duration: 5000 }
               );
               return { status: "fulfilled", analysisType, value: res };
             })
