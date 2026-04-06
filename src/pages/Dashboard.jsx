@@ -344,8 +344,12 @@ const Dashboard = () => {
           sessionStorage.clear();
           navigate('/login');
         } else if (response.status === 403 && data.error && data.error.includes('limit reached')) {
-          handleCloseCreateModal();
-          setShowPlanLimitModal(true);
+          if (isAdmin) {
+            handleCloseCreateModal();
+            setShowPlanLimitModal(true);
+          } else {
+            setBusinessError(data.error || t('plan_limit_reached'));
+          }
         } else {
           setBusinessError(data.error || t('failed_to_create_business'));
         }
@@ -365,65 +369,65 @@ const Dashboard = () => {
     // Business Name validation
     const businessName = businessFormData.business_name.trim();
 
-if (!businessName) {
-  errors.business_name = t('business_name_cannot_be_empty');
-}
-else if (businessName.length < 3) {
-  errors.business_name = "Business name must be at least 3 characters";
-}
-else if (!/[A-Za-z]/.test(businessName)) {
-  errors.business_name = "Business name must contain at least one letter";
-}
-else if (/[0-9]{5,}/.test(businessName)) {
-  errors.business_name = "Too many consecutive numbers are not allowed";
-}
-else if (/[^A-Za-z0-9\s]{5,}/.test(businessName)) {
-  errors.business_name = "Too many consecutive special characters are not allowed";
-}
+    if (!businessName) {
+      errors.business_name = t('business_name_cannot_be_empty');
+    }
+    else if (businessName.length < 3) {
+      errors.business_name = "Business name must be at least 3 characters";
+    }
+    else if (!/[A-Za-z]/.test(businessName)) {
+      errors.business_name = "Business name must contain at least one letter";
+    }
+    else if (/[0-9]{5,}/.test(businessName)) {
+      errors.business_name = "Too many consecutive numbers are not allowed";
+    }
+    else if (/[^A-Za-z0-9\s]{5,}/.test(businessName)) {
+      errors.business_name = "Too many consecutive special characters are not allowed";
+    }
 
     // Business purpose validation
-const businessPurpose = businessFormData.business_purpose.trim();
+    const businessPurpose = businessFormData.business_purpose.trim();
 
-if (!businessPurpose) {
-  errors.business_purpose = t('business_purpose_required');
-}
-else if (businessPurpose.length < 10) {
-  errors.business_purpose = "Business purpose must be at least 10 characters long";
-}
-else if (!/[A-Za-z]/.test(businessPurpose)) {
-  errors.business_purpose =
-    t('business_purpose_must_contain_alphabetic_characters') ||
-    "Business purpose must contain alphabetic characters";
-}
-else if (/[0-9]{5,}/.test(businessPurpose)) {
-  errors.business_purpose = "Too many consecutive numbers are not allowed";
-}
-else if (/[^A-Za-z0-9\s]{5,}/.test(businessPurpose)) {
-  errors.business_purpose = "Too many consecutive special characters are not allowed";
-}
+    if (!businessPurpose) {
+      errors.business_purpose = t('business_purpose_required');
+    }
+    else if (businessPurpose.length < 10) {
+      errors.business_purpose = "Business purpose must be at least 10 characters long";
+    }
+    else if (!/[A-Za-z]/.test(businessPurpose)) {
+      errors.business_purpose =
+        t('business_purpose_must_contain_alphabetic_characters') ||
+        "Business purpose must contain alphabetic characters";
+    }
+    else if (/[0-9]{5,}/.test(businessPurpose)) {
+      errors.business_purpose = "Too many consecutive numbers are not allowed";
+    }
+    else if (/[^A-Za-z0-9\s]{5,}/.test(businessPurpose)) {
+      errors.business_purpose = "Too many consecutive special characters are not allowed";
+    }
 
     // City validation (optional but if provided, must be valid)
-const cityTrimmed = businessFormData.city.trim();
-const cityHasSpecialChars = /[^a-zA-ZÀ-ÿ\s.-]/.test(cityTrimmed);
+    const cityTrimmed = businessFormData.city.trim();
+    const cityHasSpecialChars = /[^a-zA-ZÀ-ÿ\s.-]/.test(cityTrimmed);
 
-if (businessFormData.city && cityTrimmed.length === 0) {
-  errors.city = t('city_cannot_contain_only_spaces');
-} else if (cityTrimmed.length > 0 && cityTrimmed.length < 2) {
-  errors.city = t('city_min_length');
-} else if (cityTrimmed.length > 20) {
-  errors.city = t('city_max_length');
-} else {
-  const hasNumber = /\d/.test(cityTrimmed);  
-  const hasSpecial = cityHasSpecialChars;    
+    if (businessFormData.city && cityTrimmed.length === 0) {
+      errors.city = t('city_cannot_contain_only_spaces');
+    } else if (cityTrimmed.length > 0 && cityTrimmed.length < 2) {
+      errors.city = t('city_min_length');
+    } else if (cityTrimmed.length > 20) {
+      errors.city = t('city_max_length');
+    } else {
+      const hasNumber = /\d/.test(cityTrimmed);
+      const hasSpecial = cityHasSpecialChars;
 
-  if (hasNumber && hasSpecial) {
-    errors.city = "Numeric and special characters are not allowed"; 
-  } else if (hasNumber) {
-    errors.city = "Numeric values not allowed.";
-  } else if (hasSpecial) {
-    errors.city = t('city_cannot_contain_special_characters');
-  }
-}
+      if (hasNumber && hasSpecial) {
+        errors.city = "Numeric and special characters are not allowed";
+      } else if (hasNumber) {
+        errors.city = "Numeric values not allowed.";
+      } else if (hasSpecial) {
+        errors.city = t('city_cannot_contain_special_characters');
+      }
+    }
 
     // Country validation (optional but if provided, must be valid)
     const countryTrimmed = businessFormData.country.trim();
@@ -436,37 +440,37 @@ if (businessFormData.city && cityTrimmed.length === 0) {
     } else if (countryTrimmed.length > 20) {
       errors.country = t('country_max_length');
     } else {
-  const hasNumber = /\d/.test(countryTrimmed);
-  const hasSpecial = countryHasSpecialChars;
+      const hasNumber = /\d/.test(countryTrimmed);
+      const hasSpecial = countryHasSpecialChars;
 
-  if (hasNumber && hasSpecial) {
-    errors.country = "Numeric and special characters are not allowed";
-  } else if (hasNumber) {
-    errors.country = t('Numeric_values_not_allowed');
-  } else if (hasSpecial) {
-    errors.country = t('country_cannot_contain_special_characters');
-  }
-}
+      if (hasNumber && hasSpecial) {
+        errors.country = "Numeric and special characters are not allowed";
+      } else if (hasNumber) {
+        errors.country = t('Numeric_values_not_allowed');
+      } else if (hasSpecial) {
+        errors.country = t('country_cannot_contain_special_characters');
+      }
+    }
 
     const description = businessFormData.description?.trim() || "";
 
-if (description) {
-  if (description.length < 10) {
-    errors.description = t('description_min_length');
-  }
-  else if (!/[A-Za-z]/.test(description)) {
-    errors.description = t('description_alphabetic_required');
-  }
-  else if (/[0-9]{5,}/.test(description)) {
-    errors.description = t('description_consecutive_numbers');
-  }
-  else if (/[^A-Za-z0-9\s]{5,}/.test(description)) {
-    errors.description = t('description_consecutive_special');
-  }
-  else if (/\s{3,}/.test(description)) {
-    errors.description = t('description_consecutive_spaces');
-  }
-}
+    if (description) {
+      if (description.length < 10) {
+        errors.description = t('description_min_length');
+      }
+      else if (!/[A-Za-z]/.test(description)) {
+        errors.description = t('description_alphabetic_required');
+      }
+      else if (/[0-9]{5,}/.test(description)) {
+        errors.description = t('description_consecutive_numbers');
+      }
+      else if (/[^A-Za-z0-9\s]{5,}/.test(description)) {
+        errors.description = t('description_consecutive_special');
+      }
+      else if (/\s{3,}/.test(description)) {
+        errors.description = t('description_consecutive_spaces');
+      }
+    }
 
 
     setFormErrors(errors);
@@ -497,7 +501,7 @@ if (description) {
       const current = usage.workspaces?.current || 0;
       const limit = usage.workspaces?.limit || 0;
 
-      if (current >= limit) {
+      if (current >= limit && isAdmin) {
         setShowPlanLimitModal(true);
         return;
       }
@@ -743,6 +747,7 @@ if (description) {
         plan={usage?.plan}
         limit={usage?.workspaces?.limit}
         isAdmin={isAdmin}
+        message="plan limit for business is reached please upgrade"
       />
 
 
@@ -849,7 +854,7 @@ if (description) {
                             </Accordion.Body>
                           </Accordion.Item>
                         )}
-                        
+
                         {/* Deleted Businesses */}
                         {!isCollaborator && !isViewer && deletedBusinesses.length > 0 && (
                           <Accordion.Item eventKey="3">
@@ -882,9 +887,15 @@ if (description) {
                             variant="primary"
                             className="flex-grow-1 create-business-btn"
                             onClick={handleShowCreateModal}
-                            disabled={(usage && usage.workspaces?.current >= usage.workspaces?.limit) || isLoadingBusinesses}
+                            disabled={isLoadingBusinesses}
                           >
-                            {t('create_business')}
+                            {isLoadingBusinesses ? (
+                              <>
+                                <Spinner size="sm" className="me-2" />
+                              </>
+                            ) : (
+                              t('create_business')
+                            )}
                           </Button>
                         )}
                         <Button
@@ -918,9 +929,16 @@ if (description) {
                                   variant="primary"
                                   className="create-business-btn"
                                   onClick={handleShowCreateModal}
-                                  disabled={(usage && usage.workspaces?.current >= usage.workspaces?.limit) || isLoadingBusinesses}
+                                  disabled={isLoadingBusinesses}
                                 >
-                                  {t('create_business')}
+                                  {isLoadingBusinesses ? (
+                                    <>
+                                      <Spinner size="sm" className="me-2" />
+                                      {t('create_business')}
+                                    </>
+                                  ) : (
+                                    t('create_business')
+                                  )}
                                 </Button>
                               )}
 
