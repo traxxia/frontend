@@ -4,6 +4,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { LogOut, Settings, Home, User, Archive, FileText, Shield, BookOpen } from 'lucide-react';
 import "../styles/menubar.css";
 import { useTranslation } from '../hooks/useTranslation';
+import NotificationBell from './NotificationBell';
 
 const MenuBar = () => {
   const navigate = useNavigate();
@@ -117,7 +118,10 @@ const MenuBar = () => {
           </div>
 
           {/* Right side - User Menu */}
-          <div className="navbar-right">
+          <div className="navbar-right d-flex align-items-center">
+            
+            {!isSuperAdmin && <NotificationBell />}
+
             <Dropdown>
               <Dropdown.Toggle
                 variant="link"

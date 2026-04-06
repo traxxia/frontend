@@ -755,12 +755,12 @@ const AnalysisContentManager = (props) => {
         </div>
         <ul className="overview-bullets">
           {[
+            { id: 'current-strategy', title: t('Current Strategy'), desc: t('six_cs_strategy_desc') },
             { id: 'costs-financial', title: t('Costs/Financial'), desc: t('six_cs_cost_desc') },
             { id: 'context-industry', title: t('Context/Industry'), desc: t('six_cs_context_desc') },
             { id: 'customer', title: t('Customer'), desc: t('six_cs_customer_desc') },
             { id: 'capabilities', title: t('Capabilities'), desc: t('six_cs_capabilities_desc') },
             { id: 'competition', title: t('Competition'), desc: t('six_cs_competition_desc') },
-            { id: 'current-strategy', title: t('Current Strategy'), desc: t('six_cs_strategy_desc') },
           ].map((item) => (
             <li
               key={item.id}

@@ -269,7 +269,7 @@ const BusinessSetupPage = () => {
       setIsAnalysisExpanded(true);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [location.key, searchParams]);
 
   useEffect(() => {
     let pageContext = null;
@@ -1006,6 +1006,15 @@ const BusinessSetupPage = () => {
     } catch { }
   };
 
+  const handleStayOnPriorities = () => {
+    setShowProjectsTab(true);
+    try {
+      if (selectedBusinessId) {
+        sessionStorage.setItem(`showProjectsTab_${selectedBusinessId}`, 'true');
+      }
+    } catch { }
+  };
+
 
   const getPhaseSpecificOptions = (phase) => {
     const unlockedFeatures = phaseManager.getUnlockedFeatures();
@@ -1553,8 +1562,10 @@ const BusinessSetupPage = () => {
                             </button>
                             {showDropdown && (() => {
                               const categoryOptions = getPhaseSpecificOptions(currentPhase);
-                              return Object.keys(categoryOptions).length > 0 && (<div className="dropdown-menu-options">
-                                {Object.entries(categoryOptions).map(([category, items]) =>
+                              return Object.keys(categoryOptions).length > 0 && (
+                                <div className="dropdown-menu-options">
+                                  <div className="dropdown-main-header">{t("Insights & Recommendations")}</div>
+                                  {Object.entries(categoryOptions).map(([category, items]) =>
                                   items.length > 0 && (
                                     <div key={category}>
                                       <div className="dropdown-category-header">{t(category)}</div>
@@ -1740,6 +1751,7 @@ const BusinessSetupPage = () => {
                           selectedBusinessId={selectedBusinessId}
                           companyAdminIds={companyAdminIds}
                           onSuccess={handleKickstartSuccess}
+                          onStayOnPriorities={handleStayOnPriorities}
                           onToastMessage={showToastMessage}
                           onStartOnboarding={() => setShowPMFOnboarding(true)}
                         />
@@ -1922,6 +1934,7 @@ const BusinessSetupPage = () => {
                       selectedBusinessId={selectedBusinessId}
                       companyAdminIds={companyAdminIds}
                       onSuccess={handleKickstartSuccess}
+                      onStayOnPriorities={handleStayOnPriorities}
                       onToastMessage={showToastMessage}
                       onStartOnboarding={() => setShowPMFOnboarding(true)}
                     />
@@ -2029,6 +2042,7 @@ const BusinessSetupPage = () => {
                     selectedBusinessId={selectedBusinessId}
                     companyAdminIds={companyAdminIds}
                     onSuccess={handleKickstartSuccess}
+                    onStayOnPriorities={handleStayOnPriorities}
                     onToastMessage={showToastMessage}
                     onStartOnboarding={() => setShowPMFOnboarding(true)}
                   />

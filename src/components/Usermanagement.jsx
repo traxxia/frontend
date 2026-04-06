@@ -102,6 +102,8 @@ const UserManagement = ({ onToast }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [usage, setUsage] = useState(null);
   const [isAssigning, setIsAssigning] = useState(false);
+  const [assigningBusinessCollaborators, setAssigningBusinessCollaborators] = useState([]);
+
 
   const fetchPlanDetails = async () => {
     try {
@@ -146,6 +148,7 @@ const UserManagement = ({ onToast }) => {
     setShowAssignModal(false);
     setAssignUserId("");
     setAssignBusinessId("");
+    setAssigningBusinessCollaborators([]);
     setAssignErrors({});
   };
 
@@ -508,9 +511,8 @@ const UserManagement = ({ onToast }) => {
       const isBizLaunched = (biz?.status || "").toLowerCase() === 'launched';
       
       const filtered = allProjects.filter(p => {
-        const lp = (p.launch_status || "").toLowerCase();
-        const s = (p.status || "").toLowerCase();
-        return lp === 'launched' || lp === 'pending_launch' || (isBizLaunched && s === 'active');
+        const s = (p.status || "").toLowerCase().trim().replace(/[-_\s]/g, '');
+        return s === 'active' || s === 'atrisk' || s === 'paused';
       });
       
       setProjects(filtered);
@@ -545,6 +547,27 @@ const UserManagement = ({ onToast }) => {
       setLoadingCollaborators(false);
     }
   };
+
+  const fetchCurrentBusinessCollaborators = async (businessId) => {
+    if (!businessId) {
+      setAssigningBusinessCollaborators([]);
+      return;
+    }
+    try {
+      const res = await axios.get(`${BACKEND_URL}/api/businesses/${businessId}/collaborators`);
+      setAssigningBusinessCollaborators(res.data.collaborators || []);
+    } catch (err) {
+      console.error("Failed to fetch current business collaborators", err);
+    }
+  };
+
+  useEffect(() => {
+    if (showAssignModal && assignBusinessId) {
+      fetchCurrentBusinessCollaborators(assignBusinessId);
+    } else if (!showAssignModal) {
+      setAssigningBusinessCollaborators([]);
+    }
+  }, [assignBusinessId, showAssignModal]);
 
 
   const getSelectedCollaboratorNames = () => collaborators.filter(c => selectedCollaboratorIds.includes(c._id)).map(c => c.name);
@@ -950,27 +973,6 @@ const UserManagement = ({ onToast }) => {
         <Modal.Header closeButton><Modal.Title>{t("Assign_Business_Access")}</Modal.Title></Modal.Header>
         <Modal.Body>
           <Form onSubmit={handleAssign} noValidate>
-             <Form.Group className="mb-3">
-               <Form.Label>{t("User")}</Form.Label>
-               <Form.Select
-                 value={assignUserId}
-                 onChange={(e) => setAssignUserId(e.target.value)}
-                 isInvalid={!!assignErrors.collaborator}
-               >
-                 <option value="">{t("Select_user")}</option>
-                 {users
-                   .filter(u => {
-                     const isArchivedOrDeleted = u.status === 'inactive' || u.status === 'deleted' || u.access_mode === 'archived';
-                     const roleName = formatRole(u.role_name || u.role);
-                     return !isArchivedOrDeleted && ["Collaborator", "User", "Viewer"].includes(roleName);
-                   })
-                   .map(u => (
-                     <option key={u._id} value={u._id}>{u.name}</option>
-                   ))
-                 }
-               </Form.Select>
-               <Form.Control.Feedback type="invalid">{assignErrors.collaborator}</Form.Control.Feedback>
-             </Form.Group>
             <Form.Group className="mb-3">
               <Form.Label>{t("business")}</Form.Label>
               <Form.Select 
@@ -987,6 +989,36 @@ const UserManagement = ({ onToast }) => {
                 ))}
               </Form.Select>
               <Form.Control.Feedback type="invalid">{assignErrors.business}</Form.Control.Feedback>
+            </Form.Group>
+            <Form.Group className="mb-3">
+              <Form.Label>{t("User")}</Form.Label>
+              <Form.Select
+                value={assignUserId}
+                onChange={(e) => setAssignUserId(e.target.value)}
+                isInvalid={!!assignErrors.collaborator}
+                disabled={!assignBusinessId}
+              >
+                {(() => {
+                  const filtered = users.filter(u => {
+                    const isArchivedOrDeleted = u.status === 'inactive' || u.status === 'deleted' || u.access_mode === 'archived';
+                    const roleName = formatRole(u.role_name || u.role);
+                    const isAlreadyAssigned = assigningBusinessCollaborators.some(c => c._id === u._id);
+                    return !isArchivedOrDeleted && ["Collaborator", "User", "Viewer"].includes(roleName) && !isAlreadyAssigned;
+                  });
+                  
+                  const showNoUsers = assignBusinessId && filtered.length === 0;
+                  
+                  return (
+                    <>
+                      <option value="">{showNoUsers ? t("No_Users_Found") : t("Select_user")}</option>
+                      {!showNoUsers && filtered.map(u => (
+                        <option key={u._id} value={u._id}>{u.name}</option>
+                      ))}
+                    </>
+                  );
+                })()}
+              </Form.Select>
+              <Form.Control.Feedback type="invalid">{assignErrors.collaborator}</Form.Control.Feedback>
             </Form.Group>
             <div className="d-flex justify-content-end"><Button variant="secondary" className="me-2" onClick={handleCloseAssignModal} disabled={isAssigning}>{t("cancel")}</Button><Button variant="primary" type="submit" disabled={isAssigning}>{isAssigning ? <Spinner as="span" animation="border" size="sm" role="status" aria-hidden="true" className="me-2" /> : null}{isAssigning ? t("Saving...") : t("save")}</Button></div>
           </Form>

@@ -9,7 +9,7 @@ import PlanLimitModal from "./PlanLimitModal";
 import "../styles/PrioritiesProjects.css";
 import { getUserLimits } from "../utils/authUtils";
 
-const PrioritiesProjects = ({ selectedBusinessId, companyAdminIds, onSuccess, onToastMessage, onStartOnboarding }) => {
+const PrioritiesProjects = ({ selectedBusinessId, companyAdminIds, onSuccess, onStayOnPriorities, onToastMessage, onStartOnboarding }) => {
   const { t } = useTranslation();
   const [priorities, setPriorities] = useState([]);
   const [selected, setSelected] = useState([]);
@@ -315,7 +315,12 @@ const PrioritiesProjects = ({ selectedBusinessId, companyAdminIds, onSuccess, on
             <Button variant="success" onClick={handleConfirmRedirect} className="d-flex align-items-center justify-content-center gap-2 py-2 fw-semibold">
               {t("Go to Projects")} <ArrowRight size={18} />
             </Button>
-            <Button variant="link" onClick={() => setShowSuccessModal(false)} className="text-muted text-decoration-none">
+            <Button variant="link" onClick={() => {
+              setShowSuccessModal(false);
+              if (onStayOnPriorities) {
+                onStayOnPriorities();
+              }
+            }} className="text-muted text-decoration-none">
               {t("Stay on Priorities")}
             </Button>
           </div>

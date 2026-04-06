@@ -156,8 +156,9 @@ export const useAccessControl = (selectedBusinessId) => {
       //if (isAdmin) return true;
 
       const isOwner = project.accountable_owner_id && project.accountable_owner_id.toString() === myUserId;
-      const isCollaborator = Array.isArray(project.allowed_collaborators) && project.allowed_collaborators.includes(myUserId);
-      return isOwner || isCollaborator;
+      // const isCollaborator = Array.isArray(project.allowed_collaborators) && project.allowed_collaborators.includes(myUserId);
+      // return isOwner || isCollaborator;
+      return isOwner === true;
     },
     []
   );
