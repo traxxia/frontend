@@ -269,7 +269,7 @@ const BusinessSetupPage = () => {
       setIsAnalysisExpanded(true);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [location.key, searchParams]);
 
   useEffect(() => {
     let pageContext = null;

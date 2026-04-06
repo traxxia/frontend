@@ -1906,7 +1906,8 @@ export const staticTranslations = {
     "insight_access": "Insight Access",
     "pmf_access": "PMF Access",
     "strategic_access": "Strategic Access",
-    "projects_access": "Projects Access"
+    "projects_access": "Projects Access",
+    "mark_all_read": "Mark all as read"
 
 
   },
@@ -3854,7 +3855,8 @@ export const staticTranslations = {
     "no_stale_bets_found": "No se encontraron apuestas atrasadas. ¡Buen trabajo manteniéndote al día con las revisiones!",
     "failed_to_fetch_stale_projects": "Error al obtener proyectos atrasados",
     "cadence": "Cadencia",
-    "last_reviewed": "Última Revisión"
+    "last_reviewed": "Última Revisión",
+    "mark_all_read": "Marcar todo como leído"
   }
 };
 
