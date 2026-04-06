@@ -18,6 +18,7 @@ const ToastNotifications = ({
   validationMessageType = "error", // Add this prop with default
   showAIRankingToast,
   setShowAIRankingToast,
+  toastDuration = 7000,
 }) => {
   const { t } = useTranslation();
 
@@ -30,7 +31,7 @@ const ToastNotifications = ({
         <Toast
           show={showValidationToast}
           onClose={() => setShowValidationToast(false)}
-          delay={3000}
+          delay={toastDuration}
           autohide
         >
           <Toast.Body className={isSuccess ? "validation-toast-body-success" : "validation-toast-body"}>

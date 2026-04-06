@@ -142,6 +142,7 @@ const ProjectsSection = ({
   const [showLaunchToast, setShowLaunchToast] = useState(false);
   const [showValidationToast, setShowValidationToast] = useState(false);
   const [validationMessage, setValidationMessage] = useState("");
+  const [toastDuration, setToastDuration] = useState(3000);
   const [showAIRankingToast, setShowAIRankingToast] = useState(false);
   const [isGeneratingAIRankings, setIsGeneratingAIRankings] = useState(false);
   const [validationMessageType, setValidationMessageType] = useState("error");
@@ -225,6 +226,7 @@ const ProjectsSection = ({
   const handleShowToast = (message, type = "error", duration = 3000) => {
     setValidationMessage(message);
     setValidationMessageType(type);
+    setToastDuration(duration);
     setShowValidationToast(true);
     setTimeout(() => setShowValidationToast(false), duration);
   };
@@ -574,7 +576,7 @@ const ProjectsSection = ({
         if (error.includes("collaborators")) {
           await loadProjects();
         }
-        handleShowToast(error || "Failed to launch projects.", "error", 5000);
+          handleShowToast(error || "Failed to launch projects.", "error", 7000);
       }
     } finally {
       setIsSubmitting(false);
@@ -1124,6 +1126,7 @@ const ProjectsSection = ({
         validationMessageType={validationMessageType}
         showAIRankingToast={showAIRankingToast}
         setShowAIRankingToast={setShowAIRankingToast}
+        toastDuration={toastDuration}
       />
 
       <StateChangeModal
