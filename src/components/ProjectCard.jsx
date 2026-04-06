@@ -135,14 +135,15 @@ const ProjectCard = ({
                   nextDate.setHours(0, 0, 0, 0);
                   const today = new Date();
                   today.setHours(0, 0, 0, 0);
+                  const diffDays = Math.round((nextDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
 
-                  if (nextDate.getTime() === today.getTime()) {
+                  if (diffDays >= 0 && diffDays <= 3) {
                     return (
                       <span
                         className="review-badge due"
                         onClick={(e) => { e.stopPropagation(); onPerformReview(project); }}
                       >
-                        <Clock size={12} /> {t("Review_Due")}
+                        <Clock size={12} /> {t("Pending_Review") || "Pending Review"}
                       </span>
                     );
                   }
