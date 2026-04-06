@@ -971,7 +971,13 @@ const ProjectsSection = ({
                     onLockRankings={handleLockProjectRanking}
                     onRankSaved={() => {
                       refreshTeamRankings();
-                      onToggleTeamRankings();
+                      if (lockSummary.total_users === 0) {
+                        setViewMode("projects");
+                        setShowRankScreen(false);
+                        setShowTeamRankings(false);
+                      } else {
+                        onToggleTeamRankings();
+                      }
                     }}
                     isAdmin={isSuperAdmin}
                     isRankingLocked={isRankingLocked}

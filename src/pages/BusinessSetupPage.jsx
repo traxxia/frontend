@@ -454,15 +454,11 @@ const BusinessSetupPage = () => {
     setHasUploadedDocument(!!uploadedFileForAnalysis);
   }, [uploadedFileForAnalysis]);
 
-  const showToastMessage = (message, type = "success", options = {}) => {
-    const { duration = 4000 } = options;
+  const showToastMessage = (message, type = "success") => {
     setShowToast({ show: true, message, type });
-
-    if (duration > 0) {
-      setTimeout(() => {
-        setShowToast({ show: false, message: "", type: "success" });
-      }, duration);
-    }
+    setTimeout(() => {
+      setShowToast({ show: false, message: "", type: "success" });
+    }, 5000);
   };
 
   // Initialize Projects tab visibility from sessionStorage (scoped per business)

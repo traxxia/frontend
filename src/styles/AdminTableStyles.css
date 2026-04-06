@@ -771,6 +771,46 @@
     color: #4b5563;
 }
 
+.admin-collab-remove-btn {
+    background: none;
+    border: none;
+    color: #ef4444;
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    margin-left: auto;
+}
+
+.admin-collab-remove-btn:hover {
+    background: #fee2e2;
+    color: #dc2626;
+}
+
+.admin-collab-inline-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    padding: 2px 0;
+    width: 100%;
+}
+
+.admin-collab-remove-btn.inline {
+    padding: 2px;
+    opacity: 0.4;
+    transition: all 0.2s ease;
+    border-radius: 4px;
+}
+
+.admin-collab-remove-btn.inline:hover {
+    opacity: 1;
+    background: #fee2e2;
+}
+
 .admin-modal-footer {
     padding: 1rem 1.5rem;
     border-top: 1px solid #f0f2f5;

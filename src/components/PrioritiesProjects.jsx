@@ -79,8 +79,9 @@ const PrioritiesProjects = ({ selectedBusinessId, companyAdminIds, onSuccess, on
       return;
     }
 
-    // Check for collaborators if admin
-    if (isAdmin && !hasCollaborators && !showNoCollaboratorsModal) {
+    // Check for collaborators if admin - only if no projects have been kickstarted yet
+    const anyProjectKickstarted = priorities.some(p => p.isKickstarted || (p.actions && p.actions.some(a => a.isKickstarted)));
+    if (isAdmin && !hasCollaborators && !anyProjectKickstarted && !showNoCollaboratorsModal) {
       setShowNoCollaboratorsModal(true);
       return;
     }
@@ -338,9 +339,9 @@ const PrioritiesProjects = ({ selectedBusinessId, companyAdminIds, onSuccess, on
           <div className="warning-icon-wrapper mb-3">
             <AlertTriangle size={48} className="text-warning" />
           </div>
-          <h4 className="fw-bold mb-2">{t("Kickstart without Collaborators")}?</h4>
+          <h4 className="fw-bold mb-2">{t("Proceed without Collaborators?")}</h4>
           <p className="text-muted mb-4">
-            {t("You haven't added any collaborators to this business yet. Projects will be created but won't have assigned owners.")}
+            {t("Are you sure you want to proceed without collaborators? You can also continue without any participants for now—this is perfectly fine, and you can always add them later.")}
           </p>
           <div className="d-grid gap-2">
             <Button 
@@ -348,14 +349,14 @@ const PrioritiesProjects = ({ selectedBusinessId, companyAdminIds, onSuccess, on
               onClick={() => handleKickstart()} 
               className="d-flex align-items-center justify-content-center gap-2 py-2 fw-semibold"
             >
-              {t("Yes, Kickstart Projects")}
+              {t("Kickstart to Projects")}
             </Button>
             <Button 
               variant="outline-secondary" 
-              onClick={() => setShowNoCollaboratorsModal(false)} 
+              onClick={() => navigate('/admin?tab=user_management')} 
               className="py-2"
             >
-              {t("No, I'll add collaborators first")}
+              {t("Add Collaborators First")}
             </Button>
           </div>
         </Modal.Body>
