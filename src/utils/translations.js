@@ -22,6 +22,15 @@ export const staticTranslations = {
     'active': 'Active',
     'deleted': 'Deleted',
     'archived': 'Archived',
+    'confirm_remove_participant': 'Are you sure you want to remove this participant?',
+    'confirm_remove_participant_title': 'Confirm Removal',
+    'participant_removed_successfully': 'Participant removed successfully',
+    'failed_to_remove_participant': 'Failed to remove participant',
+    'remove_participant': 'Remove Participant',
+    'Proceed without Collaborators?': 'Proceed without Collaborators?',
+    'Are you sure you want to proceed without collaborators? You can also continue without any participants for now—this is perfectly fine, and you can always add them later.': 'Are you sure you want to proceed without collaborators? You can also continue without any participants for now—this is perfectly fine, and you can always add them later.',
+    'Kickstart to Projects': 'Kickstart to Projects',
+    'Add Collaborators First': 'Add Collaborators First',
 
     // ===========================
     // REGISTRATION
@@ -2107,6 +2116,15 @@ export const staticTranslations = {
     'active': 'Activo',
     'deleted': 'Eliminado',
     'archived': 'Archivado',
+    'confirm_remove_participant': '¿Estás seguro de que deseas eliminar a este participante?',
+    'confirm_remove_participant_title': 'Confirmar Eliminación',
+    'participant_removed_successfully': 'Participante eliminado exitosamente',
+    'failed_to_remove_participant': 'Error al eliminar al participante',
+    'remove_participant': 'Eliminar Participante',
+    'Proceed without Collaborators?': '¿Continuar sin colaboradores?',
+    'Are you sure you want to proceed without collaborators? You can also continue without any participants for now—this is perfectly fine, and you can always add them later.': '¿Está seguro de que desea continuar sin colaboradores? También puede continuar sin participantes por ahora; esto está perfectamente bien y siempre puede agregarlos más tarde.',
+    'Kickstart to Projects': 'Iniciar hacia proyectos',
+    'Add Collaborators First': 'Agregar colaboradores primero',
 
     // ===========================
     // REGISTRO

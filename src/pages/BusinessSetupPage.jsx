@@ -454,15 +454,11 @@ const BusinessSetupPage = () => {
     setHasUploadedDocument(!!uploadedFileForAnalysis);
   }, [uploadedFileForAnalysis]);
 
-  const showToastMessage = (message, type = "success", options = {}) => {
-    const { duration = 4000 } = options;
+  const showToastMessage = (message, type = "success") => {
     setShowToast({ show: true, message, type });
-
-    if (duration > 0) {
-      setTimeout(() => {
-        setShowToast({ show: false, message: "", type: "success" });
-      }, duration);
-    }
+    setTimeout(() => {
+      setShowToast({ show: false, message: "", type: "success" });
+    }, 5000);
   };
 
   // Initialize Projects tab visibility from sessionStorage (scoped per business)
@@ -1164,37 +1160,7 @@ const BusinessSetupPage = () => {
           <span>
             This workspace has been moved to an <strong>Archived</strong> state and is currently view-only. 
             Please upgrade your plan to reactivate this workspace.
-          </span>
-          <div className="ms-3 d-flex gap-2">
-            {!getUserLimits().project && (
-              <button
-                className="btn btn-warning btn-sm fw-bold border-dark"
-                onClick={() => {
-                  if (loggedInRole === 'company_admin' || loggedInRole === 'admin') {
-                    navigate('/admin?tab=subscription');
-                  } else {
-                    showToastMessage("Contact admin for upgradation", "warning");
-                  }
-                }}
-              >
-                Upgrade Now
-              </button>
-            )}
-            {getUserLimits().project && (
-              <button
-                className="btn btn-outline-dark btn-sm fw-bold"
-                onClick={() => {
-                  if (loggedInRole === 'company_admin' || loggedInRole === 'admin') {
-                    setShowUpgradeModal({ mode: 'downgrade' });
-                  } else {
-                    showToastMessage("Contact admin for downgradation", "warning");
-                  }
-                }}
-              >
-                Downgrade
-              </button>
-            )}
-          </div>
+          </span> 
         </div>
       )}
 
