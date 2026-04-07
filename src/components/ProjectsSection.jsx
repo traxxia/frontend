@@ -148,8 +148,9 @@ const ProjectsSection = ({
   const [validationMessageType, setValidationMessageType] = useState("error");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const isProjectsLoadingRef = useRef(false);
 
-  const { locks } = useFieldLockPolling(currentProject?._id);
+  const { locks } = useFieldLockPolling(currentProject?._id, activeView === "edit");
   const { fetchProjects, deleteProject, createProject, updateProject, launchProjects } =
     useProjectOperations(selectedBusinessId, onProjectCountChange);
   const { fetchTeamRankings, fetchAdminRankings, lockRanking } =
@@ -397,71 +398,78 @@ const ProjectsSection = ({
   }, [fetchAdminRankings]);
 
   const loadProjects = useCallback(async () => {
+    if (isProjectsLoadingRef.current) return;
+    isProjectsLoadingRef.current = true;
     setIsLoading(true);
 
-    // Call new consolidated access check API
-    const accessData = await checkAllAccess();
+    try {
+      // Call new consolidated access check API
+      const accessData = await checkAllAccess();
 
-    // Fetch rankings (this also returns projects list, business status, etc.)
-    const result = await fetchTeamRankings();
+      // Fetch rankings (this also returns projects list, business status, etc.)
+      const result = await fetchTeamRankings();
 
-    if (!result) {
+      if (!result) {
+        setIsLoading(false);
+        return;
+      }
+
+      const fetched = result.rankings; // In getRankings, this is the projects array
+      setProjects(fetched);
+
+      // Set business status from API response
+      if (result.businessStatus) {
+        setBusinessStatus(result.businessStatus);
+      }
+
+      // Set lock summary with locked_users array
+      const lockSummaryData = {
+        locked_users_count: result.lockSummary?.locked_users_count ?? 0,
+        total_users: result.lockSummary?.total_users ?? 0,
+        locked_users: result.lockSummary?.locked_users ?? [],
+      };
+      setLockSummary(lockSummaryData);
+
+      // Check if current user has locked their ranking
+      const isCurrentUserLocked = checkIfCurrentUserLocked(lockSummaryData.locked_users);
+      setRankingsLocked(isCurrentUserLocked);
+
+      // Set archival status from API response
+      if (result.businessAccessMode) {
+        const apiArchived = result.businessAccessMode === 'archived' || result.businessAccessMode === 'hidden';
+        setApiIsArchived(apiArchived);
+      }
+
+      // Use business status from API to set internal lock states
+      const backendStatus = result.businessStatus || "draft";
+
+      if (backendStatus === "draft") {
+        setProjectCreationLocked(false);
+        setRankingLockedFirst(false);
+        setFinalizeCompleted(false);
+        setLaunched(false);
+      } else if (backendStatus === "prioritizing") {
+        setProjectCreationLocked(true);
+        setRankingLockedFirst(false);
+        setFinalizeCompleted(false);
+        setLaunched(false);
+      } else if (backendStatus === "prioritized") {
+        setProjectCreationLocked(true);
+        setRankingLockedFirst(isCurrentUserLocked);
+        setFinalizeCompleted(true);
+        setLaunched(false);
+      } else if (backendStatus === "launched") {
+        setProjectCreationLocked(true);
+        setRankingLockedFirst(isCurrentUserLocked);
+        setFinalizeCompleted(true);
+        setLaunched(true);
+      }
+    } catch (err) {
+      console.error("Error in loadProjects:", err);
+    } finally {
       setIsLoading(false);
-      return;
+      isProjectsLoadingRef.current = false;
     }
-
-    const fetched = result.rankings; // In getRankings, this is the projects array
-    setProjects(fetched);
-
-    // Set business status from API response
-    if (result.businessStatus) {
-      setBusinessStatus(result.businessStatus);
-    }
-
-    // Set lock summary with locked_users array
-    const lockSummaryData = {
-      locked_users_count: result.lockSummary?.locked_users_count ?? 0,
-      total_users: result.lockSummary?.total_users ?? 0,
-      locked_users: result.lockSummary?.locked_users ?? [],
-    };
-    setLockSummary(lockSummaryData);
-
-    // Check if current user has locked their ranking
-    const isCurrentUserLocked = checkIfCurrentUserLocked(lockSummaryData.locked_users);
-    setRankingsLocked(isCurrentUserLocked);
-
-    // Set archival status from API response
-    if (result.businessAccessMode) {
-      const apiArchived = result.businessAccessMode === 'archived' || result.businessAccessMode === 'hidden';
-      setApiIsArchived(apiArchived);
-    }
-
-    // Use business status from API to set internal lock states
-    const backendStatus = result.businessStatus || "draft";
-
-    if (backendStatus === "draft") {
-      setProjectCreationLocked(false);
-      setRankingLockedFirst(false);
-      setFinalizeCompleted(false);
-      setLaunched(false);
-    } else if (backendStatus === "prioritizing") {
-      setProjectCreationLocked(true);
-      setRankingLockedFirst(false);
-      setFinalizeCompleted(false);
-      setLaunched(false);
-    } else if (backendStatus === "prioritized") {
-      setProjectCreationLocked(true);
-      setRankingLockedFirst(isCurrentUserLocked);
-      setFinalizeCompleted(true);
-      setLaunched(false);
-    } else if (backendStatus === "launched") {
-      setProjectCreationLocked(true);
-      setRankingLockedFirst(isCurrentUserLocked);
-      setFinalizeCompleted(true);
-      setLaunched(true);
-    }
-
-    setIsLoading(false);
   }, [checkAllAccess, fetchTeamRankings, myUserId]);
 
   const refreshTeamRankings = useCallback(async () => {

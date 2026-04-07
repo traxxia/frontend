@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Modal, Button, Row, Col, Spinner, Alert, Form } from 'react-bootstrap';
 import { ArrowRight, Zap, CreditCard, Check, AlertTriangle } from 'lucide-react';
-import { loadStripe } from '@stripe/stripe-js';
-import { Elements, useStripe, useElements, CardNumberElement } from '@stripe/react-stripe-js';
+// Stripe imports removed for lazy loading
 import PricingPlanCard from './PricingPlanCard';
 import PlanConfigurationModal from './PlanConfigurationModal';
 import PaymentForm from './PaymentForm';
@@ -25,11 +24,13 @@ const UpgradeModalContent = ({
     defaultPaymentMethodId,
     submitting,
     onProcessUpgrade,
-    selectedPlan
+    selectedPlan,
+    stripe,
+    elements,
+    stripeComponents
 }) => {
     const { t } = useTranslation();
-    const stripe = useStripe();
-    const elements = useElements();
+    const { CardNumberElement } = stripeComponents || {};
 
     // Default to the default PM, or 'new' if none exist
     const [selectedMethodId, setSelectedMethodId] = useState('new');
@@ -231,6 +232,7 @@ const UpgradeModalContent = ({
                                 onCardChange={() => {
                                     if (localError) setLocalError(null);
                                 }}
+                                stripeComponents={stripeComponents}
                             />
                         </div>
 
@@ -265,10 +267,17 @@ const UpgradeModalContent = ({
 };
 
 const UpgradeModal = ({ show, onHide, onUpgradeSuccess, paymentMethod, initialPlanId }) => {
+    const [stripeComponents, setStripeComponents] = useState(null);
+
     // Lazy load Stripe only when the modal is active
-    const stripePromise = React.useMemo(() => {
+    const stripePromise = React.useMemo(async () => {
         if (!show) return null;
-        return loadStripe(process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY);
+        const [stripeJs, reactStripeJs] = await Promise.all([
+            import('@stripe/stripe-js'),
+            import('@stripe/react-stripe-js')
+        ]);
+        setStripeComponents(reactStripeJs);
+        return stripeJs.loadStripe(process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY);
     }, [show]);
 
     const [loading, setLoading] = useState(true);
@@ -415,22 +424,25 @@ const UpgradeModal = ({ show, onHide, onUpgradeSuccess, paymentMethod, initialPl
     return (
         <>
             <Modal show={show} onHide={onHide} size="lg" centered scrollable className="upgrade-modal" backdrop="static" keyboard={false}>
-                <Elements stripe={stripePromise}>
-                    <UpgradeModalContent
-                        onHide={onHide}
-                        loading={loading}
-                        error={error}
-                        plans={plans}
-                        subscription={subscription}
-                        selectedPlanId={selectedPlanId}
-                        setSelectedPlanId={setSelectedPlanId}
-                        paymentMethods={subscription?.payment_methods}
-                        defaultPaymentMethodId={subscription?.default_payment_method_id}
-                        submitting={submitting}
-                        onProcessUpgrade={processUpgrade}
-                        selectedPlan={selectedPlan}
-                    />
-                </Elements>
+                {stripeComponents && (
+                    <stripeComponents.Elements stripe={stripePromise}>
+                        <UpgradeModalStripeWrapper
+                            onHide={onHide}
+                            loading={loading}
+                            error={error}
+                            plans={plans}
+                            subscription={subscription}
+                            selectedPlanId={selectedPlanId}
+                            setSelectedPlanId={setSelectedPlanId}
+                            paymentMethods={subscription?.payment_methods}
+                            defaultPaymentMethodId={subscription?.default_payment_method_id}
+                            submitting={submitting}
+                            onProcessUpgrade={processUpgrade}
+                            selectedPlan={selectedPlan}
+                            stripeComponents={stripeComponents}
+                        />
+                    </stripeComponents.Elements>
+                )}
             </Modal>
 
             <PlanConfigurationModal
@@ -443,6 +455,13 @@ const UpgradeModal = ({ show, onHide, onUpgradeSuccess, paymentMethod, initialPl
             />
         </>
     );
+};
+
+const UpgradeModalStripeWrapper = (props) => {
+    const { stripeComponents } = props;
+    const stripe = stripeComponents.useStripe();
+    const elements = stripeComponents.useElements();
+    return <UpgradeModalContent {...props} stripe={stripe} elements={elements} />;
 };
 
 export default UpgradeModal;

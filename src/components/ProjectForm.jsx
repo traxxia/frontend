@@ -5,6 +5,9 @@ import { TrendingUp, Zap, AlertTriangle, Circle, Diamond, Rocket, Bolt, Lightbul
 import { validateField } from "../utils/validation";
 import "../styles/NewProjectPage.css";
 
+// Module-level cache to deduplicate requests across re-renders
+const eligibleOwnersCache = new Map();
+
 
 const impactOptions = [
   { value: "High", label: "High - Game changer", icon: <Circle size={14} color="green" fill="green" /> },
@@ -345,25 +348,40 @@ const ProjectForm = ({
   const [eligibleOwners, setEligibleOwners] = useState([]);
 
   useEffect(() => {
-    if (selectedBusinessId) {
+    // Only fetch for New or Edit mode
+    if (selectedBusinessId && mode !== "view") {
+      const cacheKey = `owners-${selectedBusinessId}`;
+
       const fetchOwners = async () => {
-        try {
-          const response = await fetch(`${process.env.REACT_APP_BACKEND_URL || "http://localhost:5000"}/api/businesses/${selectedBusinessId}/eligible-owners`, {
-            headers: {
-              "Authorization": `Bearer ${sessionStorage.getItem("token")}`
-            }
-          });
-          const data = await response.json();
-          if (data.eligible_owners) {
-            setEligibleOwners(data.eligible_owners);
-          }
-        } catch (err) {
-          console.error("Failed to fetch eligible owners:", err);
+        if (eligibleOwnersCache.has(cacheKey)) {
+          const owners = await eligibleOwnersCache.get(cacheKey);
+          setEligibleOwners(owners || []);
+          return;
         }
+
+        const fetchPromise = (async () => {
+          try {
+            const response = await fetch(`${process.env.REACT_APP_BACKEND_URL || "http://localhost:5000"}/api/businesses/${selectedBusinessId}/eligible-owners`, {
+              headers: {
+                "Authorization": `Bearer ${sessionStorage.getItem("token")}`
+              }
+            });
+            const data = await response.json();
+            return data.eligible_owners || [];
+          } catch (err) {
+            console.error("Failed to fetch eligible owners:", err);
+            return [];
+          }
+        })();
+
+        eligibleOwnersCache.set(cacheKey, fetchPromise);
+        const owners = await fetchPromise;
+        setEligibleOwners(owners);
       };
+
       fetchOwners();
     }
-  }, [selectedBusinessId]);
+  }, [selectedBusinessId, mode]);
 
   useEffect(() => {
     // DEFAULT: Set business owner as default if currently empty
