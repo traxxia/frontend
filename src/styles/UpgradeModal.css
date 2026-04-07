@@ -127,12 +127,31 @@
 @media (max-width: 480px) {
     .plans-grid {
         grid-template-columns: 1fr;
+        gap: 12px;
+    }
+
+    .plan-card {
+        padding: 16px;
+    }
+
+    .plan-name {
+        font-size: 16px;
+    }
+
+    .plan-price .amount {
+        font-size: 24px;
+    }
+
+    .plan-desc {
+        font-size: 11px;
+        height: auto;
+        min-height: 32px;
     }
 
     /* Ensure saved cards look neat */
     .upgrade-modal .saved-payment-method {
-        width: fit-content;
-        min-width: 320px;
+        width: 100%;
+        min-width: unset;
         margin-right: auto;
     }
 }
