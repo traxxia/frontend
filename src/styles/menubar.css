@@ -262,7 +262,8 @@
 
 /* Dropdown Toggle Arrows - Hide them */
 .hamburger-menu::after,
-.user-menu::after {
+.user-menu::after,
+.notification-menu::after {
   display: none !important;
 }
 
@@ -344,4 +345,79 @@
   padding: 6px 18px !important;
   gap: 1px !important;
   width: 100%;
+}
+
+/* Notification Empty State Animation */
+@keyframes emptyStateFloatPulse {
+  0% {
+    transform: translateY(0) scale(1);
+    box-shadow: 0 0 0 0 rgba(0,0,0,0.05);
+  }
+  50% {
+    transform: translateY(-6px) scale(1.05);
+    box-shadow: 0 12px 20px -5px rgba(0,0,0,0.08);
+  }
+  100% {
+    transform: translateY(0) scale(1);
+    box-shadow: 0 0 0 0 rgba(0,0,0,0.05);
+  }
+}
+
+@keyframes emptyStateSoftSwing {
+  0% { transform: rotate(0deg); }
+  25% { transform: rotate(-8deg); }
+  50% { transform: rotate(0deg); }
+  75% { transform: rotate(8deg); }
+  100% { transform: rotate(0deg); }
+}
+
+.notification-empty-bell {
+  animation: emptyStateFloatPulse 3s ease-in-out infinite;
+  transition: all 0.3s ease;
+}
+
+.notification-empty-bell svg {
+  animation: emptyStateSoftSwing 4s ease-in-out infinite;
+}
+
+/* Premium Active Bell Styling */
+.notification-bell-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  transition: all 0.2s ease-in-out;
+  background-color: transparent;
+}
+
+.notification-bell-container:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+@keyframes activeBellSwing {
+  0% { transform: rotate(0deg); }
+  15% { transform: rotate(15deg); }
+  30% { transform: rotate(-10deg); }
+  45% { transform: rotate(5deg); }
+  60% { transform: rotate(-3deg); }
+  75% { transform: rotate(0deg); }
+  100% { transform: rotate(0deg); }
+}
+
+.notification-bell-active svg {
+  animation: activeBellSwing 3s ease-in-out infinite;
+  color: var(--color-primary, #0B5ED7) !important;
+}
+
+/* Badge Blink Animation */
+@keyframes badgeBlinkPulse {
+  0% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.15); opacity: 0.7; box-shadow: 0 0 8px rgba(220, 53, 69, 0.6); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.notification-badge-blink {
+  animation: badgeBlinkPulse 1.5s ease-in-out infinite;
 }

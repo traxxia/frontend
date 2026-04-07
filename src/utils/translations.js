@@ -22,6 +22,15 @@ export const staticTranslations = {
     'active': 'Active',
     'deleted': 'Deleted',
     'archived': 'Archived',
+    'confirm_remove_participant_prefix': 'Are you sure you want to remove participant',
+    'confirm_remove_participant_title': 'Confirm Removal',
+    'participant_removed_successfully': 'Participant removed successfully',
+    'failed_to_remove_participant': 'Failed to remove participant',
+    'remove_participant': 'Remove Participant',
+    'Proceed without Collaborators?': 'Proceed without Collaborators?',
+    'Are you sure you want to proceed without collaborators? You can also continue without any participants for now—this is perfectly fine, and you can always add them later.': 'Are you sure you want to proceed without collaborators? You can also continue without any participants for now—this is perfectly fine, and you can always add them later.',
+    'Kickstart to Projects': 'Kickstart to Projects',
+    'Add Collaborators First': 'Add Collaborators First',
 
     // ===========================
     // REGISTRATION
@@ -989,12 +998,14 @@ export const staticTranslations = {
     'Edit_the_Project': 'Edit the Project',
     'Loading_projects': 'Loading projects...',
     'Select_Project': 'Select Project',
+    'Participants': 'Participants',
+    'No_Participants_Found': 'No participants found',
     'Continue': 'Continue',
     'Confirm_Access_Grant': 'Confirm Access Grant',
     'Business_Label': 'Business:',
     'Project_Label': 'Project:',
     'Access_Label': 'Access:',
-    'Collaborators_Label': 'Collaborators:',
+    'Participants_Label': 'Participants:',
     'Back': 'Back',
     'Granting': 'Granting...',
     'Yes_Grant_Access': 'Yes, Grant Access',
@@ -1584,6 +1595,7 @@ export const staticTranslations = {
     'Last_Reviewed': 'Last Reviewed',
     'Next_Review_Date': 'Next Review Date',
     'Review_Due': 'Review Due',
+    'Pending_Review': 'Pending Review',
     'Stale': 'Stale',
     'Perform_Review': 'Perform Review',
     'Ad_Hoc_Update': 'Ad-hoc Update',
@@ -1803,7 +1815,7 @@ export const staticTranslations = {
     "Loading your options...": "Loading your options...",
     "Plan Management": "Plan Management",
     "Downgrade Warning": "Downgrade Warning",
-    "Downgrading to": "Downgrading to",
+    "Downgrading to": "Downgrade Warning",
     "Essential": "Essential",
     "will impact your current setup": "will impact your current setup",
     "Workspaces": "Workspaces",
@@ -1906,7 +1918,8 @@ export const staticTranslations = {
     "insight_access": "Insight Access",
     "pmf_access": "PMF Access",
     "strategic_access": "Strategic Access",
-    "projects_access": "Projects Access"
+    "projects_access": "Projects Access",
+    "mark_all_read": "Mark all as read"
 
 
   },
@@ -2106,6 +2119,15 @@ export const staticTranslations = {
     'active': 'Activo',
     'deleted': 'Eliminado',
     'archived': 'Archivado',
+    'confirm_remove_participant': '¿Estás seguro de que deseas eliminar a este participante?',
+    'confirm_remove_participant_title': 'Confirmar Eliminación',
+    'participant_removed_successfully': 'Participante eliminado exitosamente',
+    'failed_to_remove_participant': 'Error al eliminar al participante',
+    'remove_participant': 'Eliminar Participante',
+    'Proceed without Collaborators?': '¿Continuar sin colaboradores?',
+    'Are you sure you want to proceed without collaborators? You can also continue without any participants for now—this is perfectly fine, and you can always add them later.': '¿Está seguro de que desea continuar sin colaboradores? También puede continuar sin participantes por ahora; esto está perfectamente bien y siempre puede agregarlos más tarde.',
+    'Kickstart to Projects': 'Iniciar hacia proyectos',
+    'Add Collaborators First': 'Agregar colaboradores primero',
 
     // ===========================
     // REGISTRO
@@ -2487,7 +2509,7 @@ export const staticTranslations = {
     // FUNCIONES DE AUTO-GUARDADO
     // ===========================
     'unsaved_changes': 'Cambios sin guardar',
-    'auto_save_in': 'Auto-guardado en',
+    'auto_guardado_in': 'Auto-guardado en',
     'auto_save_pending': 'Auto-guardado pendiente...',
     'auto_save_info': 'Los cambios se guardarán automáticamente en 10 segundos',
     'all_changes_saved': 'Todos los cambios guardados',
@@ -2618,6 +2640,8 @@ export const staticTranslations = {
     'Total_Users': 'Total de Usuarios',
     'org_admins': 'Admins de Org',
     'Collaborators': 'Colaboradores',
+    'Participants': 'Participantes',
+    'No_Participants_Found': 'No se encontraron participantes',
     'Viewers': 'Espectadores',
     'Assign_Collaborator': 'Asignar Colaborador',
     'Project_Access': 'Acceso al Proyecto',
@@ -2640,6 +2664,8 @@ export const staticTranslations = {
     'Access_Type': 'Tipo de Acceso',
     'Enable_Reranking_Project': 'Habilitar Re-jerarquización de Proyecto',
     'Edit_the_Project': 'Editar el Proyecto',
+    'Participants': 'Participantes',
+    'No_Participants_Found': 'No se encontraron participantes',
     'Loading_projects': 'Cargando proyectos...',
     'Select_Project': 'Seleccionar Proyecto',
     'Continue': 'Continuar',
@@ -2652,7 +2678,7 @@ export const staticTranslations = {
     'Business_Label': 'Negocio:',
     'Project_Label': 'Proyecto:',
     'Access_Label': 'Acceso:',
-    'Collaborators_Label': 'Colaboradores:',
+    'Participants_Label': 'Participantes:',
     'Back': 'Atrás',
     'Granting': 'Otorgando...',
     'Yes_Grant_Access': 'Sí, Otorgar Acceso',
@@ -3466,6 +3492,7 @@ export const staticTranslations = {
     'Last_Reviewed': 'Última Revisión',
     'Next_Review_Date': 'Próxima Fecha de Revisión',
     'Review_Due': 'Revisión Pendiente',
+    'Pending_Review': 'Revisión Pendiente',
     'Stale': 'Obsoleto',
     'Perform_Review': 'Realizar Revisión',
     'Ad_Hoc_Update': 'Actualización Especial',
@@ -3854,7 +3881,8 @@ export const staticTranslations = {
     "no_stale_bets_found": "No se encontraron apuestas atrasadas. ¡Buen trabajo manteniéndote al día con las revisiones!",
     "failed_to_fetch_stale_projects": "Error al obtener proyectos atrasados",
     "cadence": "Cadencia",
-    "last_reviewed": "Última Revisión"
+    "last_reviewed": "Última Revisión",
+    "mark_all_read": "Marcar todo como leído"
   }
 };
 

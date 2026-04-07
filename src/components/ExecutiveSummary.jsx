@@ -4,10 +4,10 @@ import { AnalysisApiService } from "../services/analysisApiService";
 import "../styles/executiveSummary.css";
 import { useTranslation } from "../hooks/useTranslation";
 
-const ExecutiveSummary = ({ businessId, onStartOnboarding }) => {
+const ExecutiveSummary = ({ businessId, onStartOnboarding, refreshTrigger }) => {
   const { t } = useTranslation();
   const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [expandedSections, setExpandedSections] = useState({
     ahaInsights: false,
     whereToCompete: false,
@@ -30,9 +30,13 @@ const ExecutiveSummary = ({ businessId, onStartOnboarding }) => {
   const analysisService = new AnalysisApiService(ML_API_BASE_URL, API_BASE_URL, getAuthToken);
 
   const fetchSummary = useCallback(async () => {
-    if (!businessId) return;
+    setLoading(true);
+    setData(null); // Clear old data to show loader during refresh
+    if (!businessId) {
+      setLoading(false);
+      return;
+    }
     try {
-      setLoading(true);
       // Fetch both Executive Summary and PMF Insights (AHA)
       const [summaryResult, ahaResult] = await Promise.all([
         analysisService.getPMFExecutiveSummary(businessId),
@@ -53,11 +57,11 @@ const ExecutiveSummary = ({ businessId, onStartOnboarding }) => {
     } finally {
       setLoading(false);
     }
-  }, [businessId]);
+  }, [businessId, refreshTrigger]);
 
   useEffect(() => {
     fetchSummary();
-  }, [fetchSummary]);
+  }, [fetchSummary, refreshTrigger]);
 
   const toggleSection = (section) => {
     setExpandedSections((prev) => ({
@@ -91,7 +95,18 @@ const ExecutiveSummary = ({ businessId, onStartOnboarding }) => {
     );
   }
 
-  if (!data || Object.keys(data).length <= 1) { // _baseAnalysis always exists if call succeeds
+  // Robust check for empty content
+  const hasActualContent = data && (
+    (data.top_priorities && Array.isArray(data.top_priorities) && data.top_priorities.length > 0) || 
+    (data.topPriorities && Array.isArray(data.topPriorities) && data.topPriorities.length > 0) ||
+    (data["Top Priorities"] && Array.isArray(data["Top Priorities"]) && data["Top Priorities"].length > 0) ||
+    data.how_to_compete || 
+    data.howToCompete ||
+    (data.new_adjacencies_to_explore && Array.isArray(data.new_adjacencies_to_explore) && data.new_adjacencies_to_explore.length > 0) ||
+    (data.newAdjacencies && Array.isArray(data.newAdjacencies) && data.newAdjacencies.length > 0)
+  );
+
+  if (!data || !hasActualContent) {
     return (
       <div className="bg-light py-5 text-center rounded-4 m-3 shadow-sm border">
         <div className="container" style={{ maxWidth: '600px' }}>

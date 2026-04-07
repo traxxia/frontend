@@ -1080,10 +1080,13 @@ const UserManagement = ({ onToast }) => {
               </Form.Group>
             )}
             <Form.Group className="mb-3">
-              <Form.Label>{t("Collaborators")}</Form.Label>
+              <Form.Label>{t("Participants")}</Form.Label>
               <div className="collaborator-checkbox-list" style={{ maxHeight: "350px", overflowY: "auto", border: "1px solid #dee2e6", borderRadius: "4px", padding: "17px" }}>
                 {(() => {
                   const filteredCollaborators = collaborators.filter(c => {
+                    // Filter out viewers
+                    if (c.role_name?.toLowerCase() === 'viewer') return false;
+
                     if (accessType === "reRanking") {
                       const biz = launchedBusinesses.find(b => b._id === accessBusinessId);
                       const existing = biz?.allowed_ranking_collaborators || [];
@@ -1102,7 +1105,7 @@ const UserManagement = ({ onToast }) => {
                       <Form.Check key={c._id} label={c.name} checked={selectedCollaboratorIds.includes(c._id)} onChange={() => handleCollaboratorToggle(c._id)} />
                     ))
                   ) : (
-                    <div className="text-muted text-center py-3">{t("No_Collaborators_Found")}</div>
+                    <div className="text-muted text-center py-3">{t("No_Participants_Found")}</div>
                   );
                 })()}
               </div>
@@ -1115,7 +1118,7 @@ const UserManagement = ({ onToast }) => {
 
       <Modal show={showAccessConfirmation} onHide={() => setShowAccessConfirmation(false)} centered>
         <Modal.Header closeButton><Modal.Title>{t("Confirm_Access_Grant")}</Modal.Title></Modal.Header>
-        <Modal.Body><p>{t("Business_Label")} {getSelectedBusinessName()}</p>{accessType === "projectEdit" && <p>{t("Project_Label")} {getSelectedProjectName()}</p>}<p>{t("Access_Label")} {accessType === "reRanking" ? t("reRanking") : t("projectEdit")}</p><p>{t("Collaborators_Label")} {getSelectedCollaboratorNames().join(", ")}</p></Modal.Body>
+        <Modal.Body><p>{t("Business_Label")} {getSelectedBusinessName()}</p>{accessType === "projectEdit" && <p>{t("Project_Label")} {getSelectedProjectName()}</p>}<p>{t("Access_Label")} {accessType === "reRanking" ? t("reRanking") : t("projectEdit")}</p><p>{t("Participants_Label")} {getSelectedCollaboratorNames().join(", ")}</p></Modal.Body>
         <Modal.Footer><Button variant="secondary" onClick={() => setShowAccessConfirmation(false)}>{t("Back")}</Button><Button variant="primary" onClick={handleGiveProjectAccess} disabled={isGrantingAccess}>{isGrantingAccess ? t("Granting") : t("Yes_Grant_Access")}</Button></Modal.Footer>
       </Modal>
 

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Search, Users, Building2, Activity, TrendingUp, X } from "lucide-react";
+import { Search, Users, Building2, Activity, TrendingUp, X, Trash2 } from "lucide-react";
 import axios from "axios";
 import { useTranslation } from "../hooks/useTranslation";
 import AdminTable from "./AdminTable";
@@ -21,6 +21,10 @@ const BusinessOverview = ({ onToast }) => {
     // Collaborator modal state
     const [showCollabModal, setShowCollabModal] = useState(false);
     const [selectedBizForCollab, setSelectedBizForCollab] = useState(null);
+
+    // Confirmation modal state
+    const [showConfirmModal, setShowConfirmModal] = useState(false);
+    const [pendingRemoval, setPendingRemoval] = useState(null);
 
     const token = sessionStorage.getItem("token");
 
@@ -127,6 +131,50 @@ const BusinessOverview = ({ onToast }) => {
         setShowCollabModal(true);
     };
 
+    const handleRemoveParticipant = (businessId, userId, userName) => {
+        setPendingRemoval({ businessId, userId, userName });
+        setShowConfirmModal(true);
+    };
+
+    const confirmRemoveParticipant = async () => {
+        if (!pendingRemoval) return;
+        
+        const { businessId, userId } = pendingRemoval;
+
+        try {
+            await axios.delete(`${BACKEND_URL}/api/admin/businesses/${businessId}/participants/${userId}`, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            onToast(t("participant_removed_successfully") || "Participant removed successfully", "success");
+            
+            // Update local state to reflect removal
+            const updatedBusinesses = businesses.map(biz => {
+                if (biz._id === businessId) {
+                    return {
+                        ...biz,
+                        collaborators: (biz.collaborators || []).filter(c => c.id !== userId)
+                    };
+                }
+                return biz;
+            });
+            setBusinesses(updatedBusinesses);
+            
+            // Also update selectedBizForCollab if modal is open
+            if (selectedBizForCollab && selectedBizForCollab._id === businessId) {
+                setSelectedBizForCollab({
+                    ...selectedBizForCollab,
+                    collaborators: (selectedBizForCollab.collaborators || []).filter(c => c.id !== userId)
+                });
+            }
+        } catch (error) {
+            console.error("Error removing participant:", error);
+            onToast(error.response?.data?.error || t("failed_to_remove_participant") || "Failed to remove participant", "error");
+        } finally {
+            setShowConfirmModal(false);
+            setPendingRemoval(null);
+        }
+    };
+
     // Column definitions for AdminTable
     const columns = [
         {
@@ -162,9 +210,18 @@ const BusinessOverview = ({ onToast }) => {
                 return (
                     <div style={{ display: "flex", flexDirection: "column", gap: "0.3rem" }}>
                         {displayed.map((c, idx) => (
-                            <div key={idx}>
-                                <div className="admin-cell-primary" style={{ fontSize: "0.85rem" }}>{c.name}</div>
-                                <div className="admin-cell-secondary">{c.email}</div>
+                            <div key={idx} className="admin-collab-inline-item">
+                                <div className="admin-collab-info">
+                                    <div className="admin-cell-primary" style={{ fontSize: "0.85rem" }}>{c.name}</div>
+                                    <div className="admin-cell-secondary">{c.email}</div>
+                                </div>
+                                <button
+                                    className="admin-collab-remove-btn inline"
+                                    onClick={() => handleRemoveParticipant(row._id, c.id, c.name)}
+                                    title={t("remove_participant") || "Remove Participant"}
+                                >
+                                    <Trash2 size={12} />
+                                </button>
                             </div>
                         ))}
                         {hasMore && (
@@ -282,6 +339,13 @@ const BusinessOverview = ({ onToast }) => {
                                         <span className="admin-collab-name">{collab.name}</span>
                                         <span className="admin-collab-email">{collab.email}</span>
                                     </div>
+                                    <button 
+                                        className="admin-collab-remove-btn"
+                                        onClick={() => handleRemoveParticipant(selectedBizForCollab._id, collab.id, collab.name)}
+                                        title={t("remove_participant") || "Remove Participant"}
+                                    >
+                                        <Trash2 size={16} />
+                                    </button>
                                 </div>
                             ))}
                         </div>
@@ -291,6 +355,42 @@ const BusinessOverview = ({ onToast }) => {
                                 onClick={() => setShowCollabModal(false)}
                             >
                                 {t("close") || "Close"}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+            {/* ---- Confirmation Modal ---- */}
+            {showConfirmModal && (
+                <div className="admin-modal-overlay" onClick={() => setShowConfirmModal(false)}>
+                    <div className="admin-modal-box confirm-box" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '400px' }}>
+                        <div className="admin-modal-header">
+                            <h3>{t("confirm_remove_participant_title") || "Confirm Removal"}</h3>
+                            <button
+                                className="admin-modal-close"
+                                onClick={() => setShowConfirmModal(false)}
+                            >
+                                <X size={18} />
+                            </button>
+                        </div>
+                        <div className="admin-modal-body">
+                            <p style={{ margin: 0, color: '#4b5563', lineHeight: '1.5' }}>
+                                {t("confirm_remove_participant_prefix") || "Are you sure you want to remove participant"} <strong>{pendingRemoval?.userName || "this participant"}</strong>?
+                            </p>
+                        </div>
+                        <div className="admin-modal-footer" style={{ gap: '10px' }}>
+                            <button
+                                className="admin-modal-footer-btn"
+                                onClick={() => setShowConfirmModal(false)}
+                            >
+                                {t("cancel") || "Cancel"}
+                            </button>
+                            <button
+                                className="admin-primary-btn"
+                                onClick={confirmRemoveParticipant}
+                                style={{ backgroundColor: "#ef4444", border: 'none' }}
+                            >
+                                {t("remove_participant") || "Remove Participant"}
                             </button>
                         </div>
                     </div>
