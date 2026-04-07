@@ -22,7 +22,7 @@ export const staticTranslations = {
     'active': 'Active',
     'deleted': 'Deleted',
     'archived': 'Archived',
-    'confirm_remove_participant': 'Are you sure you want to remove this participant?',
+    'confirm_remove_participant_prefix': 'Are you sure you want to remove participant',
     'confirm_remove_participant_title': 'Confirm Removal',
     'participant_removed_successfully': 'Participant removed successfully',
     'failed_to_remove_participant': 'Failed to remove participant',

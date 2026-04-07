@@ -9,7 +9,7 @@ import PlanLimitModal from "./PlanLimitModal";
 import "../styles/PrioritiesProjects.css";
 import { getUserLimits } from "../utils/authUtils";
 
-const PrioritiesProjects = ({ selectedBusinessId, companyAdminIds, onSuccess, onStayOnPriorities, onToastMessage, onStartOnboarding }) => {
+const PrioritiesProjects = ({ selectedBusinessId, companyAdminIds, onSuccess, onStayOnPriorities, onToastMessage, onStartOnboarding, refreshTrigger }) => {
   const { t } = useTranslation();
   const [priorities, setPriorities] = useState([]);
   const [selected, setSelected] = useState([]);
@@ -40,8 +40,9 @@ const PrioritiesProjects = ({ selectedBusinessId, companyAdminIds, onSuccess, on
   useEffect(() => {
     const fetchData = async () => {
       if (!selectedBusinessId) return;
+      setLoading(true);
+      setPriorities([]); // Clear old data to show loader during refresh
       try {
-        setLoading(true);
         const data = await apiService.getKickstartData(selectedBusinessId);
         if (data && data.priorities) {
           setPriorities(data.priorities);
@@ -57,7 +58,7 @@ const PrioritiesProjects = ({ selectedBusinessId, companyAdminIds, onSuccess, on
     };
 
     fetchData();
-  }, [selectedBusinessId]);
+  }, [selectedBusinessId, refreshTrigger]);
 
   const toggleExpand = (idx) => {
     setExpandedId((prev) => (prev === idx ? null : idx));
@@ -206,7 +207,7 @@ const PrioritiesProjects = ({ selectedBusinessId, companyAdminIds, onSuccess, on
         const isExpanded = expandedId === idx;
         const isAlreadyKickstarted = item.isKickstarted;
         const actions = item.actions || [];
-        
+
         // Calculate granular progress
         const totalActions = actions.length;
         const kickstartedActions = actions.filter(a => a.isKickstarted).length;
@@ -248,7 +249,7 @@ const PrioritiesProjects = ({ selectedBusinessId, companyAdminIds, onSuccess, on
                     <Folder size={12} className="me-1" />
                     <span>{actions.length} {t("Tactical Actions")}</span>
                   </div>
-                  
+
                   <ChevronRight
                     size={16}
                     className={`priority-chevron ${isExpanded ? "rotate" : ""}`}
@@ -298,8 +299,8 @@ const PrioritiesProjects = ({ selectedBusinessId, companyAdminIds, onSuccess, on
       </Card>
 
       {/* SUCCESS MODAL (New) */}
-      <Modal 
-        show={showSuccessModal} 
+      <Modal
+        show={showSuccessModal}
         onHide={() => setShowSuccessModal(false)}
         centered
         className="kickstart-success-modal"
@@ -331,7 +332,9 @@ const PrioritiesProjects = ({ selectedBusinessId, companyAdminIds, onSuccess, on
       {/* NO COLLABORATORS CONFIRMATION MODAL */}
       <Modal
         show={showNoCollaboratorsModal}
-        onHide={() => setShowNoCollaboratorsModal(false)}
+        onHide={() => { if (!kickstarting) setShowNoCollaboratorsModal(false); }}
+        backdrop={kickstarting ? "static" : true}
+        keyboard={!kickstarting}
         centered
         className="kickstart-confirm-modal"
       >
@@ -344,22 +347,24 @@ const PrioritiesProjects = ({ selectedBusinessId, companyAdminIds, onSuccess, on
             {t("Are you sure you want to proceed without collaborators? You can also continue without any participants for now—this is perfectly fine, and you can always add them later.")}
           </p>
           <div className="d-grid gap-2">
-            <Button 
-              variant="success" 
-              onClick={() => handleKickstart()} 
+            <Button
+              variant="success"
+              onClick={() => handleKickstart()}
               disabled={kickstarting}
               className="d-flex align-items-center justify-content-center gap-2 py-2 fw-semibold"
             >
               {kickstarting ? <Spinner size="sm" /> : null}
               {kickstarting ? t("Kickstarting...") : t("Kickstart to Projects")}
             </Button>
-            <Button 
-              variant="outline-secondary" 
-              onClick={() => navigate('/admin?tab=user_management')} 
-              className="py-2"
-            >
-              {t("Add Collaborators First")}
-            </Button>
+            {!kickstarting && (
+              <Button
+                variant="outline-secondary"
+                onClick={() => navigate('/admin?tab=user_management')}
+                className="py-2"
+              >
+                {t("Add Collaborators First")}
+              </Button>
+            )}
           </div>
         </Modal.Body>
       </Modal>

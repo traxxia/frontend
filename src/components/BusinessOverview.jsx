@@ -131,8 +131,8 @@ const BusinessOverview = ({ onToast }) => {
         setShowCollabModal(true);
     };
 
-    const handleRemoveParticipant = (businessId, userId) => {
-        setPendingRemoval({ businessId, userId });
+    const handleRemoveParticipant = (businessId, userId, userName) => {
+        setPendingRemoval({ businessId, userId, userName });
         setShowConfirmModal(true);
     };
 
@@ -217,7 +217,7 @@ const BusinessOverview = ({ onToast }) => {
                                 </div>
                                 <button
                                     className="admin-collab-remove-btn inline"
-                                    onClick={() => handleRemoveParticipant(row._id, c.id)}
+                                    onClick={() => handleRemoveParticipant(row._id, c.id, c.name)}
                                     title={t("remove_participant") || "Remove Participant"}
                                 >
                                     <Trash2 size={12} />
@@ -341,7 +341,7 @@ const BusinessOverview = ({ onToast }) => {
                                     </div>
                                     <button 
                                         className="admin-collab-remove-btn"
-                                        onClick={() => handleRemoveParticipant(selectedBizForCollab._id, collab.id)}
+                                        onClick={() => handleRemoveParticipant(selectedBizForCollab._id, collab.id, collab.name)}
                                         title={t("remove_participant") || "Remove Participant"}
                                     >
                                         <Trash2 size={16} />
@@ -375,7 +375,7 @@ const BusinessOverview = ({ onToast }) => {
                         </div>
                         <div className="admin-modal-body">
                             <p style={{ margin: 0, color: '#4b5563', lineHeight: '1.5' }}>
-                                {t("confirm_remove_participant") || "Are you sure you want to remove this participant?"}
+                                {t("confirm_remove_participant_prefix") || "Are you sure you want to remove participant"} <strong>{pendingRemoval?.userName || "this participant"}</strong>?
                             </p>
                         </div>
                         <div className="admin-modal-footer" style={{ gap: '10px' }}>

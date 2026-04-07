@@ -1670,6 +1670,7 @@ const BusinessSetupPage = () => {
                         <ExecutiveSummary
                           businessId={selectedBusinessId}
                           onStartOnboarding={() => setShowPMFOnboarding(true)}
+                          refreshTrigger={pmfRefreshTrigger}
                         />
                       )}
                       {activeTab === "advanced" && (
@@ -1750,6 +1751,7 @@ const BusinessSetupPage = () => {
                           onStayOnPriorities={handleStayOnPriorities}
                           onToastMessage={showToastMessage}
                           onStartOnboarding={() => setShowPMFOnboarding(true)}
+                          refreshTrigger={pmfRefreshTrigger}
                         />
                       )}
                     </div>
@@ -1881,6 +1883,7 @@ const BusinessSetupPage = () => {
                     <ExecutiveSummary
                       businessId={selectedBusinessId}
                       onStartOnboarding={() => setShowPMFOnboarding(true)}
+                      refreshTrigger={pmfRefreshTrigger}
                     />
                   )}
                   {activeTab === "insights" && hasInsightAccess && (
@@ -1933,6 +1936,7 @@ const BusinessSetupPage = () => {
                       onStayOnPriorities={handleStayOnPriorities}
                       onToastMessage={showToastMessage}
                       onStartOnboarding={() => setShowPMFOnboarding(true)}
+                      refreshTrigger={pmfRefreshTrigger}
                     />
                   )}
                 </div>
@@ -1990,6 +1994,7 @@ const BusinessSetupPage = () => {
                   <ExecutiveSummary
                     businessId={selectedBusinessId}
                     onStartOnboarding={() => setShowPMFOnboarding(true)}
+                    refreshTrigger={pmfRefreshTrigger}
                   />
                 )}
                 {activeTab === "insights" && hasInsightAccess && (
@@ -2041,6 +2046,7 @@ const BusinessSetupPage = () => {
                     onStayOnPriorities={handleStayOnPriorities}
                     onToastMessage={showToastMessage}
                     onStartOnboarding={() => setShowPMFOnboarding(true)}
+                    refreshTrigger={pmfRefreshTrigger}
                   />
                 )}
               </div>
@@ -2062,6 +2068,7 @@ const BusinessSetupPage = () => {
           onToastMessage={showToastMessage}
           onSubmit={() => {
             setShowPMFOnboarding(false);
+            setActiveTab("executive");
             setPmfRefreshTrigger(prev => prev + 1);
           }}
         />
