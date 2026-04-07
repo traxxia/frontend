@@ -5,14 +5,15 @@ import {
     Users, Briefcase, Eye, FolderOpen, ChevronRight, Lock, AlertCircle, X, Trash
 } from 'lucide-react';
 import { Modal, Button, Spinner, Alert } from 'react-bootstrap';
-// Stripe imports removed for lazy loading
+import { loadStripe } from '@stripe/stripe-js';
+import { Elements, useStripe, useElements, CardNumberElement } from '@stripe/react-stripe-js';
 import PaymentForm from './PaymentForm';
 import { useTranslation } from '../hooks/useTranslation';
 import UpgradeModal from './UpgradeModal';
 import AdminTable from './AdminTable';
 import '../styles/SubscriptionTab.css';
 
-
+const stripePromise = loadStripe(process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY);
 
 
 /* ─── helpers ─── */
@@ -78,9 +79,10 @@ const FeatureRow = ({ label, active }) => (
 
 /* ─── Payment Methods Section ─── */
 /* ─── Add Card Modal Content (using Stripe hooks) ─── */
-const AddCardModalContent = ({ onHide, onAddSuccess, apiBase, token, onToast, stripeComponents, stripe, elements }) => {
+const AddCardModalContent = ({ onHide, onAddSuccess, apiBase, token, onToast }) => {
     const { t } = useTranslation();
-    const { CardNumberElement, CardExpiryElement, CardCvcElement } = stripeComponents || {};
+    const stripe = useStripe();
+    const elements = useElements();
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [cardHolderName, setCardHolderName] = useState('');
     const [error, setError] = useState(null);
@@ -144,7 +146,6 @@ const AddCardModalContent = ({ onHide, onAddSuccess, apiBase, token, onToast, st
                     isSubmitting={isSubmitting}
                     error={error}
                     hideHeader={true}
-                    stripeComponents={stripeComponents}
                 />
             </Modal.Body>
             <Modal.Footer className="border-0 pt-0 d-flex justify-content-end align-items-center">
@@ -164,41 +165,19 @@ const AddCardModalContent = ({ onHide, onAddSuccess, apiBase, token, onToast, st
     );
 };
 
-const AddCardStripeWrapper = (props) => {
-    const { stripeComponents } = props;
-    const stripe = stripeComponents.useStripe();
-    const elements = stripeComponents.useElements();
-    return <AddCardModalContent {...props} stripe={stripe} elements={elements} />;
-};
-
 const AddCardModal = ({ show, onHide, onAddSuccess, apiBase, token, onToast }) => {
-    const [stripeComponents, setStripeComponents] = useState(null);
-
-    const stripePromise = React.useMemo(async () => {
-        if (!show) return null;
-        const [stripeJs, reactStripeJs] = await Promise.all([
-            import('@stripe/stripe-js'),
-            import('@stripe/react-stripe-js')
-        ]);
-        setStripeComponents(reactStripeJs);
-        return stripeJs.loadStripe(process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY);
-    }, [show]);
-
     if (!show) return null;
     return (
         <Modal show={show} onHide={onHide} centered backdrop="static" size="lg">
-            {stripeComponents && (
-                <stripeComponents.Elements stripe={stripePromise}>
-                    <AddCardStripeWrapper
-                        onHide={onHide}
-                        onAddSuccess={onAddSuccess}
-                        apiBase={apiBase}
-                        token={token}
-                        onToast={onToast}
-                        stripeComponents={stripeComponents}
-                    />
-                </stripeComponents.Elements>
-            )}
+            <Elements stripe={stripePromise}>
+                <AddCardModalContent
+                    onHide={onHide}
+                    onAddSuccess={onAddSuccess}
+                    apiBase={apiBase}
+                    token={token}
+                    onToast={onToast}
+                />
+            </Elements>
         </Modal>
     );
 };

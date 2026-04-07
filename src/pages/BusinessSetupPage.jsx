@@ -90,9 +90,6 @@ const CARD_ID_MAP = {
 const toSlug = (name = '') =>
   name.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 
-// Module-level cache to deduplicate project requests across re-renders
-const projectRequestCache = new Map();
-
 const BusinessSetupPage = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -154,9 +151,8 @@ const BusinessSetupPage = () => {
   const [expandedCards, setExpandedCards] = useState(new Set());
   const [shouldScrollToUpload, setShouldScrollToUpload] = useState(false);
   const [selectedDropdownValue, setSelectedDropdownValue] = useState(t("Go_to_Section"));
+  const hasLoadedAnalysis = useRef(false);
   const streamingManager = useStreamingManager();
-  const isBusinessFetching = useRef(false);
-  const isPmfFetching = useRef(false);
   const [showProjectsTab, setShowProjectsTab] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [pmfRefreshTrigger, setPmfRefreshTrigger] = useState(0);
@@ -316,20 +312,14 @@ const BusinessSetupPage = () => {
       sessionStorage.setItem('activeBusinessId', selectedBusinessId);
 
       // If we don't have the full business object, fetch it
+      // Skip fetch if we are on Priorities tab and already have basic info or if tab is projects (as requested for optimization)
       if (!currentBusiness) {
-        // Skip fetch if we are on Priorities tab and already have basic info or if tab is projects (as requested for optimization)
+        // Only skip if we already have the name, otherwise we must fetch for the header
         if ((activeTab === 'priorities' || activeTab === 'projects') && selectedBusinessName && selectedBusinessName !== "") {
           console.log("Skipping business recovery fetch for tab:", activeTab);
           return;
         }
-
-        if (isBusinessFetching.current) {
-          console.log("Business fetch already in progress for:", selectedBusinessId);
-          return;
-        }
-
         try {
-          isBusinessFetching.current = true;
           console.log("Recovering business data for:", selectedBusinessId);
           const businessDataResult = await apiService.getBusiness(selectedBusinessId);
           if (businessDataResult) {
@@ -340,31 +330,24 @@ const BusinessSetupPage = () => {
           }
         } catch (error) {
           console.error("Failed to recover business context:", error);
-        } finally {
-          isBusinessFetching.current = false;
         }
       }
     };
 
     recoverBusinessContext();
-  }, [selectedBusinessId, currentBusiness]); // Minimal dependencies to prevent redundant calls on tab switch
+  }, [selectedBusinessId, currentBusiness, activeTab, selectedBusinessName]);
 
   //PMF onboarding check
   useEffect(() => {
     const checkPmf = async () => {
       if (!selectedBusinessId) return;
-      if (isPmfFetching.current) return;
-
       try {
-        isPmfFetching.current = true;
         const pmfData = await apiService.getPMFAnalysis(selectedBusinessId);
         // Onboarding is complete if we have any insights data
         const hasAha = !!pmfData && (Array.isArray(pmfData) ? pmfData.length > 0 : (pmfData.insights && (Array.isArray(pmfData.insights) ? pmfData.insights.length > 0 : (pmfData.insights.insights && pmfData.insights.insights.length > 0))));
         setIsPmfOnboardingComplete(hasAha);
       } catch (e) {
         setIsPmfOnboardingComplete(false);
-      } finally {
-        isPmfFetching.current = false;
       }
     };
     checkPmf();
@@ -505,71 +488,51 @@ const BusinessSetupPage = () => {
   }, [activeTab, showProjectsTab, selectedBusinessId, hasProjectAccess]);
 
   // Automatically show Projects tab if this business already has projects
-  // Skip this check when on the projects tab itself (handled by ProjectsSection) or if already visible
+  // Skip this check when on tabs that never show the projects button (aha / executive)
   useEffect(() => {
-    if (showProjectsTab || !selectedBusinessId || activeTab === 'projects') return;
+    if (showProjectsTab || !selectedBusinessId) return;
 
     const fetchProjectsForBusiness = async () => {
       if (!selectedBusinessId) return;
 
-      const cacheKey = `projects-${selectedBusinessId}`;
-      if (projectRequestCache.has(cacheKey)) {
-        const projects = await projectRequestCache.get(cacheKey);
+      try {
+        const token = sessionStorage.getItem('token');
+        if (!token) return;
+
+        const res = await axios.get(
+          `${API_BASE_URL}/api/projects`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`
+            },
+            params: {
+              business_id: selectedBusinessId
+            }
+          }
+        );
+
+        const projects = res.data?.projects || [];
         const hasProjects = projects.length > 0;
+        // Only show Projects tab if the plan allows it
         setShowProjectsTab(hasProjects && hasProjectAccess);
-        return;
-      }
-
-      const fetchPromise = (async () => {
         try {
-          const token = sessionStorage.getItem('token');
-          if (!token) return [];
-
-          const res = await axios.get(
-            `${API_BASE_URL}/api/projects`,
-            {
-              headers: {
-                Authorization: `Bearer ${token}`
-              },
-              params: {
-                business_id: selectedBusinessId
-              }
+          if (selectedBusinessId) {
+            const key = `showProjectsTab_${selectedBusinessId}`;
+            if (hasProjects) {
+              sessionStorage.setItem(key, 'true');
+            } else {
+              sessionStorage.removeItem(key);
             }
-          );
-
-          const projects = res.data?.projects || [];
-          const hasProjects = projects.length > 0;
-          
-          // SIDE EFFECT: Still need to update tab visibility for the initiating instance
-          setShowProjectsTab(hasProjects && hasProjectAccess);
-          
-          try {
-            if (selectedBusinessId) {
-              const key = `showProjectsTab_${selectedBusinessId}`;
-              if (hasProjects) {
-                sessionStorage.setItem(key, 'true');
-              } else {
-                sessionStorage.removeItem(key);
-              }
-            }
-          } catch { }
-          
-          return projects;
-        } catch (err) {
-          console.error('Failed to check existing projects for business:', err);
-          return [];
-        }
-      })();
-
-      projectRequestCache.set(cacheKey, fetchPromise);
-      await fetchPromise;
-      // After promise settles, we might want to keep it or clear it.
-      // Keeping it is fine as it acts as a per-session cache.
+          }
+        } catch { }
+      } catch (err) {
+        console.error('Failed to check existing projects for business:', err);
+      }
     };
 
     fetchProjectsForBusiness();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedBusinessId, API_BASE_URL]);
+  }, [selectedBusinessId, API_BASE_URL, activeTab]);
 
   //const showToastMessage = createToastMessage(setShowToast);
 

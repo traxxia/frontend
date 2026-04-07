@@ -5,9 +5,6 @@ import { TrendingUp, Zap, AlertTriangle, Circle, Diamond, Rocket, Bolt, Lightbul
 import { validateField } from "../utils/validation";
 import "../styles/NewProjectPage.css";
 
-// Module-level cache to deduplicate requests across re-renders
-const eligibleOwnersCache = new Map();
-
 
 const impactOptions = [
   { value: "High", label: "High - Game changer", icon: <Circle size={14} color="green" fill="green" /> },
@@ -348,40 +345,25 @@ const ProjectForm = ({
   const [eligibleOwners, setEligibleOwners] = useState([]);
 
   useEffect(() => {
-    // Only fetch for New or Edit mode
-    if (selectedBusinessId && mode !== "view") {
-      const cacheKey = `owners-${selectedBusinessId}`;
-
+    if (selectedBusinessId) {
       const fetchOwners = async () => {
-        if (eligibleOwnersCache.has(cacheKey)) {
-          const owners = await eligibleOwnersCache.get(cacheKey);
-          setEligibleOwners(owners || []);
-          return;
-        }
-
-        const fetchPromise = (async () => {
-          try {
-            const response = await fetch(`${process.env.REACT_APP_BACKEND_URL || "http://localhost:5000"}/api/businesses/${selectedBusinessId}/eligible-owners`, {
-              headers: {
-                "Authorization": `Bearer ${sessionStorage.getItem("token")}`
-              }
-            });
-            const data = await response.json();
-            return data.eligible_owners || [];
-          } catch (err) {
-            console.error("Failed to fetch eligible owners:", err);
-            return [];
+        try {
+          const response = await fetch(`${process.env.REACT_APP_BACKEND_URL || "http://localhost:5000"}/api/businesses/${selectedBusinessId}/eligible-owners`, {
+            headers: {
+              "Authorization": `Bearer ${sessionStorage.getItem("token")}`
+            }
+          });
+          const data = await response.json();
+          if (data.eligible_owners) {
+            setEligibleOwners(data.eligible_owners);
           }
-        })();
-
-        eligibleOwnersCache.set(cacheKey, fetchPromise);
-        const owners = await fetchPromise;
-        setEligibleOwners(owners);
+        } catch (err) {
+          console.error("Failed to fetch eligible owners:", err);
+        }
       };
-
       fetchOwners();
     }
-  }, [selectedBusinessId, mode]);
+  }, [selectedBusinessId]);
 
   useEffect(() => {
     // DEFAULT: Set business owner as default if currently empty

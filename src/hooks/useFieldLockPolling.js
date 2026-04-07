@@ -1,55 +1,27 @@
 import { useEffect, useRef, useState } from "react";
 import axios from "axios";
 
-// Global cache for lock requests shared across hook instances
-const fieldLockCache = new Map();
-
-export const useFieldLockPolling = (projectId, enabled = true) => {
+export const useFieldLockPolling = (projectId) => {
   const [locks, setLocks] = useState([]);
   const pollingRef = useRef(null);
   const token = sessionStorage.getItem("token");
 
   const fetchLocks = async () => {
     if (!projectId || !token) return;
-
-    const cacheKey = `locks-${projectId}`;
-    const timestamp = Math.floor(Date.now() / 1000); // 1-second granularity for polling deduplication
-
-    // If a request for this project was made in the last 1 second, reuse it
-    if (fieldLockCache.has(cacheKey)) {
-      const cached = fieldLockCache.get(cacheKey);
-      if (timestamp - cached.time <= 1) {
-        const data = await cached.promise;
-        setLocks(data.locks || []);
-        return;
-      }
+    try {
+      const res = await axios.get(
+        `${process.env.REACT_APP_BACKEND_URL}/api/project-field-locks/${projectId}/lock`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setLocks(res.data.locks || []);
+    } catch (err) {
+      console.error("Failed to fetch field locks", err);
+      setLocks([]);
     }
-
-    const fetchPromise = (async () => {
-      try {
-        const res = await axios.get(
-          `${process.env.REACT_APP_BACKEND_URL}/api/project-field-locks/${projectId}/lock`,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-        const data = res.data;
-        setLocks(data.locks || []);
-        return data;
-      } catch (err) {
-        console.error("Failed to fetch field locks", err);
-        setLocks([]);
-        return { locks: [] };
-      }
-    })();
-
-    fieldLockCache.set(cacheKey, { promise: fetchPromise, time: timestamp });
-    await fetchPromise;
   };
 
   useEffect(() => {
-    if (!projectId || !enabled) {
-      if (!enabled) setLocks([]);
-      return;
-    }
+    if (!projectId) return;
 
     fetchLocks();
 
@@ -58,7 +30,7 @@ export const useFieldLockPolling = (projectId, enabled = true) => {
     return () => {
       clearInterval(pollingRef.current);
     };
-  }, [projectId, enabled]);
+  }, [projectId]);
 
   return { locks, refetchLocks: fetchLocks };
 };
