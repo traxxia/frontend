@@ -243,10 +243,14 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId, onToastMessage
     const newErrors = {};
     const nameRegex = /^[a-zA-Z\s]+$/;
 
-    if (!formData.geography1.trim()) {
+    const hasGeography = formData.geography1.trim() || formData.geography2.trim() || formData.geography3.trim();
+
+    if (!hasGeography) {
       newErrors.geography1 = t('geography_required') || 'At least one geography is required';
-    } else if (!nameRegex.test(formData.geography1.trim())) {
-      newErrors.geography1 = t('invalid_input_text') || 'This field can only contain letters';
+    } else {
+      if (formData.geography1.trim() && !nameRegex.test(formData.geography1.trim())) {
+        newErrors.geography1 = t('invalid_input_text') || 'This field can only contain letters';
+      }
     }
 
     if (formData.geography2.trim() && !nameRegex.test(formData.geography2.trim())) {
