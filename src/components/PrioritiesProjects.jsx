@@ -347,9 +347,11 @@ const PrioritiesProjects = ({ selectedBusinessId, companyAdminIds, onSuccess, on
             <Button 
               variant="success" 
               onClick={() => handleKickstart()} 
+              disabled={kickstarting}
               className="d-flex align-items-center justify-content-center gap-2 py-2 fw-semibold"
             >
-              {t("Kickstart to Projects")}
+              {kickstarting ? <Spinner size="sm" /> : null}
+              {kickstarting ? t("Kickstarting...") : t("Kickstart to Projects")}
             </Button>
             <Button 
               variant="outline-secondary" 
