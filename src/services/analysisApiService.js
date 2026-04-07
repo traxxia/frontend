@@ -87,6 +87,9 @@ const EXCEL_ANALYSIS_METRIC_TYPES = {
 
 const DEEP_SEARCH_ENDPOINTS = ['find', 'pestel-analysis', 'full-swot-portfolio', 'porter-analysis'];
 
+// Global cache for kickstart requests shared across all service instances
+const kickstartRequestCache = new Map();
+
 export class AnalysisApiService {
   constructor(ML_API_BASE_URL, API_BASE_URL, getAuthToken, setApiLoading = null) {
     this.ML_API_BASE_URL = ML_API_BASE_URL;
@@ -191,19 +194,31 @@ export class AnalysisApiService {
   }
 
   async getKickstartData(businessId) {
-    try {
-      const token = this.getAuthToken();
-      const response = await fetch(`${this.API_BASE_URL}/api/pmf/kickstart/${businessId}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      if (response.status === 404) return null;
-      return await response.json();
-    } catch (error) {
-      console.error('Error fetching kickstart data:', error);
-      throw error;
+    if (!businessId) return null;
+
+    const cacheKey = `kickstart-${businessId}`;
+    if (kickstartRequestCache.has(cacheKey)) {
+      return await kickstartRequestCache.get(cacheKey);
     }
+
+    const fetchPromise = (async () => {
+      try {
+        const token = this.getAuthToken();
+        const response = await fetch(`${this.API_BASE_URL}/api/pmf/kickstart/${businessId}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        if (response.status === 404) return null;
+        return await response.json();
+      } catch (error) {
+        console.error('Error fetching kickstart data:', error);
+        throw error;
+      }
+    })();
+
+    kickstartRequestCache.set(cacheKey, fetchPromise);
+    return fetchPromise;
   }
 
   async kickstartProject(payload) {
