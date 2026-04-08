@@ -1085,6 +1085,7 @@ const ProjectsSection = ({
             </div>
 
             <ProjectsList
+              isLoading={isLoading}
               sortedProjects={sortedProjects}
               rankMap={rankMap}
               finalizeCompleted={finalizeCompleted}
