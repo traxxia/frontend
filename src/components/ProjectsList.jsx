@@ -1,10 +1,11 @@
 import React, { useMemo, useState, useEffect } from "react";
-import { Row, Col } from "react-bootstrap";
+import { Row, Col, Spinner } from "react-bootstrap";
 import ProjectCard from "./ProjectCard";
 import { useTranslation } from '../hooks/useTranslation';
 import { getUserLimits } from '../utils/authUtils';
 
 const ProjectsList = ({
+  isLoading,
   sortedProjects,
   rankMap,
   finalizeCompleted,
@@ -132,6 +133,17 @@ const ProjectsList = ({
   };
 
   const getFilteredGroups = () => {
+    if (isLoading) {
+      return (
+        <div className="d-flex justify-content-center align-items-center py-5" style={{ minHeight: "300px" }}>
+          <div className="text-center">
+            <Spinner animation="border" variant="primary" size="lg" />
+            <p className="mt-3 text-muted fw-500">{t("Loading projects...")}</p>
+          </div>
+        </div>
+      );
+    }
+
     // Show flat rank-ordered list for "All"
     if (!selectedCategory || selectedCategory === "All") {
       return renderProjectGrid(sortedProjects);

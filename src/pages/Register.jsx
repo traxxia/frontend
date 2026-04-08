@@ -10,15 +10,13 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from '../hooks/useTranslation';
 import PricingPlanCard from '../components/PricingPlanCard';
 
-import { loadStripe } from '@stripe/stripe-js';
-import { Elements, CardNumberElement, CardExpiryElement, CardCvcElement, useStripe, useElements } from '@stripe/react-stripe-js';
+// Stripe imports removed from top-level for lazy loading
 import PaymentForm from '../components/PaymentForm';
 
 
-const PaymentStep = ({ onBack, onSubmit, isSubmitting, error, selectedPlanPrice }) => {
+const PaymentStep = ({ onBack, onSubmit, isSubmitting, error, selectedPlanPrice, stripeComponents, stripe, elements }) => {
   const { t } = useTranslation();
-  const stripe = useStripe();
-  const elements = useElements();
+  const { CardNumberElement } = stripeComponents;
   const [localError, setLocalError] = useState(null);
   const [cardHolderName, setCardHolderName] = useState('');
 
@@ -86,6 +84,9 @@ const PaymentStep = ({ onBack, onSubmit, isSubmitting, error, selectedPlanPrice 
           onCardChange={() => {
             if (localError) setLocalError(null);
           }}
+          stripe={stripe}
+          elements={elements}
+          stripeComponents={stripeComponents}
         />
       </div>
 
@@ -99,6 +100,12 @@ const PaymentStep = ({ onBack, onSubmit, isSubmitting, error, selectedPlanPrice 
       </div>
     </motion.div>
   );
+};
+const StripeHookWrapper = (props) => {
+  const { stripeComponents } = props;
+  const stripe = stripeComponents.useStripe();
+  const elements = stripeComponents.useElements();
+  return <PaymentStep {...props} stripe={stripe} elements={elements} />;
 };
 
 const Register = () => {
@@ -140,10 +147,17 @@ const Register = () => {
 
   const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
 
-  // Lazy load Stripe only when needed for the payment step
-  const stripePromise = React.useMemo(() => {
+  const [stripeComponents, setStripeComponents] = useState(null);
+
+  // Lazy load Stripe and its React components only when needed for the payment step
+  const stripePromise = React.useMemo(async () => {
     if (activeTab === 3 && isNewCompany) {
-      return loadStripe(process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY);
+      const [stripeJs, reactStripeJs] = await Promise.all([
+        import('@stripe/stripe-js'),
+        import('@stripe/react-stripe-js')
+      ]);
+      setStripeComponents(reactStripeJs);
+      return stripeJs.loadStripe(process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY);
     }
     return null;
   }, [activeTab, isNewCompany]);
@@ -685,16 +699,17 @@ const Register = () => {
                   </motion.div>
                 )}
 
-                {activeTab === 3 && isNewCompany && stripePromise && (
-                  <Elements stripe={stripePromise}>
-                    <PaymentStep
+                {activeTab === 3 && isNewCompany && stripeComponents && (
+                  <stripeComponents.Elements stripe={stripePromise}>
+                    <StripeHookWrapper
                       onBack={handleBack}
                       onSubmit={handleSubmit}
                       isSubmitting={isSubmitting}
                       error={errors.payment}
                       showSaveCheckbox={false}
+                      stripeComponents={stripeComponents}
                     />
-                  </Elements>
+                  </stripeComponents.Elements>
                 )}
               </AnimatePresence>
             </motion.div>
