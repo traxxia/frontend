@@ -22,19 +22,12 @@ const TeamRankingsView = ({
   const [consensusMode, setConsensusMode] = useState("ai");
   const [expandedRows, setExpandedRows] = useState(new Set());
 
-  // Load data immediately on mount (or when businessId changes), as parent now controls visibility
+  // Load data immediately on mount (or when businessId/mode changes)
   useEffect(() => {
     if (businessId) {
       loadConsensusData();
     }
-  }, [businessId]);
-
-  // Reload if mode changes
-  useEffect(() => {
-    if (businessId) {
-      loadConsensusData();
-    }
-  }, [consensusMode]);
+  }, [businessId, consensusMode]);
 
 
   const loadConsensusData = async () => {

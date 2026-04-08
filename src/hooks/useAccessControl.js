@@ -1,6 +1,9 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import axios from "axios";
 import { getUserLimits } from '../utils/authUtils';
+
+// Global cache for access requests shared across hook instances
+const globalAccessRequests = new Map();
 
 export const useAccessControl = (selectedBusinessId) => {
   const [userHasRerankAccess, setUserHasRerankAccess] = useState(false);
@@ -119,27 +122,51 @@ export const useAccessControl = (selectedBusinessId) => {
   }, []);
 
   const checkAllAccess = useCallback(async () => {
-    try {
-      const token = sessionStorage.getItem("token");
-      const res = await axios.get(
-        `${process.env.REACT_APP_BACKEND_URL}/api/projects/check-all-access`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-          params: { business_id: selectedBusinessId },
-        }
-      );
+    if (!selectedBusinessId) return {};
 
-      setUserHasRerankAccess(res.data.has_rerank_access);
-      setUserHasProjectEditAccess(res.data.projects_edit_access || {});
+    const cacheKey = `all-access-${selectedBusinessId}`;
 
-      return res.data;
-    } catch (err) {
-      console.error("Failed to check all access:", err);
-      return {
-        has_rerank_access: false,
-        projects_edit_access: {},
-      };
+    if (globalAccessRequests.has(cacheKey)) {
+      const data = await globalAccessRequests.get(cacheKey);
+      // Still need to update local state for THIS instance
+      setUserHasRerankAccess(data.has_rerank_access);
+      setUserHasProjectEditAccess(data.projects_edit_access || {});
+      return data;
     }
+
+    const fetchPromise = (async () => {
+      try {
+        const token = sessionStorage.getItem("token");
+        const res = await axios.get(
+          `${process.env.REACT_APP_BACKEND_URL}/api/projects/check-all-access`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+            params: { business_id: selectedBusinessId },
+          }
+        );
+
+        setUserHasRerankAccess(res.data.has_rerank_access);
+        setUserHasProjectEditAccess(res.data.projects_edit_access || {});
+
+        return res.data;
+      } catch (err) {
+        console.error("Failed to check all access:", err);
+        return {
+          has_rerank_access: false,
+          projects_edit_access: {},
+        };
+      }
+    })();
+
+    globalAccessRequests.set(cacheKey, fetchPromise);
+    return fetchPromise;
+  }, [selectedBusinessId]);
+
+  // Reset fetching ref if business ID changes
+  useEffect(() => {
+    // Shared cache handles its own persistence per business ID.
+    // If we want to FORCE a refetch on business change, we would clear the entry.
+    // However, keeping it ensures that if multiple components switch to same business, they share request.
   }, [selectedBusinessId]);
 
   const canReviewProject = useCallback(

@@ -139,6 +139,17 @@ const ProjectDetails = ({
         }
     };
 
+    const isPendingReview = (() => {
+        if (!project || !project.next_review_date) return false;
+        if (project.is_stale || new Date(project.next_review_date).getTime() < new Date().setHours(0, 0, 0, 0)) return false;
+        const nextDate = new Date(project.next_review_date);
+        nextDate.setHours(0, 0, 0, 0);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const diffDays = Math.round((nextDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+        return diffDays >= 0 && diffDays <= 3;
+    })();
+
     return (
         <div className="project-details-container">
             {/* Breadcrumb */}
@@ -336,19 +347,18 @@ const ProjectDetails = ({
                             <label className="detail-label">{t("Next_Review_Date")}</label>
                             <div className="detail-value" style={{ display: 'flex', alignItems: 'center' }}>
                                 <span style={{
-                                    color: (project.is_stale || (project.next_review_date && new Date(project.next_review_date).getTime() < new Date().setHours(0, 0, 0, 0))) ? '#ef4444' : (project.next_review_date && new Date(project.next_review_date).toDateString() === new Date().toDateString() ? '#d97706' : 'inherit'),
+                                    color: (project.is_stale || (project.next_review_date && new Date(project.next_review_date).getTime() < new Date().setHours(0, 0, 0, 0))) ? '#ef4444' : (isPendingReview ? '#d97706' : 'inherit'),
                                     fontWeight: '600'
                                 }}>
                                     {project.next_review_date ? new Date(project.next_review_date).toLocaleDateString() : t("Not_Available")}
                                 </span>
-                                {(project.is_stale || (project.next_review_date && new Date(project.next_review_date).getTime() < new Date().setHours(0, 0, 0, 0))) && (
+                                {(project.is_stale || (project.next_review_date && new Date(project.next_review_date).getTime() < new Date().setHours(0, 0, 0, 0))) ? (
                                     <span className="review-badge stale">
                                         <AlertTriangle size={12} /> {t("Stale")}
                                     </span>
-                                )}
-                                {!project.is_stale && !(project.next_review_date && new Date(project.next_review_date).getTime() < new Date().setHours(0, 0, 0, 0)) && project.next_review_date && new Date(project.next_review_date).toDateString() === new Date().toDateString() && (
+                                ) : isPendingReview && (
                                     <span className="review-badge due">
-                                        <Clock size={12} /> {t("Review_Due")}
+                                        <Clock size={12} /> {t("Pending_Review") || "Pending Review"}
                                     </span>
                                 )}
                             </div>

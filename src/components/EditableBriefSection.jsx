@@ -795,7 +795,7 @@ const EditableBriefSection = ({
 
   const showToastMessage = (message, type = 'success') => {
     setShowToast({ show: true, message, type });
-    setTimeout(() => setShowToast({ show: false, message: '', type: 'success' }), 4000);
+    setTimeout(() => setShowToast({ show: false, message: '', type: 'success' }), 5000);
   };
 
   const updateConversationAnswer = async (field, newAnswer) => {

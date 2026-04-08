@@ -70,7 +70,7 @@ const SuperAdminPanel = () => {
     setShowToast({ show: true, message, type });
     setTimeout(() => {
       setShowToast({ show: false, message: "", type: "success" });
-    }, 4000);
+    }, 5000);
   };
 
   const handleBack = () => {
