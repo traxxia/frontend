@@ -1318,25 +1318,6 @@
 @media (max-width: 768px) {
 }
 
-
-
-
-:root {
-  --font-base: 'Inter', sans-serif;
-  --color-bg: #ffffff;
-  --color-text: #111827;
-  --color-muted: #6b7280;
-  --color-border: #e5e7eb;
-  --color-hover: #f9fafb;
-  --color-primary: #4f46e5;
-  --color-primary-dark: #4338ca;
-  --color-success: #10b981;
-  --color-warning: #f59e0b;
-  --color-danger: #ef4444;
-  --color-shadow: rgba(0, 0, 0, 0.08);
-}
-
-
 /* Header Section */
 .user-history-header {
   display: flex;

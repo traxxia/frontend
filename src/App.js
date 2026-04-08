@@ -10,6 +10,7 @@ import 'styles/App.css';
 /* Layout Component Styles */
 import 'styles/menubar.css';
 import 'styles/dashboard.css';
+import 'styles/variables.css';
 
 /* Page & Component Styles (Bulk Import) */
 import 'styles/AdminTableStyles.css';
