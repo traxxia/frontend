@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { useLocation } from "react-router-dom";
 import { useTranslation } from "../hooks/useTranslation";
 import { Row, Col, Button, Form, Dropdown, Alert, Container } from "react-bootstrap";
 import axios from "axios";
@@ -59,10 +60,24 @@ const ProjectsSection = ({
     }
   }, [activeView]);
 
-  const [viewMode, setViewMode] = useState("projects"); // "projects" or "ranking"
+  const location = useLocation();
+  const [viewMode, setViewMode] = useState(location.state?.viewMode || "projects"); // "projects" or "ranking"
   const [currentProject, setCurrentProject] = useState(null);
-  const [showRankScreen, setShowRankScreen] = useState(false);
-  const [showTeamRankings, setShowTeamRankings] = useState(false); // New state for Team Rankings Panel
+  
+  // Set initial state based on viewMode
+  const initialIsViewer = sessionStorage.getItem("userRole") === "viewer";
+  const [showRankScreen, setShowRankScreen] = useState(location.state?.viewMode === "ranking" && !initialIsViewer);
+  const [showTeamRankings, setShowTeamRankings] = useState(location.state?.viewMode === "ranking" && initialIsViewer);
+
+  // Sync viewMode from location if it changes
+  useEffect(() => {
+    if (location.state?.viewMode === 'ranking') {
+      setViewMode('ranking');
+      const isViewerRole = userRole === 'viewer';
+      setShowRankScreen(!isViewerRole);
+      setShowTeamRankings(isViewerRole);
+    }
+  }, [location.state?.viewMode, userRole]);
   const [activeAccordionKey, setActiveAccordionKey] = useState(null);
   const [showStateChangeModal, setShowStateChangeModal] = useState(false);
   const [pendingSavePayload, setPendingSavePayload] = useState(null);

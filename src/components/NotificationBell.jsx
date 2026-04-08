@@ -51,6 +51,9 @@ const NotificationBell = () => {
       const isStaleProject = notif.type === 'stale_bet' || notif.type === 'stale_project' || notif.type === 'review_reminder' || 
                              (notif.title && (notif.title.toLowerCase().includes('stale') || notif.title.toLowerCase().includes('atrasada') || notif.title.toLowerCase().includes('reminder')));
 
+      const isRankingNotif = notif.type === 'ranking_status_change' || notif.type === 'project_ranking' || notif.type === 'collaborator_ranked_projects' || notif.type === 'time_to_rank_projects' ||
+                             (notif.title && (notif.title.toLowerCase().includes('rank')));
+
       console.log("Is stale project?", isStaleProject);
 
       // Extract explicit business ID if available to set the correct business context
@@ -114,6 +117,11 @@ const NotificationBell = () => {
            navPath = '/businesspage';
         }
         navOptions = { state: { initialTab: 'projects' } };
+      } else if (isRankingNotif) {
+        if (!navPath.includes('/businesspage')) {
+           navPath = '/businesspage';
+        }
+        navOptions = { state: { initialTab: 'projects', viewMode: 'ranking' } };
       }
 
       // If action link explicitly requests a tab via query params, use it
