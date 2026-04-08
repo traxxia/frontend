@@ -1,11 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import './styles/index.css';
 import App from './App';
 import reportWebVitals from './utils/reportWebVitals';
-import './styles/variables.css';
-import './styles/menubar.css';
-import './styles/dashboard.css';
 import { ThemeProvider } from './components/ThemeComponent';
 
 // Create the root once

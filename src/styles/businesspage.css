@@ -462,7 +462,6 @@ body {
 
 @keyframes dropdownFade {
   from { opacity: 0; transform: translateY(-10px); }
-  to { opacity: 1; transform: translateY(0); }
 }
 
 .dropdown-main-header {
@@ -2058,9 +2057,6 @@ body {
 
 /* ========== SMALL MOBILE SCREENS ========== */
 @media (max-width: 480px) {
-  .main-header {
-    padding: 10px 16px;
-  }
 
   .sub-header {
     padding: 10px 16px;
@@ -2081,25 +2077,6 @@ body {
   .logo-circle {
     width: 48px;
     height: 48px;
-  }
-
-  .message-bubble {
-    max-width: 85%;
-    padding: 10px 12px;
-  }
-
-  .message-bubble p {
-    font-size: 13px;
-  }
-
-  .chat-input {
-    padding: 10px 14px;
-    font-size: 13px;
-  }
-
-  .send-btn {
-    width: 32px;
-    height: 32px;
   }
 }
 
@@ -2124,17 +2101,6 @@ body {
 }
 
 @keyframes spin {
-  0% {
-    transform: rotate(0deg);
-  }
-
-  100% {
-    transform: rotate(360deg);
-  }
-}
-
-.spinner {
-  animation: spin 1s linear infinite;
 }
 
 /* Enhanced Coming Soon Section Styles */
@@ -2438,28 +2404,6 @@ body {
 
 .analysis-section {
   margin-top: 0px;
-}
-
-.analysis-table {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  margin-bottom: 1rem;
-}
-
-.analysis-row {
-  display: flex;
-  gap: 1rem;
-  flex-wrap: wrap;
-}
-
-.analysis-cell {
-  flex: 1;
-  padding: 1rem;
-  border-radius: 8px;
-  font-size: 0.95rem;
-  border: 1px solid #e5e7eb;
-  min-width: 200px;
 }
 
 
@@ -3598,12 +3542,6 @@ body {
     pointer-events: none; /* Prevent any interaction */
     user-select: none; /* Prevent text selection */
     filter: blur(1px); /* Add a very light blur directly to content */
-}
-
-.is-archived .desktop-tabs {
-  z-index: 1100 !important;
-  position: sticky !important;
-  background: white !important;
 }
 
 .archived-overlay {

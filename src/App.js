@@ -1,8 +1,61 @@
 import React, { useEffect, useState } from 'react';
 import { BrowserRouter as Router, Route, Routes, useLocation } from 'react-router-dom';
-import 'bootstrap/dist/css/bootstrap.min.css';
-import { initializeTranslations } from './utils/translations';
 
+/* Global Styles Foundation */
+import 'styles/variables.css';
+import 'bootstrap/dist/css/bootstrap.min.css';
+import 'styles/index.css';
+import 'styles/App.css';
+
+/* Layout Component Styles */
+import 'styles/menubar.css';
+import 'styles/dashboard.css';
+
+/* Page & Component Styles (Bulk Import) */
+import 'styles/AdminTableStyles.css';
+import 'styles/Ai.css';
+import 'styles/AnalysisEmptyState.css';
+import 'styles/Analytics.css';
+import 'styles/ChatComponent.css';
+import 'styles/CompanyManagement.css';
+import 'styles/ConsensusButtonPopover.css';
+import 'styles/ErrorModal.css';
+import 'styles/EssentialPhase.css';
+import 'styles/KickstartProjectsCard.css';
+import 'styles/LanguageTranslator.css';
+import 'styles/Login.css';
+import 'styles/NewProjectPage.css';
+import 'styles/PMFInsights.css';
+import 'styles/PlanLimitModal.css';
+import 'styles/PlanManagement.css';
+import 'styles/PrioritiesProjects.css';
+import 'styles/ProjectDetails.css';
+import 'styles/ProjectReviewModal.css';
+import 'styles/ProjectsSection.css';
+import 'styles/RankProjectsPanel.css';
+import 'styles/Register.css';
+import 'styles/StrategicAnalysis.css';
+import 'styles/SubscriptionTab.css';
+import 'styles/UpgradeModal.css';
+import 'styles/UserHistory.css';
+import 'styles/academy.css';
+import 'styles/accessmanagement.css';
+import 'styles/analysis-components.css';
+import 'styles/audittrail.css';
+import 'styles/business-detail.css';
+import 'styles/business.css';
+import 'styles/businesspage.css';
+import 'styles/executiveSummary.css';
+import 'styles/goodPhase.css';
+import 'styles/phaseunlocktoast.css';
+import 'styles/pmf-onboarding.css';
+import 'styles/question-management.css';
+import 'styles/streaming.css';
+import 'styles/superadmin.css';
+import 'styles/usermanagement.css';
+
+/* Core Logic */
+import { initializeTranslations } from './utils/translations';
 import Login from './pages/Login';
 import ProtectedRoute from './components/ProtectedRoute';
 import Aiassistant from './components/Aiassistant';
