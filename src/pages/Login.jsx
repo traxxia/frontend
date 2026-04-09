@@ -13,6 +13,7 @@ import { useTranslation } from "../hooks/useTranslation";
 import { faSun, faMoon } from "@fortawesome/free-solid-svg-icons";
 import { ThemeContext } from "../components/ThemeComponent";
 import ErrorModal from "../components/ErrorModal";
+import { useAuthStore } from "../store/authStore";
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -51,25 +52,9 @@ const Login = () => {
         password,
       });
 
-      sessionStorage.setItem("token", res.data.token);
-      sessionStorage.setItem("userId", res.data.user.id);
-      sessionStorage.setItem("userName", res.data.user.name);
-      sessionStorage.setItem("userEmail", res.data.user.email);
-      sessionStorage.setItem("userRole", res.data.user.role);
-      sessionStorage.setItem("userPlan", res.data.user.plan_name || "");
-      sessionStorage.setItem("userCompany", res.data.user.company?.name || "");
-      if (res.data.user.company) {
-        sessionStorage.setItem("companyId", res.data.user.company.id || "");
-        sessionStorage.setItem("companyName", res.data.user.company.name || "");
-        sessionStorage.setItem("companyLogo", res.data.user.company.logo || "");
-        sessionStorage.setItem("companyIndustry", res.data.user.company.industry || "");
-      }
-      // Store feature-access limits from the login response directly
-      sessionStorage.setItem("userLimits", JSON.stringify(res.data.user.limits || {}));
-      sessionStorage.setItem(
-        "isAdmin",
-        ["super_admin", "company_admin"].includes(res.data.user.role) ? "true" : "false"
-      );
+      // Use Zustand auth store instead of sessionStorage
+      const setAuth = useAuthStore.getState().setAuth;
+      setAuth(res.data);
 
       const currentLang = window.getCurrentLanguage
         ? window.getCurrentLanguage()
@@ -113,7 +98,7 @@ const Login = () => {
       </div>
 
       <div className="login-right-section">
-        <div className="theme-icon-toggle" >
+        <div className="theme-icon-toggle">
           <button onClick={toggleTheme} className="theme-toggle-button">
             <FontAwesomeIcon
               icon={theme === "dark" ? faSun : faMoon}
@@ -133,13 +118,16 @@ const Login = () => {
                   value={email}
                   onChange={(e) => {
                     setEmail(e.target.value);
-                    if (errors.email) setErrors((prev) => ({ ...prev, email: "" }));
+                    if (errors.email)
+                      setErrors((prev) => ({ ...prev, email: "" }));
                   }}
                   placeholder={t("email_address")}
                   disabled={isLoading}
                 />
               </div>
-              {errors.email && <span className="error-message">{errors.email}</span>}
+              {errors.email && (
+                <span className="error-message">{errors.email}</span>
+              )}
             </div>
 
             <div className="form-group">
@@ -150,7 +138,8 @@ const Login = () => {
                   value={password}
                   onChange={(e) => {
                     setPassword(e.target.value);
-                    if (errors.password) setErrors((prev) => ({ ...prev, password: "" }));
+                    if (errors.password)
+                      setErrors((prev) => ({ ...prev, password: "" }));
                   }}
                   placeholder={t("password")}
                   disabled={isLoading}
@@ -170,7 +159,9 @@ const Login = () => {
                   />
                 </button>
               </div>
-              {errors.password && <span className="error-message">{errors.password}</span>}
+              {errors.password && (
+                <span className="error-message">{errors.password}</span>
+              )}
             </div>
 
             <button
