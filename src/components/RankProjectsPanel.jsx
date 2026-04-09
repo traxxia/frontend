@@ -79,6 +79,7 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankS
   const [movedProjectName, setMovedProjectName] = useState("");
   const [step, setStep] = useState(1); // 1: Selection, 2: Ranking
   const [selectedDraftIds, setSelectedDraftIds] = useState([]);
+  const [initialSelectedDraftIds, setInitialSelectedDraftIds] = useState([]);
   const [isGeneratingAI, setIsGeneratingAI] = useState(false);
   const [rationaleErrors, setRationaleErrors] = useState({});
   const [initialAllRanked, setInitialAllRanked] = useState(false);
@@ -175,6 +176,9 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankS
       // Initialize selectedDraftIds if not already set
       if (selectedDraftIds.length === 0 && rankedDraftIds.length > 0) {
         setSelectedDraftIds(rankedDraftIds);
+        setInitialSelectedDraftIds(rankedDraftIds);
+      } else if (initialSelectedDraftIds.length === 0 && rankedDraftIds.length > 0) {
+        setInitialSelectedDraftIds(rankedDraftIds);
       }
 
       // Jump to Step 2 for Admin ONLY if all projects are ranked
@@ -269,6 +273,13 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankS
     return projectList.some((project, index) => {
       return initialOrder[index] !== project._id;
     });
+  };
+
+  const hasSelectionChanged = () => {
+    if (selectedDraftIds.length !== initialSelectedDraftIds.length) return true;
+    const sortedInitial = [...initialSelectedDraftIds].sort();
+    const sortedCurrent = [...selectedDraftIds].sort();
+    return JSON.stringify(sortedInitial) !== JSON.stringify(sortedCurrent);
   };
 
   const validateRankings = () => {
@@ -622,7 +633,7 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankS
                       key={item._id}
                       draggableId={item._id}
                       index={index}
-                      isDragDisabled={isArchived || (isAdmin && initialAllRanked) || (!isAdmin && (!userHasRerankAccess || hasEverSaved || userHasLockedRanking))}
+                      isDragDisabled={isArchived || (isAdmin && initialAllRanked) || (!isAdmin && !userHasRerankAccess && (hasEverSaved || userHasLockedRanking))}
                     >
                       {(provided, snapshot) => (
                         <Card
@@ -755,7 +766,7 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankS
               variant="primary"
               className="responsive-btn w-100-mobile"
               onClick={handleNextToRanking}
-              disabled={isGeneratingAI || isArchived}
+              disabled={isGeneratingAI || isArchived || !hasSelectionChanged()}
             >
               {isGeneratingAI ? t("Fetching AI Rankings...") : t("Next: Rank Projects")}
             </Button>
@@ -769,7 +780,7 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankS
               ← {t("Back to Selection")}
             </Button>
           )}
-          {step === 2 && ((isAdmin && !initialAllRanked) || (!isAdmin && userHasRerankAccess && !hasEverSaved && !userHasLockedRanking)) && projectList.length > 0 && (
+          {step === 2 && ((isAdmin && !initialAllRanked) || (!isAdmin && userHasRerankAccess && !hasEverSaved)) && projectList.length > 0 && (
             <Button
               className="btn-save-rank responsive-btn w-100-mobile"
               onClick={handleSaveRankings}

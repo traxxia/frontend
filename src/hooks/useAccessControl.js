@@ -5,6 +5,10 @@ import { getUserLimits } from '../utils/authUtils';
 // Global cache for access requests shared across hook instances
 const globalAccessRequests = new Map();
 
+export const clearAccessCache = () => {
+    globalAccessRequests.clear();
+};
+
 export const useAccessControl = (selectedBusinessId) => {
   const [userHasRerankAccess, setUserHasRerankAccess] = useState(false);
   const [userHasProjectEditAccess, setUserHasProjectEditAccess] = useState({});

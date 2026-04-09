@@ -7,7 +7,7 @@ import { lockField, heartbeat, unlockFields } from "@/hooks/fieldlockapi";
 import { useFieldLockPolling } from "@/hooks/useFieldLockPolling";
 import { useProjectOperations } from "../hooks/useProjectOperations";
 import { useRankingOperations } from "../hooks/useRankingOperations";
-import { useAccessControl } from "../hooks/useAccessControl";
+import { useAccessControl, clearAccessCache } from "../hooks/useAccessControl";
 import { useProjectForm } from "../hooks/useProjectForm";
 import { callMLRankingAPI, saveAIRankings } from "../services/aiRankingService";
 import { AI_PAGE_CONTEXTS } from "../utils/aiContexts";
@@ -488,6 +488,7 @@ const ProjectsSection = ({
   }, [checkAllAccess, fetchTeamRankings, myUserId]);
 
   const refreshTeamRankings = useCallback(async () => {
+    clearAccessCache(); // Force-clear stale permission cache
     await loadProjects(); // Use the consolidated loader
   }, [loadProjects]);
 
@@ -993,14 +994,8 @@ const ProjectsSection = ({
                     businessId={selectedBusinessId}
                     onLockRankings={handleLockProjectRanking}
                     onRankSaved={() => {
-                      refreshTeamRankings();
-                      if (lockSummary.total_users === 0) {
-                        setViewMode("projects");
-                        setShowRankScreen(false);
-                        setShowTeamRankings(false);
-                      } else {
-                        onToggleTeamRankings();
-                      }
+                      refreshTeamRankings(); // Clears cache and reloads
+                      onToggleTeamRankings(); // Automatically switch to Team Rankings view
                     }}
                     isAdmin={isSuperAdmin}
                     isRankingLocked={isRankingLocked}
