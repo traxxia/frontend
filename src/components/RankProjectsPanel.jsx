@@ -615,7 +615,7 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankS
                       key={item._id}
                       draggableId={item._id}
                       index={index}
-                      isDragDisabled={isArchived || (!isAdmin && !userHasRerankAccess)}
+                      isDragDisabled={isArchived || (isAdmin && initialAllRanked) || (!isAdmin && !userHasRerankAccess)}
                     >
                       {(provided, snapshot) => (
                         <Card
@@ -646,7 +646,7 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankS
 
                               <div
                                 className="rank-move-buttons responsive-move-buttons"
-                                style={{ cursor: (!isAdmin && !userHasRerankAccess) ? "not-allowed" : "grab" }}
+                                style={{ cursor: isArchived || (isAdmin && initialAllRanked) || (!isAdmin && !userHasRerankAccess) ? "not-allowed" : "grab" }}
                               >
                                 <ChevronUp size={18} />
                                 <ChevronDown size={18} />
@@ -762,7 +762,7 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankS
               ← {t("Back to Selection")}
             </Button>
           )}
-          {step === 2 && (isAdmin || userHasRerankAccess) && projectList.length > 0 && (
+          {step === 2 && ((isAdmin && !initialAllRanked) || (!isAdmin && userHasRerankAccess)) && projectList.length > 0 && (
             <Button
               className="btn-save-rank responsive-btn w-100-mobile"
               onClick={handleSaveRankings}
