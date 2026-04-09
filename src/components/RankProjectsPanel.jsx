@@ -63,7 +63,7 @@ function RationaleToggle({ eventKey, children }) {
   );
 }
 
-const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankSaved, isAdmin, isRankingLocked, businessStatus, userHasRerankAccess, onShowToast, isArchived }) => {
+const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankSaved, isAdmin, isRankingLocked, businessStatus, userHasRerankAccess, onShowToast, isArchived, userHasLockedRanking = false }) => {
   const { t } = useTranslation();
   const [projectList, setProjectList] = useState([]);
   const [initialOrder, setInitialOrder] = useState([]);
@@ -82,6 +82,13 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankS
   const [isGeneratingAI, setIsGeneratingAI] = useState(false);
   const [rationaleErrors, setRationaleErrors] = useState({});
   const [initialAllRanked, setInitialAllRanked] = useState(false);
+
+  useEffect(() => {
+    if (!userHasLockedRanking) {
+      setHasEverSaved(false);
+      setIsSaved(false);
+    }
+  }, [userHasLockedRanking]);
 
   useEffect(() => {
     if (!projects || projects.length === 0) return;
@@ -615,7 +622,7 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankS
                       key={item._id}
                       draggableId={item._id}
                       index={index}
-                      isDragDisabled={isArchived || (isAdmin && initialAllRanked) || (!isAdmin && !userHasRerankAccess)}
+                      isDragDisabled={isArchived || (isAdmin && initialAllRanked) || (!isAdmin && (!userHasRerankAccess || hasEverSaved || userHasLockedRanking))}
                     >
                       {(provided, snapshot) => (
                         <Card
@@ -646,7 +653,7 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankS
 
                               <div
                                 className="rank-move-buttons responsive-move-buttons"
-                                style={{ cursor: isArchived || (isAdmin && initialAllRanked) || (!isAdmin && !userHasRerankAccess) ? "not-allowed" : "grab" }}
+                                style={{ cursor: isArchived || (isAdmin && initialAllRanked) || (!isAdmin && (!userHasRerankAccess || hasEverSaved || userHasLockedRanking)) ? "not-allowed" : "grab" }}
                               >
                                 <ChevronUp size={18} />
                                 <ChevronDown size={18} />
@@ -762,11 +769,11 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankS
               ← {t("Back to Selection")}
             </Button>
           )}
-          {step === 2 && ((isAdmin && !initialAllRanked) || (!isAdmin && userHasRerankAccess)) && projectList.length > 0 && (
+          {step === 2 && ((isAdmin && !initialAllRanked) || (!isAdmin && userHasRerankAccess && !hasEverSaved && !userHasLockedRanking)) && projectList.length > 0 && (
             <Button
               className="btn-save-rank responsive-btn w-100-mobile"
               onClick={handleSaveRankings}
-              disabled={isSaving || (isSaved && !hasRankingsChanged()) || isArchived}
+              disabled={isSaving || isArchived}
             >
               {isSaving ? "Saving..." : t("Save_Rankings")}
             </Button>
