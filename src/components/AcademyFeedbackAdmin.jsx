@@ -5,6 +5,8 @@ import { ThumbsUp, ThumbsDown, MessageSquareMore, Eye } from 'lucide-react';
 import { formatDate } from '../utils/dateUtils';
 import { Modal, Button } from 'react-bootstrap';
 
+import { useAuthStore } from '../store/authStore';
+
 const AcademyFeedbackAdmin = ({ onToast }) => {
     const { t } = useTranslation();
     const [feedbackData, setFeedbackData] = useState([]);
@@ -28,7 +30,7 @@ const AcademyFeedbackAdmin = ({ onToast }) => {
     const itemsPerPage = 10;
 
     const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
-    const getAuthToken = () => sessionStorage.getItem('token');
+    const getAuthToken = () => useAuthStore.getState().token;
 
     useEffect(() => {
         loadFeedback();

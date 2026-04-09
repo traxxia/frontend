@@ -4,6 +4,8 @@ import { academyStructure, findCategoryById } from '../utils/academyIndex';
 import * as LucideIcons from 'lucide-react';
 import '../styles/academy.css';
 
+import { useAuthStore } from '../store/authStore';
+
 const AcademyNavigation = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
     const { category: activeCategory, article: activeArticle } = useParams();
     const navigate = useNavigate();
@@ -13,7 +15,7 @@ const AcademyNavigation = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
     const navRef = useRef(null);
 
     useEffect(() => {
-        const storedRole = sessionStorage.getItem('userRole');
+        const storedRole = useAuthStore.getState().userRole;
         setUserRole(storedRole || '');
     }, []);
 

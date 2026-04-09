@@ -7,6 +7,8 @@ import AnalysisEmptyState from './AnalysisEmptyState';
 import { checkMissingQuestionsAndRedirect, ANALYSIS_TYPES } from '../services/missingQuestionsService';
 import AnalysisError from './AnalysisError';
 
+import { useAuthStore } from '../store/authStore';
+
 const CostEfficiencyInsight = ({
   questions = [],
   userAnswers = {},
@@ -31,7 +33,7 @@ const CostEfficiencyInsight = ({
 
   const ML_API_BASE_URL = process.env.REACT_APP_ML_BACKEND_URL || 'http://127.0.0.1:8000';
   const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
-  const getAuthToken = () => sessionStorage.getItem('token');
+  const getAuthToken = () => useAuthStore.getState().token;
 
   const handleRedirectToBrief = (missingQuestionsData = null) => {
     if (onRedirectToBrief) {

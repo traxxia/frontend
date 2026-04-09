@@ -6,6 +6,8 @@ import { useTranslation } from '../hooks/useTranslation';
 import AdminTable from './AdminTable';
 
 
+import { useAuthStore } from '../store/authStore';
+
 // ------------------ CompanyEdit Modal ------------------
 const CompanyEditModal = ({ company, onClose, onSave, onToast }) => {
   const { t } = useTranslation();
@@ -21,7 +23,7 @@ const CompanyEditModal = ({ company, onClose, onSave, onToast }) => {
   const fileInputRef = useRef(null);
 
   const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
-  const token = sessionStorage.getItem('token');
+  const token = useAuthStore(state => state.token);
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
@@ -126,10 +128,12 @@ const CompanyEditModal = ({ company, onClose, onSave, onToast }) => {
         onSave({ ...company, ...formData, logo: finalLogoUrl });
 
         // Update sessionStorage if this is the user's company
-        if (sessionStorage.getItem('userRole') === 'company_admin') {
-          sessionStorage.setItem('companyName', formData.company_name);
-          sessionStorage.setItem('companyLogo', finalLogoUrl);
-          sessionStorage.setItem('companyIndustry', formData.industry);
+        if (useAuthStore.getState().userRole === 'company_admin') {
+          useAuthStore.getState().updateUser({
+            companyName: formData.company_name,
+            companyLogo: finalLogoUrl,
+            companyIndustry: formData.industry
+          });
         }
 
         onClose();
@@ -275,10 +279,10 @@ const CompanyManagement = ({ onToast }) => {
   const pageSize = 10;
 
   const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
-  const getAuthToken = () => sessionStorage.getItem('token');
+  const getAuthToken = () => useAuthStore.getState().token;
 
   useEffect(() => {
-    const role = sessionStorage.getItem('userRole');
+    const role = useAuthStore.getState().userRole;
     setUserRole(role || '');
     loadCompanies();
   }, []);

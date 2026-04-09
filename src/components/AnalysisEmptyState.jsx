@@ -3,6 +3,8 @@ import { Upload, X, Loader, MessageSquareQuote, Sparkles } from 'lucide-react';
 import { useTranslation } from "../hooks/useTranslation";
 import '../styles/AnalysisEmptyState.css';
 
+import { useAuthStore } from '../store/authStore';
+
 const AnalysisEmptyState = ({
   // Required props
   analysisType,
@@ -39,7 +41,7 @@ const AnalysisEmptyState = ({
   const { t } = useTranslation();
   const fileInputRef = useRef(null);
 
-  const userRole = sessionStorage.getItem("userRole");
+  const userRole = useAuthStore(state => state.userRole);
   const isViewer = userRole === "viewer";
 
   const answeredCount = Object.keys(userAnswers).length;

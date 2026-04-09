@@ -8,6 +8,8 @@ import MetricCard from "./MetricCard";
 import "../styles/AdminTableStyles.css";
 import "../styles/accessmanagement.css";
 
+import { useAuthStore } from '../store/authStore';
+
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
 const AccessManagement = ({ onToast }) => {
@@ -20,7 +22,7 @@ const AccessManagement = ({ onToast }) => {
     const [revokeDetails, setRevokeDetails] = useState(null);
     const [revoking, setRevoking] = useState(false);
     const [fetchingBusinesses, setFetchingBusinesses] = useState(true);
-    const token = sessionStorage.getItem("token");
+    const token = useAuthStore(state => state.token);
 
     useEffect(() => {
         fetchBusinesses();

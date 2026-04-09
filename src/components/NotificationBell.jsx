@@ -4,6 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import { Bell, BellOff, X } from 'lucide-react';
 import { useTranslation } from '../hooks/useTranslation';
 
+import { useAuthStore } from '../store/authStore';
+
 const NotificationBell = () => {
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -17,7 +19,7 @@ const NotificationBell = () => {
 
   const fetchNotifications = async () => {
     try {
-      const token = sessionStorage.getItem('token');
+      const token = useAuthStore.getState().token;
       if (!token) return;
       const res = await fetch(`${REACT_APP_BACKEND_URL}/api/notifications`, {
         headers: { 'Authorization': `Bearer ${token}` }
@@ -37,7 +39,7 @@ const NotificationBell = () => {
     
     // 1. Mark as read in the background asynchronously, don't block navigation
     if (!notif.is_read) {
-      const token = sessionStorage.getItem('token');
+      const token = useAuthStore.getState().token;
       fetch(`${REACT_APP_BACKEND_URL}/api/notifications/${notif._id}/read`, {
         method: 'PUT',
         headers: { 'Authorization': `Bearer ${token}` }
@@ -70,7 +72,7 @@ const NotificationBell = () => {
              console.log("Extracted business name from message:", businessName);
              try {
                 // We must map this name to a business ID because the backend payload lacks it
-                const token = sessionStorage.getItem('token');
+                const token = useAuthStore.getState().token;
                 const res = await fetch(`${REACT_APP_BACKEND_URL}/api/businesses`, {
                   headers: { 'Authorization': `Bearer ${token}` }
                 });
@@ -145,7 +147,7 @@ const NotificationBell = () => {
   const handleDeleteNotification = async (e, notifId) => {
     e.stopPropagation();
     try {
-      const token = sessionStorage.getItem('token');
+      const token = useAuthStore.getState().token;
       const res = await fetch(`${REACT_APP_BACKEND_URL}/api/notifications/${notifId}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
@@ -165,7 +167,7 @@ const NotificationBell = () => {
   const handleMarkAllRead = async (e) => {
     if (e) e.stopPropagation();
     try {
-      const token = sessionStorage.getItem('token');
+      const token = useAuthStore.getState().token;
       await fetch(`${REACT_APP_BACKEND_URL}/api/notifications/read-all`, {
         method: 'PUT',
         headers: { 'Authorization': `Bearer ${token}` }

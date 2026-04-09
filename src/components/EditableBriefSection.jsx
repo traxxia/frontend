@@ -9,6 +9,8 @@ import '../styles/CompanyManagement.css';
 
 
 
+import { useAuthStore } from '../store/authStore';
+
 const EditableField = ({
   field,
   editingField,
@@ -599,7 +601,7 @@ const EditableBriefSection = ({
   }, [isFinancialRegeneratingProp, isAnalysisRegenerating, isStrategicRegenerating]);
 
   const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
-  const getAuthToken = () => sessionStorage.getItem('token');
+  const getAuthToken = () => useAuthStore.getState().token;
   const ML_API_BASE_URL = process.env.REACT_APP_ML_BACKEND_URL;
   const analysisService = useRef(new AnalysisApiService(ML_API_BASE_URL, API_BASE_URL, getAuthToken)).current;
 
@@ -611,7 +613,7 @@ const EditableBriefSection = ({
   const [userRole, setUserRole] = useState("");
 
   useEffect(() => {
-    const role = (sessionStorage.getItem("role") || sessionStorage.getItem("userRole") || "").toLowerCase();
+    const role = (useAuthStore.getState().userRole || useAuthStore.getState().userRole || "").toLowerCase();
     setUserRole(role);
   }, []);
 

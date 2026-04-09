@@ -6,6 +6,8 @@ import FinancialTemplatesPopup from './FinancialTemplatesPopup';
 import { detectTemplateType, validateAgainstTemplate, formatValidationResults } from '../utils/templateValidator';
 import { formatDate } from '../utils/dateUtils';
 
+import { useAuthStore } from '../store/authStore';
+
 const ChatComponent = ({
   selectedBusinessId,
   userAnswers = {},
@@ -44,7 +46,7 @@ const ChatComponent = ({
   const [uploadedFileInfo, setUploadedFileInfo] = useState(null);
   const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
   const ML_API_BASE_URL = process.env.REACT_APP_ML_BACKEND_URL || 'http://127.0.0.1:8000';
-  const getAuthToken = () => sessionStorage.getItem('token');
+  const getAuthToken = () => useAuthStore.getState().token;
   const [uploadedFileForAnalysis, setUploadedFileForAnalysis] = useState(null);
   const [businessUploadDecision, setBusinessUploadDecision] = useState({
     upload_decision_made: false,
@@ -54,7 +56,7 @@ const ChatComponent = ({
   const [userRole, setUserRole] = useState("");
 
   useEffect(() => {
-    const role = sessionStorage.getItem("userRole");
+    const role = useAuthStore(state => state.userRole);
     setUserRole(role);
   }, []);
 

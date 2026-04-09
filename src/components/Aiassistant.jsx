@@ -4,6 +4,8 @@ import axios from "axios";
 import "../styles/Ai.css";
 import { useTranslation } from "../hooks/useTranslation";
 
+import { useAuthStore } from '../store/authStore';
+
 const Aiassistant = ({ businessId: propBusinessId, projectId, pageContext, isDisabled }) => {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
@@ -26,7 +28,7 @@ const Aiassistant = ({ businessId: propBusinessId, projectId, pageContext, isDis
   const getBusinessId = () =>
     propBusinessId || sessionStorage.getItem("activeBusinessId");
 
-  const getToken = () => sessionStorage.getItem("token");
+  const getToken = () => useAuthStore.getState().token;
 
   // Auto-scroll to bottom on new messages
   useEffect(() => {

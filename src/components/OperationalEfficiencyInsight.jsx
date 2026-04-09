@@ -5,6 +5,8 @@ import AnalysisEmptyState from './AnalysisEmptyState';
 import AnalysisError from './AnalysisError';
 import { checkMissingQuestionsAndRedirect, ANALYSIS_TYPES } from '../services/missingQuestionsService';
 
+import { useAuthStore } from '../store/authStore';
+
 // Utility function to handle empty values
 const formatValue = (value, type = 'text', fallback = '-') => {
   if (value === null || value === undefined || value === '' || (typeof value === 'string' && value.trim() === '')) {
@@ -48,7 +50,7 @@ const OperationalEfficiencyInsight = ({
   // API URLs
   const ML_API_BASE_URL = process.env.REACT_APP_ML_BACKEND_URL || 'http://127.0.0.1:8000';
   const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
-  const getAuthToken = () => sessionStorage.getItem('token');
+  const getAuthToken = () => useAuthStore.getState().token;
 
   const handleRedirectToBrief = (missingQuestionsData = null) => {
     if (onRedirectToBrief) {

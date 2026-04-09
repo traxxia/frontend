@@ -6,6 +6,8 @@ import AnalysisEmptyState from './AnalysisEmptyState';
 import { checkMissingQuestionsAndRedirect, ANALYSIS_TYPES } from '../services/missingQuestionsService';
 import AnalysisError from './AnalysisError';
 
+import { useAuthStore } from '../store/authStore';
+
 const CustomerSegmentation = ({
   questions = [],
   userAnswers = {},
@@ -28,7 +30,7 @@ const CustomerSegmentation = ({
   const { t } = useTranslation();
 
   const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
-  const getAuthToken = () => sessionStorage.getItem('token');
+  const getAuthToken = () => useAuthStore.getState().token;
 
   const SEGMENT_COLORS = ['#4F46E5', '#06B6D4', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6'];
 

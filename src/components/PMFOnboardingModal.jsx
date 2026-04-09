@@ -18,6 +18,8 @@ import { PMF_ONBOARDING_CONFIG } from "../config/pmfOnboardingConfig";
 import { AnalysisApiService } from "../services/analysisApiService";
 import '../styles/pmf-onboarding.css';
 
+import { useAuthStore } from '../store/authStore';
+
 const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId, onToastMessage }) => {
   const navigate = useNavigate();
   const { t } = useTranslation();
@@ -28,7 +30,7 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId, onToastMessage
   // API Service setup
   const ML_API_BASE_URL = process.env.REACT_APP_ML_BACKEND_URL;
   const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
-  const getAuthToken = () => sessionStorage.getItem("token");
+  const getAuthToken = () => useAuthStore.getState().token;
   const analysisService = new AnalysisApiService(ML_API_BASE_URL, API_BASE_URL, getAuthToken);
 
   const [currentStep, setCurrentStep] = useState(1);
@@ -502,7 +504,7 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId, onToastMessage
 
       // Mark that we expect to see our own data for this business
       // This is the most robust way to detect a simultaneous overwrite
-      const currentUserId = sessionStorage.getItem("userId");
+      const currentUserId = useAuthStore.getState().userId;
       if (currentUserId && businessId) {
         console.info(`PMF Save: Setting expectation flag for business ${businessId} and user ${currentUserId}`);
         localStorage.setItem(`pmf_expecting_my_data_${businessId}`, currentUserId);

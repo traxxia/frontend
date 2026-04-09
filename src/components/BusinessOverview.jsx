@@ -6,6 +6,8 @@ import AdminTable from "./AdminTable";
 import MetricCard from "./MetricCard";
 import "../styles/AdminTableStyles.css";
 
+import { useAuthStore } from '../store/authStore';
+
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
 const BusinessOverview = ({ onToast }) => {
@@ -26,7 +28,7 @@ const BusinessOverview = ({ onToast }) => {
     const [showConfirmModal, setShowConfirmModal] = useState(false);
     const [pendingRemoval, setPendingRemoval] = useState(null);
 
-    const token = sessionStorage.getItem("token");
+    const token = useAuthStore(state => state.token);
 
     useEffect(() => {
         fetchBusinesses();

@@ -12,6 +12,8 @@ import { useTranslation } from "../hooks/useTranslation";
 import { Modal } from "react-bootstrap";
 
 
+import { useAuthStore } from '../store/authStore';
+
 const PMFInsightsTab = ({ selectedBusinessId, onStartOnboarding, refreshTrigger }) => {
   const { t } = useTranslation();
   const [data, setData] = useState(null);
@@ -19,8 +21,8 @@ const PMFInsightsTab = ({ selectedBusinessId, onStartOnboarding, refreshTrigger 
   const [showOverwriteModal, setShowOverwriteModal] = useState(false);
   const [overwrittenBy, setOverwrittenBy] = useState("");
   const userRole = (
-    sessionStorage.getItem("role") ||
-    sessionStorage.getItem("userRole") ||
+    useAuthStore.getState().userRole ||
+    useAuthStore.getState().userRole ||
     ""
   ).toLowerCase();
   const isViewer = userRole === "viewer";
@@ -28,7 +30,7 @@ const PMFInsightsTab = ({ selectedBusinessId, onStartOnboarding, refreshTrigger 
   // API Service setup
   const ML_API_BASE_URL = process.env.REACT_APP_ML_BACKEND_URL;
   const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
-  const getAuthToken = () => sessionStorage.getItem("token");
+  const getAuthToken = () => useAuthStore.getState().token;
   const analysisService = new AnalysisApiService(ML_API_BASE_URL, API_BASE_URL, getAuthToken);
 
   useEffect(() => {
@@ -53,7 +55,7 @@ const PMFInsightsTab = ({ selectedBusinessId, onStartOnboarding, refreshTrigger 
 
           // --- OVERWRITE DETECTION (AHA Page) ---
           if (result && result.user_id) {
-            const currentUserId = sessionStorage.getItem("userId");
+            const currentUserId = useAuthStore.getState().userId;
             const bId = String(businessId);
             const expectedUserId = localStorage.getItem(`pmf_expecting_my_data_${bId}`);
 

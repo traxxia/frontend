@@ -24,6 +24,8 @@ import {
 import "../styles/audittrail.css";
 import { useTranslation } from '@/hooks/useTranslation';
 
+import { useAuthStore } from '../store/authStore';
+
 const AuditTrail = ({ onToast }) => {
   const [auditEntries, setAuditEntries] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -62,7 +64,7 @@ const AuditTrail = ({ onToast }) => {
 
   // Get current user role from session/token
   useEffect(() => {
-    const token = sessionStorage.getItem('token') || sessionStorage.getItem('authToken');
+    const token = useAuthStore.getState().token || sessionStorage.getItem('authToken');
     if (token) {
       try {
         const payload = JSON.parse(atob(token.split('.')[1]));
@@ -107,7 +109,7 @@ const AuditTrail = ({ onToast }) => {
   const fetchAuditTrail = async () => {
     try {
       setLoading(true);
-      const token = sessionStorage.getItem('token') || sessionStorage.getItem('authToken');
+      const token = useAuthStore.getState().token || sessionStorage.getItem('authToken');
 
       if (!token || token === 'undefined' || token === 'null') {
         onToast('Session expired. Please login again.', 'error');
@@ -363,7 +365,7 @@ const AuditTrail = ({ onToast }) => {
     if (!analysisData) {
       try {
         setLoadingAnalysisData(prev => ({ ...prev, [entry._id]: true }));
-        const token = sessionStorage.getItem('token') || sessionStorage.getItem('authToken');
+        const token = useAuthStore.getState().token || sessionStorage.getItem('authToken');
         const response = await fetch(`${REACT_APP_BACKEND_URL}/api/admin/audit-trail/${entry._id}/analysis-data`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });

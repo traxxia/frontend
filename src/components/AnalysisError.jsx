@@ -1,6 +1,8 @@
 import React from 'react';
 import { AlertTriangle, RefreshCw } from 'lucide-react';
 
+import { useAuthStore } from '../store/authStore';
+
 const AnalysisError = ({
   error,
   onRetry,
@@ -24,7 +26,7 @@ const AnalysisError = ({
       </div>
       <h3>{title}</h3>
       <p>{error}</p>
-      {showRetryButton && onRetry && sessionStorage.getItem("userRole") !== "viewer" && (
+      {showRetryButton && onRetry && useAuthStore.getState().userRole !== "viewer" && (
         <button
           type="button"
           onClick={handleRetry}
