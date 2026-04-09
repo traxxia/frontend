@@ -48,16 +48,16 @@ const NotificationBell = () => {
     }
 
     try {
-      const isStaleProject = notif.type === 'stale_bet' || notif.type === 'stale_project' || notif.type === 'review_reminder' || 
+      const isStaleProject = notif.type === 'stale_bet' || notif.type === 'stale_project' || notif.type === 'review_reminder' || notif.type === 'review-reminder' || 
                              (notif.title && (notif.title.toLowerCase().includes('stale') || notif.title.toLowerCase().includes('atrasada') || notif.title.toLowerCase().includes('reminder')));
 
-      const isRankingNotif = notif.type === 'ranking_status_change' || notif.type === 'project_ranking' || notif.type === 'collaborator_ranked_projects' || notif.type === 'time_to_rank_projects' ||
+      const isRankingNotif = notif.type === 'admin_ranked_projects' || notif.type === 'collaborator_ranked_projects' || notif.type === 'ranking_status_change' || notif.type === 'project_ranking' || notif.type === 'time_to_rank_projects' ||
                              (notif.title && (notif.title.toLowerCase().includes('rank')));
 
       console.log("Is stale project?", isStaleProject);
 
       // Extract explicit business ID if available to set the correct business context
-      const targetBusinessId = notif.business_id || notif.metadata?.business_id || notif.project?.business_id || notif.reference_id;
+      const targetBusinessId = notif.business_id || notif.action_data?.business_id || notif.metadata?.business_id || notif.project?.business_id || notif.reference_id;
       
       if (targetBusinessId) {
          console.log("Setting active business:", targetBusinessId);
@@ -211,13 +211,14 @@ const NotificationBell = () => {
             notifications.map((notif) => (
               <Dropdown.Item
                 key={notif._id}
-                className={`d-flex flex-column align-items-start py-2 px-3 border-bottom text-wrap ${!notif.is_read ? 'bg-light' : ''}`}
+                className={`d-flex flex-column align-items-start py-2 px-3 border-bottom text-wrap ${!notif.is_read ? 'bg-white' : 'bg-light'}`}
+                style={{ transition: 'all 0.2s ease', opacity: notif.is_read ? 0.85 : 1 }}
                 onClick={() => handleNotificationClick(notif)}
               >
                 <div className="d-flex justify-content-between align-items-start w-100 mb-1">
-                  <strong style={{ fontSize: '0.85rem', paddingRight: '20px' }}>{notif.title}</strong>
+                  <strong style={{ fontSize: '0.85rem', paddingRight: '20px', fontWeight: !notif.is_read ? '700' : '500', color: !notif.is_read ? '#212529' : '#6c757d' }}>{notif.title}</strong>
                   <div className="d-flex align-items-center">
-                    {!notif.is_read && <span className="badge bg-primary rounded-circle me-2" style={{ width: '8px', height: '8px', padding: 0 }}></span>}
+                    {!notif.is_read && <span className="badge bg-primary rounded-pill me-2 px-2 py-1" style={{ fontSize: '0.65rem' }}>New</span>}
                     <div
                       className="text-muted opacity-50 pe-auto"
                       style={{ padding: '4px', margin: '-4px', cursor: 'pointer' }}
@@ -229,7 +230,7 @@ const NotificationBell = () => {
                     </div>
                   </div>
                 </div>
-                <small className="text-muted" style={{ fontSize: '0.75rem', lineHeight: '1.2', whiteSpace: 'normal', paddingRight: '15px' }}>{notif.message}</small>
+                <small className={!notif.is_read ? "text-dark" : "text-muted"} style={{ fontSize: '0.75rem', lineHeight: '1.2', whiteSpace: 'normal', paddingRight: '15px' }}>{notif.message}</small>
                 <small className="text-muted mt-1" style={{ fontSize: '0.65rem' }}>{new Date(notif.created_at).toLocaleDateString()}</small>
               </Dropdown.Item>
             ))
