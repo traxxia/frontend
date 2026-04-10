@@ -183,6 +183,255 @@ export const useProjectStore = create((set, get) => ({
     }
   },
 
+  saveRankings: async (businessId, rankings) => {
+    const token = useAuthStore.getState().token;
+    if (!token || !businessId) return;
+    set({ isLoading: true });
+    try {
+      const response = await axios.put(`${API_BASE_URL}/api/projects/rank`, {
+        business_id: businessId,
+        projects: rankings
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      set({ isLoading: false });
+      return { success: true, data: response.data };
+    } catch (err) {
+      set({ error: err.response?.data?.error || err.message, isLoading: false });
+      return { success: false, error: err.response?.data?.error || err.message };
+    }
+  },
+
+  saveAIRankings: async (businessId, aiRankings) => {
+    const token = useAuthStore.getState().token;
+    if (!token || !businessId) return;
+    set({ isLoading: true });
+    try {
+      const response = await axios.post(`${API_BASE_URL}/api/projects/ai-rankings`, {
+        business_id: businessId,
+        ai_rankings: aiRankings,
+        model_version: "v1.0"
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      set({ aiRankings: response.data.projects || [], isLoading: false });
+      return { success: true, data: response.data };
+    } catch (err) {
+      set({ error: err.response?.data?.error || err.message, isLoading: false });
+      return { success: false, error: err.response?.data?.error || err.message };
+    }
+  },
+
+  lockRanking: async (projectId) => {
+    const token = useAuthStore.getState().token;
+    if (!token || !projectId) return;
+    set({ isLoading: true });
+    try {
+      const response = await axios.post(
+        `${API_BASE_URL}/api/projects/lock-rank`,
+        null,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+          params: { project_id: projectId },
+        }
+      );
+      set({ isLoading: false });
+      return { success: true, data: response.data };
+    } catch (err) {
+      set({ error: err.response?.data?.error || err.message, isLoading: false });
+    }
+  },
+
+  reviewProject: async (projectId, data) => {
+    const token = useAuthStore.getState().token;
+    if (!token || !projectId) return;
+    set({ isLoading: true });
+    try {
+      const response = await axios.post(`${API_BASE_URL}/api/projects/${projectId}/review`, data, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      set((state) => ({
+        projects: state.projects.map(p => p._id === projectId || p.id === projectId ? response.data.project : p),
+        isLoading: false
+      }));
+      return { success: true, data: response.data };
+    } catch (err) {
+      set({ error: err.response?.data?.error || err.message, isLoading: false });
+      return { success: false, error: err.response?.data?.error || err.message };
+    }
+  },
+
+  adhocUpdateProject: async (projectId, data) => {
+    const token = useAuthStore.getState().token;
+    if (!token || !projectId) return;
+    set({ isLoading: true });
+    try {
+      const response = await axios.patch(`${API_BASE_URL}/api/projects/${projectId}/adhoc-update`, data, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      set((state) => ({
+        projects: state.projects.map(p => p._id === projectId || p.id === projectId ? response.data.project : p),
+        isLoading: false
+      }));
+      return { success: true, data: response.data };
+    } catch (err) {
+      set({ error: err.response?.data?.error || err.message, isLoading: false });
+      return { success: false, error: err.response?.data?.error || err.message };
+    }
+  },
+
+  fetchGrantedAccess: async (businessId) => {
+    const token = useAuthStore.getState().token;
+    if (!token || !businessId) return;
+    set({ isLoading: true });
+    try {
+      const response = await axios.get(`${API_BASE_URL}/api/projects/granted-access`, {
+        headers: { Authorization: `Bearer ${token}` },
+        params: { business_id: businessId },
+      });
+      set({ isLoading: false });
+      return { success: true, data: response.data };
+    } catch (err) {
+      set({ error: err.response?.data?.error || err.message, isLoading: false });
+      return { success: false, error: err.response?.data?.error || err.message };
+    }
+  },
+
+  revokeAccess: async (businessId, userId, accessType) => {
+    const token = useAuthStore.getState().token;
+    if (!token || !businessId || !userId) return;
+    set({ isLoading: true });
+    try {
+      const response = await axios.post(`${API_BASE_URL}/api/projects/revoke-access`, {
+        business_id: businessId,
+        user_id: userId,
+        access_type: accessType
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      set({ isLoading: false });
+      return { success: true, data: response.data };
+    } catch (err) {
+      set({ error: err.response?.data?.error || err.message, isLoading: false });
+      return { success: false, error: err.response?.data?.error || err.message };
+    }
+  },
+
+  setBusinessAccessMode: async (businessId, scope) => {
+    const token = useAuthStore.getState().token;
+    if (!token || !businessId) return;
+    try {
+      const response = await axios.put(`${API_BASE_URL}/api/projects/edit-access`, 
+        { scope, business_id: businessId },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      return { success: true, data: response.data };
+    } catch (err) {
+      return { success: false, error: err.response?.data?.error || err.message };
+    }
+  },
+
+  grantProjectEditAccess: async (businessId, projectId, collaboratorIds) => {
+    const token = useAuthStore.getState().token;
+    if (!token || !businessId || !projectId) return;
+    try {
+      const response = await axios.patch(`${API_BASE_URL}/api/businesses/${businessId}/project/${projectId}/allowed-collaborators`, 
+        { collaborator_ids: collaboratorIds },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      return { success: true, data: response.data };
+    } catch (err) {
+      return { success: false, error: err.response?.data?.error || err.message };
+    }
+  },
+
+  grantRankingAccess: async (businessId, collaboratorIds) => {
+    const token = useAuthStore.getState().token;
+    if (!token || !businessId) return;
+    try {
+      const response = await axios.patch(`${API_BASE_URL}/api/businesses/${businessId}/allowed-ranking-collaborators`, 
+        { collaborator_ids: collaboratorIds },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      return { success: true, data: response.data };
+    } catch (err) {
+      return { success: false, error: err.response?.data?.error || err.message };
+    }
+  },
+
+  fetchConsensusAnalysis: async (businessId) => {
+    const token = useAuthStore.getState().token;
+    if (!token || !businessId) return;
+    try {
+      const response = await axios.get(`${API_BASE_URL}/api/projects/consensus-analysis`, {
+        headers: { Authorization: `Bearer ${token}` },
+        params: { business_id: businessId },
+      });
+      return { success: true, data: response.data };
+    } catch (err) {
+      return { success: false, error: err.response?.data?.error || err.message };
+    }
+  },
+
+  fetchCollaboratorConsensus: async (businessId) => {
+    const token = useAuthStore.getState().token;
+    if (!token || !businessId) return;
+    try {
+      const response = await axios.get(`${API_BASE_URL}/api/projects/collaborator-consensus`, {
+        headers: { Authorization: `Bearer ${token}` },
+        params: { business_id: businessId },
+      });
+      return { success: true, data: response.data };
+    } catch (err) {
+      return { success: false, error: err.response?.data?.error || err.message };
+    }
+  },
+
+  clearAIRankings: async (businessId) => {
+    const token = useAuthStore.getState().token;
+    if (!token || !businessId) return;
+    try {
+      const response = await axios.delete(`${API_BASE_URL}/api/projects/ai-rankings`, {
+        headers: { Authorization: `Bearer ${token}` },
+        data: { business_id: businessId }
+      });
+      set({ aiRankings: [] });
+      return { success: true, data: response.data };
+    } catch (err) {
+      return { success: false, error: err.response?.data?.error || err.message };
+    }
+  },
+
+  callMLRankingAPI: async (projects) => {
+    const ML_API_BASE_URL = process.env.REACT_APP_ML_BACKEND_URL;
+    try {
+      const projectList = projects.map(project => ({
+        name: project.project_name,
+        id: project._id
+      }));
+
+      const response = await axios.post(`${ML_API_BASE_URL}/rerank`, { projects: projectList });
+      const processedRankings = response.data.rankings.map((item) => {
+        let projectId = item.id;
+        if (!projectId || !projects.find(p => p._id === projectId)) {
+          const matchedProject = projects.find(p => p.project_name === item.name);
+          if (matchedProject) projectId = matchedProject._id;
+        }
+
+        return {
+          project_id: projectId,
+          rank: item.rank,
+          score: parseFloat((1.0 - (item.rank - 1) / projects.length).toFixed(4)),
+          severity: item.severity,
+        };
+      }).filter(r => r.project_id);
+
+      return { success: true, rankings: processedRankings };
+    } catch (error) {
+      return { success: false, error: 'ML ranking service temporarily unavailable' };
+    }
+  },
+
   selectProject: (project) => set({ selectedProject: project }),
   clearProjects: () => set({ projects: [], selectedProject: null, teamRankings: [], aiRankings: [] }),
   projectCount: () => get().projects.length,

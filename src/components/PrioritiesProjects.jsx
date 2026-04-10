@@ -1,57 +1,45 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { Card, Button, Form, Badge, Spinner, Modal } from "react-bootstrap";
 import { ChevronRight, ArrowRight } from "react-bootstrap-icons";
 import { Folder, CheckCircle, Rocket, Info, AlertTriangle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { AnalysisApiService } from "../services/analysisApiService";
+import { useAuthStore, useAnalysisStore } from "../store";
 import { useTranslation } from "../hooks/useTranslation";
 import PlanLimitModal from "./PlanLimitModal";
 import "../styles/PrioritiesProjects.css";
-import { getUserLimits } from "../utils/authUtils";
 
-const ML_API_BASE_URL = process.env.REACT_APP_ML_BACKEND_URL;
-const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
-const getAuthToken = () => sessionStorage.getItem("token");
-// Instantiate service outside to maintain a stable reference
-const analysisService = new AnalysisApiService(ML_API_BASE_URL, API_BASE_URL, getAuthToken);
-
-const PrioritiesProjects = ({ selectedBusinessId, companyAdminIds, onSuccess, onStayOnPriorities, onToastMessage, onStartOnboarding, refreshTrigger }) => {
+const PrioritiesProjects = ({ selectedBusinessId, onSuccess, onStayOnPriorities, onToastMessage, onStartOnboarding, refreshTrigger }) => {
   const { t } = useTranslation();
-  const [priorities, setPriorities] = useState([]);
+  const navigate = useNavigate();
+  
+  const userRole = useAuthStore(state => state.userRole);
+  const userLimits = useAuthStore(state => state.userLimits);
+  const isAdmin = useAuthStore(state => state.isAdmin);
+  const isViewer = userRole?.toLowerCase() === "viewer";
+  const hasProjectsAccess = userLimits?.project === true;
+
+  const kickstartData = useAnalysisStore(state => state.kickstartData);
+  const fetchKickstartData = useAnalysisStore(state => state.fetchKickstartData);
+  const kickstartProject = useAnalysisStore(state => state.kickstartProject);
+
   const [selected, setSelected] = useState([]);
   const [expandedId, setExpandedId] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [kickstarting, setKickstarting] = useState(false);
   const [showPlanLimitModal, setShowPlanLimitModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [lastKickstartedCount, setLastKickstartedCount] = useState(0);
-  const [hasCollaborators, setHasCollaborators] = useState(true);
   const [showNoCollaboratorsModal, setShowNoCollaboratorsModal] = useState(false);
-  const navigate = useNavigate();
-  const userRole = (
-    sessionStorage.getItem("role") ||
-    sessionStorage.getItem("userRole") ||
-    ""
-  ).toLowerCase();
-  const isAdmin = userRole === "company_admin" || userRole === "super_admin";
-  const isViewer = userRole === "viewer";
-  const hasProjectsAccess = getUserLimits().project === true;
 
-
+  const priorities = useMemo(() => kickstartData?.priorities || [], [kickstartData]);
+  const hasCollaborators = kickstartData?.hasCollaborators ?? true;
 
   useEffect(() => {
     const fetchData = async () => {
       if (!selectedBusinessId) return;
       setLoading(true);
-      setPriorities([]); // Clear old data to show loader during refresh
       try {
-        const data = await analysisService.getKickstartData(selectedBusinessId);
-        if (data && data.priorities) {
-          setPriorities(data.priorities);
-          if (data.hasCollaborators !== undefined) {
-            setHasCollaborators(data.hasCollaborators);
-          }
-        }
+        await fetchKickstartData(selectedBusinessId);
       } catch (error) {
         console.error("Error fetching kickstart data:", error);
       } finally {
@@ -60,7 +48,7 @@ const PrioritiesProjects = ({ selectedBusinessId, companyAdminIds, onSuccess, on
     };
 
     fetchData();
-  }, [selectedBusinessId, refreshTrigger]);
+  }, [selectedBusinessId, refreshTrigger, fetchKickstartData]);
 
   const toggleExpand = useCallback((idx) => {
     setExpandedId((prev) => (prev === idx ? null : idx));
@@ -94,9 +82,8 @@ const PrioritiesProjects = ({ selectedBusinessId, companyAdminIds, onSuccess, on
       const selectedPriorities = selected.map(idx => priorities[idx]);
       let totalProjectsCreated = 0;
 
-      // Process projects sequentially or wait for all, but ensure we handle errors
       for (const priority of selectedPriorities) {
-        const response = await analysisService.kickstartProject({
+        const response = await kickstartProject({
           businessId: selectedBusinessId,
           priority: priority
         });
@@ -108,13 +95,7 @@ const PrioritiesProjects = ({ selectedBusinessId, companyAdminIds, onSuccess, on
       }
 
       // Refresh data to show kickstarted status
-      const data = await analysisService.getKickstartData(selectedBusinessId);
-      if (data && data.priorities) {
-        setPriorities(data.priorities);
-        if (data.hasCollaborators !== undefined) {
-          setHasCollaborators(data.hasCollaborators);
-        }
-      }
+      await fetchKickstartData(selectedBusinessId);
       setSelected([]);
       setLastKickstartedCount(totalProjectsCreated);
       setShowSuccessModal(true);
@@ -131,7 +112,7 @@ const PrioritiesProjects = ({ selectedBusinessId, companyAdminIds, onSuccess, on
     } finally {
       setKickstarting(false);
     }
-  }, [selected, hasProjectsAccess, priorities, isAdmin, hasCollaborators, showNoCollaboratorsModal, selectedBusinessId, t, onToastMessage]);
+  }, [selected, hasProjectsAccess, priorities, isAdmin, hasCollaborators, showNoCollaboratorsModal, selectedBusinessId, t, onToastMessage, kickstartProject, fetchKickstartData]);
 
   const handleConfirmRedirect = useCallback(() => {
     setShowSuccessModal(false);
@@ -211,7 +192,7 @@ const PrioritiesProjects = ({ selectedBusinessId, companyAdminIds, onSuccess, on
 
         // Calculate granular progress
         const totalActions = actions.length;
-        const kickstartedActions = actions.filter(a => a.isKickstarted).length;
+        const kickstartedActions = actions.filter(a => a.isKickstarted || a.status === 'kickstarted').length;
         const progressPercent = totalActions > 0 ? (kickstartedActions / totalActions) * 100 : 0;
         const isFullyKickstarted = progressPercent === 100 && totalActions > 0;
         const isPartiallyKickstarted = progressPercent > 0 && progressPercent < 100;
@@ -267,7 +248,7 @@ const PrioritiesProjects = ({ selectedBusinessId, companyAdminIds, onSuccess, on
 
                   {actions.map((action, actionIdx) => {
                     const actionText = typeof action === 'object' ? (action.action || action.Action || JSON.stringify(action)) : action;
-                    const isActionKickstarted = action.isKickstarted;
+                    const isActionKickstarted = action.isKickstarted || action.status === 'kickstarted';
                     return (
                       <div key={actionIdx} className={`project-row ${isActionKickstarted ? 'kickstarted' : ''}`}>
                         <div className="d-flex align-items-center justify-content-between w-100">
@@ -299,7 +280,6 @@ const PrioritiesProjects = ({ selectedBusinessId, companyAdminIds, onSuccess, on
         </Card.Body>
       </Card>
 
-      {/* SUCCESS MODAL (New) */}
       <Modal
         show={showSuccessModal}
         onHide={() => setShowSuccessModal(false)}
@@ -330,7 +310,6 @@ const PrioritiesProjects = ({ selectedBusinessId, companyAdminIds, onSuccess, on
         </Modal.Body>
       </Modal>
 
-      {/* NO COLLABORATORS CONFIRMATION MODAL */}
       <Modal
         show={showNoCollaboratorsModal}
         onHide={() => { if (!kickstarting) setShowNoCollaboratorsModal(false); }}

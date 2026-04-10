@@ -127,7 +127,7 @@ const CompanyEditModal = ({ company, onClose, onSave, onToast }) => {
         onToast('Company updated successfully', 'success');
         onSave({ ...company, ...formData, logo: finalLogoUrl });
 
-        // Update sessionStorage if this is the user's company
+        // Update authStore if this is the user's company
         if (useAuthStore.getState().userRole === 'company_admin') {
           useAuthStore.getState().updateUser({
             companyName: formData.company_name,

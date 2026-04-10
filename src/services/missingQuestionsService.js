@@ -1,8 +1,8 @@
-
+import { useAuthStore } from '../store';
 
 const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
 
-const getAuthToken = () => sessionStorage.getItem('token');
+const getAuthToken = () => useAuthStore.getState().token;
 
 export const checkMissingQuestions = async (analysisType, selectedBusinessId) => {
   try {

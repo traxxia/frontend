@@ -24,6 +24,7 @@ import CompetitiveLandscape from "./CompetitiveLandscape";
 import CoreAdjacency from "./CoreAdjacency";
 import { useStreamingManager } from './StreamingManager';
 import { useTranslation } from "../hooks/useTranslation";
+import { useAnalysisStore } from "../store";
 
 const MemoizedAnalysisCard = React.memo(
   ({
@@ -427,16 +428,37 @@ const AnalysisContentManager = (props) => {
     setCollapsedCategories,
     highlightedCard,
     hideRegenerateButtons = false,
-    isAnalysisRegenerating = false,
-    isStrategicRegenerating = false,
-    hasInsightAccess = true
+    hasInsightAccess = true,
+    selectedBusinessId,
+    handleRedirectToBrief,
+    questions: propsQuestions,
+    userAnswers: propsUserAnswers,
+    businessData: propsBusinessData
   } = props;
+
+  const {
+    swotAnalysis, purchaseCriteria, loyaltyNPS, portersData, pestelData,
+    fullSwotData, competitiveAdvantage, strategicData, expandedCapability,
+    strategicRadar, productivityData, maturityData, competitiveLandscape,
+    coreAdjacency, profitabilityData, growthTrackerData, liquidityEfficiencyData,
+    investmentPerformanceData, leverageRiskData,
+    isRegenerating: isTypeRegenerating,
+    questions: storeQuestions,
+    userAnswers: storeUserAnswers,
+    regenerateIndividualAnalysis
+  } = useAnalysisStore();
+
+  const questions = propsQuestions || storeQuestions;
+  const userAnswers = propsUserAnswers || storeUserAnswers;
+  const businessName = propsBusinessData?.name || "";
 
   const streamingManager = useStreamingManager();
 
   const isAnalysisLoading = useCallback((analysisType) => {
-    const excelAnalysisTypes = ['profitabilityAnalysis', 'growthTracker', 'liquidityEfficiency', 'investmentPerformance', 'leverageRisk'];
+    // If store says it's regenerating, it's loading
+    if (isTypeRegenerating(analysisType)) return true;
 
+    const excelAnalysisTypes = ['profitabilityAnalysis', 'growthTracker', 'liquidityEfficiency', 'investmentPerformance', 'leverageRisk'];
     if (excelAnalysisTypes.includes(analysisType)) {
       const apiKeyMap = {
         'profitabilityAnalysis': 'excel-analysis-profitability',
@@ -445,11 +467,8 @@ const AnalysisContentManager = (props) => {
         'investmentPerformance': 'excel-analysis-investment',
         'leverageRisk': 'excel-analysis-leverage'
       };
-
-      const regeneratingKey = `is${analysisType.charAt(0).toUpperCase() + analysisType.slice(1)}Regenerating`;
       const apiKey = apiKeyMap[analysisType];
-
-      return props[regeneratingKey] || apiLoadingStates[apiKey] || false;
+      return apiLoadingStates[apiKey] || false;
     }
 
     const relevantEndpoints = Object.entries(API_TO_ANALYSIS_MAP)
@@ -457,7 +476,7 @@ const AnalysisContentManager = (props) => {
       .map(([endpoint]) => endpoint);
 
     return relevantEndpoints.some(endpoint => apiLoadingStates[endpoint]);
-  }, [apiLoadingStates, props, API_TO_ANALYSIS_MAP]);
+  }, [apiLoadingStates, isTypeRegenerating, API_TO_ANALYSIS_MAP]);
 
   const toggleCard = useCallback((cardId) => {
     setExpandedCards(prev => {
@@ -488,21 +507,25 @@ const AnalysisContentManager = (props) => {
   const createSimpleRegenerationHandler = useCallback((analysisKey) => () => {
     const cardId = analysisKey.replace(/([A-Z])/g, '-$1').toLowerCase();
     streamingManager.startStreaming(cardId);
-    if (props.createSimpleRegenerationHandler) {
-      props.createSimpleRegenerationHandler(analysisKey)();
-    }
-  }, [streamingManager, props]);
+    regenerateIndividualAnalysis(analysisKey, questions, userAnswers, selectedBusinessId, props.showToastMessage);
+  }, [streamingManager, regenerateIndividualAnalysis, questions, userAnswers, selectedBusinessId, props.showToastMessage]);
 
   const renderAnalysisCard = useCallback((analysisKey, config) => {
-    const Component = config.component;
-    const dataKey = config.dataKey;
-    const refKey = config.refKey;
-    const pdfComponent = config.pdfComponent;
-    const regeneratingKey = `is${analysisKey.charAt(0).toUpperCase() + analysisKey.slice(1)}Regenerating`;
+    const dataMap = {
+      swot: swotAnalysis, purchaseCriteria, loyaltyNPS, porters: portersData,
+      pestel: pestelData, fullSwot: fullSwotData, competitiveAdvantage,
+      expandedCapability, strategicRadar, productivityMetrics: productivityData,
+      maturityScore: maturityData, competitiveLandscape, coreAdjacency,
+      profitabilityAnalysis: profitabilityData, growthTracker: growthTrackerData,
+      liquidityEfficiency: liquidityEfficiencyData, investmentPerformance: investmentPerformanceData,
+      leverageRisk: leverageRiskData, strategic: strategicData
+    };
 
-    const data = props[dataKey];
-    const ref = props[refKey];
-    const isRegenerating = props[regeneratingKey];
+    const data = dataMap[analysisKey];
+    const Component = config.component;
+    const ref = props[config.refKey];
+    const pdfComponent = config.pdfComponent;
+    const isRegenerating = isTypeRegenerating(analysisKey);
     const cardId = config.slug || analysisKey.replace(/([A-Z])/g, '-$1').toLowerCase();
 
     return (
@@ -512,7 +535,7 @@ const AnalysisContentManager = (props) => {
         title={config.title}
         description={config.description}
         hasData={!!data}
-        onRegenerate={props.createSimpleRegenerationHandler(analysisKey)}
+        onRegenerate={createSimpleRegenerationHandler(analysisKey)}
         isRegenerating={isRegenerating}
         isLoading={isAnalysisLoading(analysisKey)}
         isExpanded={expandedCards.has(cardId)}
@@ -525,15 +548,15 @@ const AnalysisContentManager = (props) => {
       >
         <div ref={ref} data-component={pdfComponent}>
           <Component
-            questions={props.questions}
-            userAnswers={props.userAnswers}
-            businessName={props.businessData.name}
+            questions={questions}
+            userAnswers={userAnswers}
+            businessName={businessName}
             onRegenerate={createSimpleRegenerationHandler(analysisKey)}
             isRegenerating={isRegenerating || isAnalysisLoading(analysisKey)}
             canRegenerate={props.canRegenerate && !!data}
-            {...{ [dataKey]: data }}
-            selectedBusinessId={props.selectedBusinessId}
-            onRedirectToBrief={props.handleRedirectToBrief}
+            {...{ [config.dataKey]: data }}
+            selectedBusinessId={selectedBusinessId}
+            onRedirectToBrief={handleRedirectToBrief}
             isExpanded={expandedCards.has(cardId)}
             streamingManager={streamingManager}
             cardId={cardId}
@@ -542,8 +565,7 @@ const AnalysisContentManager = (props) => {
             readOnly={props.readOnly}
             {...(analysisKey === 'swot' && {
               analysisResult: data,
-              onDataGenerated: props.setSwotAnalysisResult,
-              saveAnalysisToBackend: (d, type) => props.apiService.saveAnalysisToBackend(d, type, props.selectedBusinessId)
+              saveAnalysisToBackend: (d, type) => props.apiService.saveAnalysisToBackend(d, type, selectedBusinessId)
             })}
             {...(analysisKey === 'purchaseCriteria' && {
               onDataGenerated: props.setPurchaseCriteriaData
@@ -565,39 +587,18 @@ const AnalysisContentManager = (props) => {
       </MemoizedAnalysisCard>
     );
   }, [
-    props.questions,
-    props.userAnswers,
-    props.businessData.name,
-    props.selectedBusinessId,
-    props.isAnalysisRegenerating,
-    props.swotAnalysisResult,
-    props.purchaseCriteriaData,
-    props.loyaltyNPSData,
-    props.portersData,
-    props.pestelData,
-    props.fullSwotData,
-    props.competitiveAdvantageData,
-    props.expandedCapabilityData,
-    props.strategicRadarData,
-    props.productivityData,
-    props.maturityData,
-    props.profitabilityData,
-    props.growthTrackerData,
-    props.liquidityEfficiencyData,
-    props.investmentPerformanceData,
-    props.leverageRiskData,
-    props.competitiveLandscapeData,
-    props.coreAdjacencyData,
-    props.isSwotAnalysisRegenerating,
-    props.isPurchaseCriteriaRegenerating,
-    props.isLoyaltyNPSRegenerating,
-    props.isPortersRegenerating,
-    props.isPestelRegenerating,
-    props.isFullSwotRegenerating,
-    props.isCompetitiveAdvantageRegenerating,
-    props.isExpandedCapabilityRegenerating,
-    props.isStrategicRadarRegenerating,
-    props.isProductivityRegenerating,
+    questions, userAnswers, businessName, selectedBusinessId,
+    swotAnalysis, purchaseCriteria, loyaltyNPS, portersData, pestelData,
+    fullSwotData, competitiveAdvantage, strategicData, expandedCapability,
+    strategicRadar, productivityData, maturityData, competitiveLandscape,
+    coreAdjacency, profitabilityData, growthTrackerData, liquidityEfficiencyData,
+    investmentPerformanceData, leverageRiskData,
+    isTypeRegenerating, isAnalysisLoading, expandedCards, highlightedCard,
+    toggleCard, streamingManager, hideRegenerateButtons, props.canRegenerate,
+    hasInsightAccess, handleRedirectToBrief, createSimpleRegenerationHandler,
+    props.hideImproveButton, props.showImproveButton, props.readOnly,
+    props.apiService, props.uploadedFileForAnalysis, props.onRedirectToChat,
+    props.isMobile, props.setActiveTab, props.hasUploadedDocument, props.documentInfo,
     props.isMaturityRegenerating,
     props.isProfitabilityRegenerating,
     props.isGrowthTrackerRegenerating,
@@ -617,7 +618,6 @@ const AnalysisContentManager = (props) => {
     props.isMobile,
     props.setActiveTab,
     props.apiService,
-    props.createSimpleRegenerationHandler,
     props.swotRef,
     props.purchaseCriteriaRef,
     props.loyaltyNpsRef,
@@ -734,6 +734,9 @@ const AnalysisContentManager = (props) => {
       </div>
     );
   }
+
+  const isAnalysisRegenerating = props.isAnalysisRegenerating || false;
+  const isStrategicRegenerating = props.isStrategicRegenerating || false;
 
   return (
     <div className="modern-analysis-container">

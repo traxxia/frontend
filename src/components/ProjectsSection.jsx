@@ -5,12 +5,11 @@ import { Container } from "react-bootstrap";
 import axios from "axios";
 import { lockField, heartbeat, unlockFields } from "@/hooks/fieldlockapi";
 import { useFieldLockPolling } from "@/hooks/useFieldLockPolling";
-import { useProjectOperations } from "../hooks/useProjectOperations";
-import { useRankingOperations } from "../hooks/useRankingOperations";
 import { useAccessControl } from "../hooks/useAccessControl";
 import { useProjectForm } from "../hooks/useProjectForm";
 import { AI_PAGE_CONTEXTS } from "../utils/aiContexts";
-import { useAuthStore, useProjectStore, useUIStore } from "../store";
+
+import { useAuthStore, useProjectStore, useUIStore, useBusinessStore } from "../store";
 
 import { Users, CheckCircle, Plus, ListOrdered, Rocket } from "lucide-react";
 import RankProjectsPanel from "../components/RankProjectsPanel";
@@ -35,7 +34,9 @@ const CATEGORIES = [
   { id: "Scaled", label: "Scaled" },
 ];
 
-const getToken = () => sessionStorage.getItem("token");
+
+
+const getToken = () => useAuthStore.getState().token;
 
 const lockFieldSafe = async (projectId, fieldName) => {
   try {
@@ -71,27 +72,44 @@ const unlockAllFieldsSafe = async (projectId) => {
 };
 
 const ProjectsSection = ({
-  selectedBusinessId,
   onProjectCountChange,
-  onBusinessStatusChange,
   companyAdminIds,
   isArchived,
 }) => {
+  const { selectedBusinessId } = useBusinessStore();
   const { t } = useTranslation();
   const { userRole, userId: myUserId, userName: user, userLimits } = useAuthStore();
   const getUserLimits = () => userLimits || {};
 
   const {
-    openModal,
-    closeModal,
-    isModalOpen,
-    addToast
-  } = useUIStore();
+    projects,
+    lockSummary,
+    businessStatus,
+    isLoading,
+    fetchProjects,
+    fetchTeamRankings: fetchTeamRankingsStore,
+    checkAllAccess: checkAllAccessStore,
+    deleteProject,
+    createProject,
+    updateProject,
+    launchProjects,
+    lockRanking,
+    reviewProject: reviewProjectAction,
+    adhocUpdateProject: adhocUpdateProjectAction
+  } = useProjectStore();
+
+  const { addToast, openModal, closeModal, isModalOpen } = useUIStore();
 
   const [activeView, setActiveView] = useState("list");
   const [isRankingsLoading] = useState(false);
   const [isGeneratingAIRankings] = useState(false);
   const containerRef = useRef(null);
+
+  useEffect(() => {
+    if (onProjectCountChange) {
+      onProjectCountChange(projects.length);
+    }
+  }, [projects.length, onProjectCountChange]);
 
   useEffect(() => {
     if (activeView !== "list") {
@@ -131,15 +149,6 @@ const ProjectsSection = ({
   const [pendingSavePayload, setPendingSavePayload] = useState(null);
   const [selectedReviewProject, setSelectedReviewProject] = useState(null);
   const [reviewType, setReviewType] = useState("review");
-
-  const {
-    projects,
-    businessStatus,
-    lockSummary,
-    isLoading,
-    fetchTeamRankings: fetchTeamRankingsStore,
-    checkAllAccess: checkAllAccessStore,
-  } = useProjectStore();
 
   const [apiIsArchived, setApiIsArchived] = useState(isArchived);
   const [selectedCategory, setSelectedCategory] = useState("All");
@@ -186,10 +195,6 @@ const ProjectsSection = ({
   const adminRanks = useProjectStore(state => state.aiRankings);
 
   const { locks } = useFieldLockPolling(currentProject?._id, activeView === "edit");
-  const { deleteProject, createProject, updateProject, launchProjects } =
-    useProjectOperations(selectedBusinessId, onProjectCountChange);
-  const { lockRanking } =
-    useRankingOperations(selectedBusinessId, companyAdminIds);
 
   const {
     userHasRerankAccess,
@@ -342,9 +347,6 @@ const ProjectsSection = ({
   }, [myUserId]);
 
   const loadProjects = useCallback(async () => {
-    if (isProjectsLoadingRef.current) return;
-    isProjectsLoadingRef.current = true;
-
     try {
       await checkAllAccessStore(selectedBusinessId);
       const result = await fetchTeamRankingsStore(selectedBusinessId);
@@ -379,8 +381,6 @@ const ProjectsSection = ({
       }
     } catch (err) {
       console.error("Error in loadProjects:", err);
-    } finally {
-      isProjectsLoadingRef.current = false;
     }
   }, [checkAllAccessStore, checkIfCurrentUserLocked, fetchTeamRankingsStore, selectedBusinessId]);
 
@@ -494,7 +494,7 @@ const ProjectsSection = ({
 
     setIsSubmitting(true);
     try {
-      const userId = sessionStorage.getItem("userId");
+      const userId = useAuthStore.getState().userId;
       const payload = getPayload(userId, selectedBusinessId);
 
       const { success, error } = await createProject(payload);
@@ -546,7 +546,7 @@ const ProjectsSection = ({
     if (!validation.isValid) return;
 
     try {
-      const userId = sessionStorage.getItem("userId");
+      const userId = useAuthStore.getState().userId;
       const payload = getPayload(userId, selectedBusinessId);
 
       const oldStatus = (currentProject.status || "Draft").toLowerCase();
@@ -570,22 +570,16 @@ const ProjectsSection = ({
     if (!selectedReviewProject?._id) return;
 
     try {
-      const token = getToken();
-      const endpoint = reviewType === "review" ? "review" : "adhoc-update";
-      const method = reviewType === "review" ? "post" : "patch";
+      const { success, error } = reviewType === "review" 
+        ? await reviewProjectAction(selectedReviewProject._id, data)
+        : await adhocUpdateProjectAction(selectedReviewProject._id, data);
 
-      await axios({
-        method,
-        url: `${process.env.REACT_APP_BACKEND_URL}/api/projects/${selectedReviewProject._id}/${endpoint}`,
-        data,
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        }
-      });
-
-      handleShowToast(reviewType === "review" ? "Review submitted successfully!" : "Update submitted successfully!", "success");
-      await loadProjects();
+      if (success) {
+        handleShowToast(reviewType === "review" ? "Review submitted successfully!" : "Update submitted successfully!", "success");
+        await loadProjects();
+      } else {
+        handleShowToast(error || "Failed to process update", "error");
+      }
 
     } catch (err) {
       console.error("Review submit error:", err);
@@ -796,7 +790,6 @@ const ProjectsSection = ({
                   <RankProjectsPanel
                     show={showRankScreen}
                     projects={rankedProjects}
-                    businessId={selectedBusinessId}
                     onLockRankings={handleLockProjectRanking}
                     onRankSaved={() => {
                       refreshTeamRankings();

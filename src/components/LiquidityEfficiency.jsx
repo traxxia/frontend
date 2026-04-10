@@ -1,7 +1,8 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { Activity, Loader, AlertCircle } from 'lucide-react';
 import '../styles/goodPhase.css';
 import { useTranslation } from "../hooks/useTranslation";
+import { useAnalysisStore } from "../store";
 import FinancialEmptyState from './FinancialEmptyState';
 import CitationSource from './CitationSource';
 import { checkMissingQuestionsAndRedirect, ANALYSIS_TYPES } from '../services/missingQuestionsService';
@@ -98,17 +99,19 @@ const PairedBarChart = React.memo(({ metrics, thresholds, citations, t, activeBu
   const [containerWidth, setContainerWidth] = useState(600);
   const containerRef = useRef(null);
 
-  const chartData = Object.entries(metrics)
-    .filter(([key, value]) => value !== null && value !== undefined && value !== '')
-    .map(([key, value]) => ({
-      metric: key,
-      actualValue: parseRatioValue(value),
-      benchmarkValue: parseRatioValue(thresholds[key]),
-      color: getTrafficLightColor(value, thresholds[key], key, t),
-      hasData: value !== null && value !== undefined && value !== '',
-      type: key,
-      citationUrl: getCitationUrl(key, citations)
-    }));
+  const chartData = useMemo(() => {
+    return Object.entries(metrics)
+      .filter(([key, value]) => value !== null && value !== undefined && value !== '')
+      .map(([key, value]) => ({
+        metric: key,
+        actualValue: parseRatioValue(value),
+        benchmarkValue: parseRatioValue(thresholds[key]),
+        color: getTrafficLightColor(value, thresholds[key], key, t),
+        hasData: value !== null && value !== undefined && value !== '',
+        type: key,
+        citationUrl: getCitationUrl(key, citations)
+      }));
+  }, [metrics, thresholds, citations, t]);
 
   useEffect(() => {
     const updateWidth = () => {
@@ -286,9 +289,8 @@ const LiquidityEfficiency = ({
   questions = [],
   userAnswers = {},
   businessName,
-  onDataGenerated,
   onRegenerate,
-  isRegenerating = false,
+  isRegenerating: propIsRegenerating = false,
   canRegenerate = true,
   liquidityData = null,
   liquidityEfficiencyData = null, // Unified prop support
@@ -302,11 +304,26 @@ const LiquidityEfficiency = ({
   readOnly = false,
   documentInfo = null,
 }) => {
-  const [analysisData, setAnalysisData] = useState(null);
-  const [error, setError] = useState(null);
-
-  const fileInputRef = useRef(null);
   const { t } = useTranslation();
+  
+  const { 
+    liquidityEfficiencyData: storeLiquidityData,
+    isRegenerating: isTypeRegenerating,
+    regenerateIndividualAnalysis 
+  } = useAnalysisStore();
+
+  const isRegenerating = propIsRegenerating || isTypeRegenerating('liquidityEfficiency');
+
+  const analysisData = useMemo(() => {
+    const rawData = liquidityData || liquidityEfficiencyData || storeLiquidityData;
+    if (!rawData) return null;
+
+    const normalized = getNormalizedData(rawData);
+    return normalized ? { liquidity: normalized } : null;
+  }, [liquidityData, liquidityEfficiencyData, storeLiquidityData]);
+
+  const [error, setError] = useState(null);
+  const fileInputRef = useRef(null);
 
   const activeBusinessName = businessName || t('yourBusiness');
 
@@ -332,6 +349,7 @@ const LiquidityEfficiency = ({
       }
     );
   }, [selectedBusinessId, handleRedirectToBrief, t]);
+
   const handleRegenerate = useCallback(async () => {
     if (onRegenerate) {
       try {
@@ -340,24 +358,15 @@ const LiquidityEfficiency = ({
       } catch (error) {
         setError(t('failed_to_generate'));
       }
-    }
-  }, [onRegenerate, t]);
-
-
-
-  useEffect(() => {
-    const rawData = liquidityData || liquidityEfficiencyData;
-    if (rawData) {
-      const normalized = getNormalizedData(rawData);
-      if (normalized) {
-        setAnalysisData({ liquidity: normalized });
+    } else {
+      try {
         setError(null);
-        if (onDataGenerated) {
-          onDataGenerated({ liquidity: normalized });
-        }
+        await regenerateIndividualAnalysis('liquidityEfficiency', questions, userAnswers, selectedBusinessId);
+      } catch (error) {
+        setError(t('failed_to_generate'));
       }
     }
-  }, [liquidityData, liquidityEfficiencyData, onDataGenerated]);
+  }, [onRegenerate, regenerateIndividualAnalysis, questions, userAnswers, selectedBusinessId, t]);
 
   const handleFileUpload = useCallback((file) => {
     if (file) {
@@ -373,8 +382,6 @@ const LiquidityEfficiency = ({
   const removeFile = useCallback(() => {
     if (fileInputRef.current) fileInputRef.current.value = '';
   }, []);
-
-
 
   if (isRegenerating) {
     return (
@@ -461,4 +468,4 @@ const LiquidityEfficiency = ({
   );
 };
 
-export default LiquidityEfficiency;
+export default React.memo(LiquidityEfficiency);

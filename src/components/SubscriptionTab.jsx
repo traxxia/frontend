@@ -8,12 +8,10 @@ import { Modal, Button, Spinner, Alert } from 'react-bootstrap';
 // Stripe imports removed for lazy loading
 import PaymentForm from './PaymentForm';
 import { useTranslation } from '../hooks/useTranslation';
+import { useAuthStore } from '../store/authStore';
 import UpgradeModal from './UpgradeModal';
 import AdminTable from './AdminTable';
 import '../styles/SubscriptionTab.css';
-
-
-
 
 /* ─── helpers ─── */
 
@@ -203,7 +201,6 @@ const AddCardModal = ({ show, onHide, onAddSuccess, apiBase, token, onToast }) =
     );
 };
 
-
 const PaymentMethodsSection = ({ paymentMethods, defaultId, apiBase, token, onUpdate, onToast }) => {
     const { t } = useTranslation();
     const [isRemoving, setIsRemoving] = useState(null);
@@ -335,7 +332,6 @@ const PaymentMethodsSection = ({ paymentMethods, defaultId, apiBase, token, onUp
     );
 };
 
-
 /* ─── main ─── */
 const SubscriptionTab = ({ onToast }) => {
     const { t } = useTranslation();
@@ -348,7 +344,7 @@ const SubscriptionTab = ({ onToast }) => {
     const itemsPerPage = 5;
 
     const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
-    const token = sessionStorage.getItem('token');
+    const token = useAuthStore.getState().token;
 
     const fetchSubDetails = async () => {
         try {
@@ -401,7 +397,6 @@ const SubscriptionTab = ({ onToast }) => {
     const currentPlanData = available_plans.find(p => p.name.toLowerCase() === currentPlanName);
     const displayLimits = currentPlanData?.limits || subscription.original_plan_limits || {};
     const displayPrice = currentPlanData?.price || subscription.original_plan_price || subscription.plan_price || 0;
-
 
     const daysRemaining = getDaysRemaining(end_date);
     const totalDays = total_days || 31;
@@ -491,7 +486,6 @@ const SubscriptionTab = ({ onToast }) => {
                     </div>
                 </div>
             </div>
-
 
             {/* ══ BODY GRID ══ */}
             <div className="st-body-grid">

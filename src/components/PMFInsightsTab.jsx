@@ -12,9 +12,10 @@ import { useTranslation } from "../hooks/useTranslation";
 import { Modal } from "react-bootstrap";
 
 
-import { useAuthStore } from '../store/authStore';
+import { useAuthStore, useBusinessStore, useUIStore } from '../store';
 
-const PMFInsightsTab = ({ selectedBusinessId, onStartOnboarding, refreshTrigger }) => {
+const PMFInsightsTab = ({ onStartOnboarding, refreshTrigger }) => {
+  const { selectedBusinessId } = useBusinessStore();
   const { t } = useTranslation();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -38,9 +39,6 @@ const PMFInsightsTab = ({ selectedBusinessId, onStartOnboarding, refreshTrigger 
 
     const fetchInsights = async () => {
       let businessId = selectedBusinessId;
-      if (!businessId) {
-        businessId = sessionStorage.getItem('activeBusinessId');
-      }
 
       if (!businessId) {
         console.warn("PMFInsightsTab: No business ID found, skipping fetch.");
@@ -57,7 +55,7 @@ const PMFInsightsTab = ({ selectedBusinessId, onStartOnboarding, refreshTrigger 
           if (result && result.user_id) {
             const currentUserId = useAuthStore.getState().userId;
             const bId = String(businessId);
-            const expectedUserId = localStorage.getItem(`pmf_expecting_my_data_${bId}`);
+            const expectedUserId = useUIStore.getState().getBusinessSetting(bId, 'pmfExpectingMyData');
 
             if (expectedUserId) {
               const getStrId = (val) => {
@@ -305,10 +303,10 @@ const PMFInsightsTab = ({ selectedBusinessId, onStartOnboarding, refreshTrigger 
               className="px-4 rounded-3 fw-semibold"
               onClick={() => {
                 setShowOverwriteModal(false);
-                const bId = String(selectedBusinessId || sessionStorage.getItem('activeBusinessId'));
+                const bId = String(selectedBusinessId);
                 if (bId) {
-                  localStorage.removeItem(`pmf_expecting_my_data_${bId}`);
-                  localStorage.removeItem(`pmf_last_submission_${bId}`);
+                  useUIStore.getState().setBusinessSetting(bId, 'pmfExpectingMyData', null);
+                  useUIStore.getState().setBusinessSetting(bId, 'pmfLastSubmission', null);
                 }
               }}
             >

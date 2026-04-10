@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Heart, TrendingUp, Calendar, Loader, Target, Award, BarChart3 } from 'lucide-react';
 import { useTranslation } from "../hooks/useTranslation";
+import { useAuthStore, useAnalysisStore } from "../store";
 import AnalysisEmptyState from './AnalysisEmptyState';
 import AnalysisError from './AnalysisError';
 import { checkMissingQuestionsAndRedirect, ANALYSIS_TYPES } from '../services/missingQuestionsService';
@@ -44,8 +45,6 @@ const getTrendIndicator = (trend) => {
 
 const isLoyaltyNPSDataIncomplete = (data) => {
   if (!data) return true;
-
-  // Handle both wrapped and direct API response formats
   let normalizedData;
   const wrappedData = data.loyaltyMetrics || data.loyalty_metrics || data.loyaltyNPS || data.loyalty_nps || data.LoyaltyNPS;
 
@@ -57,21 +56,13 @@ const isLoyaltyNPSDataIncomplete = (data) => {
     return true;
   }
 
-  // Check if loyaltyMetrics exists
-  if (!normalizedData.loyaltyMetrics) {
-    return true;
-  }
-
+  if (!normalizedData.loyaltyMetrics) return true;
   const metrics = normalizedData.loyaltyMetrics;
   const hasOverallScore = metrics.overallScore !== null && metrics.overallScore !== undefined;
   const hasMethod = metrics.method && metrics.method !== '';
   const hasScale = metrics.scale && metrics.scale.min !== undefined && metrics.scale.max !== undefined;
   const hasBenchmark = metrics.benchmark !== null && metrics.benchmark !== undefined;
-
-  // Relaxed validation: show if we have a score OR (method and scale) OR benchmark
-  const hasSufficientData = hasOverallScore || (hasMethod && hasScale) || hasBenchmark;
-
-  return !hasSufficientData;
+  return !(hasOverallScore || (hasMethod && hasScale) || hasBenchmark);
 };
 
 // Gauge Chart Component
@@ -83,28 +74,24 @@ const GaugeChart = React.memo(({ loyaltyData }) => {
 
   const hasScore = overallScore !== null && overallScore !== undefined;
 
-  // Normalize score to 0-1 range for gauge
   let normalizedScore = 0;
   if (hasScore) {
     normalizedScore = method === 'NPS'
-      ? (overallScore + 100) / 200  // NPS is -100 to 100
-      : overallScore / 100;         // CSAT and others are 0 to 100
+      ? (overallScore + 100) / 200
+      : overallScore / 100;
   }
 
   const radius = 80;
   const strokeWidth = 12;
   const circumference = 2 * Math.PI * radius;
-  const strokeDasharray = circumference * 0.75; // 3/4 circle
+  const strokeDasharray = circumference * 0.75;
   const strokeDashoffset = hasScore ? strokeDasharray * (1 - normalizedScore) : strokeDasharray;
 
-  // Calculate zones for NPS
   let zones = [];
   if (method === 'NPS' && scale?.zones) {
-    // Calculate proportional positions based on actual scale values
-    const totalRange = scale.max - scale.min; // 200 for NPS (-100 to 100)
-
-    const detractorEnd = (scale.zones.detractors[1] - scale.min) / totalRange; // 0.5
-    const passiveEnd = (scale.zones.passives[1] - scale.min) / totalRange; // 0.65
+    const totalRange = scale.max - scale.min;
+    const detractorEnd = (scale.zones.detractors[1] - scale.min) / totalRange;
+    const passiveEnd = (scale.zones.passives[1] - scale.min) / totalRange;
 
     zones = [
       { name: 'Detractors', range: scale.zones.detractors, color: '#EF4444', start: 0, end: detractorEnd },
@@ -117,56 +104,18 @@ const GaugeChart = React.memo(({ loyaltyData }) => {
     <div className="gauge-wrapper">
       <div className="gauge-container">
         <svg className="gauge-svg" viewBox="0 0 200 120">
-          {/* Background arc */}
-          <path
-            d="M 30 100 A 80 80 0 0 1 170 100"
-            fill="none"
-            stroke="#e5e7eb"
-            strokeWidth={strokeWidth}
-            strokeLinecap="round"
-          />
-
-          {/* Zone arcs for NPS */}
+          <path d="M 30 100 A 80 80 0 0 1 170 100" fill="none" stroke="#e5e7eb" strokeWidth={strokeWidth} strokeLinecap="round" />
           {zones.map((zone, index) => {
             const zoneLength = strokeDasharray * (zone.end - zone.start);
             const zoneOffset = strokeDasharray * (1 - zone.end);
             return (
-              <path
-                key={index}
-                d="M 30 100 A 80 80 0 0 1 170 100"
-                fill="none"
-                stroke={zone.color}
-                strokeWidth={strokeWidth - 2}
-                strokeLinecap="round"
-                strokeDasharray={`${zoneLength} ${circumference}`}
-                strokeDashoffset={zoneOffset}
-                opacity={0.3}
-              />
+              <path key={index} d="M 30 100 A 80 80 0 0 1 170 100" fill="none" stroke={zone.color} strokeWidth={strokeWidth - 2} strokeLinecap="round" strokeDasharray={`${zoneLength} ${circumference}`} strokeDashoffset={zoneOffset} opacity={0.3} />
             );
           })}
-
-          {/* Score arc */}
-          <path
-            d="M 30 100 A 80 80 0 0 1 170 100"
-            fill="none"
-            stroke={classification.color}
-            strokeWidth={strokeWidth}
-            strokeLinecap="round"
-            strokeDasharray={strokeDasharray}
-            strokeDashoffset={strokeDashoffset}
-            className="gauge-progress"
-          />
-
-          {/* Center score */}
-          <text x="100" y="85" textAnchor="middle" className="gauge-score">
-            {hasScore ? overallScore : '--'}
-          </text>
-          <text x="100" y="100" textAnchor="middle" className="gauge-label">
-            {classification.label}
-          </text>
+          <path d="M 30 100 A 80 80 0 0 1 170 100" fill="none" stroke={classification.color} strokeWidth={strokeWidth} strokeLinecap="round" strokeDasharray={strokeDasharray} strokeDashoffset={strokeDashoffset} className="gauge-progress" />
+          <text x="100" y="85" textAnchor="middle" className="gauge-score">{hasScore ? overallScore : '--'}</text>
+          <text x="100" y="100" textAnchor="middle" className="gauge-label">{classification.label}</text>
         </svg>
-
-        {/* Scale labels */}
         <div className="gauge-scale">
           <span className="gauge-scale-min">{scale?.min || 0}</span>
           <span className="gauge-scale-max">{scale?.max || 100}</span>
@@ -209,7 +158,6 @@ const ScoreInterpretation = React.memo(({ loyaltyData, t }) => {
             </div>
           </>
         )}
-
         {loyaltyData.method !== 'NPS' && (
           <div className="ln-scale-range">
             <span>{t("Scale")}: {loyaltyData.scale.min} {t("to")} {loyaltyData.scale.max}</span>
@@ -224,20 +172,26 @@ const LoyaltyNPS = ({
   questions = [],
   userAnswers = {},
   businessName = "Your Business",
-  onDataGenerated,
   onRegenerate,
-  isRegenerating = false,
+  isRegenerating: propIsRegenerating = false,
   canRegenerate = true,
-  loyaltyNPSData = null,
+  loyaltyNPSData: propLoyaltyNPSData = null,
   selectedBusinessId,
   onRedirectToBrief,
   hideImproveButton = false,
 }) => {
 
-  const [data, setData] = useState(loyaltyNPSData);
-  const [hasGenerated, setHasGenerated] = useState(false);
-
   const { t } = useTranslation();
+  const token = useAuthStore(state => state.token);
+  
+  const {
+    loyaltyNPSData: storeLoyaltyNPSData,
+    isRegenerating: isTypeRegenerating,
+    regenerateIndividualAnalysis
+  } = useAnalysisStore();
+
+  const dataRaw = propLoyaltyNPSData || storeLoyaltyNPSData;
+  const isRegenerating = propIsRegenerating || isTypeRegenerating('loyaltyNPS');
 
   const handleRedirectToBrief = useCallback((missingQuestionsData = null) => {
     if (onRedirectToBrief) {
@@ -247,7 +201,6 @@ const LoyaltyNPS = ({
 
   const handleMissingQuestionsCheck = useCallback(async () => {
     const analysisConfig = ANALYSIS_TYPES.loyaltyNPS;
-
     await checkMissingQuestionsAndRedirect(
       'loyaltyNPS',
       selectedBusinessId,
@@ -262,77 +215,30 @@ const LoyaltyNPS = ({
   const handleRegenerate = useCallback(async () => {
     if (onRegenerate) {
       onRegenerate();
-    }
-  }, [onRegenerate]);
-
-  // Handle retry for error state
-  const handleRetry = useCallback(() => {
-    if (onRegenerate) {
-      onRegenerate();
-    }
-  }, [onRegenerate]);
-
-  // Simplified validation - EXACTLY like other components
-
-
-  // EXACTLY the same useEffect pattern as other components
-  useEffect(() => {
-    if (loyaltyNPSData) {
-      // Handle both wrapped and direct API response formats
-      let normalizedData;
-      const wrappedData = loyaltyNPSData.loyaltyMetrics || loyaltyNPSData.loyalty_metrics || loyaltyNPSData.loyaltyNPS || loyaltyNPSData.loyalty_nps || loyaltyNPSData.LoyaltyNPS;
-
-      if (wrappedData) {
-        // Data is wrapped
-        normalizedData = { loyaltyMetrics: wrappedData };
-      } else if (loyaltyNPSData.method && loyaltyNPSData.overallScore !== undefined) {
-        // Data is direct from API, needs wrapping
-        normalizedData = { loyaltyMetrics: loyaltyNPSData };
-      } else {
-        normalizedData = null;
-      }
-
-      if (normalizedData) {
-        setData(normalizedData);
-        setHasGenerated(true);
-        if (onDataGenerated) {
-          onDataGenerated(normalizedData);
-        }
-      } else {
-        setData(null);
-        setHasGenerated(false);
-      }
     } else {
-      setData(null);
-      setHasGenerated(false);
+      await regenerateIndividualAnalysis('loyaltyNPS', questions, userAnswers, selectedBusinessId);
     }
-  }, [loyaltyNPSData, onDataGenerated]);
+  }, [onRegenerate, questions, userAnswers, selectedBusinessId, regenerateIndividualAnalysis]);
 
+  const handleRetry = useCallback(() => {
+    handleRegenerate();
+  }, [handleRegenerate]);
 
+  const wrappedData = dataRaw?.loyaltyMetrics || dataRaw?.loyalty_metrics || dataRaw?.loyaltyNPS || dataRaw?.loyalty_nps || dataRaw?.LoyaltyNPS;
+  const data = wrappedData ? { loyaltyMetrics: wrappedData } : (dataRaw?.method ? { loyaltyMetrics: dataRaw } : null);
 
-
-
-
-
-  // Loading state
   if (isRegenerating) {
     return (
       <div className="loyalty-nps">
         <div className="loading-state">
           <Loader size={24} className="loading-spinner" />
-          <span>
-            {isRegenerating
-              ? t("Regenerating loyalty & NPS analysis...")
-              : t("Generating loyalty & NPS analysis...")
-            }
-          </span>
+          <span>Regenerating loyalty & NPS analysis...</span>
         </div>
       </div>
     );
   }
 
-  // Error state
-  if (!hasGenerated && !data && Object.keys(userAnswers).length > 0) {
+  if (!data && Object.keys(userAnswers).length > 0) {
     return (
       <div className="loyalty-nps">
         <AnalysisEmptyState
@@ -352,8 +258,7 @@ const LoyaltyNPS = ({
     );
   }
 
-  // Check if data is incomplete and show missing questions checker
-  if (!loyaltyNPSData || isLoyaltyNPSDataIncomplete(loyaltyNPSData)) {
+  if (!dataRaw || isLoyaltyNPSDataIncomplete(dataRaw)) {
     return (
       <div className="loyalty-nps">
         <AnalysisEmptyState
@@ -373,7 +278,6 @@ const LoyaltyNPS = ({
     );
   }
 
-  // Check if data structure is valid
   if (!data?.loyaltyMetrics) {
     return (
       <div className="loyalty-nps">
@@ -395,7 +299,6 @@ const LoyaltyNPS = ({
       data-analysis-name="Loyalty & NPS Analysis"
       data-analysis-order="4">
 
-      {/* Key Metrics */}
       <div className="ln-metrics">
         <div className="ln-metric-card ln-metric-primary">
           <div className="ln-metric-header">
@@ -436,7 +339,6 @@ const LoyaltyNPS = ({
           </div>
         )}
 
-        {/* Measurement Method */}
         <div className="ln-metric-card ln-metric-secondary">
           <div className="ln-metric-header">
             <Target size={20} />
@@ -450,7 +352,6 @@ const LoyaltyNPS = ({
           </p>
         </div>
 
-        {/* Last Measured */}
         {loyaltyData.lastMeasured && (
           <div className="ln-metric-card ln-metric-accent">
             <div className="ln-metric-header">
@@ -463,14 +364,10 @@ const LoyaltyNPS = ({
         )}
       </div>
 
-      {/* Main Content */}
       <div className="ln-content">
-        {/* Gauge Chart with Score Interpretation below it */}
         <div className="ln-chart-container">
           <h3 className="ln-section-title">Overall {loyaltyData.method} Score</h3>
           <GaugeChart loyaltyData={loyaltyData} />
-
-          {/* Score Interpretation - moved here, directly below the chart */}
           <ScoreInterpretation loyaltyData={loyaltyData} t={t} />
         </div>
       </div>
@@ -478,4 +375,4 @@ const LoyaltyNPS = ({
   );
 };
 
-export default LoyaltyNPS;
+export default LoyaltyNPS;

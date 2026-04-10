@@ -49,13 +49,8 @@ const MenuBar = () => {
       console.error("Error during logout:", error);
     } finally {
       logout();
-      // Clear only non-auth session data (language preference, etc.)
-      // Auth-related keys are cleared by the store's logout action
-      try {
-        sessionStorage.removeItem("appLanguage");
-      } catch (e) {
-        // ignore
-      }
+      // Navigation to login
+      navigate("/login");
       navigate("/login");
     }
   };

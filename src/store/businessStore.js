@@ -40,6 +40,27 @@ export const useBusinessStore = create(
         }
       },
 
+      fetchBusiness: async (businessId) => {
+        const token = useAuthStore.getState().token;
+        if (!token) { set({ error: 'No authentication token' }); return; }
+        set({ isLoading: true, error: null });
+        try {
+          const response = await axios.get(API_BASE_URL + '/api/businesses/' + businessId, {
+            headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' }
+          });
+          const business = response.data.business || response.data;
+          set({
+            selectedBusiness: business,
+            selectedBusinessId: businessId,
+            isLoading: false
+          });
+          return business;
+        } catch (err) {
+          set({ error: err.response?.data?.error || err.message, isLoading: false });
+          throw err;
+        }
+      },
+
       createBusiness: async (businessData) => {
         const token = useAuthStore.getState().token;
         if (!token) { set({ createError: 'No authentication token', isCreating: false }); return; }

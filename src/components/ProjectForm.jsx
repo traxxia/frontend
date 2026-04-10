@@ -363,7 +363,7 @@ const ProjectForm = ({
           try {
             const response = await fetch(`${process.env.REACT_APP_BACKEND_URL || "http://localhost:5000"}/api/businesses/${selectedBusinessId}/eligible-owners`, {
               headers: {
-                "Authorization": `Bearer ${sessionStorage.getItem("token")}`
+                "Authorization": `Bearer ${useAuthStore.getState().token}`
               }
             });
             const data = await response.json();

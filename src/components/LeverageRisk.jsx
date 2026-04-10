@@ -1,7 +1,8 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { AlertTriangle, Loader, AlertCircle } from 'lucide-react';
 import '../styles/goodPhase.css';
 import { useTranslation } from "../hooks/useTranslation";
+import { useAnalysisStore } from "../store";
 import FinancialEmptyState from './FinancialEmptyState';
 import CitationSource from './CitationSource';
 import { checkMissingQuestionsAndRedirect, ANALYSIS_TYPES } from '../services/missingQuestionsService';
@@ -105,17 +106,19 @@ const PairedBarChart = React.memo(({ metrics, thresholds, citations, activeBusin
   const [containerWidth, setContainerWidth] = useState(600);
   const containerRef = useRef(null);
 
-  const chartData = Object.entries(metrics)
-    .filter(([key, value]) => value !== null && value !== undefined && value !== '')
-    .map(([key, value]) => ({
-      metric: key,
-      actualValue: parseRatioValue(value),
-      benchmarkValue: parseRatioValue(thresholds[key]),
-      color: getTrafficLightColor(value, thresholds[key], key),
-      hasData: value !== null && value !== undefined && value !== '',
-      type: key,
-      citationUrl: getCitationUrl(key, citations)
-    }));
+  const chartData = useMemo(() => {
+    return Object.entries(metrics)
+      .filter(([key, value]) => value !== null && value !== undefined && value !== '')
+      .map(([key, value]) => ({
+        metric: key,
+        actualValue: parseRatioValue(value),
+        benchmarkValue: parseRatioValue(thresholds[key]),
+        color: getTrafficLightColor(value, thresholds[key], key),
+        hasData: value !== null && value !== undefined && value !== '',
+        type: key,
+        citationUrl: getCitationUrl(key, citations)
+      }));
+  }, [metrics, thresholds, citations]);
 
   useEffect(() => {
     const updateWidth = () => {
@@ -286,9 +289,8 @@ const LeverageRisk = ({
   questions = [],
   userAnswers = {},
   businessName = "Your Business",
-  onDataGenerated,
   onRegenerate,
-  isRegenerating = false,
+  isRegenerating: propIsRegenerating = false,
   canRegenerate = true,
   leverageData = null,
   leverageRiskData = null, // Unified prop support
@@ -302,11 +304,25 @@ const LeverageRisk = ({
   readOnly = false,
   documentInfo = null,
 }) => {
-  const [analysisData, setAnalysisData] = useState(null);
-  const [error, setError] = useState(null);
-
-
   const { t } = useTranslation();
+  
+  const { 
+    leverageRiskData: storeLeverageData,
+    isRegenerating: isTypeRegenerating,
+    regenerateIndividualAnalysis 
+  } = useAnalysisStore();
+
+  const isRegenerating = propIsRegenerating || isTypeRegenerating('leverageRisk');
+
+  const analysisData = useMemo(() => {
+    const rawData = leverageData || leverageRiskData || storeLeverageData;
+    if (!rawData) return null;
+
+    const normalized = getNormalizedData(rawData);
+    return normalized ? { leverage: normalized } : null;
+  }, [leverageData, leverageRiskData, storeLeverageData]);
+
+  const [error, setError] = useState(null);
 
   const handleRedirectToBrief = useCallback((missingQuestionsData = null) => {
     if (onRedirectToBrief) {
@@ -330,6 +346,7 @@ const LeverageRisk = ({
       }
     );
   }, [selectedBusinessId, handleRedirectToBrief]);
+
   const handleRegenerate = useCallback(async () => {
     if (onRegenerate) {
       try {
@@ -338,24 +355,16 @@ const LeverageRisk = ({
       } catch (error) {
         setError('Failed to regenerate analysis. Please try again.');
       }
-    }
-  }, [onRegenerate]);
-
-  useEffect(() => {
-    const rawData = leverageData || leverageRiskData;
-    if (rawData) {
-      const normalized = getNormalizedData(rawData);
-      if (normalized) {
-        setAnalysisData({ leverage: normalized });
+    } else {
+      try {
         setError(null);
-        if (onDataGenerated) {
-          onDataGenerated({ leverage: normalized });
-        }
+        await regenerateIndividualAnalysis('leverageRisk', questions, userAnswers, selectedBusinessId);
+      } catch (error) {
+        setError('Failed to regenerate analysis. Please try again.');
+        console.error('Error during regeneration:', error);
       }
     }
-  }, [leverageData, leverageRiskData, onDataGenerated]);
-
-
+  }, [onRegenerate, regenerateIndividualAnalysis, questions, userAnswers, selectedBusinessId]);
 
   if (isRegenerating) {
     return (
@@ -437,4 +446,4 @@ const LeverageRisk = ({
   );
 };
 
-export default LeverageRisk;
+export default React.memo(LeverageRisk);

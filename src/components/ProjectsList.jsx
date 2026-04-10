@@ -124,7 +124,7 @@ const ProjectsList = ({
               onAdhocUpdate={onAdhocUpdate}
               canReviewProject={canReviewProject}
               myUserId={myUserId}
-              isCheckboxDisabled={isArchived || selectionDisabled || !getUserLimits().project || sessionStorage.getItem("userPlan") === 'essential'}
+              isCheckboxDisabled={isArchived || selectionDisabled || !getUserLimits().project || useAuthStore.getState().userPlan === 'essential'}
             />
           </Col>
         ))}

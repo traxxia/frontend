@@ -1,6 +1,7 @@
 import React, { useState, useCallback, useMemo } from 'react';
 import { FileDown, Loader } from 'lucide-react';
 import { useTranslation } from "../hooks/useTranslation";
+import { useAnalysisStore } from '../store';
 
 const PHASE_COMPONENTS = {
   initial: [
@@ -208,36 +209,26 @@ const captureComponent = async (selector, name) => {
 };
 
 const PDFExportButton = ({
-  businessName,
-  onToastMessage,
-  currentPhase,
-  disabled = false,
-  isChannelHeatmapReady = true,
-  isCapabilityHeatmapReady = true,
-  className = "",
-  style = {},
-  exportType = "insights", // "insights" or "strategic"
-  strategicData = null,
-  // Analysis data state indicators
-  unlockedFeatures = {},
-  fullSwotData = null,
-  competitiveAdvantageData = null,
-  expandedCapabilityData = null,
-  strategicRadarData = null,
-  productivityData = null,
-  maturityData = null,
-  competitiveLandscapeData = null,
-  coreAdjacencyData = null,
-  // Financial analysis data (Good Phase)
-  profitabilityData = null,
-  growthTrackerData = null,
-  liquidityEfficiencyData = null,
-  investmentPerformanceData = null,
-  leverageRiskData = null,
-  showText = false
-}) => {
-  const [isExportingPDF, setIsExportingPDF] = useState(false);
-  const { t } = useTranslation();
+    businessName,
+    onToastMessage,
+    currentPhase,
+    disabled = false,
+    className = "",
+    style = {},
+    exportType = "insights", // "insights" or "strategic"
+    unlockedFeatures = {},
+    showText = false
+  }) => {
+    const [isExportingPDF, setIsExportingPDF] = useState(false);
+    const { t } = useTranslation();
+    
+    const {
+      swotAnalysis, purchaseCriteria, loyaltyNPS, portersData, pestelData,
+      fullSwotData, competitiveAdvantage, strategicData, expandedCapability,
+      strategicRadar, productivityData, maturityData, competitiveLandscape,
+      coreAdjacency, profitabilityData, growthTrackerData, liquidityEfficiencyData,
+      investmentPerformanceData, leverageRiskData
+    } = useAnalysisStore();
 
 
 
@@ -469,7 +460,12 @@ const PDFExportButton = ({
       }
       setIsExportingPDF(false);
     }
-  }, [exportType, unlockedFeatures, businessName, onToastMessage]);
+  }, [exportType, unlockedFeatures, businessName, onToastMessage,
+      swotAnalysis, purchaseCriteria, loyaltyNPS, portersData, pestelData,
+      fullSwotData, competitiveAdvantage, expandedCapability,
+      strategicRadar, productivityData, maturityData, competitiveLandscape,
+      coreAdjacency, profitabilityData, growthTrackerData, liquidityEfficiencyData,
+      investmentPerformanceData, leverageRiskData]);
 
   // Main strategic export function
   const handleDownload = exportType === "strategic" ? handleDownloadStrategicAnalysis : handleDownloadPhaseAnalysis;

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Table, Badge, Spinner, Collapse, Card } from "react-bootstrap";
 import { Users, Sparkles, ChevronDown, ChevronUp, ChevronRight } from "lucide-react";
 import { useTranslation } from "../hooks/useTranslation";
-import { fetchConsensusAnalysis, fetchCollaboratorConsensus } from "../services/consensusService";
+import { useProjectStore } from "../store";
 
 const TeamRankingsView = ({
   activeAccordionKey,
@@ -36,6 +36,7 @@ const TeamRankingsView = ({
     setLoadingConsensus(true);
     try {
       let response;
+      const { fetchConsensusAnalysis, fetchCollaboratorConsensus } = useProjectStore.getState();
       if (consensusMode === "ai") {
         response = await fetchConsensusAnalysis(businessId);
       } else {

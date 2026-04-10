@@ -1,13 +1,11 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { TrendingUp, Loader, AlertCircle } from 'lucide-react';
 import '../styles/goodPhase.css';
-
+import { useAnalysisStore } from "../store";
 import FinancialEmptyState from './FinancialEmptyState';
 import CitationSource from './CitationSource';
 import { checkMissingQuestionsAndRedirect, ANALYSIS_TYPES } from '../services/missingQuestionsService';
-
-
 
 // Helper to normalize growth data structure
 const getNormalizedData = (data) => {
@@ -59,7 +57,6 @@ const prepareChartData = (dataValues) => {
 };
 
 const extractGrowthMetrics = (data) => {
-  // data is expected to be { growth_trends: ... } or just the trends object
   const target = data?.growth_trends || data;
   if (!target) return { revenueChartData: [], netIncomeChartData: [], metrics: {}, citations: {} };
 
@@ -91,7 +88,6 @@ const isGrowthDataIncomplete = (data) => {
   const normalized = getNormalizedData(data);
   if (!normalized) return true;
 
-  // Check if revenue or net_income data exists
   const hasRevenueData = normalized.revenue?.values && Object.keys(normalized.revenue.values).length > 0;
   const hasNetIncomeData = normalized.net_income?.values && Object.keys(normalized.net_income.values).length > 0;
 
@@ -124,9 +120,8 @@ const GrowthTracker = ({
   questions = [],
   userAnswers = {},
   businessName = "Your Business",
-  onDataGenerated,
   onRegenerate,
-  isRegenerating = false,
+  isRegenerating: propIsRegenerating = false,
   canRegenerate = true,
   growthData = null,
   growthTrackerData = null, // Support for naming variants
@@ -140,9 +135,23 @@ const GrowthTracker = ({
   readOnly = false,
   documentInfo = null,
 }) => {
-  const [analysisData, setAnalysisData] = useState(null);
-  const [error, setError] = useState(null);
+  const { 
+    growthTrackerData: storeGrowthTrackerData,
+    isRegenerating: isTypeRegenerating,
+    regenerateIndividualAnalysis 
+  } = useAnalysisStore();
 
+  const isRegenerating = propIsRegenerating || isTypeRegenerating('growthTracker');
+
+  const analysisData = useMemo(() => {
+    const rawData = growthData || growthTrackerData || storeGrowthTrackerData;
+    if (!rawData) return null;
+
+    const normalized = getNormalizedData(rawData);
+    return normalized ? { growth_trends: normalized } : null;
+  }, [growthData, growthTrackerData, storeGrowthTrackerData]);
+
+  const [error, setError] = useState(null);
   const fileInputRef = useRef(null);
 
   const handleRedirectToBrief = useCallback((missingQuestionsData = null) => {
@@ -181,26 +190,16 @@ const GrowthTracker = ({
         console.error('Error during regeneration:', error);
         setError('Failed to regenerate analysis. Please try again.');
       }
-    }
-  }, [onRegenerate]);
-
-
-
-  useEffect(() => {
-    const rawData = growthData || growthTrackerData;
-
-    if (rawData) {
-      const normalized = getNormalizedData(rawData);
-
-      if (normalized) {
-        setAnalysisData({ growth_trends: normalized });
+    } else {
+      try {
         setError(null);
-        if (onDataGenerated) {
-          onDataGenerated({ growth_trends: normalized });
-        }
+        await regenerateIndividualAnalysis('growthTracker', questions, userAnswers, selectedBusinessId);
+      } catch (error) {
+        console.error('Error during regeneration:', error);
+        setError('Failed to regenerate analysis. Please try again.');
       }
     }
-  }, [growthData, growthTrackerData, onDataGenerated]);
+  }, [onRegenerate, regenerateIndividualAnalysis, questions, userAnswers, selectedBusinessId]);
 
   const handleFileUpload = useCallback((file) => {
     if (file) {
@@ -223,10 +222,6 @@ const GrowthTracker = ({
       fileInputRef.current.value = '';
     }
   }, []);
-
-
-
-
 
   if (isRegenerating) {
     return (
@@ -434,4 +429,4 @@ const GrowthTracker = ({
   );
 };
 
-export default GrowthTracker;
+export default React.memo(GrowthTracker);

@@ -8,7 +8,7 @@ import MetricCard from "./MetricCard";
 import "../styles/AdminTableStyles.css";
 import "../styles/accessmanagement.css";
 
-import { useAuthStore } from '../store/authStore';
+import { useAuthStore, useProjectStore } from '../store';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -73,15 +73,14 @@ const AccessManagement = ({ onToast }) => {
 
         try {
             setLoading(true);
-            const res = await axios.get(`${BACKEND_URL}/api/projects/granted-access`, {
-                headers: { Authorization: `Bearer ${token}` },
-                params: { business_id: selectedBusinessId },
-            });
-
-            setAccessData(res.data);
-        } catch (err) {
-            console.error("Failed to fetch access data", err);
-            onToast("Failed to load access data", "error");
+            const { fetchGrantedAccess } = useProjectStore.getState();
+            const result = await fetchGrantedAccess(selectedBusinessId);
+            
+            if (result.success) {
+                setAccessData(result.data);
+            } else {
+                onToast(result.error || "Failed to load access data", "error");
+            }
         } finally {
             setLoading(false);
         }
@@ -101,36 +100,26 @@ const AccessManagement = ({ onToast }) => {
 
         try {
             setRevoking(true);
-
-            await axios.post(
-                `${BACKEND_URL}/api/projects/revoke-access`,
-                {
-                    business_id: revokeDetails.business_id,
-                    user_id: revokeDetails.user.user_id,
-                    access_type: revokeDetails.accessType
-                },
-                {
-                    headers: { Authorization: `Bearer ${token}` }
-                }
+            const { revokeAccess } = useProjectStore.getState();
+            
+            const result = await revokeAccess(
+                revokeDetails.business_id,
+                revokeDetails.user.user_id,
+                revokeDetails.accessType
             );
 
-            onToast(
-                `Successfully revoked ${revokeDetails.accessType === "all" ? "all access" : revokeDetails.accessType + " access"} for ${revokeDetails.user.user_name}`,
-                "success"
-            );
-
-            setShowRevokeModal(false);
-            setRevokeDetails(null);
-
-            // Refresh both businesses list (in case no grants left) and current access data
-            await fetchBusinesses();
-            await fetchAccessData();
-        } catch (err) {
-            console.error("Failed to revoke access", err);
-            onToast(
-                err.response?.data?.error || "Failed to revoke access",
-                "error"
-            );
+            if (result.success) {
+                onToast(
+                    `Successfully revoked ${revokeDetails.accessType === "all" ? "all access" : revokeDetails.accessType + " access"} for ${revokeDetails.user.user_name}`,
+                    "success"
+                );
+                setShowRevokeModal(false);
+                setRevokeDetails(null);
+                await fetchBusinesses();
+                await fetchAccessData();
+            } else {
+                onToast(result.error || "Failed to revoke access", "error");
+            }
         } finally {
             setRevoking(false);
         }

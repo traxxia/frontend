@@ -15,13 +15,9 @@ export const useLanguageStore = create(
         }
         const translations = window.appTranslations?.[lang] || staticTranslations[lang] || {};
         set({ currentLanguage: lang, translations });
-        window.currentAppLanguage = lang;
-        window.appTranslations = window.appTranslations || staticTranslations;
         window.dispatchEvent(new CustomEvent('languageChanged', {
           detail: { language: lang }
         }));
-        sessionStorage.setItem('appLanguage', lang);
-        localStorage.setItem('appLanguage', lang);
       },
 
       t: (key, params = {}) => {

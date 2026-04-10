@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { useTranslation } from "../hooks/useTranslation";
+import { useAuthStore, useBusinessStore, useUIStore, useProjectStore } from "../store";
 import {
   Button,
   Card,
@@ -16,7 +17,6 @@ import { Lock, ChevronUp, ChevronDown, AlertTriangle } from "lucide-react";
 import axios from "axios";
 import "../styles/RankProjectsPanel.css";
 import { validateRationale } from "../utils/validation";
-import { callMLRankingAPI } from "../services/aiRankingService";
 import { Checkbox } from "lucide-react"; // Import Checkbox icon if needed or use native
 
 /* ---------- PROJECT FILTERING HELPERS ---------- */
@@ -63,7 +63,8 @@ function RationaleToggle({ eventKey, children }) {
   );
 }
 
-const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankSaved, isAdmin, isRankingLocked, businessStatus, userHasRerankAccess, onShowToast, isArchived }) => {
+const RankProjectsPanel = ({ show, projects, onLockRankings, onRankSaved, isAdmin, isRankingLocked, businessStatus, userHasRerankAccess, onShowToast, isArchived }) => {
+  const { selectedBusinessId: businessId } = useBusinessStore();
   const { t } = useTranslation();
   const [projectList, setProjectList] = useState([]);
   const [initialOrder, setInitialOrder] = useState([]);
@@ -198,6 +199,7 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankS
         index === self.findIndex(p => p._id === project._id)
       );
 
+      const { callMLRankingAPI } = useProjectStore.getState();
       const { success, rankings } = await callMLRankingAPI(uniqueProjects);
       if (success) {
         // Map rankings back to projects
@@ -225,10 +227,8 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankS
             ai_rankings: validRankings,
             model_version: "v1.0"
           };
-          const token = sessionStorage.getItem("token");
-          await axios.post(`${process.env.REACT_APP_BACKEND_URL}/api/projects/ai-rankings`, aiPayload, {
-            headers: { Authorization: `Bearer ${token}` }
-          });
+          const { saveAIRankings } = useProjectStore.getState();
+          await saveAIRankings(businessId, validRankings);
         }
 
         setProjectList(rankedList);
@@ -468,27 +468,15 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankS
     setIsSaving(true);
 
     try {
-      const token = sessionStorage.getItem("token");
+      const { saveRankings } = useProjectStore.getState();
+      const rankingPayload = projectList.map((p, index) => ({
+        project_id: p._id,
+        rank: index + 1,
+        rationals: p.rationale || ""
+      }));
 
-      const payload = {
-        business_id: businessId,
-        projects: projectList.map((p, index) => ({
-          project_id: p._id,
-          rank: index + 1,
-          rationals: p.rationale || ""
-        }))
-      };
-
-      await axios.put(
-        `${process.env.REACT_APP_BACKEND_URL}/api/projects/rank`,
-        payload,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json"
-          }
-        }
-      );
+      const result = await saveRankings(businessId, rankingPayload);
+      if (!result.success) throw new Error(result.error);
 
       onShowToast("Rankings saved successfully", "success");
       setIsSaved(true);
@@ -515,7 +503,7 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankS
       return;
     }
     setIsLocked(true);
-    localStorage.setItem(`rankingLocked_${businessId}`, "true");
+    useUIStore.getState().setBusinessSetting(businessId, 'rankingLocked', true);
     if (onLockRankings) {
       onLockRankings();
     }

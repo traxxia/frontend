@@ -4,9 +4,10 @@ import axios from "axios";
 import "../styles/Ai.css";
 import { useTranslation } from "../hooks/useTranslation";
 
-import { useAuthStore } from '../store/authStore';
+import { useAuthStore, useBusinessStore } from '../store';
 
 const Aiassistant = ({ businessId: propBusinessId, projectId, pageContext, isDisabled }) => {
+  const { selectedBusinessId } = useBusinessStore();
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -25,8 +26,7 @@ const Aiassistant = ({ businessId: propBusinessId, projectId, pageContext, isDis
     "How to improve strategic justification?",
   ];
 
-  const getBusinessId = () =>
-    propBusinessId || sessionStorage.getItem("activeBusinessId");
+  const getBusinessId = () => propBusinessId || selectedBusinessId;
 
   const getToken = () => useAuthStore.getState().token;
 

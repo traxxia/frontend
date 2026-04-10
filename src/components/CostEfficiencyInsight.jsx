@@ -1,47 +1,58 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, ReferenceLine } from 'recharts';
-import { TrendingDown, DollarSign, Users, Target, Loader, Upload, X } from 'lucide-react';
+import { TrendingDown, DollarSign, Users, Target, Loader } from 'lucide-react';
 import '../styles/goodPhase.css';
 import { useTranslation } from "../hooks/useTranslation";
-import AnalysisEmptyState from './AnalysisEmptyState';
+import { useAnalysisStore } from '../store';
+import FinancialEmptyState from './FinancialEmptyState';
 import { checkMissingQuestionsAndRedirect, ANALYSIS_TYPES } from '../services/missingQuestionsService';
 import AnalysisError from './AnalysisError';
-
-import { useAuthStore } from '../store/authStore';
 
 const CostEfficiencyInsight = ({
   questions = [],
   userAnswers = {},
-  businessName = "Your Business",
-  onDataGenerated,
   onRegenerate,
-  isRegenerating = false,
+  isRegenerating: propIsRegenerating = false,
   canRegenerate = true,
-  costEfficiencyData = null,
+  costEfficiencyData: propCostEfficiencyData = null,
   selectedBusinessId,
   onRedirectToBrief
 }) => {
-  const [analysisData, setAnalysisData] = useState(costEfficiencyData);
-  const [isLoading, setIsLoading] = useState(false);
+  const { t } = useTranslation();
+  
+  // Use Zustand store
+  const { 
+    costEfficiencyData: storeCostEfficiencyData,
+    isRegenerating: isTypeRegenerating,
+    regenerateIndividualAnalysis 
+  } = useAnalysisStore();
+
+  const isRegenerating = propIsRegenerating || isTypeRegenerating('costEfficiency');
+
+  // Normalize data from store or props
+  const analysisData = useMemo(() => {
+    const rawData = propCostEfficiencyData || storeCostEfficiencyData;
+    if (!rawData) return null;
+    
+    // Normalize structure
+    if (rawData.costEfficiencyInsight) return rawData;
+    if (rawData.cost_efficiency_insight) return { costEfficiencyInsight: rawData.cost_efficiency_insight };
+    if (rawData.unitEconomics && rawData.costBreakdown) return { costEfficiencyInsight: rawData };
+    
+    return null;
+  }, [propCostEfficiencyData, storeCostEfficiencyData]);
+
   const [error, setError] = useState(null);
   const [uploadedFile, setUploadedFile] = useState(null);
-  const [isUploading, setIsUploading] = useState(false);
-  const isMounted = useRef(false);
-  const hasInitialized = useRef(false);
   const fileInputRef = useRef(null);
-  const { t } = useTranslation();
 
-  const ML_API_BASE_URL = process.env.REACT_APP_ML_BACKEND_URL || 'http://127.0.0.1:8000';
-  const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
-  const getAuthToken = () => useAuthStore.getState().token;
-
-  const handleRedirectToBrief = (missingQuestionsData = null) => {
+  const handleRedirectToBrief = useCallback((missingQuestionsData = null) => {
     if (onRedirectToBrief) {
       onRedirectToBrief(missingQuestionsData);
     }
-  };
+  }, [onRedirectToBrief]);
 
-  const handleMissingQuestionsCheck = async () => {
+  const handleMissingQuestionsCheck = useCallback(async () => {
     const analysisConfig = ANALYSIS_TYPES.costEfficiency || {
       displayName: 'Cost Efficiency Insight',
       customMessage: 'Answer more questions to unlock detailed cost efficiency analysis'
@@ -56,65 +67,33 @@ const CostEfficiencyInsight = ({
         customMessage: analysisConfig.customMessage
       }
     );
-  };
+  }, [selectedBusinessId, handleRedirectToBrief]);
 
-  const handleRetry = () => {
-    setError(null);
-    if (onRegenerate) {
-      onRegenerate();
-    }
-  };
-  const isCostEfficiencyDataIncomplete = (data) => {
-    if (!data) return true;
-
-    if (!data.costEfficiencyInsight) return true;
-    if (!data.costEfficiencyInsight.unitEconomics) return true;
-    if (!data.costEfficiencyInsight.costBreakdown) return true;
-    if (!data.costEfficiencyInsight.employeeProductivity) return true;
-
-    return false;
-  };
-
-  const handleRegenerate = async () => {
-    if (onRegenerate) {
-      onRegenerate();
-    } else {
-      setAnalysisData(null);
-      setError(null);
-    }
-  };
-
-  useEffect(() => {
-    if (costEfficiencyData && costEfficiencyData !== analysisData) {
-      setAnalysisData(costEfficiencyData);
-      if (onDataGenerated) {
-        onDataGenerated(costEfficiencyData);
-      }
-    }
-  }, [costEfficiencyData]);
-
-  useEffect(() => {
-    if (hasInitialized.current) return;
-
-    isMounted.current = true;
-    hasInitialized.current = true;
-
-    if (costEfficiencyData) {
-      setAnalysisData(costEfficiencyData);
-    }
-
-    return () => {
-      isMounted.current = false;
-    };
+  const isCostEfficiencyDataIncomplete = useCallback((data) => {
+    if (!data || !data.costEfficiencyInsight) return true;
+    const { unitEconomics, costBreakdown, employeeProductivity } = data.costEfficiencyInsight;
+    return !unitEconomics || !costBreakdown || !employeeProductivity;
   }, []);
 
-  useEffect(() => {
-    if (analysisData && onDataGenerated) {
-      onDataGenerated(analysisData);
+  const handleRegenerate = useCallback(async () => {
+    if (onRegenerate) {
+      try {
+        setError(null);
+        await onRegenerate();
+      } catch (err) {
+        setError(`Failed to generate analysis: ${err.message}`);
+      }
+    } else {
+      try {
+        setError(null);
+        await regenerateIndividualAnalysis('costEfficiency', questions, userAnswers, selectedBusinessId);
+      } catch (err) {
+        setError(`Failed to generate analysis: ${err.message}`);
+      }
     }
-  }, [analysisData]);
+  }, [onRegenerate, regenerateIndividualAnalysis, questions, userAnswers, selectedBusinessId]);
 
-  const handleFileUpload = (file) => {
+  const handleFileUpload = useCallback((file) => {
     if (file) {
       const allowedTypes = [
         'application/pdf',
@@ -133,128 +112,24 @@ const CostEfficiencyInsight = ({
         setError('Please upload a PDF, image, Excel, or CSV file.');
       }
     }
-  };
+  }, []);
 
-  const removeFile = () => {
+  const removeFile = useCallback(() => {
     setUploadedFile(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
-  };
+  }, []);
 
-  const generateCostEfficiencyAnalysis = async (withFile = false) => {
-    setIsLoading(true);
-    setError(null);
+  const waterfallData = useMemo(() => {
+    if (!analysisData?.costEfficiencyInsight?.unitEconomics?.historicalCosts) return [];
 
-    try {
-      const questionsArray = [];
-      const answersArray = [];
-
-      questions
-        .filter(q => userAnswers[q._id] && userAnswers[q._id].trim())
-        .sort((a, b) => (a.order || 0) - (b.order || 0))
-        .forEach(question => {
-          questionsArray.push(question.question_text);
-          answersArray.push(userAnswers[question._id]);
-        });
-
-      if (questionsArray.length === 0) {
-        throw new Error('Please answer some questions first to generate cost efficiency analysis.');
-      }
-      const formData = new FormData();
-      if (withFile && uploadedFile) {
-        formData.append('file', uploadedFile);
-      } else {
-        const businessInfo = `Business Information:\n${questionsArray.map((q, i) => `${q}: ${answersArray[i]}`).join('\n')}`;
-        const dummyFile = new Blob([businessInfo], { type: 'text/plain' });
-        formData.append('file', dummyFile, 'business_data.txt');
-      }
-
-      formData.append('questions', questionsArray.join(','));
-      formData.append('answers', answersArray.join('\n'));
-
-      const response = await fetch(`${ML_API_BASE_URL}/cost-efficiency-competitive-position`, {
-        method: 'POST',
-        headers: {
-          'accept': 'application/json'
-        },
-        body: formData
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`API returned ${response.status}: ${errorText}`);
-      }
-
-      const result = await response.json();
-      let costEfficiencyContent = null;
-      if (result.costEfficiencyInsight) {
-        costEfficiencyContent = result;
-      } else if (result.cost_efficiency_insight) {
-        costEfficiencyContent = { costEfficiencyInsight: result.cost_efficiency_insight };
-      } else {
-        costEfficiencyContent = { costEfficiencyInsight: result };
-      }
-
-      setAnalysisData(costEfficiencyContent);
-      await saveAnalysisToBackend(costEfficiencyContent);
-
-      if (onDataGenerated) {
-        onDataGenerated(costEfficiencyContent);
-      }
-
-    } catch (error) {
-      console.error('Error generating cost efficiency analysis:', error);
-      setError(`Failed to generate analysis: ${error.message}`);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-  const saveAnalysisToBackend = async (analysisData) => {
-    try {
-      const token = getAuthToken();
-
-      const response = await fetch(`${API_BASE_URL}/api/conversations/phase-analysis`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          phase: 'good',
-          analysis_type: 'costEfficiency',
-          analysis_name: 'Cost Efficiency Insight',
-          analysis_data: analysisData,
-          business_id: selectedBusinessId,
-          metadata: {
-            generated_at: new Date().toISOString(),
-            business_name: businessName,
-            has_uploaded_file: !!uploadedFile
-          }
-        })
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to save Cost Efficiency analysis');
-      }
-
-      const result = await response.json();
-      return result;
-    } catch (error) {
-      console.error('Error saving Cost Efficiency analysis to backend:', error);
-      throw error;
-    }
-  };
-  const prepareWaterfallData = (data) => {
-    if (!data?.costEfficiencyInsight?.unitEconomics?.historicalCosts) return [];
-
-    const costs = data.costEfficiencyInsight.unitEconomics.historicalCosts;
-    const waterfallData = [];
+    const costs = analysisData.costEfficiencyInsight.unitEconomics.historicalCosts;
+    const result = [];
 
     costs.forEach((cost, index) => {
       if (index === 0) {
-        waterfallData.push({
+        result.push({
           year: cost.year,
           value: cost.cost,
           cumulative: cost.cost,
@@ -263,7 +138,7 @@ const CostEfficiencyInsight = ({
       } else {
         const previous = costs[index - 1];
         const change = cost.cost - previous.cost;
-        waterfallData.push({
+        result.push({
           year: cost.year,
           value: Math.abs(change),
           cumulative: cost.cost,
@@ -273,13 +148,13 @@ const CostEfficiencyInsight = ({
       }
     });
 
-    return waterfallData;
-  };
+    return result;
+  }, [analysisData]);
 
-  const prepareBenchmarkData = (data) => {
-    if (!data?.costEfficiencyInsight?.unitEconomics) return [];
+  const benchmarkData = useMemo(() => {
+    if (!analysisData?.costEfficiencyInsight?.unitEconomics) return [];
 
-    const { currentUnitCost, competitorAvgCost } = data.costEfficiencyInsight.unitEconomics;
+    const { currentUnitCost, competitorAvgCost } = analysisData.costEfficiencyInsight.unitEconomics;
 
     return [
       {
@@ -293,8 +168,9 @@ const CostEfficiencyInsight = ({
         type: 'benchmark'
       }
     ];
-  };
-  const WaterfallTooltip = ({ active, payload, label }) => {
+  }, [analysisData]);
+
+  const WaterfallTooltip = React.memo(({ active, payload, label }) => {
     if (active && payload && payload.length) {
       const data = payload[0].payload;
       return (
@@ -314,8 +190,9 @@ const CostEfficiencyInsight = ({
       );
     }
     return null;
-  };
-  const BenchmarkTooltip = ({ active, payload, label }) => {
+  });
+
+  const BenchmarkTooltip = React.memo(({ active, payload, label }) => {
     if (active && payload && payload.length) {
       const value = payload[0].value;
       return (
@@ -328,39 +205,33 @@ const CostEfficiencyInsight = ({
       );
     }
     return null;
-  };
+  });
 
-  if (isLoading || isRegenerating) {
+  if (isRegenerating) {
     return (
       <div className="channel-heatmap channel-heatmap-container">
         <div className="loading-state">
           <Loader size={24} className="loading-spinner" />
-          <span>
-            {isRegenerating
-              ? t("Regenerating cost efficiency analysis...")
-              : t("Generating cost efficiency analysis...")
-            }
-          </span>
+          <span>Generating cost efficiency analysis...</span>
         </div>
       </div>
     );
   }
 
-  if (error) {
-    return (
-      <div className="channel-heatmap channel-heatmap-container">
+  const renderContent = () => {
+    if (error) {
+      return (
         <AnalysisError
           error={error}
-          onRetry={handleRetry}
+          onRetry={handleRegenerate}
           title="Cost Efficiency Analysis Error"
         />
-      </div>
-    );
-  }
-  if (!analysisData || isCostEfficiencyDataIncomplete(analysisData)) {
-    return (
-      <div className="channel-heatmap channel-heatmap-container">
-        <AnalysisEmptyState
+      );
+    }
+
+    if (!analysisData || isCostEfficiencyDataIncomplete(analysisData)) {
+      return (
+        <FinancialEmptyState
           analysisType="costEfficiency"
           analysisDisplayName="Cost Efficiency Insight"
           icon={TrendingDown}
@@ -372,180 +243,181 @@ const CostEfficiencyInsight = ({
           minimumAnswersRequired={3}
           showFileUpload={true}
           onFileUpload={handleFileUpload}
-          onGenerateWithFile={() => generateCostEfficiencyAnalysis(true)}
-          onGenerateWithoutFile={() => generateCostEfficiencyAnalysis(false)}
           uploadedFile={uploadedFile}
           onRemoveFile={removeFile}
-          isUploading={isLoading}
           fileUploadMessage="Upload financial documents (PDF, Excel, CSV, or images)"
           acceptedFileTypes=".pdf,.xlsx,.xls,.csv,.jpg,.jpeg,.png"
         />
-      </div>
+      );
+    }
+
+    const { unitEconomics, costBreakdown, employeeProductivity } = analysisData.costEfficiencyInsight;
+    const costSavings = unitEconomics.competitorAvgCost - unitEconomics.currentUnitCost;
+    const savingsPercentage = ((costSavings / unitEconomics.competitorAvgCost) * 100).toFixed(1);
+
+    return (
+      <>
+        <div className="ch-metrics">
+          <div className="ch-metric-card ch-metric-blue">
+            <div className="ch-metric-header">
+              <DollarSign size={20} />
+              <span>Current Unit Cost</span>
+            </div>
+            <p className="ch-metric-value">{unitEconomics.currentUnitCost}</p>
+          </div>
+
+          <div className="ch-metric-card ch-metric-green">
+            <div className="ch-metric-header">
+              <Target size={20} />
+              <span>Industry Average</span>
+            </div>
+            <p className="ch-metric-value">{unitEconomics.competitorAvgCost}</p>
+          </div>
+
+          <div className="ch-metric-card ch-metric-purple">
+            <div className="ch-metric-header">
+              <TrendingDown size={20} />
+              <span>{costSavings > 0 ? 'Cost Advantage' : 'Cost Gap'}</span>
+            </div>
+            <p className="ch-metric-value">
+              {costSavings > 0 ? '-' : '+'}{Math.abs(costSavings)} ({savingsPercentage}%)
+            </p>
+          </div>
+
+          <div className="ch-metric-card ch-metric-orange">
+            <div className="ch-metric-header">
+              <Users size={20} />
+              <span>Value per Employee</span>
+            </div>
+            <p className="ch-metric-value">{employeeProductivity.valuePerEmployee?.toLocaleString()}</p>
+          </div>
+        </div>
+
+        <div className="ch-heatmap-container">
+          <div className="ch-heatmap-scroll">
+            <div className="ch-heatmap-header-section">
+              <h3 className="ch-section-title">Cost Analysis Charts</h3>
+            </div>
+
+            <div className="ch-charts-grid">
+              <div className="ch-chart-section">
+                <h4>Historical Cost Trend</h4>
+                <div className="ch-chart-wrapper">
+                  <ResponsiveContainer width="100%" height={300}>
+                    <BarChart data={waterfallData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="year" />
+                      <YAxis />
+                      <Tooltip content={<WaterfallTooltip />} />
+                      <Bar dataKey="cumulative">
+                        {waterfallData.map((entry, index) => (
+                          <Cell
+                            key={`cell-${index}`}
+                            fill={
+                              entry.type === 'start' ? '#8884d8' :
+                                entry.type === 'decrease' ? '#82ca9d' : '#ff7c7c'
+                            }
+                          />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+
+              <div className="ch-chart-section">
+                <h4>Cost Benchmark Comparison</h4>
+                <div className="ch-chart-wrapper">
+                  <ResponsiveContainer width="100%" height={300}>
+                    <BarChart data={benchmarkData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="category" />
+                      <YAxis />
+                      <Tooltip content={<BenchmarkTooltip />} />
+                      <ReferenceLine y={unitEconomics.competitorAvgCost} stroke="#ff7300" strokeDasharray="5 5" />
+                      <Bar dataKey="value">
+                        {benchmarkData.map((entry, index) => (
+                          <Cell
+                            key={`cell-${index}`}
+                            fill={entry.type === 'current' ? '#8884d8' : '#82ca9d'}
+                          />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="ch-breakdown-section">
+          <h3 className="ch-section-title">Cost Structure Analysis</h3>
+          <div className="ch-breakdown-grid">
+            <div className="ch-breakdown-card">
+              <h4>Fixed Costs</h4>
+              <div className="ch-cost-item">
+                <span>Monthly:</span>
+                <span>{costBreakdown.fixedCosts.monthly.toLocaleString()}</span>
+              </div>
+              <div className="ch-cost-item">
+                <span>Annual:</span>
+                <span>{costBreakdown.fixedCosts.annualized.toLocaleString()}</span>
+              </div>
+              <div className="ch-cost-components">
+                <strong>Components:</strong>
+                <ul>
+                  {costBreakdown.fixedCosts.components.map((component, index) => (
+                    <li key={index}>{component}</li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+
+            <div className="ch-breakdown-card">
+              <h4>Variable Costs</h4>
+              <div className="ch-cost-item">
+                <span>Per Unit:</span>
+                <span>{costBreakdown.variableCosts.perUnit}</span>
+              </div>
+              <div className="ch-cost-components">
+                <strong>Components:</strong>
+                <ul>
+                  {costBreakdown.variableCosts.components.map((component, index) => (
+                    <li key={index}>{component}</li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+
+            <div className="ch-breakdown-card">
+              <h4>Employee Metrics</h4>
+              <div className="ch-cost-item">
+                <span>Headcount:</span>
+                <span>{employeeProductivity.headcount}</span>
+              </div>
+              <div className="ch-cost-item">
+                <span>Cost %:</span>
+                <span>{employeeProductivity.costPercentage}%</span>
+              </div>
+              <div className="ch-cost-item">
+                <span>Value/Employee:</span>
+                <span>{employeeProductivity.valuePerEmployee.toLocaleString()}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </>
     );
-  }
-
-  const { unitEconomics, costBreakdown, employeeProductivity } = analysisData.costEfficiencyInsight;
-  const waterfallData = prepareWaterfallData(analysisData);
-  const benchmarkData = prepareBenchmarkData(analysisData);
-
-  const costSavings = unitEconomics.competitorAvgCost - unitEconomics.currentUnitCost;
-  const savingsPercentage = ((costSavings / unitEconomics.competitorAvgCost) * 100).toFixed(1);
+  };
 
   return (
     <div className="channel-heatmap channel-heatmap-container" data-analysis-type="cost-efficiency"
       data-analysis-name="Cost Efficiency Insight"
       data-analysis-order="1">
-      <div className="ch-metrics">
-        <div className="ch-metric-card ch-metric-blue">
-          <div className="ch-metric-header">
-            <DollarSign size={20} />
-            <span>Current Unit Cost</span>
-          </div>
-          <p className="ch-metric-value">{unitEconomics.currentUnitCost}</p>
-        </div>
-
-        <div className="ch-metric-card ch-metric-green">
-          <div className="ch-metric-header">
-            <Target size={20} />
-            <span>Industry Average</span>
-          </div>
-          <p className="ch-metric-value">{unitEconomics.competitorAvgCost}</p>
-        </div>
-
-        <div className="ch-metric-card ch-metric-purple">
-          <div className="ch-metric-header">
-            <TrendingDown size={20} />
-            <span>{costSavings > 0 ? 'Cost Advantage' : 'Cost Gap'}</span>
-          </div>
-          <p className="ch-metric-value">
-            {costSavings > 0 ? '-' : '+'}{Math.abs(costSavings)} ({savingsPercentage}%)
-          </p>
-        </div>
-
-        <div className="ch-metric-card ch-metric-orange">
-          <div className="ch-metric-header">
-            <Users size={20} />
-            <span>Value per Employee</span>
-          </div>
-          <p className="ch-metric-value">{employeeProductivity.valuePerEmployee?.toLocaleString()}</p>
-        </div>
-      </div>
-      <div className="ch-heatmap-container">
-        <div className="ch-heatmap-scroll">
-          <div className="ch-heatmap-header-section">
-            <h3 className="ch-section-title">Cost Analysis Charts</h3>
-          </div>
-
-          <div className="ch-charts-grid">
-            <div className="ch-chart-section">
-              <h4>Historical Cost Trend</h4>
-              <div className="ch-chart-wrapper">
-                <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={waterfallData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="year" />
-                    <YAxis />
-                    <Tooltip content={<WaterfallTooltip />} />
-                    <Bar dataKey="cumulative">
-                      {waterfallData.map((entry, index) => (
-                        <Cell
-                          key={`cell-${index}`}
-                          fill={
-                            entry.type === 'start' ? '#8884d8' :
-                              entry.type === 'decrease' ? '#82ca9d' : '#ff7c7c'
-                          }
-                        />
-                      ))}
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-
-            <div className="ch-chart-section">
-              <h4>Cost Benchmark Comparison</h4>
-              <div className="ch-chart-wrapper">
-                <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={benchmarkData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="category" />
-                    <YAxis />
-                    <Tooltip content={<BenchmarkTooltip />} />
-                    <ReferenceLine y={unitEconomics.competitorAvgCost} stroke="#ff7300" strokeDasharray="5 5" />
-                    <Bar dataKey="value">
-                      {benchmarkData.map((entry, index) => (
-                        <Cell
-                          key={`cell-${index}`}
-                          fill={entry.type === 'current' ? '#8884d8' : '#82ca9d'}
-                        />
-                      ))}
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="ch-breakdown-section">
-        <h3 className="ch-section-title">Cost Structure Analysis</h3>
-        <div className="ch-breakdown-grid">
-          <div className="ch-breakdown-card">
-            <h4>Fixed Costs</h4>
-            <div className="ch-cost-item">
-              <span>Monthly:</span>
-              <span>{costBreakdown.fixedCosts.monthly.toLocaleString()}</span>
-            </div>
-            <div className="ch-cost-item">
-              <span>Annual:</span>
-              <span>{costBreakdown.fixedCosts.annualized.toLocaleString()}</span>
-            </div>
-            <div className="ch-cost-components">
-              <strong>Components:</strong>
-              <ul>
-                {costBreakdown.fixedCosts.components.map((component, index) => (
-                  <li key={index}>{component}</li>
-                ))}
-              </ul>
-            </div>
-          </div>
-
-          <div className="ch-breakdown-card">
-            <h4>Variable Costs</h4>
-            <div className="ch-cost-item">
-              <span>Per Unit:</span>
-              <span>{costBreakdown.variableCosts.perUnit}</span>
-            </div>
-            <div className="ch-cost-components">
-              <strong>Components:</strong>
-              <ul>
-                {costBreakdown.variableCosts.components.map((component, index) => (
-                  <li key={index}>{component}</li>
-                ))}
-              </ul>
-            </div>
-          </div>
-
-          <div className="ch-breakdown-card">
-            <h4>Employee Metrics</h4>
-            <div className="ch-cost-item">
-              <span>Headcount:</span>
-              <span>{employeeProductivity.headcount}</span>
-            </div>
-            <div className="ch-cost-item">
-              <span>Cost %:</span>
-              <span>{employeeProductivity.costPercentage}%</span>
-            </div>
-            <div className="ch-cost-item">
-              <span>Value/Employee:</span>
-              <span>{employeeProductivity.valuePerEmployee.toLocaleString()}</span>
-            </div>
-          </div>
-        </div>
-      </div>
+      {renderContent()}
     </div>
   );
 };
 
-export default CostEfficiencyInsight;
+export default React.memo(CostEfficiencyInsight);

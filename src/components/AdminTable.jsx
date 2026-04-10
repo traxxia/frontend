@@ -106,7 +106,7 @@ const AdminTable = ({
                                 />
                                 {searchTooltip && (
                                     <OverlayTrigger
-                                        trigger="hover"
+                                        trigger={["hover", "focus"]}
                                         placement="top"
                                         rootClose
                                         popperConfig={{

@@ -19,6 +19,7 @@ import { AnalysisApiService } from "../services/analysisApiService";
 import '../styles/pmf-onboarding.css';
 
 import { useAuthStore } from '../store/authStore';
+import { useUIStore } from '../store/uiStore';
 
 const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId, onToastMessage }) => {
   const navigate = useNavigate();
@@ -507,9 +508,9 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId, onToastMessage
       const currentUserId = useAuthStore.getState().userId;
       if (currentUserId && businessId) {
         console.info(`PMF Save: Setting expectation flag for business ${businessId} and user ${currentUserId}`);
-        localStorage.setItem(`pmf_expecting_my_data_${businessId}`, currentUserId);
+        useUIStore.getState().setBusinessSetting(businessId, 'pmfExpectingMyData', currentUserId);
         // Also clear any old submission data to prevent conflicts
-        localStorage.removeItem(`pmf_last_submission_${businessId}`);
+        useUIStore.getState().setBusinessSetting(businessId, 'pmfLastSubmission', null);
       }
 
       if (onSubmit) {

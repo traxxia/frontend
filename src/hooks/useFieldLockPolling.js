@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import axios from "axios";
+import { useAuthStore } from "../store/authStore";
 
 // Global cache for lock requests shared across hook instances
 const fieldLockCache = new Map();
@@ -7,7 +8,7 @@ const fieldLockCache = new Map();
 export const useFieldLockPolling = (projectId, enabled = true) => {
   const [locks, setLocks] = useState([]);
   const pollingRef = useRef(null);
-  const token = sessionStorage.getItem("token");
+  const token = useAuthStore.getState().token;
 
   const fetchLocks = useCallback(async () => {
     if (!projectId || !token) return;

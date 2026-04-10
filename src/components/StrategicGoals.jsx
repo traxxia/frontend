@@ -1,35 +1,63 @@
-import React, { useState, useEffect } from 'react';
-import { RefreshCw, Loader, Target, TrendingUp, Calendar, CheckCircle, BarChart3, ChevronDown, ChevronRight } from 'lucide-react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { Loader, Target, TrendingUp, CheckCircle, BarChart3, ChevronDown, ChevronRight } from 'lucide-react';
 import AnalysisEmptyState from './AnalysisEmptyState';
-import '../styles/EssentialPhase.css';
+import AnalysisError from './AnalysisError';
+import { useAnalysisStore } from '../store';
+import { useTranslation } from "../hooks/useTranslation";
 import { checkMissingQuestionsAndRedirect, ANALYSIS_TYPES } from '../services/missingQuestionsService';
+import '../styles/EssentialPhase.css';
 
 const StrategicGoals = ({
     questions = [],
     userAnswers = {},
     businessName = '',
     onRegenerate,
-    isRegenerating = false,
+    isRegenerating: propIsRegenerating = false,
     canRegenerate = true,
-    strategicGoalsData = null,
+    strategicGoalsData: propStrategicGoalsData = null,
     selectedBusinessId,
-    onRedirectToBrief // Add this prop
+    onRedirectToBrief
 }) => {
-    const [data, setData] = useState(strategicGoalsData);
-    const [hasGenerated, setHasGenerated] = useState(false);
-    const [expandedSections, setExpandedSections] = useState({});
+    const { t } = useTranslation();
+    
+    // Use Zustand store
+    const { 
+        strategicGoalsData: storeStrategicGoalsData,
+        isRegenerating: isTypeRegenerating,
+        regenerateIndividualAnalysis 
+    } = useAnalysisStore();
 
-    const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
-    const getAuthToken = () => sessionStorage.getItem('token');
+    const isRegenerating = propIsRegenerating || isTypeRegenerating('strategicGoals');
 
-    const handleRedirectToBrief = (missingQuestionsData = null) => {
+    // Normalize data from store or props
+    const data = useMemo(() => {
+        const rawData = propStrategicGoalsData || storeStrategicGoalsData;
+        if (!rawData) return null;
+        
+        // Handle nested structure
+        const actualData = rawData.strategicGoals || rawData;
+        return actualData;
+    }, [propStrategicGoalsData, storeStrategicGoalsData]);
+
+    const [expandedSections, setExpandedSections] = useState({
+        overview: true,
+        objectives: true,
+        keyresults: true,
+        gantt: true
+    });
+    const [error, setError] = useState(null);
+
+    const handleRedirectToBrief = useCallback((missingQuestionsData = null) => {
         if (onRedirectToBrief) {
             onRedirectToBrief(missingQuestionsData);
         }
-    };
+    }, [onRedirectToBrief]);
 
-    const handleMissingQuestionsCheck = async () => {
-        const analysisConfig = ANALYSIS_TYPES.strategicGoals;
+    const handleMissingQuestionsCheck = useCallback(async () => {
+        const analysisConfig = ANALYSIS_TYPES.strategicGoals || {
+            displayName: 'Strategic Goals & OKR Analysis',
+            customMessage: 'Answer more questions to unlock detailed strategic goals and OKR analysis'
+        };
 
         await checkMissingQuestionsAndRedirect(
             'strategicGoals',
@@ -40,30 +68,15 @@ const StrategicGoals = ({
                 customMessage: analysisConfig.customMessage
             }
         );
-    };
+    }, [selectedBusinessId, handleRedirectToBrief]);
 
-    // Check if the strategic goals data is empty/incomplete
-    const isStrategicGoalsDataIncomplete = (data) => {
+    const isStrategicGoalsDataIncomplete = useCallback((data) => {
         if (!data) return true;
+        const objectives = data.objectives || [];
+        if (!Array.isArray(objectives) || objectives.length === 0) return true;
+        return !objectives.some(obj => obj.objective && (obj.priority !== undefined || obj.keyResults));
+    }, []);
 
-        // Handle nested structure - check if data is nested under 'strategicGoals' key
-        const actualData = data.strategicGoals || data;
-
-        // Check if objectives array is empty or null
-        if (!actualData.objectives || !Array.isArray(actualData.objectives) || actualData.objectives.length === 0) {
-            return true;
-        }
-
-        // Check if objectives have essential data
-        const hasValidObjectives = actualData.objectives.some(objective =>
-            objective.objective &&
-            (objective.priority !== undefined || objective.keyResults)
-        );
-
-        return !hasValidObjectives;
-    };
-
-    // Toggle section expansion
     const toggleSection = (sectionKey) => {
         setExpandedSections(prev => ({
             ...prev,
@@ -71,25 +84,23 @@ const StrategicGoals = ({
         }));
     };
 
-    // Handle regeneration
-    const handleRegenerate = async () => {
+    const handleRegenerate = useCallback(async () => {
         if (onRegenerate) {
-            onRegenerate();
+            try {
+                setError(null);
+                await onRegenerate();
+            } catch (err) {
+                setError(err.message || 'Failed to regenerate analysis');
+            }
         } else {
-            setData(null);
-            setHasGenerated(false);
+            try {
+                setError(null);
+                await regenerateIndividualAnalysis('strategicGoals', questions, userAnswers, selectedBusinessId);
+            } catch (err) {
+                setError(err.message || 'Failed to generate analysis');
+            }
         }
-    };
-
-    useEffect(() => {
-        if (strategicGoalsData) {
-            // Handle nested structure - check if data is nested under 'strategicGoals' key
-            const actualData = strategicGoalsData.strategicGoals || strategicGoalsData;
-
-            setData(actualData);
-            setHasGenerated(true);
-        }
-    }, [strategicGoalsData]);
+    }, [onRegenerate, regenerateIndividualAnalysis, questions, userAnswers, selectedBusinessId]);
 
     const getProgressColor = (progress) => {
         if (progress >= 75) return 'high-intensity';
@@ -131,35 +142,17 @@ const StrategicGoals = ({
         }
     };
 
-    const months = [
-        'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
-    ];
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
     const renderGanttChart = (objectives) => {
-        // Generate default timeline data if missing
         const objectivesWithTimeline = objectives.map((objective, index) => {
-            // Create more realistic timeline based on priority
             let startMonth, duration;
-
             switch (objective.priority) {
-                case 1: // High priority - start early, longer duration
-                    startMonth = 1;
-                    duration = 12;
-                    break;
-                case 2: // Medium priority - start mid-year, medium duration
-                    startMonth = 3;
-                    duration = 8;
-                    break;
-                case 3: // Lower priority - start later, shorter duration
-                    startMonth = 6;
-                    duration = 6;
-                    break;
-                default:
-                    startMonth = index * 2 + 1;
-                    duration = 6;
+                case 1: startMonth = 1; duration = 12; break;
+                case 2: startMonth = 3; duration = 8; break;
+                case 3: startMonth = 6; duration = 6; break;
+                default: startMonth = index * 2 + 1; duration = 6;
             }
-
             return {
                 ...objective,
                 startMonth: objective.startMonth || startMonth,
@@ -174,10 +167,9 @@ const StrategicGoals = ({
                     {expandedSections.gantt ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
                 </div>
 
-                {expandedSections.gantt !== false && (
+                {expandedSections.gantt && (
                     <div className="table-container">
                         <div className="gantt-chart">
-                            {/* Timeline Header */}
                             <div className="timeline-header">
                                 <div className="timeline-label">Initiative</div>
                                 {months.map((month, index) => (
@@ -185,7 +177,6 @@ const StrategicGoals = ({
                                 ))}
                             </div>
 
-                            {/* Initiative Rows */}
                             {objectivesWithTimeline.map((objective, index) => (
                                 <div key={index} className="initiative-row">
                                     <div className="initiative-name">{objective.objective}</div>
@@ -195,7 +186,6 @@ const StrategicGoals = ({
                                         const isFirstMonth = monthIndex === objective.startMonth - 1;
                                         const isMidPoint = monthIndex === Math.floor(objective.startMonth - 1 + objective.duration / 2);
 
-                                        // Calculate average progress from key results
                                         const avgProgress = objective.keyResults?.length > 0
                                             ? Math.round(objective.keyResults.reduce((sum, kr) => sum + (kr.progress || 0), 0) / objective.keyResults.length)
                                             : 0;
@@ -205,33 +195,17 @@ const StrategicGoals = ({
                                                 {isActive && (
                                                     <div className={`timeline-bar priority-${objective.priority}`}
                                                         style={{
-                                                            position: 'relative',
-                                                            display: 'flex',
-                                                            alignItems: 'center',
-                                                            justifyContent: 'center',
-                                                            fontSize: '11px',
-                                                            fontWeight: 'bold',
-                                                            color: 'white',
-                                                            textShadow: '0 1px 2px rgba(0,0,0,0.5)'
+                                                            position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                                            fontSize: '11px', fontWeight: 'bold', color: 'white', textShadow: '0 1px 2px rgba(0,0,0,0.5)'
                                                         }}>
-                                                        {/* Show progress percentage in the middle of the timeline bar */}
                                                         {isMidPoint && objective.duration > 2 && (
-                                                            <span style={{
-                                                                background: 'rgba(0,0,0,0.3)',
-                                                                padding: '1px 4px',
-                                                                borderRadius: '2px',
-                                                                fontSize: '10px'
-                                                            }}>
+                                                            <span style={{ background: 'rgba(0,0,0,0.3)', padding: '1px 4px', borderRadius: '2px', fontSize: '10px' }}>
                                                                 {avgProgress}%
                                                             </span>
                                                         )}
-                                                        {/* Show priority for short durations or first month */}
-                                                        {((isFirstMonth && objective.duration <= 2) ||
-                                                            (isFirstMonth && !isMidPoint)) && (
-                                                                <span style={{ fontSize: '10px' }}>
-                                                                    P{objective.priority}
-                                                                </span>
-                                                            )}
+                                                        {((isFirstMonth && objective.duration <= 2) || (isFirstMonth && !isMidPoint)) && (
+                                                            <span style={{ fontSize: '10px' }}>P{objective.priority}</span>
+                                                        )}
                                                     </div>
                                                 )}
                                             </div>
@@ -254,15 +228,11 @@ const StrategicGoals = ({
                     {expandedSections.overview ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
                 </div>
 
-                {expandedSections.overview !== false && (
+                {expandedSections.overview && (
                     <div className="table-container">
                         <table className="data-table">
                             <thead>
-                                <tr>
-                                    <th>Metric</th>
-                                    <th>Value</th>
-                                    <th>Status</th>
-                                </tr>
+                                <tr><th>Metric</th><th>Value</th><th>Status</th></tr>
                             </thead>
                             <tbody>
                                 <tr>
@@ -270,27 +240,12 @@ const StrategicGoals = ({
                                     <td>{progress}%</td>
                                     <td>
                                         <span className={`status-badge ${getProgressColor(progress)}`}>
-                                            {progress >= 75 ? 'Excellent' :
-                                                progress >= 50 ? 'Good' :
-                                                    progress >= 25 ? 'Fair' : 'Needs Attention'}
+                                            {progress >= 75 ? 'Excellent' : progress >= 50 ? 'Good' : progress >= 25 ? 'Fair' : 'Needs Attention'}
                                         </span>
                                     </td>
                                 </tr>
-                                <tr>
-                                    <td><strong>Total Objectives</strong></td>
-                                    <td>{data.objectives?.length || 0}</td>
-                                    <td>-</td>
-                                </tr>
-                                <tr>
-                                    <td><strong>High Priority Objectives</strong></td>
-                                    <td>{data.objectives?.filter(obj => obj.priority === 1).length || 0}</td>
-                                    <td>-</td>
-                                </tr>
-                                <tr>
-                                    <td><strong>Strategic Themes</strong></td>
-                                    <td>{themes?.length || 0}</td>
-                                    <td>-</td>
-                                </tr>
+                                <tr><td><strong>Total Objectives</strong></td><td>{data.objectives?.length || 0}</td><td>-</td></tr>
+                                <tr><td><strong>High Priority Objectives</strong></td><td>{data.objectives?.filter(obj => obj.priority === 1).length || 0}</td><td>-</td></tr>
                             </tbody>
                         </table>
 
@@ -299,9 +254,7 @@ const StrategicGoals = ({
                                 <h4>Strategic Themes</h4>
                                 <div className="forces-tags">
                                     {themes.map((theme, index) => (
-                                        <span key={index} className="force-tag">
-                                            {formatTheme(theme)}
-                                        </span>
+                                        <span key={index} className="force-tag">{formatTheme(theme)}</span>
                                     ))}
                                 </div>
                             </div>
@@ -320,17 +273,11 @@ const StrategicGoals = ({
                     {expandedSections.objectives ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
                 </div>
 
-                {expandedSections.objectives !== false && (
+                {expandedSections.objectives && (
                     <div className="table-container">
                         <table className="data-table">
                             <thead>
-                                <tr>
-                                    <th>Objective</th>
-                                    <th>Priority</th>
-                                    <th>Alignment</th>
-                                    <th>Progress</th>
-                                    <th>Key Results</th>
-                                </tr>
+                                <tr><th>Objective</th><th>Priority</th><th>Alignment</th><th>Progress</th><th>Key Results</th></tr>
                             </thead>
                             <tbody>
                                 {objectives.map((objective, index) => {
@@ -340,35 +287,21 @@ const StrategicGoals = ({
 
                                     return (
                                         <tr key={index}>
-                                            <td>
-                                                <strong>{objective.objective}</strong>
-                                            </td>
-                                            <td>
-                                                <span className={`status-badge priority-${objective.priority}`}>
-                                                    Priority {objective.priority}
-                                                </span>
-                                            </td>
+                                            <td><strong>{objective.objective}</strong></td>
+                                            <td><span className={`status-badge priority-${objective.priority}`}>Priority {objective.priority}</span></td>
                                             <td>
                                                 <div className="force-name">
                                                     {getAlignmentIcon(objective.alignment)}
                                                     <span>{formatAlignmentLabel(objective.alignment)}</span>
                                                 </div>
                                             </td>
-                                            <td>
-                                                <span className={`status-badge ${getProgressColor(avgProgress)}`}>
-                                                    {avgProgress}%
-                                                </span>
-                                            </td>
+                                            <td><span className={`status-badge ${getProgressColor(avgProgress)}`}>{avgProgress}%</span></td>
                                             <td>
                                                 <div className="factors-cell">
                                                     {objective.keyResults?.map((kr, krIndex) => (
                                                         <div key={krIndex} className="factor-item">
-                                                            <span className={`factor-impact ${getProgressColor(kr.progress)}`}>
-                                                                {kr.progress}%
-                                                            </span>
-                                                            <span className="factor-desc">
-                                                                <strong>{kr.metric}:</strong> {kr.current} / {kr.target}
-                                                            </span>
+                                                            <span className={`factor-impact ${getProgressColor(kr.progress)}`}>{kr.progress}%</span>
+                                                            <span className="factor-desc"><strong>{kr.metric}:</strong> {kr.current} / {kr.target}</span>
                                                         </div>
                                                     ))}
                                                 </div>
@@ -403,18 +336,11 @@ const StrategicGoals = ({
                     {expandedSections.keyresults ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
                 </div>
 
-                {expandedSections.keyresults !== false && (
+                {expandedSections.keyresults && (
                     <div className="table-container">
                         <table className="data-table">
                             <thead>
-                                <tr>
-                                    <th>Objective</th>
-                                    <th>Key Result</th>
-                                    <th>Current</th>
-                                    <th>Target</th>
-                                    <th>Progress</th>
-                                    <th>Status</th>
-                                </tr>
+                                <tr><th>Objective</th><th>Key Result</th><th>Current</th><th>Target</th><th>Progress</th><th>Status</th></tr>
                             </thead>
                             <tbody>
                                 {allKeyResults.map((kr, index) => (
@@ -425,19 +351,10 @@ const StrategicGoals = ({
                                         <td>{kr.target}</td>
                                         <td>
                                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                                <div style={{
-                                                    width: '60px',
-                                                    height: '8px',
-                                                    backgroundColor: '#f0f0f0',
-                                                    borderRadius: '4px',
-                                                    overflow: 'hidden'
-                                                }}>
+                                                <div style={{ width: '60px', height: '8px', backgroundColor: '#f0f0f0', borderRadius: '4px', overflow: 'hidden' }}>
                                                     <div style={{
-                                                        width: `${Math.min(kr.progress || 0, 100)}%`,
-                                                        height: '100%',
-                                                        backgroundColor: kr.progress >= 75 ? '#10b981' :
-                                                            kr.progress >= 50 ? '#f59e0b' :
-                                                                kr.progress >= 25 ? '#ef4444' : '#dc2626',
+                                                        width: `${Math.min(kr.progress || 0, 100)}%`, height: '100%',
+                                                        backgroundColor: kr.progress >= 75 ? '#10b981' : kr.progress >= 50 ? '#f59e0b' : kr.progress >= 25 ? '#ef4444' : '#dc2626',
                                                         transition: 'width 0.3s ease-in-out'
                                                     }} />
                                                 </div>
@@ -446,9 +363,7 @@ const StrategicGoals = ({
                                         </td>
                                         <td>
                                             <span className={`status-badge ${getProgressColor(kr.progress)}`}>
-                                                {kr.progress >= 75 ? 'On Track' :
-                                                    kr.progress >= 50 ? 'Progressing' :
-                                                        kr.progress >= 25 ? 'Behind' : 'Critical'}
+                                                {kr.progress >= 75 ? 'On Track' : kr.progress >= 50 ? 'Progressing' : kr.progress >= 25 ? 'Behind' : 'Critical'}
                                             </span>
                                         </td>
                                     </tr>
@@ -461,27 +376,30 @@ const StrategicGoals = ({
         );
     };
 
-    // Loading state
     if (isRegenerating) {
         return (
             <div className="strategic-goals-container">
                 <div className="loading-state">
                     <Loader size={24} className="loading-spinner" />
-                    <span>
-                        {isRegenerating
-                            ? "Regenerating strategic goals analysis..."
-                            : "Generating strategic goals analysis..."
-                        }
-                    </span>
+                    <span>Generating strategic goals analysis...</span>
                 </div>
             </div>
         );
     }
 
-    // Error state
-    if (!hasGenerated && !data && Object.keys(userAnswers).length > 0) {
-        return (
-            <div className="strategic-goals-container">
+    const renderContent = () => {
+        if (error) {
+            return (
+                <AnalysisError 
+                    error={error}
+                    onRetry={handleRegenerate}
+                    title="Strategic Goals Analysis Error"
+                />
+            );
+        }
+
+        if (!data || isStrategicGoalsDataIncomplete(data)) {
+            return (
                 <AnalysisEmptyState
                     analysisType="strategicGoals"
                     analysisDisplayName="Strategic Goals & OKR Analysis"
@@ -492,62 +410,25 @@ const StrategicGoals = ({
                     canRegenerate={canRegenerate}
                     userAnswers={userAnswers}
                     minimumAnswersRequired={3}
-                    showImproveButton={false}
-                    showRegenerateButton={false}
                 />
-            </div>
-        );
-    }
+            );
+        }
 
-    // Check if data is incomplete and show missing questions checker
-    if (!strategicGoalsData || isStrategicGoalsDataIncomplete(strategicGoalsData)) {
         return (
-            <div className="strategic-goals-container">
-
-                {/* Replace the entire empty-state div with the common component */}
-                <AnalysisEmptyState
-                    analysisType="strategicGoals"
-                    analysisDisplayName="Strategic Goals & OKR Analysis"
-                    icon={Target}
-                    onImproveAnswers={handleMissingQuestionsCheck}
-                    onRegenerate={handleRegenerate}
-                    isRegenerating={isRegenerating}
-                    canRegenerate={canRegenerate}
-                    userAnswers={userAnswers}
-                    minimumAnswersRequired={3}
-                    showImproveButton={false}
-                    showRegenerateButton={false}
-                />
+            <div className="goals-content">
+                {data.overallProgress !== undefined && renderOverallProgress(data.overallProgress, data.strategicThemes || data.themes)}
+                {data.objectives && data.objectives.length > 0 && renderObjectivesTable(data.objectives)}
+                {data.objectives && data.objectives.length > 0 && renderKeyResultsDetailTable(data.objectives)}
+                {data.objectives && renderGanttChart(data.objectives)}
             </div>
         );
-    }
+    };
 
     return (
         <div className="strategic-goals-container">
-
-            <div className="goals-content">
-                {/* Overall Progress Section */}
-                {data.overallProgress !== undefined && (
-                    renderOverallProgress(data.overallProgress, data.strategicThemes || data.themes)
-                )}
-
-                {/* Objectives Table */}
-                {data.objectives && data.objectives.length > 0 && (
-                    renderObjectivesTable(data.objectives)
-                )}
-
-                {/* Key Results Detail Table */}
-                {data.objectives && data.objectives.length > 0 && (
-                    renderKeyResultsDetailTable(data.objectives)
-                )}
-
-                {/* Gantt Chart: Timeline of strategic initiatives */}
-                {data.objectives && (
-                    renderGanttChart(data.objectives)
-                )}
-            </div>
+            {renderContent()}
         </div>
     );
 };
 
-export default StrategicGoals;
+export default React.memo(StrategicGoals);

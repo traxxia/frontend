@@ -169,12 +169,15 @@ const Dashboard = () => {
     collaboratingBusinesses, 
     deletedBusinesses, 
     isLoading: isLoadingBusinesses,
+    isCreating: isCreatingBusiness,
+    isDeleting: isDeletingBusiness,
     error: businessError,
+    deleteError: storeDeleteError,
     fetchBusinesses,
     createBusiness: createBusinessAction,
     deleteBusiness: deleteBusinessAction,
     setSelectedBusinessId,
-    activeBusinessId,
+    selectedBusinessId,
     clearErrors
   } = useBusinessStore();
   const {
@@ -186,7 +189,6 @@ const Dashboard = () => {
   } = useUIStore();
 
   const [newlyCreatedBusiness, setNewlyCreatedBusiness] = useState(null);
-  const [isCreatingBusiness, setIsCreatingBusiness] = useState(false);
   const [businessFormData, setBusinessFormData] = useState({
     business_name: '',
     business_purpose: '',
@@ -205,8 +207,6 @@ const Dashboard = () => {
 
   // Delete business state
   const [businessToDelete, setBusinessToDelete] = useState(null);
-  const [isDeletingBusiness, setIsDeletingBusiness] = useState(false);
-  const [deleteError, setDeleteError] = useState('');
   // isLoadingBusinesses is now from store
 
   // Deletion cooldown state
@@ -302,8 +302,7 @@ const Dashboard = () => {
 
   const deleteBusiness = useCallback(async (businessId) => {
     try {
-      setIsDeletingBusiness(true);
-      setDeleteError('');
+      clearErrors();
       await deleteBusinessAction(businessId);
       await fetchPlanDetails();
       closeModal('deleteBusiness');
@@ -311,15 +310,11 @@ const Dashboard = () => {
       addToast({ message: t('business_deleted_successfully'), type: 'success' });
     } catch (error) {
       console.error('Error deleting business:', error);
-      setDeleteError(error.message || t('network_error_try_again'));
-    } finally {
-      setIsDeletingBusiness(false);
     }
-  }, [deleteBusinessAction, fetchPlanDetails, t, closeModal, addToast]);
+  }, [deleteBusinessAction, fetchPlanDetails, t, closeModal, addToast, clearErrors]);
 
   const createBusiness = useCallback(async () => {
     try {
-      setIsCreatingBusiness(true);
       const data = await createBusinessAction(businessFormData);
       setNewlyCreatedBusiness(data.business);
       if (data.business && (data.business._id || data.business.id)) {
@@ -338,8 +333,6 @@ const Dashboard = () => {
       if (ENABLE_PMF) openModal('pmfOnboarding');
     } catch (error) {
       console.error('Error creating business:', error);
-    } finally {
-      setIsCreatingBusiness(false);
     }
   }, [createBusinessAction, businessFormData, setSelectedBusinessId, fetchPlanDetails, t, ENABLE_PMF, closeModal, openModal, addToast]);
 
@@ -558,13 +551,13 @@ const Dashboard = () => {
   const handleShowDeleteModal = useCallback((business) => {
     setBusinessToDelete(business);
     openModal('deleteBusiness');
-    setDeleteError('');
+    clearErrors();
   }, [openModal]);
 
   const handleCloseDeleteModal = useCallback(() => {
     closeModal('deleteBusiness');
     setBusinessToDelete(null);
-    setDeleteError('');
+    clearErrors();
   }, [closeModal]);
 
   const handleConfirmDelete = useCallback(() => {
@@ -618,12 +611,12 @@ const Dashboard = () => {
       {isModalOpen('insights') ? (
         ENABLE_PMF ? (
           <PMFInsights
-            businessId={newlyCreatedBusiness?._id || activeBusinessId || businesses[0]?._id}
+            businessId={newlyCreatedBusiness?._id || selectedBusinessId || businesses[0]?._id}
             onContinue={() => {
               closeModal('insights');
               navigate("/businesspage", {
                 state: {
-                  business: newlyCreatedBusiness || businesses.find(b => b._id === (activeBusinessId || businesses[0]?._id)) || businesses[0]
+                  business: newlyCreatedBusiness || businesses.find(b => b._id === (selectedBusinessId || businesses[0]?._id)) || businesses[0]
                 }
               });
             }}
@@ -1075,7 +1068,7 @@ const Dashboard = () => {
             <PMFOnboardingModal
               show={isModalOpen('pmfOnboarding')}
               onHide={() => closeModal('pmfOnboarding')}
-              businessId={newlyCreatedBusiness?._id || sessionStorage.getItem('activeBusinessId') || businesses[0]?._id}
+              businessId={newlyCreatedBusiness?._id || selectedBusinessId || businesses[0]?._id}
               onSubmit={(pmfFormData) => {
                 closeModal('pmfOnboarding');
                 // Instead of showing standalone insights, go straight to the business page
@@ -1083,7 +1076,7 @@ const Dashboard = () => {
                 closeModal('insights');
                 navigate("/businesspage", {
                   state: {
-                    business: newlyCreatedBusiness || businesses.find(b => b._id === (sessionStorage.getItem('activeBusinessId') || businesses[0]?._id))
+                    business: newlyCreatedBusiness || businesses.find(b => b._id === (selectedBusinessId || businesses[0]?._id))
                   }
                 });
               }}
@@ -1241,9 +1234,9 @@ const Dashboard = () => {
               </Modal.Title>
             </Modal.Header>
             <Modal.Body>
-              {deleteError && (
+              {storeDeleteError && (
                 <Alert variant="danger" className="mb-3">
-                  {deleteError}
+                  {storeDeleteError}
                 </Alert>
               )}
 

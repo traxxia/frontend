@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useTranslation } from "../hooks/useTranslation";
 import { Shield, Loader, AlertTriangle, Users, DollarSign, TrendingUp, Building, ArrowRight, ChevronDown, ChevronRight } from 'lucide-react';
+import { useAuthStore, useAnalysisStore } from "../store";
 import AnalysisEmptyState from './AnalysisEmptyState';
 import AnalysisError from './AnalysisError';
 import { checkMissingQuestionsAndRedirect, ANALYSIS_TYPES } from '../services/missingQuestionsService';
@@ -12,11 +13,10 @@ const PortersFiveForces = ({
   questions = [],
   userAnswers = {},
   businessName = "Your Business",
-  onDataGenerated,
   onRegenerate,
-  isRegenerating = false,
+  isRegenerating: propIsRegenerating = false,
   canRegenerate = true,
-  portersData = null,
+  portersData: propPortersData = null,
   selectedBusinessId,
   onRedirectToBrief,
   isExpanded = true,
@@ -25,8 +25,17 @@ const PortersFiveForces = ({
   hideImproveButton = false,
 }) => {
   const { t } = useTranslation();
-  const [portersAnalysisData, setPortersAnalysisData] = useState(portersData);
-  const [isLoading, setIsLoading] = useState(false);
+  const token = useAuthStore(state => state.token);
+  
+  const {
+    portersData: storePortersData,
+    isRegenerating: isTypeRegenerating,
+    regenerateIndividualAnalysis
+  } = useAnalysisStore();
+
+  const portersAnalysisData = propPortersData || storePortersData;
+  const isRegenerating = propIsRegenerating || isTypeRegenerating('porters');
+
   const [error, setError] = useState(null);
   const [expandedSections, setExpandedSections] = useState({
     executive: true,
@@ -43,9 +52,6 @@ const PortersFiveForces = ({
 
   const { lastRowRef, userHasScrolled, setUserHasScrolled } = useAutoScroll(streamingManager, cardId, isExpanded, visibleRows);
 
-  const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
-  const getAuthToken = () => sessionStorage.getItem('token');
-
   const handleRedirectToBrief = (missingQuestionsData = null) => {
     if (onRedirectToBrief) {
       onRedirectToBrief(missingQuestionsData);
@@ -54,7 +60,6 @@ const PortersFiveForces = ({
 
   const handleMissingQuestionsCheck = async () => {
     const analysisConfig = ANALYSIS_TYPES.porters;
-
     await checkMissingQuestionsAndRedirect(
       'porters',
       selectedBusinessId,
@@ -87,18 +92,16 @@ const PortersFiveForces = ({
       streamingManager.resetCard(cardId);
       onRegenerate();
     } else {
-      setPortersAnalysisData(null);
       setError(null);
       streamingManager.resetCard(cardId);
+      await regenerateIndividualAnalysis('porters', questions, userAnswers, selectedBusinessId);
     }
   };
 
   const handleRetry = () => {
     setError(null);
     streamingManager.resetCard(cardId);
-    if (onRegenerate) {
-      onRegenerate();
-    }
+    handleRegenerate();
   };
 
   const parsePortersData = (data) => {
@@ -112,32 +115,24 @@ const PortersFiveForces = ({
     }
 
     let total = 0;
-
     if (parsedData.executive_summary) {
       if (parsedData.executive_summary.industry_attractiveness) total++;
       if (parsedData.executive_summary.overall_competitive_intensity) total++;
       if (parsedData.executive_summary.competitive_position) total++;
     }
-
     if (parsedData.five_forces_analysis) {
       total += Object.keys(parsedData.five_forces_analysis).length;
     }
-
     if (parsedData.key_improvements && Array.isArray(parsedData.key_improvements)) {
       total += parsedData.key_improvements.length;
     }
-
     return total;
   };
 
   useEffect(() => {
     const parsedData = parsePortersData(portersAnalysisData);
     const totalRows = calculateTotalRows(parsedData);
-
-    if (totalRows === 0) {
-      return;
-    }
-
+    if (totalRows === 0) return;
     if (!streamingManager?.shouldStream(cardId)) {
       setVisibleRows(totalRows);
     }
@@ -145,11 +140,9 @@ const PortersFiveForces = ({
 
   const typeText = (text, rowIndex, field, delay = 0) => {
     if (!text) return;
-
     setTimeout(() => {
       let currentIndex = 0;
       const key = `${rowIndex}-${field}`;
-
       const interval = setInterval(() => {
         if (currentIndex <= text.length) {
           setTypingTexts(prev => ({
@@ -166,18 +159,10 @@ const PortersFiveForces = ({
 
   useEffect(() => {
     const parsedData = parsePortersData(portersAnalysisData);
+    if (!streamingManager?.shouldStream(cardId)) return;
+    if (!parsedData || isRegenerating || isPortersDataIncomplete(parsedData)) return;
 
-    if (!streamingManager?.shouldStream(cardId)) {
-      return;
-    }
-
-    if (!parsedData || isRegenerating || isPortersDataIncomplete(parsedData)) {
-      return;
-    }
-
-    if (streamingIntervalRef.current) {
-      clearInterval(streamingIntervalRef.current);
-    }
+    if (streamingIntervalRef.current) clearInterval(streamingIntervalRef.current);
 
     setVisibleRows(0);
     setTypingTexts({});
@@ -189,7 +174,6 @@ const PortersFiveForces = ({
     streamingIntervalRef.current = setInterval(() => {
       if (currentRow < totalItems) {
         setVisibleRows(currentRow + 1);
-
         let rowsProcessed = 0;
 
         if (parsedData.executive_summary) {
@@ -222,7 +206,6 @@ const PortersFiveForces = ({
         if (parsedData.five_forces_analysis) {
           const forces = Object.entries(parsedData.five_forces_analysis);
           const forceIndex = currentRow - rowsProcessed;
-
           if (forceIndex >= 0 && forceIndex < forces.length) {
             const [forceKey, forceData] = forces[forceIndex];
             typeText(forceKey.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()), currentRow, 'force', 0);
@@ -230,19 +213,16 @@ const PortersFiveForces = ({
             currentRow++;
             return;
           }
-
           rowsProcessed += forces.length;
         }
 
         if (parsedData.key_improvements && Array.isArray(parsedData.key_improvements)) {
           const improvementIndex = currentRow - rowsProcessed;
-
           if (improvementIndex >= 0 && improvementIndex < parsedData.key_improvements.length) {
             const improvement = parsedData.key_improvements[improvementIndex];
             typeText(improvement, currentRow, 'improvement', 0);
           }
         }
-
         currentRow++;
       } else {
         clearInterval(streamingIntervalRef.current);
@@ -253,35 +233,9 @@ const PortersFiveForces = ({
     }, STREAMING_CONFIG.ROW_INTERVAL);
 
     return () => {
-      if (streamingIntervalRef.current) {
-        clearInterval(streamingIntervalRef.current);
-      }
+      if (streamingIntervalRef.current) clearInterval(streamingIntervalRef.current);
     };
   }, [cardId, portersAnalysisData, isRegenerating, streamingManager, setUserHasScrolled]);
-
-  useEffect(() => {
-    if (portersData && portersData !== portersAnalysisData) {
-      setPortersAnalysisData(portersData);
-      setError(null);
-      streamingManager.resetCard(cardId);
-      if (onDataGenerated) {
-        onDataGenerated(portersData);
-      }
-    }
-  }, [portersData, cardId, streamingManager]);
-
-  useEffect(() => {
-    if (portersData) {
-      setPortersAnalysisData(portersData);
-      setError(null);
-    }
-
-    return () => {
-      if (streamingIntervalRef.current) {
-        clearInterval(streamingIntervalRef.current);
-      }
-    };
-  }, []);
 
   const getIntensityColor = (intensity) => {
     const level = intensity?.toLowerCase() || '';
@@ -301,17 +255,12 @@ const PortersFiveForces = ({
     return <Shield size={16} />;
   };
 
-  if (isLoading || isRegenerating) {
+  if (isRegenerating) {
     return (
       <div className="porters-container">
         <div className="loading-state">
           <Loader size={24} className="loading-spinner" />
-          <span>
-            {isRegenerating
-              ? "Regenerating Porter's Five Forces analysis..."
-              : "Generating Porter's Five Forces analysis..."
-            }
-          </span>
+          <span>Regenerating Porter's Five Forces analysis...</span>
         </div>
       </div>
     );
@@ -344,28 +293,16 @@ const PortersFiveForces = ({
   const forcesIndices = {};
   const improvementsIndices = {};
 
-  if (parsedData.executive_summary) {
-    if (parsedData.executive_summary.industry_attractiveness) {
-      executiveSummaryIndices.industry_attractiveness = currentRowIndex++;
-    }
-    if (parsedData.executive_summary.overall_competitive_intensity) {
-      executiveSummaryIndices.overall_competitive_intensity = currentRowIndex++;
-    }
-    if (parsedData.executive_summary.competitive_position) {
-      executiveSummaryIndices.competitive_position = currentRowIndex++;
-    }
+  if (parsedData?.executive_summary) {
+    if (parsedData.executive_summary.industry_attractiveness) executiveSummaryIndices.industry_attractiveness = currentRowIndex++;
+    if (parsedData.executive_summary.overall_competitive_intensity) executiveSummaryIndices.overall_competitive_intensity = currentRowIndex++;
+    if (parsedData.executive_summary.competitive_position) executiveSummaryIndices.competitive_position = currentRowIndex++;
   }
-
-  if (parsedData.five_forces_analysis) {
-    Object.keys(parsedData.five_forces_analysis).forEach((forceKey) => {
-      forcesIndices[forceKey] = currentRowIndex++;
-    });
+  if (parsedData?.five_forces_analysis) {
+    Object.keys(parsedData.five_forces_analysis).forEach((forceKey) => { forcesIndices[forceKey] = currentRowIndex++; });
   }
-
-  if (parsedData.key_improvements && Array.isArray(parsedData.key_improvements)) {
-    parsedData.key_improvements.forEach((_, index) => {
-      improvementsIndices[index] = currentRowIndex++;
-    });
+  if (parsedData?.key_improvements && Array.isArray(parsedData.key_improvements)) {
+    parsedData.key_improvements.forEach((_, index) => { improvementsIndices[index] = currentRowIndex++; });
   }
 
   const isStreaming = streamingManager?.shouldStream(cardId);
@@ -378,14 +315,12 @@ const PortersFiveForces = ({
       data-analysis-name="Porter's Five Forces"
       data-analysis-order="6"
     >
-
-      {parsedData.executive_summary && (
+      {parsedData?.executive_summary && (
         <div className="section-container">
           <div className="section-header" onClick={() => toggleSection('executive')}>
             <h3>{t("porter_card1")}</h3>
             {expandedSections.executive ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
           </div>
-
           {expandedSections.executive !== false && (
             <div className="table-container">
               <table className="data-table">
@@ -443,29 +378,17 @@ const PortersFiveForces = ({
                   )}
                 </tbody>
               </table>
-
-              {parsedData.executive_summary.key_competitive_forces?.length > 0 && (
-                <div className="subsection">
-                  <h4>{t("porter_card1_head2")}</h4>
-                  <div className="forces-tags">
-                    {parsedData.executive_summary.key_competitive_forces.map((force, index) => (
-                      <span key={index} className="force-tag">{force}</span>
-                    ))}
-                  </div>
-                </div>
-              )}
             </div>
           )}
         </div>
       )}
 
-      {parsedData.five_forces_analysis && (
+      {parsedData?.five_forces_analysis && (
         <div className="section-container">
           <div className="section-header" onClick={() => toggleSection('forces')}>
             <h3>{t("porter_card2")}</h3>
             {expandedSections.forces ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
           </div>
-
           {expandedSections.forces !== false && (
             <div className="table-container">
               <table className="data-table forces-table">
@@ -483,7 +406,6 @@ const PortersFiveForces = ({
                     const rowIndex = forcesIndices[forceKey];
                     const isVisible = rowIndex < visibleRows;
                     const isLast = rowIndex === visibleRows - 1;
-
                     return (
                       <StreamingRow
                         key={forceKey}
@@ -508,11 +430,7 @@ const PortersFiveForces = ({
                             {forceData.key_factors?.map((factor, idx) => (
                               <div key={idx} className="factor-item">
                                 <strong className='strong-text'>{factor.factor}</strong>
-                                {factor.impact && (
-                                  <span className={`factor-impact ${factor.impact?.toLowerCase()}`}>
-                                    Impact: {factor.impact}
-                                  </span>
-                                )}
+                                {factor.impact && <span className={`factor-impact ${factor.impact?.toLowerCase()}`}>Impact: {factor.impact}</span>}
                                 <span className="factor-desc">{factor.description}</span>
                               </div>
                             ))}
@@ -521,41 +439,13 @@ const PortersFiveForces = ({
                         <td style={{ opacity: isVisible ? 1 : 0, transition: !isStreaming ? 'none' : 'opacity 0.3s 0.5s' }}>
                           <div className="additional-details">
                             {forceData.entry_barriers && (
-                              <div>
-                                <strong>Entry Barriers:</strong>
-                                <ul>
-                                  {forceData.entry_barriers.map((barrier, idx) => (
-                                    <li key={idx}>{barrier}</li>
-                                  ))}
-                                </ul>
-                              </div>
+                              <div><strong>Entry Barriers:</strong><ul>{forceData.entry_barriers.map((barrier, idx) => (<li key={idx}>{barrier}</li>))}</ul></div>
                             )}
-                            {forceData.supplier_concentration && (
-                              <div><strong>Supplier Concentration:</strong> {forceData.supplier_concentration}</div>
-                            )}
-                            {forceData.switching_costs && (
-                              <div><strong>Switching Costs:</strong> {forceData.switching_costs}</div>
-                            )}
-                            {forceData.buyer_concentration && (
-                              <div><strong>Buyer Concentration:</strong> {forceData.buyer_concentration}</div>
-                            )}
-                            {forceData.product_differentiation && (
-                              <div><strong>Product Differentiation:</strong> {forceData.product_differentiation}</div>
-                            )}
-                            {forceData.substitute_availability && (
-                              <div><strong>Substitute Availability:</strong> {forceData.substitute_availability}</div>
-                            )}
-                            {forceData.competitor_concentration && (
-                              <div><strong>Competitor Concentration:</strong> {forceData.competitor_concentration}</div>
-                            )}
-                            {forceData.industry_growth && (
-                              <div><strong>Industry Growth:</strong> {forceData.industry_growth}</div>
-                            )}
+                            {forceData.switching_costs && <div><strong>Switching Costs:</strong> {forceData.switching_costs}</div>}
+                            {forceData.product_differentiation && <div><strong>Product Differentiation:</strong> {forceData.product_differentiation}</div>}
                           </div>
                         </td>
-                        <td className="implications-cell" style={{ opacity: isVisible ? 1 : 0, transition: !isStreaming ? 'none' : 'opacity 0.3s 0.6s' }}>
-                          {forceData.strategic_implications}
-                        </td>
+                        <td className="implications-cell" style={{ opacity: isVisible ? 1 : 0, transition: !isStreaming ? 'none' : 'opacity 0.3s 0.6s' }}>{forceData.strategic_implications}</td>
                       </StreamingRow>
                     );
                   })}
@@ -566,13 +456,12 @@ const PortersFiveForces = ({
         </div>
       )}
 
-      {parsedData.key_improvements && Array.isArray(parsedData.key_improvements) && parsedData.key_improvements.length > 0 && (
+      {parsedData?.key_improvements && Array.isArray(parsedData.key_improvements) && parsedData.key_improvements.length > 0 && (
         <div className="section-container">
           <div className="section-header" onClick={() => toggleSection('improvements')}>
             <h3>{t("porter_card3")}</h3>
             {expandedSections.improvements ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
           </div>
-
           {expandedSections.improvements && (
             <div className="table-container">
               <table className="data-table">
@@ -581,21 +470,12 @@ const PortersFiveForces = ({
                     const rowIndex = improvementsIndices[index];
                     const isVisible = rowIndex < visibleRows;
                     const isLast = rowIndex === visibleRows - 1;
-
                     return (
-                      <StreamingRow
-                        key={index}
-                        isVisible={isVisible}
-                        isLast={isLast && isStreaming}
-                        lastRowRef={lastRowRef}
-                        isStreaming={isStreaming}
-                      >
+                      <StreamingRow key={index} isVisible={isVisible} isLast={isLast && isStreaming} lastRowRef={lastRowRef} isStreaming={isStreaming}>
                         <td>
                           <div className="force-name">
                             <TrendingUp size={16} />
-                            <span>
-                              {hasStreamed ? improvement : (typingTexts[`${rowIndex}-improvement`] || improvement)}
-                            </span>
+                            <span>{hasStreamed ? improvement : (typingTexts[`${rowIndex}-improvement`] || improvement)}</span>
                           </div>
                         </td>
                       </StreamingRow>
@@ -611,4 +491,4 @@ const PortersFiveForces = ({
   );
 };
 
-export default PortersFiveForces;
+export default PortersFiveForces;

@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { Bell, BellOff, X } from 'lucide-react';
 import { useTranslation } from '../hooks/useTranslation';
 
-import { useAuthStore } from '../store/authStore';
+import { useAuthStore, useBusinessStore } from '../store';
 
 const NotificationBell = () => {
   const [notifications, setNotifications] = useState([]);
@@ -12,6 +12,7 @@ const NotificationBell = () => {
   const REACT_APP_BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const { setSelectedBusinessId } = useBusinessStore();
 
   useEffect(() => {
     fetchNotifications();
@@ -63,7 +64,7 @@ const NotificationBell = () => {
       
       if (targetBusinessId) {
          console.log("Setting active business:", targetBusinessId);
-         sessionStorage.setItem('activeBusinessId', targetBusinessId);
+         setSelectedBusinessId(targetBusinessId);
       } else if (isStaleProject && notif.message) {
          // Attempt to extract the business name from the message to aid the user
          const nameMatch = notif.message.match(/under\s+"([^"]+)"/i) || notif.message.match(/project.*under\s+([^ ]+)/i);
@@ -84,10 +85,10 @@ const NotificationBell = () => {
                    
                    const found = allBusinesses.find(b => b.business_name === businessName);
                    if (found) {
-                      const foundId = found._id || found.id;
-                      console.log("Matched business name to ID:", foundId);
-                      sessionStorage.setItem('activeBusinessId', foundId);
-                   } else {
+                       const foundId = found._id || found.id;
+                       console.log("Matched business name to ID:", foundId);
+                       setSelectedBusinessId(foundId);
+                    } else {
                       console.log("Could not find a business matching the name:", businessName);
                    }
                 }
@@ -101,10 +102,10 @@ const NotificationBell = () => {
          try {
            const url = new URL(notif.action_link, window.location.origin);
            const bId = url.searchParams.get('business_id') || url.searchParams.get('businessId');
-           if (bId) {
-              console.log("Setting active business from URL:", bId);
-              sessionStorage.setItem('activeBusinessId', bId);
-           }
+            if (bId) {
+               console.log("Setting active business from URL:", bId);
+               setSelectedBusinessId(bId);
+            }
          } catch (e) {
            console.error("URL parsing error:", e);
          }

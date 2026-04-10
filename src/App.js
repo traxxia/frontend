@@ -62,6 +62,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import Aiassistant from './components/Aiassistant';
 import ToastNotifications from './components/ToastNotifications';
 import { useUIStore } from './store/uiStore';
+import { useLanguageStore } from './store/languageStore';
 
 // Pages where the AI assistant should NOT appear
 const AI_EXCLUDED_EXACT_PATHS = ['/', '/login', '/register', '/dashboard', '/admin', '/super-admin'];
@@ -127,22 +128,13 @@ const App = () => {
     document.documentElement.setAttribute("data-theme", theme);
   }, [theme]);
 
+  const { setLanguage, currentLanguage } = useLanguageStore();
+
   useEffect(() => {
-    // Initialize translations when app starts
-    initializeTranslations();
-
-    // Check if user has a session language preference and apply it
-    const preferredLang = sessionStorage.getItem('appLanguage') || localStorage.getItem('appLanguage') || 'en';
-
-    // Set the language if it's different from current
-    if (window.currentAppLanguage !== preferredLang) {
-      window.currentAppLanguage = preferredLang;
-      if (window.appTranslations && window.appTranslations[preferredLang]) {
-        window.getTranslation = (key) => window.appTranslations[preferredLang][key] || key;
-      }
-      window.dispatchEvent(new CustomEvent('languageChanged', { detail: { language: preferredLang } }));
-    }
-  }, []);
+    // Ensure the store is synchronized with the initial preference
+    // This also triggers translation loading via the store's action
+    setLanguage(currentLanguage);
+  }, [setLanguage, currentLanguage]);
 
   return (
     <Router>

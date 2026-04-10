@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { TrendingUp, Loader, AlertCircle } from 'lucide-react';
 import '../styles/goodPhase.css';
+import { useAnalysisStore } from "../store";
 import FinancialEmptyState from './FinancialEmptyState';
 import CitationSource from './CitationSource';
 import { checkMissingQuestionsAndRedirect, ANALYSIS_TYPES } from '../services/missingQuestionsService';
@@ -90,16 +91,18 @@ const PairedBarChart = React.memo(({ metrics, thresholds, citations }) => {
   const [containerWidth, setContainerWidth] = useState(600);
   const containerRef = useRef(null);
 
-  const chartData = Object.entries(metrics)
-    .filter(([key, value]) => value !== null && value !== undefined && value !== '')
-    .map(([key, value]) => ({
-      metric: key,
-      actualValue: parsePercentageValue(value),
-      benchmarkValue: parsePercentageValue(thresholds[key]),
-      color: getTrafficLightColor(value, thresholds[key], true),
-      hasData: value !== null && value !== undefined && value !== '',
-      citationUrl: getCitationUrl(key, citations)
-    }));
+  const chartData = useMemo(() => {
+    return Object.entries(metrics)
+      .filter(([key, value]) => value !== null && value !== undefined && value !== '')
+      .map(([key, value]) => ({
+        metric: key,
+        actualValue: parsePercentageValue(value),
+        benchmarkValue: parsePercentageValue(thresholds[key]),
+        color: getTrafficLightColor(value, thresholds[key], true),
+        hasData: value !== null && value !== undefined && value !== '',
+        citationUrl: getCitationUrl(key, citations)
+      }));
+  }, [metrics, thresholds, citations]);
 
   useEffect(() => {
     const updateWidth = () => {
@@ -284,9 +287,8 @@ const InvestmentPerformance = ({
   questions = [],
   userAnswers = {},
   businessName = "Your Business",
-  onDataGenerated,
   onRegenerate,
-  isRegenerating = false,
+  isRegenerating: propIsRegenerating = false,
   canRegenerate = true,
   investmentData = null,
   investmentPerformanceData = null, // Unified prop support
@@ -300,10 +302,23 @@ const InvestmentPerformance = ({
   readOnly = false,
   documentInfo = null,
 }) => {
-  const [analysisData, setAnalysisData] = useState(null);
+  const { 
+    investmentPerformanceData: storeInvestmentData,
+    isRegenerating: isTypeRegenerating,
+    regenerateIndividualAnalysis 
+  } = useAnalysisStore();
+
+  const isRegenerating = propIsRegenerating || isTypeRegenerating('investmentPerformance');
+
+  const analysisData = useMemo(() => {
+    const rawData = investmentData || investmentPerformanceData || storeInvestmentData;
+    if (!rawData) return null;
+
+    const normalized = getNormalizedData(rawData);
+    return normalized ? { investment: normalized } : null;
+  }, [investmentData, investmentPerformanceData, storeInvestmentData]);
+
   const [error, setError] = useState(null);
-
-
 
   const handleRedirectToBrief = useCallback((missingQuestionsData = null) => {
     if (onRedirectToBrief) {
@@ -328,8 +343,6 @@ const InvestmentPerformance = ({
     );
   }, [selectedBusinessId, handleRedirectToBrief]);
 
-
-
   const handleRegenerate = useCallback(async () => {
     if (onRegenerate) {
       try {
@@ -338,22 +351,16 @@ const InvestmentPerformance = ({
       } catch (error) {
         setError('Failed to regenerate analysis. Please try again.');
       }
-    }
-  }, [onRegenerate]);
-
-  useEffect(() => {
-    const rawData = investmentData || investmentPerformanceData;
-    if (rawData) {
-      const normalized = getNormalizedData(rawData);
-      if (normalized) {
-        setAnalysisData({ investment: normalized });
+    } else {
+      try {
         setError(null);
-        if (onDataGenerated) {
-          onDataGenerated({ investment: normalized });
-        }
+        await regenerateIndividualAnalysis('investmentPerformance', questions, userAnswers, selectedBusinessId);
+      } catch (error) {
+        setError('Failed to regenerate analysis. Please try again.');
+        console.error('Error during regeneration:', error);
       }
     }
-  }, [investmentData, investmentPerformanceData, onDataGenerated]);
+  }, [onRegenerate, regenerateIndividualAnalysis, questions, userAnswers, selectedBusinessId]);
 
   const renderContent = () => {
     if (error) {
@@ -436,4 +443,4 @@ const InvestmentPerformance = ({
   );
 };
 
-export default InvestmentPerformance;
+export default React.memo(InvestmentPerformance);

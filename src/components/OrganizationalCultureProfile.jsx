@@ -1,37 +1,61 @@
-import React, { useState, useEffect } from 'react';
-import { Loader, RefreshCw, Users, TrendingUp, Target, BarChart3, ChevronDown, ChevronRight } from 'lucide-react'; 
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import { Loader, Users, TrendingUp, Target, BarChart3, ChevronDown, ChevronRight } from 'lucide-react'; 
 import AnalysisEmptyState from './AnalysisEmptyState';
 import AnalysisError from './AnalysisError';
-import "../styles/EssentialPhase.css";
+import { useAnalysisStore } from '../store';
+import { useTranslation } from "../hooks/useTranslation";
 import { checkMissingQuestionsAndRedirect, ANALYSIS_TYPES } from '../services/missingQuestionsService';
-
-import { useAuthStore } from '../store/authStore';
+import "../styles/EssentialPhase.css";
 
 const OrganizationalCultureProfile = ({
   questions = [],
   userAnswers = {},
-  businessName = '',
   onRegenerate,
-  isRegenerating = false,
+  isRegenerating: propIsRegenerating = false,
   canRegenerate = true,
-  cultureProfileData = null,
+  cultureProfileData: propCultureProfileData = null,
   selectedBusinessId,
-  onRedirectToBrief // Add this prop
+  onRedirectToBrief
 }) => {
+  const { t } = useTranslation();
+  
+  // Use Zustand store
+  const { 
+    cultureProfileData: storeCultureProfileData,
+    isRegenerating: isTypeRegenerating,
+    regenerateIndividualAnalysis 
+  } = useAnalysisStore();
+
+  const isRegenerating = propIsRegenerating || isTypeRegenerating('cultureProfile');
+
+  // Normalize data from store or props
+  const cultureProfile = useMemo(() => {
+    const rawData = propCultureProfileData || storeCultureProfileData;
+    if (!rawData) return null;
+    return rawData.cultureProfile || rawData;
+  }, [propCultureProfileData, storeCultureProfileData]);
+
   const [error, setError] = useState(null);
-  const [expandedSections, setExpandedSections] = useState({});
+  const [expandedSections, setExpandedSections] = useState({
+    wordcloud: true,
+    culturemap: true,
+    overview: true,
+    workstyle: true,
+    metrics: true,
+    fit: true
+  });
 
-  const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
-  const getAuthToken = () => useAuthStore.getState().token;
-
-  const handleRedirectToBrief = (missingQuestionsData = null) => {
+  const handleRedirectToBrief = useCallback((missingQuestionsData = null) => {
     if (onRedirectToBrief) {
       onRedirectToBrief(missingQuestionsData);
     }
-  };
+  }, [onRedirectToBrief]);
 
-  const handleMissingQuestionsCheck = async () => {
-    const analysisConfig = ANALYSIS_TYPES.cultureProfile; 
+  const handleMissingQuestionsCheck = useCallback(async () => {
+    const analysisConfig = ANALYSIS_TYPES.cultureProfile || {
+      displayName: 'Organizational Culture Profile Analysis',
+      customMessage: 'Answer more questions to unlock detailed organizational culture profile analysis'
+    };
     
     await checkMissingQuestionsAndRedirect(
       'cultureProfile', 
@@ -42,62 +66,16 @@ const OrganizationalCultureProfile = ({
         customMessage: analysisConfig.customMessage
       }
     );
-  };
+  }, [selectedBusinessId, handleRedirectToBrief]);
 
-  // Check if the culture profile data is empty/incomplete
-  const isCultureProfileDataIncomplete = (data) => {
+  const isCultureProfileDataIncomplete = useCallback((data) => {
     if (!data) return true;
-    
-    // Handle both wrapped and direct response structures
-    const cultureProfile = data?.cultureProfile || data;
-    
-    // Check if essential culture profile data exists
-    if (!cultureProfile) return true;
-    
-    // Check if cultureType is empty or null
-    if (!cultureProfile.cultureType || cultureProfile.cultureType.trim() === '') return true;
-    
-    // Check if values array is empty
-    if (!cultureProfile.values || cultureProfile.values.length === 0) return true;
-    
-    // Check if behaviors array is empty
-    if (!cultureProfile.behaviors || cultureProfile.behaviors.length === 0) return true;
-    
-    // Check if workStyle has meaningful data (not just empty strings)
-    if (cultureProfile.workStyle) {
-      const workStyleValues = Object.values(cultureProfile.workStyle);
-      const hasValidWorkStyle = workStyleValues.some(value => 
-        value && typeof value === 'string' && value.trim() !== ''
-      );
-      if (!hasValidWorkStyle) return true;
-    }
-    
-    // Check if cultureFit has meaningful data (not just empty strings)
-    if (cultureProfile.cultureFit) {
-      const cultureFitValues = Object.values(cultureProfile.cultureFit);
-      const hasValidCultureFit = cultureFitValues.some(value => 
-        value && typeof value === 'string' && value.trim() !== ''
-      );
-      if (!hasValidCultureFit) return true;
-    }
-    
-    // Check if employeeMetrics has meaningful data (not just zeros or empty strings)
-    if (cultureProfile.employeeMetrics) {
-      const metrics = cultureProfile.employeeMetrics;
-      const hasValidMetrics = (
-        (metrics.totalEmployees && metrics.totalEmployees > 0) ||
-        (metrics.costPercentage && metrics.costPercentage > 0) ||
-        (metrics.valuePerEmployee && metrics.valuePerEmployee > 0) ||
-        (metrics.productivity && metrics.productivity.trim() !== '')
-      );
-      if (!hasValidMetrics) return true;
-    }
-    
-    // If we get here, the data appears to be incomplete/empty
-    return true;
-  };
+    if (!data.cultureType || data.cultureType.trim() === '') return true;
+    if (!data.values || data.values.length === 0) return true;
+    if (!data.behaviors || data.behaviors.length === 0) return true;
+    return false;
+  }, []);
 
-  // Toggle section expansion
   const toggleSection = (sectionKey) => {
     setExpandedSections(prev => ({
       ...prev,
@@ -105,56 +83,46 @@ const OrganizationalCultureProfile = ({
     }));
   };
 
-  // Handle regeneration - same pattern as CustomerSegmentation
-  const handleRegenerate = async () => { 
+  const handleRegenerate = useCallback(async () => {
     if (onRegenerate) {
-      setError(null); // Clear any existing errors
-      onRegenerate(); 
+      try {
+        setError(null);
+        await onRegenerate();
+      } catch (err) {
+        setError(err.message || 'Failed to regenerate analysis');
+      }
+    } else {
+      try {
+        setError(null);
+        await regenerateIndividualAnalysis('cultureProfile', questions, userAnswers, selectedBusinessId);
+      } catch (err) {
+        setError(err.message || 'Failed to generate analysis');
+      }
     }
-  };
+  }, [onRegenerate, regenerateIndividualAnalysis, questions, userAnswers, selectedBusinessId]);
 
-  // Handle retry for error state
-  const handleRetry = () => {
-    setError(null);
-    if (onRegenerate) {
-      onRegenerate();
-    }
-  };
-
-  // Clear errors when new data comes in
-  useEffect(() => {
-    if (cultureProfileData) {
-      setError(null);
-    }
-  }, [cultureProfileData]);
-
-  // Word Cloud Component
-  const WordCloud = ({ values = [], behaviors = [] }) => {
+  const WordCloud = React.memo(({ values = [], behaviors = [] }) => {
     const allWords = [...values, ...behaviors];
     if (allWords.length === 0) return null;
 
     const wordSizes = allWords.map((word, index) => ({
       word,
-      size: Math.random() * 20 + 14, // Random size between 14-34px
+      size: Math.random() * 20 + 14,
       type: index < values.length ? 'value' : 'behavior'
     }));
 
     return (
       <div className="word-cloud">
         {wordSizes.map((item, index) => (
-          <span
-            key={index}
-            className={`word-cloud-item ${item.type}`} 
-          >
+          <span key={index} className={`word-cloud-item ${item.type}`}>
             {item.word}
           </span>
         ))}
       </div>
     );
-  };
+  });
 
-  // Culture Map Component
-  const CultureMap = ({ cultureType, cultureFit = {} }) => {
+  const CultureMap = React.memo(({ cultureType, cultureFit = {} }) => {
     const quadrants = [
       { name: 'Clan', position: { top: '20%', left: '20%' }, color: '#10b981' },
       { name: 'Adhocracy', position: { top: '20%', right: '20%' }, color: '#f59e0b' },
@@ -162,62 +130,37 @@ const OrganizationalCultureProfile = ({
       { name: 'Hierarchy', position: { bottom: '20%', left: '20%' }, color: '#3b82f6' }
     ];
 
-    const getCurrentQuadrant = () => {
-      return quadrants.find(q => q.name === cultureType) || quadrants[0];
-    };
-
-    const currentQuadrant = getCurrentQuadrant();
+    const currentQuadrant = quadrants.find(q => q.name === cultureType) || quadrants[0];
 
     return (
       <div className="culture-map">
         <div className="culture-map-container">
-          {/* Grid lines */}
           <div className="grid-line horizontal"></div>
           <div className="grid-line vertical"></div>
-
-          {/* Axis labels */}
           <div className="axis-label top">Flexible & Adaptable</div>
           <div className="axis-label bottom">Stable & Controlled</div>
           <div className="axis-label left">Internal Focus</div>
           <div className="axis-label right">External Focus</div>
 
-          {/* Quadrants */}
           {quadrants.map((quadrant, index) => (
-            <div
-              key={index}
-              className={`quadrant ${quadrant.name.toLowerCase()} ${cultureType === quadrant.name ? 'active' : ''}`}
-              style={quadrant.position}
-            >
-              <div className="quadrant-label" style={{ color: quadrant.color }}>
-                {quadrant.name}
-              </div>
+            <div key={index} className={`quadrant ${quadrant.name.toLowerCase()} ${cultureType === quadrant.name ? 'active' : ''}`} style={quadrant.position}>
+              <div className="quadrant-label" style={{ color: quadrant.color }}>{quadrant.name}</div>
             </div>
           ))}
 
-          {/* Current position indicator */}
-          <div
-            className="current-position"
-            style={{
-              ...currentQuadrant.position,
-              backgroundColor: currentQuadrant.color
-            }}
-          >
+          <div className="current-position" style={{ ...currentQuadrant.position, backgroundColor: currentQuadrant.color }}>
             <div className="position-dot"></div>
             <div className="position-label">Current</div>
           </div>
         </div>
 
-        {/* Culture fit indicators */}
         {Object.keys(cultureFit).length > 0 && (
           <div className="culture-fit-indicators">
             {Object.entries(cultureFit).map(([area, fit]) => (
               <div key={area} className="fit-indicator">
                 <span className="fit-area">{area.replace(/([A-Z])/g, ' $1').trim()}</span>
                 <div className="fit-bar">
-                  <div
-                    className={`fit-level ${fit.toLowerCase()}`}
-                    style={{ width: fit === 'high' ? '80%' : fit === 'medium' ? '50%' : '20%' }}
-                  ></div>
+                  <div className={`fit-level ${fit.toLowerCase()}`} style={{ width: fit === 'high' ? '80%' : fit === 'medium' ? '50%' : '20%' }}></div>
                 </div>
                 <span className={`fit-label ${fit.toLowerCase()}`}>{fit}</span>
               </div>
@@ -226,9 +169,8 @@ const OrganizationalCultureProfile = ({
         )}
       </div>
     );
-  };
+  });
 
-  // Get intensity color for styling
   const getIntensityColor = (value) => {
     const level = value?.toLowerCase() || '';
     if (level.includes('high') || level.includes('strong')) return 'high-intensity';
@@ -237,37 +179,30 @@ const OrganizationalCultureProfile = ({
     return 'medium-intensity';
   };
 
-  // Loading state
   if (isRegenerating) {
     return (
       <div className="culture-profile">
         <div className="loading-state">
           <Loader size={24} className="loading-spinner" />
-          <span>Regenerating organizational culture profile analysis...</span>
+          <span>Generating organizational culture profile analysis...</span>
         </div>
       </div>
     );
   }
 
-  // Error state - UPDATED: Using AnalysisError component
-  if (error) {
-    return (
-      <div className="culture-profile"> 
+  const renderContent = () => {
+    if (error) {
+      return (
         <AnalysisError 
           error={error}
-          onRetry={handleRetry}
+          onRetry={handleRegenerate}
           title="Organizational Culture Profile Analysis Error"
         />
-      </div>
-    );
-  }
+      );
+    }
 
-  // Check if data is incomplete and show missing questions checker
-  if (!cultureProfileData || isCultureProfileDataIncomplete(cultureProfileData)) {
-    return (
-      <div className="culture-profile"> 
-
-        {/* Replace the entire empty-state div with the common component */}
+    if (!cultureProfile || isCultureProfileDataIncomplete(cultureProfile)) {
+      return (
         <AnalysisEmptyState
           analysisType="cultureProfile"
           analysisDisplayName="Organizational Culture Profile Analysis"
@@ -279,106 +214,64 @@ const OrganizationalCultureProfile = ({
           userAnswers={userAnswers}
           minimumAnswersRequired={3}
         /> 
-      </div>
-    );
-  }
+      );
+    }
 
-  // Handle both wrapped and direct response structures
-  const cultureProfile = cultureProfileData?.cultureProfile || cultureProfileData;
-
-  return (
-    <div className="porters-container"> 
-
-      {/* Word Cloud Section */}
-      {(cultureProfile.values?.length > 0 || cultureProfile.behaviors?.length > 0) && (
-        <div className="section-container">
-          <div className="section-header" onClick={() => toggleSection('wordcloud')}>
-            <h3>
-              <BarChart3 size={20} />
-              Key Cultural Values & Behaviors
-            </h3>
-            {expandedSections.wordcloud ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
-          </div>
-          
-          {expandedSections.wordcloud !== false && (
-            <div className="table-container">
-              <WordCloud
-                values={cultureProfile.values || []}
-                behaviors={cultureProfile.behaviors || []}
-              />
+    return (
+      <div className="porters-container"> 
+        {/* Word Cloud Section */}
+        {(cultureProfile.values?.length > 0 || cultureProfile.behaviors?.length > 0) && (
+          <div className="section-container">
+            <div className="section-header" onClick={() => toggleSection('wordcloud')}>
+              <h3><BarChart3 size={20} />Key Cultural Values & Behaviors</h3>
+              {expandedSections.wordcloud ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
             </div>
-          )}
-        </div>
-      )}
-
-      {/* Culture Map Section */}
-      {cultureProfile.cultureType && (
-        <div className="section-container">
-          <div className="section-header" onClick={() => toggleSection('culturemap')}>
-            <h3>
-              <Target size={20} />
-              Culture Map: Current Position & Fit Assessment
-            </h3>
-            {expandedSections.culturemap ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
+            {expandedSections.wordcloud && (
+              <div className="table-container">
+                <WordCloud values={cultureProfile.values || []} behaviors={cultureProfile.behaviors || []} />
+              </div>
+            )}
           </div>
-          
-          {expandedSections.culturemap !== false && (
-            <div className="table-container">
-              <CultureMap
-                cultureType={cultureProfile.cultureType}
-                cultureFit={cultureProfile.cultureFit || {}}
-              />
-            </div>
-          )}
-        </div>
-      )}
+        )}
 
-      {/* Culture Overview Table */}
-      {cultureProfile.cultureType && (
+        {/* Culture Map Section */}
+        {cultureProfile.cultureType && (
+          <div className="section-container">
+            <div className="section-header" onClick={() => toggleSection('culturemap')}>
+              <h3><Target size={20} />Culture Map: Current Position & Fit Assessment</h3>
+              {expandedSections.culturemap ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
+            </div>
+            {expandedSections.culturemap && (
+              <div className="table-container">
+                <CultureMap cultureType={cultureProfile.cultureType} cultureFit={cultureProfile.cultureFit || {}} />
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Culture Overview Table */}
         <div className="section-container">
           <div className="section-header" onClick={() => toggleSection('overview')}>
             <h3>Culture Overview</h3>
             {expandedSections.overview ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
           </div>
-          
-          {expandedSections.overview !== false && (
+          {expandedSections.overview && (
             <div className="table-container">
               <table className="data-table">
                 <thead>
-                  <tr>
-                    <th>Attribute</th>
-                    <th>Current State</th>
-                    <th>Assessment</th>
-                  </tr>
+                  <tr><th>Attribute</th><th>Current State</th><th>Assessment</th></tr>
                 </thead>
                 <tbody>
                   <tr>
                     <td><strong>Culture Type</strong></td>
                     <td>{cultureProfile.cultureType}</td>
-                    <td>
-                      <span className="type-badge">{cultureProfile.cultureType}</span>
-                    </td>
+                    <td><span className="type-badge">{cultureProfile.cultureType}</span></td>
                   </tr>
-                  {cultureProfile.values && cultureProfile.values.length > 0 && (
+                  {cultureProfile.values?.length > 0 && (
                     <tr>
                       <td><strong>Core Values</strong></td>
                       <td>{cultureProfile.values.slice(0, 3).join(', ')}</td>
-                      <td>
-                        <span className="status-badge high-intensity">
-                          {cultureProfile.values.length} Values Identified
-                        </span>
-                      </td>
-                    </tr>
-                  )}
-                  {cultureProfile.behaviors && cultureProfile.behaviors.length > 0 && (
-                    <tr>
-                      <td><strong>Key Behaviors</strong></td>
-                      <td>{cultureProfile.behaviors.slice(0, 3).join(', ')}</td>
-                      <td>
-                        <span className="status-badge medium-intensity">
-                          {cultureProfile.behaviors.length} Behaviors Defined
-                        </span>
-                      </td>
+                      <td><span className="status-badge high-intensity">{cultureProfile.values.length} Values Identified</span></td>
                     </tr>
                   )}
                 </tbody>
@@ -386,149 +279,67 @@ const OrganizationalCultureProfile = ({
             </div>
           )}
         </div>
-      )}
 
-      {/* Work Style Analysis Table */}
-      {cultureProfile.workStyle && Object.keys(cultureProfile.workStyle).length > 0 && (
-        <div className="section-container">
-          <div className="section-header" onClick={() => toggleSection('workstyle')}>
-            <h3>
-              <TrendingUp size={20} />
-              Work Style Analysis
-            </h3>
-            {expandedSections.workstyle ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
-          </div>
-          
-          {expandedSections.workstyle !== false && (
-            <div className="table-container">
-              <table className="data-table">
-                <thead>
-                  <tr>
-                    <th>Work Style Attribute</th>
-                    <th>Current Approach</th>
-                    <th>Impact Level</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {Object.entries(cultureProfile.workStyle).map(([key, value]) => (
-                    <tr key={key}>
-                      <td><strong>{key.replace(/([A-Z])/g, ' $1').trim()}</strong></td>
-                      <td>{value}</td>
-                      <td>
-                        <span className={`status-badge ${getIntensityColor(value)}`}>
-                          {value.toLowerCase().includes('high') || value.toLowerCase().includes('strong') ? 'High' :
-                           value.toLowerCase().includes('medium') || value.toLowerCase().includes('moderate') ? 'Medium' : 'Standard'}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+        {/* Work Style Analysis Table */}
+        {cultureProfile.workStyle && Object.keys(cultureProfile.workStyle).length > 0 && (
+          <div className="section-container">
+            <div className="section-header" onClick={() => toggleSection('workstyle')}>
+              <h3><TrendingUp size={20} />Work Style Analysis</h3>
+              {expandedSections.workstyle ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
             </div>
-          )}
-        </div>
-      )}
+            {expandedSections.workstyle && (
+              <div className="table-container">
+                <table className="data-table">
+                  <thead><tr><th>Work Style Attribute</th><th>Current Approach</th><th>Impact Level</th></tr></thead>
+                  <tbody>
+                    {Object.entries(cultureProfile.workStyle).map(([key, value]) => (
+                      <tr key={key}>
+                        <td><strong>{key.replace(/([A-Z])/g, ' $1').trim()}</strong></td>
+                        <td>{value}</td>
+                        <td><span className={`status-badge ${getIntensityColor(value)}`}>{value}</span></td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
 
-      {/* Employee Metrics Table */}
-      {cultureProfile.employeeMetrics && Object.keys(cultureProfile.employeeMetrics).length > 0 && (
-        <div className="section-container">
-          <div className="section-header" onClick={() => toggleSection('metrics')}>
-            <h3>
-              <Target size={20} />
-              Employee Metrics & Performance
-            </h3>
-            {expandedSections.metrics ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
-          </div>
-          
-          {expandedSections.metrics !== false && (
-            <div className="table-container">
-              <table className="data-table">
-                <thead>
-                  <tr>
-                    <th>Metric</th>
-                    <th>Value</th>
-                    <th>Performance Level</th>
-                    <th>Industry Benchmark</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {Object.entries(cultureProfile.employeeMetrics)
-                    .filter(([key, value]) => value !== null && value !== undefined)
-                    .map(([key, value]) => {
-                      const isPercentage = key.toLowerCase().includes('percentage') || key.toLowerCase().includes('rate');
-                      const displayValue = isPercentage ? `${value}%` : value;
-                      const performanceLevel = typeof value === 'number' ? 
-                        (value > 75 ? 'High' : value > 50 ? 'Medium' : 'Low') : 'Standard';
-                      
-                      return (
-                        <tr key={key}>
-                          <td><strong>{key.replace(/([A-Z])/g, ' $1').trim()}</strong></td>
-                          <td>{displayValue}</td>
-                          <td>
-                            <span className={`status-badge ${getIntensityColor(performanceLevel)}`}>
-                              {performanceLevel}
-                            </span>
-                          </td>
-                          <td>
-                            {isPercentage && typeof value === 'number' ? 
-                              (value > 70 ? 'Above Average' : value > 40 ? 'Average' : 'Below Average') : 
-                              'Industry Standard'
-                            }
-                          </td>
-                        </tr>
-                      );
-                    })}
-                </tbody>
-              </table>
+        {/* Employee Metrics Table */}
+        {cultureProfile.employeeMetrics && Object.keys(cultureProfile.employeeMetrics).length > 0 && (
+          <div className="section-container">
+            <div className="section-header" onClick={() => toggleSection('metrics')}>
+              <h3><Target size={20} />Employee Metrics & Performance</h3>
+              {expandedSections.metrics ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
             </div>
-          )}
-        </div>
-      )}
+            {expandedSections.metrics && (
+              <div className="table-container">
+                <table className="data-table">
+                  <thead><tr><th>Metric</th><th>Value</th><th>Performance</th></tr></thead>
+                  <tbody>
+                    {Object.entries(cultureProfile.employeeMetrics).map(([key, value]) => (
+                      <tr key={key}>
+                        <td><strong>{key.replace(/([A-Z])/g, ' $1').trim()}</strong></td>
+                        <td>{typeof value === 'number' && key.includes('Percentage') ? `${value}%` : value}</td>
+                        <td><span className={`status-badge ${getIntensityColor(String(value))}`}>{value}</span></td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    );
+  };
 
-      {/* Culture Fit Assessment Table */}
-      {cultureProfile.cultureFit && Object.keys(cultureProfile.cultureFit).length > 0 && (
-        <div className="section-container">
-          <div className="section-header" onClick={() => toggleSection('fit')}>
-            <h3>Culture Fit Assessment</h3>
-            {expandedSections.fit ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
-          </div>
-          
-          {expandedSections.fit !== false && (
-            <div className="table-container">
-              <table className="data-table">
-                <thead>
-                  <tr>
-                    <th>Assessment Area</th>
-                    <th>Fit Level</th>
-                    <th>Status</th>
-                    <th>Recommendation</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {Object.entries(cultureProfile.cultureFit).map(([area, fit]) => (
-                    <tr key={area}>
-                      <td><strong>{area.replace(/([A-Z])/g, ' $1').trim()}</strong></td>
-                      <td>{fit}</td>
-                      <td>
-                        <span className={`status-badge ${getIntensityColor(fit)}`}>
-                          {fit}
-                        </span>
-                      </td>
-                      <td>
-                        {fit === 'high' ? 'Maintain current approach' :
-                         fit === 'medium' ? 'Consider improvements' :
-                         'Requires attention'}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
-      )}
+  return (
+    <div className="porters-container"> 
+      {renderContent()}
     </div>
   );
 };
 
-export default OrganizationalCultureProfile;
+export default React.memo(OrganizationalCultureProfile);

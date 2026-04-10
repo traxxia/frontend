@@ -1,6 +1,13 @@
 import { useState, useEffect, useRef } from 'react';
 import { AnalysisService } from '../services/analysisService';
 
+const checkHas = (collection, id) => {
+    if (!collection) return false;
+    if (typeof collection.has === 'function') return collection.has(id);
+    if (typeof collection.includes === 'function') return collection.includes(id);
+    return false;
+};
+
 const PHASES = {
     INITIAL: "initial",
     ESSENTIAL: "essential",
@@ -17,7 +24,7 @@ const isPhaseCompleted = (phase, questions, userAnswers, completedQuestions) => 
     return mandatoryQuestions.every((q) => {
         const questionId = q._id;
         return (userAnswers[questionId] && userAnswers[questionId].trim()) ||
-            completedQuestions.has(questionId);
+            checkHas(completedQuestions, questionId);
     });
 };
 
@@ -32,11 +39,11 @@ const getUnlockedFeatures = (questions, userAnswers, completedQuestions, hasUplo
     };
 
     const hasAnswer = (qId) => {
-        const answered = (userAnswers[qId] && String(userAnswers[qId]).trim().length > 0) || completedQuestions.has(qId);
-        if (!answered && typeof qId === 'number') return completedQuestions.has(String(qId));
+        const answered = (userAnswers[qId] && String(userAnswers[qId]).trim().length > 0) || checkHas(completedQuestions, qId);
+        if (!answered && typeof qId === 'number') return checkHas(completedQuestions, String(qId));
         if (!answered && typeof qId === 'string') {
             const numId = Number(qId);
-            if (!isNaN(numId)) return completedQuestions.has(numId);
+            if (!isNaN(numId)) return checkHas(completedQuestions, numId);
         }
         return !!answered;
     };
@@ -135,9 +142,9 @@ const PhaseManager = ({
                     const essentialQuestions = questions.filter(q => q.phase === PHASES.ESSENTIAL && q.severity === "mandatory");
                     const advancedQuestions = questions.filter(q => q.phase === PHASES.ADVANCED);
 
-            const completedInitialQuestions = initialQuestions.filter(q => completedQuestions.has(q._id));
-            const completedEssentialQuestions = essentialQuestions.filter(q => completedQuestions.has(q._id));
-            const completedAdvancedQuestions = advancedQuestions.filter(q => completedQuestions.has(q._id));
+            const completedInitialQuestions = initialQuestions.filter(q => checkHas(completedQuestions, q._id));
+            const completedEssentialQuestions = essentialQuestions.filter(q => checkHas(completedQuestions, q._id));
+            const completedAdvancedQuestions = advancedQuestions.filter(q => checkHas(completedQuestions, q._id));
 
                     const newCompletedPhases = new Set();
 
@@ -290,13 +297,13 @@ const PhaseManager = ({
 
     const canGenerateFullSwot = () => {
         const essentialQuestions = questions.filter(q => q.phase === PHASES.ESSENTIAL);
-        const completedEssentialQuestions = essentialQuestions.filter(q => completedQuestions.has(q._id));
+        const completedEssentialQuestions = essentialQuestions.filter(q => checkHas(completedQuestions, q._id));
         return essentialQuestions.length > 0 && completedEssentialQuestions.length === essentialQuestions.length;
     };
 
     const canGenerateAdvancedPhase = () => {
         const advancedQuestions = questions.filter(q => q.phase === PHASES.ADVANCED);
-        const completedAdvancedQuestions = advancedQuestions.filter(q => completedQuestions.has(q._id));
+        const completedAdvancedQuestions = advancedQuestions.filter(q => checkHas(completedQuestions, q._id));
         return advancedQuestions.length > 0 && completedAdvancedQuestions.length === advancedQuestions.length;
     };
 

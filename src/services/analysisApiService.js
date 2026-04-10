@@ -1,4 +1,5 @@
 import { AnalysisService } from './analysisService';
+
 export const PHASE_API_CONFIG = {
   initial: [
     'swot',
@@ -97,6 +98,32 @@ export class AnalysisApiService {
     this.getAuthToken = getAuthToken;
     this.setApiLoading = setApiLoading;
     this.excelAnalysisCache = null; // Cache the excel-analysis result
+  }
+
+  async fetchAnalysisDataThroughBackend(businessId) {
+    const token = this.getAuthToken();
+    if (!token) return [];
+    return await AnalysisService.getAnalysis(this.API_BASE_URL, token, businessId);
+  }
+
+  async getFreshAnswersData(businessId) {
+    try {
+      const token = this.getAuthToken();
+      if (!token) return { freshAnswers: {} };
+      
+      const response = await fetch(`${this.API_BASE_URL}/api/conversations/business/${businessId}/answers`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (!response.ok) return { freshAnswers: {} };
+      const data = await response.json();
+      return { freshAnswers: data.answers || {} };
+    } catch (error) {
+      console.error('Error fetching fresh answers:', error);
+      return { freshAnswers: {} };
+    }
   }
 
   // PMF Analysis Methods

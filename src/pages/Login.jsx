@@ -60,7 +60,6 @@ const Login = () => {
       const currentLang = window.getCurrentLanguage
         ? window.getCurrentLanguage()
         : "en";
-      sessionStorage.setItem("appLanguage", currentLang);
 
       if (res.data.user.role === "super_admin") {
         navigate("/super-admin");

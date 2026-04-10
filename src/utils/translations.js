@@ -3452,17 +3452,12 @@ export const staticTranslations = {
 export const initializeTranslations = () => {
   window.appTranslations = staticTranslations;
 
-  // Check session storage first, then localStorage as fallback
-  const sessionLang = sessionStorage.getItem('appLanguage');
-  const localLang = localStorage.getItem('appLanguage');
-  window.currentAppLanguage = sessionLang || localLang || 'en';
-
-  // Static translation function - ONLY FOR UI ELEMENTS
+  // Global translation function - fallback for legacy components
   window.getTranslation = function (key, params = {}) {
-    let result = window.appTranslations[window.currentAppLanguage][key] || key;
+    const currentLang = window.currentAppLanguage || 'en';
+    let result = window.appTranslations[currentLang]?.[key] || key;
     if (typeof result !== 'string') result = String(key);
 
-    // Basic interpolation: replace {{key}} with params[key]
     Object.keys(params).forEach(pKey => {
       result = result.replace(new RegExp(`{{${pKey}}}`, 'g'), params[pKey]);
     });
@@ -3470,18 +3465,10 @@ export const initializeTranslations = () => {
     return result;
   };
 
-  // Enhanced language change function - now saves to session storage
+  // Enhanced language change function
   window.setAppLanguage = function (language) {
     const oldLanguage = window.currentAppLanguage;
     window.currentAppLanguage = language;
-    sessionStorage.setItem('appLanguage', language);
-    localStorage.setItem('appLanguage', language); // Keep as backup
-
-    // Update the translation function
-    window.getTranslation = function (key) {
-      const result = window.appTranslations[window.currentAppLanguage][key] || key;
-      return typeof result === 'string' ? result : String(key);
-    };
 
     // Only dispatch event if language actually changed
     if (oldLanguage !== language) {
@@ -3499,13 +3486,12 @@ export const initializeTranslations = () => {
     return window.currentAppLanguage || 'en';
   };
 
-  // Backward compatibility - keep the old function name
+  // Backward compatibility
   window.translateApp = window.setAppLanguage;
 
-  // Clear language from session (useful for logout)
+  // Clear language from session (legacy no-op)
   window.clearSessionLanguage = function () {
-    sessionStorage.removeItem('appLanguage');
-    // Keep in localStorage for next login
+    // Session language is now managed by languageStore persistence
   };
 };
 

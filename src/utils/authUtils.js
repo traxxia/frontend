@@ -1,3 +1,5 @@
+import { useAuthStore } from '../store/authStore';
+
 const DEFAULT_LIMITS = {
   insight: false,
   strategic: false,
@@ -6,18 +8,15 @@ const DEFAULT_LIMITS = {
 };
 
 /**
- * Reads the plan feature-flags from the `userLimits` key stored in
- * sessionStorage at login time.  The value is the raw `limits` object
- * from the login API response (e.g. { insight, strategic, pmf, project, … }).
+ * Reads the plan feature-flags from the `userLimits` in useAuthStore.
  *
  * @returns {{ insight: boolean, strategic: boolean, pmf: boolean, project: boolean }}
  */
 export function getUserLimits() {
   try {
-    const raw = sessionStorage.getItem('userLimits');
-    if (!raw) return { ...DEFAULT_LIMITS };
-    const parsed = JSON.parse(raw);
-    return { ...DEFAULT_LIMITS, ...parsed };
+    const limits = useAuthStore.getState().userLimits;
+    if (!limits) return { ...DEFAULT_LIMITS };
+    return { ...DEFAULT_LIMITS, ...limits };
   } catch {
     return { ...DEFAULT_LIMITS };
   }

@@ -2,50 +2,6 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 
-// Helper to sync auth data to individual sessionStorage keys for backward compatibility
-// during migration. Components that still use sessionStorage.getItem('token') will work.
-const syncToSessionStorage = (state) => {
-  try {
-    if (state.token) sessionStorage.setItem('token', state.token);
-    else sessionStorage.removeItem('token');
-
-    if (state.userId) sessionStorage.setItem('userId', state.userId);
-    else sessionStorage.removeItem('userId');
-
-    if (state.userName) sessionStorage.setItem('userName', state.userName);
-    else sessionStorage.removeItem('userName');
-
-    if (state.userEmail) sessionStorage.setItem('userEmail', state.userEmail);
-    else sessionStorage.removeItem('userEmail');
-
-    if (state.userRole) sessionStorage.setItem('userRole', state.userRole);
-    else sessionStorage.removeItem('userRole');
-
-    if (state.userPlan) sessionStorage.setItem('userPlan', state.userPlan);
-    else sessionStorage.removeItem('userPlan');
-
-    if (state.userCompany) sessionStorage.setItem('userCompany', state.userCompany);
-    else sessionStorage.removeItem('userCompany');
-
-    if (state.companyId) sessionStorage.setItem('companyId', state.companyId);
-    else sessionStorage.removeItem('companyId');
-
-    if (state.companyName) sessionStorage.setItem('companyName', state.companyName);
-    else sessionStorage.removeItem('companyName');
-
-    if (state.companyLogo) sessionStorage.setItem('companyLogo', state.companyLogo);
-    else sessionStorage.removeItem('companyLogo');
-
-    if (state.companyIndustry) sessionStorage.setItem('companyIndustry', state.companyIndustry);
-    else sessionStorage.removeItem('companyIndustry');
-
-    sessionStorage.setItem('userLimits', JSON.stringify(state.userLimits || {}));
-    sessionStorage.setItem('isAdmin', String(state.isAdmin));
-  } catch (e) {
-    console.error('Error syncing auth state to sessionStorage:', e);
-  }
-};
-
 export const useAuthStore = create(
   persist(
     (set, get) => ({
@@ -82,13 +38,10 @@ export const useAuthStore = create(
           isAuthenticated: true,
         };
         set(newState);
-        syncToSessionStorage(newState);
       },
 
       updateUser: (updates) => {
-        const newState = { ...get(), ...updates };
-        set(newState);
-        syncToSessionStorage(newState);
+        set((state) => ({ ...state, ...updates }));
       },
 
       logout: () => {
@@ -98,24 +51,6 @@ export const useAuthStore = create(
           companyName: null, companyLogo: null, companyIndustry: null,
           userLimits: {}, isAdmin: false, isAuthenticated: false,
         });
-        // Clear individual sessionStorage keys for backward compatibility
-        try {
-          sessionStorage.removeItem('token');
-          sessionStorage.removeItem('userId');
-          sessionStorage.removeItem('userName');
-          sessionStorage.removeItem('userEmail');
-          sessionStorage.removeItem('userRole');
-          sessionStorage.removeItem('userPlan');
-          sessionStorage.removeItem('userCompany');
-          sessionStorage.removeItem('companyId');
-          sessionStorage.removeItem('companyName');
-          sessionStorage.removeItem('companyLogo');
-          sessionStorage.removeItem('companyIndustry');
-          sessionStorage.removeItem('userLimits');
-          sessionStorage.removeItem('isAdmin');
-        } catch (e) {
-          console.error('Error clearing sessionStorage on logout:', e);
-        }
       },
 
       isSuperAdmin: () => get().userRole === 'super_admin',
