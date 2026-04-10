@@ -166,9 +166,10 @@ const PhaseManager = ({
             }
 
             const analysisArray = [];
-
+            
             try {
-                const newAnalysisData = await AnalysisService.getAnalysis(API_BASE_URL, token, selectedBusinessId);
+                // Use the centralized apiService which has common promise-caching logic
+                const newAnalysisData = await apiService.fetchAnalysisDataThroughBackend(selectedBusinessId);
                 if (newAnalysisData && Array.isArray(newAnalysisData)) {
                     analysisArray.push(...newAnalysisData);
                 }

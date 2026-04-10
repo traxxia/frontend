@@ -94,6 +94,7 @@ const pmfAnalysisCache = new Map();
 const pmfExecutiveSummaryCache = new Map();
 const analysisDataCache = new Map();
 const projectsCache = new Map();
+const financialDocumentCache = new Map();
 
 export class AnalysisApiService {
   constructor(ML_API_BASE_URL, API_BASE_URL, getAuthToken, setApiLoading = null) {
@@ -405,36 +406,49 @@ export class AnalysisApiService {
 
   // Fetch document metadata from backend
   async fetchFinancialDocument(businessId) {
-    try {
-      const token = this.getAuthToken();
-      if (!token) {
-        console.warn('No auth token available for document fetch');
-        return null;
-      }
+    if (!businessId) return null;
 
-      const response = await fetch(`${this.API_BASE_URL}/api/businesses/${businessId}/financial-document`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-
-      if (!response.ok) {
-        console.warn(`Financial document fetch failed: ${response.status} ${response.statusText}`);
-        return null;
-      }
-
-      const documentInfo = await response.json();
-
-      if (!documentInfo.has_document) {
-        return null;
-      }
-
-      return documentInfo.document;
-
-    } catch (error) {
-      console.error('Error fetching financial document:', error);
-      return null;
+    const cacheKey = `doc-${businessId}`;
+    if (financialDocumentCache.has(cacheKey)) {
+      return await financialDocumentCache.get(cacheKey);
     }
+
+    const fetchPromise = (async () => {
+      try {
+        const token = this.getAuthToken();
+        if (!token) {
+          console.warn('No auth token available for document fetch');
+          return null;
+        }
+
+        const response = await fetch(`${this.API_BASE_URL}/api/businesses/${businessId}/financial-document`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (!response.ok) {
+          console.warn(`Financial document fetch failed: ${response.status} ${response.statusText}`);
+          return null;
+        }
+
+        const documentInfo = await response.json();
+
+        if (!documentInfo.has_document) {
+          return null;
+        }
+
+        return documentInfo.document;
+
+      } catch (error) {
+        financialDocumentCache.delete(cacheKey);
+        console.error('Error fetching financial document:', error);
+        return null;
+      }
+    })();
+
+    financialDocumentCache.set(cacheKey, fetchPromise);
+    return fetchPromise;
   }
 
   // Download financial document binary data

@@ -627,11 +627,7 @@ const EditableBriefSection = ({
     }
   }, [questions, userAnswers]);
 
-  useEffect(() => {
-    if (selectedBusinessId && !documentInfo) {
-      loadDocumentInfo();
-    }
-  }, [selectedBusinessId, documentInfo]);
+  // Removed redundant document info fetch as it is now handled and passed down by BusinessSetupPage
 
   useEffect(() => {
     if (documentInfo) {

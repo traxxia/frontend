@@ -5,6 +5,9 @@ import { useAuthStore } from './authStore';
 
 const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
 
+const checkAllAccessCache = new Map();
+const teamRankingsCache = new Map();
+
 export const useProjectStore = create((set, get) => ({
   projects: [],
   selectedProject: null,
@@ -42,41 +45,67 @@ export const useProjectStore = create((set, get) => ({
   checkAllAccess: async (businessId) => {
     const token = useAuthStore.getState().token;
     if (!token || !businessId) return;
-    try {
-      const response = await axios.get(API_BASE_URL + '/api/projects/check-all-access', {
-        headers: { Authorization: 'Bearer ' + token },
-        params: { business_id: businessId }
-      });
-      set({
-        accessControl: {
-          hasRerankAccess: response.data.has_rerank_access || false,
-          projectsEditAccess: response.data.projects_edit_access || {},
-        }
-      });
-      return response.data;
-    } catch (err) {
-      console.error('Error checking project access:', err);
+
+    const cacheKey = `access-${businessId}`;
+    if (checkAllAccessCache.has(cacheKey)) {
+      return await checkAllAccessCache.get(cacheKey);
     }
+
+    const fetchPromise = (async () => {
+      try {
+        const response = await axios.get(API_BASE_URL + '/api/projects/check-all-access', {
+          headers: { Authorization: 'Bearer ' + token },
+          params: { business_id: businessId }
+        });
+        set({
+          accessControl: {
+            hasRerankAccess: response.data.has_rerank_access || false,
+            projectsEditAccess: response.data.projects_edit_access || {},
+          }
+        });
+        return response.data;
+      } catch (err) {
+        checkAllAccessCache.delete(cacheKey);
+        console.error('Error checking project access:', err);
+        throw err;
+      }
+    })();
+
+    checkAllAccessCache.set(cacheKey, fetchPromise);
+    return fetchPromise;
   },
 
   fetchTeamRankings: async (businessId) => {
     const token = useAuthStore.getState().token;
     const userId = useAuthStore.getState().userId;
     if (!token || !businessId || !userId) return;
-    try {
-      const response = await axios.get(API_BASE_URL + `/api/projects/rank/${userId}`, {
-        headers: { Authorization: 'Bearer ' + token },
-        params: { business_id: businessId }
-      });
-      set({ 
-        projects: response.data.projects || [],
-        businessStatus: response.data.business_status,
-        lockSummary: response.data.ranking_lock_summary || { locked_users_count: 0, total_users: 0, locked_users: [] },
-      });
-      return response.data;
-    } catch (err) {
-      console.error('Error fetching team rankings:', err);
+
+    const cacheKey = `rank-${businessId}-${userId}`;
+    if (teamRankingsCache.has(cacheKey)) {
+      return await teamRankingsCache.get(cacheKey);
     }
+
+    const fetchPromise = (async () => {
+      try {
+        const response = await axios.get(API_BASE_URL + `/api/projects/rank/${userId}`, {
+          headers: { Authorization: 'Bearer ' + token },
+          params: { business_id: businessId }
+        });
+        set({ 
+          projects: response.data.projects || [],
+          businessStatus: response.data.business_status,
+          lockSummary: response.data.ranking_lock_summary || { locked_users_count: 0, total_users: 0, locked_users: [] },
+        });
+        return response.data;
+      } catch (err) {
+        teamRankingsCache.delete(cacheKey);
+        console.error('Error fetching team rankings:', err);
+        throw err;
+      }
+    })();
+
+    teamRankingsCache.set(cacheKey, fetchPromise);
+    return fetchPromise;
   },
 
   checkAccess: async (businessId) => {

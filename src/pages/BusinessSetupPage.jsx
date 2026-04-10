@@ -474,21 +474,11 @@ const BusinessSetupPage = () => {
           if (responseData.document_info && responseData.document_info.has_document) {
             setDocumentInfo(responseData.document_info);
           } else {
-            try {
-              const docResponse = await fetch(`${API_BASE_URL}/api/businesses/${selectedBusinessId}/financial-document`, {
-                headers: {
-                  'Authorization': `Bearer ${token}`,
-                  'Content-Type': 'application/json'
-                }
-              });
-              if (docResponse.ok) {
-                const docData = await docResponse.json();
-                setDocumentInfo(docData.has_document && docData.document ? docData.document : { has_document: false });
-              } else {
-                setDocumentInfo({ has_document: false });
-              }
-            } catch (docError) {
-              console.error('Error calling financial-document API:', docError);
+            // Use the service which now has local promise-caching to avoid duplicate requests
+            const doc = await apiService.fetchFinancialDocument(selectedBusinessId);
+            if (doc) {
+              setDocumentInfo(doc);
+            } else {
               setDocumentInfo({ has_document: false });
             }
           }
