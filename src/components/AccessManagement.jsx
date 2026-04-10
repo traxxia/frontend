@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Table, Badge, Spinner, Form, Button, Modal } from "react-bootstrap";
 import { Shield, Lock, Pencil, Users, AlertCircle, Trash2, Activity, Key, ListOrdered, FileEdit, ShieldOff, FolderX, UserMinus } from "lucide-react";
 import axios from "axios";
@@ -24,7 +24,11 @@ const AccessManagement = ({ onToast }) => {
     const [fetchingBusinesses, setFetchingBusinesses] = useState(true);
     const token = useAuthStore(state => state.token);
 
+    const initializedRef = useRef(false);
+
     useEffect(() => {
+        if (initializedRef.current) return;
+        initializedRef.current = true;
         fetchBusinesses();
     }, []);
 

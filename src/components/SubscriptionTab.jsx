@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   Check,
   CreditCard,
@@ -479,7 +479,11 @@ const SubscriptionTab = ({ onToast }) => {
     }
   };
 
+  const initializedRef = useRef(false);
+
   useEffect(() => {
+    if (initializedRef.current) return;
+    initializedRef.current = true;
     fetchSubDetails();
   }, []);
 

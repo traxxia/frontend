@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Plus, Edit, Loader } from 'lucide-react';
 import { Modal, Button } from 'react-bootstrap';
 import axios from 'axios';
@@ -593,7 +593,11 @@ const PlanManagement = ({ onToast }) => {
         }
     }, [onToast]);
 
+    const initializedRef = useRef(false);
+
     useEffect(() => {
+        if (initializedRef.current) return;
+        initializedRef.current = true;
         loadPlans();
     }, [loadPlans]);
 

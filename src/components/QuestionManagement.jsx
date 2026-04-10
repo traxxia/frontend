@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Plus, HelpCircle, Edit, Save, X, ChevronDown, ChevronRight, Trash2, GripVertical, AlertCircle, FileText, CheckCircle2, ListChecks, Layers } from 'lucide-react';
 import '../styles/question-management.css';
 import { useTranslation } from '@/hooks/useTranslation';
@@ -27,7 +27,11 @@ const QuestionManagement = ({ onToast }) => {
 
   const phases = ['initial', 'essential', 'advanced'];
 
+  const initializedRef = useRef(false);
+
   useEffect(() => {
+    if (initializedRef.current) return;
+    initializedRef.current = true;
     loadQuestions();
   }, []);
 

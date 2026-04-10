@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Row, Col, Card, Form, Button, Dropdown, Modal, Alert, Spinner } from "react-bootstrap";
 import { Crown, UserCog, User, ShieldCheck, MoreVertical, Plus, Eye, EyeOff, Activity, Users, Shield, History } from "lucide-react";
 import "../styles/usermanagement.css";
@@ -106,7 +106,8 @@ const UserManagement = ({ onToast }) => {
   const [assigningBusinessCollaborators, setAssigningBusinessCollaborators] = useState([]);
 
 
-  const fetchPlanDetails = async () => {
+  const fetchPlanDetails = useCallback(async () => {
+    if (!token) return;
     try {
       const res = await axios.get(`${BACKEND_URL}/api/subscription/plan-details`, {
         headers: { Authorization: `Bearer ${token}` }
@@ -115,7 +116,7 @@ const UserManagement = ({ onToast }) => {
     } catch (err) {
       console.error("Failed to fetch plan details", err);
     }
-  };
+  }, [token]);
 
   const handleOpenModal = () => {
     setNewName("");
@@ -256,10 +257,12 @@ const UserManagement = ({ onToast }) => {
     }
   };
 
+  const companiesFetchedRef = useRef(false);
   useEffect(() => {
-    if (!isSuperAdmin) return;
+    if (!isSuperAdmin || companiesFetchedRef.current) return;
     const fetchCompanies = async () => {
       try {
+        companiesFetchedRef.current = true;
         const res = await axios.get(`${BACKEND_URL}/api/companies`, {
           headers: { Authorization: `Bearer ${token}` }
         });
@@ -267,10 +270,11 @@ const UserManagement = ({ onToast }) => {
         setCompanies(data);
       } catch (err) {
         console.error("Failed to fetch companies", err);
+        companiesFetchedRef.current = false;
       }
     };
     fetchCompanies();
-  }, [isSuperAdmin]);
+  }, [isSuperAdmin, token]);
 
   const handleRoleUpdate = async (userId, role) => {
     // Dynamic Limit Check for role update
@@ -397,13 +401,11 @@ const UserManagement = ({ onToast }) => {
     }
   };
 
-  useEffect(() => {
-    fetchUsers();
-    fetchBusinesses();
-    fetchPlanDetails();
-  }, []);
+  const hasFetched = useRef(false);
 
-  const fetchUsers = async () => {
+
+  const fetchUsers = useCallback(async () => {
+    if (!token) return;
     try {
       setIsLoading(true);
       const res = await axios.get(`${BACKEND_URL}/api/admin/users`, {
@@ -416,9 +418,10 @@ const UserManagement = ({ onToast }) => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [token, t, onToast]);
 
-  const fetchBusinesses = async () => {
+  const fetchBusinesses = useCallback(async () => {
+    if (!token) return;
     try {
       const res = await axios.get(`${BACKEND_URL}/api/businesses`, {
         headers: { Authorization: `Bearer ${token}` }
@@ -427,7 +430,6 @@ const UserManagement = ({ onToast }) => {
         ? res.data 
         : [...(res.data.businesses || []), ...(res.data.collaborating_businesses || [])];
       
-      // Filter out archived businesses
       const activeBusinesses = data.filter(b => 
         (b.status || "").toLowerCase() !== 'archived' && 
         (b.access_mode || "").toLowerCase() !== 'archived' &&
@@ -437,7 +439,16 @@ const UserManagement = ({ onToast }) => {
     } catch (error) {
       console.error("Failed to fetch businesses", error);
     }
-  };
+  }, [token]);
+
+  useEffect(() => {
+    if (token && !hasFetched.current) {
+      fetchUsers();
+      fetchBusinesses();
+      fetchPlanDetails();
+      hasFetched.current = true;
+    }
+  }, [token, fetchUsers, fetchBusinesses, fetchPlanDetails]);
 
   const handleSearch = (value) => {
     if (searchTerm === "" && value !== "") setLastPageBeforeSearch(currentPage);

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Search, Users, Building2, Activity, TrendingUp, X, Trash2 } from "lucide-react";
 import axios from "axios";
 import { useTranslation } from "../hooks/useTranslation";
@@ -30,7 +30,11 @@ const BusinessOverview = ({ onToast }) => {
 
     const token = useAuthStore(state => state.token);
 
+    const initializedRef = useRef(false);
+
     useEffect(() => {
+        if (initializedRef.current) return;
+        initializedRef.current = true;
         fetchBusinesses();
     }, []);
 

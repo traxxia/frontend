@@ -265,7 +265,10 @@ const CompanyEditModal = ({ company, onClose, onSave, onToast }) => {
   );
 };
 
-// ------------------ CompanyManagement ------------------
+function getAuthToken() {
+  return useAuthStore.getState().token;
+}
+
 const CompanyManagement = ({ onToast }) => {
   const [companies, setCompanies] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -278,17 +281,11 @@ const CompanyManagement = ({ onToast }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 10;
 
-  const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
-  const getAuthToken = () => useAuthStore.getState().token;
-
-  useEffect(() => {
-    const role = useAuthStore.getState().userRole;
-    setUserRole(role || '');
-    loadCompanies();
-  }, []);
-
   const isSuperAdmin = userRole === 'super_admin';
   const isCompanyAdmin = userRole === 'company_admin';
+
+  const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
+  const initializedRef = useRef(false);
 
   const loadCompanies = async () => {
     try {
@@ -323,6 +320,15 @@ const CompanyManagement = ({ onToast }) => {
       setIsLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (initializedRef.current) return;
+    initializedRef.current = true;
+
+    const role = useAuthStore.getState().userRole;
+    setUserRole(role || '');
+    loadCompanies();
+  }, []);
 
   const handleEditCompany = (company) => {
     setEditingCompany(company);

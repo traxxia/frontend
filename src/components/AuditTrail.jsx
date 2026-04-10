@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import AnalysisDataModal from './AnalysisDataModal';
 import AdminTable from './AdminTable';
 import MetricCard from './MetricCard';
@@ -75,8 +75,13 @@ const AuditTrail = ({ onToast }) => {
     }
   }, []);
 
+  const initializedRef = useRef(false);
+
   // Initial load effect
   useEffect(() => {
+    if (!currentUserRole || initializedRef.current) return;
+    initializedRef.current = true;
+
     const initializeData = async () => {
       try {
         fetchAuditTrail();
@@ -87,10 +92,8 @@ const AuditTrail = ({ onToast }) => {
       }
     };
 
-    if (initialLoad && currentUserRole) {
-      initializeData();
-    }
-  }, [initialLoad, currentUserRole]);
+    initializeData();
+  }, [currentUserRole]);
 
 
   // Consolidated fetch effect for all filters

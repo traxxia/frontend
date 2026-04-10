@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap/dist/js/bootstrap.bundle.min.js';
 import { Table, Badge, Spinner, Form, Button, Modal, Card } from "react-bootstrap";
@@ -78,31 +78,7 @@ const UserHistory = ({ onToast }) => {
   };
 
 
-  // Load Initial Data
-  useEffect(() => {
-    const init = async () => {
-      const userInfo = getUserInfo();
-      setUserRole(userInfo.role || '');
-
-      const token = getAuthToken();
-      try {
-        const companiesResponse = await fetch(`${API_BASE_URL}/api/admin/companies`, {
-          headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
-        });
-        if (companiesResponse.ok) {
-          const data = await companiesResponse.json();
-          setCompanies(data.companies || []);
-        }
-        await loadUsers();
-        await loadGlobalQuestions();
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setIsInitialized(true);
-      }
-    };
-    init();
-  }, []);
+  const initializedRef = useRef(false);
 
   const loadGlobalQuestions = async () => {
     try {
@@ -143,8 +119,42 @@ const UserHistory = ({ onToast }) => {
     }
   };
 
+  // Load Initial Data
   useEffect(() => {
-    if (isInitialized) loadUsers(selectedCompany);
+    if (initializedRef.current) return;
+    initializedRef.current = true;
+
+    const init = async () => {
+      const userInfo = getUserInfo();
+      setUserRole(userInfo.role || '');
+
+      const token = getAuthToken();
+      try {
+        const companiesResponse = await fetch(`${API_BASE_URL}/api/admin/companies`, {
+          headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
+        });
+        if (companiesResponse.ok) {
+          const data = await companiesResponse.json();
+          setCompanies(data.companies || []);
+        }
+        // Removed: await loadUsers(); // Now handled by the useEffect below to prevent double calls
+        await loadGlobalQuestions();
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setIsInitialized(true);
+      }
+    };
+    init();
+  }, []);
+
+  const lastFetchRef = useRef(null);
+  useEffect(() => {
+    const fetchKey = `${selectedCompany}_${isInitialized}`;
+    if (isInitialized && lastFetchRef.current !== fetchKey) {
+      lastFetchRef.current = fetchKey;
+      loadUsers(selectedCompany);
+    }
   }, [selectedCompany, isInitialized]);
 
   const applyFilters = useCallback((searchValue, roleValue) => {

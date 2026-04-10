@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Users, Search, Loader, Plus, ChevronRight, ChevronLeft, } from 'lucide-react';
 import Pagination from '../components/Pagination';
 import { formatDate } from '../utils/dateUtils';
@@ -96,12 +96,21 @@ const UserOverview = ({ onToast }) => {
 
   // Check if form is valid
 
+  const initializedRef = useRef(false);
+  const usersFetchedRef = useRef(null);
+
   useEffect(() => {
+    if (initializedRef.current) return;
+    initializedRef.current = true;
     loadInitialData();
   }, []);
 
   useEffect(() => {
-    loadUsers();
+    const fetchKey = `${selectedCompany}`;
+    if (usersFetchedRef.current !== fetchKey) {
+      usersFetchedRef.current = fetchKey;
+      loadUsers();
+    }
   }, [selectedCompany]);
 
   const loadInitialData = async () => {
@@ -127,7 +136,7 @@ const UserOverview = ({ onToast }) => {
         }
       }
 
-      await loadUsers();
+      // loadUsers() is now handled by the useEffect above to avoid double calls
     } catch (error) {
       console.error('Error loading initial data:', error);
       onToast('Error loading data', 'error');

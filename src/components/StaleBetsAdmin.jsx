@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Card, Table, Alert, Spinner, Button } from 'react-bootstrap';
 import Pagination from './Pagination';
 import { MdRefresh, MdUnfoldMore, MdArrowUpward, MdArrowDownward } from 'react-icons/md';
@@ -43,7 +43,11 @@ const StaleBetsAdmin = ({ onToast }) => {
     }
   };
 
+  const initializedRef = useRef(false);
+
   useEffect(() => {
+    if (initializedRef.current) return;
+    initializedRef.current = true;
     fetchStaleProjects();
   }, []);
 
