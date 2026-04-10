@@ -6,8 +6,6 @@ import { useAuthStore } from '../store/authStore';
 import AdminTable from './AdminTable';
 import MetricCard from './MetricCard';
 
-import { useAuthStore } from '../store/authStore';
-
 const QuestionManagement = ({ onToast }) => {
   const [questions, setQuestions] = useState([]);
   const [questionsByPhase, setQuestionsByPhase] = useState({});
