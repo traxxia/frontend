@@ -7,6 +7,8 @@ import { useTranslation } from '../hooks/useTranslation';
 import { useAuthStore } from '../store/authStore';
 import '../styles/PlanManagement.css';
 
+import { useAuthStore } from '../store/authStore';
+
 const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
 
 const PlanModal = ({ show, plan, onClose, onSave, isSubmitting, onToast }) => {

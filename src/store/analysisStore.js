@@ -164,9 +164,34 @@ export const useAnalysisStore = create((set, get) => ({
         });
 
       const updates = {};
+      const keyMap = {
+        swot: 'swotAnalysis', purchaseCriteria: 'purchaseCriteria', loyaltyNPS: 'loyaltyNPS',
+        porters: 'portersData', pestel: 'pestelData', fullSwot: 'fullSwotData',
+        competitiveAdvantage: 'competitiveAdvantage', strategic: 'strategicData',
+        expandedCapability: 'expandedCapability', strategicRadar: 'strategicRadar',
+        productivity: 'productivityData', maturity: 'maturityData',
+        competitiveLandscape: 'competitiveLandscape', coreAdjacency: 'coreAdjacency',
+        profitabilityAnalysis: 'profitabilityData', growthTracker: 'growthTrackerData',
+        liquidityEfficiency: 'liquidityEfficiencyData', investmentPerformance: 'investmentPerformanceData',
+        leverageRisk: 'leverageRiskData',
+        financialBalance: 'financialBalanceData', costEfficiency: 'costEfficiencyData',
+        operationalEfficiency: 'operationalEfficiencyData', financialPerformance: 'financialPerformanceData',
+        channelEffectiveness: 'channelEffectivenessData', channelHeatmap: 'channelHeatmapData',
+        customerSegmentation: 'customerSegmentationData', cultureProfile: 'cultureProfileData',
+        strategicGoals: 'strategicGoalsData',
+      };
+
       Object.entries(latestAnalysisByType).forEach(([type, analysis]) => {
-        const key = apiService.getStateSetterName(type).replace('set', '');
-        const dataKey = key.charAt(0).toLowerCase() + key.slice(1);
+        let dataKey = keyMap[type];
+        if (!dataKey) {
+          try {
+            const key = apiService.getStateSetterName(type).replace('set', '');
+            dataKey = key.charAt(0).toLowerCase() + key.slice(1);
+          } catch(e) {
+            dataKey = type;
+          }
+        }
+
         updates[dataKey] = type === 'swot' 
           ? (typeof analysis.analysis_data === 'string' ? analysis.analysis_data : JSON.stringify(analysis.analysis_data))
           : analysis.analysis_data;

@@ -247,4 +247,4 @@ const SwotAnalysis = ({
   );
 };
 
-export default SwotAnalysis;
+export default SwotAnalysis;

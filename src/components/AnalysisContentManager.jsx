@@ -54,7 +54,7 @@ const MemoizedAnalysisCard = React.memo(
     const getActualStatus = () => {
       if (isRegenerating || isLoading) return 'loading';
       if (hasData) return 'completed';
-      return 'error';
+      return 'empty';
     };
 
     return (

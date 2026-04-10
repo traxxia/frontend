@@ -5,6 +5,8 @@ import { TrendingUp, Zap, AlertTriangle, Circle, Diamond, Rocket, Bolt, Lightbul
 import { validateField } from "../utils/validation";
 import "../styles/NewProjectPage.css";
 
+import { useAuthStore } from '../store/authStore';
+
 // Module-level cache to deduplicate requests across re-renders
 const eligibleOwnersCache = new Map();
 
