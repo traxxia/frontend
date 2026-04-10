@@ -35,6 +35,8 @@ import UpgradeModal from "./UpgradeModal";
 import PlanLimitModal from "./PlanLimitModal";
 import '../styles/StrategicAnalysis.css';
 
+import { useAuthStore } from '../store/authStore';
+
 const StrategicAnalysis = ({
   questions = [],
   userAnswers = {},
@@ -60,7 +62,7 @@ const StrategicAnalysis = ({
   const [userRole, setUserRole] = useState("");
 
   useEffect(() => {
-    const role = sessionStorage.getItem("userRole");
+    const role = useAuthStore.getState().userRole;
     setUserRole(role);
   }, []);
 
@@ -82,8 +84,8 @@ const StrategicAnalysis = ({
   const [showPlanLimitModal, setShowPlanLimitModal] = useState(false);
   const handleKickstart = async () => {
     try {
-      const token = sessionStorage.getItem("token");
-      const userId = sessionStorage.getItem("userId");
+      const token = useAuthStore.getState().token;
+      const userId = useAuthStore.getState().userId;
 
       if (!getUserLimits().strategic) {
         setShowPlanLimitModal(true);

@@ -15,6 +15,8 @@ import '../styles/SubscriptionTab.css';
 
 
 
+import { useAuthStore } from '../store/authStore';
+
 /* ─── helpers ─── */
 
 const getDaysRemaining = (end) => {
@@ -348,7 +350,7 @@ const SubscriptionTab = ({ onToast }) => {
     const itemsPerPage = 5;
 
     const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
-    const token = sessionStorage.getItem('token');
+    const token = useAuthStore.getState().token;
 
     const fetchSubDetails = async () => {
         try {

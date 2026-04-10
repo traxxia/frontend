@@ -35,7 +35,7 @@ const CATEGORIES = [
   { id: "Scaled", label: "Scaled" },
 ];
 
-const getToken = () => sessionStorage.getItem("token");
+const getToken = () => useAuthStore.getState().token;
 
 const lockFieldSafe = async (projectId, fieldName) => {
   try {
@@ -494,7 +494,7 @@ const ProjectsSection = ({
 
     setIsSubmitting(true);
     try {
-      const userId = sessionStorage.getItem("userId");
+      const userId = useAuthStore.getState().userId;
       const payload = getPayload(userId, selectedBusinessId);
 
       const { success, error } = await createProject(payload);
@@ -546,7 +546,7 @@ const ProjectsSection = ({
     if (!validation.isValid) return;
 
     try {
-      const userId = sessionStorage.getItem("userId");
+      const userId = useAuthStore.getState().userId;
       const payload = getPayload(userId, selectedBusinessId);
 
       const oldStatus = (currentProject.status || "Draft").toLowerCase();

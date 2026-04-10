@@ -5,6 +5,8 @@ import { TrendingUp, Zap, AlertTriangle, Circle, Diamond, Rocket, Bolt, Lightbul
 import { validateField } from "../utils/validation";
 import "../styles/NewProjectPage.css";
 
+import { useAuthStore } from '../store/authStore';
+
 // Module-level cache to deduplicate requests across re-renders
 const eligibleOwnersCache = new Map();
 
@@ -363,7 +365,7 @@ const ProjectForm = ({
           try {
             const response = await fetch(`${process.env.REACT_APP_BACKEND_URL || "http://localhost:5000"}/api/businesses/${selectedBusinessId}/eligible-owners`, {
               headers: {
-                "Authorization": `Bearer ${sessionStorage.getItem("token")}`
+                "Authorization": `Bearer ${useAuthStore.getState().token}`
               }
             });
             const data = await response.json();

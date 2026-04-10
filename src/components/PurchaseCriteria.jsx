@@ -6,6 +6,8 @@ import AnalysisEmptyState from './AnalysisEmptyState';
 import AnalysisError from './AnalysisError';
 import { checkMissingQuestionsAndRedirect, ANALYSIS_TYPES } from '../services/missingQuestionsService';
 
+import { useAuthStore } from '../store/authStore';
+
 const PurchaseCriteria = ({
   questions = [],
   userAnswers = {},
@@ -29,7 +31,7 @@ const PurchaseCriteria = ({
   const { t } = useTranslation();
 
   const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
-  const getAuthToken = () => sessionStorage.getItem('token');
+  const getAuthToken = () => useAuthStore.getState().token;
 
   // Colors for different performance levels
   const PERFORMANCE_COLORS = {

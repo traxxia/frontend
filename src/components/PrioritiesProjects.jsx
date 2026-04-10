@@ -9,9 +9,11 @@ import PlanLimitModal from "./PlanLimitModal";
 import "../styles/PrioritiesProjects.css";
 import { getUserLimits } from "../utils/authUtils";
 
+import { useAuthStore } from '../store/authStore';
+
 const ML_API_BASE_URL = process.env.REACT_APP_ML_BACKEND_URL;
 const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
-const getAuthToken = () => sessionStorage.getItem("token");
+const getAuthToken = () => useAuthStore.getState().token;
 // Instantiate service outside to maintain a stable reference
 const analysisService = new AnalysisApiService(ML_API_BASE_URL, API_BASE_URL, getAuthToken);
 
@@ -29,8 +31,8 @@ const PrioritiesProjects = ({ selectedBusinessId, companyAdminIds, onSuccess, on
   const [showNoCollaboratorsModal, setShowNoCollaboratorsModal] = useState(false);
   const navigate = useNavigate();
   const userRole = (
-    sessionStorage.getItem("role") ||
-    sessionStorage.getItem("userRole") ||
+    useAuthStore.getState().userRole ||
+    useAuthStore.getState().userRole ||
     ""
   ).toLowerCase();
   const isAdmin = userRole === "company_admin" || userRole === "super_admin";

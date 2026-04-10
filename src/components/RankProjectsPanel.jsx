@@ -19,6 +19,8 @@ import { validateRationale } from "../utils/validation";
 import { callMLRankingAPI } from "../services/aiRankingService";
 import { Checkbox } from "lucide-react"; // Import Checkbox icon if needed or use native
 
+import { useAuthStore } from '../store/authStore';
+
 /* ---------- PROJECT FILTERING HELPERS ---------- */
 const isLaunched = (p) => {
   const ls = p?.launch_status?.toLowerCase();
@@ -225,7 +227,7 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankS
             ai_rankings: validRankings,
             model_version: "v1.0"
           };
-          const token = sessionStorage.getItem("token");
+          const token = useAuthStore.getState().token;
           await axios.post(`${process.env.REACT_APP_BACKEND_URL}/api/projects/ai-rankings`, aiPayload, {
             headers: { Authorization: `Bearer ${token}` }
           });
@@ -468,7 +470,7 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankS
     setIsSaving(true);
 
     try {
-      const token = sessionStorage.getItem("token");
+      const token = useAuthStore.getState().token;
 
       const payload = {
         business_id: businessId,
