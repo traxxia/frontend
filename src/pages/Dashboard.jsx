@@ -177,6 +177,7 @@ const Dashboard = () => {
     createBusiness: createBusinessAction,
     deleteBusiness: deleteBusinessAction,
     setSelectedBusinessId,
+    selectBusiness,
     selectedBusinessId,
     clearErrors
   } = useBusinessStore();
@@ -568,10 +569,10 @@ const Dashboard = () => {
   const handleBusinessClick = useCallback((business) => {
     const businessId = business._id || business.id;
     if (businessId) {
-      setSelectedBusinessId(businessId);
+      selectBusiness(business);
     }
     navigate('/businesspage', { state: { business, initialTab: 'executive' } });
-  }, [setSelectedBusinessId, navigate]);
+  }, [selectBusiness, navigate]);
 
   const handleCloseModal = useCallback(() => {
     closeModal('howItWorks');

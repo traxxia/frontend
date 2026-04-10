@@ -376,9 +376,9 @@ const BusinessSetupPage = () => {
 
       // Store selection is now persisted via businessStore
 
-      // If we don't have the full business object, fetch it
-      if (!currentBusiness) {
-        // Skip fetch if we are on Priorities tab and already have basic info or if tab is projects (as requested for optimization)
+      // If we don't have the full business object OR it doesn't match the current ID, fetch it
+      if (!currentBusiness || (currentBusiness._id !== selectedBusinessId && currentBusiness.id !== selectedBusinessId)) {
+        // Skip fetch if we are on Priorities or Projects tab and already have basic info (optimization)
         if ((activeTab === 'priorities' || activeTab === 'projects') && selectedBusinessName && selectedBusinessName !== "") {
           console.log("Skipping business recovery fetch for tab:", activeTab);
           return;
@@ -698,12 +698,13 @@ const BusinessSetupPage = () => {
       };
 
       const targetPhase = findHighestAnsweredPhase();
-
-      if (options?.includeFinancial && targetPhase !== 'advanced') {
-        await handleRegeneratePhase('financial', false, true);
+      
+      // Removed the 'targetPhase !== advanced' restriction to allow financial regeneration in all phases
+      if (options?.includeFinancial) {
+        await handleRegeneratePhase('financial', false);
       }
 
-      await handleRegeneratePhase(targetPhase, true, true);
+      await handleRegeneratePhase(targetPhase, true);
     } finally {
       isRegeneratingRef.current = false;
     }
@@ -1136,7 +1137,7 @@ const BusinessSetupPage = () => {
                   {canShowRegenerateButtons && unlockedFeatures.analysis && hasInsightAccess && (
                     <CustomTooltip align="right" message={t("regenerate_all_tooltip") || "Re-generate all insights."}>
                       <button
-                        onClick={() => canRegenerate && handleRegeneratePhase(currentPhase)}
+                        onClick={() => canRegenerate && handleRegenerateAllAnalysis({ includeFinancial: hasUploadedDocument })}
                         disabled={isAnalysisRegenerating || !unlockedFeatures.analysis || !canRegenerate || !hasInsightAccess}
                         className={`regenerate-button ${isAnalysisRegenerating ? 'disabled' : ''}`}
                       >
@@ -1444,7 +1445,7 @@ const BusinessSetupPage = () => {
                           {canShowRegenerateButtons && unlockedFeatures.analysis && hasInsightAccess && (
                             <CustomTooltip align="right" message={t("regenerate_all_tooltip") || "Re-generate all insights."}>
                               <button
-                                onClick={() => canRegenerate && handleRegeneratePhase(currentPhase)}
+                                onClick={() => canRegenerate && handleRegenerateAllAnalysis({ includeFinancial: hasUploadedDocument })}
                                 disabled={isAnalysisRegenerating || !unlockedFeatures.analysis || !canRegenerate || !hasInsightAccess}
                                 className={`regenerate-button ${isAnalysisRegenerating ? 'disabled' : ''}`}
                               >

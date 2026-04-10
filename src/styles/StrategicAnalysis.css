@@ -15,23 +15,39 @@
   text-align: center;
 }
 
-.loading-spinner {
-  color: #3b82f6;
-  margin-bottom: 16px;
-}
-
-.spin-animation {
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
+/* Loading State Animation */
+@keyframes strategic-spin-animation {
   from {
     transform: rotate(0deg);
   }
-
   to {
     transform: rotate(360deg);
   }
+}
+
+@-webkit-keyframes strategic-spin-animation {
+  from {
+    -webkit-transform: rotate(0deg);
+  }
+  to {
+    -webkit-transform: rotate(360deg);
+  }
+}
+
+.strategic-analysis-container .loading-state svg,
+.strategic-analysis-container .loading-state .loading-spinner,
+.strategic-analysis-container .loading-state .animate-spin {
+  animation: strategic-spin-animation 1s linear infinite !important;
+  -webkit-animation: strategic-spin-animation 1s linear infinite !important;
+  display: inline-block !important;
+  transform-origin: center !important;
+  transform-box: fill-box !important;
+  color: #3b82f6 !important;
+}
+
+.loading-spinner {
+  color: #3b82f6;
+  margin-bottom: 16px;
 }
 
 .loading-title {

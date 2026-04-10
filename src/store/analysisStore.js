@@ -114,9 +114,9 @@ export const useAnalysisStore = create((set, get) => ({
       porters: 'portersData', pestel: 'pestelData', fullSwot: 'fullSwotData',
       competitiveAdvantage: 'competitiveAdvantage', strategic: 'strategicData',
       expandedCapability: 'expandedCapability', strategicRadar: 'strategicRadar',
-      productivity: 'productivityData', maturity: 'maturityData',
+      productivityMetrics: 'productivityData', maturityScore: 'maturityData',
       competitiveLandscape: 'competitiveLandscape', coreAdjacency: 'coreAdjacency',
-      profitability: 'profitabilityData', growthTracker: 'growthTrackerData',
+      profitabilityAnalysis: 'profitabilityData', growthTracker: 'growthTrackerData',
       liquidityEfficiency: 'liquidityEfficiencyData', investmentPerformance: 'investmentPerformanceData',
       leverageRisk: 'leverageRiskData',
       financialBalance: 'financialBalanceData',
@@ -169,7 +169,7 @@ export const useAnalysisStore = create((set, get) => ({
         porters: 'portersData', pestel: 'pestelData', fullSwot: 'fullSwotData',
         competitiveAdvantage: 'competitiveAdvantage', strategic: 'strategicData',
         expandedCapability: 'expandedCapability', strategicRadar: 'strategicRadar',
-        productivity: 'productivityData', maturity: 'maturityData',
+        productivityMetrics: 'productivityData', maturityScore: 'maturityData',
         competitiveLandscape: 'competitiveLandscape', coreAdjacency: 'coreAdjacency',
         profitabilityAnalysis: 'profitabilityData', growthTracker: 'growthTrackerData',
         liquidityEfficiency: 'liquidityEfficiencyData', investmentPerformance: 'investmentPerformanceData',
@@ -219,9 +219,20 @@ export const useAnalysisStore = create((set, get) => ({
     try {
       const apiService = getApiService();
       const stateSetters = {};
-      // Create transient setters for the service to call
-      Object.keys(apiService.getStateSetterName('swot')).forEach(type => {
-        stateSetters[apiService.getStateSetterName(type)] = (data) => get().setAnalysisData(type, data);
+      // Create transient setters for the service to call for all analysis types
+      const analysisTypes = [
+        'swot', 'purchaseCriteria', 'loyaltyNPS', 'porters', 'pestel', 
+        'fullSwot', 'competitiveAdvantage', 'strategic', 'expandedCapability', 
+        'strategicRadar', 'productivityMetrics', 'maturityScore', 'competitiveLandscape', 
+        'coreAdjacency', 'profitabilityAnalysis', 'growthTracker', 'liquidityEfficiency', 
+        'investmentPerformance', 'leverageRisk'
+      ];
+      
+      analysisTypes.forEach(type => {
+        const setterName = apiService.getStateSetterName(type);
+        if (setterName) {
+          stateSetters[setterName] = (data) => get().setAnalysisData(type, data);
+        }
       });
 
       await apiService.handlePhaseCompletion(

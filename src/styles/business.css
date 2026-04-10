@@ -580,7 +580,10 @@
 }
 
 .modern-animate-spin {
-  animation: modern-spin 1s linear infinite;
+  animation: modern-spin 1s linear infinite !important;
+  display: inline-block !important;
+  transform-origin: center !important;
+  transform-box: fill-box !important;
 }
 
 /* Responsive Design */
