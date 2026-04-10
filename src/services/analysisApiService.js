@@ -88,8 +88,12 @@ const EXCEL_ANALYSIS_METRIC_TYPES = {
 
 const DEEP_SEARCH_ENDPOINTS = ['find', 'pestel-analysis', 'full-swot-portfolio', 'porter-analysis'];
 
-// Global cache for kickstart requests shared across all service instances
+// Global caches shared across all service instances to prevent redundant concurrent requests
 const kickstartRequestCache = new Map();
+const pmfAnalysisCache = new Map();
+const pmfExecutiveSummaryCache = new Map();
+const analysisDataCache = new Map();
+const projectsCache = new Map();
 
 export class AnalysisApiService {
   constructor(ML_API_BASE_URL, API_BASE_URL, getAuthToken, setApiLoading = null) {
@@ -101,9 +105,26 @@ export class AnalysisApiService {
   }
 
   async fetchAnalysisDataThroughBackend(businessId) {
-    const token = this.getAuthToken();
-    if (!token) return [];
-    return await AnalysisService.getAnalysis(this.API_BASE_URL, token, businessId);
+    if (!businessId) return [];
+    
+    const cacheKey = `analysis-${businessId}`;
+    if (analysisDataCache.has(cacheKey)) {
+      return await analysisDataCache.get(cacheKey);
+    }
+    
+    const fetchPromise = (async () => {
+      try {
+        const token = this.getAuthToken();
+        if (!token) return [];
+        return await AnalysisService.getAnalysis(this.API_BASE_URL, token, businessId);
+      } catch (error) {
+        analysisDataCache.delete(cacheKey);
+        throw error;
+      }
+    })();
+    
+    analysisDataCache.set(cacheKey, fetchPromise);
+    return fetchPromise;
   }
 
   async getFreshAnswersData(businessId) {
@@ -130,6 +151,10 @@ export class AnalysisApiService {
   async savePMFOnboardingData(businessId, onboardingData) {
     try {
       const token = this.getAuthToken();
+      // Clear caches on save to ensure fresh data next time
+      pmfAnalysisCache.delete(`pmf-${businessId}`);
+      pmfExecutiveSummaryCache.delete(`exec-${businessId}`);
+      
       const response = await fetch(`${this.API_BASE_URL}/api/pmf-analysis/onboarding`, {
         method: 'POST',
         headers: {
@@ -152,24 +177,40 @@ export class AnalysisApiService {
   }
 
   async getPMFAnalysis(businessId) {
-    try {
-      const token = this.getAuthToken();
-      const response = await fetch(`${this.API_BASE_URL}/api/pmf-analysis/${businessId}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      if (response.status === 404) return null;
-      return await response.json();
-    } catch (error) {
-      console.error('Error fetching PMF analysis:', error);
-      throw error;
+    if (!businessId) return null;
+    
+    const cacheKey = `pmf-${businessId}`;
+    if (pmfAnalysisCache.has(cacheKey)) {
+      return await pmfAnalysisCache.get(cacheKey);
     }
+    
+    const fetchPromise = (async () => {
+      try {
+        const token = this.getAuthToken();
+        const response = await fetch(`${this.API_BASE_URL}/api/pmf-analysis/${businessId}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        if (response.status === 404) return null;
+        return await response.json();
+      } catch (error) {
+        pmfAnalysisCache.delete(cacheKey);
+        console.error('Error fetching PMF analysis:', error);
+        throw error;
+      }
+    })();
+    
+    pmfAnalysisCache.set(cacheKey, fetchPromise);
+    return fetchPromise;
   }
 
   async savePMFExecutiveSummary(businessId, summary) {
     try {
       const token = this.getAuthToken();
+      // Clear cache on save
+      pmfExecutiveSummaryCache.delete(`exec-${businessId}`);
+      
       const response = await fetch(`${this.API_BASE_URL}/api/pmf-analysis/${businessId}/executive-summary`, {
         method: 'POST',
         headers: {
@@ -186,19 +227,65 @@ export class AnalysisApiService {
   }
 
   async getPMFExecutiveSummary(businessId) {
-    try {
-      const token = this.getAuthToken();
-      const response = await fetch(`${this.API_BASE_URL}/api/pmf-analysis/${businessId}/executive-summary`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      if (response.status === 404) return null;
-      return await response.json();
-    } catch (error) {
-      console.error('Error fetching PMF executive summary:', error);
-      throw error;
+    if (!businessId) return null;
+    
+    const cacheKey = `exec-${businessId}`;
+    if (pmfExecutiveSummaryCache.has(cacheKey)) {
+      return await pmfExecutiveSummaryCache.get(cacheKey);
     }
+    
+    const fetchPromise = (async () => {
+      try {
+        const token = this.getAuthToken();
+        const response = await fetch(`${this.API_BASE_URL}/api/pmf-analysis/${businessId}/executive-summary`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        if (response.status === 404) return null;
+        return await response.json();
+      } catch (error) {
+        pmfExecutiveSummaryCache.delete(cacheKey);
+        console.error('Error fetching PMF executive summary:', error);
+        throw error;
+      }
+    })();
+    
+    pmfExecutiveSummaryCache.set(cacheKey, fetchPromise);
+    return fetchPromise;
+  }
+  
+  async getProjects(businessId) {
+    if (!businessId) return [];
+    
+    const cacheKey = `projects-${businessId}`;
+    if (projectsCache.has(cacheKey)) {
+      return await projectsCache.get(cacheKey);
+    }
+    
+    const fetchPromise = (async () => {
+      try {
+        const token = this.getAuthToken();
+        if (!token) return [];
+        
+        const response = await fetch(`${this.API_BASE_URL}/api/projects?business_id=${businessId}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        if (!response.ok) return [];
+        const data = await response.json();
+        return data.projects || [];
+      } catch (error) {
+        projectsCache.delete(cacheKey);
+        console.error('Error fetching projects:', error);
+        return [];
+      }
+    })();
+    
+    projectsCache.set(cacheKey, fetchPromise);
+    return fetchPromise;
   }
 
   async savePMFInsights(businessId, insights) {
@@ -261,6 +348,10 @@ export class AnalysisApiService {
       });
 
       const data = await response.json();
+
+      if (response.ok && payload.selectedBusinessId) {
+        projectsCache.delete(`projects-${payload.selectedBusinessId}`);
+      }
 
       if (!response.ok) {
         throw new Error(data.error || data.message || 'Failed to kickstart project');
@@ -898,6 +989,9 @@ export class AnalysisApiService {
       }
 
       await AnalysisService.upsertAnalysis(this.API_BASE_URL, token, analysisPayload);
+      
+      // Clear analysis cache for this business after upsert
+      analysisDataCache.delete(`analysis-${selectedBusinessId}`);
 
       /*
       console.log("--- VERIFICATION START: Calling other Analysis APIs ---");

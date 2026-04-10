@@ -89,8 +89,6 @@ const CARD_ID_MAP = {
 const toSlug = (name = '') =>
   name.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 
-// Module-level cache to deduplicate project requests across re-renders
-const projectRequestCache = new Map();
 
 const BusinessSetupPage = () => {
   const location = useLocation();
@@ -562,51 +560,19 @@ const BusinessSetupPage = () => {
     const fetchProjectsForBusiness = async () => {
       if (!selectedBusinessId) return;
 
-      const cacheKey = `projects-${selectedBusinessId}`;
-      if (projectRequestCache.has(cacheKey)) {
-        const projects = await projectRequestCache.get(cacheKey);
+      try {
+        // Use the centralized service with promise-caching
+        const projects = await apiService.getProjects(selectedBusinessId);
         const hasProjects = projects.length > 0;
+        
         setShowProjectsTab(hasProjects && hasProjectAccess);
-        return;
-      }
-
-      const fetchPromise = (async () => {
-        try {
-          if (!token) return [];
-
-          const res = await axios.get(
-            `${API_BASE_URL}/api/projects`,
-            {
-              headers: {
-                Authorization: `Bearer ${token}`
-              },
-              params: {
-                business_id: selectedBusinessId
-              }
-            }
-          );
-
-          const projects = res.data?.projects || [];
-          const hasProjects = projects.length > 0;
-          
-          // SIDE EFFECT: Still need to update tab visibility for the initiating instance
-          setShowProjectsTab(hasProjects && hasProjectAccess);
-          
-          if (selectedBusinessId) {
-            setBusinessSetting(selectedBusinessId, 'showProjectsTab', hasProjects);
-          }
-          
-          return projects;
-        } catch (err) {
-          console.error('Failed to check existing projects for business:', err);
-          return [];
+        
+        if (selectedBusinessId) {
+          setBusinessSetting(selectedBusinessId, 'showProjectsTab', hasProjects);
         }
-      })();
-
-      projectRequestCache.set(cacheKey, fetchPromise);
-      await fetchPromise;
-      // After promise settles, we might want to keep it or clear it.
-      // Keeping it is fine as it acts as a per-session cache.
+      } catch (err) {
+        console.error('Failed to check existing projects for business:', err);
+      }
     };
 
     fetchProjectsForBusiness();

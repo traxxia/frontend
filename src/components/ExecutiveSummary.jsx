@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useMemo, useEffect, useCallback } from "react";
 import { ChevronDown, ChevronUp, CheckCircle2, AlertCircle, Info, Target, FileText, ListChecks, Loader2, Zap } from "lucide-react";
 import { AnalysisApiService } from "../services/analysisApiService";
 import "../styles/executiveSummary.css";
@@ -29,7 +29,7 @@ const ExecutiveSummary = ({ businessId, onStartOnboarding, refreshTrigger }) => 
     ""
   ).toLowerCase();
   const isViewer = userRole === "viewer";
-  const analysisService = new AnalysisApiService(ML_API_BASE_URL, API_BASE_URL, getAuthToken);
+  const analysisService = useMemo(() => new AnalysisApiService(ML_API_BASE_URL, API_BASE_URL, getAuthToken), [ML_API_BASE_URL, API_BASE_URL, getAuthToken]);
 
   const fetchSummary = useCallback(async () => {
     setLoading(true);
