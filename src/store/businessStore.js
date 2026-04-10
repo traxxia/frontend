@@ -22,6 +22,7 @@ export const useBusinessStore = create(
       deleteError: null,
 
       fetchBusinesses: async () => {
+        if (get().isLoading) return;
         const token = useAuthStore.getState().token;
         if (!token) { set({ error: 'No authentication token', isLoading: false }); return; }
         set({ isLoading: true, error: null });

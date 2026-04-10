@@ -1,53 +1,36 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { Dropdown } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 import { Bell, BellOff, X } from 'lucide-react';
 import { useTranslation } from '../hooks/useTranslation';
 
-import { useAuthStore, useBusinessStore } from '../store';
+import { useAuthStore, useBusinessStore, useNotificationStore } from '../store';
 
 const NotificationBell = () => {
-  const [notifications, setNotifications] = useState([]);
-  const [unreadCount, setUnreadCount] = useState(0);
+  const { 
+    notifications, 
+    unreadCount, 
+    fetchNotifications, 
+    markAsRead, 
+    deleteNotification, 
+    markAllAsRead 
+  } = useNotificationStore();
+  
+  const { setSelectedBusinessId } = useBusinessStore();
   const REACT_APP_BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const { setSelectedBusinessId } = useBusinessStore();
 
   useEffect(() => {
     fetchNotifications();
-  }, []);
-
-  const fetchNotifications = async () => {
-    try {
-      const token = useAuthStore.getState().token;
-      if (!token) return;
-      const res = await fetch(`${REACT_APP_BACKEND_URL}/api/notifications`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setNotifications(data.notifications || []);
-        setUnreadCount(data.unread_count || 0);
-      }
-    } catch (err) {
-      console.error('Failed to fetch notifications', err);
-    }
-  };
+  }, [fetchNotifications]);
 
   const handleNotificationClick = async (notif) => {
     console.log("Notification clicked:", notif);
     
     // 1. Mark as read in the background asynchronously, don't block navigation
     if (!notif.is_read) {
-      const token = useAuthStore.getState().token;
-      fetch(`${REACT_APP_BACKEND_URL}/api/notifications/${notif._id}/read`, {
-        method: 'PUT',
-        headers: { 'Authorization': `Bearer ${token}` }
-      }).catch(err => console.error('Error marking as read', err));
-
-      setNotifications(prev => prev.map(n => n._id === notif._id ? { ...n, is_read: true } : n));
-      setUnreadCount(prev => Math.max(0, prev - 1));
+      markAsRead(notif._id);
     }
 
     try {
@@ -89,8 +72,8 @@ const NotificationBell = () => {
                        console.log("Matched business name to ID:", foundId);
                        setSelectedBusinessId(foundId);
                     } else {
-                      console.log("Could not find a business matching the name:", businessName);
-                   }
+                       console.log("Could not find a business matching the name:", businessName);
+                    }
                 }
              } catch (e) {
                 console.error("Failed to resolve business name to ID", e);
@@ -147,37 +130,12 @@ const NotificationBell = () => {
 
   const handleDeleteNotification = async (e, notifId) => {
     e.stopPropagation();
-    try {
-      const token = useAuthStore.getState().token;
-      const res = await fetch(`${REACT_APP_BACKEND_URL}/api/notifications/${notifId}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      if (res.ok) {
-        const notif = notifications.find(n => n._id === notifId);
-        setNotifications(prev => prev.filter(n => n._id !== notifId));
-        if (notif && !notif.is_read) {
-          setUnreadCount(prev => Math.max(0, prev - 1));
-        }
-      }
-    } catch (err) {
-      console.error('Error deleting notification', err);
-    }
+    deleteNotification(notifId);
   };
 
   const handleMarkAllRead = async (e) => {
     if (e) e.stopPropagation();
-    try {
-      const token = useAuthStore.getState().token;
-      await fetch(`${REACT_APP_BACKEND_URL}/api/notifications/read-all`, {
-        method: 'PUT',
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
-      setUnreadCount(0);
-    } catch (err) {
-      console.error('Error marking all as read', err);
-    }
+    markAllAsRead();
   };
 
   return (

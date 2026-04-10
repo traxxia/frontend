@@ -24,7 +24,7 @@ import 'react-circular-progressbar/dist/styles.css';
 import { useTranslation } from '../hooks/useTranslation';
 
 import PlanLimitModal from '../components/PlanLimitModal';
-import { useAuthStore, useBusinessStore, useUIStore } from '../store';
+import { useAuthStore, useBusinessStore, useUIStore, useSubscriptionStore } from '../store';
 import { getUserLimits } from '../utils/authUtils';
 
 const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
@@ -216,8 +216,8 @@ const Dashboard = () => {
   // Tour modal state
   const [activeSlide, setActiveSlide] = useState(0);
 
-  // Plan Limit Modal state
-  const [usage, setUsage] = useState(null);
+  // Plan Limit Modal state from store
+  const { usage, fetchPlanDetails } = useSubscriptionStore();
 
   // Custom menu state for alternatives
 
@@ -231,23 +231,9 @@ const Dashboard = () => {
     b => Boolean(b.has_projects) === true
   ), [businesses]);
 
-  const fetchPlanDetails = useCallback(async () => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/subscription/plan-details`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setUsage(data.usage);
-      }
-    } catch (error) {
-      console.error('Error fetching plan details:', error);
-    }
-  }, [token]);
+  /* 
+    fetchPlanDetails is now handled by useSubscriptionStore
+  */
 
   // Fetch businesses on component mount
   useEffect(() => {
@@ -639,127 +625,133 @@ const Dashboard = () => {
                         <p className="text-muted small mb-4">{t('create_business_plans')}</p>
 
                       </div>
-                      <Accordion className="px-4 mb-4">
-                        {/* My Businesses */}
-                        {!isCollaborator && !isViewer && (
-                          <Accordion.Item eventKey="0">
-                            <Accordion.Header>
-                              <div className="accordion-header-content">
-                                <span className="accordion-title-text">
-                                  {t("my_businesses")}
-                                </span>
-                                <span className="accordion-count-pill">
-                                  {myBusinesses.length}
-                                </span>
-                              </div>
-                            </Accordion.Header>
+                      {isLoadingBusinesses ? (
+                        <div className="d-flex flex-column align-items-center justify-content-center py-5">
+                          <Spinner animation="border" variant="primary" />
+                          <span className="mt-3 text-muted">{t('loading_businesses')}</span>
+                        </div>
+                      ) : (
+                        <Accordion className="px-4 mb-4">
+                          {/* My Businesses */}
+                          {!isCollaborator && !isViewer && (
+                            <Accordion.Item eventKey="0">
+                              <Accordion.Header>
+                                <div className="accordion-header-content">
+                                  <span className="accordion-title-text">
+                                    {t("my_businesses")}
+                                  </span>
+                                  <span className="accordion-count-pill">
+                                    {myBusinesses.length}
+                                  </span>
+                                </div>
+                              </Accordion.Header>
 
-                            <Accordion.Body>
-                              <BusinessList
-                                businesses={myBusinesses}
-                                viewType="mobile"
-                                isLoading={isLoadingBusinesses}
-                                t={t}
-                                isViewer={isViewer}
-                                onShowDeleteModal={handleShowDeleteModal}
-                                setHoveredItem={setHoveredItem}
-                                onBusinessClick={handleBusinessClick}
-                              />
-                            </Accordion.Body>
-                          </Accordion.Item>
-                        )}
+                              <Accordion.Body>
+                                <BusinessList
+                                  businesses={myBusinesses}
+                                  viewType="mobile"
+                                  isLoading={false} // Global loader handles initial load
+                                  t={t}
+                                  isViewer={isViewer}
+                                  onShowDeleteModal={handleShowDeleteModal}
+                                  setHoveredItem={setHoveredItem}
+                                  onBusinessClick={handleBusinessClick}
+                                />
+                              </Accordion.Body>
+                            </Accordion.Item>
+                          )}
 
-                        {/* Project Phase */}
-                        {!isCollaborator && !isViewer && projectPhaseBusinesses.length > 0 && (
-                          <Accordion.Item eventKey="1">
-                            <Accordion.Header>
-                              <div className="accordion-header-content">
-                                <span className="accordion-title-text">
-                                  {t("Project Phase")}
-                                </span>
-                                <span className="accordion-count-pill">
-                                  {projectPhaseBusinesses.length}
-                                </span>
-                              </div>
-                            </Accordion.Header>
+                          {/* Project Phase */}
+                          {!isCollaborator && !isViewer && projectPhaseBusinesses.length > 0 && (
+                            <Accordion.Item eventKey="1">
+                              <Accordion.Header>
+                                <div className="accordion-header-content">
+                                  <span className="accordion-title-text">
+                                    {t("Project Phase")}
+                                  </span>
+                                  <span className="accordion-count-pill">
+                                    {projectPhaseBusinesses.length}
+                                  </span>
+                                </div>
+                              </Accordion.Header>
 
-                            <Accordion.Body>
-                              <BusinessList
-                                businesses={projectPhaseBusinesses}
-                                viewType="mobile"
-                                canDelete={false}
-                                isLoading={isLoadingBusinesses}
-                                t={t}
-                                isViewer={isViewer}
-                                onShowDeleteModal={handleShowDeleteModal}
-                                setHoveredItem={setHoveredItem}
-                                onBusinessClick={handleBusinessClick}
-                              />
-                            </Accordion.Body>
-                          </Accordion.Item>
-                        )}
+                              <Accordion.Body>
+                                <BusinessList
+                                  businesses={projectPhaseBusinesses}
+                                  viewType="mobile"
+                                  canDelete={false}
+                                  isLoading={false}
+                                  t={t}
+                                  isViewer={isViewer}
+                                  onShowDeleteModal={handleShowDeleteModal}
+                                  setHoveredItem={setHoveredItem}
+                                  onBusinessClick={handleBusinessClick}
+                                />
+                              </Accordion.Body>
+                            </Accordion.Item>
+                          )}
 
-                        {/* Collaborating Businesses */}
-                        {(isCollaborator || isViewer || collaboratingBusinesses.length > 0) && (
-                          <Accordion.Item eventKey="2">
-                            <Accordion.Header>
-                              <div className="accordion-header-content">
-                                <span className="accordion-title-text">
-                                  Collaborating Businesses
-                                </span>
-                                <span className="accordion-count-pill">
-                                  {collaboratingBusinesses.length}
-                                </span>
-                              </div>
-                            </Accordion.Header>
+                          {/* Collaborating Businesses */}
+                          {(isCollaborator || isViewer || collaboratingBusinesses.length > 0) && (
+                            <Accordion.Item eventKey="2">
+                              <Accordion.Header>
+                                <div className="accordion-header-content">
+                                  <span className="accordion-title-text">
+                                    Collaborating Businesses
+                                  </span>
+                                  <span className="accordion-count-pill">
+                                    {collaboratingBusinesses.length}
+                                  </span>
+                                </div>
+                              </Accordion.Header>
 
-                            <Accordion.Body>
-                              <BusinessList
-                                businesses={collaboratingBusinesses}
-                                viewType="mobile"
-                                canDelete={false}
-                                isLoading={isLoadingBusinesses}
-                                t={t}
-                                isViewer={isViewer}
-                                onShowDeleteModal={handleShowDeleteModal}
-                                setHoveredItem={setHoveredItem}
-                                onBusinessClick={handleBusinessClick}
-                              />
-                            </Accordion.Body>
-                          </Accordion.Item>
-                        )}
+                              <Accordion.Body>
+                                <BusinessList
+                                  businesses={collaboratingBusinesses}
+                                  viewType="mobile"
+                                  canDelete={false}
+                                  isLoading={false}
+                                  t={t}
+                                  isViewer={isViewer}
+                                  onShowDeleteModal={handleShowDeleteModal}
+                                  setHoveredItem={setHoveredItem}
+                                  onBusinessClick={handleBusinessClick}
+                                />
+                              </Accordion.Body>
+                            </Accordion.Item>
+                          )}
 
-                        {/* Deleted Businesses */}
-                        {!isCollaborator && !isViewer && deletedBusinesses.length > 0 && (
-                          <Accordion.Item eventKey="3">
-                            <Accordion.Header>
-                              <div className="accordion-header-content">
-                                <span className="accordion-title-text">
-                                  Deleted Business
-                                </span>
-                                <span className="accordion-count-pill">
-                                  {deletedBusinesses.length}
-                                </span>
-                              </div>
-                            </Accordion.Header>
+                          {/* Deleted Businesses */}
+                          {!isCollaborator && !isViewer && deletedBusinesses.length > 0 && (
+                            <Accordion.Item eventKey="3">
+                              <Accordion.Header>
+                                <div className="accordion-header-content">
+                                  <span className="accordion-title-text">
+                                    Deleted Business
+                                  </span>
+                                  <span className="accordion-count-pill">
+                                    {deletedBusinesses.length}
+                                  </span>
+                                </div>
+                              </Accordion.Header>
 
-                            <Accordion.Body>
-                              <BusinessList
-                                businesses={deletedBusinesses}
-                                viewType="mobile"
-                                canDelete={false}
-                                isLoading={isLoadingBusinesses}
-                                t={t}
-                                isViewer={isViewer}
-                                onShowDeleteModal={handleShowDeleteModal}
-                                setHoveredItem={setHoveredItem}
-                                onBusinessClick={handleBusinessClick}
-                              />
-                            </Accordion.Body>
-                          </Accordion.Item>
-                        )}
-
-                      </Accordion>
+                              <Accordion.Body>
+                                <BusinessList
+                                  businesses={deletedBusinesses}
+                                  viewType="mobile"
+                                  canDelete={false}
+                                  isLoading={false}
+                                  t={t}
+                                  isViewer={isViewer}
+                                  onShowDeleteModal={handleShowDeleteModal}
+                                  setHoveredItem={setHoveredItem}
+                                  onBusinessClick={handleBusinessClick}
+                                />
+                              </Accordion.Body>
+                            </Accordion.Item>
+                          )}
+                        </Accordion>
+                      )}
 
                       <div className="px-4 pb-4 d-flex flex-wrap gap-2">
                         {!isCollaborator && !isViewer && (
@@ -836,122 +828,131 @@ const Dashboard = () => {
 
                         {/* RIGHT SIDE - Business List */}
                         <Col md={6} className="businesses-section">
-                          <Accordion>
-                            {/* My Businesses */}
-                            {!isCollaborator && !isViewer && (
-                              <Accordion.Item eventKey="0">
-                                <Accordion.Header>
-                                  <div className="accordion-header-content">
-                                    <span className="accordion-title-text">
-                                      {t("my_businesses")}
-                                    </span>
-                                    <span className="accordion-count-pill">
-                                      {myBusinesses.length}
-                                    </span>
-                                  </div>
-                                </Accordion.Header>
-                                <Accordion.Body>
-                                  <BusinessList
-                                    businesses={myBusinesses}
-                                    viewType="desktop"
-                                    isLoading={isLoadingBusinesses}
-                                    t={t}
-                                    isViewer={isViewer}
-                                    onShowDeleteModal={handleShowDeleteModal}
-                                    setHoveredItem={setHoveredItem}
-                                    onBusinessClick={handleBusinessClick}
-                                  />
-                                </Accordion.Body>
-                              </Accordion.Item>
-                            )}
+                          {isLoadingBusinesses ? (
+                            <div className="d-flex flex-row align-items-center justify-content-center h-100 py-5 w-100">
+                              <div className="text-center">
+                                <Spinner animation="border" variant="primary" />
+                                <p className="mt-3 text-muted">{t('loading_businesses')}</p>
+                              </div>
+                            </div>
+                          ) : (
+                            <Accordion>
+                              {/* My Businesses */}
+                              {!isCollaborator && !isViewer && (
+                                <Accordion.Item eventKey="0">
+                                  <Accordion.Header>
+                                    <div className="accordion-header-content">
+                                      <span className="accordion-title-text">
+                                        {t("my_businesses")}
+                                      </span>
+                                      <span className="accordion-count-pill">
+                                        {myBusinesses.length}
+                                      </span>
+                                    </div>
+                                  </Accordion.Header>
+                                  <Accordion.Body>
+                                    <BusinessList
+                                      businesses={myBusinesses}
+                                      viewType="desktop"
+                                      isLoading={false}
+                                      t={t}
+                                      isViewer={isViewer}
+                                      onShowDeleteModal={handleShowDeleteModal}
+                                      setHoveredItem={setHoveredItem}
+                                      onBusinessClick={handleBusinessClick}
+                                    />
+                                  </Accordion.Body>
+                                </Accordion.Item>
+                              )}
 
-                            {/* Project Phase */}
-                            {!isCollaborator && !isViewer && projectPhaseBusinesses.length > 0 && (
-                              <Accordion.Item eventKey="1">
-                                <Accordion.Header>
-                                  <div className="accordion-header-content">
-                                    <span className="accordion-title-text">
-                                      {t("Project Phase")}
-                                    </span>
-                                    <span className="accordion-count-pill">
-                                      {projectPhaseBusinesses.length}
-                                    </span>
-                                  </div>
-                                </Accordion.Header>
-                                <Accordion.Body>
-                                  <BusinessList
-                                    businesses={projectPhaseBusinesses}
-                                    viewType="desktop"
-                                    canDelete={false}
-                                    isLoading={isLoadingBusinesses}
-                                    t={t}
-                                    isViewer={isViewer}
-                                    onShowDeleteModal={handleShowDeleteModal}
-                                    setHoveredItem={setHoveredItem}
-                                    onBusinessClick={handleBusinessClick}
-                                  />
-                                </Accordion.Body>
-                              </Accordion.Item>
-                            )}
+                              {/* Project Phase */}
+                              {!isCollaborator && !isViewer && projectPhaseBusinesses.length > 0 && (
+                                <Accordion.Item eventKey="1">
+                                  <Accordion.Header>
+                                    <div className="accordion-header-content">
+                                      <span className="accordion-title-text">
+                                        {t("Project Phase")}
+                                      </span>
+                                      <span className="accordion-count-pill">
+                                        {projectPhaseBusinesses.length}
+                                      </span>
+                                    </div>
+                                  </Accordion.Header>
+                                  <Accordion.Body>
+                                    <BusinessList
+                                      businesses={projectPhaseBusinesses}
+                                      viewType="desktop"
+                                      canDelete={false}
+                                      isLoading={false}
+                                      t={t}
+                                      isViewer={isViewer}
+                                      onShowDeleteModal={handleShowDeleteModal}
+                                      setHoveredItem={setHoveredItem}
+                                      onBusinessClick={handleBusinessClick}
+                                    />
+                                  </Accordion.Body>
+                                </Accordion.Item>
+                              )}
 
-                            {/* Collaborating Businesses */}
-                            {(isCollaborator || isViewer || collaboratingBusinesses.length > 0) && (
-                              <Accordion.Item eventKey="2">
-                                <Accordion.Header>
-                                  <div className="accordion-header-content">
-                                    <span className="accordion-title-text">
-                                      Collaborating Businesses
-                                    </span>
-                                    <span className="accordion-count-pill">
-                                      {collaboratingBusinesses.length}
-                                    </span>
-                                  </div>
-                                </Accordion.Header>
-                                <Accordion.Body>
-                                  <BusinessList
-                                    businesses={collaboratingBusinesses}
-                                    viewType="desktop"
-                                    canDelete={false}
-                                    isLoading={isLoadingBusinesses}
-                                    t={t}
-                                    isViewer={isViewer}
-                                    onShowDeleteModal={handleShowDeleteModal}
-                                    setHoveredItem={setHoveredItem}
-                                    onBusinessClick={handleBusinessClick}
-                                  />
-                                </Accordion.Body>
-                              </Accordion.Item>
-                            )}
+                              {/* Collaborating Businesses */}
+                              {(isCollaborator || isViewer || collaboratingBusinesses.length > 0) && (
+                                <Accordion.Item eventKey="2">
+                                  <Accordion.Header>
+                                    <div className="accordion-header-content">
+                                      <span className="accordion-title-text">
+                                        Collaborating Businesses
+                                      </span>
+                                      <span className="accordion-count-pill">
+                                        {collaboratingBusinesses.length}
+                                      </span>
+                                    </div>
+                                  </Accordion.Header>
+                                  <Accordion.Body>
+                                    <BusinessList
+                                      businesses={collaboratingBusinesses}
+                                      viewType="desktop"
+                                      canDelete={false}
+                                      isLoading={false}
+                                      t={t}
+                                      isViewer={isViewer}
+                                      onShowDeleteModal={handleShowDeleteModal}
+                                      setHoveredItem={setHoveredItem}
+                                      onBusinessClick={handleBusinessClick}
+                                    />
+                                  </Accordion.Body>
+                                </Accordion.Item>
+                              )}
 
-                            {/* Deleted Businesses */}
-                            {!isCollaborator && !isViewer && deletedBusinesses.length > 0 && (
-                              <Accordion.Item eventKey="3">
-                                <Accordion.Header>
-                                  <div className="accordion-header-content">
-                                    <span className="accordion-title-text">
-                                      Deleted Business
-                                    </span>
-                                    <span className="accordion-count-pill">
-                                      {deletedBusinesses.length}
-                                    </span>
-                                  </div>
-                                </Accordion.Header>
-                                <Accordion.Body>
-                                  <BusinessList
-                                    businesses={deletedBusinesses}
-                                    viewType="desktop"
-                                    canDelete={false}
-                                    isLoading={isLoadingBusinesses}
-                                    t={t}
-                                    isViewer={isViewer}
-                                    onShowDeleteModal={handleShowDeleteModal}
-                                    setHoveredItem={setHoveredItem}
-                                    onBusinessClick={handleBusinessClick}
-                                  />
-                                </Accordion.Body>
-                              </Accordion.Item>
-                            )}
-                          </Accordion>
+                              {/* Deleted Businesses */}
+                              {!isCollaborator && !isViewer && deletedBusinesses.length > 0 && (
+                                <Accordion.Item eventKey="3">
+                                  <Accordion.Header>
+                                    <div className="accordion-header-content">
+                                      <span className="accordion-title-text">
+                                        Deleted Business
+                                      </span>
+                                      <span className="accordion-count-pill">
+                                        {deletedBusinesses.length}
+                                      </span>
+                                    </div>
+                                  </Accordion.Header>
+                                  <Accordion.Body>
+                                    <BusinessList
+                                      businesses={deletedBusinesses}
+                                      viewType="desktop"
+                                      canDelete={false}
+                                      isLoading={false}
+                                      t={t}
+                                      isViewer={isViewer}
+                                      onShowDeleteModal={handleShowDeleteModal}
+                                      setHoveredItem={setHoveredItem}
+                                      onBusinessClick={handleBusinessClick}
+                                    />
+                                  </Accordion.Body>
+                                </Accordion.Item>
+                              )}
+                            </Accordion>
+                          )}
                         </Col>
 
                       </Row>

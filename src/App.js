@@ -146,7 +146,11 @@ const App = () => {
             <Route path="/" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/login" element={<Login />} />
-            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/dashboard" element={
+              <React.Suspense fallback={null}>
+                <Dashboard />
+              </React.Suspense>
+            } />
             <Route path="/businesspage" element={<BusinessSetupPage />} />
             <Route path="/academy" element={<AcademyPage />} />
             <Route path="/academy/:category" element={<AcademyPage />} />
