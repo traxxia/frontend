@@ -38,6 +38,7 @@ export const useAutoScroll = (streamingManager, cardId, isExpanded, visibleRows)
       }
     });
 
+    const timeoutId = scrollTimeoutRef.current;
     return () => {
       window.removeEventListener('scroll', handleScroll);
       document.removeEventListener('scroll', handleScroll, { capture: true });
@@ -48,8 +49,8 @@ export const useAutoScroll = (streamingManager, cardId, isExpanded, visibleRows)
         }
       });
 
-      if (scrollTimeoutRef.current) {
-        clearTimeout(scrollTimeoutRef.current);
+      if (timeoutId) {
+        clearTimeout(timeoutId);
       }
     };
   }, [cardId, streamingManager]);
@@ -68,13 +69,14 @@ export const useAutoScroll = (streamingManager, cardId, isExpanded, visibleRows)
         isScrollingProgrammatically.current = false;
       }, 1000);
     }
-  }, [visibleRows, cardId, isExpanded]);
+  }, [visibleRows, cardId, isExpanded, streamingManager, userHasScrolled]);
 
   useEffect(() => {
-    if (streamingManager?.shouldStream(cardId)) {
+    const shouldStream = streamingManager?.shouldStream(cardId);
+    if (shouldStream) {
       setUserHasScrolled(false);
     }
-  }, [streamingManager?.shouldStream(cardId), cardId]);
+  }, [streamingManager, cardId]);
 
   return {
     lastRowRef,

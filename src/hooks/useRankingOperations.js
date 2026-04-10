@@ -1,66 +1,34 @@
-import { useCallback, useRef, useEffect } from "react";
+import { useCallback } from "react";
 import axios from "axios";
+import { useProjectStore, useAuthStore } from "../store";
 
 export const useRankingOperations = (selectedBusinessId, companyAdminIds) => {
-  const getToken = () => sessionStorage.getItem("token");
-  const isRankingsFetching = useRef(false);
+  const {
+    fetchTeamRankings: fetchTeamRankingsStore,
+    fetchAdminRankings: fetchAdminRankingsStore
+  } = useProjectStore();
+  const token = useAuthStore(state => state.token);
 
   const fetchTeamRankings = useCallback(async () => {
-    if (isRankingsFetching.current) return null;
-    try {
-      isRankingsFetching.current = true;
-      const token = getToken();
-      const userId = sessionStorage.getItem("userId");
-
-      const res = await axios.get(
-        `${process.env.REACT_APP_BACKEND_URL}/api/projects/rank/${userId}`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-          params: { business_id: selectedBusinessId },
-        }
-      );
-
-      return {
-        rankings: res.data.projects || [],
-        businessStatus: res.data?.business_status, // NEW: business-level status
-        businessAccessMode: res.data?.business_access_mode,
-        lockSummary: res.data?.ranking_lock_summary, // Now includes locked_users array
-      };
-    } catch (err) {
-      console.error("Failed to fetch team rankings", err);
-      return null;
-    } finally {
-      isRankingsFetching.current = false;
-    }
-  }, [selectedBusinessId]);
-
-  useEffect(() => {
-    isRankingsFetching.current = false;
-  }, [selectedBusinessId]);
+    const data = await fetchTeamRankingsStore(selectedBusinessId);
+    if (!data) return null;
+    return {
+      rankings: data.projects || [],
+      businessStatus: data.business_status,
+      businessAccessMode: data.business_access_mode,
+      lockSummary: data.ranking_lock_summary,
+    };
+  }, [selectedBusinessId, fetchTeamRankingsStore]);
 
   const fetchAdminRankings = useCallback(async () => {
-    try {
-      const token = getToken();
-      const res = await axios.get(
-        `${process.env.REACT_APP_BACKEND_URL}/api/projects/admin-rank`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-          params: {
-            business_id: selectedBusinessId,
-            admin_user_id: companyAdminIds[0],
-          },
-        }
-      );
-      return res.data.projects || [];
-    } catch (err) {
-      console.error("Failed to fetch admin rankings", err);
-      return [];
-    }
-  }, [selectedBusinessId, companyAdminIds]);
+    const adminUserId = companyAdminIds?.[0];
+    if (!adminUserId) return [];
+    return await fetchAdminRankingsStore(selectedBusinessId, adminUserId);
+  }, [selectedBusinessId, companyAdminIds, fetchAdminRankingsStore]);
 
   const lockRanking = useCallback(async (projectId) => {
     try {
-      const token = getToken();
+      if (!token) return { success: false, error: "No token found" };
       await axios.post(
         `${process.env.REACT_APP_BACKEND_URL}/api/projects/lock-rank`,
         null,
@@ -77,7 +45,7 @@ export const useRankingOperations = (selectedBusinessId, companyAdminIds) => {
         error: err.response?.data?.error || "Failed to lock ranking"
       };
     }
-  }, []);
+  }, [token]);
 
   return {
     fetchTeamRankings,

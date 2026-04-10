@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from "react";
-import { Card, Button, Form, Row, Col, Badge, Spinner, ProgressBar, Modal } from "react-bootstrap";
+import React, { useState, useEffect, useCallback } from "react";
+import { Card, Button, Form, Badge, Spinner, Modal } from "react-bootstrap";
 import { ChevronRight, ArrowRight } from "react-bootstrap-icons";
 import { Folder, CheckCircle, Rocket, Info, AlertTriangle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -8,6 +8,12 @@ import { useTranslation } from "../hooks/useTranslation";
 import PlanLimitModal from "./PlanLimitModal";
 import "../styles/PrioritiesProjects.css";
 import { getUserLimits } from "../utils/authUtils";
+
+const ML_API_BASE_URL = process.env.REACT_APP_ML_BACKEND_URL;
+const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
+const getAuthToken = () => sessionStorage.getItem("token");
+// Instantiate service outside to maintain a stable reference
+const analysisService = new AnalysisApiService(ML_API_BASE_URL, API_BASE_URL, getAuthToken);
 
 const PrioritiesProjects = ({ selectedBusinessId, companyAdminIds, onSuccess, onStayOnPriorities, onToastMessage, onStartOnboarding, refreshTrigger }) => {
   const { t } = useTranslation();
@@ -31,11 +37,7 @@ const PrioritiesProjects = ({ selectedBusinessId, companyAdminIds, onSuccess, on
   const isViewer = userRole === "viewer";
   const hasProjectsAccess = getUserLimits().project === true;
 
-  // API Service setup
-  const ML_API_BASE_URL = process.env.REACT_APP_ML_BACKEND_URL;
-  const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
-  const getAuthToken = () => sessionStorage.getItem("token");
-  const apiService = new AnalysisApiService(ML_API_BASE_URL, API_BASE_URL, getAuthToken);
+
 
   useEffect(() => {
     const fetchData = async () => {
@@ -43,7 +45,7 @@ const PrioritiesProjects = ({ selectedBusinessId, companyAdminIds, onSuccess, on
       setLoading(true);
       setPriorities([]); // Clear old data to show loader during refresh
       try {
-        const data = await apiService.getKickstartData(selectedBusinessId);
+        const data = await analysisService.getKickstartData(selectedBusinessId);
         if (data && data.priorities) {
           setPriorities(data.priorities);
           if (data.hasCollaborators !== undefined) {
@@ -60,19 +62,19 @@ const PrioritiesProjects = ({ selectedBusinessId, companyAdminIds, onSuccess, on
     fetchData();
   }, [selectedBusinessId, refreshTrigger]);
 
-  const toggleExpand = (idx) => {
+  const toggleExpand = useCallback((idx) => {
     setExpandedId((prev) => (prev === idx ? null : idx));
-  };
+  }, []);
 
-  const toggleSelection = (idx) => {
+  const toggleSelection = useCallback((idx) => {
     setSelected((prev) =>
       prev.includes(idx)
         ? prev.filter((item) => item !== idx)
         : [...prev, idx]
     );
-  };
+  }, []);
 
-  const handleKickstart = async () => {
+  const handleKickstart = useCallback(async () => {
     if (selected.length === 0) return;
 
     if (!hasProjectsAccess) {
@@ -94,7 +96,7 @@ const PrioritiesProjects = ({ selectedBusinessId, companyAdminIds, onSuccess, on
 
       // Process projects sequentially or wait for all, but ensure we handle errors
       for (const priority of selectedPriorities) {
-        const response = await apiService.kickstartProject({
+        const response = await analysisService.kickstartProject({
           businessId: selectedBusinessId,
           priority: priority
         });
@@ -106,7 +108,7 @@ const PrioritiesProjects = ({ selectedBusinessId, companyAdminIds, onSuccess, on
       }
 
       // Refresh data to show kickstarted status
-      const data = await apiService.getKickstartData(selectedBusinessId);
+      const data = await analysisService.getKickstartData(selectedBusinessId);
       if (data && data.priorities) {
         setPriorities(data.priorities);
         if (data.hasCollaborators !== undefined) {
@@ -129,16 +131,16 @@ const PrioritiesProjects = ({ selectedBusinessId, companyAdminIds, onSuccess, on
     } finally {
       setKickstarting(false);
     }
-  };
+  }, [selected, hasProjectsAccess, priorities, isAdmin, hasCollaborators, showNoCollaboratorsModal, selectedBusinessId, t, onToastMessage]);
 
-  const handleConfirmRedirect = () => {
+  const handleConfirmRedirect = useCallback(() => {
     setShowSuccessModal(false);
     if (onSuccess) {
       onSuccess();
     } else {
       navigate(`/projects?business_id=${selectedBusinessId}`);
     }
-  };
+  }, [onSuccess, navigate, selectedBusinessId]);
 
   if (loading) {
     return (
@@ -205,7 +207,6 @@ const PrioritiesProjects = ({ selectedBusinessId, companyAdminIds, onSuccess, on
 
       {priorities.map((item, idx) => {
         const isExpanded = expandedId === idx;
-        const isAlreadyKickstarted = item.isKickstarted;
         const actions = item.actions || [];
 
         // Calculate granular progress

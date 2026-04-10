@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback, useMemo, memo } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Button,
@@ -13,7 +13,7 @@ import {
   Accordion
 } from "react-bootstrap";
 import {
-  Info, X, Trash2, AlertTriangle, ArrowLeft, Check
+  Info, X, Trash2, AlertTriangle, Check
 } from "lucide-react";
 import MenuBar from "../components/MenuBar";
 import PMFOnboardingModal from "../components/PMFOnboardingModal";
@@ -22,18 +22,169 @@ import "../styles/dashboard.css";
 import { CircularProgressbar, buildStyles } from 'react-circular-progressbar';
 import 'react-circular-progressbar/dist/styles.css';
 import { useTranslation } from '../hooks/useTranslation';
-import UpgradeModal from '../components/UpgradeModal';
+
 import PlanLimitModal from '../components/PlanLimitModal';
+import { useAuthStore, useBusinessStore, useUIStore } from '../store';
 import { getUserLimits } from '../utils/authUtils';
+
+const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
+
+const getStepKeys = (index) => {
+  const keys = [
+    'step_1_login',
+    'step_2_create_business',
+    'step_3_onboarding_pmf',
+    'step_4_aha_insights',
+    'step_5_exec_summary',
+    'step_6_kickstart_projects',
+    'step_7_project_ranking',
+    'step_8_ai_answers',
+    'step_9_insights_6cs',
+    'step_10_strategic'
+  ];
+  return {
+    title: keys[index],
+    description: `${keys[index]}_description`
+  };
+};
+
+const DeleteButtonAlternatives = memo(({ business, viewType, canDelete = true, isViewer, t, onShowDeleteModal, setHoveredItem, onBusinessClick }) => {
+  const stats = business.question_statistics || {};
+  const progress = stats.progress_percentage || 0;
+  const completedQuestions = stats.completed_questions || 0;
+  const totalQuestions = stats.total_questions || 0;
+  const remainingQuestions = stats.pending_questions || 0;
+
+  const getStatusInfo = () => {
+    if (business.status === 'deleted') return { label: t('deleted'), className: 'status-deleted' };
+    if (business.access_mode === 'archived' || business.access_mode === 'hidden') return { label: t('archived'), className: 'status-archived' };
+    return { label: t('active'), className: 'status-active' };
+  };
+
+  const statusInfo = getStatusInfo();
+
+  return (
+    <div
+      className="business-item d-flex align-items-center p-3 border-bottom position-relative"
+      onMouseEnter={() => setHoveredItem(business._id)}
+      onMouseLeave={() => setHoveredItem(null)}
+    >
+      <div
+        style={{ width: 60, height: 60, cursor: "pointer" }}
+        className="progress-circle me-3 progress-wrapper"
+        onClick={() => onBusinessClick(business)}
+      >
+        <CircularProgressbar
+          value={progress}
+          text={`${Math.round(progress)}%`}
+          styles={buildStyles({
+            pathColor: progress === 100 ? "#28a745" : progress > 50 ? "#ffc107" : "#17a2b8",
+            textColor: "#000",
+            trailColor: "#e9ecef",
+            textSize: "28px",
+            pathTransitionDuration: 0.5,
+          })}
+        />
+      </div>
+
+      <div
+        className="flex-grow-1"
+        onClick={() => onBusinessClick(business)}
+        style={{ cursor: "pointer" }}
+      >
+        <h6 className="mb-1">{business.business_name}</h6>
+        <small className="text-muted">
+          {completedQuestions}/{totalQuestions} {t('questions_completed')}
+          {remainingQuestions > 0 && (
+            <span className="text-warning ms-2 text-grey-custom">
+              • {remainingQuestions} {t('questions_remaining')}
+            </span>
+          )}
+        </small>
+      </div>
+      <div className="right-side d-flex flex-column flex-md-row align-items-end align-items-md-center gap-1">
+        <span className={`status-badge ${statusInfo.className}`}>
+          {statusInfo.label}
+        </span>
+        {canDelete && !isViewer && (
+          <div className="delete-btn-wrapper">
+            <button
+              className="btn btn-outline-danger btn-sm delete-btn-simple"
+              onClick={(e) => {
+                e.stopPropagation();
+                onShowDeleteModal(business);
+              }}
+              title={t('delete_business')}
+            >
+              <Trash2 size={16} />
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+});
+
+const BusinessList = memo(({ businesses, viewType, canDelete = true, isLoading, t, isViewer, onShowDeleteModal, setHoveredItem, onBusinessClick }) => (
+  <div className={`business-list ${viewType}`}>
+    {isLoading && (
+      <div className="d-flex justify-content-center align-items-center py-5">
+        <Spinner animation="border" role="status" variant="primary" />
+        <span className="ms-2 text-muted">{t('loading_businesses')}</span>
+      </div>
+    )}
+    {!isLoading && businesses.length === 0 && (
+      <div className="text-center text-muted py-5">
+        <p className="mb-2">{t('no_businesses_yet')}</p>
+        <small>{t('get_started_by_creating')}</small>
+      </div>
+    )}
+    {!isLoading && businesses.length > 0 && businesses.map((business, index) => {
+      const isDeleted = business.status === 'deleted';
+      const isArchived = business.access_mode === 'archived' || business.access_mode === 'hidden';
+      return (
+        <div key={business._id || index} className={isDeleted ? 'opacity-50' : ''} style={isDeleted ? { pointerEvents: isDeleted ? 'none' : 'auto' } : {}}>
+          <DeleteButtonAlternatives
+            business={business}
+            viewType={viewType}
+            canDelete={canDelete && !isDeleted && !isArchived}
+            isViewer={isViewer}
+            t={t}
+            onShowDeleteModal={onShowDeleteModal}
+            setHoveredItem={setHoveredItem}
+            onBusinessClick={onBusinessClick}
+          />
+        </div>
+      );
+    })}
+  </div>
+));
 
 const Dashboard = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const ENABLE_PMF = getUserLimits().pmf;
-  const [businesses, setBusinesses] = useState([]);
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [showPMFOnboarding, setShowPMFOnboarding] = useState(false);
-  const [showInsights, setShowInsights] = useState(false);
+  const { 
+    businesses, 
+    collaboratingBusinesses, 
+    deletedBusinesses, 
+    isLoading: isLoadingBusinesses,
+    error: businessError,
+    fetchBusinesses,
+    createBusiness: createBusinessAction,
+    deleteBusiness: deleteBusinessAction,
+    setSelectedBusinessId,
+    activeBusinessId,
+    clearErrors
+  } = useBusinessStore();
+  const {
+    openModal,
+    closeModal,
+    isModalOpen,
+    addToast,
+    setLoading
+  } = useUIStore();
+
   const [newlyCreatedBusiness, setNewlyCreatedBusiness] = useState(null);
   const [isCreatingBusiness, setIsCreatingBusiness] = useState(false);
   const [businessFormData, setBusinessFormData] = useState({
@@ -43,67 +194,45 @@ const Dashboard = () => {
     city: '',
     country: ''
   });
-  const [businessError, setBusinessError] = useState('');
+  // businessError is now from store
   const [formErrors, setFormErrors] = useState({});
-  const userRole = sessionStorage.getItem("userRole");
-  const isViewer = userRole?.toLowerCase() === "viewer";
+  const userRole = useAuthStore(state => state.userRole);
+  const isViewer = useAuthStore(state => state.isViewer());
   const isCollaborator = userRole?.toLowerCase() === "collaborator";
-  const isAdmin = ["super_admin", "company_admin"].includes(userRole?.toLowerCase());
-
+  const isAdmin = useAuthStore(state => state.isAdmin);
+  // const logout = useAuthStore(state => state.logout);
+  const token = useAuthStore(state => state.token);
 
   // Delete business state
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [businessToDelete, setBusinessToDelete] = useState(null);
   const [isDeletingBusiness, setIsDeletingBusiness] = useState(false);
   const [deleteError, setDeleteError] = useState('');
-  const [isLoadingBusinesses, setIsLoadingBusinesses] = useState(true);
-
-
-  // Success popup state
-  const [showSuccessPopup, setShowSuccessPopup] = useState(false);
-  const [successMessage, setSuccessMessage] = useState('');
-  const [collaboratingBusinesses, setCollaboratingBusinesses] = useState([]);
-  const [deletedBusinesses, setDeletedBusinesses] = useState([]);
+  // isLoadingBusinesses is now from store
 
   // Deletion cooldown state
-  const [showCooldownModal, setShowCooldownModal] = useState(false);
-  const [cooldownMessage, setCooldownMessage] = useState('');
+  const [cooldownMessage] = useState('');
 
 
   // Tour modal state
-  const [showHowModal, setShowHowModal] = useState(false);
   const [activeSlide, setActiveSlide] = useState(0);
 
   // Plan Limit Modal state
-  const [showPlanLimitModal, setShowPlanLimitModal] = useState(false);
   const [usage, setUsage] = useState(null);
 
   // Custom menu state for alternatives
-  const [showCustomMenu, setShowCustomMenu] = useState({});
-  const [hoveredItem, setHoveredItem] = useState(null);
-  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
-  const myBusinesses = businesses.filter(
+
+  const [, setHoveredItem] = useState(null);
+  // const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const myBusinesses = useMemo(() => businesses.filter(
     b => Boolean(b.has_projects) === false
-  );
+  ), [businesses]);
 
-  const projectPhaseBusinesses = businesses.filter(
+  const projectPhaseBusinesses = useMemo(() => businesses.filter(
     b => Boolean(b.has_projects) === true
-  );
+  ), [businesses]);
 
-  const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
-
-  // Fetch businesses on component mount
-  useEffect(() => {
-    fetchBusinesses();
-    fetchPlanDetails();
-    //fetchSubscriptionDetails();
-  }, []);
-
-  const fetchPlanDetails = async () => {
+  const fetchPlanDetails = useCallback(async () => {
     try {
-      const token = sessionStorage.getItem('token');
-      if (!token) return;
-
       const response = await fetch(`${API_BASE_URL}/api/subscription/plan-details`, {
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -118,13 +247,17 @@ const Dashboard = () => {
     } catch (error) {
       console.error('Error fetching plan details:', error);
     }
-  };
+  }, [token]);
 
+  // Fetch businesses on component mount
+  useEffect(() => {
+    fetchBusinesses();
+    fetchPlanDetails();
+  }, [fetchBusinesses, fetchPlanDetails]);
+
+  /*
   const fetchSubscriptionDetails = async () => {
     try {
-      const token = sessionStorage.getItem('token');
-      if (!token) return;
-
       const response = await fetch(`${API_BASE_URL}/api/subscription/plan-details`, {
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -137,63 +270,20 @@ const Dashboard = () => {
         // Show success popup with subscription info
         const expiryDate = data.expires_at ? new Date(data.expires_at).toLocaleDateString() : 'N/A';
         setSuccessMessage(`Welcome! Your ${data.plan} plan is active until ${expiryDate}.`);
-        setShowSuccessPopup(true);
-        setTimeout(() => setShowSuccessPopup(false), 5000);
+        addToast({ message: t('operation_success'), type: 'success' });
       }
     } catch (error) {
       console.error('Error fetching subscription details:', error);
     }
   };
+  */
 
-  // API Functions
-  const fetchBusinesses = async () => {
-    try {
-      setIsLoadingBusinesses(true);
-      const token = sessionStorage.getItem('token');
-
-      if (!token) {
-        console.error('No token found in sessionStorage');
-        setBusinessError(t('authentication_required'));
-        navigate('/login');
-        return;
-      }
-
-      const response = await fetch(`${API_BASE_URL}/api/businesses`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        const collabList = data.collaboratingBusinesses || data.collaborating_businesses || [];
-        setBusinesses(data.businesses || []);
-        setCollaboratingBusinesses(Array.isArray(collabList) ? collabList : []);
-        setDeletedBusinesses(data.deleted_businesses || []);
-        setBusinessError('');
-      } else {
-        const errorData = await response.json();
-        console.error('Failed to fetch businesses:', errorData);
-
-        if (response.status === 401 || response.status === 403) {
-          sessionStorage.clear();
-          navigate('/login');
-        } else {
-          setBusinessError(errorData.error || t('failed_to_load_businesses'));
-        }
-      }
-    } catch (error) {
-      console.error('Error fetching businesses:', error);
-      setBusinessError(t('network_error'));
-    } finally {
-      setIsLoadingBusinesses(false);
-    }
-  };
+  // fetchPlanDetails and fetchSubscriptionDetails remain (or could be moved to store later)
+  // Removed local fetchBusinesses as it's now in businessStore
 
   // Sync active slide for How It Works carousel
   useEffect(() => {
-    if (showHowModal) {
+    if (isModalOpen('howItWorks')) {
       const carouselEl = document.getElementById('howItWorksCarousel');
       if (carouselEl) {
         const handleSlid = (event) => {
@@ -205,165 +295,56 @@ const Dashboard = () => {
     } else {
       setActiveSlide(0);
     }
-  }, [showHowModal]);
+  }, [isModalOpen, activeSlide]); // Fixed: Added meaningful dependencies
 
-  const getStepKeys = (index) => {
-    const keys = [
-      'step_1_login',
-      'step_2_create_business',
-      'step_3_onboarding_pmf',
-      'step_4_aha_insights',
-      'step_5_exec_summary',
-      'step_6_kickstart_projects',
-      'step_7_project_ranking',
-      'step_8_ai_answers',
-      'step_9_insights_6cs',
-      'step_10_strategic'
-    ];
-    return {
-      title: keys[index],
-      description: `${keys[index]}_description`
-    };
-  };
 
-  const deleteBusiness = async (businessId) => {
+
+
+  const deleteBusiness = useCallback(async (businessId) => {
     try {
       setIsDeletingBusiness(true);
       setDeleteError('');
-
-      const token = sessionStorage.getItem('token');
-
-      if (!token) {
-        setDeleteError(t('authentication_required'));
-        navigate('/login');
-        return;
-      }
-
-      const response = await fetch(`${API_BASE_URL}/api/businesses/${businessId}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        await fetchBusinesses();
-        await fetchPlanDetails();
-        setShowDeleteModal(false);
-        setBusinessToDelete(null);
-
-        setSuccessMessage(t('business_deleted_successfully'));
-        setShowSuccessPopup(true);
-
-        setTimeout(() => {
-          setShowSuccessPopup(false);
-          setSuccessMessage('');
-        }, 4000);
-      } else {
-        console.error('Delete business error:', data);
-
-        if (response.status === 401) {
-          sessionStorage.clear();
-          navigate('/login');
-        } else if (response.status === 403 && data.error && data.error.includes('30 days')) {
-          setCooldownMessage(data.error);
-          setShowCooldownModal(true);
-          setShowDeleteModal(false);
-        } else if (response.status === 403) {
-          sessionStorage.clear();
-          navigate('/login');
-        } else {
-          setDeleteError(data.error || t('failed_to_delete_business'));
-        }
-      }
+      await deleteBusinessAction(businessId);
+      await fetchPlanDetails();
+      closeModal('deleteBusiness');
+      setBusinessToDelete(null);
+      addToast({ message: t('business_deleted_successfully'), type: 'success' });
     } catch (error) {
       console.error('Error deleting business:', error);
-      setDeleteError(t('network_error_try_again'));
+      setDeleteError(error.message || t('network_error_try_again'));
     } finally {
       setIsDeletingBusiness(false);
     }
-  };
+  }, [deleteBusinessAction, fetchPlanDetails, t, closeModal, addToast]);
 
-  const createBusiness = async () => {
+  const createBusiness = useCallback(async () => {
     try {
       setIsCreatingBusiness(true);
-      setBusinessError('');
-
-      const token = sessionStorage.getItem('token');
-
-      if (!token) {
-        setBusinessError(t('authentication_required'));
-        navigate('/login');
-        return;
+      const data = await createBusinessAction(businessFormData);
+      setNewlyCreatedBusiness(data.business);
+      if (data.business && (data.business._id || data.business.id)) {
+        setSelectedBusinessId(data.business._id || data.business.id);
       }
-
-      const response = await fetch(`${API_BASE_URL}/api/businesses`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(businessFormData)
+      addToast({ message: t('business_created_successfully'), type: 'success' });
+      setBusinessFormData({
+        business_name: '',
+        business_purpose: '',
+        description: '',
+        city: '',
+        country: ''
       });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        setNewlyCreatedBusiness(data.business);
-        if (data.business && (data.business._id || data.business.id)) {
-          sessionStorage.setItem('activeBusinessId', data.business._id || data.business.id);
-        }
-        setSuccessMessage(t('business_created_successfully'));
-        setShowSuccessPopup(true);
-
-        setBusinessFormData({
-          business_name: '',
-          business_purpose: '',
-          description: '',
-          city: '',
-          country: ''
-        });
-
-        await fetchBusinesses();
-        await fetchPlanDetails();
-        setShowCreateModal(false);
-
-        // Show PMF Onboarding modal after successful business creation (only if enabled)
-        setTimeout(() => {
-          setShowSuccessPopup(false);
-          setSuccessMessage('');
-          if (ENABLE_PMF) setShowPMFOnboarding(true);
-        }, 2000);
-      } else {
-        console.error('Create business error:', data);
-
-        if (response.status === 401) {
-          sessionStorage.clear();
-          navigate('/login');
-        } else if (response.status === 403 && data.error && data.error.includes('limit reached')) {
-          if (isAdmin) {
-            handleCloseCreateModal();
-            setShowPlanLimitModal(true);
-          } else {
-            setBusinessError(data.error || t('plan_limit_reached'));
-          }
-        } else {
-          setBusinessError(data.error || t('failed_to_create_business'));
-        }
-      }
+      await fetchPlanDetails();
+      closeModal('createBusiness');
+      if (ENABLE_PMF) openModal('pmfOnboarding');
     } catch (error) {
-      setBusinessError(t('network_error_try_again'));
       console.error('Error creating business:', error);
     } finally {
       setIsCreatingBusiness(false);
     }
-  };
+  }, [createBusinessAction, businessFormData, setSelectedBusinessId, fetchPlanDetails, t, ENABLE_PMF, closeModal, openModal, addToast]);
 
   // Validation Functions
-  const validateForm = () => {
+  const validateForm = useCallback(() => {
     const errors = {};
 
     // Business Name validation
@@ -475,8 +456,9 @@ const Dashboard = () => {
 
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
-  };
+  }, [businessFormData, t]);
 
+  /*
   const isInvisibleOrEmpty = (str) => {
     if (!str) return true; // Empty or null
 
@@ -494,26 +476,27 @@ const Dashboard = () => {
     // Check if first visible character is NOT a letter
     return /^[^A-Za-z]/.test(trimmed);
   }
+  */
 
   // Business Modal Functions
-  const handleShowCreateModal = () => {
+  const handleShowCreateModal = useCallback(() => {
     if (usage) {
       const current = usage.workspaces?.current || 0;
       const limit = usage.workspaces?.limit || 0;
 
       if (current >= limit && isAdmin) {
-        setShowPlanLimitModal(true);
+        openModal('planLimit');
         return;
       }
     }
 
-    setShowCreateModal(true);
-    setBusinessError('');
+    openModal('createBusiness');
+    clearErrors();
     setFormErrors({});
-  };
+  }, [usage, isAdmin, clearErrors, openModal]);
 
-  const handleCloseCreateModal = () => {
-    setShowCreateModal(false);
+  const handleCloseCreateModal = useCallback(() => {
+    closeModal('createBusiness');
     setBusinessFormData({
       business_name: '',
       business_purpose: '',
@@ -521,11 +504,11 @@ const Dashboard = () => {
       city: '',
       country: ''
     });
-    setBusinessError('');
+    clearErrors();
     setFormErrors({});
-  };
+  }, [clearErrors, closeModal]);
 
-  const handleFormChange = (e) => {
+  const handleFormChange = useCallback((e) => {
     const { name, value } = e.target;
 
     const sanitizedValue =
@@ -540,28 +523,26 @@ const Dashboard = () => {
     }));
 
     // Clear error for this field when user starts typing
-    if (formErrors[name]) {
-      setFormErrors(prev => ({
+    setFormErrors(prev => {
+      if (!prev[name]) return prev;
+      return {
         ...prev,
         [name]: ''
-      }));
-    }
-  };
+      };
+    });
+  }, []);
 
-  const handleSubmitBusiness = (e) => {
+  const handleSubmitBusiness = useCallback((e) => {
     e.preventDefault();
 
     if (!validateForm()) {
-      // Highlight the first error by scrolling to it and focusing
       const firstErrorField = Object.keys(formErrors)[0];
       if (firstErrorField) {
-        // Small delay to ensure form errors are rendered
         setTimeout(() => {
           const element = document.querySelector(`input[name="${firstErrorField}"], textarea[name="${firstErrorField}"]`);
           if (element) {
             element.scrollIntoView({ behavior: 'smooth', block: 'center' });
             element.focus();
-            // Optional: Add a temporary shake class for visual highlight (add CSS for .shake)
             element.classList.add('shake');
             setTimeout(() => element.classList.remove('shake'), 500);
           }
@@ -571,33 +552,30 @@ const Dashboard = () => {
     }
 
     createBusiness();
-  };
+  }, [validateForm, formErrors, createBusiness]);
 
   // Delete Modal Functions
-  const handleShowDeleteModal = (business) => {
+  const handleShowDeleteModal = useCallback((business) => {
     setBusinessToDelete(business);
-    setShowDeleteModal(true);
+    openModal('deleteBusiness');
     setDeleteError('');
-    // Close any open custom menus
-    setShowCustomMenu({});
-  };
+  }, [openModal]);
 
-  const handleCloseDeleteModal = () => {
-    setShowDeleteModal(false);
+  const handleCloseDeleteModal = useCallback(() => {
+    closeModal('deleteBusiness');
     setBusinessToDelete(null);
     setDeleteError('');
-  };
+  }, [closeModal]);
 
-  const handleConfirmDelete = () => {
+  const handleConfirmDelete = useCallback(() => {
     if (businessToDelete) {
       deleteBusiness(businessToDelete._id);
     }
-  };
+  }, [businessToDelete, deleteBusiness]);
 
   // Close custom menu when clicking outside
   useEffect(() => {
     const handleClickOutside = () => {
-      setShowCustomMenu({});
     };
 
     document.addEventListener('click', handleClickOutside);
@@ -605,135 +583,20 @@ const Dashboard = () => {
   }, []);
 
   // Different delete button alternatives
-  const DeleteButtonAlternatives = ({ business, viewType, canDelete = true }) => {
-    const stats = business.question_statistics || {};
-    const progress = stats.progress_percentage || 0;
-    const completedQuestions = stats.completed_questions || 0;
-    const totalQuestions = stats.total_questions || 0;
-    const remainingQuestions = stats.pending_questions || 0;
 
-    const getStatusInfo = () => {
-      if (business.status === 'deleted') return { label: t('deleted'), className: 'status-deleted' };
-      if (business.access_mode === 'archived' || business.access_mode === 'hidden') return { label: t('archived'), className: 'status-archived' };
-      return { label: t('active'), className: 'status-active' };
-    };
-
-    const statusInfo = getStatusInfo();
-
-    // Alternative 1: Simple Delete Button (Always Visible)
-    const SimpleDeleteButton = () => {
-      if (isViewer) return null; // 👈 HIDE FOR VIEWER
-
-      return (
-        <button
-          className="btn btn-outline-danger btn-sm delete-btn-simple"
-          onClick={(e) => {
-            e.stopPropagation();
-            handleShowDeleteModal(business);
-          }}
-          title={t('delete_business')}
-        >
-          <Trash2 size={16} />
-        </button>
-      );
-    };
-
-    return (
-      <div
-        className="business-item d-flex align-items-center p-3 border-bottom position-relative"
-        onMouseEnter={() => setHoveredItem(business._id)}
-        onMouseLeave={() => setHoveredItem(null)}
-      >
-        <div
-          style={{ width: 60, height: 60, cursor: "pointer" }}
-          className="progress-circle me-3 progress-wrapper"
-          onClick={() => handleBusinessClick(business)}
-        >
-          <CircularProgressbar
-            value={progress}
-            text={`${Math.round(progress)}%`}
-            styles={buildStyles({
-              pathColor: progress === 100 ? "#28a745" : progress > 50 ? "#ffc107" : "#17a2b8",
-              textColor: "#000",
-              trailColor: "#e9ecef",
-              textSize: "28px",
-              pathTransitionDuration: 0.5,
-            })}
-          />
-        </div>
-
-        <div
-          className="flex-grow-1"
-          onClick={() => handleBusinessClick(business)}
-          style={{ cursor: "pointer" }}
-        >
-          <h6 className="mb-1">{business.business_name}</h6>
-          <small className="text-muted">
-            {completedQuestions}/{totalQuestions} {t('questions_completed')}
-            {remainingQuestions > 0 && (
-              <span className="text-warning ms-2 text-grey-custom">
-                • {remainingQuestions} {t('questions_remaining')}
-              </span>
-            )}
-          </small>
-        </div>
-        <div className="right-side d-flex flex-column flex-md-row align-items-end align-items-md-center gap-1">
-          <span className={`status-badge ${statusInfo.className}`}>
-            {statusInfo.label}
-          </span>
-          {canDelete && (
-            <div className="delete-btn-wrapper">
-              <SimpleDeleteButton />
-            </div>
-          )}
-        </div>
-      </div>
-    );
-  };
-
-  const BusinessList = ({ businesses, viewType, canDelete = true }) => (
-    <div className={`business-list ${viewType}`}>
-      {isLoadingBusinesses && (
-        <div className="d-flex justify-content-center align-items-center py-5">
-          <Spinner animation="border" role="status" variant="primary" />
-          <span className="ms-2 text-muted">{t('loading_businesses')}</span>
-        </div>
-      )}
-      {!isLoadingBusinesses && businesses.length === 0 && (
-        <div className="text-center text-muted py-5">
-          <p className="mb-2">{t('no_businesses_yet')}</p>
-          <small>{t('get_started_by_creating')}</small>
-        </div>
-      )}
-      {!isLoadingBusinesses && businesses.length > 0 && businesses.map((business, index) => {
-        const isDeleted = business.status === 'deleted';
-        const isArchived = business.access_mode === 'archived' || business.access_mode === 'hidden';
-        return (
-          <div key={business._id || index} className={isDeleted ? 'opacity-50' : ''} style={isDeleted ? { pointerEvents: isDeleted ? 'none' : 'auto' } : {}}>
-            <DeleteButtonAlternatives
-              business={business}
-              viewType={viewType}
-              canDelete={canDelete && !isDeleted && !isArchived}
-            />
-          </div>
-        );
-      })}
-    </div>
-  );
 
   // Event Handlers
-  const handleBusinessClick = (business) => {
+  const handleBusinessClick = useCallback((business) => {
     const businessId = business._id || business.id;
     if (businessId) {
-      sessionStorage.setItem('activeBusinessId', businessId);
+      setSelectedBusinessId(businessId);
     }
-    // Navigate directly to business page with Executive Summary tab active
     navigate('/businesspage', { state: { business, initialTab: 'executive' } });
-  };
+  }, [setSelectedBusinessId, navigate]);
 
-  const handleCloseModal = () => {
-    setShowHowModal(false);
-  };
+  const handleCloseModal = useCallback(() => {
+    closeModal('howItWorks');
+  }, [closeModal]);
 
   // Character counter for business name
   const businessNameLength = businessFormData.business_name.length;
@@ -742,8 +605,8 @@ const Dashboard = () => {
   return (
     <div className="dashboard-layout">
       <PlanLimitModal
-        show={showPlanLimitModal}
-        onHide={() => setShowPlanLimitModal(false)}
+        show={isModalOpen('planLimit')}
+        onHide={() => closeModal('planLimit')}
         plan={usage?.plan}
         limit={usage?.workspaces?.limit}
         isAdmin={isAdmin}
@@ -752,15 +615,15 @@ const Dashboard = () => {
 
 
       {/* FULL PAGE PMF INSIGHTS */}
-      {showInsights ? (
+      {isModalOpen('insights') ? (
         ENABLE_PMF ? (
           <PMFInsights
-            businessId={newlyCreatedBusiness?._id || sessionStorage.getItem('activeBusinessId') || businesses[0]?._id}
+            businessId={newlyCreatedBusiness?._id || activeBusinessId || businesses[0]?._id}
             onContinue={() => {
-              setShowInsights(false);
+              closeModal('insights');
               navigate("/businesspage", {
                 state: {
-                  business: newlyCreatedBusiness || businesses.find(b => b._id === (sessionStorage.getItem('activeBusinessId') || businesses[0]?._id)) || businesses[0]
+                  business: newlyCreatedBusiness || businesses.find(b => b._id === (activeBusinessId || businesses[0]?._id)) || businesses[0]
                 }
               });
             }}
@@ -802,6 +665,12 @@ const Dashboard = () => {
                               <BusinessList
                                 businesses={myBusinesses}
                                 viewType="mobile"
+                                isLoading={isLoadingBusinesses}
+                                t={t}
+                                isViewer={isViewer}
+                                onShowDeleteModal={handleShowDeleteModal}
+                                setHoveredItem={setHoveredItem}
+                                onBusinessClick={handleBusinessClick}
                               />
                             </Accordion.Body>
                           </Accordion.Item>
@@ -826,6 +695,12 @@ const Dashboard = () => {
                                 businesses={projectPhaseBusinesses}
                                 viewType="mobile"
                                 canDelete={false}
+                                isLoading={isLoadingBusinesses}
+                                t={t}
+                                isViewer={isViewer}
+                                onShowDeleteModal={handleShowDeleteModal}
+                                setHoveredItem={setHoveredItem}
+                                onBusinessClick={handleBusinessClick}
                               />
                             </Accordion.Body>
                           </Accordion.Item>
@@ -850,6 +725,12 @@ const Dashboard = () => {
                                 businesses={collaboratingBusinesses}
                                 viewType="mobile"
                                 canDelete={false}
+                                isLoading={isLoadingBusinesses}
+                                t={t}
+                                isViewer={isViewer}
+                                onShowDeleteModal={handleShowDeleteModal}
+                                setHoveredItem={setHoveredItem}
+                                onBusinessClick={handleBusinessClick}
                               />
                             </Accordion.Body>
                           </Accordion.Item>
@@ -874,6 +755,12 @@ const Dashboard = () => {
                                 businesses={deletedBusinesses}
                                 viewType="mobile"
                                 canDelete={false}
+                                isLoading={isLoadingBusinesses}
+                                t={t}
+                                isViewer={isViewer}
+                                onShowDeleteModal={handleShowDeleteModal}
+                                setHoveredItem={setHoveredItem}
+                                onBusinessClick={handleBusinessClick}
                               />
                             </Accordion.Body>
                           </Accordion.Item>
@@ -901,7 +788,7 @@ const Dashboard = () => {
                         <Button
                           variant="primary"
                           className="flex-grow-1 create-business-btn"
-                          onClick={() => setShowHowModal(true)}
+                          onClick={() => openModal('howItWorks')}
                         >
                           <Info size={18} className="me-2" />
                           {t('how_it_works')}
@@ -945,7 +832,7 @@ const Dashboard = () => {
                               <Button
                                 variant="primary"
                                 className="create-business-btn"
-                                onClick={() => setShowHowModal(true)}
+                                onClick={() => openModal('howItWorks')}
                               >
                                 <Info size={18} className="me-2" />
                                 {t('how_it_works')}
@@ -974,6 +861,12 @@ const Dashboard = () => {
                                   <BusinessList
                                     businesses={myBusinesses}
                                     viewType="desktop"
+                                    isLoading={isLoadingBusinesses}
+                                    t={t}
+                                    isViewer={isViewer}
+                                    onShowDeleteModal={handleShowDeleteModal}
+                                    setHoveredItem={setHoveredItem}
+                                    onBusinessClick={handleBusinessClick}
                                   />
                                 </Accordion.Body>
                               </Accordion.Item>
@@ -997,6 +890,12 @@ const Dashboard = () => {
                                     businesses={projectPhaseBusinesses}
                                     viewType="desktop"
                                     canDelete={false}
+                                    isLoading={isLoadingBusinesses}
+                                    t={t}
+                                    isViewer={isViewer}
+                                    onShowDeleteModal={handleShowDeleteModal}
+                                    setHoveredItem={setHoveredItem}
+                                    onBusinessClick={handleBusinessClick}
                                   />
                                 </Accordion.Body>
                               </Accordion.Item>
@@ -1020,6 +919,12 @@ const Dashboard = () => {
                                     businesses={collaboratingBusinesses}
                                     viewType="desktop"
                                     canDelete={false}
+                                    isLoading={isLoadingBusinesses}
+                                    t={t}
+                                    isViewer={isViewer}
+                                    onShowDeleteModal={handleShowDeleteModal}
+                                    setHoveredItem={setHoveredItem}
+                                    onBusinessClick={handleBusinessClick}
                                   />
                                 </Accordion.Body>
                               </Accordion.Item>
@@ -1043,6 +948,12 @@ const Dashboard = () => {
                                     businesses={deletedBusinesses}
                                     viewType="desktop"
                                     canDelete={false}
+                                    isLoading={isLoadingBusinesses}
+                                    t={t}
+                                    isViewer={isViewer}
+                                    onShowDeleteModal={handleShowDeleteModal}
+                                    setHoveredItem={setHoveredItem}
+                                    onBusinessClick={handleBusinessClick}
                                   />
                                 </Accordion.Body>
                               </Accordion.Item>
@@ -1059,7 +970,7 @@ const Dashboard = () => {
           </Container>
 
           {/* How It Works Modal */}
-          {showHowModal && (
+          {isModalOpen('howItWorks') && (
             <div className="popup-overlay" onClick={handleCloseModal}>
               <div className="popup-content large" onClick={(e) => e.stopPropagation()}>
                 <button
@@ -1162,14 +1073,14 @@ const Dashboard = () => {
           {/* PMF Onboarding Modal */}
           {ENABLE_PMF && (
             <PMFOnboardingModal
-              show={showPMFOnboarding}
-              onHide={() => setShowPMFOnboarding(false)}
+              show={isModalOpen('pmfOnboarding')}
+              onHide={() => closeModal('pmfOnboarding')}
               businessId={newlyCreatedBusiness?._id || sessionStorage.getItem('activeBusinessId') || businesses[0]?._id}
               onSubmit={(pmfFormData) => {
-                setShowPMFOnboarding(false);
+                closeModal('pmfOnboarding');
                 // Instead of showing standalone insights, go straight to the business page
                 // Any "AHA" results will be available in the tabs there
-                setShowInsights(false);
+                closeModal('insights');
                 navigate("/businesspage", {
                   state: {
                     business: newlyCreatedBusiness || businesses.find(b => b._id === (sessionStorage.getItem('activeBusinessId') || businesses[0]?._id))
@@ -1180,7 +1091,7 @@ const Dashboard = () => {
           )}
 
           {/* Create Business Modal */}
-          <Modal show={showCreateModal} onHide={handleCloseCreateModal} centered size="lg" backdrop="static">
+          <Modal show={isModalOpen('createBusiness')} onHide={handleCloseCreateModal} centered size="lg" backdrop="static">
             <Modal.Header closeButton>
               <Modal.Title>{t('create_new_business')}</Modal.Title>
             </Modal.Header>
@@ -1321,36 +1232,8 @@ const Dashboard = () => {
             </Form>
           </Modal>
 
-          {/* Success/Alert Popup */}
-          {showSuccessPopup && (
-            <div className="success-popup-overlay">
-              <div className="success-popup">
-                <div className="success-popup-content">
-                  <div className={`dashboard-success-icon ${businessError ? 'bg-danger' : 'bg-success'}`}>
-                    {businessError ? <AlertTriangle size={36} color="white" strokeWidth={3} /> : <Check size={40} color="white" strokeWidth={3} />}
-                  </div>
-                  <h5 className={`mb-2 ${businessError ? 'text-danger' : ''}`}>
-                    {businessError ? t('alert') : t('success')}
-                  </h5>
-                  <p className="mb-3">{businessError || successMessage}</p>
-                  <Button
-                    variant={businessError ? "danger" : "primary"}
-                    className="px-5 py-2 fw-semibold"
-                    onClick={() => {
-                      setShowSuccessPopup(false);
-                      setSuccessMessage('');
-                      setBusinessError('');
-                    }}
-                  >
-                    {t('ok')}
-                  </Button>
-                </div>
-              </div>
-            </div>
-          )}
-
           {/* Delete Business Confirmation Modal */}
-          <Modal show={showDeleteModal} onHide={handleCloseDeleteModal} centered>
+          <Modal show={isModalOpen('deleteBusiness')} onHide={handleCloseDeleteModal} centered>
             <Modal.Header closeButton>
               <Modal.Title className="text-danger">
                 <Trash2 size={20} className="me-2" />
@@ -1418,7 +1301,7 @@ const Dashboard = () => {
           </Modal>
 
           {/* Deletion Cooldown Error Modal */}
-          <Modal show={showCooldownModal} onHide={() => setShowCooldownModal(false)} centered>
+          <Modal show={isModalOpen('deleteCooldown')} onHide={() => closeModal('deleteCooldown')} centered>
             <Modal.Header closeButton>
               <Modal.Title className="text-warning">
                 <Info size={20} className="me-2" />
@@ -1436,7 +1319,7 @@ const Dashboard = () => {
             <Modal.Footer>
               <Button
                 variant="primary"
-                onClick={() => setShowCooldownModal(false)}
+                onClick={() => closeModal('deleteCooldown')}
               >
                 {t('ok')}
               </Button>
@@ -1444,13 +1327,11 @@ const Dashboard = () => {
           </Modal>
 
           {/* <UpgradeModal
-            show={showUpgradeModal}
-            onHide={() => setShowUpgradeModal(false)}
+            show={isModalOpen('upgrade')}
+            onHide={() => closeModal('upgrade')}
             onUpgradeSuccess={(updatedSub) => {
-              setShowUpgradeModal(false);
-              setSuccessMessage(`Plan updated to ${updatedSub.plan} successfully!`);
-              setShowSuccessPopup(true);
-              setTimeout(() => setShowSuccessPopup(false), 3000);
+              closeModal('upgrade');
+              addToast({ message: t('upgrade_success'), type: 'success' });
             }}
           /> */}
         </>

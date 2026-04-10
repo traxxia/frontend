@@ -1,6 +1,6 @@
 import React, { useState, useContext } from "react";
 import axios from "axios";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import "../styles/Login.css";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faEye, faEyeSlash } from "@fortawesome/free-solid-svg-icons";
@@ -11,9 +11,9 @@ import apple from "../assets/apple.png";
 import LanguageTranslator from "../components/LanguageTranslator";
 import { useTranslation } from "../hooks/useTranslation";
 import { faSun, faMoon } from "@fortawesome/free-solid-svg-icons";
-import { ThemeContext } from "../components/ThemeComponent";
 import ErrorModal from "../components/ErrorModal";
 import { useAuthStore } from "../store/authStore";
+import { useUIStore } from "../store/uiStore";
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -23,7 +23,8 @@ const Login = () => {
   const [showErrorModal, setShowErrorModal] = useState(false);
   const [modalMessage, setModalMessage] = useState("");
   const navigate = useNavigate();
-  const { theme, toggleTheme } = useContext(ThemeContext);
+  const theme = useUIStore((state) => state.theme);
+  const toggleTheme = useUIStore((state) => state.toggleTheme);
   const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
   const { t } = useTranslation();
 

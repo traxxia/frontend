@@ -8,9 +8,7 @@ import { STREAMING_CONFIG } from '../hooks/streamingConfig';
 import { useTranslation } from '../hooks/useTranslation';
 
 const CompetitiveAdvantageMatrix = ({
-    questions = [],
     userAnswers = {},
-    businessName = '',
     onRegenerate,
     isRegenerating = false,
     canRegenerate = true,
@@ -20,7 +18,6 @@ const CompetitiveAdvantageMatrix = ({
     isExpanded = true,
     streamingManager,
     cardId,
-    hideImproveButton = false,
 }) => {
     const [data, setData] = useState(competitiveAdvantageData);
     const [hasGenerated, setHasGenerated] = useState(false);
@@ -306,7 +303,7 @@ const CompetitiveAdvantageMatrix = ({
                 clearInterval(streamingIntervalRef.current);
             }
         };
-    }, [cardId, data, isRegenerating, streamingManager, setUserHasScrolled]);
+    }, [cardId, data, isRegenerating, streamingManager, setUserHasScrolled, advantage]);
 
     useEffect(() => {
         return () => {

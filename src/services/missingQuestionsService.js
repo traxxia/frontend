@@ -1,4 +1,4 @@
-import FinancialPerformance from "@/components/FinancialPerformance";
+
 
 const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -229,9 +229,11 @@ export const ANALYSIS_TYPES = {
   }
 };
 
-export default {
+const MissingQuestionsService = {
   checkMissingQuestions,
   getQuestionsByAnalysisType,
   checkMissingQuestionsAndRedirect,
   ANALYSIS_TYPES
 };
+
+export default MissingQuestionsService;

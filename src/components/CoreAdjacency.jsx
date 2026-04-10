@@ -1,8 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
-    Loader, TrendingUp, Target, Lightbulb, AlertTriangle, Award,
-    ChevronDown, ChevronRight, Shield, Users, BarChart3, Map,
-    DollarSign, Activity, Zap, Package, Globe, ArrowRight
+    Loader, TrendingUp, Target, Lightbulb, AlertTriangle,
+    ChevronDown, ChevronRight, Shield, Activity
 } from 'lucide-react';
 import '../styles/EssentialPhase.css';
 import AnalysisEmptyState from './AnalysisEmptyState';
@@ -14,9 +13,7 @@ import { STREAMING_CONFIG } from '../hooks/streamingConfig';
 import { useTranslation } from '@/hooks/useTranslation';
 
 const CoreAdjacency = ({
-    questions = [],
     userAnswers = {},
-    businessName = '',
     onRegenerate,
     isRegenerating = false,
     canRegenerate = true,
@@ -26,7 +23,6 @@ const CoreAdjacency = ({
     isExpanded = true,
     streamingManager,
     cardId,
-    hideImproveButton = false,
 }) => {
     const [data, setData] = useState(coreAdjacencyData);
     const [hasGenerated, setHasGenerated] = useState(false);
@@ -106,7 +102,7 @@ const CoreAdjacency = ({
         return sectionsWithData < 2;
     };
 
-    const calculateTotalRows = (data) => {
+    const calculateTotalRows = useCallback((data) => {
         if (!data || isCoreAdjacencyDataIncomplete(data)) {
             return 0;
         }
@@ -155,7 +151,7 @@ const CoreAdjacency = ({
         }
 
         return total;
-    };
+    }, []);
 
     const typeText = (text, rowIndex, field, delay = 0) => {
         if (text === null || text === undefined) return;
@@ -190,7 +186,7 @@ const CoreAdjacency = ({
         if (!streamingManager?.shouldStream(cardId)) {
             setVisibleRows(totalRows);
         }
-    }, [coreAdjacencyData, cardId, streamingManager]);
+    }, [coreAdjacencyData, cardId, streamingManager, calculateTotalRows]);
 
     useEffect(() => {
         if (!streamingManager?.shouldStream(cardId)) {

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import axios from "axios";
 
 // Global cache for lock requests shared across hook instances
@@ -9,7 +9,7 @@ export const useFieldLockPolling = (projectId, enabled = true) => {
   const pollingRef = useRef(null);
   const token = sessionStorage.getItem("token");
 
-  const fetchLocks = async () => {
+  const fetchLocks = useCallback(async () => {
     if (!projectId || !token) return;
 
     const cacheKey = `locks-${projectId}`;
@@ -43,7 +43,7 @@ export const useFieldLockPolling = (projectId, enabled = true) => {
 
     fieldLockCache.set(cacheKey, { promise: fetchPromise, time: timestamp });
     await fetchPromise;
-  };
+  }, [projectId, token]);
 
   useEffect(() => {
     if (!projectId || !enabled) {
@@ -58,7 +58,7 @@ export const useFieldLockPolling = (projectId, enabled = true) => {
     return () => {
       clearInterval(pollingRef.current);
     };
-  }, [projectId, enabled]);
+  }, [projectId, enabled, fetchLocks]);
 
   return { locks, refetchLocks: fetchLocks };
 };

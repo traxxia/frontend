@@ -1,12 +1,9 @@
 import React from "react";
 import {
-  Pencil,
   Trash2,
-  Users,
   Edit2,
   Eye,
   AlertTriangle,
-  TrendingUp,
   Target,
   Zap,
   CheckCircle,
@@ -30,6 +27,7 @@ const getStrategicSignal = (project) => {
   const theme = project.strategic_theme || "None";
   return { impact, theme };
 };
+
 
 const ProjectCard = ({
   project,
@@ -60,7 +58,6 @@ const ProjectCard = ({
 }) => {
   const { t } = useTranslation();
 
-  const { impact, theme } = getStrategicSignal(project);
 
   // Determine if user can edit this project
   const userCanEdit = canEditProject ? canEditProject(project) : true;
@@ -68,29 +65,7 @@ const ProjectCard = ({
   const statusLower = project.status?.toLowerCase();
   const isTerminal = ["completed", "scaled", "killed"].includes(statusLower);
 
-  const getStatusIcon = (status) => {
-    switch (status) {
-      case 'Active': return <PlayCircle size={14} color="green" />;
-      case 'At Risk': return <AlertTriangle size={14} color="red" />;
-      case 'Paused': return <PauseCircle size={14} color="orange" />;
-      case 'Completed': return <CheckCircle size={14} color="#2563eb" />;
-      case 'Killed': return <XCircle size={14} color="grey" />;
-      case 'Scaled': return <CheckCircle size={14} color="purple" />;
-      default: return <Edit2 size={14} color="grey" />; // Draft
-    }
-  };
 
-  const getThemeIcon = (themeName) => {
-    switch (themeName) {
-      case "Growth": return <Rocket size={14} />;
-      case "Efficiency": return <Bolt size={14} />;
-      case "Innovation": return <Lightbulb size={14} />;
-      case "CustomerExperience": return <Heart size={14} />;
-      case "RiskMitigation": return <Shield size={14} />;
-      case "Platform": return <Boxes size={14} />;
-      default: return <Target size={14} />;
-    }
-  };
 
   return (
     <div className={`project-card ${project.status === "Killed" ? "killed" : ""} ${(project.status?.toLowerCase() === "launched" ? "draft" : (project.status?.toLowerCase().replace(" ", "-") || "draft"))}-border`}>

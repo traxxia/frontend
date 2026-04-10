@@ -615,7 +615,6 @@ export class AnalysisApiService {
       let completed = 0;
       const total = analysisTypes.length;
       let successes = 0;
-      let failures = 0;
 
       const wrappedPromises = analysisTypes.map((analysisType) => {
         const displayName =
@@ -637,7 +636,6 @@ export class AnalysisApiService {
             return { status: "fulfilled", analysisType, value: res };
           })
           .catch((err) => {
-            failures++;
             completed++;
 
             console.error(`Error with ${analysisType} analysis:`, err);
@@ -647,7 +645,9 @@ export class AnalysisApiService {
               { duration: 5000 }
             );
 
-            throw { status: "rejected", analysisType, reason: err };
+            const error = new Error(`Analysis failed for ${analysisType}`);
+            Object.assign(error, { status: "rejected", analysisType, reason: err });
+            throw error;
           });
       });
 
@@ -675,7 +675,6 @@ export class AnalysisApiService {
             .callAnalysisAPIWithSave(analysisType, payload, stateSetters, selectedBusinessId)
             .then((res) => {
               successes++;
-              failures--;
               // Stay in progress mode until all retries finish
               showToastMessage(
                 `${successes}/${total} analyses — "${displayName}" completed successfully (after retry)`,
@@ -1169,18 +1168,7 @@ export class AnalysisApiService {
 
   // Individual analysis methods - Active ones only
 
-  async generateSWOTAnalysis(questions, answers, selectedBusinessId) {
-    try {
-      const { questionsArray, answersArray } = this.prepareQuestionsAndAnswers(questions, answers);
-      const result = await this.makeAPICall('find', questionsArray, answersArray);
-      const analysisContent = typeof result === 'string' ? result : JSON.stringify(result);
-      await this.saveAnalysisToBackend(analysisContent, 'swot', selectedBusinessId);
-      return analysisContent;
-    } catch (error) {
-      console.error('Error generating SWOT analysis:', error);
-      throw error;
-    }
-  }
+
 
   async generatePurchaseCriteria(questions, answers, selectedBusinessId) {
     try {

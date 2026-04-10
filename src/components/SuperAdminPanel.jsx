@@ -35,6 +35,7 @@ import PlanManagement from "./PlanManagement";
 import StaleBetsAdmin from "./StaleBetsAdmin";
 import { useTranslation } from "../hooks/useTranslation";
 import "../styles/superadmin.css";
+import { useAuthStore } from "../store";
 
 const SuperAdminPanel = () => {
   const { t } = useTranslation();
@@ -50,14 +51,8 @@ const SuperAdminPanel = () => {
     message: "",
     type: "success",
   });
-  const [userRole, setUserRole] = useState("");
-
-  useEffect(() => {
-    const userRoleStored = sessionStorage.getItem("userRole");
-    setUserRole(userRoleStored || "");
-  }, []);
-
-  const isSuperAdmin = userRole === "super_admin";
+  const userRole = useAuthStore(state => state.userRole || "");
+  const isSuperAdmin = useAuthStore(state => state.isSuperAdmin());
 
   // Status check for questions tab
   useEffect(() => {

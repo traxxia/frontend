@@ -1,6 +1,102 @@
 import { useState, useEffect, useRef } from 'react';
 import { AnalysisService } from '../services/analysisService';
 
+const PHASES = {
+    INITIAL: "initial",
+    ESSENTIAL: "essential",
+    ADVANCED: "advanced",
+};
+
+const isPhaseCompleted = (phase, questions, userAnswers, completedQuestions) => {
+    const mandatoryQuestions = questions.filter(
+        (q) => q.phase === phase && q.severity === "mandatory"
+    );
+
+    if (mandatoryQuestions.length === 0) return false;
+
+    return mandatoryQuestions.every((q) => {
+        const questionId = q._id;
+        return (userAnswers[questionId] && userAnswers[questionId].trim()) ||
+            completedQuestions.has(questionId);
+    });
+};
+
+const getUnlockedFeatures = (questions, userAnswers, completedQuestions, hasUploadedDocument) => {
+    if (!questions || !questions.length) return {
+        advanced: true,
+        analysis: false,
+        initialPhase: false,
+        essentialPhase: false,
+        advancedPhase: false,
+        hasDocument: false
+    };
+
+    const hasAnswer = (qId) => {
+        const answered = (userAnswers[qId] && String(userAnswers[qId]).trim().length > 0) || completedQuestions.has(qId);
+        if (!answered && typeof qId === 'number') return completedQuestions.has(String(qId));
+        if (!answered && typeof qId === 'string') {
+            const numId = Number(qId);
+            if (!isNaN(numId)) return completedQuestions.has(numId);
+        }
+        return !!answered;
+    };
+
+    const checkPhase = (phaseName) => {
+        const lowerPhase = phaseName.toLowerCase();
+        return questions.some(q => {
+            const qPhase = (q.phase || 'initial').toLowerCase();
+            return qPhase === lowerPhase && hasAnswer(q._id);
+        });
+    };
+
+    const hasAnyInitial = checkPhase('initial');
+    const hasAnyEssential = checkPhase('essential');
+    const hasAnyAdvanced = checkPhase('advanced');
+    const hasDoc = !!hasUploadedDocument;
+
+    return {
+        advanced: true,
+        analysis: hasAnyInitial || hasAnyEssential || hasAnyAdvanced || hasDoc,
+        initialPhase: hasAnyInitial,
+        essentialPhase: hasAnyEssential,
+        advancedPhase: hasAnyAdvanced,
+        hasDocument: hasDoc
+    };
+};
+
+const loadCompletedQuestionsFromAPI = (conversations) => {
+    const completedSet = new Set();
+    const answersMap = {};
+
+    conversations.forEach(conversation => {
+        const questionId = conversation.question_id;
+
+        if (conversation.completion_status === 'complete' || conversation.completion_status === 'skipped') {
+            completedSet.add(questionId);
+        }
+
+        const allAnswers = Array.isArray(conversation.conversation_flow)
+            ? conversation.conversation_flow
+                .filter(item => item && String(item.type).toLowerCase() === 'answer' && item.text !== undefined && item.text !== null)
+                .map(a => String(a.text).trim())
+                .filter(text => text.length > 0 && text !== '[Question Skipped]')
+            : [];
+
+
+        if (allAnswers.length > 0) {
+            answersMap[questionId] = allAnswers.join('\n\n'); 
+        } else {
+            if (conversation.completion_status === 'skipped' || conversation.is_skipped) {
+                answersMap[questionId] = '[Question Skipped]';
+            } else if (conversation.completion_status === 'complete') {
+                answersMap[questionId] = ''; 
+            }
+        }
+    });
+
+    return { completedSet, answersMap };
+};
+
 const PhaseManager = ({
     questions,
     questionsLoaded,
@@ -29,103 +125,7 @@ const PhaseManager = ({
     const [showUnlockToast, setShowUnlockToast] = useState(false);
     const allPhasesCelebratedRef = useRef(false);
 
-    const PHASES = {
-        INITIAL: "initial",
-        ESSENTIAL: "essential",
-        ADVANCED: "advanced",
-    };
 
-    const isPhaseCompleted = (phase) => {
-        const mandatoryQuestions = questions.filter(
-            (q) => q.phase === phase && q.severity === "mandatory"
-        );
-
-        if (mandatoryQuestions.length === 0) return false;
-
-        return mandatoryQuestions.every((q) => {
-            const questionId = q._id;
-            return (userAnswers[questionId] && userAnswers[questionId].trim()) ||
-                completedQuestions.has(questionId);
-        });
-    };
-
-    const getUnlockedFeatures = () => {
-        if (!questions || !questions.length) return {
-            advanced: true,
-            analysis: false,
-            initialPhase: false,
-            essentialPhase: false,
-            advancedPhase: false,
-            hasDocument: false
-        };
-
-        const hasAnswer = (qId) => {
-            const answered = (userAnswers[qId] && String(userAnswers[qId]).trim().length > 0) || completedQuestions.has(qId);
-            if (!answered && typeof qId === 'number') return completedQuestions.has(String(qId));
-            if (!answered && typeof qId === 'string') {
-                const numId = Number(qId);
-                if (!isNaN(numId)) return completedQuestions.has(numId);
-            }
-            return !!answered;
-        };
-
-        const checkPhase = (phaseName) => {
-            const lowerPhase = phaseName.toLowerCase();
-            return questions.some(q => {
-                const qPhase = (q.phase || 'initial').toLowerCase();
-                return qPhase === lowerPhase && hasAnswer(q._id);
-            });
-        };
-
-        const hasAnyInitial = checkPhase('initial');
-        const hasAnyEssential = checkPhase('essential');
-        const hasAnyAdvanced = checkPhase('advanced');
-        const hasDoc = !!hasUploadedDocument;
-
-        return {
-            advanced: true,
-            analysis: hasAnyInitial || hasAnyEssential || hasAnyAdvanced || hasDoc,
-            initialPhase: hasAnyInitial,
-            essentialPhase: hasAnyEssential,
-            advancedPhase: hasAnyAdvanced,
-            hasDocument: hasDoc
-        };
-    };
-
-
-
-    const loadCompletedQuestionsFromAPI = (conversations) => {
-        const completedSet = new Set();
-        const answersMap = {};
-
-        conversations.forEach(conversation => {
-            const questionId = conversation.question_id;
-
-            if (conversation.completion_status === 'complete' || conversation.completion_status === 'skipped') {
-                completedSet.add(questionId);
-            }
-
-            const allAnswers = Array.isArray(conversation.conversation_flow)
-                ? conversation.conversation_flow
-                    .filter(item => item && String(item.type).toLowerCase() === 'answer' && item.text !== undefined && item.text !== null)
-                    .map(a => String(a.text).trim())
-                    .filter(text => text.length > 0 && text !== '[Question Skipped]')
-                : [];
-
-
-            if (allAnswers.length > 0) {
-                answersMap[questionId] = allAnswers.join('\n\n'); // or '. ' if you prefer single-line
-            } else {
-                if (conversation.completion_status === 'skipped' || conversation.is_skipped) {
-                    answersMap[questionId] = '[Question Skipped]';
-                } else if (conversation.completion_status === 'complete') {
-                    answersMap[questionId] = ''; // completed but no usable answers
-                }
-            }
-        });
-
-        return { completedSet, answersMap };
-    };
 
     const loadExistingAnalysis = async () => {
         try {
@@ -277,14 +277,12 @@ const PhaseManager = ({
     useEffect(() => {
         const phaseList = ['initial', 'essential', 'advanced'];
         const allDone = phaseList.every(p => completedPhases.has(p));
-        if (allDone && !allPhasesCelebratedRef.current) {
+        if (allDone && !allPhasesCelebratedRef.current && completedPhases.size > 0) {
             allPhasesCelebratedRef.current = true;
             showToastMessage?.('🎉 All phases completed! You have unlocked all analyses.', 'success');
         }
-    }, [completedPhases]);
-    const handlePhaseCompleted = async (phase, updatedCompletedSet) => {
-        await handleSimplifiedPhaseCompletion(phase, updatedCompletedSet);
-    };
+    }, [completedPhases, showToastMessage]);
+
 
     const canRegenerateAnalysis = () => {
         return Object.values(userAnswers).some(answer => answer && String(answer).trim().length > 0);
@@ -372,8 +370,8 @@ const PhaseManager = ({
     return {
         completedPhases,
         PHASES,
-        isPhaseCompleted,
-        getUnlockedFeatures,
+        isPhaseCompleted: (phase) => isPhaseCompleted(phase, questions, userAnswers, completedQuestions),
+        getUnlockedFeatures: () => getUnlockedFeatures(questions, userAnswers, completedQuestions, hasUploadedDocument),
         handleQuestionCompleted,
         canRegenerateAnalysis,
         canGenerateFullSwot,
@@ -387,6 +385,7 @@ const PhaseManager = ({
         unlockedPhase,
         showUnlockToast,
         setShowUnlockToast,
+        loadCompletedQuestionsFromAPI // Adding to return object if needed elsewhere
     };
 };
 

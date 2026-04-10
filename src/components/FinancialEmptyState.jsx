@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { FileX, Upload, AlertCircle, TrendingUp, MessageCircle, Edit } from 'lucide-react';
 import { useTranslation } from "../hooks/useTranslation";
 import MissingMetricsDisplay from './MissingMetricsDisplay';
@@ -36,7 +36,7 @@ const FinancialEmptyState = ({
 
   const defaultMessage = `No ${analysisDisplayName.toLowerCase()} results found. The uploaded financial document doesn't contain the required data or proper values for analysis.`;
 
-  const handleRedirectToFileManagement = () => {
+  const handleRedirectToFileManagement = useCallback(() => {
     // Don't redirect in read-only mode
     if (readOnly) return;
 
@@ -52,18 +52,18 @@ const FinancialEmptyState = ({
         chatSection.scrollIntoView({ behavior: 'smooth' });
       }
     }
-  };
+  }, [readOnly, isMobile, setActiveTab, onRedirectToChat]);
 
   // Enhanced document detection - check multiple sources
   const hasDocumentUploaded = uploadedFile || hasUploadedDocument || (documentInfo && documentInfo.has_document);
-  
+
   // Create documentInfo object if it doesn't exist but we know a document is uploaded
-  const effectiveDocumentInfo = documentInfo || (hasDocumentUploaded ? {
+  const effectiveDocumentInfo = useMemo(() => documentInfo || (hasDocumentUploaded ? {
     has_document: true,
     filename: uploadedFile?.name || 'Financial Document',
     template_name: 'Standard', // Default template type
     upload_date: new Date().toISOString()
-  } : null);
+  } : null), [documentInfo, hasDocumentUploaded, uploadedFile?.name]);
 
   return (
     <div className="financial-empty-state">

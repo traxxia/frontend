@@ -3,6 +3,7 @@ import { Users, Search, Loader, Plus, ChevronRight, ChevronLeft, } from 'lucide-
 import Pagination from '../components/Pagination';
 import { formatDate } from '../utils/dateUtils';
 import { useTranslation } from '../hooks/useTranslation';
+import { useAuthStore } from '../store';
 
 
 
@@ -31,7 +32,8 @@ const UserOverview = ({ onToast }) => {
   const [currentPage, setCurrentPage] = useState(1);
 
   const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
-  const getAuthToken = () => sessionStorage.getItem('token');
+  const token = useAuthStore(state => state.token);
+  const getAuthToken = () => token;
 
   // Validation function for individual fields
   const validateField = (fieldName, value) => {

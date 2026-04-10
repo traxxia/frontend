@@ -1,6 +1,80 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { AlertTriangle, ChevronDown, ChevronUp, Check, X, Info } from 'lucide-react';
 import { useTranslation } from '@/hooks/useTranslation';
+
+const TEMPLATE_METRICS = {
+  simple: {
+    name: "Simplified", 
+    metrics: [
+      { key: "revenue", name: "Revenue", required: true },
+      { key: "net_income", name: "Net Income", required: true },
+      { key: "operating_expenses", name: "Operating Expenses", required: true },
+      { key: "gross_profit", name: "Gross Profit", required: true },
+      { key: "revenue_trends", name: "Revenue Trends", required: true }
+    ]
+  },
+  standard: {
+    name: "Standard",
+    metrics: [
+      { key: "revenue", name: "Revenue", required: true },
+      { key: "cogs", name: "Cost Of Goods", required: true },
+      { key: "ebitda", name: "EBITDA", required: true },
+      { key: "net_income", name: "Net Income", required: true },
+      { key: "operating_income", name: "Operating Income", required: true },
+      { key: "operating_expenses", name: "Operating Expenses", required: true },
+      { key: "gross_profit", name: "Gross Profit", required: true },
+      { key: "revenue_trends", name: "Revenue Trends", required: true },
+      { key: "total_assets", name: "Total Assets", required: true },
+      { key: "shareholder_equity", name: "Shareholder Equity", required: true },
+      { key: "total_debt", name: "Total Debt", required: true }
+    ]
+  },
+  detailed: {
+    name: "Detailed",
+    metrics: [
+      { key: "revenue", name: "Revenue", required: true },
+      { key: "cogs", name: "Cost Of Goods", required: true },
+      { key: "ebitda", name: "EBITDA", required: true },
+      { key: "net_income", name: "Net Income", required: true },
+      { key: "operating_income", name: "Operating Income", required: true },
+      { key: "operating_expenses", name: "Operating Expenses", required: true },
+      { key: "gross_profit", name: "Gross Profit", required: true },
+      { key: "revenue_trends", name: "Revenue Trends", required: true },
+      { key: "current_assets", name: "Current Assets", required: true },
+      { key: "current_liabilities", name: "Current Liabilities", required: true },
+      { key: "cash", name: "Cash", required: true },
+      { key: "inventory", name: "Inventory", required: true },
+      { key: "total_assets", name: "Total Assets", required: true },
+      { key: "shareholder_equity", name: "Shareholder Equity", required: true },
+      { key: "total_debt", name: "Total Debt", required: true }
+    ]
+  }
+};
+
+const getCurrentTemplateType = (documentInfo) => {
+  let type = "standard"; 
+  if (documentInfo?.template_name) {
+    const templateName = documentInfo.template_name.toLowerCase();
+    if (templateName.includes("simplified") || templateName.includes("simple") || templateName.includes("basic")) {
+      type = "simple";
+    } else if (templateName.includes("detailed") || templateName.includes("advanced") || templateName.includes("comprehensive")) {
+      type = "detailed";
+    } 
+  } else if (documentInfo?.template_type) { 
+    const templateType = documentInfo.template_type.toLowerCase();
+    if (templateType === "simple" || templateType === "basic") {
+      type = "simple";
+    } else if (templateType === "detailed" || templateType === "advanced") {
+      type = "detailed";
+    }
+  }
+  return type;
+};
+
+const isMetricRequired = (metricKey, templateKey) => {
+  const template = TEMPLATE_METRICS[templateKey];
+  return template.metrics.some(m => m.key === metricKey && m.required);
+};
 
 const MissingMetricsDisplay = ({ 
   documentInfo,  
@@ -9,72 +83,26 @@ const MissingMetricsDisplay = ({
   const [isExpanded, setIsExpanded] = useState(false);
   const { t } = useTranslation();
 
-  const TEMPLATE_METRICS = {
-    simple: {
-      name: "Simplified", 
-      metrics: [
-        { key: "revenue", name: "Revenue", required: true },
-        { key: "net_income", name: "Net Income", required: true },
-        { key: "operating_expenses", name: "Operating Expenses", required: true },
-        { key: "gross_profit", name: "Gross Profit", required: true },
-        { key: "revenue_trends", name: "Revenue Trends", required: true }
-      ]
-    },
-    standard: {
-      name: "Standard",
-      metrics: [
-        { key: "revenue", name: "Revenue", required: true },
-        { key: "cogs", name: "Cost Of Goods", required: true },
-        { key: "ebitda", name: "EBITDA", required: true },
-        { key: "net_income", name: "Net Income", required: true },
-        { key: "operating_income", name: "Operating Income", required: true },
-        { key: "operating_expenses", name: "Operating Expenses", required: true },
-        { key: "gross_profit", name: "Gross Profit", required: true },
-        { key: "revenue_trends", name: "Revenue Trends", required: true },
-        { key: "total_assets", name: "Total Assets", required: true },
-        { key: "shareholder_equity", name: "Shareholder Equity", required: true },
-        { key: "total_debt", name: "Total Debt", required: true }
-      ]
-    },
-    detailed: {
-      name: "Detailed",
-      metrics: [
-        { key: "revenue", name: "Revenue", required: true },
-        { key: "cogs", name: "Cost Of Goods", required: true },
-        { key: "ebitda", name: "EBITDA", required: true },
-        { key: "net_income", name: "Net Income", required: true },
-        { key: "operating_income", name: "Operating Income", required: true },
-        { key: "operating_expenses", name: "Operating Expenses", required: true },
-        { key: "gross_profit", name: "Gross Profit", required: true },
-        { key: "revenue_trends", name: "Revenue Trends", required: true },
-        { key: "current_assets", name: "Current Assets", required: true },
-        { key: "current_liabilities", name: "Current Liabilities", required: true },
-        { key: "cash", name: "Cash", required: true },
-        { key: "inventory", name: "Inventory", required: true },
-        { key: "total_assets", name: "Total Assets", required: true },
-        { key: "shareholder_equity", name: "Shareholder Equity", required: true },
-        { key: "total_debt", name: "Total Debt", required: true }
-      ]
-    }
-  };
+  const handleToggleExpanded = useCallback(() => {
+    setIsExpanded(prev => !prev);
+  }, []);
 
-  // Determine current template type
-  let currentTemplateType = "standard"; 
-  if (documentInfo?.template_name) {
-    const templateName = documentInfo.template_name.toLowerCase();
-    if (templateName.includes("simplified") || templateName.includes("simple") || templateName.includes("basic")) {
-      currentTemplateType = "simple";
-    } else if (templateName.includes("detailed") || templateName.includes("advanced") || templateName.includes("comprehensive")) {
-      currentTemplateType = "detailed";
-    } 
-  } else if (documentInfo?.template_type) { 
-    const type = documentInfo.template_type.toLowerCase();
-    if (type === "simple" || type === "basic") {
-      currentTemplateType = "simple";
-    } else if (type === "detailed" || type === "advanced") {
-      currentTemplateType = "detailed";
-    }
-  }
+  const currentTemplateType = useMemo(() => getCurrentTemplateType(documentInfo), [documentInfo]);
+
+  const allMetrics = useMemo(() => {
+    const metrics = [];
+    const metricSet = new Set();
+    
+    Object.values(TEMPLATE_METRICS).forEach(template => {
+      template.metrics.forEach(metric => {
+        if (!metricSet.has(metric.key)) {
+          metricSet.add(metric.key);
+          metrics.push(metric);
+        }
+      });
+    });
+    return metrics;
+  }, []);
 
   if (!documentInfo || documentInfo.has_document === false) {
     return null;
@@ -104,7 +132,7 @@ const MissingMetricsDisplay = ({
           <div className="template-desc">{currentTemplate.metrics.length} metrics required</div>
         </div>
         <button
-          onClick={() => setIsExpanded(!isExpanded)}
+          onClick={handleToggleExpanded}
           style={{ 
             background: 'none', 
             border: 'none', 
@@ -201,68 +229,47 @@ const MissingMetricsDisplay = ({
                 </tr>
               </thead>
               <tbody>
-                {(() => {
-                  // Get all unique metrics
-                  const allMetrics = [];
-                  const metricSet = new Set();
-                  
-                  Object.values(TEMPLATE_METRICS).forEach(template => {
-                    template.metrics.forEach(metric => {
-                      if (!metricSet.has(metric.key)) {
-                        metricSet.add(metric.key);
-                        allMetrics.push(metric);
-                      }
-                    });
-                  });
-
-                  // Check if a metric is required for a specific template
-                  const isMetricRequired = (metricKey, templateKey) => {
-                    const template = TEMPLATE_METRICS[templateKey];
-                    return template.metrics.some(m => m.key === metricKey && m.required);
-                  };
-
-                  return allMetrics.map((metric, index) => (
-                    <tr key={metric.key} style={{ 
-                      borderTop: index > 0 ? '1px solid #e2e8f0' : 'none',
-                      backgroundColor: index % 2 === 0 ? 'white' : '#f8fafc' 
+                {allMetrics.map((metric, index) => (
+                  <tr key={metric.key} style={{ 
+                    borderTop: index > 0 ? '1px solid #e2e8f0' : 'none',
+                    backgroundColor: index % 2 === 0 ? 'white' : '#f8fafc' 
+                  }}>
+                    <td style={{ padding: '8px 12px', fontWeight: '500' }}>{metric.name}</td>
+                    <td style={{ 
+                      padding: '8px 12px', 
+                      textAlign: 'center',
+                      backgroundColor: currentTemplateType === 'simple' ? '#fef3c7' : (index % 2 === 0 ? 'white' : '#f8fafc')
                     }}>
-                      <td style={{ padding: '8px 12px', fontWeight: '500' }}>{metric.name}</td>
-                      <td style={{ 
-                        padding: '8px 12px', 
-                        textAlign: 'center',
-                        backgroundColor: currentTemplateType === 'simple' ? '#fef3c7' : (index % 2 === 0 ? 'white' : '#f8fafc')
-                      }}>
-                        {isMetricRequired(metric.key, 'simple') ? (
-                          <Check size={14} style={{ color: '#059669', margin: '0 auto', display: 'block' }} />
-                        ) : (
-                          <X size={14} style={{ color: '#d1d5db', margin: '0 auto', display: 'block' }} />
-                        )}
-                      </td>
-                      <td style={{ 
-                        padding: '8px 12px', 
-                        textAlign: 'center',
-                        backgroundColor: currentTemplateType === 'standard' ? '#fef3c7' : (index % 2 === 0 ? 'white' : '#f8fafc')
-                      }}>
-                        {isMetricRequired(metric.key, 'standard') ? (
-                          <Check size={14} style={{ color: '#059669', margin: '0 auto', display: 'block' }} />
-                        ) : (
-                          <X size={14} style={{ color: '#d1d5db', margin: '0 auto', display: 'block' }} />
-                        )}
-                      </td>
-                      <td style={{ 
-                        padding: '8px 12px', 
-                        textAlign: 'center',
-                        backgroundColor: currentTemplateType === 'detailed' ? '#fef3c7' : (index % 2 === 0 ? 'white' : '#f8fafc')
-                      }}>
-                        {isMetricRequired(metric.key, 'detailed') ? (
-                          <Check size={14} style={{ color: '#059669', margin: '0 auto', display: 'block' }} />
-                        ) : (
-                          <X size={14} style={{ color: '#d1d5db', margin: '0 auto', display: 'block' }} />
-                        )}
-                      </td>
-                    </tr>
-                  ));
-                })()}
+                      {isMetricRequired(metric.key, 'simple') ? (
+                        <Check size={14} style={{ color: '#059669', margin: '0 auto', display: 'block' }} />
+                      ) : (
+                        <X size={14} style={{ color: '#d1d5db', margin: '0 auto', display: 'block' }} />
+                      )}
+                    </td>
+                    <td style={{ 
+                      padding: '8px 12px', 
+                      textAlign: 'center',
+                      backgroundColor: currentTemplateType === 'standard' ? '#fef3c7' : (index % 2 === 0 ? 'white' : '#f8fafc')
+                    }}>
+                      {isMetricRequired(metric.key, 'standard') ? (
+                        <Check size={14} style={{ color: '#059669', margin: '0 auto', display: 'block' }} />
+                      ) : (
+                        <X size={14} style={{ color: '#d1d5db', margin: '0 auto', display: 'block' }} />
+                      )}
+                    </td>
+                    <td style={{ 
+                      padding: '8px 12px', 
+                      textAlign: 'center',
+                      backgroundColor: currentTemplateType === 'detailed' ? '#fef3c7' : (index % 2 === 0 ? 'white' : '#f8fafc')
+                    }}>
+                      {isMetricRequired(metric.key, 'detailed') ? (
+                        <Check size={14} style={{ color: '#059669', margin: '0 auto', display: 'block' }} />
+                      ) : (
+                        <X size={14} style={{ color: '#d1d5db', margin: '0 auto', display: 'block' }} />
+                      )}
+                    </td>
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div> 

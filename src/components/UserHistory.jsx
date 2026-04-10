@@ -27,6 +27,7 @@ import PDFExportButton from './PDFExportButton';
 import '../styles/UserHistory.css';
 import '../styles/AdminTableStyles.css';
 import { useTranslation } from '../hooks/useTranslation';
+import { useAuthStore } from '../store';
 import { answerService } from '../services/answerService';
 
 // Constants
@@ -34,8 +35,13 @@ const ITEMS_PER_PAGE = 10;
 const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
 
 // Utility functions
-const getAuthToken = () => sessionStorage.getItem('token');
-const getUserInfo = () => JSON.parse(sessionStorage.getItem('user') || '{}');
+const getAuthToken = () => useAuthStore.getState().token;
+const getUserInfo = () => ({
+  id: useAuthStore.getState().userId,
+  name: useAuthStore.getState().userName,
+  email: useAuthStore.getState().userEmail,
+  role: useAuthStore.getState().userRole
+});
 
 const transformUser = (user) => ({
   _id: user._id,
@@ -76,8 +82,7 @@ const UserHistory = ({ onToast }) => {
   useEffect(() => {
     const init = async () => {
       const userInfo = getUserInfo();
-      const storedRole = sessionStorage.getItem("userRole");
-      setUserRole(storedRole || userInfo.role || '');
+      setUserRole(userInfo.role || '');
 
       const token = getAuthToken();
       try {

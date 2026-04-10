@@ -11,6 +11,7 @@ import AdminTable from "./AdminTable";
 import MetricCard from "./MetricCard";
 import "../styles/AdminTableStyles.css";
 import { OverlayTrigger, Tooltip } from "react-bootstrap";
+import { useAuthStore } from "../store";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -63,7 +64,11 @@ const UserManagement = ({ onToast }) => {
   const [newRole, setNewRole] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const token = sessionStorage.getItem("token");
+  const token = useAuthStore(state => state.token);
+  const currentRole = useAuthStore(state => state.userRole);
+  const userPlan = useAuthStore(state => state.userPlan);
+  const isSuperAdmin = useAuthStore(state => state.isSuperAdmin());
+  const isAdmin = useAuthStore(state => state.isAdmin);
 
   const [showAssignModal, setShowAssignModal] = useState(false);
   const [assignUserId, setAssignUserId] = useState("");
@@ -92,11 +97,7 @@ const UserManagement = ({ onToast }) => {
   const [accessErrors, setAccessErrors] = useState({});
   const [isGrantingAccess, setIsGrantingAccess] = useState(false);
 
-  axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
-  const currentRole = sessionStorage.getItem("userRole");
-  const isAdmin = ["super_admin", "company_admin"].includes(currentRole?.toLowerCase());
-  const userPlan = sessionStorage.getItem("userPlan");
-  const isSuperAdmin = currentRole === "super_admin";
+  // token, currentRole, isAdmin, userPlan, isSuperAdmin are now handled by store selectors above
   const [companies, setCompanies] = useState([]);
   const [selectedCompanyId, setSelectedCompanyId] = useState("");
   const [isLoading, setIsLoading] = useState(true);

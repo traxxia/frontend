@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { RefreshCw, Loader, TrendingUp, TrendingDown, BarChart3, Grid3x3, Target, Info } from 'lucide-react';
 import AnalysisEmptyState from './AnalysisEmptyState';
 import AnalysisError from './AnalysisError';
 import { checkMissingQuestionsAndRedirect, ANALYSIS_TYPES } from '../services/missingQuestionsService';
-import { useTranslation } from '@/hooks/useTranslation';
+import { useTranslation } from '../hooks/useTranslation';
 
 const ExpandedCapabilityHeatmap = ({
     questions = [],
@@ -22,14 +22,14 @@ const ExpandedCapabilityHeatmap = ({
     const [hoveredCell, setHoveredCell] = useState(null);
 
 
-    const handleRedirectToBrief = (missingQuestionsData = null) => {
+    const handleRedirectToBrief = useCallback((missingQuestionsData = null) => {
         if (onRedirectToBrief) {
             onRedirectToBrief(missingQuestionsData);
         }
-    };
+    }, [onRedirectToBrief]);
     const { t } = useTranslation();
 
-    const handleMissingQuestionsCheck = async () => {
+    const handleMissingQuestionsCheck = useCallback(async () => {
         const analysisConfig = ANALYSIS_TYPES.expandedCapability;
 
         await checkMissingQuestionsAndRedirect(
@@ -41,21 +41,21 @@ const ExpandedCapabilityHeatmap = ({
                 customMessage: analysisConfig.customMessage
             }
         );
-    };
+    }, [selectedBusinessId, handleRedirectToBrief]);
 
-    const handleRegenerate = async () => {
+    const handleRegenerate = useCallback(async () => {
         if (onRegenerate) {
             onRegenerate();
         }
-    };
+    }, [onRegenerate]);
 
     // Handle retry for error state
-    const handleRetry = () => {
+    const handleRetry = useCallback(() => {
         setError(null);
         if (onRegenerate) {
             onRegenerate();
         }
-    };
+    }, [onRegenerate]);
 
     const isExpandedCapabilityDataIncomplete = (data) => {
         if (!data) return true;
@@ -114,7 +114,7 @@ const ExpandedCapabilityHeatmap = ({
         return icons[rating?.toLowerCase()] || <BarChart3 {...iconProps} color="#6b7280" />;
     };
 
-    const getHeatmapData = () => {
+    const heatmapData = useMemo(() => {
         if (!data?.expandedCapabilityHeatmap?.capabilities || !Array.isArray(data.expandedCapabilityHeatmap.capabilities)) {
             return null;
         }
@@ -138,14 +138,14 @@ const ExpandedCapabilityHeatmap = ({
         });
 
         return { businessFunctions, heatmapMatrix };
-    };
+    }, [data, maturityLevels]);
 
     const renderHeatmapCell = (businessFunction, maturityLevel, capabilities) => {
         const cellKey = `${businessFunction}-${maturityLevel}`;
         const isEmpty = capabilities.length === 0;
         const allCellCounts = [];
         if (data?.expandedCapabilityHeatmap?.capabilities) {
-            const heatmapData = getHeatmapData();
+
             if (heatmapData) {
                 Object.values(heatmapData.heatmapMatrix).forEach(row => {
                     Object.values(row).forEach(cells => {
@@ -197,7 +197,7 @@ const ExpandedCapabilityHeatmap = ({
         );
     };
 
-    const renderCapabilityGaps = (gaps) => (
+    const renderCapabilityGaps = useCallback((gaps) => (
         <div className="capability-gaps">
             <h4 className="gaps-header">
                 <Target size={20} color="#f59e0b" />
@@ -221,7 +221,7 @@ const ExpandedCapabilityHeatmap = ({
                 ))}
             </div>
         </div>
-    );
+    ), [t]);
 
     if (isRegenerating) {
         return (
@@ -243,7 +243,7 @@ const ExpandedCapabilityHeatmap = ({
     if (error ||
         (!hasGenerated && !data && Object.keys(userAnswers).length > 0) ||
         (data && !data?.expandedCapabilityHeatmap) ||
-        (data && !getHeatmapData())) {
+        (data && !heatmapData)) { 
 
         return (
             <div className="expanded-capability-heatmap">
@@ -284,7 +284,7 @@ const ExpandedCapabilityHeatmap = ({
         );
     }
 
-    const heatmapData = getHeatmapData();
+    if (!heatmapData) return null;
     const { businessFunctions, heatmapMatrix } = heatmapData;
     const capabilities = data?.expandedCapabilityHeatmap?.capabilities || [];
     const capabilityGaps = data?.expandedCapabilityHeatmap?.capabilityGaps || [];

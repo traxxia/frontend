@@ -51,11 +51,26 @@ export const useUIStore = create(
       })),
 
       isLoading: (key) => get().loadingStates[key] || false,
+
+      businessSettings: {},
+      setBusinessSetting: (businessId, key, value) => set((state) => ({
+        businessSettings: {
+          ...state.businessSettings,
+          [businessId]: {
+            ...(state.businessSettings[businessId] || {}),
+            [key]: value
+          }
+        }
+      })),
+      getBusinessSetting: (businessId, key) => get().businessSettings[businessId]?.[key] || null,
     }),
     {
       name: 'ui-storage',
       storage: createJSONStorage(() => localStorage),
-      partialize: (state) => ({ theme: state.theme }),
+      partialize: (state) => ({ 
+        theme: state.theme,
+        businessSettings: state.businessSettings 
+      }),
     }
   )
 );

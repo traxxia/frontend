@@ -60,6 +60,8 @@ import { initializeTranslations } from './utils/translations';
 import Login from './pages/Login';
 import ProtectedRoute from './components/ProtectedRoute';
 import Aiassistant from './components/Aiassistant';
+import ToastNotifications from './components/ToastNotifications';
+import { useUIStore } from './store/uiStore';
 
 // Pages where the AI assistant should NOT appear
 const AI_EXCLUDED_EXACT_PATHS = ['/', '/login', '/register', '/dashboard', '/admin', '/super-admin'];
@@ -114,12 +116,17 @@ const GlobalAiAssistant = () => {
 
 const Dashboard = React.lazy(() => import('./pages/Dashboard'));
 const BusinessSetupPage = React.lazy(() => import('./pages/BusinessSetupPage'));
-const Admin = React.lazy(() => import('./pages/Admin'));
 const SuperAdminPage = React.lazy(() => import('./pages/SuperAdminPage'));
 const Register = React.lazy(() => import('./pages/Register'));
 const AcademyPage = React.lazy(() => import('./pages/AcademyPage'));
 
 const App = () => {
+  const theme = useUIStore((state) => state.theme);
+
+  useEffect(() => {
+    document.documentElement.setAttribute("data-theme", theme);
+  }, [theme]);
+
   useEffect(() => {
     // Initialize translations when app starts
     initializeTranslations();
@@ -140,6 +147,7 @@ const App = () => {
   return (
     <Router>
       <div className="App">
+        <ToastNotifications />
         <GlobalAiAssistant />
         <React.Suspense fallback={<div className="p-5 text-center"><div className="spinner-border text-primary" role="status"><span className="visually-hidden">Loading...</span></div></div>}>
           <Routes>

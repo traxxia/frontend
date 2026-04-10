@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from "react";
+import React, { useMemo, useCallback } from "react";
 import {
   Target, Award, TrendingUp, Users, Building, Zap,
   Loader, Lock, ChevronDown, ChevronUp,
@@ -175,7 +175,7 @@ CategorySection.displayName = 'CategorySection';
 const AnalysisContentManager = (props) => {
   const { t } = useTranslation();
 
-  const CATEGORIES = [
+  const CATEGORIES = useMemo(() => [
     {
       id: 'current-strategy',
       title: t('Current Strategy'),
@@ -212,9 +212,9 @@ const AnalysisContentManager = (props) => {
       subtitle: t('Competitive_landscape_and_market_positioning_analysis'),
       icon: Award
     }
-  ];
+  ], [t]);
 
-  const ANALYSIS_CONFIG = {
+  const ANALYSIS_CONFIG = useMemo(() => ({
     swot: {
       slug: "swot",
       component: SwotAnalysis,
@@ -395,9 +395,9 @@ const AnalysisContentManager = (props) => {
       refKey: "coreAdjacencyRef",
       pdfComponent: "core-adjacency"
     }
-  };
+  }), [t]);
 
-  const API_TO_ANALYSIS_MAP = {
+  const API_TO_ANALYSIS_MAP = useMemo(() => ({
     'find': 'swot',
     'purchase-criteria': 'purchaseCriteria',
     'loyalty-metrics': 'loyaltyNPS',
@@ -416,7 +416,7 @@ const AnalysisContentManager = (props) => {
     'excel-analysis-liquidity': 'liquidityEfficiency',
     'excel-analysis-investment': 'investmentPerformance',
     'excel-analysis-leverage': 'leverageRisk'
-  };
+  }), []);
 
   const {
     phaseManager,

@@ -1,12 +1,11 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Loader, RefreshCw, Activity, BarChart3, DollarSign, Target, TrendingUp, ChevronDown, ChevronRight } from 'lucide-react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { Loader, Activity, ChevronDown, ChevronRight } from 'lucide-react';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { StreamingRow } from './StreamingManager';
 import { useAutoScroll } from '../hooks/useAutoScroll';
 import { STREAMING_CONFIG } from '../hooks/streamingConfig';
 
 import AnalysisEmptyState from './AnalysisEmptyState';
-import AnalysisError from './AnalysisError';
 
 const ProductivityMetrics = ({
   questions = [],
@@ -32,13 +31,8 @@ const ProductivityMetrics = ({
   const [typingTexts, setTypingTexts] = useState({});
   const streamingIntervalRef = useRef(null);
 
-  const { lastRowRef, userHasScrolled, setUserHasScrolled } = useAutoScroll(streamingManager, cardId, isExpanded, visibleRows);
+  const { lastRowRef, setUserHasScrolled } = useAutoScroll(streamingManager, cardId, isExpanded, visibleRows);
 
-  const handleRedirectToBrief = (missingQuestionsData = null) => {
-    if (onRedirectToBrief) {
-      onRedirectToBrief(missingQuestionsData);
-    }
-  };
 
   const handleRegenerate = async () => {
     if (onRegenerate) {
@@ -48,12 +42,6 @@ const ProductivityMetrics = ({
     }
   };
 
-  const handleRetry = () => {
-    setError(null);
-    if (onRegenerate) {
-      onRegenerate();
-    }
-  };
 
   const isProductivityDataIncomplete = (data) => {
     if (!data) return true;
@@ -79,7 +67,7 @@ const ProductivityMetrics = ({
     return sectionsWithData === 0;
   };
 
-  const calculateTotalRows = (data) => {
+  const calculateTotalRows = useCallback((data) => {
     if (!data || isProductivityDataIncomplete(data)) {
       return 0;
     }
@@ -104,7 +92,7 @@ const ProductivityMetrics = ({
     });
 
     return total;
-  };
+  }, []);
 
   const typeText = (text, rowIndex, field, delay = 0) => {
     if (text === null || text === undefined) return;
@@ -139,7 +127,7 @@ const ProductivityMetrics = ({
     if (!streamingManager?.shouldStream(cardId)) {
       setVisibleRows(totalRows);
     }
-  }, [productivityData, cardId, streamingManager]);
+  }, [productivityData, cardId, streamingManager, calculateTotalRows]);
 
   useEffect(() => {
     if (!streamingManager?.shouldStream(cardId)) {
@@ -225,7 +213,7 @@ const ProductivityMetrics = ({
         clearInterval(streamingIntervalRef.current);
       }
     };
-  }, [cardId, productivityData, isRegenerating, streamingManager, setUserHasScrolled]);
+  }, [cardId, productivityData, isRegenerating, streamingManager, setUserHasScrolled, calculateTotalRows]);
 
   useEffect(() => {
     return () => {

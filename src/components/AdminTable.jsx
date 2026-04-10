@@ -53,7 +53,7 @@ const AdminTable = ({
     searchTooltip = '',
 }) => {
     const { t } = useTranslation();
-    const [showHelp, setShowHelp] = useState(false);
+
 
     // ---- Pagination helpers ----
     const getPageNumbers = () => {

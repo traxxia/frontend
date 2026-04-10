@@ -1,11 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import {
   Award,
   BarChart3,
-  TrendingUp,
-  Target,
-  CheckCircle,
-  AlertCircle,
   Users,
   Cog,
   Star,
@@ -47,20 +43,20 @@ const MaturityScore = ({
   const streamingIntervalRef = useRef(null);
   const { t } = useTranslation();
 
-  const { lastRowRef, userHasScrolled, setUserHasScrolled } = useAutoScroll(
+  const { lastRowRef } = useAutoScroll(
     streamingManager,
     cardId,
     isExpanded,
     visibleRows
   );
 
-  const handleRedirectToBrief = (missingQuestionsData = null) => {
+  const handleRedirectToBrief = useCallback((missingQuestionsData = null) => {
     if (onRedirectToBrief) {
       onRedirectToBrief(missingQuestionsData);
     }
-  };
+  }, [onRedirectToBrief]);
 
-  const handleMissingQuestionsCheck = async () => {
+  const handleMissingQuestionsCheck = useCallback(async () => {
     const analysisConfig = ANALYSIS_TYPES.maturityScore;
 
     await checkMissingQuestionsAndRedirect(
@@ -72,95 +68,189 @@ const MaturityScore = ({
         customMessage: analysisConfig.customMessage
       }
     );
-  };
+  }, [selectedBusinessId, handleRedirectToBrief]);
 
-  const handleRegenerate = async () => {
+  const handleRegenerate = useCallback(async () => {
     if (onRegenerate) {
       streamingManager?.resetCard(cardId);
       setError(null);
       onRegenerate();
     }
+  }, [onRegenerate, streamingManager, cardId]);
+
+
+
+  const transformedData = useMemo(() => getTransformedData(data), [data]);
+
+  const totalRowsCap = calculateTotalRows(data);
+
+const isMaturityDataIncomplete = (data) => {
+  if (!data) return true;
+
+  const scoreData = data.maturityScore || data.maturity_score || data.MaturityScore || data.maturityScoring || (data.dimensions || data.overallMaturity ? data : null);
+  if (!scoreData) {
+    return true;
+  }
+
+  const normalizedData = { maturityScore: scoreData };
+
+  if (!normalizedData.maturityScore) {
+    return true;
+  }
+
+  const score = normalizedData.maturityScore;
+  const hasOverallMaturity = score.overallMaturity && score.overallMaturity > 0;
+  const hasDimensions = score.dimensions && score.dimensions.length > 0;
+  const hasMaturityLevel = score.maturityLevel && score.maturityLevel !== '';
+
+  return !hasOverallMaturity && !hasDimensions && !hasMaturityLevel;
+};
+
+const getTransformedData = (sourceData) => {
+  if (!sourceData?.maturityScore) {
+    return null;
+  }
+
+  const scoreData = sourceData.maturityScore;
+
+  const transformed = {
+    overallScore: scoreData.overallMaturity,
+    level: scoreData.maturityLevel,
+    components: {},
+    dimensions: scoreData.dimensions || [],
+    maturityProfile: `${scoreData.industryBenchmark?.comparison || 'Business'} maturity profile (${scoreData.industryBenchmark?.percentile}th percentile)`,
+    strengths: [],
+    developmentAreas: [],
+    nextLevel: null,
+    industryBenchmark: scoreData.industryBenchmark,
+    crossScoring: scoreData.crossScoring,
+    progressionPath: scoreData.progressionPath
   };
 
-  const handleRetry = () => {
-    setError(null);
-    if (onRegenerate) {
-      onRegenerate();
-    }
-  };
+  if (scoreData.dimensions?.length) {
+    scoreData.dimensions.forEach(dimension => {
+      const componentKey = dimension.name.toLowerCase().replace(/\s+/g, '');
+      transformed.components[componentKey] = dimension.score;
 
-  const isMaturityDataIncomplete = (data) => {
-    if (!data) return true;
+      if (dimension.score >= 4.0) {
+        transformed.strengths.push(
+          `Strong ${dimension.name}: Achieving ${dimension.level} level performance (${dimension.score})`
+        );
+      }
 
-    const scoreData = data.maturityScore || data.maturity_score || data.MaturityScore || data.maturityScoring || (data.dimensions || data.overallMaturity ? data : null);
-    if (!scoreData) {
-      return true;
-    }
+      if (dimension.gap && dimension.gap > 0) {
+        transformed.developmentAreas.push(
+          `${dimension.name}: ${dimension.gap} points above industry benchmark`
+        );
+      }
 
-    const normalizedData = { maturityScore: scoreData };
-
-    if (!normalizedData.maturityScore) {
-      return true;
-    }
-
-    const score = normalizedData.maturityScore;
-    const hasOverallMaturity = score.overallMaturity && score.overallMaturity > 0;
-    const hasDimensions = score.dimensions && score.dimensions.length > 0;
-    const hasMaturityLevel = score.maturityLevel && score.maturityLevel !== '';
-
-    return !hasOverallMaturity && !hasDimensions && !hasMaturityLevel;
-  };
-
-  const calculateTotalRows = (data) => {
-    if (!data || isMaturityDataIncomplete(data)) {
-      return 0;
-    }
-
-    const transformedData = getTransformedData(data);
-    if (!transformedData) return 0;
-
-    let total = 0;
-
-    if (transformedData.industryBenchmark) {
-      total += 3;
-    }
-
-    if (transformedData.dimensions?.length) {
-      total += transformedData.dimensions.length;
-
-      transformedData.dimensions.forEach(dim => {
-        if (dim.subDimensions?.length) {
-          total += dim.subDimensions.length;
+      dimension.subDimensions?.forEach(subDim => {
+        if (subDim.score >= 4.0) {
+          transformed.strengths.push(`${subDim.name}: ${subDim.description}`);
+        } else if (subDim.score < 3.7) {
+          transformed.developmentAreas.push(`${subDim.name}: ${subDim.description}`);
         }
       });
-    }
+    });
+  }
 
-    if (transformedData.crossScoring) {
-      if (transformedData.crossScoring.correlations?.length) {
-        total += transformedData.crossScoring.correlations.length;
-      }
-      if (transformedData.crossScoring.synergies?.length) {
-        total += transformedData.crossScoring.synergies.length;
-      }
-    }
+  if (scoreData.progressionPath?.length) {
+    const progression = scoreData.progressionPath[0];
+    transformed.nextLevel = {
+      target: progression.nextLevel,
+      estimatedTimeframe: progression.timeline,
+      investment: progression.investment,
+      requirements: progression.requirements || []
+    };
+  }
 
-    if (transformedData.nextLevel) {
-      total += 2;
-      if (transformedData.nextLevel.investment) total += 1;
-      if (transformedData.nextLevel.requirements?.length) {
-        total += transformedData.nextLevel.requirements.length;
-      }
-    }
+  return transformed;
+};
 
-    return total;
+const calculateTotalRows = (data) => {
+  if (!data || isMaturityDataIncomplete(data)) {
+    return 0;
+  }
+
+  const transformedData = getTransformedData(data);
+  if (!transformedData) return 0;
+
+  let total = 0;
+
+  if (transformedData.industryBenchmark) {
+    total += 3;
+  }
+
+  if (transformedData.dimensions?.length) {
+    total += transformedData.dimensions.length;
+
+    transformedData.dimensions.forEach(dim => {
+      if (dim.subDimensions?.length) {
+        total += dim.subDimensions.length;
+      }
+    });
+  }
+
+  if (transformedData.crossScoring) {
+    if (transformedData.crossScoring.correlations?.length) {
+      total += transformedData.crossScoring.correlations.length;
+    }
+    if (transformedData.crossScoring.synergies?.length) {
+      total += transformedData.crossScoring.synergies.length;
+    }
+  }
+
+  if (transformedData.nextLevel) {
+    total += 2;
+    if (transformedData.nextLevel.investment) total += 1;
+    if (transformedData.nextLevel.requirements?.length) {
+      total += transformedData.nextLevel.requirements.length;
+    }
+  }
+
+  return total;
+};
+
+const getScoreColor = (score) => {
+  if (score >= 4.0) return '#10b981';
+  if (score >= 3.5) return '#3b82f6';
+  if (score >= 3.0) return '#f59e0b';
+  return '#ef4444';
+};
+
+const getLevelColor = (level) => {
+  const levelMap = {
+    'Initial': '#ef4444',
+    'Developing': '#f59e0b',
+    'Defined': '#3b82f6',
+    'Managed': '#10b981',
+    'Optimized': '#8b5cf6'
   };
+  return levelMap[level] || '#6b7280';
+};
 
-  const toggleSection = (sectionKey) => {
+const getScoreClass = (score) => {
+  if (score >= 4.0) return 'high-intensity';
+  if (score >= 3.5) return 'medium-intensity';
+  if (score >= 3.0) return 'low-intensity';
+  return 'critical-intensity';
+};
+
+const getDimensionIcon = (dimensionName) => {
+  const name = dimensionName.toLowerCase();
+  if (name.includes('process')) return <Cog size={16} />;
+  if (name.includes('technology')) return <Zap size={16} />;
+  if (name.includes('customer')) return <Users size={16} />;
+  if (name.includes('organizational')) return <Star size={16} />;
+  return <BarChart3 size={16} />;
+};
+
+  const toggleSection = useCallback((sectionKey) => {
     setExpandedSections(prev => ({
       ...prev,
       [sectionKey]: !prev[sectionKey]
     }));
-  };
+  }, []);
 
   useEffect(() => {
     if (maturityData) {
@@ -183,18 +273,16 @@ const MaturityScore = ({
 
 
   useEffect(() => {
-    const totalRows = calculateTotalRows(data);
-
-    if (totalRows === 0) {
+    if (totalRowsCap === 0) {
       return;
     }
 
     if (!streamingManager?.shouldStream(cardId)) {
-      setVisibleRows(totalRows);
+      setVisibleRows(totalRowsCap);
     }
-  }, [data, cardId, streamingManager]);
+  }, [totalRowsCap, cardId, streamingManager]);
 
-  const typeText = (text, rowIndex, field, delay = 0) => {
+  const typeText = useCallback((text, rowIndex, field, delay = 0) => {
     if (!text) return;
 
     setTimeout(() => {
@@ -213,7 +301,7 @@ const MaturityScore = ({
         }
       }, STREAMING_CONFIG.TYPING_SPEED);
     }, delay);
-  };
+  }, []);
 
   useEffect(() => {
     if (!streamingManager?.shouldStream(cardId)) {
@@ -230,29 +318,31 @@ const MaturityScore = ({
 
     setVisibleRows(0);
     setTypingTexts({});
-    setUserHasScrolled(false);
 
-    const totalItems = calculateTotalRows(data);
+
+    const totalItems = totalRowsCap;
     let currentRow = 0;
 
     streamingIntervalRef.current = setInterval(() => {
       if (currentRow < totalItems) {
         setVisibleRows(currentRow + 1);
 
-        const transformedData = getTransformedData(data);
+        const currentTransformed = getTransformedData(data);
+        if (!currentTransformed) return;
+
         let rowsProcessed = 0;
 
-        if (transformedData.industryBenchmark) {
+        if (currentTransformed.industryBenchmark) {
           const overviewRows = 3;
           if (currentRow < overviewRows) {
             if (currentRow === 0) {
-              typeText(transformedData.overallScore.toString(), currentRow, 'overallScore', 0);
-              typeText(transformedData.level, currentRow, 'level', 200);
+              typeText(currentTransformed.overallScore.toString(), currentRow, 'overallScore', 0);
+              typeText(currentTransformed.level, currentRow, 'level', 200);
             } else if (currentRow === 1) {
-              typeText(transformedData.industryBenchmark.percentile, currentRow, 'percentile', 0);
-              typeText(transformedData.industryBenchmark.comparison, currentRow, 'comparison', 200);
+              typeText(currentTransformed.industryBenchmark.percentile, currentRow, 'percentile', 0);
+              typeText(currentTransformed.industryBenchmark.comparison, currentRow, 'comparison', 200);
             } else if (currentRow === 2) {
-              typeText(transformedData.industryBenchmark.average.toString(), currentRow, 'average', 0);
+              typeText(currentTransformed.industryBenchmark.average.toString(), currentRow, 'average', 0);
             }
             currentRow++;
             return;
@@ -260,11 +350,11 @@ const MaturityScore = ({
           rowsProcessed += overviewRows;
         }
 
-        if (transformedData.dimensions?.length) {
+        if (currentTransformed.dimensions?.length) {
           const dimensionIndex = currentRow - rowsProcessed;
 
-          if (dimensionIndex >= 0 && dimensionIndex < transformedData.dimensions.length) {
-            const dimension = transformedData.dimensions[dimensionIndex];
+          if (dimensionIndex >= 0 && dimensionIndex < currentTransformed.dimensions.length) {
+            const dimension = currentTransformed.dimensions[dimensionIndex];
             typeText(dimension.name, currentRow, 'name', 0);
             typeText(dimension.score.toString(), currentRow, 'score', 200);
             typeText(dimension.level, currentRow, 'level', 400);
@@ -272,10 +362,10 @@ const MaturityScore = ({
             return;
           }
 
-          rowsProcessed += transformedData.dimensions.length;
+          rowsProcessed += currentTransformed.dimensions.length;
 
           let subDimIndex = currentRow - rowsProcessed;
-          for (const dimension of transformedData.dimensions) {
+          for (const dimension of currentTransformed.dimensions) {
             if (dimension.subDimensions?.length) {
               if (subDimIndex < dimension.subDimensions.length) {
                 const subDim = dimension.subDimensions[subDimIndex];
@@ -292,11 +382,11 @@ const MaturityScore = ({
           }
         }
 
-        if (transformedData.crossScoring) {
-          if (transformedData.crossScoring.correlations?.length) {
+        if (currentTransformed.crossScoring) {
+          if (currentTransformed.crossScoring.correlations?.length) {
             const corrIndex = currentRow - rowsProcessed;
-            if (corrIndex >= 0 && corrIndex < transformedData.crossScoring.correlations.length) {
-              const corr = transformedData.crossScoring.correlations[corrIndex];
+            if (corrIndex >= 0 && corrIndex < currentTransformed.crossScoring.correlations.length) {
+              const corr = currentTransformed.crossScoring.correlations[corrIndex];
               typeText(corr.dimension1, currentRow, 'dim1', 0);
               typeText(corr.dimension2, currentRow, 'dim2', 200);
               typeText(corr.correlation.toString(), currentRow, 'correlation', 400);
@@ -304,35 +394,35 @@ const MaturityScore = ({
               currentRow++;
               return;
             }
-            rowsProcessed += transformedData.crossScoring.correlations.length;
+            rowsProcessed += currentTransformed.crossScoring.correlations.length;
           }
 
-          if (transformedData.crossScoring.synergies?.length) {
+          if (currentTransformed.crossScoring.synergies?.length) {
             const synIndex = currentRow - rowsProcessed;
-            if (synIndex >= 0 && synIndex < transformedData.crossScoring.synergies.length) {
-              const synergy = transformedData.crossScoring.synergies[synIndex];
+            if (synIndex >= 0 && synIndex < currentTransformed.crossScoring.synergies.length) {
+              const synergy = currentTransformed.crossScoring.synergies[synIndex];
               typeText(synergy.combination, currentRow, 'combination', 0);
               typeText(synergy.synergyScore.toString(), currentRow, 'synergyScore', 200);
               typeText(synergy.description, currentRow, 'synDescription', 400);
               currentRow++;
               return;
             }
-            rowsProcessed += transformedData.crossScoring.synergies.length;
+            rowsProcessed += currentTransformed.crossScoring.synergies.length;
           }
         }
 
-        if (transformedData.nextLevel) {
+        if (currentTransformed.nextLevel) {
           const progIndex = currentRow - rowsProcessed;
           let progRows = 2;
-          if (transformedData.nextLevel.investment) progRows++;
+          if (currentTransformed.nextLevel.investment) progRows++;
 
           if (progIndex < progRows) {
             if (progIndex === 0) {
-              typeText(transformedData.nextLevel.target, currentRow, 'target', 0);
+              typeText(currentTransformed.nextLevel.target, currentRow, 'target', 0);
             } else if (progIndex === 1) {
-              typeText(transformedData.nextLevel.estimatedTimeframe, currentRow, 'timeline', 0);
-            } else if (progIndex === 2 && transformedData.nextLevel.investment) {
-              typeText(transformedData.nextLevel.investment, currentRow, 'investment', 0);
+              typeText(currentTransformed.nextLevel.estimatedTimeframe, currentRow, 'timeline', 0);
+            } else if (progIndex === 2 && currentTransformed.nextLevel.investment) {
+              typeText(currentTransformed.nextLevel.investment, currentRow, 'investment', 0);
             }
             currentRow++;
             return;
@@ -340,10 +430,10 @@ const MaturityScore = ({
 
           rowsProcessed += progRows;
 
-          if (transformedData.nextLevel.requirements?.length) {
+          if (currentTransformed.nextLevel.requirements?.length) {
             const reqIndex = currentRow - rowsProcessed;
-            if (reqIndex >= 0 && reqIndex < transformedData.nextLevel.requirements.length) {
-              const requirement = transformedData.nextLevel.requirements[reqIndex];
+            if (reqIndex >= 0 && reqIndex < currentTransformed.nextLevel.requirements.length) {
+              const requirement = currentTransformed.nextLevel.requirements[reqIndex];
               typeText(requirement, currentRow, 'requirement', 0);
               currentRow++;
               return;
@@ -356,7 +446,7 @@ const MaturityScore = ({
         clearInterval(streamingIntervalRef.current);
         setVisibleRows(totalItems);
         streamingManager.stopStreaming(cardId);
-        setUserHasScrolled(false);
+
       }
     }, STREAMING_CONFIG.ROW_INTERVAL);
 
@@ -365,7 +455,7 @@ const MaturityScore = ({
         clearInterval(streamingIntervalRef.current);
       }
     };
-  }, [cardId, data, isRegenerating, streamingManager, setUserHasScrolled]);
+  }, [cardId, data, isRegenerating, streamingManager, totalRowsCap, typeText]);
 
   useEffect(() => {
     return () => {
@@ -395,100 +485,6 @@ const MaturityScore = ({
     );
   }
 
-  const getTransformedData = (sourceData = data) => {
-    if (!sourceData?.maturityScore) {
-      return null;
-    }
-
-    const scoreData = sourceData.maturityScore;
-
-    const transformed = {
-      overallScore: scoreData.overallMaturity,
-      level: scoreData.maturityLevel,
-      components: {},
-      dimensions: scoreData.dimensions || [],
-      maturityProfile: `${scoreData.industryBenchmark?.comparison || 'Business'} maturity profile (${scoreData.industryBenchmark?.percentile}th percentile)`,
-      strengths: [],
-      developmentAreas: [],
-      nextLevel: null,
-      industryBenchmark: scoreData.industryBenchmark,
-      crossScoring: scoreData.crossScoring,
-      progressionPath: scoreData.progressionPath
-    };
-
-    if (scoreData.dimensions?.length) {
-      scoreData.dimensions.forEach(dimension => {
-        const componentKey = dimension.name.toLowerCase().replace(/\s+/g, '');
-        transformed.components[componentKey] = dimension.score;
-
-        if (dimension.score >= 4.0) {
-          transformed.strengths.push(
-            `Strong ${dimension.name}: Achieving ${dimension.level} level performance (${dimension.score})`
-          );
-        }
-
-        if (dimension.gap && dimension.gap > 0) {
-          transformed.developmentAreas.push(
-            `${dimension.name}: ${dimension.gap} points above industry benchmark`
-          );
-        }
-
-        dimension.subDimensions?.forEach(subDim => {
-          if (subDim.score >= 4.0) {
-            transformed.strengths.push(`${subDim.name}: ${subDim.description}`);
-          } else if (subDim.score < 3.7) {
-            transformed.developmentAreas.push(`${subDim.name}: ${subDim.description}`);
-          }
-        });
-      });
-    }
-
-    if (scoreData.progressionPath?.length) {
-      const progression = scoreData.progressionPath[0];
-      transformed.nextLevel = {
-        target: progression.nextLevel,
-        estimatedTimeframe: progression.timeline,
-        investment: progression.investment,
-        requirements: progression.requirements || []
-      };
-    }
-
-    return transformed;
-  };
-
-  const getScoreColor = (score) => {
-    if (score >= 4.0) return '#10b981';
-    if (score >= 3.5) return '#3b82f6';
-    if (score >= 3.0) return '#f59e0b';
-    return '#ef4444';
-  };
-
-  const getLevelColor = (level) => {
-    const levelMap = {
-      'Initial': '#ef4444',
-      'Developing': '#f59e0b',
-      'Defined': '#3b82f6',
-      'Managed': '#10b981',
-      'Optimized': '#8b5cf6'
-    };
-    return levelMap[level] || '#6b7280';
-  };
-
-  const getScoreClass = (score) => {
-    if (score >= 4.0) return 'high-intensity';
-    if (score >= 3.5) return 'medium-intensity';
-    if (score >= 3.0) return 'low-intensity';
-    return 'critical-intensity';
-  };
-
-  const getDimensionIcon = (dimensionName) => {
-    const name = dimensionName.toLowerCase();
-    if (name.includes('process')) return <Cog size={16} />;
-    if (name.includes('technology')) return <Zap size={16} />;
-    if (name.includes('customer')) return <Users size={16} />;
-    if (name.includes('organizational')) return <Star size={16} />;
-    return <BarChart3 size={16} />;
-  };
 
   const renderGaugeChart = (transformedData) => (
     <div className="gauge-section">
@@ -534,11 +530,7 @@ const MaturityScore = ({
     const isStreaming = streamingManager?.shouldStream(cardId);
     const hasStreamed = streamingManager?.hasStreamed(cardId);
 
-    const overviewRows = [
-      { label: 'Overall Maturity Score', rowIndex: 0 },
-      { label: 'Industry Percentile', rowIndex: 1 },
-      { label: 'Industry Average', rowIndex: 2 }
-    ];
+
 
     return (
       <div className="section-container">
@@ -1122,7 +1114,6 @@ const MaturityScore = ({
     );
   }
 
-  const transformedData = getTransformedData();
 
   if (error || (!hasGenerated && !data && Object.keys(userAnswers).length > 0) || !maturityData || isMaturityDataIncomplete(maturityData) || !data?.maturityScore || !transformedData) {
     return (

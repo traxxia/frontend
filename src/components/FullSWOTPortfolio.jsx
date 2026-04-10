@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useTranslation } from "../hooks/useTranslation";
 import {
     Loader, TrendingUp, TrendingDown, Target, AlertTriangle, Star, Award, Clock, Zap,
@@ -11,6 +11,90 @@ import { checkMissingQuestionsAndRedirect, ANALYSIS_TYPES } from '../services/mi
 import { StreamingRow } from './StreamingManager';
 import { useAutoScroll } from '../hooks/useAutoScroll';
 import { STREAMING_CONFIG } from '../hooks/streamingConfig';
+
+const getScoreColor = (score) => {
+    if (score >= 8) return 'high-intensity';
+    if (score >= 6) return 'medium-intensity';
+    return 'low-intensity';
+};
+
+const getPriorityColor = (priority) => {
+    const colors = {
+        'high': 'high-intensity',
+        'medium': 'medium-intensity',
+        'low': 'low-intensity'
+    };
+    return colors[priority?.toLowerCase()] || 'medium-intensity';
+};
+
+const getLikelihoodColor = (likelihood) => {
+    if (likelihood >= 4) return 'high-intensity';
+    if (likelihood >= 3) return 'medium-intensity';
+    return 'low-intensity';
+};
+
+const isFullSwotDataIncomplete = (data) => {
+    if (!data) return true;
+
+    const swotPortfolio = data.swotPortfolio || data.swot_portfolio || data.fullSwot || data.full_swot || (data.strengths || data.weaknesses ? data : null);
+    if (!swotPortfolio) {
+        return true;
+    }
+
+    const portfolio = swotPortfolio;
+    const hasStrengths = portfolio.strengths && portfolio.strengths.length > 0;
+    const hasWeaknesses = portfolio.weaknesses && portfolio.weaknesses.length > 0;
+    const hasOpportunities = portfolio.opportunities && portfolio.opportunities.length > 0;
+    const hasThreats = portfolio.threats && portfolio.threats.length > 0;
+
+    const sectionsWithData = [hasStrengths, hasWeaknesses, hasOpportunities, hasThreats].filter(Boolean).length;
+    return sectionsWithData < 2;
+};
+
+const calculateTotalRows = (data) => {
+    if (!data || isFullSwotDataIncomplete(data)) {
+        return 0;
+    }
+
+    const swotPortfolio = data.swotPortfolio || data.swot_portfolio || data.fullSwot || data.full_swot || (data.strengths || data.weaknesses ? data : null);
+    if (!swotPortfolio) {
+        return 0;
+    }
+
+    const portfolio = swotPortfolio;
+    let total = 0;
+
+    if (portfolio.strengths && Array.isArray(portfolio.strengths)) total += portfolio.strengths.length;
+    if (portfolio.weaknesses && Array.isArray(portfolio.weaknesses)) total += portfolio.weaknesses.length;
+    if (portfolio.opportunities && Array.isArray(portfolio.opportunities)) total += portfolio.opportunities.length;
+    if (portfolio.threats && Array.isArray(portfolio.threats)) total += portfolio.threats.length;
+
+    if (portfolio.strategicOptions) {
+        if (portfolio.strategicOptions.SO_strategies && Array.isArray(portfolio.strategicOptions.SO_strategies)) {
+            total += portfolio.strategicOptions.SO_strategies.length;
+        }
+        if (portfolio.strategicOptions.WO_strategies && Array.isArray(portfolio.strategicOptions.WO_strategies)) {
+            total += portfolio.strategicOptions.WO_strategies.length;
+        }
+        if (portfolio.strategicOptions.ST_strategies && Array.isArray(portfolio.strategicOptions.ST_strategies)) {
+            total += portfolio.strategicOptions.ST_strategies.length;
+        }
+        if (portfolio.strategicOptions.WT_strategies && Array.isArray(portfolio.strategicOptions.WT_strategies)) {
+            total += portfolio.strategicOptions.WT_strategies.length;
+        }
+    }
+
+    if (portfolio.riskAssessment) {
+        if (portfolio.riskAssessment.operationalRisks && Array.isArray(portfolio.riskAssessment.operationalRisks)) {
+            total += portfolio.riskAssessment.operationalRisks.length;
+        }
+        if (portfolio.riskAssessment.strategicRisks && Array.isArray(portfolio.riskAssessment.strategicRisks)) {
+            total += portfolio.riskAssessment.strategicRisks.length;
+        }
+    }
+
+    return total;
+};
 
 const FullSWOTPortfolio = ({
     questions = [],
@@ -46,13 +130,13 @@ const FullSWOTPortfolio = ({
 
     const { lastRowRef, userHasScrolled, setUserHasScrolled } = useAutoScroll(streamingManager, cardId, isExpanded, visibleRows);
 
-    const handleRedirectToBrief = (missingQuestionsData = null) => {
+    const handleRedirectToBrief = useCallback((missingQuestionsData = null) => {
         if (onRedirectToBrief) {
             onRedirectToBrief(missingQuestionsData);
         }
-    };
+    }, [onRedirectToBrief]);
 
-    const handleMissingQuestionsCheck = async () => {
+    const handleMissingQuestionsCheck = useCallback(async () => {
         const analysisConfig = ANALYSIS_TYPES.fullSwot;
 
         await checkMissingQuestionsAndRedirect(
@@ -64,87 +148,20 @@ const FullSWOTPortfolio = ({
                 customMessage: analysisConfig.customMessage
             }
         );
-    };
+    }, [selectedBusinessId, handleRedirectToBrief]);
 
-    const handleRegenerate = async () => {
+    const handleRegenerate = useCallback(async () => {
         if (onRegenerate) {
             streamingManager?.resetCard(cardId);
             onRegenerate();
         }
-    };
+    }, [onRegenerate, streamingManager, cardId]);
 
 
 
-    const isFullSwotDataIncomplete = (data) => {
-        if (!data) return true;
 
-        const swotPortfolio = data.swotPortfolio || data.swot_portfolio || data.fullSwot || data.full_swot || (data.strengths || data.weaknesses ? data : null);
-        if (!swotPortfolio) {
-            return true;
-        }
 
-        const normalizedData = { swotPortfolio };
-
-        if (!normalizedData.swotPortfolio) {
-            return true;
-        }
-
-        const portfolio = normalizedData.swotPortfolio;
-        const hasStrengths = portfolio.strengths && portfolio.strengths.length > 0;
-        const hasWeaknesses = portfolio.weaknesses && portfolio.weaknesses.length > 0;
-        const hasOpportunities = portfolio.opportunities && portfolio.opportunities.length > 0;
-        const hasThreats = portfolio.threats && portfolio.threats.length > 0;
-
-        const sectionsWithData = [hasStrengths, hasWeaknesses, hasOpportunities, hasThreats].filter(Boolean).length;
-        return sectionsWithData < 2;
-    };
-
-    const calculateTotalRows = (data) => {
-        if (!data || isFullSwotDataIncomplete(data)) {
-            return 0;
-        }
-
-        const swotPortfolio = data.swotPortfolio || data.swot_portfolio || data.fullSwot || data.full_swot || (data.strengths || data.weaknesses ? data : null);
-        if (!swotPortfolio) {
-            return 0;
-        }
-
-        const portfolio = swotPortfolio;
-        let total = 0;
-
-        if (portfolio.strengths && Array.isArray(portfolio.strengths)) total += portfolio.strengths.length;
-        if (portfolio.weaknesses && Array.isArray(portfolio.weaknesses)) total += portfolio.weaknesses.length;
-        if (portfolio.opportunities && Array.isArray(portfolio.opportunities)) total += portfolio.opportunities.length;
-        if (portfolio.threats && Array.isArray(portfolio.threats)) total += portfolio.threats.length;
-
-        if (portfolio.strategicOptions) {
-            if (portfolio.strategicOptions.SO_strategies && Array.isArray(portfolio.strategicOptions.SO_strategies)) {
-                total += portfolio.strategicOptions.SO_strategies.length;
-            }
-            if (portfolio.strategicOptions.WO_strategies && Array.isArray(portfolio.strategicOptions.WO_strategies)) {
-                total += portfolio.strategicOptions.WO_strategies.length;
-            }
-            if (portfolio.strategicOptions.ST_strategies && Array.isArray(portfolio.strategicOptions.ST_strategies)) {
-                total += portfolio.strategicOptions.ST_strategies.length;
-            }
-            if (portfolio.strategicOptions.WT_strategies && Array.isArray(portfolio.strategicOptions.WT_strategies)) {
-                total += portfolio.strategicOptions.WT_strategies.length;
-            }
-        }
-
-        if (portfolio.riskAssessment) {
-            if (portfolio.riskAssessment.operationalRisks && Array.isArray(portfolio.riskAssessment.operationalRisks)) {
-                total += portfolio.riskAssessment.operationalRisks.length;
-            }
-            if (portfolio.riskAssessment.strategicRisks && Array.isArray(portfolio.riskAssessment.strategicRisks)) {
-                total += portfolio.riskAssessment.strategicRisks.length;
-            }
-        }
-
-        return total;
-    };
-
-    const typeText = (text, rowIndex, field, delay = 0) => {
+    const typeText = useCallback((text, rowIndex, field, delay = 0) => {
         if (text === null || text === undefined) return;
 
         const textStr = typeof text === 'string' ? text : String(text);
@@ -165,7 +182,7 @@ const FullSWOTPortfolio = ({
                 }
             }, STREAMING_CONFIG.TYPING_SPEED);
         }, delay);
-    };
+    }, []);
 
     useEffect(() => {
         const totalRows = calculateTotalRows(fullSwotData);
@@ -352,7 +369,7 @@ const FullSWOTPortfolio = ({
                 clearInterval(streamingIntervalRef.current);
             }
         };
-    }, [cardId, fullSwotData, isRegenerating, streamingManager, setUserHasScrolled]);
+    }, [cardId, fullSwotData, isRegenerating, streamingManager, setUserHasScrolled, typeText]);
 
     useEffect(() => {
         return () => {
@@ -362,12 +379,12 @@ const FullSWOTPortfolio = ({
         };
     }, []);
 
-    const toggleSection = (sectionKey) => {
+    const toggleSection = useCallback((sectionKey) => {
         setExpandedSections(prev => ({
             ...prev,
             [sectionKey]: !prev[sectionKey]
         }));
-    };
+    }, []);
 
     useEffect(() => {
         if (fullSwotData) {
@@ -387,26 +404,7 @@ const FullSWOTPortfolio = ({
         }
     }, [fullSwotData]);
 
-    const getScoreColor = (score) => {
-        if (score >= 8) return 'high-intensity';
-        if (score >= 6) return 'medium-intensity';
-        return 'low-intensity';
-    };
 
-    const getPriorityColor = (priority) => {
-        const colors = {
-            'high': 'high-intensity',
-            'medium': 'medium-intensity',
-            'low': 'low-intensity'
-        };
-        return colors[priority.toLowerCase()] || 'medium-intensity';
-    };
-
-    const getLikelihoodColor = (likelihood) => {
-        if (likelihood >= 4) return 'high-intensity';
-        if (likelihood >= 3) return 'medium-intensity';
-        return 'low-intensity';
-    };
 
     // Loading state
     if (isRegenerating) {

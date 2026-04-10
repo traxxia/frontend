@@ -1,8 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
-    Loader, TrendingUp, TrendingDown, Target, AlertTriangle, Star, Award, Clock, Zap,
-    ChevronDown, ChevronRight, Shield, Users, BarChart3, Lightbulb, PieChart,
-    DollarSign, Activity, Map, CheckCircle, XCircle
+    Loader, TrendingUp, TrendingDown, Target, AlertTriangle,
+    ChevronDown, ChevronRight, Users, Activity
 } from 'lucide-react';
 import '../styles/EssentialPhase.css';
 import AnalysisEmptyState from './AnalysisEmptyState';
@@ -14,9 +13,7 @@ import { STREAMING_CONFIG } from '../hooks/streamingConfig';
 import { useTranslation } from '@/hooks/useTranslation';
 
 const CompetitiveLandscape = ({
-    questions = [],
     userAnswers = {},
-    businessName = '',
     onRegenerate,
     isRegenerating = false,
     canRegenerate = true,
@@ -26,7 +23,6 @@ const CompetitiveLandscape = ({
     isExpanded = true,
     streamingManager,
     cardId,
-    hideImproveButton = false,
 }) => {
     const [data, setData] = useState(competitiveLandscapeData);
     const [hasGenerated, setHasGenerated] = useState(false);
@@ -100,7 +96,7 @@ const CompetitiveLandscape = ({
         return !hasValidCompetitor;
     };
 
-    const calculateTotalRows = (data) => {
+    const calculateTotalRows = useCallback((data) => {
         if (!data || isCompetitiveLandscapeDataIncomplete(data)) {
             return 0;
         }
@@ -126,7 +122,7 @@ const CompetitiveLandscape = ({
         });
 
         return total;
-    };
+    }, []);
 
     // ✅ Initialize visible rows when data is available
     useEffect(() => {
@@ -139,7 +135,7 @@ const CompetitiveLandscape = ({
         if (!streamingManager?.shouldStream(cardId)) {
             setVisibleRows(totalRows);
         }
-    }, [competitiveLandscapeData, cardId, streamingManager]);
+    }, [competitiveLandscapeData, cardId, streamingManager, calculateTotalRows]);
 
     const typeText = (text, rowIndex, field, delay = 0) => {
         if (!text) return;

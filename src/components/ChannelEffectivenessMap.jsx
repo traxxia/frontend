@@ -1,13 +1,11 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { Loader, RefreshCw, BarChart3 } from 'lucide-react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import { Loader, BarChart3 } from 'lucide-react';
 import AnalysisEmptyState from './AnalysisEmptyState';
 import AnalysisError from './AnalysisError';
 import { checkMissingQuestionsAndRedirect, ANALYSIS_TYPES } from '../services/missingQuestionsService';
 
 const ChannelEffectivenessMap = ({
-  questions = [],
   userAnswers = {},
-  businessName = '',
   onRegenerate, 
   isRegenerating = false,
   canRegenerate = true,
@@ -112,7 +110,7 @@ const ChannelEffectivenessMap = ({
     return !hasValidChannels;
   };
  
-  const extractScore = (data, type) => {
+  const extractScore = useCallback((data, type) => {
     if (!data) { 
       return 50;  
     }
@@ -140,14 +138,14 @@ const ChannelEffectivenessMap = ({
       }
     } 
     return 50;
-  };
+  }, []);
 
   const getChannelColor = (index) => {
     const colors = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#feca57', '#ff9ff3', '#54a0ff', '#5f27cd', '#00d2d3', '#ff9f43', '#a55eea', '#26de81'];
     return colors[index % colors.length];
   };
  
-  const processBubbleData = (channels) => {
+  const processBubbleData = useCallback((channels) => {
     if (!channels || channels.length === 0) return [];
 
     const validChannels = channels
@@ -234,18 +232,8 @@ const ChannelEffectivenessMap = ({
       .filter(channel => channel !== null);  
 
     return validChannels;
-  }; 
-  useEffect(() => {
-    if (hasInitialized.current) return;
-    hasInitialized.current = true;
+  }, [extractScore]);
 
-    if (channelEffectivenessData) {
-      setData(channelEffectivenessData);
-      setHasGenerated(true);
-      setError(null);
-    }
-  }, [channelEffectivenessData]);
- 
   useEffect(() => {
     if (channelEffectivenessData) {
       setData(channelEffectivenessData);
@@ -262,7 +250,7 @@ const ChannelEffectivenessMap = ({
       return [];
     }
     return processBubbleData(data.channelEffectiveness.channels);
-  }, [data]);
+  }, [data, processBubbleData]);
  
   const hasValidData = processedData.length > 0;
 
