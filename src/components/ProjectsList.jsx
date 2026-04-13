@@ -3,6 +3,7 @@ import { Row, Col, Spinner } from "react-bootstrap";
 import ProjectCard from "./ProjectCard";
 import { useTranslation } from '../hooks/useTranslation';
 import { getUserLimits } from '../utils/authUtils';
+import { useAuthStore } from '../store/authStore';
 
 const ProjectsList = ({
   isLoading,

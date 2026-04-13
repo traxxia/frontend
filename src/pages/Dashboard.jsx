@@ -201,6 +201,7 @@ const Dashboard = () => {
   // businessError is now from store
   const [formErrors, setFormErrors] = useState({});
   const userRole = useAuthStore(state => state.userRole);
+  const userName = useAuthStore(state => state.userName);
   const isViewer = useAuthStore(state => state.isViewer());
   const isCollaborator = userRole?.toLowerCase() === "collaborator";
   const isAdmin = useAuthStore(state => state.isAdmin);
