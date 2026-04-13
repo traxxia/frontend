@@ -161,7 +161,7 @@ const PrioritiesProjects = ({ selectedBusinessId, onSuccess, onStayOnPriorities,
   return (
     <div className="container my-4 priorities-container">
 
-      {isAdmin && hasProjectsAccess && (
+      {isAdmin && (
         <Card className="kickstart-card mb-4">
           <Card.Body className="d-flex justify-content-between align-items-center">
             <div>
@@ -211,7 +211,7 @@ const PrioritiesProjects = ({ selectedBusinessId, onSuccess, onStayOnPriorities,
                 {/* TOP SECTION */}
                 <div className="priority-top justify-content-between">
                   <div className="d-flex align-items-center gap-3">
-                    {isAdmin && hasProjectsAccess && (
+                    {isAdmin && (
                       <div onClick={(e) => e.stopPropagation()}>
                         <Form.Check
                           type="checkbox"

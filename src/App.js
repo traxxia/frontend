@@ -146,15 +146,48 @@ const App = () => {
             <Route path="/" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/login" element={<Login />} />
-            <Route path="/dashboard" element={
-              <React.Suspense fallback={null}>
-                <Dashboard />
-              </React.Suspense>
-            } />
-            <Route path="/businesspage" element={<BusinessSetupPage />} />
-            <Route path="/academy" element={<AcademyPage />} />
-            <Route path="/academy/:category" element={<AcademyPage />} />
-            <Route path="/academy/:category/:article" element={<AcademyPage />} />
+            <Route
+              path="/dashboard"
+              element={
+                <ProtectedRoute>
+                  <React.Suspense fallback={null}>
+                    <Dashboard />
+                  </React.Suspense>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/businesspage"
+              element={
+                <ProtectedRoute>
+                  <BusinessSetupPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/academy"
+              element={
+                <ProtectedRoute>
+                  <AcademyPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/academy/:category"
+              element={
+                <ProtectedRoute>
+                  <AcademyPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/academy/:category/:article"
+              element={
+                <ProtectedRoute>
+                  <AcademyPage />
+                </ProtectedRoute>
+              }
+            />
             <Route
               path="/admin"
               element={

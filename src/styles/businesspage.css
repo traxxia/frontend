@@ -539,6 +539,9 @@ body {
   flex-direction: column;
   gap: 2rem;
   padding: 1rem 0;
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
 }
 
 .mobile-nav-group-header {

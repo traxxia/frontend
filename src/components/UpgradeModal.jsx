@@ -380,7 +380,10 @@ const UpgradeModal = ({ show, onHide, onUpgradeSuccess, paymentMethod, initialPl
                 return;
             }
 
-            updateUser({ userPlan: data.plan });
+            updateUser({ 
+                userPlan: data.plan,
+                userLimits: data.plan_limits || data.limits || data.usage || {}
+            });
             if (onUpgradeSuccess) onUpgradeSuccess(data);
             onHide();
         } catch (err) {
@@ -411,7 +414,10 @@ const UpgradeModal = ({ show, onHide, onUpgradeSuccess, paymentMethod, initialPl
                 throw new Error(data.error || 'Configuration failed');
             }
 
-            updateUser({ userPlan: data.subscription_plan || data.plan || selectedPlan?.name || 'unknown' });
+            updateUser({ 
+                userPlan: data.subscription_plan || data.plan || selectedPlan?.name || 'unknown',
+                userLimits: data.plan_limits || data.limits || data.usage || {}
+            });
             if (onUpgradeSuccess) onUpgradeSuccess(data);
             setShowConfigurationModal(false);
             onHide();

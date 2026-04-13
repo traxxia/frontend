@@ -48,10 +48,11 @@ const MenuBar = () => {
     } catch (error) {
       console.error("Error during logout:", error);
     } finally {
+      // Clear the local state first
       logout();
-      // Navigation to login
-      navigate("/login");
-      navigate("/login");
+      
+      // Perform a full page reload to the login page to ensure all memory state is cleared
+      window.location.href = "/login";
     }
   };
 

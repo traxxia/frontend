@@ -471,7 +471,14 @@ const SubscriptionTab = ({ onToast }) => {
         },
       });
       if (!res.ok) throw new Error("Failed to fetch subscription details");
-      setSubscription(await res.json());
+      const data = await res.json();
+      setSubscription(data);
+
+      // Sync limits and plan to global auth store
+      useAuthStore.getState().updateUser({ 
+          userPlan: data.plan,
+          userLimits: data.plan_limits || data.usage || {} 
+      });
     } catch (err) {
       setError(err.message);
     } finally {

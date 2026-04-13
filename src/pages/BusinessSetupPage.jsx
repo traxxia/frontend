@@ -1273,22 +1273,41 @@ const BusinessSetupPage = () => {
                       </button>
                     )}
                     {showProjectsTab && hasProjectAccess && (
-                      <button
-                        className={`mobile-menu-item ${activeTab === "projects" ? "active" : ""}`}
-                        onClick={() => {
-                          useProjectStore.getState().clearCache(selectedBusinessId);
-                          if (activeTab === 'projects') {
-                            useProjectStore.getState().checkAllAccess(selectedBusinessId);
-                            useProjectStore.getState().fetchTeamRankings(selectedBusinessId);
-                          } else {
-                            setActiveTab('projects');
-                          }
-                          closeModal('mobileMenu');
-                        }}
-                      >
-                        <Briefcase size={18} />
-                        <span>{t("Projects")}</span>
-                      </button>
+                      <div className="mobile-nav-sub-group mt-3">
+                        <div className="mobile-nav-sub-group-header">{t("Projects")}</div>
+                        <button
+                          className={`mobile-menu-item ${activeTab === 'projects' && useProjectStore.getState().viewMode === 'projects' ? 'active' : ''}`}
+                          onClick={() => {
+                            useProjectStore.getState().setViewMode('projects');
+                            useProjectStore.getState().clearCache(selectedBusinessId);
+                            if (activeTab !== 'projects') {
+                              setActiveTab('projects');
+                            }
+                            closeModal('mobileMenu');
+                          }}
+                        >
+                          <Briefcase size={18} />
+                          <span>{t("Projects_View")}</span>
+                        </button>
+                        
+                        <button
+                          className={`mobile-menu-item ${activeTab === 'projects' && useProjectStore.getState().viewMode === 'ranking' ? 'active' : ''}`}
+                          onClick={() => {
+                            useProjectStore.getState().setViewMode('ranking');
+                            useProjectStore.getState().clearCache(selectedBusinessId);
+                            if (activeTab === 'projects') {
+                              useProjectStore.getState().checkAllAccess(selectedBusinessId);
+                              useProjectStore.getState().fetchTeamRankings(selectedBusinessId);
+                            } else {
+                              setActiveTab('projects');
+                            }
+                            closeModal('mobileMenu');
+                          }}
+                        >
+                          <BarChart4 size={18} />
+                          <span>{t("Ranking")}</span>
+                        </button>
+                      </div>
                     )}
                   </div>
                 </div>
