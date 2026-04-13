@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Row, Col, Card, Form, Button, Dropdown, Modal, Alert, Spinner } from "react-bootstrap";
 import { Crown, UserCog, User, ShieldCheck, MoreVertical, Plus, Eye, EyeOff, Activity, Users, Shield, History } from "lucide-react";
 import "../styles/usermanagement.css";
@@ -11,6 +11,7 @@ import AdminTable from "./AdminTable";
 import MetricCard from "./MetricCard";
 import "../styles/AdminTableStyles.css";
 import { OverlayTrigger, Tooltip } from "react-bootstrap";
+import { useAuthStore, useProjectStore } from "../store";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -63,7 +64,11 @@ const UserManagement = ({ onToast }) => {
   const [newRole, setNewRole] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const token = sessionStorage.getItem("token");
+  const token = useAuthStore(state => state.token);
+  const currentRole = useAuthStore(state => state.userRole);
+  const userPlan = useAuthStore(state => state.userPlan);
+  const isSuperAdmin = useAuthStore(state => state.isSuperAdmin());
+  const isAdmin = useAuthStore(state => state.isAdmin);
 
   const [showAssignModal, setShowAssignModal] = useState(false);
   const [assignUserId, setAssignUserId] = useState("");
@@ -92,11 +97,7 @@ const UserManagement = ({ onToast }) => {
   const [accessErrors, setAccessErrors] = useState({});
   const [isGrantingAccess, setIsGrantingAccess] = useState(false);
 
-  axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
-  const currentRole = sessionStorage.getItem("userRole");
-  const isAdmin = ["super_admin", "company_admin"].includes(currentRole?.toLowerCase());
-  const userPlan = sessionStorage.getItem("userPlan");
-  const isSuperAdmin = currentRole === "super_admin";
+  // token, currentRole, isAdmin, userPlan, isSuperAdmin are now handled by store selectors above
   const [companies, setCompanies] = useState([]);
   const [selectedCompanyId, setSelectedCompanyId] = useState("");
   const [isLoading, setIsLoading] = useState(true);
@@ -105,14 +106,17 @@ const UserManagement = ({ onToast }) => {
   const [assigningBusinessCollaborators, setAssigningBusinessCollaborators] = useState([]);
 
 
-  const fetchPlanDetails = async () => {
+  const fetchPlanDetails = useCallback(async () => {
+    if (!token) return;
     try {
-      const res = await axios.get(`${BACKEND_URL}/api/subscription/plan-details`);
+      const res = await axios.get(`${BACKEND_URL}/api/subscription/plan-details`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       setUsage(res.data.usage);
     } catch (err) {
       console.error("Failed to fetch plan details", err);
     }
-  };
+  }, [token]);
 
   const handleOpenModal = () => {
     setNewName("");
@@ -238,7 +242,9 @@ const UserManagement = ({ onToast }) => {
       role: newRole,
     };
     try {
-      await axios.post(`${BACKEND_URL}/api/admin/users`, payload);
+      await axios.post(`${BACKEND_URL}/api/admin/users`, payload, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       onToast(t("User_added_successfully"), "success");
       await fetchUsers();
       await fetchPlanDetails(); // Refresh usage after adding user
@@ -251,19 +257,24 @@ const UserManagement = ({ onToast }) => {
     }
   };
 
+  const companiesFetchedRef = useRef(false);
   useEffect(() => {
-    if (!isSuperAdmin) return;
+    if (!isSuperAdmin || companiesFetchedRef.current) return;
     const fetchCompanies = async () => {
       try {
-        const res = await axios.get(`${BACKEND_URL}/api/companies`);
+        companiesFetchedRef.current = true;
+        const res = await axios.get(`${BACKEND_URL}/api/companies`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
         const data = Array.isArray(res.data) ? res.data : res.data.companies || [];
         setCompanies(data);
       } catch (err) {
         console.error("Failed to fetch companies", err);
+        companiesFetchedRef.current = false;
       }
     };
     fetchCompanies();
-  }, [isSuperAdmin]);
+  }, [isSuperAdmin, token]);
 
   const handleRoleUpdate = async (userId, role) => {
     // Dynamic Limit Check for role update
@@ -286,7 +297,9 @@ const UserManagement = ({ onToast }) => {
     }
 
     try {
-      await axios.put(`${BACKEND_URL}/api/admin/users/${userId}/role`, { role });
+      await axios.put(`${BACKEND_URL}/api/admin/users/${userId}/role`, { role }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       onToast(t("User_updated_successfully"), "success");
       fetchUsers();
       fetchPlanDetails();
@@ -326,14 +339,16 @@ const UserManagement = ({ onToast }) => {
   const handleGiveProjectAccess = async () => {
     setIsGrantingAccess(true);
     try {
+      const { setBusinessAccessMode, grantProjectEditAccess, grantRankingAccess } = useProjectStore.getState();
+
       if (accessType === "reRanking") {
-        await axios.put(`${BACKEND_URL}/api/projects/edit-access`, { scope: "reRanking", business_id: accessBusinessId });
+        await setBusinessAccessMode(accessBusinessId, "reRanking");
       }
       if (accessType === "projectEdit") {
-        await axios.patch(`${BACKEND_URL}/api/businesses/${accessBusinessId}/project/${selectedProjectId}/allowed-collaborators`, { collaborator_ids: selectedCollaboratorIds });
+        await grantProjectEditAccess(accessBusinessId, selectedProjectId, selectedCollaboratorIds);
       }
       if (accessType === "reRanking") {
-        await axios.patch(`${BACKEND_URL}/api/businesses/${accessBusinessId}/allowed-ranking-collaborators`, { collaborator_ids: selectedCollaboratorIds });
+        await grantRankingAccess(accessBusinessId, selectedCollaboratorIds);
       }
       onToast(t("Access_granted_successfully"), "success");
       setShowAccessConfirmation(false);
@@ -342,7 +357,7 @@ const UserManagement = ({ onToast }) => {
       setAccessBusinessId("");
     } catch (err) {
       console.error(err);
-      onToast(err.response?.data?.error || t("Failed_to_give_access"), "error");
+      onToast(err.error || t("Failed_to_give_access"), "error");
     } finally {
       setIsGrantingAccess(false);
     }
@@ -363,7 +378,9 @@ const UserManagement = ({ onToast }) => {
 
     setIsAssigning(true);
     try {
-      await axios.post(`${BACKEND_URL}/api/businesses/${assignBusinessId}/collaborators`, { user_id: assignUserId });
+      await axios.post(`${BACKEND_URL}/api/businesses/${assignBusinessId}/collaborators`, { user_id: assignUserId }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       onToast(t("User_assigned_successfully"), "success");
       handleCloseAssignModal();
       fetchPlanDetails();
@@ -384,16 +401,16 @@ const UserManagement = ({ onToast }) => {
     }
   };
 
-  useEffect(() => {
-    fetchUsers();
-    fetchBusinesses();
-    fetchPlanDetails();
-  }, []);
+  const hasFetched = useRef(false);
 
-  const fetchUsers = async () => {
+
+  const fetchUsers = useCallback(async () => {
+    if (!token) return;
     try {
       setIsLoading(true);
-      const res = await axios.get(`${BACKEND_URL}/api/admin/users`);
+      const res = await axios.get(`${BACKEND_URL}/api/admin/users`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       const data = Array.isArray(res.data) ? res.data : res.data.users || [];
       setUsers(data);
     } catch (error) {
@@ -401,16 +418,18 @@ const UserManagement = ({ onToast }) => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [token, t, onToast]);
 
-  const fetchBusinesses = async () => {
+  const fetchBusinesses = useCallback(async () => {
+    if (!token) return;
     try {
-      const res = await axios.get(`${BACKEND_URL}/api/businesses`);
+      const res = await axios.get(`${BACKEND_URL}/api/businesses`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       const data = Array.isArray(res.data) 
         ? res.data 
         : [...(res.data.businesses || []), ...(res.data.collaborating_businesses || [])];
       
-      // Filter out archived businesses
       const activeBusinesses = data.filter(b => 
         (b.status || "").toLowerCase() !== 'archived' && 
         (b.access_mode || "").toLowerCase() !== 'archived' &&
@@ -420,7 +439,16 @@ const UserManagement = ({ onToast }) => {
     } catch (error) {
       console.error("Failed to fetch businesses", error);
     }
-  };
+  }, [token]);
+
+  useEffect(() => {
+    if (token && !hasFetched.current) {
+      fetchUsers();
+      fetchBusinesses();
+      fetchPlanDetails();
+      hasFetched.current = true;
+    }
+  }, [token, fetchUsers, fetchBusinesses, fetchPlanDetails]);
 
   const handleSearch = (value) => {
     if (searchTerm === "" && value !== "") setLastPageBeforeSearch(currentPage);
@@ -477,7 +505,9 @@ const UserManagement = ({ onToast }) => {
   const loadLaunchedBusinessAndProjects = async () => {
     try {
       setLoadingProjects(true);
-      const businessRes = await axios.get(`${BACKEND_URL}/api/businesses`);
+      const businessRes = await axios.get(`${BACKEND_URL}/api/businesses`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       const allBiz = Array.isArray(businessRes.data) 
         ? businessRes.data 
         : [...(businessRes.data.businesses || []), ...(businessRes.data.collaborating_businesses || [])];
@@ -504,7 +534,10 @@ const UserManagement = ({ onToast }) => {
     }
     try {
       setLoadingProjects(true);
-      const res = await axios.get(`${BACKEND_URL}/api/projects`, { params: { business_id: businessId } });
+      const res = await axios.get(`${BACKEND_URL}/api/projects`, { 
+        params: { business_id: businessId },
+        headers: { Authorization: `Bearer ${token}` }
+      });
       const allProjects = res.data.projects || [];
       
       const biz = launchedBusinesses.find(b => b._id === businessId);
@@ -538,7 +571,9 @@ const UserManagement = ({ onToast }) => {
     if (!businessId) return;
     try {
       setLoadingCollaborators(true);
-      const res = await axios.get(`${BACKEND_URL}/api/businesses/${businessId}/collaborators`);
+      const res = await axios.get(`${BACKEND_URL}/api/businesses/${businessId}/collaborators`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       setCollaborators(res.data.collaborators || []);
       setSelectedCollaboratorIds([]);
     } catch (err) {
@@ -554,7 +589,9 @@ const UserManagement = ({ onToast }) => {
       return;
     }
     try {
-      const res = await axios.get(`${BACKEND_URL}/api/businesses/${businessId}/collaborators`);
+      const res = await axios.get(`${BACKEND_URL}/api/businesses/${businessId}/collaborators`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       setAssigningBusinessCollaborators(res.data.collaborators || []);
     } catch (err) {
       console.error("Failed to fetch current business collaborators", err);

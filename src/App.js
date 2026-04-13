@@ -60,6 +60,9 @@ import { initializeTranslations } from './utils/translations';
 import Login from './pages/Login';
 import ProtectedRoute from './components/ProtectedRoute';
 import Aiassistant from './components/Aiassistant';
+import ToastNotifications from './components/ToastNotifications';
+import { useUIStore } from './store/uiStore';
+import { useLanguageStore } from './store/languageStore';
 
 // Pages where the AI assistant should NOT appear
 const AI_EXCLUDED_EXACT_PATHS = ['/', '/login', '/register', '/dashboard', '/admin', '/super-admin'];
@@ -114,39 +117,40 @@ const GlobalAiAssistant = () => {
 
 const Dashboard = React.lazy(() => import('./pages/Dashboard'));
 const BusinessSetupPage = React.lazy(() => import('./pages/BusinessSetupPage'));
-const Admin = React.lazy(() => import('./pages/Admin'));
 const SuperAdminPage = React.lazy(() => import('./pages/SuperAdminPage'));
 const Register = React.lazy(() => import('./pages/Register'));
 const AcademyPage = React.lazy(() => import('./pages/AcademyPage'));
 
 const App = () => {
+  const theme = useUIStore((state) => state.theme);
+
   useEffect(() => {
-    // Initialize translations when app starts
-    initializeTranslations();
+    document.documentElement.setAttribute("data-theme", theme);
+  }, [theme]);
 
-    // Check if user has a session language preference and apply it
-    const preferredLang = sessionStorage.getItem('appLanguage') || localStorage.getItem('appLanguage') || 'en';
+  const { setLanguage, currentLanguage } = useLanguageStore();
 
-    // Set the language if it's different from current
-    if (window.currentAppLanguage !== preferredLang) {
-      window.currentAppLanguage = preferredLang;
-      if (window.appTranslations && window.appTranslations[preferredLang]) {
-        window.getTranslation = (key) => window.appTranslations[preferredLang][key] || key;
-      }
-      window.dispatchEvent(new CustomEvent('languageChanged', { detail: { language: preferredLang } }));
-    }
-  }, []);
+  useEffect(() => {
+    // Ensure the store is synchronized with the initial preference
+    // This also triggers translation loading via the store's action
+    setLanguage(currentLanguage);
+  }, [setLanguage, currentLanguage]);
 
   return (
     <Router>
       <div className="App">
+        <ToastNotifications />
         <GlobalAiAssistant />
         <React.Suspense fallback={<div className="p-5 text-center"><div className="spinner-border text-primary" role="status"><span className="visually-hidden">Loading...</span></div></div>}>
           <Routes>
             <Route path="/" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/login" element={<Login />} />
-            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/dashboard" element={
+              <React.Suspense fallback={null}>
+                <Dashboard />
+              </React.Suspense>
+            } />
             <Route path="/businesspage" element={<BusinessSetupPage />} />
             <Route path="/academy" element={<AcademyPage />} />
             <Route path="/academy/:category" element={<AcademyPage />} />

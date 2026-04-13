@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { FaEye, FaEyeSlash, FaCheck, FaTimes, FaAngleLeft, FaAngleRight, FaSpinner, FaUser, FaBuilding, FaSave, FaBriefcase, FaEnvelope, FaCreditCard, FaPaypal, FaUniversity, FaLock, FaMicrochip, FaCcVisa, FaCcMastercard, FaCcAmex, FaCcDiscover, FaCcDinersClub, FaCcJcb } from 'react-icons/fa';
+import { FaEye, FaEyeSlash, FaCheck, FaTimes, FaAngleLeft, FaAngleRight, FaSpinner, FaUser, FaBuilding, FaSave } from 'react-icons/fa';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Modal, Button } from 'react-bootstrap';
 import '../styles/Register.css';
@@ -129,7 +129,7 @@ const Register = () => {
   const [isNewCompany, setIsNewCompany] = useState(false);
   const [plans, setPlans] = useState([]);
   const [selectedPlanId, setSelectedPlanId] = useState('');
-  const [loadingPlans, setLoadingPlans] = useState(true);
+  // const [loadingPlans, setLoadingPlans] = useState(true);
 
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -165,9 +165,9 @@ const Register = () => {
   useEffect(() => {
     fetchCompanies();
     fetchPlans();
-  }, []);
+  }, [fetchCompanies, fetchPlans]);
 
-  const fetchPlans = async () => {
+  const fetchPlans = React.useCallback(async () => {
     try {
       const response = await axios.get(`${API_BASE_URL}/api/plans`);
       if (response.data.plans) {
@@ -179,11 +179,11 @@ const Register = () => {
     } catch (error) {
       console.error('Error fetching plans:', error);
     } finally {
-      setLoadingPlans(false);
+      // setLoadingPlans(false);
     }
-  };
+  }, [API_BASE_URL]);
 
-  const fetchCompanies = async () => {
+  const fetchCompanies = React.useCallback(async () => {
     setLoadingCompanies(true);
     try {
       const response = await axios.get(`${API_BASE_URL}/api/companies`);
@@ -193,7 +193,7 @@ const Register = () => {
     } finally {
       setLoadingCompanies(false);
     }
-  };
+  }, [API_BASE_URL]);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;

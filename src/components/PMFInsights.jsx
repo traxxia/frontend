@@ -9,6 +9,8 @@ import {
 } from "lucide-react";
 import { AnalysisApiService } from "../services/analysisApiService";
 
+import { useAuthStore } from '../store/authStore';
+
 const PMFInsights = ({ businessId, onContinue }) => {
   const { t } = useTranslation();
   const [insights, setInsights] = useState([]);
@@ -19,7 +21,7 @@ const PMFInsights = ({ businessId, onContinue }) => {
   // API Service setup
   const ML_API_BASE_URL = process.env.REACT_APP_ML_BACKEND_URL;
   const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
-  const getAuthToken = () => sessionStorage.getItem("token");
+  const getAuthToken = () => useAuthStore.getState().token;
   const analysisService = new AnalysisApiService(ML_API_BASE_URL, API_BASE_URL, getAuthToken);
 
   const fetchInsights = useCallback(async () => {

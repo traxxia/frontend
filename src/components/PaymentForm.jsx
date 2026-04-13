@@ -1,9 +1,35 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 // Stripe imports removed for lazy loading
-import { FaCreditCard, FaPaypal, FaUniversity, FaCheck, FaLock, FaMicrochip, FaCcVisa, FaCcMastercard, FaCcAmex, FaCcDiscover, FaCcDinersClub, FaCcJcb } from 'react-icons/fa';
+import { FaCreditCard, FaPaypal, FaUniversity, FaCheck, FaMicrochip, FaCcVisa, FaCcMastercard, FaCcAmex, FaCcDiscover, FaCcDinersClub, FaCcJcb } from 'react-icons/fa';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from "../hooks/useTranslation";
 import '../styles/Register.css'; // Reusing Register styles for consistency
+
+const STRIPE_STYLE = {
+    base: {
+        fontSize: '16px',
+        color: '#424770',
+        '::placeholder': {
+            color: '#aab7c4',
+        },
+        iconColor: '#666EE8',
+    },
+    invalid: {
+        color: '#9e2146',
+    },
+};
+
+const getBrandIcon = (brand) => {
+    switch (brand) {
+        case 'visa': return <FaCcVisa size={40} />;
+        case 'mastercard': return <FaCcMastercard size={40} />;
+        case 'amex': return <FaCcAmex size={40} />;
+        case 'discover': return <FaCcDiscover size={40} />;
+        case 'diners': return <FaCcDinersClub size={40} />;
+        case 'jcb': return <FaCcJcb size={40} />;
+        default: return <FaCreditCard size={40} />;
+    }
+};
 
 const PaymentForm = ({
     onSubmit,
@@ -29,41 +55,19 @@ const PaymentForm = ({
     const [cardBrand, setCardBrand] = useState('unknown');
     const [cardComplete, setCardComplete] = useState(false);
 
-    const handleMethodSelect = (type) => {
+    const handleMethodSelect = useCallback((type) => {
         setPaymentMethodType(type);
         if (onMethodSelect) onMethodSelect(type);
-    };
+    }, [onMethodSelect]);
 
-    const stripeElementOptions = {
-        style: {
-            base: {
-                fontSize: '16px',
-                color: '#424770',
-                '::placeholder': {
-                    color: '#aab7c4',
-                },
-                iconColor: '#666EE8',
-            },
-            invalid: {
-                color: '#9e2146',
-            },
-        },
+    const stripeElementOptions = useMemo(() => ({
+        style: STRIPE_STYLE,
         disabled: isSubmitting,
-    };
+    }), [isSubmitting]);
 
-    const getBrandIcon = (brand) => {
-        switch (brand) {
-            case 'visa': return <FaCcVisa size={40} />;
-            case 'mastercard': return <FaCcMastercard size={40} />;
-            case 'amex': return <FaCcAmex size={40} />;
-            case 'discover': return <FaCcDiscover size={40} />;
-            case 'diners': return <FaCcDinersClub size={40} />;
-            case 'jcb': return <FaCcJcb size={40} />;
-            default: return <FaCreditCard size={40} />;
-        }
-    };
 
-    const handleStripeChange = (e) => {
+
+    const handleStripeChange = useCallback((e) => {
         if (e.elementType === 'cardNumber') {
             setCardBrand(e.brand || 'unknown');
             setCardComplete(e.complete);
@@ -74,7 +78,7 @@ const PaymentForm = ({
         } else {
             setLocalError(null);
         }
-    };
+    }, [onCardChange]);
 
     return (
         <div className="payment-form-container">

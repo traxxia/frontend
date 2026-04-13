@@ -1,22 +1,17 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useTranslation } from "../hooks/useTranslation";
-import { Row, Col, Button, Form, Dropdown, Alert, Container } from "react-bootstrap";
+import { Container } from "react-bootstrap";
 import axios from "axios";
 import { lockField, heartbeat, unlockFields } from "@/hooks/fieldlockapi";
 import { useFieldLockPolling } from "@/hooks/useFieldLockPolling";
-import { useProjectOperations } from "../hooks/useProjectOperations";
-import { useRankingOperations } from "../hooks/useRankingOperations";
-import { useAccessControl, clearAccessCache } from "../hooks/useAccessControl";
+import { useAccessControl } from "../hooks/useAccessControl";
 import { useProjectForm } from "../hooks/useProjectForm";
-import { callMLRankingAPI, saveAIRankings } from "../services/aiRankingService";
 import { AI_PAGE_CONTEXTS } from "../utils/aiContexts";
-import { getUserLimits } from "../utils/authUtils";
 
-import { MdArrowDownward } from "react-icons/md";
-import { Users, CheckCircle, Plus, ListOrdered, Lock, Rocket, Briefcase, Edit2 } from "lucide-react";
-import CollaborationCard from "../components/CollaborationCard";
-import PortfolioOverview from "../components/PortfolioOverview";
+import { useAuthStore, useProjectStore, useUIStore, useBusinessStore } from "../store";
+
+import { Users, CheckCircle, Plus, ListOrdered, Rocket } from "lucide-react";
 import RankProjectsPanel from "../components/RankProjectsPanel";
 import TeamRankingsView from "../components/TeamRankingsView";
 import ProjectsList from "../components/ProjectsList";
@@ -28,21 +23,94 @@ import StateChangeModal from "../components/StateChangeModal";
 import "../styles/ProjectsSection.css";
 import "../styles/ProjectReviewModal.css";
 
+const CATEGORIES = [
+  { id: "All", label: "all" },
+  { id: "Draft", label: "Draft" },
+  { id: "Active", label: "Active" },
+  { id: "At Risk", label: "At Risk" },
+  { id: "Paused", label: "Paused" },
+  { id: "Killed", label: "Killed" },
+  { id: "Completed", label: "Completed" },
+  { id: "Scaled", label: "Scaled" },
+];
+
+
+
+const getToken = () => useAuthStore.getState().token;
+
+const lockFieldSafe = async (projectId, fieldName) => {
+  try {
+    if (!projectId) return;
+    const token = getToken();
+    if (!token) return;
+    await lockField(projectId, fieldName, token);
+  } catch (err) {
+    console.error("Failed to lock field", fieldName, err);
+  }
+};
+
+const heartbeatSafe = async (projectId) => {
+  try {
+    if (!projectId) return;
+    const token = getToken();
+    if (!token) return;
+    await heartbeat(projectId, token);
+  } catch (err) {
+    console.error("Failed to send lock heartbeat", err);
+  }
+};
+
+const unlockAllFieldsSafe = async (projectId) => {
+  try {
+    if (!projectId) return;
+    const token = getToken();
+    if (!token) return;
+    await unlockFields(projectId, null, token);
+  } catch (err) {
+    console.error("Failed to unlock fields", err);
+  }
+};
+
 const ProjectsSection = ({
-  selectedBusinessId,
   onProjectCountChange,
-  onBusinessStatusChange,
   companyAdminIds,
   isArchived,
 }) => {
+  const { selectedBusinessId } = useBusinessStore();
   const { t } = useTranslation();
+  const { userRole, userId: myUserId, userName: user, userLimits } = useAuthStore();
+  const getUserLimits = () => userLimits || {};
 
-  const [userRole, setUserRole] = useState("");
-  const myUserId = sessionStorage.getItem("userId");
-  const user = sessionStorage.getItem("userName");
+  const {
+    projects,
+    lockSummary,
+    businessStatus,
+    isLoading,
+    fetchProjects,
+    fetchTeamRankings: fetchTeamRankingsStore,
+    checkAllAccess: checkAllAccessStore,
+    deleteProject,
+    createProject,
+    updateProject,
+    launchProjects,
+    lockRanking,
+    reviewProject: reviewProjectAction,
+    adhocUpdateProject: adhocUpdateProjectAction,
+    clearCache
+  } = useProjectStore();
+
+  const { addToast, openModal, closeModal, isModalOpen } = useUIStore();
 
   const [activeView, setActiveView] = useState("list");
+  const [isRankingsLoading] = useState(false);
+  const [isGeneratingAIRankings] = useState(false);
   const containerRef = useRef(null);
+
+  useEffect(() => {
+    if (onProjectCountChange) {
+      onProjectCountChange(projects.length);
+    }
+  }, [projects.length, onProjectCountChange]);
 
   useEffect(() => {
     if (activeView !== "list") {
@@ -61,11 +129,12 @@ const ProjectsSection = ({
   }, [activeView]);
 
   const location = useLocation();
+  const navigate = useNavigate();
   const [viewMode, setViewMode] = useState(location.state?.viewMode || "projects"); // "projects" or "ranking"
   const [currentProject, setCurrentProject] = useState(null);
   
   // Set initial state based on viewMode
-  const initialIsViewer = sessionStorage.getItem("userRole") === "viewer";
+  const initialIsViewer = useAuthStore.getState().isViewer();
   const [showRankScreen, setShowRankScreen] = useState(location.state?.viewMode === "ranking" && !initialIsViewer);
   const [showTeamRankings, setShowTeamRankings] = useState(location.state?.viewMode === "ranking" && initialIsViewer);
 
@@ -79,24 +148,14 @@ const ProjectsSection = ({
     }
   }, [location.state?.viewMode, userRole]);
   const [activeAccordionKey, setActiveAccordionKey] = useState(null);
-  const [showStateChangeModal, setShowStateChangeModal] = useState(false);
   const [pendingSavePayload, setPendingSavePayload] = useState(null);
-
-  const [showReviewModal, setShowReviewModal] = useState(false);
-  const [reviewType, setReviewType] = useState("review");
   const [selectedReviewProject, setSelectedReviewProject] = useState(null);
+  const [reviewType, setReviewType] = useState("review");
 
-  const [projects, setProjects] = useState([]);
-  const [teamRankings, setTeamRankings] = useState([]);
-  const [isRankingsLoading, setIsRankingsLoading] = useState(false);
-  const [adminRanks, setAdminRanks] = useState([]);
-
-  // NEW: Business-level status
-  const [businessStatus, setBusinessStatus] = useState("draft");
   const [apiIsArchived, setApiIsArchived] = useState(isArchived);
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [selectedProjectIds, setSelectedProjectIds] = useState([]);
-  const [isRankingBlinking, setIsRankingBlinking] = useState(false);
+  const [isRankingBlinking] = useState(false);
   useEffect(() => {
     let pageContext = null;
     if (activeView === "new") {
@@ -120,65 +179,27 @@ const ProjectsSection = ({
     setApiIsArchived(isArchived);
   }, [isArchived]);
 
-  const categories = [
-    { id: "All", label: t("all") || "All" },
-    { id: "Draft", label: t("Draft") || "Draft" },
-    { id: "Active", label: t("Active") || "Active" },
-    { id: "At Risk", label: t("At Risk") || "At Risk" },
-    { id: "Paused", label: t("Paused") || "Paused" },
-    { id: "Killed", label: t("Killed") || "Killed" },
-    { id: "Completed", label: t("Completed") || "Completed" },
-    { id: "Scaled", label: t("Scaled") || "Scaled" },
-  ];
 
-  const onToggleTeamRankings = () => {
 
+  const onToggleTeamRankings = useCallback(() => {
     setShowTeamRankings(true);
     setShowRankScreen(false);
-  };
+  }, []);
 
   // UPDATED: This should reflect if the CURRENT USER has locked their ranking
-  const [rankingsLocked, setRankingsLocked] = useState(false);
   const [projectCreationLocked, setProjectCreationLocked] = useState(false);
-  const [rankingLockedFirst, setRankingLockedFirst] = useState(false);
   const [finalizeCompleted, setFinalizeCompleted] = useState(false);
   const [launched, setLaunched] = useState(false);
 
-  // UPDATED: Lock summary now includes locked_users array
-  const [lockSummary, setLockSummary] = useState({
-    locked_users_count: 0,
-    total_users: 0,
-    locked_users: [], // NEW: Array of locked user objects
-  });
-
-  const [showLockToast, setShowLockToast] = useState(false);
-  const [showProjectLockToast, setShowProjectLockToast] = useState(false);
-  const [showFinalizeToast, setShowFinalizeToast] = useState(false);
-  const [showLaunchToast, setShowLaunchToast] = useState(false);
-  const [showValidationToast, setShowValidationToast] = useState(false);
-  const [validationMessage, setValidationMessage] = useState("");
-  const [toastDuration, setToastDuration] = useState(3000);
-  const [showAIRankingToast, setShowAIRankingToast] = useState(false);
-  const [isGeneratingAIRankings, setIsGeneratingAIRankings] = useState(false);
-  const [validationMessageType, setValidationMessageType] = useState("error");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
   const isProjectsLoadingRef = useRef(false);
 
+  const adminRanks = useProjectStore(state => state.aiRankings);
+
   const { locks } = useFieldLockPolling(currentProject?._id, activeView === "edit");
-  const { fetchProjects, deleteProject, createProject, updateProject, launchProjects } =
-    useProjectOperations(selectedBusinessId, onProjectCountChange);
-  const { fetchTeamRankings, fetchAdminRankings, lockRanking } =
-    useRankingOperations(selectedBusinessId, companyAdminIds);
-
-  // ... (jumping to renderProjectList)
-
 
   const {
     userHasRerankAccess,
-    checkBusinessAccess,
-    checkProjectsAccess,
-    checkAllAccess,
     canEditProject,
     canReviewProject
   } = useAccessControl(selectedBusinessId);
@@ -199,17 +220,15 @@ const ProjectsSection = ({
     lockSummary.locked_users_count === lockSummary.total_users;
 
   const isRankingLocked = allCollaboratorsLocked;
+  const userHasLockedRank = useMemo(() => {
+    return lockSummary.locked_users?.some(u => String(u.user_id) === String(myUserId)) || false;
+  }, [lockSummary.locked_users, myUserId]);
 
-  const isFinalized =
-    rankingsLocked && projectCreationLocked && rankingLockedFirst;
+  const currentStatus = businessStatus;
 
-  // UPDATED: Use businessStatus instead of derived status
-  const status = businessStatus;
-
-  const isDraft = status === "draft";
-  const isPrioritizing = status === "prioritizing";
-  const isPrioritized = status === "prioritized";
-  const isLaunched = status === "launched";
+  const isDraft = currentStatus === "draft";
+  const isPrioritized = currentStatus === "prioritized";
+  const isLaunched = currentStatus === "launched";
   const isFinalizedView = isPrioritized || isLaunched;
 
   const portfolioData = {
@@ -227,24 +246,21 @@ const ProjectsSection = ({
     completedDetails: 0,
   };
 
-  const normalizeId = (id) => String(id);
-  const rankMap = (projects || []).reduce((acc, p) => {
-    acc[normalizeId(p._id)] = p.rank;
-    return acc;
-  }, {});
+  const normalizeId = (id) => {
+    if (!id) return '';
+    return typeof id === 'object' ? String(id) : String(id);
+  };
 
-  const adminRankMap = adminRanks.reduce((acc, r) => {
+  const rankMap = useMemo(() => (projects || []).reduce((acc, p) => {
+    const id = normalizeId(p._id);
+    if (id) acc[id] = p.rank;
+    return acc;
+  }, {}), [projects]);
+
+  const adminRankMap = useMemo(() => (adminRanks || []).reduce((acc, r) => {
     acc[normalizeId(r.project_id)] = r.rank;
     return acc;
-  }, {});
-
-  const handleShowToast = (message, type = "error", duration = 3000) => {
-    setValidationMessage(message);
-    setValidationMessageType(type);
-    setToastDuration(duration);
-    setShowValidationToast(true);
-    setTimeout(() => setShowValidationToast(false), duration);
-  };
+  }, {}), [adminRanks]);
 
   const sortedProjects = useMemo(() => {
     return [...projects].sort((a, b) => {
@@ -307,7 +323,11 @@ const ProjectsSection = ({
     return acc;
   }, {});
 
-  const rankedProjects = projects.map((p) => {
+  const handleShowToast = useCallback((message, type = "error", duration = 3000) => {
+    addToast({ message, type, duration });
+  }, [addToast]);
+
+  const rankedProjects = useMemo(() => projects.map((p) => {
     const manualRank = rankMap[String(p._id)];
     const aiRank = p.ai_rank || aiRankMap[String(p._id)];
     return {
@@ -315,343 +335,185 @@ const ProjectsSection = ({
       rank: manualRank,
       ai_rank: aiRank,
     };
-  });
+  }), [projects, rankMap, aiRankMap]);
 
-  const getToken = () => sessionStorage.getItem("token");
+  const isLockedByOther = useCallback((field) =>
+    locks.some((l) => l.field_name === field && l.locked_by !== myUserId), [locks, myUserId]);
 
-  const isLockedByOther = (field) =>
-    locks.some((l) => l.field_name === field && l.locked_by !== myUserId);
-
-  const getLockOwnerForField = (field) => {
+  const getLockOwnerForField = useCallback((field) => {
     const lock = locks.find(
       (l) => l.field_name === field && l.locked_by !== myUserId
     );
     return lock?.locked_by_name || null;
-  };
+  }, [locks, myUserId]);
 
-  const lockFieldSafe = async (fieldName) => {
-    try {
-      if (!currentProject?._id) return;
-      const token = getToken();
-      if (!token) return;
-      await lockField(currentProject._id, fieldName, token);
-    } catch (err) {
-      console.error("Failed to lock field", fieldName, err);
-    }
-  };
 
-  const heartbeatSafe = async () => {
-    try {
-      if (!currentProject?._id) return;
-      const token = getToken();
-      if (!token) return;
-      await heartbeat(currentProject._id, token);
-    } catch (err) {
-      console.error("Failed to send lock heartbeat", err);
-    }
-  };
 
-  const unlockAllFieldsSafe = async () => {
-    try {
-      if (!currentProject?._id) return;
-      const token = getToken();
-      if (!token) return;
-      await unlockFields(currentProject._id, null, token);
-    } catch (err) {
-      console.error("Failed to unlock fields", err);
-    }
-  };
-
-  const updateBusinessStatus = async (newStatus) => {
-    if (!selectedBusinessId) return;
-
-    try {
-      const token = getToken();
-      if (!token) return;
-
-      await axios.patch(
-        `${process.env.REACT_APP_BACKEND_URL}/api/business/${selectedBusinessId}/status`,
-        { status: newStatus },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
-
-      // Update local business status
-      setBusinessStatus(newStatus);
-
-      if (onBusinessStatusChange) {
-        onBusinessStatusChange(newStatus);
-      }
-    } catch (err) {
-      console.error("Failed to update business status", err);
-    }
-  };
-
-  // NEW: Helper function to check if current user has locked their ranking
-  const checkIfCurrentUserLocked = (lockedUsers) => {
+  const checkIfCurrentUserLocked = useCallback((lockedUsers) => {
     if (!Array.isArray(lockedUsers) || lockedUsers.length === 0) {
       return false;
     }
     return lockedUsers.some(user => user.user_id.toString() === myUserId);
-  };
-
-  const toggleProjectSelection = (projectId) => {
-    setSelectedProjectIds((prev) =>
-      prev.includes(projectId)
-        ? prev.filter((id) => id !== projectId)
-        : [...prev, projectId]
-    );
-  };
-
-  const loadAdminRankings = useCallback(async () => {
-    const rankings = await fetchAdminRankings();
-    setAdminRanks(rankings);
-  }, [fetchAdminRankings]);
+  }, [myUserId]);
 
   const loadProjects = useCallback(async () => {
-    if (isProjectsLoadingRef.current) return;
-    isProjectsLoadingRef.current = true;
-    setIsLoading(true);
-
     try {
-      // Call new consolidated access check API
-      const accessData = await checkAllAccess();
+      await checkAllAccessStore(selectedBusinessId);
+      const result = await fetchTeamRankingsStore(selectedBusinessId);
 
-      // Fetch rankings (this also returns projects list, business status, etc.)
-      const result = await fetchTeamRankings();
+      if (!result) return;
 
-      if (!result) {
-        setIsLoading(false);
-        return;
-      }
+      const { businessStatus: backendStatus, lockSummary: lockSummaryData } = useProjectStore.getState();
+      checkIfCurrentUserLocked(lockSummaryData.locked_users);
 
-      const fetched = result.rankings; // In getRankings, this is the projects array
-      setProjects(fetched);
-
-      // Set business status from API response
-      if (result.businessStatus) {
-        setBusinessStatus(result.businessStatus);
-      }
-
-      // Set lock summary with locked_users array
-      const lockSummaryData = {
-        locked_users_count: result.lockSummary?.locked_users_count ?? 0,
-        total_users: result.lockSummary?.total_users ?? 0,
-        locked_users: result.lockSummary?.locked_users ?? [],
-      };
-      setLockSummary(lockSummaryData);
-
-      // Check if current user has locked their ranking
-      const isCurrentUserLocked = checkIfCurrentUserLocked(lockSummaryData.locked_users);
-      setRankingsLocked(isCurrentUserLocked);
-
-      // Set archival status from API response
       if (result.businessAccessMode) {
         const apiArchived = result.businessAccessMode === 'archived' || result.businessAccessMode === 'hidden';
         setApiIsArchived(apiArchived);
       }
 
-      // Use business status from API to set internal lock states
-      const backendStatus = result.businessStatus || "draft";
-
-      if (backendStatus === "draft") {
+      const currentStatus = backendStatus || "draft";
+      if (currentStatus === "draft") {
         setProjectCreationLocked(false);
-        setRankingLockedFirst(false);
         setFinalizeCompleted(false);
         setLaunched(false);
-      } else if (backendStatus === "prioritizing") {
+      } else if (currentStatus === "prioritizing") {
         setProjectCreationLocked(true);
-        setRankingLockedFirst(false);
         setFinalizeCompleted(false);
         setLaunched(false);
-      } else if (backendStatus === "prioritized") {
+      } else if (currentStatus === "prioritized") {
         setProjectCreationLocked(true);
-        setRankingLockedFirst(isCurrentUserLocked);
         setFinalizeCompleted(true);
         setLaunched(false);
-      } else if (backendStatus === "launched") {
+      } else if (currentStatus === "launched") {
         setProjectCreationLocked(true);
-        setRankingLockedFirst(isCurrentUserLocked);
         setFinalizeCompleted(true);
         setLaunched(true);
       }
     } catch (err) {
       console.error("Error in loadProjects:", err);
-    } finally {
-      setIsLoading(false);
-      isProjectsLoadingRef.current = false;
     }
-  }, [checkAllAccess, fetchTeamRankings, myUserId]);
+  }, [checkAllAccessStore, checkIfCurrentUserLocked, fetchTeamRankingsStore, selectedBusinessId]);
 
   const refreshTeamRankings = useCallback(async () => {
-    clearAccessCache(); // Force-clear stale permission cache
-    await loadProjects(); // Use the consolidated loader
+    await loadProjects();
   }, [loadProjects]);
 
-  const handleLockProjectCreation = async () => {
-    try {
-      if (!projects || projects.length === 0) {
-        handleShowToast("No projects available to rank. Please create projects first.", "error");
-        return;
-      }
-
-      setIsGeneratingAIRankings(true);
-
-      // Deduplicate projects by ID before sending to ML API
-      const uniqueProjects = projects.filter((project, index, self) =>
-        index === self.findIndex(p => p._id === project._id)
-      );
-
-      const mlResponse = await callMLRankingAPI(uniqueProjects);
-
-      const saveResponse = await saveAIRankings(
-        selectedBusinessId,
-        mlResponse.rankings
-      );
-      setProjectCreationLocked(true);
-      setShowAIRankingToast(true);
-      setShowProjectLockToast(true);
-      await updateBusinessStatus("prioritizing");
-      await loadProjects();
-
-      setTimeout(() => {
-        setShowAIRankingToast(false);
-        setShowProjectLockToast(false);
-      }, 3000);
-
-    } catch (error) {
-      console.error("Failed to lock project creation and generate AI rankings:", error);
-      handleShowToast("Failed to generate AI rankings. Please try again.", "error");
-      setIsGeneratingAIRankings(false);
-    } finally {
-      setIsGeneratingAIRankings(false);
-    }
-  };
-
-  const handleFinalizePrioritization = () => {
-    setFinalizeCompleted(true);
-    setShowFinalizeToast(true);
-    updateBusinessStatus("prioritized");
-    setTimeout(() => setShowFinalizeToast(false), 3000);
-  };
-
-  const handleLaunchProjects = async () => {
-    if (selectedProjectIds.length === 0) {
-      handleShowToast("Please select at least one project to launch.", "error");
-      return;
-    }
-
-    // 1. Check for killed projects (cannot be launched)
-    const killedProjects = selectedProjectIds.filter(id => {
-      const project = projects.find(p => p._id === id);
-      return project?.status?.toLowerCase() === 'killed';
-    });
-
-    if (killedProjects.length > 0) {
-      handleShowToast("Killed projects cannot be launched. Please deselect killed projects and try again.", "error", 5000);
-      return;
-    }
-
-    // 2. Check if ADMIN has ranked the selected projects (Frontend check for immediate feedback)
-    const unrankedSelectedNames = selectedProjectIds
-      .filter(id => {
-        const rank = rankMap[String(id)];
-        return rank === null || rank === undefined;
-      })
-      .map(id => projects.find(p => p._id === id)?.project_name)
-      .filter(Boolean);
-
-    if (unrankedSelectedNames.length > 0) {
-      const bulletedList = unrankedSelectedNames.map(name => `• ${name}`).join("\n");
-      const message = `The following projects chosen for launch are not ranked:\n${bulletedList}\n\nPlease rank them before launching.`;
-
-      handleShowToast(message, "error", 10000);
-      setIsRankingBlinking(true);
-      setTimeout(() => setIsRankingBlinking(false), 5000);
-      return;
-    }
-
-    try {
-      setIsSubmitting(true);
-      const { success, data, error } = await launchProjects(selectedProjectIds);
-
-      if (success) {
-        setLaunched(true);
-        setShowLaunchToast(true);
-        updateBusinessStatus("launched");
-        setSelectedProjectIds([]); // Clear selection
-        await loadProjects();
-        setTimeout(() => setShowLaunchToast(false), 3000);
-      } else {
-        // Special case: If it failed because of collaborators, we still want to refresh
-        // because the backend HAS persisted the pending_launch selection.
-        if (error.includes("collaborators")) {
-          await loadProjects();
-        }
-          handleShowToast(error || "Failed to launch projects.", "error", 7000);
-      }
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  // Cleanup project context on unmount
   useEffect(() => {
     return () => {
       window.dispatchEvent(new CustomEvent('ai_context_changed', { detail: { projectId: null } }));
     };
   }, []);
 
-  const handleNewProject = () => {
+  const handleLockProjectRanking = useCallback(async () => {
+    try {
+      await lockRanking();
+      await loadProjects();
+    } catch (err) {
+      console.error("Failed to lock project ranking:", err);
+    }
+  }, [lockRanking, loadProjects]);
+
+  const handleLaunchProjects = useCallback(async () => {
+    if (selectedProjectIds.length === 0) {
+      handleShowToast("Please select at least one project to launch.", "error");
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+      const { success, error } = await launchProjects(selectedProjectIds);
+
+      if (success) {
+        setLaunched(true);
+        addToast({ message: t("Projects_launched_Ready_for_execution."), type: "success" });
+        clearCache(selectedBusinessId);
+        await loadProjects();
+        setSelectedProjectIds([]); // Clear selection
+      } else {
+        handleShowToast(error || "Failed to launch projects.", "error", 7000);
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
+  }, [selectedProjectIds, launchProjects, loadProjects, handleShowToast]);
+
+  const toggleProjectSelection = useCallback((projectId) => {
+    setSelectedProjectIds((prev) =>
+      prev.includes(projectId)
+        ? prev.filter((id) => id !== projectId)
+        : [...prev, projectId]
+    );
+  }, []);
+
+  const handleNewProject = useCallback(() => {
     window.dispatchEvent(new CustomEvent('ai_context_changed', { detail: { projectId: null } }));
     resetForm();
     setCurrentProject(null);
     setActiveView("new");
-  };
+  }, [resetForm]);
 
-  const handleEditProject = (project, mode = "edit") => {
+  const handleDelete = useCallback(async (projectId) => {
+    if (isViewer || !isSuperAdmin) return;
+
+    const { success, error } = await deleteProject(projectId);
+    if (success) {
+      handleShowToast("Project killed successfully!", "success");
+      clearCache(selectedBusinessId);
+      await loadProjects();
+    } else {
+      handleShowToast(error || "Failed to kill project.", "error");
+    }
+  }, [isViewer, isSuperAdmin, deleteProject, loadProjects, handleShowToast]);
+
+  const handlePerformReview = useCallback((project) => {
+    setSelectedReviewProject(project);
+    setReviewType("review");
+    openModal('projectReview');
+  }, [openModal]);
+
+  const handleAdhocUpdate = useCallback((project) => {
+    setSelectedReviewProject(project);
+    setReviewType("adhoc");
+    openModal('projectReview');
+  }, [openModal]);
+
+  const handleFieldFocus = useCallback((fieldName) => {
+    lockFieldSafe(currentProject?._id, fieldName);
+  }, [currentProject?._id]);
+
+  const handleFieldEdit = useCallback(() => {
+    heartbeatSafe(currentProject?._id);
+  }, [currentProject?._id]);
+
+  const handleEditProject = useCallback((project, mode = "edit") => {
     window.dispatchEvent(new CustomEvent('ai_context_changed', { detail: { projectId: project._id } }));
     setCurrentProject(project);
     loadProjectData(project);
     setActiveView(mode);
-  };
+  }, [loadProjectData]);
 
-  const handleFieldFocus = (fieldName) => {
-    lockFieldSafe(fieldName);
-  };
-
-  const handleFieldEdit = () => {
-    heartbeatSafe();
-  };
-
-  const handleBackToList = () => {
+  const handleBackToList = useCallback(() => {
     window.dispatchEvent(new CustomEvent('ai_context_changed', { detail: { projectId: null } }));
-    unlockAllFieldsSafe();
+    unlockAllFieldsSafe(currentProject?._id);
     setActiveView("list");
     setCurrentProject(null);
     resetForm();
-  };
+  }, [currentProject?._id, resetForm]);
 
-  const handleCreate = async () => {
+  const handleCreate = useCallback(async () => {
     const validation = validateForm();
-    if (!validation.isValid) {
-      // Inline errors in ProjectForm handle the UI
-      return;
-    }
+    if (!validation.isValid) return;
 
     setIsSubmitting(true);
     try {
-      const userId = sessionStorage.getItem("userId");
+      const userId = useAuthStore.getState().userId;
       const payload = getPayload(userId, selectedBusinessId);
 
       const { success, error } = await createProject(payload);
       if (success) {
         handleShowToast("Project created successfully!", "success");
-        await unlockAllFieldsSafe();
+        await unlockAllFieldsSafe(currentProject?._id);
+        clearCache(selectedBusinessId);
         await loadProjects();
         handleBackToList();
       } else {
@@ -660,48 +522,11 @@ const ProjectsSection = ({
     } finally {
       setIsSubmitting(false);
     }
-  };
+  }, [validateForm, getPayload, selectedBusinessId, createProject, currentProject?._id, loadProjects, handleBackToList, handleShowToast]);
 
-  const handleSave = async () => {
-    if (!canEditProject(currentProject, isEditor, myUserId, businessStatus)) {
-      handleShowToast("You are not allowed to edit this project", "error");
-      return;
-    }
 
-    if (!currentProject?._id) {
-      console.error("No project ID found!");
-      return;
-    }
 
-    const validation = validateForm();
-    if (!validation.isValid) {
-      // Inline errors in ProjectForm handle the UI
-      return;
-    }
-
-    try {
-      const userId = sessionStorage.getItem("userId");
-      const payload = getPayload(userId, selectedBusinessId);
-
-      // Check if status changed
-      const oldStatus = (currentProject.status || "Draft").toLowerCase();
-      const newStatus = (payload.status || "Draft").toLowerCase();
-
-      if (oldStatus !== newStatus) {
-        setPendingSavePayload(payload);
-        setShowStateChangeModal(true);
-        setIsSubmitting(false);
-        return;
-      }
-
-      await executeSave(payload);
-    } catch (err) {
-      console.error("Error in prepare save:", err);
-      setIsSubmitting(false);
-    }
-  };
-
-  const executeSave = async (payload, justification = null) => {
+  const executeSave = useCallback(async (payload, justification = null) => {
     setIsSubmitting(true);
     try {
       if (justification) {
@@ -711,7 +536,8 @@ const ProjectsSection = ({
       const { success, error } = await updateProject(currentProject._id, payload);
       if (success) {
         handleShowToast("Project updated successfully!", "success");
-        await unlockAllFieldsSafe();
+        await unlockAllFieldsSafe(currentProject?._id);
+        clearCache(selectedBusinessId);
         await loadProjects();
         handleBackToList();
       } else {
@@ -720,58 +546,54 @@ const ProjectsSection = ({
     } finally {
       setIsSubmitting(false);
     }
-  };
+  }, [updateProject, currentProject?._id, loadProjects, handleBackToList, handleShowToast]);
 
-  const handleDelete = async (projectId) => {
-    if (isViewer || !isSuperAdmin) return;
-
-    const { success, error } = await deleteProject(projectId);
-    if (success) {
-      handleShowToast("Project killed successfully!", "success");
-      await loadProjects(); // Reload to get updated status/sorting
-    } else {
-      handleShowToast(error || "Failed to kill project.", "error");
+  const handleSave = useCallback(async () => {
+    if (!canEditProject(currentProject, isEditor, myUserId, businessStatus, apiIsArchived)) {
+      handleShowToast("You are not allowed to edit this project", "error");
+      return;
     }
-  };
 
-  const handlePerformReview = (project) => {
-    setSelectedReviewProject(project);
-    setReviewType("review");
-    setShowReviewModal(true);
-  };
+    if (!currentProject?._id) return;
 
-  const handleAdhocUpdate = (project) => {
-    setSelectedReviewProject(project);
-    setReviewType("adhoc");
-    setShowReviewModal(true);
-  };
+    const validation = validateForm();
+    if (!validation.isValid) return;
 
-  const submitReview = async (data) => {
+    try {
+      const userId = useAuthStore.getState().userId;
+      const payload = getPayload(userId, selectedBusinessId);
+
+      const oldStatus = (currentProject.status || "Draft").toLowerCase();
+      const newStatus = (payload.status || "Draft").toLowerCase();
+
+      if (oldStatus !== newStatus) {
+        setPendingSavePayload(payload);
+        openModal('stateChange');
+        setIsSubmitting(false);
+        return;
+      }
+
+      await executeSave(payload);
+    } catch (err) {
+      console.error("Error in prepare save:", err);
+      setIsSubmitting(false);
+    }
+  }, [canEditProject, currentProject, isEditor, myUserId, businessStatus, apiIsArchived, validateForm, getPayload, selectedBusinessId, executeSave, handleShowToast]);
+
+  const submitReview = useCallback(async (data) => {
     if (!selectedReviewProject?._id) return;
 
     try {
-      const token = getToken();
-      const endpoint = reviewType === "review" ? "review" : "adhoc-update";
-      const method = reviewType === "review" ? "post" : "patch";
+      const { success, error } = reviewType === "review" 
+        ? await reviewProjectAction(selectedReviewProject._id, data)
+        : await adhocUpdateProjectAction(selectedReviewProject._id, data);
 
-      const response = await axios({
-        method,
-        url: `${process.env.REACT_APP_BACKEND_URL}/api/projects/${selectedReviewProject._id}/${endpoint}`,
-        data,
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        }
-      });
-
-      handleShowToast(reviewType === "review" ? "Review submitted successfully!" : "Update submitted successfully!", "success");
-      await loadProjects();
-
-      // If we are in view mode, update the current project to reflect changes
-      if (activeView === "view" && currentProject?._id === selectedReviewProject._id) {
-        // We can either fetch single project or just update from list
-        // Let's just find it in the newly fetched projects
-        // Wait, loadProjects is async but doesn't return projects directly to local state yet
+      if (success) {
+        handleShowToast(reviewType === "review" ? "Review submitted successfully!" : "Update submitted successfully!", "success");
+        clearCache(selectedBusinessId);
+        await loadProjects();
+      } else {
+        handleShowToast(error || "Failed to process update", "error");
       }
 
     } catch (err) {
@@ -779,14 +601,10 @@ const ProjectsSection = ({
       const errorMsg = err.response?.data?.error || "Failed to process update";
       handleShowToast(errorMsg, "error");
     }
-  };
+  }, [selectedReviewProject?._id, reviewType, loadProjects, handleShowToast]);
 
-  const handleLockProjectRanking = async () => {
-    // This used to lock, now it just refreshes as saving is enough
-    await refreshTeamRankings();
-  };
 
-  const handleAccordionSelect = (eventKey) => {
+  const handleAccordionSelect = useCallback((eventKey) => {
     setActiveAccordionKey((prevKey) => {
       const nextKey = prevKey === eventKey ? null : eventKey;
       if (nextKey === "0" && prevKey !== "0") {
@@ -794,12 +612,8 @@ const ProjectsSection = ({
       }
       return nextKey;
     });
-  };
+  }, [refreshTeamRankings]);
 
-  useEffect(() => {
-    const role = sessionStorage.getItem("userRole");
-    setUserRole(role);
-  }, []);
 
   useEffect(() => {
     if (!selectedBusinessId) return;
@@ -870,6 +684,8 @@ const ProjectsSection = ({
               setViewMode("projects");
               setShowRankScreen(false);
               setShowTeamRankings(false);
+              clearCache(selectedBusinessId);
+              loadProjects();
             }}
             className={`view-mode-tab ${viewMode === "projects" ? "active" : ""}`}
             style={{
@@ -906,6 +722,8 @@ const ProjectsSection = ({
                 setShowRankScreen(true);
                 setShowTeamRankings(false);
               }
+              clearCache(selectedBusinessId);
+              loadProjects();
             }}
             className={`view-mode-tab ${viewMode === "ranking" ? "active" : ""}`}
             style={{
@@ -979,7 +797,7 @@ const ProjectsSection = ({
               )}
             </div>
 
-            {isLoading || isRankingsLoading ? (
+            {isLoading && projects.length === 0 ? (
               <div className="d-flex justify-content-center align-items-center py-5" style={{ minHeight: "300px" }}>
                 <div className="spinner-border text-primary" role="status">
                   <span className="visually-hidden">Loading...</span>
@@ -991,11 +809,17 @@ const ProjectsSection = ({
                   <RankProjectsPanel
                     show={showRankScreen}
                     projects={rankedProjects}
-                    businessId={selectedBusinessId}
                     onLockRankings={handleLockProjectRanking}
-                    onRankSaved={() => {
-                      refreshTeamRankings(); // Clears cache and reloads
-                      onToggleTeamRankings(); // Automatically switch to Team Rankings view
+                    onRankSaved={async () => {
+                      clearCache(selectedBusinessId);
+                      await refreshTeamRankings();
+                      if (useProjectStore.getState().lockSummary.total_users === 0) {
+                        setViewMode("projects");
+                        setShowRankScreen(false);
+                        setShowTeamRankings(false);
+                      } else {
+                        onToggleTeamRankings();
+                      }
                     }}
                     isAdmin={isSuperAdmin}
                     isRankingLocked={isRankingLocked}
@@ -1003,7 +827,7 @@ const ProjectsSection = ({
                     userHasRerankAccess={userHasRerankAccess}
                     onShowToast={handleShowToast}
                     isArchived={apiIsArchived}
-                    userHasLockedRanking={rankingsLocked}
+                    userHasLockedRanking={userHasLockedRank}
                   />
                 )}
 
@@ -1033,13 +857,13 @@ const ProjectsSection = ({
               flexWrap: 'wrap'
             }}>
               <div className="status-tabs-container">
-                {categories.map((cat) => (
+                {CATEGORIES.map((cat) => (
                   <button
                     key={cat.id}
                     className={`status-tab ${selectedCategory === cat.id ? "active" : ""}`}
                     onClick={() => setSelectedCategory(cat.id)}
                   >
-                    <span className="status-name">{cat.label}</span>
+                    <span className="status-name">{t(cat.label)}</span>
                     <span className="status-count">{categoryCounts[cat.id] || 0}</span>
                   </button>
                 ))}
@@ -1131,32 +955,15 @@ const ProjectsSection = ({
 
   return (
     <>
-      <ToastNotifications
-        showLockToast={showLockToast}
-        setShowLockToast={setShowLockToast}
-        showProjectLockToast={showProjectLockToast}
-        setShowProjectLockToast={setShowProjectLockToast}
-        showFinalizeToast={showFinalizeToast}
-        setShowFinalizeToast={setShowFinalizeToast}
-        showLaunchToast={showLaunchToast}
-        setShowLaunchToast={setShowLaunchToast}
-        showValidationToast={showValidationToast}
-        setShowValidationToast={setShowValidationToast}
-        validationMessage={validationMessage}
-        validationMessageType={validationMessageType}
-        showAIRankingToast={showAIRankingToast}
-        setShowAIRankingToast={setShowAIRankingToast}
-        toastDuration={toastDuration}
-      />
 
       <StateChangeModal
-        show={showStateChangeModal}
+        show={isModalOpen('stateChange')}
         onHide={() => {
-          setShowStateChangeModal(false);
+          closeModal('stateChange');
           setPendingSavePayload(null);
         }}
         onConfirm={(justification) => {
-          setShowStateChangeModal(false);
+          closeModal('stateChange');
           if (pendingSavePayload) {
             executeSave(pendingSavePayload, justification);
           }
@@ -1199,8 +1006,8 @@ const ProjectsSection = ({
       </Container>
 
       <ProjectReviewModal
-        isOpen={showReviewModal}
-        onClose={() => setShowReviewModal(false)}
+        isOpen={isModalOpen('projectReview')}
+        onClose={() => closeModal('projectReview')}
         project={selectedReviewProject}
         type={reviewType}
         onSubmit={submitReview}

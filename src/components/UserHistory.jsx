@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap/dist/js/bootstrap.bundle.min.js';
 import { Table, Badge, Spinner, Form, Button, Modal, Card } from "react-bootstrap";
@@ -27,6 +27,7 @@ import PDFExportButton from './PDFExportButton';
 import '../styles/UserHistory.css';
 import '../styles/AdminTableStyles.css';
 import { useTranslation } from '../hooks/useTranslation';
+import { useAuthStore } from '../store';
 import { answerService } from '../services/answerService';
 
 // Constants
@@ -34,8 +35,13 @@ const ITEMS_PER_PAGE = 10;
 const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
 
 // Utility functions
-const getAuthToken = () => sessionStorage.getItem('token');
-const getUserInfo = () => JSON.parse(sessionStorage.getItem('user') || '{}');
+const getAuthToken = () => useAuthStore.getState().token;
+const getUserInfo = () => ({
+  id: useAuthStore.getState().userId,
+  name: useAuthStore.getState().userName,
+  email: useAuthStore.getState().userEmail,
+  role: useAuthStore.getState().userRole
+});
 
 const transformUser = (user) => ({
   _id: user._id,
@@ -72,32 +78,7 @@ const UserHistory = ({ onToast }) => {
   };
 
 
-  // Load Initial Data
-  useEffect(() => {
-    const init = async () => {
-      const userInfo = getUserInfo();
-      const storedRole = sessionStorage.getItem("userRole");
-      setUserRole(storedRole || userInfo.role || '');
-
-      const token = getAuthToken();
-      try {
-        const companiesResponse = await fetch(`${API_BASE_URL}/api/admin/companies`, {
-          headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
-        });
-        if (companiesResponse.ok) {
-          const data = await companiesResponse.json();
-          setCompanies(data.companies || []);
-        }
-        await loadUsers();
-        await loadGlobalQuestions();
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setIsInitialized(true);
-      }
-    };
-    init();
-  }, []);
+  const initializedRef = useRef(false);
 
   const loadGlobalQuestions = async () => {
     try {
@@ -138,8 +119,42 @@ const UserHistory = ({ onToast }) => {
     }
   };
 
+  // Load Initial Data
   useEffect(() => {
-    if (isInitialized) loadUsers(selectedCompany);
+    if (initializedRef.current) return;
+    initializedRef.current = true;
+
+    const init = async () => {
+      const userInfo = getUserInfo();
+      setUserRole(userInfo.role || '');
+
+      const token = getAuthToken();
+      try {
+        const companiesResponse = await fetch(`${API_BASE_URL}/api/admin/companies`, {
+          headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
+        });
+        if (companiesResponse.ok) {
+          const data = await companiesResponse.json();
+          setCompanies(data.companies || []);
+        }
+        // Removed: await loadUsers(); // Now handled by the useEffect below to prevent double calls
+        await loadGlobalQuestions();
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setIsInitialized(true);
+      }
+    };
+    init();
+  }, []);
+
+  const lastFetchRef = useRef(null);
+  useEffect(() => {
+    const fetchKey = `${selectedCompany}_${isInitialized}`;
+    if (isInitialized && lastFetchRef.current !== fetchKey) {
+      lastFetchRef.current = fetchKey;
+      loadUsers(selectedCompany);
+    }
   }, [selectedCompany, isInitialized]);
 
   const applyFilters = useCallback((searchValue, roleValue) => {

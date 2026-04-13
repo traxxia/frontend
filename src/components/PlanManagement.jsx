@@ -1,9 +1,10 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Plus, Edit, Loader } from 'lucide-react';
 import { Modal, Button } from 'react-bootstrap';
 import axios from 'axios';
 import AdminTable from './AdminTable';
 import { useTranslation } from '../hooks/useTranslation';
+import { useAuthStore } from '../store/authStore';
 import '../styles/PlanManagement.css';
 
 const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
@@ -571,7 +572,7 @@ const PlanManagement = ({ onToast }) => {
         isSubmitting: false
     });
 
-    const getAuthToken = () => sessionStorage.getItem('token');
+    const getAuthToken = () => useAuthStore.getState().token;
 
     const loadPlans = useCallback(async () => {
         try {
@@ -592,7 +593,11 @@ const PlanManagement = ({ onToast }) => {
         }
     }, [onToast]);
 
+    const initializedRef = useRef(false);
+
     useEffect(() => {
+        if (initializedRef.current) return;
+        initializedRef.current = true;
         loadPlans();
     }, [loadPlans]);
 

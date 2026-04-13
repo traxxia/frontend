@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Users, Search, Loader, Plus, ChevronRight, ChevronLeft, } from 'lucide-react';
 import Pagination from '../components/Pagination';
 import { formatDate } from '../utils/dateUtils';
 import { useTranslation } from '../hooks/useTranslation';
+import { useAuthStore } from '../store';
 
 
 
@@ -31,7 +32,8 @@ const UserOverview = ({ onToast }) => {
   const [currentPage, setCurrentPage] = useState(1);
 
   const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
-  const getAuthToken = () => sessionStorage.getItem('token');
+  const token = useAuthStore(state => state.token);
+  const getAuthToken = () => token;
 
   // Validation function for individual fields
   const validateField = (fieldName, value) => {
@@ -94,12 +96,21 @@ const UserOverview = ({ onToast }) => {
 
   // Check if form is valid
 
+  const initializedRef = useRef(false);
+  const usersFetchedRef = useRef(null);
+
   useEffect(() => {
+    if (initializedRef.current) return;
+    initializedRef.current = true;
     loadInitialData();
   }, []);
 
   useEffect(() => {
-    loadUsers();
+    const fetchKey = `${selectedCompany}`;
+    if (usersFetchedRef.current !== fetchKey) {
+      usersFetchedRef.current = fetchKey;
+      loadUsers();
+    }
   }, [selectedCompany]);
 
   const loadInitialData = async () => {
@@ -125,7 +136,7 @@ const UserOverview = ({ onToast }) => {
         }
       }
 
-      await loadUsers();
+      // loadUsers() is now handled by the useEffect above to avoid double calls
     } catch (error) {
       console.error('Error loading initial data:', error);
       onToast('Error loading data', 'error');

@@ -1,45 +1,45 @@
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import { Modal, Button, Form } from "react-bootstrap";
 import { useTranslation } from "../hooks/useTranslation";
 import { AlertTriangle, Info } from "lucide-react";
+
+const JUSTIFICATION_REGEX = /^[A-Za-z\s.,'-]+$/;
 
 const StateChangeModal = ({ show, onHide, onConfirm, oldState, newState }) => {
     const { t } = useTranslation();
     const [justification, setJustification] = useState("");
     const [error, setError] = useState("");
 
-    const handleConfirm = () => {
-    const text = justification.trim();
+    const handleConfirm = useCallback(() => {
+        const text = justification.trim();
 
-    if (!text) {
-        setError(t("Justification is required to change project state"));
-        return;
-    }
+        if (!text) {
+            setError(t("Justification is required to change project state"));
+            return;
+        }
 
-    // Minimum 10 characters
-    if (text.length < 10) {
-        setError(t("Justification must be at least 10 characters long"));
-        return;
-    }
+        // Minimum 10 characters
+        if (text.length < 10) {
+            setError(t("Justification must be at least 10 characters long"));
+            return;
+        }
 
-    // Only alphabets + space + punctuation (no numbers)
-    const validSentence = /^[A-Za-z\s.,'-]+$/;
+        // Only alphabets + space + punctuation (no numbers)
+        if (!JUSTIFICATION_REGEX.test(text)) {
+            setError(t("Numbers are not allowed in justification"));
+            return;
+        }
 
-    if (!validSentence.test(text)) {
-        setError(t("Numbers are not allowed in justification"));
-        return;
-    }
+        setError("");
+        onConfirm(text);
+        setJustification("");
+    }, [justification, onConfirm, t]);
 
-    setError("");
-    onConfirm(text);
-    setJustification("");
-};
-
-    const handleCancel = () => {
+    const handleCancel = useCallback(() => {
         setError("");
         setJustification("");
         onHide();
-    };
+    }, [onHide]);
 
     return (
         <Modal show={show} onHide={handleCancel} centered>

@@ -1,3 +1,4 @@
+const analysisRequestCache = new Map();
 
 export const AnalysisService = {
     /**
@@ -33,18 +34,36 @@ export const AnalysisService = {
      * @returns {Promise<Array>}
      */
     async getAnalysis(apiBaseUrl, token, businessId) {
-        const response = await fetch(`${apiBaseUrl}/api/analysis/business/${businessId}`, {
-            headers: {
-                "Authorization": `Bearer ${token}`
-            }
-        });
+        if (!businessId) return [];
 
-        if (!response.ok) {
-            throw new Error(`Failed to fetch analysis: ${response.statusText}`);
+        const cacheKey = `analysis-${businessId}`;
+        if (analysisRequestCache.has(cacheKey)) {
+            return await analysisRequestCache.get(cacheKey);
         }
 
-        const result = await response.json();
-        return result.data || [];
+        const fetchPromise = (async () => {
+            try {
+                const response = await fetch(`${apiBaseUrl}/api/analysis/business/${businessId}`, {
+                    headers: {
+                        "Authorization": `Bearer ${token}`
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Failed to fetch analysis: ${response.statusText}`);
+                }
+
+                const result = await response.json();
+                return result.data || [];
+            } catch (error) {
+                analysisRequestCache.delete(cacheKey);
+                console.error('Error fetching analysis data:', error);
+                throw error;
+            }
+        })();
+
+        analysisRequestCache.set(cacheKey, fetchPromise);
+        return fetchPromise;
     },
 
     /**

@@ -1,10 +1,12 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Search, Users, Building2, Activity, TrendingUp, X, Trash2 } from "lucide-react";
 import axios from "axios";
 import { useTranslation } from "../hooks/useTranslation";
 import AdminTable from "./AdminTable";
 import MetricCard from "./MetricCard";
 import "../styles/AdminTableStyles.css";
+
+import { useAuthStore } from '../store/authStore';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -26,9 +28,13 @@ const BusinessOverview = ({ onToast }) => {
     const [showConfirmModal, setShowConfirmModal] = useState(false);
     const [pendingRemoval, setPendingRemoval] = useState(null);
 
-    const token = sessionStorage.getItem("token");
+    const token = useAuthStore(state => state.token);
+
+    const initializedRef = useRef(false);
 
     useEffect(() => {
+        if (initializedRef.current) return;
+        initializedRef.current = true;
         fetchBusinesses();
     }, []);
 

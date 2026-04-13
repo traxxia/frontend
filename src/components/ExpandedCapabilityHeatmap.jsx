@@ -1,37 +1,44 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { RefreshCw, Loader, TrendingUp, TrendingDown, BarChart3, Grid3x3, Target, Info } from 'lucide-react';
+import { useAuthStore, useAnalysisStore } from "../store";
 import AnalysisEmptyState from './AnalysisEmptyState';
 import AnalysisError from './AnalysisError';
 import { checkMissingQuestionsAndRedirect, ANALYSIS_TYPES } from '../services/missingQuestionsService';
-import { useTranslation } from '@/hooks/useTranslation';
+import { useTranslation } from '../hooks/useTranslation';
 
 const ExpandedCapabilityHeatmap = ({
     questions = [],
     userAnswers = {},
     businessName = '',
     onRegenerate,
-    isRegenerating = false,
+    isRegenerating: propIsRegenerating = false,
     canRegenerate = true,
-    expandedCapabilityData = null,
+    expandedCapabilityData: propExpandedCapabilityData = null,
     selectedBusinessId,
     onRedirectToBrief
 }) => {
-    const [data, setData] = useState(expandedCapabilityData);
-    const [hasGenerated, setHasGenerated] = useState(false);
-    const [error, setError] = useState(null);
+    const { t } = useTranslation();
+    const token = useAuthStore(state => state.token);
+    
+    const {
+        expandedCapabilityData: storeExpandedCapabilityData,
+        isRegenerating: isTypeRegenerating,
+        regenerateIndividualAnalysis
+    } = useAnalysisStore();
+
+    const rawCapabilityData = propExpandedCapabilityData || storeExpandedCapabilityData;
+    const isRegenerating = propIsRegenerating || isTypeRegenerating('expandedCapability');
+
     const [hoveredCell, setHoveredCell] = useState(null);
 
-
-    const handleRedirectToBrief = (missingQuestionsData = null) => {
+    const handleRedirectToBrief = useCallback((missingQuestionsData = null) => {
         if (onRedirectToBrief) {
             onRedirectToBrief(missingQuestionsData);
         }
-    };
-    const { t } = useTranslation();
+    }, [onRedirectToBrief]);
 
-    const handleMissingQuestionsCheck = async () => {
+    const handleMissingQuestionsCheck = useCallback(async () => {
         const analysisConfig = ANALYSIS_TYPES.expandedCapability;
-
         await checkMissingQuestionsAndRedirect(
             'expandedCapability',
             selectedBusinessId,
@@ -41,54 +48,40 @@ const ExpandedCapabilityHeatmap = ({
                 customMessage: analysisConfig.customMessage
             }
         );
-    };
+    }, [selectedBusinessId, handleRedirectToBrief]);
 
-    const handleRegenerate = async () => {
+    const handleRegenerate = useCallback(async () => {
         if (onRegenerate) {
-            onRegenerate();
-        }
-    };
-
-    // Handle retry for error state
-    const handleRetry = () => {
-        setError(null);
-        if (onRegenerate) {
-            onRegenerate();
-        }
-    };
-
-    const isExpandedCapabilityDataIncomplete = (data) => {
-        if (!data) return true;
-
-        const heatmap = data.expandedCapabilityHeatmap || data.expanded_capability_heatmap || data.ExpandedCapabilityHeatmap || data.expandedCapability || data.expanded_capability || (data.capabilities ? data : null);
-        if (!heatmap) {
-            return true;
-        }
-
-        const normalizedData = { expandedCapabilityHeatmap: heatmap };
-
-        const heatmapObj = normalizedData.expandedCapabilityHeatmap;
-        const hasCapabilities = heatmapObj.capabilities && heatmapObj.capabilities.length > 0;
-        return !hasCapabilities;
-    };
-
-    useEffect(() => {
-        if (expandedCapabilityData) {
-            const heatmap = expandedCapabilityData.expandedCapabilityHeatmap || expandedCapabilityData.expanded_capability_heatmap || expandedCapabilityData.ExpandedCapabilityHeatmap || expandedCapabilityData.expandedCapability || expandedCapabilityData.expanded_capability || (expandedCapabilityData.capabilities ? expandedCapabilityData : null);
-
-            if (heatmap && heatmap.capabilities) {
-                setData({ expandedCapabilityHeatmap: heatmap });
-                setHasGenerated(true);
-                setError(null);
-            } else {
-                setData(null);
-                setHasGenerated(false);
-            }
+            await onRegenerate();
         } else {
-            setData(null);
-            setHasGenerated(false);
+            await regenerateIndividualAnalysis('expandedCapability', questions, userAnswers, selectedBusinessId);
         }
-    }, [expandedCapabilityData]);
+    }, [onRegenerate, questions, userAnswers, selectedBusinessId, regenerateIndividualAnalysis]);
+
+    const handleRetry = useCallback(() => {
+        handleRegenerate();
+    }, [handleRegenerate]);
+
+    const data = useMemo(() => {
+        if (!rawCapabilityData) return null;
+        const heatmap = rawCapabilityData.expandedCapabilityHeatmap || 
+                        rawCapabilityData.expanded_capability_heatmap || 
+                        rawCapabilityData.ExpandedCapabilityHeatmap || 
+                        rawCapabilityData.expandedCapability || 
+                        rawCapabilityData.expanded_capability || 
+                        (rawCapabilityData.capabilities ? rawCapabilityData : null);
+
+        if (heatmap && heatmap.capabilities) {
+            return { expandedCapabilityHeatmap: heatmap };
+        }
+        return null;
+    }, [rawCapabilityData]);
+
+    const isExpandedCapabilityDataIncomplete = useCallback((heatmapData) => {
+        if (!heatmapData?.expandedCapabilityHeatmap) return true;
+        const capabilities = heatmapData.expandedCapabilityHeatmap.capabilities;
+        return !capabilities || capabilities.length === 0;
+    }, []);
 
     const maturityLevels = [1, 2, 3, 4, 5];
     const maturityLabels = ['Initial', 'Developing', 'Defined', 'Managed', 'Optimizing'];
@@ -114,7 +107,7 @@ const ExpandedCapabilityHeatmap = ({
         return icons[rating?.toLowerCase()] || <BarChart3 {...iconProps} color="#6b7280" />;
     };
 
-    const getHeatmapData = () => {
+    const heatmapMatrixData = useMemo(() => {
         if (!data?.expandedCapabilityHeatmap?.capabilities || !Array.isArray(data.expandedCapabilityHeatmap.capabilities)) {
             return null;
         }
@@ -131,58 +124,54 @@ const ExpandedCapabilityHeatmap = ({
         capabilities.forEach(capability => {
             const category = capability.category;
             const level = capability.maturityLevel;
-
             if (heatmapMatrix[category] && heatmapMatrix[category][level]) {
                 heatmapMatrix[category][level].push(capability);
             }
         });
-
         return { businessFunctions, heatmapMatrix };
-    };
+    }, [data, maturityLevels]);
 
-    const renderHeatmapCell = (businessFunction, maturityLevel, capabilities) => {
+    const renderHeatmapCell = (businessFunction, maturityLevel, cellCapabilities) => {
         const cellKey = `${businessFunction}-${maturityLevel}`;
-        const isEmpty = capabilities.length === 0;
+        const isEmpty = cellCapabilities.length === 0;
         const allCellCounts = [];
-        if (data?.expandedCapabilityHeatmap?.capabilities) {
-            const heatmapData = getHeatmapData();
-            if (heatmapData) {
-                Object.values(heatmapData.heatmapMatrix).forEach(row => {
-                    Object.values(row).forEach(cells => {
-                        allCellCounts.push(cells.length);
-                    });
+        
+        if (heatmapMatrixData) {
+            Object.values(heatmapMatrixData.heatmapMatrix).forEach(row => {
+                Object.values(row).forEach(cells => {
+                    allCellCounts.push(cells.length);
                 });
-            }
+            });
         }
 
         const maxCapabilitiesInAnyCell = allCellCounts.length > 0 ? Math.max(...allCellCounts) : 1;
-        const intensity = isEmpty ? 0.1 : Math.min((capabilities.length / maxCapabilitiesInAnyCell) * 0.8 + 0.2, 1);
+        const intensity = isEmpty ? 0.1 : Math.min((cellCapabilities.length / maxCapabilitiesInAnyCell) * 0.8 + 0.2, 1);
 
         return (
             <div
                 key={cellKey}
-                className={`heatmap-cell ${capabilities.length > 0 ? 'interactive' : ''}`}
+                className={`heatmap-cell ${cellCapabilities.length > 0 ? 'interactive' : ''}`}
                 style={{ backgroundColor: getMaturityColor(maturityLevel, intensity) }}
-                onMouseEnter={() => capabilities.length > 0 && setHoveredCell(cellKey)}
+                onMouseEnter={() => cellCapabilities.length > 0 && setHoveredCell(cellKey)}
                 onMouseLeave={() => setHoveredCell(null)}
             >
-                {capabilities.length > 0 && (
+                {cellCapabilities.length > 0 && (
                     <>
                         <div className={`cell-count ${intensity > 0.5 ? 'light-text' : 'dark-text'}`}>
-                            {capabilities.length}
+                            {cellCapabilities.length}
                         </div>
                         <div className={`cell-label ${intensity > 0.5 ? 'light-text' : 'dark-text'}`}>
-                            {capabilities.length === 1 ? 'capability' : 'capabilities'}
+                            {cellCapabilities.length === 1 ? 'capability' : 'capabilities'}
                         </div>
                     </>
                 )}
 
-                {hoveredCell === cellKey && capabilities.length > 0 && (
+                {hoveredCell === cellKey && cellCapabilities.length > 0 && (
                     <div className="heatmap-tooltip">
                         <div style={{ fontWeight: 'bold', marginBottom: '8px', color: '#374151' }}>
                             {businessFunction} - Level {maturityLevel}
                         </div>
-                        {capabilities.map((cap, idx) => (
+                        {cellCapabilities.map((cap, idx) => (
                             <div key={idx} className="tooltip-capability">
                                 {getPerformanceIcon(cap.performanceRating)}
                                 <span>{cap.name}</span>
@@ -197,7 +186,7 @@ const ExpandedCapabilityHeatmap = ({
         );
     };
 
-    const renderCapabilityGaps = (gaps) => (
+    const renderCapabilityGaps = useCallback((gaps) => (
         <div className="capability-gaps">
             <h4 className="gaps-header">
                 <Target size={20} color="#f59e0b" />
@@ -221,30 +210,20 @@ const ExpandedCapabilityHeatmap = ({
                 ))}
             </div>
         </div>
-    );
+    ), [t]);
 
     if (isRegenerating) {
         return (
             <div className="expanded-capability-heatmap">
                 <div className="loading-state">
                     <Loader size={24} className="loading-spinner" />
-                    <span>
-                        {isRegenerating
-                            ? "Regenerating expanded capability analysis..."
-                            : "Generating expanded capability analysis..."
-                        }
-                    </span>
+                    <span>Regenerating expanded capability analysis...</span>
                 </div>
             </div>
         );
     }
 
-    // Single consolidated error state for all error conditions
-    if (error ||
-        (!hasGenerated && !data && Object.keys(userAnswers).length > 0) ||
-        (data && !data?.expandedCapabilityHeatmap) ||
-        (data && !getHeatmapData())) {
-
+    if (!data || isExpandedCapabilityDataIncomplete(data)) {
         return (
             <div className="expanded-capability-heatmap">
                 <AnalysisEmptyState
@@ -264,34 +243,12 @@ const ExpandedCapabilityHeatmap = ({
         );
     }
 
-    if (!expandedCapabilityData || isExpandedCapabilityDataIncomplete(expandedCapabilityData)) {
-        return (
-            <div className="expanded-capability-heatmap">
-                <AnalysisEmptyState
-                    analysisType="expandedCapability"
-                    analysisDisplayName="Expanded Capability Analysis"
-                    icon={Grid3x3}
-                    onImproveAnswers={handleMissingQuestionsCheck}
-                    onRegenerate={handleRegenerate}
-                    isRegenerating={isRegenerating}
-                    canRegenerate={canRegenerate}
-                    userAnswers={userAnswers}
-                    minimumAnswersRequired={3}
-                    showImproveButton={false}
-                    showRegenerateButton={false}
-                />
-            </div>
-        );
-    }
-
-    const heatmapData = getHeatmapData();
-    const { businessFunctions, heatmapMatrix } = heatmapData;
-    const capabilities = data?.expandedCapabilityHeatmap?.capabilities || [];
+    if (!heatmapMatrixData) return null;
+    const { businessFunctions, heatmapMatrix } = heatmapMatrixData;
     const capabilityGaps = data?.expandedCapabilityHeatmap?.capabilityGaps || [];
 
     return (
         <div className="expanded-capability-heatmap">
-            {/* Legend */}
             <div className="heatmap-legend">
                 <div className="legend-info">
                     <Info size={16} color="#6b7280" />
@@ -299,21 +256,13 @@ const ExpandedCapabilityHeatmap = ({
                 </div>
                 {maturityLevels.map((level, index) => (
                     <div key={level} className="legend-item">
-                        <div
-                            className="legend-color"
-                            style={{ backgroundColor: getMaturityColor(level) }}
-                        />
-                        <span className="legend-text">
-                            L{level}: {maturityLabels[index]}
-                        </span>
+                        <div className="legend-color" style={{ backgroundColor: getMaturityColor(level) }} />
+                        <span className="legend-text">L{level}: {maturityLabels[index]}</span>
                     </div>
                 ))}
             </div>
 
-            <div
-                className="heatmap-grid"
-                style={{ gridTemplateColumns: `200px repeat(${maturityLevels.length}, 1fr)` }}
-            >
+            <div className="heatmap-grid" style={{ gridTemplateColumns: `200px repeat(${maturityLevels.length}, 1fr)` }}>
                 <div className="heatmap-header-cell">{t('Business_Function')}</div>
                 {maturityLevels.map((level, index) => (
                     <div key={level} className="heatmap-header-maturity">
@@ -334,7 +283,6 @@ const ExpandedCapabilityHeatmap = ({
                     </React.Fragment>
                 ))}
             </div>
-
             {capabilityGaps.length > 0 && renderCapabilityGaps(capabilityGaps)}
         </div>
     );

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Modal, Button, Alert, Card, Form, Row, Col, Badge, Spinner } from 'react-bootstrap';
 import { AlertTriangle, UserCheck, Shield, ChevronRight } from 'lucide-react';
 import { useTranslation } from '../hooks/useTranslation';
@@ -24,7 +24,7 @@ const PlanConfigurationModal = ({ show, onHide, data, onConfirm, submitting, ext
         }
     }, [show, data]);
 
-    const handleToggle = (featureId, itemId, limit, featureTitle) => {
+    const handleToggle = useCallback((featureId, itemId, limit, featureTitle) => {
         setSelections(prev => {
             const currentList = prev[featureId] || [];
             
@@ -44,9 +44,9 @@ const PlanConfigurationModal = ({ show, onHide, data, onConfirm, submitting, ext
             setError(null);
             return { ...prev, [featureId]: [...currentList, itemId] };
         });
-    };
+    }, [t]);
 
-    const handleConfirm = () => {
+    const handleConfirm = useCallback(() => {
         if (!data?.configurable_features) return;
 
         // Final validation
@@ -62,7 +62,7 @@ const PlanConfigurationModal = ({ show, onHide, data, onConfirm, submitting, ext
             plan_id: data.plan_id,
             selections: selections
         });
-    };
+    }, [data, selections, onConfirm, t]);
 
     const errorMessage = externalError || error;
     const isOverLimit = data?.configurable_features?.some(feat => (selections[feat.id]?.length || 0) > feat.limit);

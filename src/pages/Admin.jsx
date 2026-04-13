@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Container,
   Row,
@@ -21,7 +21,7 @@ import {
   MdRefresh,
   MdDownload
 } from 'react-icons/md';
-import { useTranslation } from '../hooks/useTranslation';
+import { useAuthStore } from '../store/authStore';
 
 const Admin = () => {
   const { t } = useTranslation();
@@ -38,11 +38,11 @@ const Admin = () => {
 
   const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
 
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     setLoading(true);
     setError('');
     try {
-      const token = sessionStorage.getItem('token');
+      const token = useAuthStore.getState().token;
       const response = await fetch(`${API_BASE_URL}/api/admin/users`, {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -61,11 +61,11 @@ const Admin = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [API_BASE_URL, t]);
 
   const downloadUserCSV = async (userId, version) => {
     try {
-      const token = sessionStorage.getItem('token');
+      const token = useAuthStore.getState().token;
       const response = await fetch(
         `${API_BASE_URL}/api/download-csv/${userId}?version=${version}`,
         {
@@ -91,7 +91,7 @@ const Admin = () => {
 
   useEffect(() => {
     fetchUsers();
-  }, []);
+  }, [fetchUsers]);
 
   const filteredUsers = users
     .filter(

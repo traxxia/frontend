@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { useTranslation } from "../hooks/useTranslation";
+import { useAuthStore, useBusinessStore, useUIStore, useProjectStore } from "../store";
 import {
   Button,
   Card,
@@ -16,7 +17,6 @@ import { Lock, ChevronUp, ChevronDown, AlertTriangle } from "lucide-react";
 import axios from "axios";
 import "../styles/RankProjectsPanel.css";
 import { validateRationale } from "../utils/validation";
-import { callMLRankingAPI } from "../services/aiRankingService";
 import { Checkbox } from "lucide-react"; // Import Checkbox icon if needed or use native
 
 /* ---------- PROJECT FILTERING HELPERS ---------- */
@@ -38,7 +38,10 @@ const isTerminalStatus = (p) => {
 const isKilled = (p) => p?.status?.toLowerCase() === 'killed';
 
 // Projects that are "live" or in active development (Active, Launched, etc.)
-const isMandatoryOrActive = (p) => (isLaunched(p) || isActiveStatus(p)) && !isTerminalStatus(p);
+// Projects that MUST be in the ranking list (Step 2)
+const isMandatoryOrActive = (p) => 
+  (isLaunched(p) || isActiveStatus(p) || (p.ai_rank !== null && p.ai_rank !== undefined)) && 
+  !isTerminalStatus(p);
 
 // Projects that MUST be ranked (Collaborators see AI ranked ones too)
 const isMandatoryForCollaborator = (p) =>
@@ -46,7 +49,7 @@ const isMandatoryForCollaborator = (p) =>
   !isTerminalStatus(p);
 
 // Projects that are considered "Draft" or "Unlaunched"
-const isDraftProject = (p) => !isLaunched(p) && !isActiveStatus(p) && !isTerminalStatus(p);
+const isDraftProject = (p) => !isLaunched(p) && !isActiveStatus(p) && !isTerminalStatus(p) && p.ai_rank === null;
 
 /* ---------- RATIONALE TOGGLE (UI ONLY) ---------- */
 function RationaleToggle({ eventKey, children }) {
@@ -63,7 +66,8 @@ function RationaleToggle({ eventKey, children }) {
   );
 }
 
-const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankSaved, isAdmin, isRankingLocked, businessStatus, userHasRerankAccess, onShowToast, isArchived, userHasLockedRanking = false }) => {
+const RankProjectsPanel = ({ show, projects, onLockRankings, onRankSaved, isAdmin, isRankingLocked, businessStatus, userHasRerankAccess, onShowToast, isArchived, userHasLockedRanking }) => {
+  const { selectedBusinessId: businessId } = useBusinessStore();
   const { t } = useTranslation();
   const [projectList, setProjectList] = useState([]);
   const [initialOrder, setInitialOrder] = useState([]);
@@ -131,6 +135,13 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankS
         !isTerminalStatus(p)
       );
 
+      // Defensive check: if we are an admin and the calculated list is empty, 
+      // but we previously had a list, don't overwrite it immediately.
+      // This prevents flickering during async store updates.
+      if (isAdmin && selectedProjects.length === 0 && projectList.length > 0) {
+        return;
+      }
+
       const sorted = [...selectedProjects].sort((a, b) => {
         // Primary: use 'rank' (manual ranking)
         // Secondary: use 'ai_rank' (AI suggested ranking)
@@ -155,23 +166,34 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankS
   const activeProjects = useMemo(() => projects.filter(isMandatoryOrActive), [projects]);
 
   const draftProjects = useMemo(() => projects.filter(isDraftProject), [projects]);
+  
+  // Projects that have a manual rank set (drafts specifically)
+  const rankedDraftIds = useMemo(() => projects
+    .filter(p => !isLaunched(p) && p.rank !== null && p.rank !== undefined)
+    .map(p => p._id), 
+  [projects]);
+
+  const hasSelectionChanged = useMemo(() => {
+    if (selectedDraftIds.length !== rankedDraftIds.length) return true;
+    const sortedSelected = [...selectedDraftIds].sort();
+    const sortedRanked = [...rankedDraftIds].sort();
+    return sortedSelected.some((id, idx) => id !== sortedRanked[idx]);
+  }, [selectedDraftIds, rankedDraftIds]);
+
+  const isFullyRanked = useMemo(() => {
+    // Check if everything selected (Mandatory + Selected Drafts) has a rank
+    const selectedProjects = [...activeProjects, ...draftProjects.filter(p => selectedDraftIds.includes(p._id))];
+    const unranked = selectedProjects.filter(p => p.rank === null || p.rank === undefined);
+    return unranked.length === 0 && selectedProjects.length > 0;
+  }, [activeProjects, draftProjects, selectedDraftIds]);
 
   useEffect(() => {
     if (projects && projects.length > 0 && step === 1) {
-      const rankedDraftIds = projects
-        .filter(p => !isLaunched(p) && p.rank !== null && p.rank !== undefined)
-        .map(p => p._id);
-
-      // Check if ALL non-killed projects are ranked
-      const allEligibleProjects = projects.filter(p => !isKilled(p));
-
-      const unrankedProjects = allEligibleProjects.filter(p =>
-        p.rank === null || p.rank === undefined
-      );
-
-      // Check if ALL eligible projects are ranked
-      const allRanked = unrankedProjects.length === 0;
-      setInitialAllRanked(allRanked);
+      // For initial mount/refresh, check if EVERYTHING is ranked to skip selection if desired
+      const unranked = projects.filter(p => !isKilled(p) && (p.rank === null || p.rank === undefined));
+      const overallAllRanked = unranked.length === 0;
+      
+      setInitialAllRanked(overallAllRanked);
 
       // Initialize selectedDraftIds if not already set
       if (selectedDraftIds.length === 0 && rankedDraftIds.length > 0) {
@@ -182,7 +204,7 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankS
       }
 
       // Jump to Step 2 for Admin ONLY if all projects are ranked
-      if (isAdmin && allRanked) {
+      if (isAdmin && overallAllRanked) {
         setStep(2);
       }
     }
@@ -203,16 +225,20 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankS
     }
 
     setIsGeneratingAI(true);
+    let finalRankedList = [];
+
     try {
       // Deduplicate projects by ID before sending to ML API
       const uniqueProjects = selectedProjects.filter((project, index, self) =>
         index === self.findIndex(p => p._id === project._id)
       );
 
+      const { callMLRankingAPI, fetchTeamRankings } = useProjectStore.getState();
       const { success, rankings } = await callMLRankingAPI(uniqueProjects);
-      if (success) {
+
+      if (success && rankings && rankings.length > 0) {
         // Map rankings back to projects
-        const rankedList = uniqueProjects.map(p => {
+        finalRankedList = uniqueProjects.map(p => {
           const r = rankings.find(rankItem => rankItem.project_id === p._id);
           return {
             ...p,
@@ -222,8 +248,8 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankS
           };
         }).sort((a, b) => a.rank - b.rank);
 
-        // Persist AI rankings to backend so collaborators can see them
-        const validRankings = rankedList
+        // Persist AI rankings to backend
+        const validRankings = finalRankedList
           .filter(p => p.rank !== Infinity && p.rank !== null && p.rank !== undefined)
           .map(p => ({
             project_id: p._id,
@@ -231,31 +257,31 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankS
           }));
 
         if (validRankings.length > 0) {
-          const aiPayload = {
-            business_id: businessId,
-            ai_rankings: validRankings,
-            model_version: "v1.0"
-          };
-          const token = sessionStorage.getItem("token");
-          await axios.post(`${process.env.REACT_APP_BACKEND_URL}/api/projects/ai-rankings`, aiPayload, {
-            headers: { Authorization: `Bearer ${token}` }
-          });
+          const { saveAIRankings } = useProjectStore.getState();
+          await saveAIRankings(businessId, validRankings);
+          // Refresh background data, but don't wait for UI update
+          fetchTeamRankings(businessId, { silent: true });
         }
-
-        setProjectList(rankedList);
-        setInitialOrder(rankedList.map(p => p._id));
-        setStep(2);
+        onShowToast(t("AI suggested an initial order based on your strategy and insights."), "success");
+      } else {
+        // Fallback if AI succeeds but returns no results
+        throw new Error("No AI rankings returned");
       }
     } catch (err) {
-      onShowToast("ML ranking service failed. Proceeding with manual ranking.", "warning");
-      setProjectList(selectedProjects.map(p => ({
+      console.error("AI Ranking Error:", err);
+      if (err.message !== "No AI rankings returned") {
+        onShowToast("ML ranking service failed. Proceeding with manual ranking.", "warning");
+      }
+      // Fallback: manually map projects
+      finalRankedList = selectedProjects.map(p => ({
         ...p,
         rationale: "",
         description: p.description || p.project_description || ""
-      })));
-      setInitialOrder(selectedProjects.map(p => p._id));
-      setStep(2);
+      }));
     } finally {
+      setProjectList(finalRankedList);
+      setInitialOrder(finalRankedList.map(p => p._id));
+      setStep(2);
       setIsGeneratingAI(false);
     }
   };
@@ -275,12 +301,6 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankS
     });
   };
 
-  const hasSelectionChanged = () => {
-    if (selectedDraftIds.length !== initialSelectedDraftIds.length) return true;
-    const sortedInitial = [...initialSelectedDraftIds].sort();
-    const sortedCurrent = [...selectedDraftIds].sort();
-    return JSON.stringify(sortedInitial) !== JSON.stringify(sortedCurrent);
-  };
 
   const validateRankings = () => {
     const missingRationales = [];
@@ -486,27 +506,15 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankS
     setIsSaving(true);
 
     try {
-      const token = sessionStorage.getItem("token");
+      const { saveRankings } = useProjectStore.getState();
+      const rankingPayload = projectList.map((p, index) => ({
+        project_id: p._id,
+        rank: index + 1,
+        rationals: p.rationale || ""
+      }));
 
-      const payload = {
-        business_id: businessId,
-        projects: projectList.map((p, index) => ({
-          project_id: p._id,
-          rank: index + 1,
-          rationals: p.rationale || ""
-        }))
-      };
-
-      await axios.put(
-        `${process.env.REACT_APP_BACKEND_URL}/api/projects/rank`,
-        payload,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json"
-          }
-        }
-      );
+      const result = await saveRankings(businessId, rankingPayload);
+      if (!result.success) throw new Error(result.error);
 
       onShowToast("Rankings saved successfully", "success");
       setIsSaved(true);
@@ -533,7 +541,7 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankS
       return;
     }
     setIsLocked(true);
-    localStorage.setItem(`rankingLocked_${businessId}`, "true");
+    useUIStore.getState().setBusinessSetting(businessId, 'rankingLocked', true);
     if (onLockRankings) {
       onLockRankings();
     }
@@ -619,7 +627,12 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankS
             >
               {projectList.length === 0 ? (
                 <div className="text-center py-5 text-muted border rounded bg-light">
-                  <p className="mb-0">{t("No projects have been prioritized for ranking by the admin yet.")}</p>
+                  <p className="mb-0">
+                    {isAdmin 
+                      ? t("Please select projects in Step 1 to begin ranking.") 
+                      : t("No projects have been prioritized for ranking by the admin yet.")
+                    }
+                  </p>
                 </div>
               ) : (
                 projectList.map((item, index) => {
@@ -633,7 +646,7 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankS
                       key={item._id}
                       draggableId={item._id}
                       index={index}
-                      isDragDisabled={isArchived || (isAdmin && initialAllRanked) || (!isAdmin && !userHasRerankAccess && (hasEverSaved || userHasLockedRanking))}
+                      isDragDisabled={isArchived || (!isAdmin && !userHasRerankAccess)}
                     >
                       {(provided, snapshot) => (
                         <Card
@@ -766,7 +779,7 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankS
               variant="primary"
               className="responsive-btn w-100-mobile"
               onClick={handleNextToRanking}
-              disabled={isGeneratingAI || isArchived || !hasSelectionChanged()}
+              disabled={isGeneratingAI || isArchived || (isFullyRanked && !hasSelectionChanged)}
             >
               {isGeneratingAI ? t("Fetching AI Rankings...") : t("Next: Rank Projects")}
             </Button>
@@ -780,7 +793,7 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankS
               ← {t("Back to Selection")}
             </Button>
           )}
-          {step === 2 && ((isAdmin && !initialAllRanked) || (!isAdmin && userHasRerankAccess && !hasEverSaved)) && projectList.length > 0 && (
+          {step === 2 && ((!isAdmin && userHasRerankAccess) || (isAdmin && !initialAllRanked)) && projectList.length > 0 && (
             <Button
               className="btn-save-rank responsive-btn w-100-mobile"
               onClick={handleSaveRankings}

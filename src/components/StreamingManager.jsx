@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 
 export const useStreamingManager = () => {
   const [activeStreamingCard, setActiveStreamingCard] = useState(null);
@@ -23,41 +23,46 @@ export const useStreamingManager = () => {
   };
 
   const shouldStream = (cardId) => {
-    return activeStreamingCard === cardId;
+    return false; // Global disable for streaming effect
   };
 
   const hasStreamed = (cardId) => {
-    return streamingStates[cardId]?.hasStreamed || false;
+    return true; // Treat as always streamed to show full content
   };
 
   const resetCard = (cardId) => {
     setStreamingStates(prev => ({
       ...prev,
-      [cardId]: { isStreaming: false, hasStreamed: false }
+      [cardId]: { isStreaming: false, hasStreamed: true }
     }));
   };
 
-  return {
+  const isStreamingFinished = (cardId) => {
+    return true;
+  };
+
+  return useMemo(() => ({
     startStreaming,
     stopStreaming,
     shouldStream,
     hasStreamed,
     resetCard,
+    isStreamingFinished,
     activeStreamingCard
-  };
+  }), [activeStreamingCard, streamingStates]);
 };
 
-export const StreamingRow = ({ children, isVisible, isLast, lastRowRef, isStreaming }) => {
+export const StreamingRow = ({ children, isVisible, isLast, lastRowRef, isStreaming, tag: Tag = 'tr' }) => {
   return (
-    <tr 
+    <Tag 
       ref={isLast ? lastRowRef : null}
       style={{
-        opacity: isVisible ? 1 : 0,
-        transform: isVisible ? 'translateY(0)' : 'translateY(20px)',
-        transition: isStreaming ? 'opacity 0.5s ease, transform 0.5s ease' : 'none'
+        opacity: isVisible ? 1 : 1, // Ensure visibility
+        transform: 'none', // Remove transform
+        transition: 'none' // Remove transition
       }}
     >
       {children}
-    </tr>
+    </Tag>
   );
 };

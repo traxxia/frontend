@@ -459,18 +459,6 @@ body {
 /* -------------------------
    Loading Spinner
 -------------------------- */
-.spinner {
-  animation: spin 1s linear infinite;
-}
-
-/* -------------------------
-   Animations
--------------------------- */
-@keyframes spin {
-  100% {
-    transform: rotate(360deg);
-  }
-}
 
 @keyframes fadeIn {
   from {
@@ -695,20 +683,6 @@ body.modal-open {
   font-size: 12px;
 }
 
-/* Loading spinner animation */
-.spinner {
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  0% {
-    transform: rotate(0deg);
-  }
-
-  100% {
-    transform: rotate(360deg);
-  }
-}
 
 /* ---------- Company Details Styling ---------- */
 .company-details {
