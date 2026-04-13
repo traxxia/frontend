@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Joyride, STATUS } from 'react-joyride';
 import axios from 'axios';
+import { useAuthStore } from '../store/authStore';
 import '../styles/UserTour.css';
 
 const CustomTooltip = ({ index, step, backProps, primaryProps, skipProps, tooltipProps, isLastStep, size }) => {
@@ -69,6 +70,9 @@ const UserTour = () => {
   const [steps, setSteps] = useState([]);
   const [completedStatus, setCompletedStatus] = useState(null); // 'finished' or 'skipped'
   
+  const tourCompleted = useAuthStore(state => state.tourCompleted);
+  const userRole = useAuthStore(state => state.userRole);
+
   // Defensive check for backend URL
   const API_BASE_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5000';
 
@@ -91,10 +95,10 @@ const UserTour = () => {
       if (!completedStatus) return;
 
       console.log(`[UserTour] Completion API effect running. Requesting /api/complete-tour`);
-      sessionStorage.setItem('tourCompleted', 'true');
+      useAuthStore.getState().updateUser({ tourCompleted: true });
 
       try {
-        const token = sessionStorage.getItem('token');
+        const token = useAuthStore.getState().token;
         const finalUrl = `${API_BASE_URL}/api/complete-tour`;
 
         if (token) {
@@ -117,13 +121,10 @@ const UserTour = () => {
   }, [completedStatus, API_BASE_URL]);
 
   useEffect(() => {
-    // We check string "true" because sessionStorage stores strings
-    const isTourCompleted = sessionStorage.getItem('tourCompleted');
-
-    // If it's explicitly "false", we run the tour. If it's "true", "undefined", or null, we don't.
-    // Since only new users get "false".
-    if (isTourCompleted === 'false') {
-      const role = sessionStorage.getItem('userRole')?.toLowerCase() || 'user';
+    // If it's explicitly false, we run the tour. If it's true, undefined, or null, we don't.
+    // Since only new users get false.
+    if (tourCompleted === false) {
+      const role = userRole?.toLowerCase() || 'user';
       let tourSteps = [];
       
       const isMobile = window.innerWidth < 768; // Bootstrap md breakpoint
@@ -248,7 +249,7 @@ const UserTour = () => {
         setTimeout(() => setRun(true), 500);
       }
     }
-  }, [steps.length]);
+  }, [steps.length, tourCompleted, userRole]);
 
   const handleJoyrideCallback = (data) => {
     const { status, type } = data;

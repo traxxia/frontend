@@ -162,11 +162,6 @@ const Register = () => {
     return null;
   }, [activeTab, isNewCompany]);
 
-  useEffect(() => {
-    fetchCompanies();
-    fetchPlans();
-  }, [fetchCompanies, fetchPlans]);
-
   const fetchPlans = React.useCallback(async () => {
     try {
       const response = await axios.get(`${API_BASE_URL}/api/plans`);
@@ -194,6 +189,11 @@ const Register = () => {
       setLoadingCompanies(false);
     }
   }, [API_BASE_URL]);
+
+  useEffect(() => {
+    fetchCompanies();
+    fetchPlans();
+  }, [fetchCompanies, fetchPlans]);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;

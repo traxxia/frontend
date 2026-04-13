@@ -16,6 +16,7 @@ export const useAuthStore = create(
       companyName: null,
       companyLogo: null,
       companyIndustry: null,
+      tourCompleted: null,
       userLimits: {},
       isAdmin: false,
       isAuthenticated: false,
@@ -33,6 +34,7 @@ export const useAuthStore = create(
           companyName: data.user?.company?.name || data.companyName || null,
           companyLogo: data.user?.company?.logo || data.companyLogo || null,
           companyIndustry: data.user?.company?.industry || data.companyIndustry || null,
+          tourCompleted: data.user?.tour_completed ?? data.tourCompleted ?? null,
           userLimits: data.user?.limits || data.userLimits || {},
           isAdmin: ['super_admin', 'company_admin'].includes(data.user?.role) || data.isAdmin === true,
           isAuthenticated: true,
@@ -49,6 +51,7 @@ export const useAuthStore = create(
           token: null, userId: null, userName: null, userEmail: null,
           userRole: null, userPlan: null, userCompany: null, companyId: null,
           companyName: null, companyLogo: null, companyIndustry: null,
+          tourCompleted: null,
           userLimits: {}, isAdmin: false, isAuthenticated: false,
         });
       },
@@ -66,7 +69,7 @@ export const useAuthStore = create(
         userEmail: state.userEmail, userRole: state.userRole, userPlan: state.userPlan,
         userCompany: state.userCompany, companyId: state.companyId,
         companyName: state.companyName, companyLogo: state.companyLogo,
-        companyIndustry: state.companyIndustry, userLimits: state.userLimits,
+        companyIndustry: state.companyIndustry, tourCompleted: state.tourCompleted, userLimits: state.userLimits,
         isAdmin: state.isAdmin, isAuthenticated: state.isAuthenticated,
       }),
     }
