@@ -119,6 +119,10 @@ const PrioritiesProjects = ({ selectedBusinessId, onSuccess, onStayOnPriorities,
     setShowSuccessModal(false);
     // Clear project-store caches so the Projects page fetches fresh data
     clearProjectCache(selectedBusinessId);
+    
+    // Set view mode to projects to ensure we see the card view
+    useProjectStore.getState().setViewMode('projects');
+
     if (onSuccess) {
       onSuccess();
     } else {

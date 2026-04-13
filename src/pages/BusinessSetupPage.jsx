@@ -13,7 +13,8 @@ import {
   TrendingUp,
   Target,
   ListTodo,
-  Briefcase
+  Briefcase,
+  BarChart4
 } from "lucide-react";
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from "../hooks/useTranslation";
@@ -885,6 +886,7 @@ const BusinessSetupPage = () => {
   const handleKickstartSuccess = () => {
     // Clear project-store caches so the Projects page fetches fresh data
     clearProjectCache(selectedBusinessId);
+    useProjectStore.getState().setViewMode('projects');
     setShowProjectsTab(true);
     setActiveTab("projects");
   };
@@ -1391,7 +1393,10 @@ const BusinessSetupPage = () => {
                               {/* Dynamically show active tab target name or category name */}
                               {(() => {
                                 if (activeTab === "priorities") return t("Priorities");
-                                if (activeTab === "projects") return t("Projects");
+                                if (activeTab === "projects") {
+                                  const viewMode = useProjectStore.getState().viewMode;
+                                  return viewMode === "ranking" ? t("Ranking") : t("Projects");
+                                }
                                 return t("Execution");
                               })()}
                               <ChevronDown size={14} className={`chevron-icon ${activeNavDropdown === 'execution' ? 'rotated' : ''}`} />
@@ -1409,22 +1414,41 @@ const BusinessSetupPage = () => {
                                   </button>
                                 )}
                                 {showProjectsTab && hasProjectAccess && (
-                                  <button 
-                                    className={`dropdown-item ${activeTab === 'projects' ? 'active' : ''}`} 
-                                    onClick={() => {
-                                      useProjectStore.getState().clearCache(selectedBusinessId);
-                                      if (activeTab === 'projects') {
-                                        useProjectStore.getState().checkAllAccess(selectedBusinessId);
-                                        useProjectStore.getState().fetchTeamRankings(selectedBusinessId);
-                                      } else {
-                                        setActiveTab('projects');
-                                      }
-                                      setActiveNavDropdown(null);
-                                    }}
-                                  >
-                                    <Briefcase size={14} />
-                                    <span>{t("Projects")}</span>
-                                  </button>
+                                  <>
+                                    <div className="dropdown-section-label">{t("Projects")}</div>
+                                    <button 
+                                      className={`dropdown-item ${activeTab === 'projects' && useProjectStore.getState().viewMode === 'projects' ? 'active' : ''}`} 
+                                      onClick={() => {
+                                        useProjectStore.getState().setViewMode('projects');
+                                        useProjectStore.getState().clearCache(selectedBusinessId);
+                                        if (activeTab !== 'projects') {
+                                          setActiveTab('projects');
+                                        }
+                                        setActiveNavDropdown(null);
+                                      }}
+                                    >
+                                      <Briefcase size={14} />
+                                      <span>{t("Projects_View")}</span>
+                                    </button>
+                                    
+                                    <button 
+                                      className={`dropdown-item ${activeTab === 'projects' && useProjectStore.getState().viewMode === 'ranking' ? 'active' : ''}`} 
+                                      onClick={() => {
+                                        useProjectStore.getState().setViewMode('ranking');
+                                        useProjectStore.getState().clearCache(selectedBusinessId);
+                                        if (activeTab === 'projects') {
+                                          useProjectStore.getState().checkAllAccess(selectedBusinessId);
+                                          useProjectStore.getState().fetchTeamRankings(selectedBusinessId);
+                                        } else {
+                                          setActiveTab('projects');
+                                        }
+                                        setActiveNavDropdown(null);
+                                      }}
+                                    >
+                                      <BarChart4 size={14} />
+                                      <span>{t("Ranking")}</span>
+                                    </button>
+                                  </>
                                 )}
                               </div>
                             )}

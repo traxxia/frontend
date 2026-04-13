@@ -16,6 +16,7 @@ export const useProjectStore = create((set, get) => ({
   accessControl: { hasRerankAccess: false, projectsEditAccess: {} },
   lockSummary: { locked_users_count: 0, total_users: 0, locked_users: [] },
   businessStatus: 'draft',
+  viewMode: 'projects', // 'projects' or 'ranking'
   isLoading: false,
   error: null,
 
@@ -479,6 +480,7 @@ export const useProjectStore = create((set, get) => ({
   },
 
   selectProject: (project) => set({ selectedProject: project }),
+  setViewMode: (mode) => set({ viewMode: mode }),
   clearProjects: () => set({ projects: [], selectedProject: null, teamRankings: [], aiRankings: [] }),
   projectCount: () => get().projects.length,
   getProjectById: (id) => get().projects.find(p => p._id === id || p.id === id),

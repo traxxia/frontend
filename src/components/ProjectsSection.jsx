@@ -96,7 +96,9 @@ const ProjectsSection = ({
     lockRanking,
     reviewProject: reviewProjectAction,
     adhocUpdateProject: adhocUpdateProjectAction,
-    clearCache
+    clearCache,
+    viewMode,
+    setViewMode
   } = useProjectStore();
 
   const { addToast, openModal, closeModal, isModalOpen } = useUIStore();
@@ -130,7 +132,6 @@ const ProjectsSection = ({
 
   const location = useLocation();
   const navigate = useNavigate();
-  const [viewMode, setViewMode] = useState(location.state?.viewMode || "projects"); // "projects" or "ranking"
   const [currentProject, setCurrentProject] = useState(null);
   
   // Set initial state based on viewMode
@@ -142,11 +143,8 @@ const ProjectsSection = ({
   useEffect(() => {
     if (location.state?.viewMode === 'ranking') {
       setViewMode('ranking');
-      const isViewerRole = userRole === 'viewer';
-      setShowRankScreen(!isViewerRole);
-      setShowTeamRankings(isViewerRole);
     }
-  }, [location.state?.viewMode, userRole]);
+  }, [location.state?.viewMode, setViewMode]);
   const [activeAccordionKey, setActiveAccordionKey] = useState(null);
   const [pendingSavePayload, setPendingSavePayload] = useState(null);
   const [selectedReviewProject, setSelectedReviewProject] = useState(null);
@@ -163,7 +161,7 @@ const ProjectsSection = ({
     } else if (activeView === "edit" || activeView === "view") {
       pageContext = AI_PAGE_CONTEXTS.PROJECT_EDIT;
     } else {
-      pageContext = AI_PAGE_CONTEXTS.PROJECTS;
+      pageContext = viewMode === "ranking" ? AI_PAGE_CONTEXTS.PROJECT_RANKING || AI_PAGE_CONTEXTS.PROJECTS : AI_PAGE_CONTEXTS.PROJECTS;
     }
 
     if (pageContext) {
@@ -178,6 +176,18 @@ const ProjectsSection = ({
   useEffect(() => {
     setApiIsArchived(isArchived);
   }, [isArchived]);
+
+  // Initial screen state based on viewMode and role
+  useEffect(() => {
+    if (viewMode === "ranking") {
+      const isViewerRole = userRole === 'viewer';
+      setShowRankScreen(!isViewerRole);
+      setShowTeamRankings(isViewerRole);
+    } else {
+      setShowRankScreen(false);
+      setShowTeamRankings(false);
+    }
+  }, [viewMode, userRole]);
 
 
 
@@ -673,77 +683,7 @@ const ProjectsSection = ({
 
     return (
       <>
-        <div className="view-mode-tabs-container mb-4" style={{
-          display: 'flex',
-          borderBottom: '1px solid #e2e8f0',
-          width: '100%',
-          paddingLeft: '4px'
-        }}>
-          <button
-            onClick={() => {
-              setViewMode("projects");
-              setShowRankScreen(false);
-              setShowTeamRankings(false);
-              clearCache(selectedBusinessId);
-              loadProjects();
-            }}
-            className={`view-mode-tab ${viewMode === "projects" ? "active" : ""}`}
-            style={{
-              padding: '12px 20px',
-              border: 'none',
-              fontSize: '15px',
-              fontWeight: '700',
-              borderRadius: '0px',
-              cursor: 'pointer',
-              backgroundColor: 'transparent',
-              color: viewMode === "projects" ? 'rgb(37, 99, 235)' : '#94a3b8',
-              borderBottom: viewMode === "projects" ? '2px solid rgb(37, 99, 235)' : '2px solid transparent',
-              transition: 'all 0.2s ease',
-              marginBottom: '-1px'
-            }}
-          >
-            {isLoading ? (
-              <>
-                {t("Projects")} (..)
-              </>
-            ) : (
-              <>
-                {t("Projects")} ({portfolioData.totalProjects})
-              </>
-            )}
-          </button>
-          <button
-            onClick={() => {
-              setViewMode("ranking");
-              if (userRole === 'viewer') {
-                setShowRankScreen(false);
-                setShowTeamRankings(true);
-              } else {
-                setShowRankScreen(true);
-                setShowTeamRankings(false);
-              }
-              clearCache(selectedBusinessId);
-              loadProjects();
-            }}
-            className={`view-mode-tab ${viewMode === "ranking" ? "active" : ""}`}
-            style={{
-              padding: '12px 20px',
-              border: 'none',
-              fontSize: '15px',
-              fontWeight: '700',
-              borderRadius: '0px',
-              cursor: 'pointer',
-              backgroundColor: 'transparent',
-              color: viewMode === "ranking" ? 'rgb(37, 99, 235)' : '#94a3b8',
-              borderBottom: viewMode === "ranking" ? '2px solid rgb(37, 99, 235)' : '2px solid transparent',
-              transition: 'all 0.2s ease',
-              marginBottom: '-1px'
-            }}
-          >
-            {t("Ranking")}
-          </button>
-        </div>
-
+        {/* View mode handled via global navigation dropdown */}
         {viewMode === "ranking" ? (
           <>
             <div className="d-flex align-items-center justify-content-between gap-2 mb-4 flex-wrap">

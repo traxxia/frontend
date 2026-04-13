@@ -153,6 +153,9 @@ export const staticTranslations = {
     "Basic": "Basic",
     "Execution": "Execution",
     "Priorities": "Priorities",
+    "Projects": "Projects",
+    "Projects_View": "Projects View",
+    "Ranking": "Ranking",
     "STRATEGIC_LABEL": "S.T.R.A.T.E.G.I.C.",
     "download_insights_tooltip": "Export the insights into PDF report.",
     "regenerate_all_tooltip": "Re-generate all insights.",
@@ -1868,6 +1871,11 @@ export const staticTranslations = {
     // ===========================
     // LOGIN Y AUTENTICACIÓN
     // ===========================
+    'Execution': 'Ejecución',
+    'Priorities': 'Prioridades',
+    'Projects': 'Proyectos',
+    'Projects_View': 'Vista de Proyectos',
+    'Ranking': 'Ranking',
     'Priorities & Projects': 'Prioridades y Proyectos',
     'Questions and Answers': 'Preguntas y Respuestas',
     "Insight": "Insights",
