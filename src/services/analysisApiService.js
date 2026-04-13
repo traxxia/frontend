@@ -1,4 +1,5 @@
 import { AnalysisService } from './analysisService';
+
 export const PHASE_API_CONFIG = {
   initial: [
     'swot',
@@ -87,8 +88,13 @@ const EXCEL_ANALYSIS_METRIC_TYPES = {
 
 const DEEP_SEARCH_ENDPOINTS = ['find', 'pestel-analysis', 'full-swot-portfolio', 'porter-analysis'];
 
-// Global cache for kickstart requests shared across all service instances
+// Global caches shared across all service instances to prevent redundant concurrent requests
 const kickstartRequestCache = new Map();
+const pmfAnalysisCache = new Map();
+const pmfExecutiveSummaryCache = new Map();
+const analysisDataCache = new Map();
+const projectsCache = new Map();
+const financialDocumentCache = new Map();
 
 export class AnalysisApiService {
   constructor(ML_API_BASE_URL, API_BASE_URL, getAuthToken, setApiLoading = null) {
@@ -99,10 +105,57 @@ export class AnalysisApiService {
     this.excelAnalysisCache = null; // Cache the excel-analysis result
   }
 
+  async fetchAnalysisDataThroughBackend(businessId) {
+    if (!businessId) return [];
+    
+    const cacheKey = `analysis-${businessId}`;
+    if (analysisDataCache.has(cacheKey)) {
+      return await analysisDataCache.get(cacheKey);
+    }
+    
+    const fetchPromise = (async () => {
+      try {
+        const token = this.getAuthToken();
+        if (!token) return [];
+        return await AnalysisService.getAnalysis(this.API_BASE_URL, token, businessId);
+      } catch (error) {
+        analysisDataCache.delete(cacheKey);
+        throw error;
+      }
+    })();
+    
+    analysisDataCache.set(cacheKey, fetchPromise);
+    return fetchPromise;
+  }
+
+  async getFreshAnswersData(businessId) {
+    try {
+      const token = this.getAuthToken();
+      if (!token) return { freshAnswers: {} };
+      
+      const response = await fetch(`${this.API_BASE_URL}/api/conversations/business/${businessId}/answers`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (!response.ok) return { freshAnswers: {} };
+      const data = await response.json();
+      return { freshAnswers: data.answers || {} };
+    } catch (error) {
+      console.error('Error fetching fresh answers:', error);
+      return { freshAnswers: {} };
+    }
+  }
+
   // PMF Analysis Methods
   async savePMFOnboardingData(businessId, onboardingData) {
     try {
       const token = this.getAuthToken();
+      // Clear caches on save to ensure fresh data next time
+      pmfAnalysisCache.delete(`pmf-${businessId}`);
+      pmfExecutiveSummaryCache.delete(`exec-${businessId}`);
+      
       const response = await fetch(`${this.API_BASE_URL}/api/pmf-analysis/onboarding`, {
         method: 'POST',
         headers: {
@@ -125,24 +178,40 @@ export class AnalysisApiService {
   }
 
   async getPMFAnalysis(businessId) {
-    try {
-      const token = this.getAuthToken();
-      const response = await fetch(`${this.API_BASE_URL}/api/pmf-analysis/${businessId}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      if (response.status === 404) return null;
-      return await response.json();
-    } catch (error) {
-      console.error('Error fetching PMF analysis:', error);
-      throw error;
+    if (!businessId) return null;
+    
+    const cacheKey = `pmf-${businessId}`;
+    if (pmfAnalysisCache.has(cacheKey)) {
+      return await pmfAnalysisCache.get(cacheKey);
     }
+    
+    const fetchPromise = (async () => {
+      try {
+        const token = this.getAuthToken();
+        const response = await fetch(`${this.API_BASE_URL}/api/pmf-analysis/${businessId}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        if (response.status === 404) return null;
+        return await response.json();
+      } catch (error) {
+        pmfAnalysisCache.delete(cacheKey);
+        console.error('Error fetching PMF analysis:', error);
+        throw error;
+      }
+    })();
+    
+    pmfAnalysisCache.set(cacheKey, fetchPromise);
+    return fetchPromise;
   }
 
   async savePMFExecutiveSummary(businessId, summary) {
     try {
       const token = this.getAuthToken();
+      // Clear cache on save
+      pmfExecutiveSummaryCache.delete(`exec-${businessId}`);
+      
       const response = await fetch(`${this.API_BASE_URL}/api/pmf-analysis/${businessId}/executive-summary`, {
         method: 'POST',
         headers: {
@@ -159,19 +228,65 @@ export class AnalysisApiService {
   }
 
   async getPMFExecutiveSummary(businessId) {
-    try {
-      const token = this.getAuthToken();
-      const response = await fetch(`${this.API_BASE_URL}/api/pmf-analysis/${businessId}/executive-summary`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      if (response.status === 404) return null;
-      return await response.json();
-    } catch (error) {
-      console.error('Error fetching PMF executive summary:', error);
-      throw error;
+    if (!businessId) return null;
+    
+    const cacheKey = `exec-${businessId}`;
+    if (pmfExecutiveSummaryCache.has(cacheKey)) {
+      return await pmfExecutiveSummaryCache.get(cacheKey);
     }
+    
+    const fetchPromise = (async () => {
+      try {
+        const token = this.getAuthToken();
+        const response = await fetch(`${this.API_BASE_URL}/api/pmf-analysis/${businessId}/executive-summary`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        if (response.status === 404) return null;
+        return await response.json();
+      } catch (error) {
+        pmfExecutiveSummaryCache.delete(cacheKey);
+        console.error('Error fetching PMF executive summary:', error);
+        throw error;
+      }
+    })();
+    
+    pmfExecutiveSummaryCache.set(cacheKey, fetchPromise);
+    return fetchPromise;
+  }
+  
+  async getProjects(businessId) {
+    if (!businessId) return [];
+    
+    const cacheKey = `projects-${businessId}`;
+    if (projectsCache.has(cacheKey)) {
+      return await projectsCache.get(cacheKey);
+    }
+    
+    const fetchPromise = (async () => {
+      try {
+        const token = this.getAuthToken();
+        if (!token) return [];
+        
+        const response = await fetch(`${this.API_BASE_URL}/api/projects?business_id=${businessId}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        if (!response.ok) return [];
+        const data = await response.json();
+        return data.projects || [];
+      } catch (error) {
+        projectsCache.delete(cacheKey);
+        console.error('Error fetching projects:', error);
+        return [];
+      }
+    })();
+    
+    projectsCache.set(cacheKey, fetchPromise);
+    return fetchPromise;
   }
 
   async savePMFInsights(businessId, insights) {
@@ -234,6 +349,12 @@ export class AnalysisApiService {
       });
 
       const data = await response.json();
+      const actualBusinessId = payload.businessId || payload.selectedBusinessId;
+
+      if (response.ok && actualBusinessId) {
+        projectsCache.delete(`projects-${actualBusinessId}`);
+        kickstartRequestCache.delete(`kickstart-${actualBusinessId}`);
+      }
 
       if (!response.ok) {
         throw new Error(data.error || data.message || 'Failed to kickstart project');
@@ -287,36 +408,49 @@ export class AnalysisApiService {
 
   // Fetch document metadata from backend
   async fetchFinancialDocument(businessId) {
-    try {
-      const token = this.getAuthToken();
-      if (!token) {
-        console.warn('No auth token available for document fetch');
-        return null;
-      }
+    if (!businessId) return null;
 
-      const response = await fetch(`${this.API_BASE_URL}/api/businesses/${businessId}/financial-document`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-
-      if (!response.ok) {
-        console.warn(`Financial document fetch failed: ${response.status} ${response.statusText}`);
-        return null;
-      }
-
-      const documentInfo = await response.json();
-
-      if (!documentInfo.has_document) {
-        return null;
-      }
-
-      return documentInfo.document;
-
-    } catch (error) {
-      console.error('Error fetching financial document:', error);
-      return null;
+    const cacheKey = `doc-${businessId}`;
+    if (financialDocumentCache.has(cacheKey)) {
+      return await financialDocumentCache.get(cacheKey);
     }
+
+    const fetchPromise = (async () => {
+      try {
+        const token = this.getAuthToken();
+        if (!token) {
+          console.warn('No auth token available for document fetch');
+          return null;
+        }
+
+        const response = await fetch(`${this.API_BASE_URL}/api/businesses/${businessId}/financial-document`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (!response.ok) {
+          console.warn(`Financial document fetch failed: ${response.status} ${response.statusText}`);
+          return null;
+        }
+
+        const documentInfo = await response.json();
+
+        if (!documentInfo.has_document) {
+          return null;
+        }
+
+        return documentInfo.document;
+
+      } catch (error) {
+        financialDocumentCache.delete(cacheKey);
+        console.error('Error fetching financial document:', error);
+        return null;
+      }
+    })();
+
+    financialDocumentCache.set(cacheKey, fetchPromise);
+    return fetchPromise;
   }
 
   // Download financial document binary data
@@ -335,11 +469,17 @@ export class AnalysisApiService {
       });
 
       if (!response.ok) {
-        console.warn(`Financial document download failed: ${response.status} ${response.statusText}`);
+        // Log more details if possible
+        const errorText = await response.text().catch(() => 'No error body');
+        console.warn(`Financial document download failed (${response.status}): ${errorText}`);
         return null;
       }
 
       const blob = await response.blob();
+      if (!blob || blob.size === 0) {
+        console.warn('Downloaded financial document blob is empty');
+        return null;
+      }
 
       return blob;
 
@@ -463,12 +603,27 @@ export class AnalysisApiService {
 
         // Try backend-saved financial document if not uploaded
         if (!fileToUpload && selectedBusinessId) {
+          console.log(`No uploaded file provided in state, fetching saved document for business: ${selectedBusinessId}`);
           documentInfo = await this.fetchFinancialDocument(selectedBusinessId);
           if (documentInfo) {
+            console.log(`Found document metadata: ${documentInfo.filename}, downloading...`);
             const documentBlob = await this.downloadFinancialDocument(selectedBusinessId);
             if (documentBlob) {
               fileToUpload = await this.createFileFromDocument(documentBlob, documentInfo);
+              if (fileToUpload) {
+                console.log(`Successfully prepared file for analysis payload: ${fileToUpload.name} (${fileToUpload.size} bytes)`);
+              }
+            } else {
+              console.warn('Failed to download document blob from backend');
             }
+          } else {
+            console.info('No financial document found on backend for this business');
+          }
+        } else if (fileToUpload) {
+          console.log(`Using provided uploaded file for analysis: ${fileToUpload.name} (${fileToUpload.size} bytes)`);
+          // Ensure we have document metadata for the source header if it's missing
+          if (!documentInfo && selectedBusinessId) {
+             documentInfo = await this.fetchFinancialDocument(selectedBusinessId);
           }
         }
 
@@ -615,7 +770,6 @@ export class AnalysisApiService {
       let completed = 0;
       const total = analysisTypes.length;
       let successes = 0;
-      let failures = 0;
 
       const wrappedPromises = analysisTypes.map((analysisType) => {
         const displayName =
@@ -637,7 +791,6 @@ export class AnalysisApiService {
             return { status: "fulfilled", analysisType, value: res };
           })
           .catch((err) => {
-            failures++;
             completed++;
 
             console.error(`Error with ${analysisType} analysis:`, err);
@@ -647,7 +800,9 @@ export class AnalysisApiService {
               { duration: 5000 }
             );
 
-            throw { status: "rejected", analysisType, reason: err };
+            const error = new Error(`Analysis failed for ${analysisType}`);
+            Object.assign(error, { status: "rejected", analysisType, reason: err });
+            throw error;
           });
       });
 
@@ -675,7 +830,6 @@ export class AnalysisApiService {
             .callAnalysisAPIWithSave(analysisType, payload, stateSetters, selectedBusinessId)
             .then((res) => {
               successes++;
-              failures--;
               // Stay in progress mode until all retries finish
               showToastMessage(
                 `${successes}/${total} analyses — "${displayName}" completed successfully (after retry)`,
@@ -872,6 +1026,9 @@ export class AnalysisApiService {
       }
 
       await AnalysisService.upsertAnalysis(this.API_BASE_URL, token, analysisPayload);
+      
+      // Clear analysis cache for this business after upsert
+      analysisDataCache.delete(`analysis-${selectedBusinessId}`);
 
       /*
       console.log("--- VERIFICATION START: Calling other Analysis APIs ---");
@@ -1169,18 +1326,7 @@ export class AnalysisApiService {
 
   // Individual analysis methods - Active ones only
 
-  async generateSWOTAnalysis(questions, answers, selectedBusinessId) {
-    try {
-      const { questionsArray, answersArray } = this.prepareQuestionsAndAnswers(questions, answers);
-      const result = await this.makeAPICall('find', questionsArray, answersArray);
-      const analysisContent = typeof result === 'string' ? result : JSON.stringify(result);
-      await this.saveAnalysisToBackend(analysisContent, 'swot', selectedBusinessId);
-      return analysisContent;
-    } catch (error) {
-      console.error('Error generating SWOT analysis:', error);
-      throw error;
-    }
-  }
+
 
   async generatePurchaseCriteria(questions, answers, selectedBusinessId) {
     try {

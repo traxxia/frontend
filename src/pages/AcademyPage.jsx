@@ -149,7 +149,7 @@ const AcademyPage = () => {
             contentDiv.addEventListener('click', handleLinkClick);
             return () => contentDiv.removeEventListener('click', handleLinkClick);
         }
-    }, [content]); // Re-attach when content changes
+    }, [content, category, navigate]); // Re-attach when content or category changes
 
     const breadcrumbs = getBreadcrumbs(category, article);
 

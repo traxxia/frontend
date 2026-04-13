@@ -1423,7 +1423,7 @@
    height: 120px;
    filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1));
    position: relative;
-   right: 45px;
+   right: 0px;
    bottom: 45px;
  }
 
@@ -5954,9 +5954,11 @@
 
  .gauge-content {
    position: absolute;
-   top: 60%;
-   transform: translate(-50%, -30%);
+   top: 50%;
+   left: 50%;
+   transform: translate(-50%, -20%);
    text-align: center;
+   width: 100%;
  }
 
  .score-number {

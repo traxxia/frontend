@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Card, Table, Alert, Spinner, Button } from 'react-bootstrap';
 import Pagination from './Pagination';
 import { MdRefresh, MdUnfoldMore, MdArrowUpward, MdArrowDownward } from 'react-icons/md';
 import { useTranslation } from '../hooks/useTranslation';
+import { useAuthStore } from '../store';
 
 const StaleBetsAdmin = ({ onToast }) => {
   const { t } = useTranslation();
@@ -21,7 +22,7 @@ const StaleBetsAdmin = ({ onToast }) => {
     setLoading(true);
     setError('');
     try {
-      const token = sessionStorage.getItem('token');
+      const token = useAuthStore.getState().token;
       const response = await fetch(`${API_BASE_URL}/api/admin/stale-projects`, {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -42,7 +43,11 @@ const StaleBetsAdmin = ({ onToast }) => {
     }
   };
 
+  const initializedRef = useRef(false);
+
   useEffect(() => {
+    if (initializedRef.current) return;
+    initializedRef.current = true;
     fetchStaleProjects();
   }, []);
 

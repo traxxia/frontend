@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Target, TrendingUp, Star, Calendar, Loader, BarChart3, Zap, RefreshCw } from 'lucide-react';
 import '../styles/Analytics.css';
 import { useTranslation } from "../hooks/useTranslation";
+import { useAuthStore, useAnalysisStore } from "../store";
 import AnalysisEmptyState from './AnalysisEmptyState';
 import AnalysisError from './AnalysisError';
 import { checkMissingQuestionsAndRedirect, ANALYSIS_TYPES } from '../services/missingQuestionsService';
@@ -10,33 +11,33 @@ const PurchaseCriteria = ({
   questions = [],
   userAnswers = {},
   businessName = "Your Business",
-  onDataGenerated,
   onRegenerate,
-  isRegenerating,
+  isRegenerating: propIsRegenerating = false,
   canRegenerate = true,
-  purchaseCriteriaData = null,
+  purchaseCriteriaData: propPurchaseCriteriaData = null,
   selectedBusinessId,
   onRedirectToBrief,
   hideImproveButton = false,
 }) => {
-  const [criteriaData, setCriteriaData] = useState(purchaseCriteriaData);
-  const [isLoading, setIsLoading] = useState(false);
+  const { t } = useTranslation();
+  const token = useAuthStore(state => state.token);
+  
+  const {
+    purchaseCriteriaData: storePurchaseCriteriaData,
+    isRegenerating: isTypeRegenerating,
+    regenerateIndividualAnalysis
+  } = useAnalysisStore();
+
+  const criteriaDataRaw = propPurchaseCriteriaData || storePurchaseCriteriaData;
+  const isRegenerating = propIsRegenerating || isTypeRegenerating('purchaseCriteria');
+
   const [error, setError] = useState(null);
 
-  // Add refs to track component mount
-  const isMounted = useRef(false);
-  const hasInitialized = useRef(false);
-  const { t } = useTranslation();
-
-  const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
-  const getAuthToken = () => sessionStorage.getItem('token');
-
-  // Colors for different performance levels
   const PERFORMANCE_COLORS = {
-    excellent: '#10B981', // Green
-    good: '#06B6D4',      // Blue
-    average: '#F59E0B',   // Orange
-    poor: '#EF4444'       // Red
+    excellent: '#10B981',
+    good: '#06B6D4',
+    average: '#F59E0B',
+    poor: '#EF4444'
   };
 
   const handleRedirectToBrief = (missingQuestionsData = null) => {
@@ -47,7 +48,6 @@ const PurchaseCriteria = ({
 
   const handleMissingQuestionsCheck = async () => {
     const analysisConfig = ANALYSIS_TYPES.purchaseCriteria;
-
     await checkMissingQuestionsAndRedirect(
       'purchaseCriteria',
       selectedBusinessId,
@@ -59,142 +59,60 @@ const PurchaseCriteria = ({
     );
   };
 
-  // Check if the criteria data is empty/incomplete
   const isCriteriaDataIncomplete = (data) => {
     if (!data) return true;
-
-    // Handle both wrapped and direct API response formats
-    let normalizedData;
-    if (data.purchaseCriteria) {
-      normalizedData = data.purchaseCriteria;
-    } else if (data.purchase_criteria) {
-      normalizedData = data.purchase_criteria;
-    } else if (data.criteria) {
-      normalizedData = data;
-    } else {
-      return true;
-    }
-
-    // Check if criteria array is empty or null
-    if (!normalizedData.criteria || normalizedData.criteria.length === 0) return true;
-
-    // Check if any critical fields are null/undefined
+    let normalizedData = data.purchaseCriteria || data.purchase_criteria || (data.criteria ? data : null);
+    if (!normalizedData || !normalizedData.criteria || normalizedData.criteria.length === 0) return true;
     const criticalFields = ['scale', 'overallAlignment'];
-    const hasNullFields = criticalFields.some(field => normalizedData[field] === null || normalizedData[field] === undefined);
-
-    return hasNullFields;
+    return criticalFields.some(field => normalizedData[field] === null || normalizedData[field] === undefined);
   };
 
-  // Handle regeneration
   const handleRegenerate = async () => {
     if (onRegenerate) {
       try {
-        await onRegenerate(); // Add await here
+        await onRegenerate();
       } catch (error) {
         console.error('Error in PurchaseCriteria regeneration:', error);
         setError(error.message || 'Failed to regenerate analysis');
       }
     } else {
-      setCriteriaData(null);
       setError(null);
+      await regenerateIndividualAnalysis('purchaseCriteria', questions, userAnswers, selectedBusinessId);
     }
   };
 
-  // Handle retry for error state
   const handleRetry = () => {
     setError(null);
-    if (onRegenerate) {
-      onRegenerate();
-    }
+    handleRegenerate();
   };
 
-  // Update criteria data when prop changes
-  useEffect(() => {
-    if (purchaseCriteriaData) {
-      // Handle both wrapped and direct API response formats
-      let normalizedData;
-      if (purchaseCriteriaData.purchaseCriteria) {
-        normalizedData = purchaseCriteriaData.purchaseCriteria;
-      } else if (purchaseCriteriaData.purchase_criteria) {
-        normalizedData = purchaseCriteriaData.purchase_criteria;
-      } else if (purchaseCriteriaData.criteria) {
-        normalizedData = purchaseCriteriaData;
-      } else {
-        normalizedData = null;
-      }
+  const normalizedData = criteriaDataRaw ? (criteriaDataRaw.purchaseCriteria || criteriaDataRaw.purchase_criteria || (criteriaDataRaw.criteria ? criteriaDataRaw : null)) : null;
 
-      if (normalizedData && normalizedData !== criteriaData) {
-        setCriteriaData(normalizedData);
-        if (onDataGenerated) {
-          onDataGenerated(normalizedData);
-        }
-      }
-    }
-  }, [purchaseCriteriaData]);
-
-  // Initialize component - only run once
-  useEffect(() => {
-    if (hasInitialized.current) return;
-
-    isMounted.current = true;
-    hasInitialized.current = true;
-
-    if (purchaseCriteriaData) {
-      // Handle both wrapped and direct API response formats
-      let normalizedData;
-      if (purchaseCriteriaData.purchaseCriteria) {
-        normalizedData = purchaseCriteriaData.purchaseCriteria;
-      } else if (purchaseCriteriaData.purchase_criteria) {
-        normalizedData = purchaseCriteriaData.purchase_criteria;
-      } else if (purchaseCriteriaData.criteria) {
-        normalizedData = purchaseCriteriaData;
-      } else {
-        normalizedData = null;
-      }
-
-      if (normalizedData) {
-        setCriteriaData(normalizedData);
-      }
-    }
-
-    return () => {
-      isMounted.current = false;
-    };
-  }, []);
-
-  // Create radar chart points
   const createRadarChart = () => {
-    if (!criteriaData?.criteria) return { points: '', viewBox: '0 0 240 240' };
-
+    if (!normalizedData?.criteria) return { points: '', viewBox: '0 0 240 240' };
     const center = 120;
     const radius = 70;
-    const criteria = criteriaData.criteria;
+    const criteria = normalizedData.criteria;
     const angleStep = (2 * Math.PI) / criteria.length;
-
     const points = criteria.map((criterion, index) => {
-      const angle = index * angleStep - Math.PI / 2; // Start from top
-      const value = criterion.selfRating / criteriaData.scale.max;
+      const angle = index * angleStep - Math.PI / 2;
+      const value = criterion.selfRating / normalizedData.scale.max;
       const x = center + radius * value * Math.cos(angle);
       const y = center + radius * value * Math.sin(angle);
       return `${x},${y}`;
     }).join(' ');
-
     return { points, viewBox: '0 0 240 240' };
   };
 
-  // Create radar chart grid lines
   const createRadarGrid = () => {
-    if (!criteriaData?.criteria) return [];
-
+    if (!normalizedData?.criteria) return [];
     const center = 120;
     const radius = 70;
-    const criteria = criteriaData.criteria;
+    const criteria = normalizedData.criteria;
     const angleStep = (2 * Math.PI) / criteria.length;
-
     const gridLines = [];
     const levels = [0.2, 0.4, 0.6, 0.8, 1.0];
 
-    // Concentric polygons
     levels.forEach((level, levelIndex) => {
       const points = criteria.map((_, index) => {
         const angle = index * angleStep - Math.PI / 2;
@@ -202,64 +120,35 @@ const PurchaseCriteria = ({
         const y = center + radius * level * Math.sin(angle);
         return `${x},${y}`;
       }).join(' ');
-
-      gridLines.push(
-        <polygon
-          key={`level-${levelIndex}`}
-          points={points}
-          fill="none"
-          stroke="#e5e7eb"
-          strokeWidth="1"
-          opacity={0.6}
-        />
-      );
+      gridLines.push(<polygon key={`level-${levelIndex}`} points={points} fill="none" stroke="#e5e7eb" strokeWidth="1" opacity={0.6} />);
     });
 
-    // Radial lines
     criteria.forEach((_, index) => {
       const angle = index * angleStep - Math.PI / 2;
       const x = center + radius * Math.cos(angle);
       const y = center + radius * Math.sin(angle);
-
-      gridLines.push(
-        <line
-          key={`radial-${index}`}
-          x1={center}
-          y1={center}
-          x2={x}
-          y2={y}
-          stroke="#e5e7eb"
-          strokeWidth="1"
-          opacity={0.6}
-        />
-      );
+      gridLines.push(<line key={`radial-${index}`} x1={center} y1={center} x2={x} y2={y} stroke="#e5e7eb" strokeWidth="1" opacity={0.6} />);
     });
-
     return gridLines;
   };
 
-  // Create radar chart labels
   const createRadarLabels = () => {
-    if (!criteriaData?.criteria) return [];
-
+    if (!normalizedData?.criteria) return [];
     const center = 120;
     const radius = 70;
-    const labelOffset = 20; // push labels away from data polygon
-    const criteria = criteriaData.criteria;
+    const labelOffset = 20;
+    const criteria = normalizedData.criteria;
     const angleStep = (2 * Math.PI) / criteria.length;
 
     return criteria.map((criterion, index) => {
       const angle = index * angleStep - Math.PI / 2;
       const x = center + (radius + labelOffset) * Math.cos(angle);
       const y = center + (radius + labelOffset) * Math.sin(angle);
-
-      // Determine text anchor based on angle
       let textAnchor = "middle";
       const cos = Math.cos(angle);
       if (cos > 0.3) textAnchor = "start";
       else if (cos < -0.3) textAnchor = "end";
 
-      // Split label into lines if it's too long
       const words = criterion.name.split(' ');
       const lines = [];
       let currentLine = words[0];
@@ -274,25 +163,8 @@ const PurchaseCriteria = ({
       lines.push(currentLine);
 
       return (
-        <text
-          key={`label-${index}`}
-          x={x}
-          y={y}
-          textAnchor={textAnchor}
-          dominantBaseline="middle"
-          className="radar-label"
-          fontSize="9"
-          fill="#374151"
-        >
-          {lines.map((line, i) => (
-            <tspan
-              key={i}
-              x={x}
-              dy={i === 0 ? `${-(lines.length - 1) * 0.5}em` : "1.1em"}
-            >
-              {line}
-            </tspan>
-          ))}
+        <text key={`label-${index}`} x={x} y={y} textAnchor={textAnchor} dominantBaseline="middle" className="radar-label" fontSize="9" fill="#374151">
+          {lines.map((line, i) => (<tspan key={i} x={x} dy={i === 0 ? `${-(lines.length - 1) * 0.5}em` : "1.1em"}>{line}</tspan>))}
         </text>
       );
     });
@@ -312,23 +184,18 @@ const PurchaseCriteria = ({
     return 'Needs Improvement';
   };
 
-  if (isLoading || isRegenerating) {
+  if (isRegenerating) {
     return (
       <div className="purchase-criteria">
         <div className="loading-state">
           <Loader size={24} className="loading-spinner" />
-          <span>
-            {isRegenerating
-              ? t("Regenerating purchase criteria analysis...")
-              : t("Generating purchase criteria analysis...")
-            }
-          </span>
+          <span>Regenerating purchase criteria analysis...</span>
         </div>
       </div>
     );
   }
 
-  if (error || (isCriteriaDataIncomplete(criteriaData) && Object.keys(userAnswers).length > 0)) {
+  if (error || (isCriteriaDataIncomplete(normalizedData) && Object.keys(userAnswers).length > 0)) {
     return (
       <div className="purchase-criteria">
         <AnalysisEmptyState
@@ -356,23 +223,22 @@ const PurchaseCriteria = ({
       data-analysis-name="Purchase Criteria Matrix"
       data-analysis-order="2">
 
-      {/* Key Metrics */}
       <div className="pc-metrics">
         <div className="pc-metric-card pc-metric-blue">
           <div className="pc-metric-header">
             <BarChart3 size={20} />
             <span>{t("total_criteria")}</span>
           </div>
-          <p className="pc-metric-value">{criteriaData.criteria?.length || 0}</p>
+          <p className="pc-metric-value">{normalizedData?.criteria?.length || 0}</p>
         </div>
 
-        {criteriaData.overallAlignment && (
+        {normalizedData?.overallAlignment && (
           <div className="pc-metric-card pc-metric-green">
             <div className="pc-metric-header">
               <Star size={20} />
               <span>{t("overall_alignment")}</span>
             </div>
-            <p className="pc-metric-value">{criteriaData.overallAlignment.toFixed(1)}</p>
+            <p className="pc-metric-value">{normalizedData.overallAlignment.toFixed(1)}</p>
           </div>
         )}
 
@@ -382,25 +248,20 @@ const PurchaseCriteria = ({
             <span>{t("top_performer")}</span>
           </div>
           <p className="pc-metric-value">
-            {criteriaData.criteria?.reduce((max, criterion) =>
+            {normalizedData?.criteria?.reduce((max, criterion) =>
               criterion.selfRating > max.selfRating ? criterion : max,
-              criteriaData.criteria[0]
+              normalizedData.criteria[0]
             )?.name || 'N/A'}
           </p>
         </div>
       </div>
 
-      {/* Charts Section */}
       <div className="pc-charts">
-        {/* Radar Chart */}
         <div className="pc-chart-container">
           <h3 className="pc-chart-title">{t("criteria_performance")}</h3>
           <div className="radar-chart-wrapper">
             <svg className="radar-chart" viewBox={radarData.viewBox}>
-              {/* Grid */}
               {createRadarGrid()}
-
-              {/* Data polygon */}
               <polygon
                 points={radarData.points}
                 fill="rgba(79, 70, 229, 0.2)"
@@ -408,17 +269,14 @@ const PurchaseCriteria = ({
                 strokeWidth="2"
                 className="radar-data"
               />
-
-              {/* Data points */}
-              {criteriaData.criteria?.map((criterion, index) => {
+              {normalizedData?.criteria?.map((criterion, index) => {
                 const center = 120;
                 const radius = 70;
-                const angleStep = (2 * Math.PI) / criteriaData.criteria.length;
+                const angleStep = (2 * Math.PI) / normalizedData.criteria.length;
                 const angle = index * angleStep - Math.PI / 2;
-                const value = criterion.selfRating / criteriaData.scale.max;
+                const value = criterion.selfRating / normalizedData.scale.max;
                 const x = center + radius * value * Math.cos(angle);
                 const y = center + radius * value * Math.sin(angle);
-
                 return (
                   <circle
                     key={`point-${index}`}
@@ -432,28 +290,25 @@ const PurchaseCriteria = ({
                   />
                 );
               })}
-
-              {/* Labels */}
               {createRadarLabels()}
             </svg>
           </div>
         </div>
 
-        {/* Bar Chart */}
         <div className="pc-chart-container">
           <h3 className="pc-chart-title">{t("criteria_performance")}</h3>
           <div className="criteria-bars">
-            {criteriaData.criteria?.map((criterion, index) => (
+            {normalizedData?.criteria?.map((criterion, index) => (
               <div key={index} className="criteria-bar-item">
                 <div className="criteria-bar-header">
                   <span className="criteria-name">{criterion.name}</span>
-                  <span className="criteria-rating">{criterion.selfRating}/{criteriaData.scale.max}</span>
+                  <span className="criteria-rating">{criterion.selfRating}/{normalizedData.scale.max}</span>
                 </div>
                 <div className="criteria-bar-container">
                   <div
                     className="criteria-bar-fill"
                     style={{
-                      width: `${(criterion.selfRating / criteriaData.scale.max) * 100}%`,
+                      width: `${(criterion.selfRating / normalizedData.scale.max) * 100}%`,
                       backgroundColor: getPerformanceColor(criterion.selfRating)
                     }}
                   ></div>
@@ -477,4 +332,4 @@ const PurchaseCriteria = ({
   );
 };
 
-export default PurchaseCriteria;
+export default PurchaseCriteria;

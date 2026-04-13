@@ -7,6 +7,7 @@ import PlanConfigurationModal from './PlanConfigurationModal';
 import PaymentForm from './PaymentForm';
 import '../styles/UpgradeModal.css';
 import { useTranslation } from '../hooks/useTranslation';
+import { useAuthStore } from '../store/authStore';
 
 // Stripe initialization will be handled inside the component for lazy loading
 
@@ -269,6 +270,8 @@ const UpgradeModalContent = ({
 const UpgradeModal = ({ show, onHide, onUpgradeSuccess, paymentMethod, initialPlanId }) => {
     const [stripeComponents, setStripeComponents] = useState(null);
 
+    const updateUser = useAuthStore(state => state.updateUser);
+
     // Lazy load Stripe only when the modal is active
     const stripePromise = React.useMemo(async () => {
         if (!show) return null;
@@ -305,7 +308,7 @@ const UpgradeModal = ({ show, onHide, onUpgradeSuccess, paymentMethod, initialPl
         try {
             setLoading(true);
             setError(null);
-            const token = sessionStorage.getItem('token');
+            const token = useAuthStore.getState().token;
 
             const [plansRes, subRes] = await Promise.all([
                 fetch(`${API_BASE_URL}/api/plans`, { headers: { 'Authorization': `Bearer ${token}` } }),
@@ -346,7 +349,7 @@ const UpgradeModal = ({ show, onHide, onUpgradeSuccess, paymentMethod, initialPl
         try {
             setSubmitting(true);
             setError(null);
-            const token = sessionStorage.getItem('token');
+            const token = useAuthStore.getState().token;
 
             const response = await fetch(`${API_BASE_URL}/api/subscription/upgrade`, {
                 method: 'PUT',
@@ -377,7 +380,7 @@ const UpgradeModal = ({ show, onHide, onUpgradeSuccess, paymentMethod, initialPl
                 return;
             }
 
-            sessionStorage.setItem('userPlan', data.plan);
+            updateUser({ userPlan: data.plan });
             if (onUpgradeSuccess) onUpgradeSuccess(data);
             onHide();
         } catch (err) {
@@ -391,7 +394,7 @@ const UpgradeModal = ({ show, onHide, onUpgradeSuccess, paymentMethod, initialPl
         try {
             setSubmitting(true);
             setError(null);
-            const token = sessionStorage.getItem('token');
+            const token = useAuthStore.getState().token;
 
             const response = await fetch(`${API_BASE_URL}/api/subscription/process-configuration`, {
                 method: 'POST',
@@ -408,7 +411,7 @@ const UpgradeModal = ({ show, onHide, onUpgradeSuccess, paymentMethod, initialPl
                 throw new Error(data.error || 'Configuration failed');
             }
 
-            sessionStorage.setItem('userPlan', data.subscription_plan || data.plan || selectedPlan?.name || 'unknown');
+            updateUser({ userPlan: data.subscription_plan || data.plan || selectedPlan?.name || 'unknown' });
             if (onUpgradeSuccess) onUpgradeSuccess(data);
             setShowConfigurationModal(false);
             onHide();

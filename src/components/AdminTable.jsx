@@ -53,7 +53,7 @@ const AdminTable = ({
     searchTooltip = '',
 }) => {
     const { t } = useTranslation();
-    const [showHelp, setShowHelp] = useState(false);
+
 
     // ---- Pagination helpers ----
     const getPageNumbers = () => {
@@ -106,7 +106,7 @@ const AdminTable = ({
                                 />
                                 {searchTooltip && (
                                     <OverlayTrigger
-                                        trigger="hover"
+                                        trigger={["hover", "focus"]}
                                         placement="top"
                                         rootClose
                                         popperConfig={{

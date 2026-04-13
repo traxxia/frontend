@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Plus, HelpCircle, Edit, Save, X, ChevronDown, ChevronRight, Trash2, GripVertical, AlertCircle, FileText, CheckCircle2, ListChecks, Layers } from 'lucide-react';
 import '../styles/question-management.css';
 import { useTranslation } from '@/hooks/useTranslation';
+import { useAuthStore } from '../store/authStore';
 import AdminTable from './AdminTable';
 import MetricCard from './MetricCard';
 
@@ -21,14 +22,16 @@ const QuestionManagement = ({ onToast }) => {
   const [isReordering, setIsReordering] = useState(false);
   const { t } = useTranslation();
 
-
-
   const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
-  const getAuthToken = () => sessionStorage.getItem('token');
+  const getAuthToken = () => useAuthStore.getState().token;
 
   const phases = ['initial', 'essential', 'advanced'];
 
+  const initializedRef = useRef(false);
+
   useEffect(() => {
+    if (initializedRef.current) return;
+    initializedRef.current = true;
     loadQuestions();
   }, []);
 

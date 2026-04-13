@@ -6,6 +6,8 @@ import { useTranslation } from '../hooks/useTranslation';
 import AdminTable from './AdminTable';
 
 
+import { useAuthStore } from '../store/authStore';
+
 // ------------------ CompanyEdit Modal ------------------
 const CompanyEditModal = ({ company, onClose, onSave, onToast }) => {
   const { t } = useTranslation();
@@ -21,7 +23,7 @@ const CompanyEditModal = ({ company, onClose, onSave, onToast }) => {
   const fileInputRef = useRef(null);
 
   const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
-  const token = sessionStorage.getItem('token');
+  const token = useAuthStore(state => state.token);
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
@@ -125,11 +127,13 @@ const CompanyEditModal = ({ company, onClose, onSave, onToast }) => {
         onToast('Company updated successfully', 'success');
         onSave({ ...company, ...formData, logo: finalLogoUrl });
 
-        // Update sessionStorage if this is the user's company
-        if (sessionStorage.getItem('userRole') === 'company_admin') {
-          sessionStorage.setItem('companyName', formData.company_name);
-          sessionStorage.setItem('companyLogo', finalLogoUrl);
-          sessionStorage.setItem('companyIndustry', formData.industry);
+        // Update authStore if this is the user's company
+        if (useAuthStore.getState().userRole === 'company_admin') {
+          useAuthStore.getState().updateUser({
+            companyName: formData.company_name,
+            companyLogo: finalLogoUrl,
+            companyIndustry: formData.industry
+          });
         }
 
         onClose();
@@ -261,7 +265,10 @@ const CompanyEditModal = ({ company, onClose, onSave, onToast }) => {
   );
 };
 
-// ------------------ CompanyManagement ------------------
+function getAuthToken() {
+  return useAuthStore.getState().token;
+}
+
 const CompanyManagement = ({ onToast }) => {
   const [companies, setCompanies] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -274,17 +281,11 @@ const CompanyManagement = ({ onToast }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 10;
 
-  const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
-  const getAuthToken = () => sessionStorage.getItem('token');
-
-  useEffect(() => {
-    const role = sessionStorage.getItem('userRole');
-    setUserRole(role || '');
-    loadCompanies();
-  }, []);
-
   const isSuperAdmin = userRole === 'super_admin';
   const isCompanyAdmin = userRole === 'company_admin';
+
+  const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
+  const initializedRef = useRef(false);
 
   const loadCompanies = async () => {
     try {
@@ -319,6 +320,15 @@ const CompanyManagement = ({ onToast }) => {
       setIsLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (initializedRef.current) return;
+    initializedRef.current = true;
+
+    const role = useAuthStore.getState().userRole;
+    setUserRole(role || '');
+    loadCompanies();
+  }, []);
 
   const handleEditCompany = (company) => {
     setEditingCompany(company);

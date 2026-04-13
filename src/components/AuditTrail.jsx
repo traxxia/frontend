@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import AnalysisDataModal from './AnalysisDataModal';
 import AdminTable from './AdminTable';
 import MetricCard from './MetricCard';
@@ -23,6 +23,8 @@ import {
 } from 'lucide-react';
 import "../styles/audittrail.css";
 import { useTranslation } from '@/hooks/useTranslation';
+
+import { useAuthStore } from '../store/authStore';
 
 const AuditTrail = ({ onToast }) => {
   const [auditEntries, setAuditEntries] = useState([]);
@@ -60,9 +62,9 @@ const AuditTrail = ({ onToast }) => {
   const REACT_APP_BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
 
-  // Get current user role from session/token
+  // Get current user role from store/token
   useEffect(() => {
-    const token = sessionStorage.getItem('token') || sessionStorage.getItem('authToken');
+    const token = useAuthStore.getState().token;
     if (token) {
       try {
         const payload = JSON.parse(atob(token.split('.')[1]));
@@ -73,8 +75,13 @@ const AuditTrail = ({ onToast }) => {
     }
   }, []);
 
+  const initializedRef = useRef(false);
+
   // Initial load effect
   useEffect(() => {
+    if (!currentUserRole || initializedRef.current) return;
+    initializedRef.current = true;
+
     const initializeData = async () => {
       try {
         fetchAuditTrail();
@@ -85,10 +92,8 @@ const AuditTrail = ({ onToast }) => {
       }
     };
 
-    if (initialLoad && currentUserRole) {
-      initializeData();
-    }
-  }, [initialLoad, currentUserRole]);
+    initializeData();
+  }, [currentUserRole]);
 
 
   // Consolidated fetch effect for all filters
@@ -107,7 +112,7 @@ const AuditTrail = ({ onToast }) => {
   const fetchAuditTrail = async () => {
     try {
       setLoading(true);
-      const token = sessionStorage.getItem('token') || sessionStorage.getItem('authToken');
+      const token = useAuthStore.getState().token;
 
       if (!token || token === 'undefined' || token === 'null') {
         onToast('Session expired. Please login again.', 'error');
@@ -363,7 +368,7 @@ const AuditTrail = ({ onToast }) => {
     if (!analysisData) {
       try {
         setLoadingAnalysisData(prev => ({ ...prev, [entry._id]: true }));
-        const token = sessionStorage.getItem('token') || sessionStorage.getItem('authToken');
+        const token = useAuthStore.getState().token;
         const response = await fetch(`${REACT_APP_BACKEND_URL}/api/admin/audit-trail/${entry._id}/analysis-data`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
@@ -463,7 +468,7 @@ const AuditTrail = ({ onToast }) => {
               >
                 {loadingAnalysisData[row._id] ? (
                   <>
-                    <RefreshCw size={12} className="animate-spin" />
+                    <RefreshCw size={12} className="antigravity-rotating" />
                     {t('Loading...')}
                   </>
                 ) : (

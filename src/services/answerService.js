@@ -1,9 +1,10 @@
 import axios from 'axios';
+import { useAuthStore } from '../store/authStore';
 
 const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
 
 const getAuthHeaders = () => {
-    const token = sessionStorage.getItem('token');
+    const token = useAuthStore.getState().token;
     return {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
