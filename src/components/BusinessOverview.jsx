@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Search, Users, Building2, Activity, TrendingUp, X, Trash2 } from "lucide-react";
+import { Search, Users, Building2, Activity, TrendingUp, X, Trash2, AlertCircle } from "lucide-react";
 import axios from "axios";
 import { useTranslation } from "../hooks/useTranslation";
 import AdminTable from "./AdminTable";
@@ -380,8 +380,16 @@ const BusinessOverview = ({ onToast }) => {
                             </button>
                         </div>
                         <div className="admin-modal-body">
-                            <p style={{ margin: 0, color: '#4b5563', lineHeight: '1.5' }}>
+                            <p className="mb-2" style={{ color: '#4b5563', lineHeight: '1.5' }}>
                                 {t("confirm_remove_participant_prefix") || "Are you sure you want to remove participant"} <strong>{pendingRemoval?.userName || "this participant"}</strong>?
+                            </p>
+                             <p style={{ margin: 0, color: '#6b7280', fontSize: '0.9rem', lineHeight: '1.4', fontStyle: 'italic' }}>
+                                <AlertCircle size={14} style={{ marginRight: '6px', color: '#f59e0b', verticalAlign: 'text-bottom' }} />
+                                {t("reassign_ownership_notice") || "Any projects currently owned by this participant will be automatically reassigned to the business owner."}
+                            </p>
+                            <p className="mt-2" style={{ margin: 0, color: '#6b7280', fontSize: '0.9rem', lineHeight: '1.4', fontStyle: 'italic' }}>
+                                <AlertCircle size={14} style={{ marginRight: '6px', color: '#f59e0b', verticalAlign: 'text-bottom' }} />
+                                {t("revoke_access_notice") || "Administrative access (reranking/project edit) will also be revoked for this participant in this business."}
                             </p>
                         </div>
                         <div className="admin-modal-footer" style={{ gap: '10px' }}>
