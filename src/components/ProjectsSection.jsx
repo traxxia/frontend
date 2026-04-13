@@ -824,6 +824,7 @@ const ProjectsSection = ({
                     userHasRerankAccess={userHasRerankAccess}
                     onShowToast={handleShowToast}
                     isArchived={apiIsArchived}
+                    userHasLockedRanking={rankingsLocked}
                   />
                 )}
 

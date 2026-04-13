@@ -1,6 +1,10 @@
 import { useCallback } from "react";
 import { useProjectStore, useAuthStore } from "../store";
 
+export const clearAccessCache = () => {
+    globalAccessRequests.clear();
+};
+
 export const useAccessControl = (selectedBusinessId) => {
   const { 
     accessControl, 

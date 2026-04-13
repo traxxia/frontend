@@ -83,9 +83,17 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, onRankSaved, isAdmi
   const [movedProjectName, setMovedProjectName] = useState("");
   const [step, setStep] = useState(1); // 1: Selection, 2: Ranking
   const [selectedDraftIds, setSelectedDraftIds] = useState([]);
+  const [initialSelectedDraftIds, setInitialSelectedDraftIds] = useState([]);
   const [isGeneratingAI, setIsGeneratingAI] = useState(false);
   const [rationaleErrors, setRationaleErrors] = useState({});
   const [initialAllRanked, setInitialAllRanked] = useState(false);
+
+  useEffect(() => {
+    if (!userHasLockedRanking) {
+      setHasEverSaved(false);
+      setIsSaved(false);
+    }
+  }, [userHasLockedRanking]);
 
   useEffect(() => {
     if (!projects || projects.length === 0) return;
@@ -190,6 +198,9 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, onRankSaved, isAdmi
       // Initialize selectedDraftIds if not already set
       if (selectedDraftIds.length === 0 && rankedDraftIds.length > 0) {
         setSelectedDraftIds(rankedDraftIds);
+        setInitialSelectedDraftIds(rankedDraftIds);
+      } else if (initialSelectedDraftIds.length === 0 && rankedDraftIds.length > 0) {
+        setInitialSelectedDraftIds(rankedDraftIds);
       }
 
       // Jump to Step 2 for Admin ONLY if all projects are ranked
@@ -288,6 +299,13 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, onRankSaved, isAdmi
     return projectList.some((project, index) => {
       return initialOrder[index] !== project._id;
     });
+  };
+
+  const hasSelectionChanged = () => {
+    if (selectedDraftIds.length !== initialSelectedDraftIds.length) return true;
+    const sortedInitial = [...initialSelectedDraftIds].sort();
+    const sortedCurrent = [...selectedDraftIds].sort();
+    return JSON.stringify(sortedInitial) !== JSON.stringify(sortedCurrent);
   };
 
   const validateRankings = () => {
@@ -665,7 +683,7 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, onRankSaved, isAdmi
 
                               <div
                                 className="rank-move-buttons responsive-move-buttons"
-                                style={{ cursor: isArchived || (isAdmin && initialAllRanked) || (!isAdmin && !userHasRerankAccess) ? "not-allowed" : "grab" }}
+                                style={{ cursor: isArchived || (isAdmin && initialAllRanked) || (!isAdmin && (!userHasRerankAccess || hasEverSaved || userHasLockedRanking)) ? "not-allowed" : "grab" }}
                               >
                                 <ChevronUp size={18} />
                                 <ChevronDown size={18} />
@@ -785,7 +803,7 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, onRankSaved, isAdmi
             <Button
               className="btn-save-rank responsive-btn w-100-mobile"
               onClick={handleSaveRankings}
-              disabled={isSaving || (isSaved && !hasRankingsChanged()) || isArchived}
+              disabled={isSaving || isArchived}
             >
               {isSaving ? "Saving..." : t("Save_Rankings")}
             </Button>
