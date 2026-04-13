@@ -555,7 +555,7 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, onRankSaved, isAdmi
 
   const renderStep1 = () => (
     <div className="rank-step-selection">
-      <h6 className="mb-3 text-primary">{t("Mandatory Projects")}</h6>
+      <h6 className="mb-3 text-primary">{t("Launched Projects (Mandatory Projects)")}</h6>
       <div className="selection-list mb-4">
         {activeProjects.map(p => (
           <div key={p._id} className="selection-item mandatory">
