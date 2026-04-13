@@ -25,6 +25,7 @@ import { useTranslation } from '../hooks/useTranslation';
 import UpgradeModal from '../components/UpgradeModal';
 import PlanLimitModal from '../components/PlanLimitModal';
 import { getUserLimits } from '../utils/authUtils';
+import UserTour from "../components/UserTour";
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -46,6 +47,7 @@ const Dashboard = () => {
   const [businessError, setBusinessError] = useState('');
   const [formErrors, setFormErrors] = useState({});
   const userRole = sessionStorage.getItem("userRole");
+  const userName = sessionStorage.getItem("userName") || "";
   const isViewer = userRole?.toLowerCase() === "viewer";
   const isCollaborator = userRole?.toLowerCase() === "collaborator";
   const isAdmin = ["super_admin", "company_admin"].includes(userRole?.toLowerCase());
@@ -741,6 +743,7 @@ const Dashboard = () => {
   // Main render
   return (
     <div className="dashboard-layout">
+      <UserTour />
       <PlanLimitModal
         show={showPlanLimitModal}
         onHide={() => setShowPlanLimitModal(false)}
@@ -778,7 +781,7 @@ const Dashboard = () => {
                     <Card.Body className="p-0">
                       <div className="p-4">
                         <div className="d-flex justify-content-between align-items-center mb-3">
-                          <h5 className="mb-0">{t('welcome_dashboard')}</h5>
+                          <h5 className="mb-0">{t('welcome_dashboard')} <span className="text-primary">{userName}</span></h5>
                         </div>
                         <p className="text-muted small mb-4">{t('create_business_plans')}</p>
 
@@ -918,7 +921,7 @@ const Dashboard = () => {
                           <div>
                             <div className="d-flex justify-content-between align-items-start mb-4">
                               <div>
-                                <h5 className="mb-2">{t('welcome_dashboard')}</h5>
+                                <h5 className="mb-2">{t('welcome_dashboard')} <span className="text-primary">{userName}</span></h5>
                               </div>
                             </div>
                             <p className="text-muted mb-4">{t('create_business_plans')}</p>

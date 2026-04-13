@@ -79,7 +79,7 @@ const MenuBar = () => {
   const handleAuditTrailClick = () => navigate('/audit-trail');
 
   return (
-    <Navbar className="traxia-navbar p-0">
+    <Navbar className="traxia-navbar p-0" id="main-menu-bar">
       <Container fluid className="px-3 py-2">
         <div className="d-flex align-items-center justify-content-between w-100">
 

@@ -19,6 +19,8 @@ export const staticTranslations = {
     'try_again': 'Try Again',
     'login_email_required': 'Email is required',
     'login_password_required': 'Password is required',
+    'incorrect_email': 'Incorrect email address',
+    'incorrect_password': 'Incorrect password',
     'active': 'Active',
     'deleted': 'Deleted',
     'archived': 'Archived',
@@ -252,7 +254,7 @@ export const staticTranslations = {
     // DASHBOARD
     // ===========================
     "dashboard": "Dashboard",
-    "welcome_dashboard": "Welcome!",
+    "welcome_dashboard": "Welcome",
     "Project Phase": "Project Phase",
     "create_business_plans": "Create business plans step by step with the S.T.R.A.T.E.G.I.C framework. Activate AI capabilities for analysis, prediction, and decision-making.",
     "my_businesses": "Businesses",
@@ -2100,7 +2102,7 @@ export const staticTranslations = {
     "completeOnboardingPrompt": "Por favor, completa el PMF Onboarding para ver perspectivas aquí.",
     "startPMFOnboarding": "Iniciar PMF Onboarding",
     "Confidence": "Confianza",
-    'welcome': '¡Bienvenido!',
+    'welcome': '¡Bienvenido',
     'email_address': 'Correo Electrónico',
     'email': 'Correo Electrónico',
     'password': 'Contraseña',
@@ -2216,7 +2218,7 @@ export const staticTranslations = {
     // PANEL DE CONTROL
     // ===========================
     "dashboard": "Panel de Control",
-    "welcome_dashboard": "¡Bienvenido!",
+    "welcome_dashboard": "¡Bienvenido",
     "Project Phase": "Fase del Proyecto",
     "Confirm_Submission": "Confirmar Envío",
     "Confirm_Review_Message": "Está a punto de registrar esta Revisión Estratégica. Esta acción quedará registrada permanentemente en el Registro de Decisiones del proyecto. ¿Está seguro de que desea continuar?",
@@ -3882,7 +3884,9 @@ export const staticTranslations = {
     "failed_to_fetch_stale_projects": "Error al obtener proyectos atrasados",
     "cadence": "Cadencia",
     "last_reviewed": "Última Revisión",
-    "mark_all_read": "Marcar todo como leído"
+    "mark_all_read": "Marcar todo como leído",
+    'incorrect_email': 'Dirección de correo electrónico incorrecta',
+    'incorrect_password': 'Contraseña incorrecta',
   }
 };
 
