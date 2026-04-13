@@ -321,6 +321,7 @@
 .login-button.loading {
   background-color: var(--color-primary-dark);
   cursor: not-allowed;
+  color: transparent; /* Hide text while loading so only spinner shows */
 }
 
 .login-button.loading::after {
@@ -331,13 +332,16 @@
   border: 3px solid rgba(255, 255, 255, 0.3);
   border-radius: var(--border-radius-round);
   border-top-color: var(--color-text-white);
-  animation: spin 1s linear infinite;
+  animation: login-spin 1s linear infinite;
   left: calc(50% - 10px);
   top: calc(50% - 10px);
 }
 
-@keyframes spin {
-  to {
+@keyframes login-spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
     transform: rotate(360deg);
   }
 }
