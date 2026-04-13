@@ -206,17 +206,6 @@ const ProjectDetails = ({
                         <label className="detail-label">{t("Project_Description")}</label>
                         <p className="detail-value">{project.description || t("Not_Available")}</p>
                     </div>
-                    <div className="detail-item">
-                        <label className="detail-label">{t("Why_This_Matters")}</label>
-                        <p className="detail-value">{project.why_this_matters || t("Not_Available")}</p>
-                    </div>
-                    <div className="detail-item full-width">
-                        <label className="detail-label">
-                            {t("Strategic_Decision_Bet")}
-                            <small className="field-sub-label">{t("Strategic_Decision_Sublabel")}</small>
-                        </label>
-                        <p className="detail-value">{project.strategic_decision || t("Not_Available")}</p>
-                    </div>
 
                     <div className="grid-2">
                         <div className="detail-item">

@@ -159,10 +159,10 @@
     white-space: nowrap;
   }
 
-  .status-badge.status-active {
+  /* .status-badge.status-active {
     background-color: #ecfdf5 !important;
     color: #059669 !important;
-  }
+  } */
 
   .status-badge.status-archived {
     background-color: #fffbeb !important;
