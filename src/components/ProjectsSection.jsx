@@ -220,6 +220,9 @@ const ProjectsSection = ({
     lockSummary.locked_users_count === lockSummary.total_users;
 
   const isRankingLocked = allCollaboratorsLocked;
+  const userHasLockedRank = useMemo(() => {
+    return lockSummary.locked_users?.some(u => String(u.user_id) === String(myUserId)) || false;
+  }, [lockSummary.locked_users, myUserId]);
 
   const currentStatus = businessStatus;
 
@@ -824,7 +827,7 @@ const ProjectsSection = ({
                     userHasRerankAccess={userHasRerankAccess}
                     onShowToast={handleShowToast}
                     isArchived={apiIsArchived}
-                    userHasLockedRanking={rankingsLocked}
+                    userHasLockedRanking={userHasLockedRank}
                   />
                 )}
 

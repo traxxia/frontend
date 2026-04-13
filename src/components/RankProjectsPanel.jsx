@@ -66,7 +66,7 @@ function RationaleToggle({ eventKey, children }) {
   );
 }
 
-const RankProjectsPanel = ({ show, projects, onLockRankings, onRankSaved, isAdmin, isRankingLocked, businessStatus, userHasRerankAccess, onShowToast, isArchived }) => {
+const RankProjectsPanel = ({ show, projects, onLockRankings, onRankSaved, isAdmin, isRankingLocked, businessStatus, userHasRerankAccess, onShowToast, isArchived, userHasLockedRanking }) => {
   const { selectedBusinessId: businessId } = useBusinessStore();
   const { t } = useTranslation();
   const [projectList, setProjectList] = useState([]);
@@ -301,12 +301,6 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, onRankSaved, isAdmi
     });
   };
 
-  const hasSelectionChanged = () => {
-    if (selectedDraftIds.length !== initialSelectedDraftIds.length) return true;
-    const sortedInitial = [...initialSelectedDraftIds].sort();
-    const sortedCurrent = [...selectedDraftIds].sort();
-    return JSON.stringify(sortedInitial) !== JSON.stringify(sortedCurrent);
-  };
 
   const validateRankings = () => {
     const missingRationales = [];
