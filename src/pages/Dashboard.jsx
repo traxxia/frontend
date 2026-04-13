@@ -26,6 +26,7 @@ import { useTranslation } from '../hooks/useTranslation';
 import PlanLimitModal from '../components/PlanLimitModal';
 import { useAuthStore, useBusinessStore, useUIStore, useSubscriptionStore } from '../store';
 import { getUserLimits } from '../utils/authUtils';
+import UserTour from "../components/UserTour";
 
 const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -584,6 +585,7 @@ const Dashboard = () => {
   // Main render
   return (
     <div className="dashboard-layout">
+      <UserTour />
       <PlanLimitModal
         show={isModalOpen('planLimit')}
         onHide={() => closeModal('planLimit')}
@@ -621,7 +623,7 @@ const Dashboard = () => {
                     <Card.Body className="p-0">
                       <div className="p-4">
                         <div className="d-flex justify-content-between align-items-center mb-3">
-                          <h5 className="mb-0">{t('welcome_dashboard')}</h5>
+                          <h5 className="mb-0">{t('welcome_dashboard')} <span className="text-primary">{userName}</span></h5>
                         </div>
                         <p className="text-muted small mb-4">{t('create_business_plans')}</p>
 
@@ -791,7 +793,7 @@ const Dashboard = () => {
                           <div>
                             <div className="d-flex justify-content-between align-items-start mb-4">
                               <div>
-                                <h5 className="mb-2">{t('welcome_dashboard')}</h5>
+                                <h5 className="mb-2">{t('welcome_dashboard')} <span className="text-primary">{userName}</span></h5>
                               </div>
                             </div>
                             <p className="text-muted mb-4">{t('create_business_plans')}</p>

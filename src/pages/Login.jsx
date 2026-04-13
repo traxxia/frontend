@@ -68,9 +68,17 @@ const Login = () => {
       }
     } catch (err) {
       console.error(err.response?.data || err.message);
-      const errorMessage = err.response?.data?.error || t("login_failed");
-      setModalMessage(errorMessage);
-      setShowErrorModal(true);
+      const errorData = err.response?.data;
+      
+      if (errorData?.error === 'incorrect_email') {
+        setErrors({ email: t("incorrect_email") !== "incorrect_email" ? t("incorrect_email") : errorData.message || "Incorrect email address" });
+      } else if (errorData?.error === 'incorrect_password') {
+        setErrors({ password: t("incorrect_password") !== "incorrect_password" ? t("incorrect_password") : errorData.message || "Incorrect password" });
+      } else {
+        const errorMessage = errorData?.error || t("login_failed");
+        setModalMessage(errorMessage);
+        setShowErrorModal(true);
+      }
     } finally {
       setIsLoading(false);
     }
