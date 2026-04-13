@@ -468,7 +468,7 @@ const AuditTrail = ({ onToast }) => {
               >
                 {loadingAnalysisData[row._id] ? (
                   <>
-                    <RefreshCw size={12} className="animate-spin" />
+                    <RefreshCw size={12} className="antigravity-rotating" />
                     {t('Loading...')}
                   </>
                 ) : (

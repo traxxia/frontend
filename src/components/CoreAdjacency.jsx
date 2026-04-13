@@ -100,6 +100,25 @@ const CoreAdjacency = ({
         return [hasCore, hasGrowth, hasVectors].filter(Boolean).length < 2;
     }, []);
 
+    const opportunityMap = useMemo(() => {
+        if (!data?.growthOpportunities) return {};
+        const map = {};
+        Object.values(data.growthOpportunities).forEach(list => {
+            if (Array.isArray(list)) {
+                list.forEach(item => {
+                    if (item.id) map[item.id] = item.description || item.opportunity || item;
+                });
+            }
+        });
+        return map;
+    }, [data]);
+
+    const resolveOpportunity = useCallback((id) => {
+        if (!id) return '';
+        if (typeof id !== 'string') return String(id);
+        return opportunityMap[id] || id;
+    }, [opportunityMap]);
+
     const calculateTotalRows = useCallback((data) => {
         if (!data || isCoreAdjacencyDataIncomplete(data)) return 0;
         const normalized = data.coreAdjacency || data.core_adjacency || data.CoreAdjacency || (data.coreBusinessDefinition || data.growthOpportunities ? data : null);
@@ -116,8 +135,22 @@ const CoreAdjacency = ({
                 if (Array.isArray(normalized.growthOpportunities[key])) total += normalized.growthOpportunities[key].length;
             });
         }
-        if (normalized.growthVectorCategorization) Object.values(normalized.growthVectorCategorization).forEach(arr => { if (Array.isArray(arr)) total += arr.length; });
-        if (Array.isArray(normalized.missingInformation)) total += normalized.missingInformation.length;
+        if (normalized.growthVectorCategorization) {
+            Object.values(normalized.growthVectorCategorization).forEach(arr => {
+                if (Array.isArray(arr)) total += arr.length;
+            });
+        }
+        
+        if (normalized.missingInformation) {
+            if (Array.isArray(normalized.missingInformation)) {
+                total += normalized.missingInformation.length;
+            } else if (typeof normalized.missingInformation === 'object') {
+                Object.values(normalized.missingInformation).forEach(arr => {
+                    if (Array.isArray(arr)) total += arr.length;
+                });
+            }
+        }
+        
         if (Array.isArray(normalized.recommendedNextSteps)) total += normalized.recommendedNextSteps.length;
         return total;
     }, [isCoreAdjacencyDataIncomplete]);
@@ -200,11 +233,19 @@ const CoreAdjacency = ({
 
                 if (normalized.growthVectorCategorization) {
                     const gvc = normalized.growthVectorCategorization;
-                    const allVectors = Object.entries(gvc).flatMap(([key, items]) => (Array.isArray(items) ? items : []).map(item => ({ ...item, category: key })));
+                    const allVectors = Object.entries(gvc).flatMap(([key, items]) => 
+                        (Array.isArray(items) ? items : []).map(item => 
+                            typeof item === 'string' 
+                                ? { vector: item, category: key } 
+                                : { ...item, category: key }
+                        )
+                    );
                     const index = currentRow - rowsProcessed;
                     if (index >= 0 && index < allVectors.length) {
                         const item = allVectors[index];
-                        typeText(item.vector || item, currentRow, 'vector', 0);
+                        const vecInput = item.vector || item.opportunity || (typeof item === 'string' ? item : '');
+                        const resolvedVec = resolveOpportunity(vecInput);
+                        typeText(resolvedVec, currentRow, 'vector', 0);
                         if (item.description) typeText(item.description, currentRow, 'description', 200);
                         currentRow++;
                         return;
@@ -212,28 +253,53 @@ const CoreAdjacency = ({
                     rowsProcessed += allVectors.length;
                 }
 
-                for (const key of ['missingInformation', 'recommendedNextSteps']) {
-                    if (Array.isArray(normalized[key]) && normalized[key].length > 0) {
+                if (normalized.missingInformation) {
+                    const mi = normalized.missingInformation;
+                    if (Array.isArray(mi)) {
                         const index = currentRow - rowsProcessed;
-                        if (index >= 0 && index < normalized[key].length) {
-                            typeText(normalized[key][index], currentRow, 'content', 0);
+                        if (index >= 0 && index < mi.length) {
+                            typeText(mi[index], currentRow, 'content', 0);
                             currentRow++;
                             return;
                         }
-                        rowsProcessed += normalized[key].length;
+                        rowsProcessed += mi.length;
+                    } else if (typeof mi === 'object') {
+                        const categories = Object.keys(mi);
+                        for (const cat of categories) {
+                            if (Array.isArray(mi[cat]) && mi[cat].length > 0) {
+                                const index = currentRow - rowsProcessed;
+                                if (index >= 0 && index < mi[cat].length) {
+                                    typeText(mi[cat][index], currentRow, 'content', 0);
+                                    currentRow++;
+                                    return;
+                                }
+                                rowsProcessed += mi[cat].length;
+                            }
+                        }
                     }
                 }
+
+                if (Array.isArray(normalized.recommendedNextSteps) && normalized.recommendedNextSteps.length > 0) {
+                    const index = currentRow - rowsProcessed;
+                    if (index >= 0 && index < normalized.recommendedNextSteps.length) {
+                        typeText(normalized.recommendedNextSteps[index], currentRow, 'content', 0);
+                        currentRow++;
+                        return;
+                    }
+                    rowsProcessed += normalized.recommendedNextSteps.length;
+                }
+                
                 currentRow++;
             } else {
                 clearInterval(streamingIntervalRef.current);
                 setVisibleRows(totalItems);
-                streamingManager.stopStreaming(cardId);
+                streamingManager?.stopStreaming(cardId);
                 setUserHasScrolled(false);
             }
         }, STREAMING_CONFIG.ROW_INTERVAL);
 
         return () => { if (streamingIntervalRef.current) clearInterval(streamingIntervalRef.current); };
-    }, [cardId, rawCoreAdjacencyData, isRegenerating, streamingManager, setUserHasScrolled, calculateTotalRows, isCoreAdjacencyDataIncomplete, typeText]);
+    }, [cardId, rawCoreAdjacencyData, isRegenerating, streamingManager, setUserHasScrolled, calculateTotalRows, isCoreAdjacencyDataIncomplete, typeText, resolveOpportunity]);
 
     const toggleSection = (sectionKey) => {
         setExpandedSections(prev => ({ ...prev, [sectionKey]: !prev[sectionKey] }));
@@ -301,11 +367,31 @@ const CoreAdjacency = ({
             }
         });
     }
-    if (Array.isArray(data.missingInformation)) data.missingInformation.forEach(() => indices.missingInfo.push(currentRowIndex++));
+
+    if (data.missingInformation) {
+        if (Array.isArray(data.missingInformation)) {
+            data.missingInformation.forEach(() => indices.missingInfo.push(currentRowIndex++));
+        } else if (typeof data.missingInformation === 'object') {
+            Object.entries(data.missingInformation).forEach(([cat, items]) => {
+                if (Array.isArray(items)) {
+                    indices.missingInfo.push(...items.map(() => currentRowIndex++));
+                }
+            });
+        }
+    }
+    
     if (Array.isArray(data.recommendedNextSteps)) data.recommendedNextSteps.forEach(() => indices.nextSteps.push(currentRowIndex++));
 
     const isStreaming = streamingManager?.shouldStream(cardId);
     const hasStreamed = streamingManager?.hasStreamed(cardId);
+
+    const getBadgeClass = (value) => {
+        const val = value?.toLowerCase();
+        if (['high', 'large'].includes(val)) return 'priority-badge high';
+        if (['medium'].includes(val)) return 'priority-badge medium';
+        if (['low', 'small'].includes(val)) return 'priority-badge low';
+        return 'priority-badge';
+    };
 
     return (
         <div className="porters-container full-swot-container" data-analysis-type="coreAdjacency" data-analysis-name="Core vs. Adjacency" data-analysis-order="10">
@@ -378,7 +464,16 @@ const CoreAdjacency = ({
                                                     const rat = typeof item === 'object' ? item.rationale : '';
                                                     return (
                                                         <StreamingRow key={idx} isVisible={rIdx < visibleRows} isLast={rIdx === visibleRows - 1 && isStreaming} lastRowRef={lastRowRef} isStreaming={isStreaming}>
-                                                            <td>{hasStreamed ? opp : (typingTexts[`${rIdx}-opportunity`] || opp)}</td>
+                                                            <td>
+                                                                <div style={{ marginBottom: '0.5rem' }}>{hasStreamed ? opp : (typingTexts[`${rIdx}-opportunity`] || opp)}</div>
+                                                                {typeof item === 'object' && (
+                                                                    <div className="item-meta" style={{ marginTop: '0.5rem' }}>
+                                                                        {item.proximityToCore && <span className={`${getBadgeClass(item.proximityToCore)}`}>{t('Proximity')}: {item.proximityToCore}</span>}
+                                                                        {item.profitPoolSize && <span className={`${getBadgeClass(item.profitPoolSize)}`}>{t('Profit_Pool')}: {item.profitPoolSize}</span>}
+                                                                        {item.competitiveness && <span className={`${getBadgeClass(item.competitiveness)}`}>{t('Competitiveness')}: {item.competitiveness}</span>}
+                                                                    </div>
+                                                                )}
+                                                            </td>
                                                             {rat && <td style={{ opacity: rIdx < visibleRows ? 1 : 0, transition: !isStreaming ? 'none' : 'opacity 0.3s 0.2s' }}>{hasStreamed ? rat : (typingTexts[`${rIdx}-rationale`] || rat)}</td>}
                                                         </StreamingRow>
                                                     );
@@ -401,29 +496,37 @@ const CoreAdjacency = ({
                     </div>
                     {expandedSections.growthVectorCategorization && (
                         <div className="table-container">
-                            {Object.entries(data.growthVectorCategorization).map(([cat, items]) => {
-                                if (!items?.length) return null;
-                                return (
-                                    <div key={cat}>
-                                        <h6 style={{ margin: '1rem 0 0.5rem 0', color: '#2c5282' }}>{formatLabel(cat)}</h6>
-                                        <table className="data-table">
-                                            <tbody>
-                                                {items.map((item, idx) => {
-                                                    const rIdx = indices.vectors[cat][idx];
-                                                    const vec = typeof item === 'string' ? item : item.vector || '';
-                                                    const desc = typeof item === 'object' ? item.description : '';
-                                                    return (
-                                                        <StreamingRow key={idx} isVisible={rIdx < visibleRows} isLast={rIdx === visibleRows - 1 && isStreaming} lastRowRef={lastRowRef} isStreaming={isStreaming}>
-                                                            <td style={{ width: '40%' }}>{hasStreamed ? vec : (typingTexts[`${rIdx}-vector`] || vec)}</td>
-                                                            <td style={{ opacity: rIdx < visibleRows ? 1 : 0, transition: !isStreaming ? 'none' : 'opacity 0.3s 0.2s' }}>{hasStreamed ? desc : (typingTexts[`${rIdx}-description`] || desc)}</td>
-                                                        </StreamingRow>
-                                                    );
-                                                })}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                );
-                            })}
+                            <table className="data-table">
+                                <tbody>
+                                    {Object.entries(data.growthVectorCategorization).map(([cat, items]) => {
+                                        if (!items?.length) return null;
+                                        return (
+                                            <tr key={cat}>
+                                                <td style={{ width: '30%' }}><span className="status-badge high-intensity">{formatLabel(cat)}</span></td>
+                                                <td>
+                                                    <ul style={{ margin: 0, paddingLeft: '1.5rem' }}>
+                                                        {items.map((item, idx) => {
+                                                            const rIdx = indices.vectors[cat][idx];
+                                                            const vec = typeof item === 'string' ? item : item.vector || '';
+                                                            const desc = typeof item === 'object' ? item.description : '';
+                                                            return (
+                                                                <li key={idx} ref={rIdx === visibleRows - 1 && isStreaming ? lastRowRef : null} style={{ opacity: rIdx < visibleRows ? 1 : 0, transition: !isStreaming ? 'none' : 'opacity 0.3s' }}>
+                                                                    <strong>{hasStreamed ? resolveOpportunity(vec) : (typingTexts[`${rIdx}-vector`] || resolveOpportunity(vec))}</strong>
+                                                                    {desc && (
+                                                                        <span style={{ display: 'block', fontSize: '0.9em', color: '#6b7280', marginTop: '2px' }}>
+                                                                            {hasStreamed ? desc : (typingTexts[`${rIdx}-description`] || desc)}
+                                                                        </span>
+                                                                    )}
+                                                                </li>
+                                                            );
+                                                        })}
+                                                    </ul>
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
+                                </tbody>
+                            </table>
                         </div>
                     )}
                 </div>
@@ -433,7 +536,7 @@ const CoreAdjacency = ({
                 { key: 'missingInformation', label: 'Missing_Information', icon: AlertTriangle, iKey: 'missingInfo' },
                 { key: 'recommendedNextSteps', label: 'Recommended_Next_Steps', icon: Lightbulb, iKey: 'nextSteps' }
             ].map(conf => (
-                data[conf.key]?.length > 0 && (
+                (data[conf.key] && (Array.isArray(data[conf.key]) ? data[conf.key].length > 0 : Object.values(data[conf.key]).some(arr => arr?.length > 0))) && (
                     <div className="section-container" key={conf.key}>
                         <div className="section-header" onClick={() => toggleSection(conf.key)}>
                             <h5><conf.icon size={20} style={{ marginRight: '8px' }} />{t(conf.label)}</h5>
@@ -443,14 +546,35 @@ const CoreAdjacency = ({
                             <div className="table-container">
                                 <table className="data-table">
                                     <tbody>
-                                        {data[conf.key].map((item, idx) => {
-                                            const rIdx = indices[conf.iKey][idx];
-                                            return (
-                                                <StreamingRow key={idx} isVisible={rIdx < visibleRows} isLast={rIdx === visibleRows - 1 && isStreaming} lastRowRef={lastRowRef} isStreaming={isStreaming}>
-                                                    <td>{hasStreamed ? item : (typingTexts[`${rIdx}-content`] || item)}</td>
-                                                </StreamingRow>
-                                            );
-                                        })}
+                                        {(() => {
+                                            const items = [];
+                                            if (Array.isArray(data[conf.key])) {
+                                                data[conf.key].forEach((item, idx) => {
+                                                    const rIdx = indices[conf.iKey][idx];
+                                                    items.push(
+                                                        <StreamingRow key={idx} isVisible={rIdx < visibleRows} isLast={rIdx === visibleRows - 1 && isStreaming} lastRowRef={lastRowRef} isStreaming={isStreaming}>
+                                                            <td>{hasStreamed ? item : (typingTexts[`${rIdx}-content`] || item)}</td>
+                                                        </StreamingRow>
+                                                    );
+                                                });
+                                            } else if (typeof data[conf.key] === 'object') {
+                                                let offset = 0;
+                                                Object.entries(data[conf.key]).forEach(([cat, catItems]) => {
+                                                    if (Array.isArray(catItems)) {
+                                                        catItems.forEach((item, idx) => {
+                                                            const rIdx = indices[conf.iKey][offset + idx];
+                                                            items.push(
+                                                                <StreamingRow key={`${cat}-${idx}`} isVisible={rIdx < visibleRows} isLast={rIdx === visibleRows - 1 && isStreaming} lastRowRef={lastRowRef} isStreaming={isStreaming}>
+                                                                    <td><strong>{formatLabel(cat)}:</strong> {hasStreamed ? item : (typingTexts[`${rIdx}-content`] || item)}</td>
+                                                                </StreamingRow>
+                                                            );
+                                                        });
+                                                        offset += catItems.length;
+                                                    }
+                                                });
+                                            }
+                                            return items;
+                                        })()}
                                     </tbody>
                                 </table>
                             </div>

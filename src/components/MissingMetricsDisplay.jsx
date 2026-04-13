@@ -104,24 +104,24 @@ const MissingMetricsDisplay = ({
     return metrics;
   }, []);
 
-  if (!documentInfo || documentInfo.has_document === false) {
-    return null;
-  }
+  const hasDocument = documentInfo && documentInfo.has_document;
 
   const currentTemplate = TEMPLATE_METRICS[currentTemplateType];
 
   return (
     <div className={`missing-metrics-display ${className}`}>
       {/* Header */}
-      <div className="header">
-        <AlertTriangle size={18} />
-        <span>{t("Template_Requirements_Missing")}</span>
+      <div className="header" style={{ color: hasDocument ? '#dc2626' : '#2563eb' }}>
+        {hasDocument ? <AlertTriangle size={18} /> : <Info size={18} />}
+        <span>{hasDocument ? t("Template_Requirements_Missing") : "Financial Template Requirements"}</span>
       </div>
 
       {/* Main Message */}
       <div className="message-box">
-        <div className="main-message">
-          {t("Some_required_metrics_are_missing_for_your_selected_template.")}
+        <div className="main-message" style={{ color: hasDocument ? '#991b1b' : '#1e40af' }}>
+          {hasDocument 
+            ? t("Some_required_metrics_are_missing_for_your_selected_template.") 
+            : "Please upload a financial document follows the requirements below to unlock detailed insights."}
         </div> 
       </div>
 

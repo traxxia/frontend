@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import axios from 'axios';
 import { useAuthStore } from './authStore';
-import { AnalysisApiService } from '../services/analysisApiService';
+import { AnalysisApiService, PHASE_API_CONFIG } from '../services/analysisApiService';
 import { useUIStore } from './uiStore';
 
 const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
@@ -206,14 +206,14 @@ export const useAnalysisStore = create((set, get) => ({
 
   regeneratePhase: async (phase, questions, userAnswers, businessId, onToast) => {
     if (!businessId || !phase) return;
+
+    // Set both the phase and all its constituent analysis types as regenerating
+    const phaseTypes = PHASE_API_CONFIG[phase] || [];
+    const regenerationUpdates = { [phase]: true };
+    phaseTypes.forEach(type => { regenerationUpdates[type] = true; });
+
     set((state) => ({ 
-      regenerating: { ...state.regenerating, [phase]: true },
-      ...(phase === 'financial' ? {
-        regenerating: { 
-          ...state.regenerating, 
-          profitability: true, growthTracker: true, liquidity: true, investment: true, leverage: true 
-        }
-      } : {})
+      regenerating: { ...state.regenerating, ...regenerationUpdates }
     }));
 
     try {
@@ -234,6 +234,11 @@ export const useAnalysisStore = create((set, get) => ({
           stateSetters[setterName] = (data) => get().setAnalysisData(type, data);
         }
       });
+      
+      // Include uploaded file if available in the arguments or global context
+      if (userAnswers && userAnswers.uploadedFile) {
+        stateSetters.uploadedFile = userAnswers.uploadedFile;
+      }
 
       await apiService.handlePhaseCompletion(
         phase,
@@ -247,18 +252,44 @@ export const useAnalysisStore = create((set, get) => ({
       console.error(`Failed to regenerate phase ${phase}:`, err);
       onToast?.(`Failed to regenerate ${phase} phase.`, "error");
     } finally {
+      const phaseTypes = PHASE_API_CONFIG[phase] || [];
+      const completionUpdates = { [phase]: false };
+      phaseTypes.forEach(type => { completionUpdates[type] = false; });
+
       set((state) => ({ 
-        regenerating: { ...state.regenerating, [phase]: false }
+        regenerating: { ...state.regenerating, ...completionUpdates }
       }));
     }
   },
 
-  regenerateIndividualAnalysis: async (type, questions, userAnswers, businessId, onToast) => {
+  regenerateIndividualAnalysis: async (type, questions, userAnswers, businessId, onToast, uploadedFile = null) => {
     if (!businessId || !type) return;
     set((state) => ({ regenerating: { ...state.regenerating, [type]: true } }));
     try {
       const apiService = getApiService();
-      const result = await apiService.callAnalysisEndpoint(type, { questions, userAnswers, businessId });
+      
+      // Prepare stateSetters for the individual analysis
+      const stateSetters = {};
+      const setterName = apiService.getStateSetterName(type);
+      if (setterName) {
+        stateSetters[setterName] = (data) => get().setAnalysisData(type, data);
+      }
+      
+      // Include uploaded file if available
+      if (uploadedFile) {
+        stateSetters.uploadedFile = uploadedFile;
+      } else if (userAnswers && userAnswers.uploadedFile) {
+        stateSetters.uploadedFile = userAnswers.uploadedFile;
+      }
+
+      const payload = { 
+        questions, 
+        userAnswers, 
+        selectedBusinessId: businessId,
+        stateSetters 
+      };
+
+      const result = await apiService.callAnalysisEndpoint(type, payload);
       get().setAnalysisData(type, result.data);
       await apiService.saveAnalysisToBackend(result.data, type, businessId);
       onToast?.(`${type} regenerated successfully!`, "success");

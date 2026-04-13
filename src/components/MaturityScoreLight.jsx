@@ -360,6 +360,17 @@ const MaturityScore = ({
     return () => { if (streamingIntervalRef.current) clearInterval(streamingIntervalRef.current); };
   }, [cardId, data, isRegenerating, streamingManager, totalRowsCap, typeText, getTransformedData, isMaturityDataIncomplete]);
 
+  if (isRegenerating) {
+    return (
+      <div className="maturity-container">
+        <div className="loading-state">
+          <Loader size={24} className="loading-spinner" />
+          <span>Regenerating maturity analysis...</span>
+        </div>
+      </div>
+    );
+  }
+
   if (!data || isMaturityDataIncomplete(data)) {
     return (
       <div className="maturity-score-container">
@@ -388,7 +399,7 @@ const MaturityScore = ({
           <path d="M 20 100 A 80 80 0 0 1 180 100" fill="none" stroke={getScoreColor(transformedData.overallScore)} strokeWidth="12" strokeDasharray={`${(transformedData.overallScore / 5) * 251.3} 251.3`} strokeLinecap="round" />
         </svg>
         <div className="gauge-content">
-          <div className="score-number">{transformedData.overallScore}<span className="score-max"></span></div>
+          <div className="score-number">{transformedData.overallScore}<span className="score-max"> / 5</span></div>
           <div className="score-level" style={{ color: getLevelColor(transformedData.level) }}>{transformedData.level}</div>
           {transformedData.maturityProfile && <div className="maturity-profile">{transformedData.maturityProfile}</div>}
         </div>
@@ -624,49 +635,55 @@ const MaturityScore = ({
           {expandedSections.progression ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
         </div>
         {expandedSections.progression !== false && (
-          <div className="progression-grid">
-            <div className="progression-summary">
-              <StreamingRow isVisible={currentRowIndex < visibleRows} isLast={currentRowIndex === visibleRows - 1 && isStreaming} lastRowRef={lastRowRef} isStreaming={isStreaming}>
-                <div className="progression-item">
-                  <div className="label">{t('Target_Maturity')}</div>
-                  <div className="value">{hasStreamed ? nextLevel.target : (typingTexts[`${currentRowIndex}-target`] || nextLevel.target)}</div>
-                </div>
-              </StreamingRow>
-              <StreamingRow isVisible={currentRowIndex + 1 < visibleRows} isLast={currentRowIndex + 1 === visibleRows - 1 && isStreaming} lastRowRef={lastRowRef} isStreaming={isStreaming}>
-                <div className="progression-item">
-                  <div className="label">{t('Timeline')}</div>
-                  <div className="value">{hasStreamed ? nextLevel.estimatedTimeframe : (typingTexts[`${currentRowIndex + 1}-timeline`] || nextLevel.estimatedTimeframe)}</div>
-                </div>
-              </StreamingRow>
-              {nextLevel.investment && (
-                <StreamingRow isVisible={currentRowIndex + 2 < visibleRows} isLast={currentRowIndex + 2 === visibleRows - 1 && isStreaming} lastRowRef={lastRowRef} isStreaming={isStreaming}>
-                  <div className="progression-item">
-                    <div className="label">{t('Required_Investment')}</div>
-                    <div className="value">{hasStreamed ? nextLevel.investment : (typingTexts[`${currentRowIndex + 2}-investment`] || nextLevel.investment)}</div>
-                  </div>
+          <div className="table-container">
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>{t('Metric')}</th>
+                  <th>{t('Details')}</th>
+                </tr>
+              </thead>
+              <tbody>
+                <StreamingRow isVisible={currentRowIndex < visibleRows} isLast={currentRowIndex === visibleRows - 1 && isStreaming} lastRowRef={lastRowRef} isStreaming={isStreaming}>
+                  <td><strong>{t('Target_Maturity')}</strong></td>
+                  <td>{hasStreamed ? nextLevel.target : (typingTexts[`${currentRowIndex}-target`] || nextLevel.target)}</td>
                 </StreamingRow>
-              )}
-            </div>
+                <StreamingRow isVisible={currentRowIndex + 1 < visibleRows} isLast={currentRowIndex + 1 === visibleRows - 1 && isStreaming} lastRowRef={lastRowRef} isStreaming={isStreaming}>
+                  <td><strong>{t('Timeline')}</strong></td>
+                  <td>{hasStreamed ? nextLevel.estimatedTimeframe : (typingTexts[`${currentRowIndex + 1}-timeline`] || nextLevel.estimatedTimeframe)}</td>
+                </StreamingRow>
+                {nextLevel.investment && (
+                  <StreamingRow isVisible={currentRowIndex + 2 < visibleRows} isLast={currentRowIndex + 2 === visibleRows - 1 && isStreaming} lastRowRef={lastRowRef} isStreaming={isStreaming}>
+                    <td><strong>{t('Required_Investment')}</strong></td>
+                    <td>{hasStreamed ? nextLevel.investment : (typingTexts[`${currentRowIndex + 2}-investment`] || nextLevel.investment)}</td>
+                  </StreamingRow>
+                )}
+              </tbody>
+            </table>
+
             {nextLevel.requirements?.length > 0 && (
-              <div className="requirements-section">
+              <div className="subsection">
                 <h4>{t('Key_Requirements')}</h4>
-                <ul className="requirements-list">
-                  {nextLevel.requirements.map((req, reqIdx) => {
-                    const reqRowIndex = currentRowIndex + 2 + (nextLevel.investment ? 1 : 0) + reqIdx;
-                    const isVisible = reqRowIndex < visibleRows;
-                    return (
-                      <StreamingRow
-                        key={reqIdx}
-                        isVisible={isVisible}
-                        isLast={reqRowIndex === visibleRows - 1 && isStreaming}
-                        lastRowRef={lastRowRef}
-                        isStreaming={isStreaming}
-                      >
-                        <li>{hasStreamed ? req : (typingTexts[`${reqRowIndex}-requirement`] || req)}</li>
-                      </StreamingRow>
-                    );
-                  })}
-                </ul>
+                <table className="data-table">
+                  <tbody>
+                    {nextLevel.requirements.map((req, reqIdx) => {
+                      const reqRowIndex = currentRowIndex + 2 + (nextLevel.investment ? 1 : 0) + reqIdx;
+                      const isVisible = reqRowIndex < visibleRows;
+                      return (
+                        <StreamingRow
+                          key={reqIdx}
+                          isVisible={isVisible}
+                          isLast={reqRowIndex === visibleRows - 1 && isStreaming}
+                          lastRowRef={lastRowRef}
+                          isStreaming={isStreaming}
+                        >
+                          <td style={{ width: '40px', textAlign: 'center' }}><strong>{reqIdx + 1}</strong></td>
+                          <td>{hasStreamed ? req : (typingTexts[`${reqRowIndex}-requirement`] || req)}</td>
+                        </StreamingRow>
+                      );
+                    })}
+                  </tbody>
+                </table>
               </div>
             )}
           </div>

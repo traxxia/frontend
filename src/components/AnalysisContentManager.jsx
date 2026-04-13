@@ -107,7 +107,7 @@ const MemoizedAnalysisCard = React.memo(
               </div>
             ) : (isLoading || isRegenerating) && !hasData ? (
               <div className="loading-placeholder">
-                <Loader className="animate-spin" size={24} />
+                <Loader className="antigravity-rotating" size={24} />
                 <p>Generating Insight...</p>
               </div>
             ) : (
@@ -507,8 +507,8 @@ const AnalysisContentManager = (props) => {
   const createSimpleRegenerationHandler = useCallback((analysisKey) => () => {
     const cardId = analysisKey.replace(/([A-Z])/g, '-$1').toLowerCase();
     streamingManager.startStreaming(cardId);
-    regenerateIndividualAnalysis(analysisKey, questions, userAnswers, selectedBusinessId, props.showToastMessage);
-  }, [streamingManager, regenerateIndividualAnalysis, questions, userAnswers, selectedBusinessId, props.showToastMessage]);
+    regenerateIndividualAnalysis(analysisKey, questions, userAnswers, selectedBusinessId, props.showToastMessage, props.uploadedFileForAnalysis);
+  }, [streamingManager, regenerateIndividualAnalysis, questions, userAnswers, selectedBusinessId, props.showToastMessage, props.uploadedFileForAnalysis]);
 
   const renderAnalysisCard = useCallback((analysisKey, config) => {
     const dataMap = {
@@ -735,15 +735,21 @@ const AnalysisContentManager = (props) => {
     );
   }
 
-  const isAnalysisRegenerating = props.isAnalysisRegenerating || false;
-  const isStrategicRegenerating = props.isStrategicRegenerating || false;
+  const financialAnalyses = ['profitabilityAnalysis', 'growthTracker', 'liquidityEfficiency', 'investmentPerformance', 'leverageRisk'];
+  const isFinancialRegenerating = financialAnalyses.some(type => isAnalysisLoading(type)) || isTypeRegenerating('financial');
+  const isMainAnalysisRegenerating = ['swot', 'purchaseCriteria', 'loyaltyNPS', 'porters', 'pestel', 'fullSwot', 'competitiveAdvantage', 'expandedCapability', 'strategicRadar', 'productivityMetrics', 'maturityScore', 'competitiveLandscape', 'coreAdjacency'].some(type => isAnalysisLoading(type)) || isTypeRegenerating('initial') || isTypeRegenerating('essential') || isTypeRegenerating('advanced');
+  const isStrategicRegLocal = isAnalysisLoading('strategic') || isTypeRegenerating('strategic');
 
   return (
     <div className="modern-analysis-container">
-      {(isAnalysisRegenerating || isStrategicRegenerating) && (
+      {(isFinancialRegenerating || isMainAnalysisRegenerating || isStrategicRegLocal) && (
         <div className="analysis-regenerating-banner" style={{ margin: '10px 0' }}>
-          <Loader size={16} className="spinner" />
-          <span>{t("Regenerating Insights...")}</span>
+          <Loader size={16} className="antigravity-rotating" />
+          <span>
+            {isFinancialRegenerating 
+              ? t("Regenerating financial insights like profitability, growth tracker, liquidity, investment performance, leverage and risk insight...")
+              : t("Generating all Insights & STRATEGIC analysis...")}
+          </span>
         </div>
       )}
       <div className="six-cs-framework-overview">

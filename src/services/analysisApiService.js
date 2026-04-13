@@ -349,9 +349,11 @@ export class AnalysisApiService {
       });
 
       const data = await response.json();
+      const actualBusinessId = payload.businessId || payload.selectedBusinessId;
 
-      if (response.ok && payload.selectedBusinessId) {
-        projectsCache.delete(`projects-${payload.selectedBusinessId}`);
+      if (response.ok && actualBusinessId) {
+        projectsCache.delete(`projects-${actualBusinessId}`);
+        kickstartRequestCache.delete(`kickstart-${actualBusinessId}`);
       }
 
       if (!response.ok) {
@@ -467,11 +469,17 @@ export class AnalysisApiService {
       });
 
       if (!response.ok) {
-        console.warn(`Financial document download failed: ${response.status} ${response.statusText}`);
+        // Log more details if possible
+        const errorText = await response.text().catch(() => 'No error body');
+        console.warn(`Financial document download failed (${response.status}): ${errorText}`);
         return null;
       }
 
       const blob = await response.blob();
+      if (!blob || blob.size === 0) {
+        console.warn('Downloaded financial document blob is empty');
+        return null;
+      }
 
       return blob;
 
@@ -595,12 +603,27 @@ export class AnalysisApiService {
 
         // Try backend-saved financial document if not uploaded
         if (!fileToUpload && selectedBusinessId) {
+          console.log(`No uploaded file provided in state, fetching saved document for business: ${selectedBusinessId}`);
           documentInfo = await this.fetchFinancialDocument(selectedBusinessId);
           if (documentInfo) {
+            console.log(`Found document metadata: ${documentInfo.filename}, downloading...`);
             const documentBlob = await this.downloadFinancialDocument(selectedBusinessId);
             if (documentBlob) {
               fileToUpload = await this.createFileFromDocument(documentBlob, documentInfo);
+              if (fileToUpload) {
+                console.log(`Successfully prepared file for analysis payload: ${fileToUpload.name} (${fileToUpload.size} bytes)`);
+              }
+            } else {
+              console.warn('Failed to download document blob from backend');
             }
+          } else {
+            console.info('No financial document found on backend for this business');
+          }
+        } else if (fileToUpload) {
+          console.log(`Using provided uploaded file for analysis: ${fileToUpload.name} (${fileToUpload.size} bytes)`);
+          // Ensure we have document metadata for the source header if it's missing
+          if (!documentInfo && selectedBusinessId) {
+             documentInfo = await this.fetchFinancialDocument(selectedBusinessId);
           }
         }
 

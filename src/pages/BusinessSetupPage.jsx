@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from "../hooks/useTranslation";
-import { useAuthStore, useBusinessStore, useUIStore, useAnalysisStore } from "../store";
+import { useAuthStore, useBusinessStore, useUIStore, useAnalysisStore, useProjectStore } from "../store";
 import { useShallow } from 'zustand/react/shallow';
 
 import MenuBar from "../components/MenuBar";
@@ -135,7 +135,7 @@ const BusinessSetupPage = () => {
   const canRegenerate = !["viewer"].includes(loggedInRole);
   const businessStatus = currentBusiness?.status || "";
   const isLaunchedStatus = businessStatus === "launched";
-  const [uploadedFileForAnalysis] = useState(null);
+  const [uploadedFileForAnalysis, setUploadedFileForAnalysis] = useState(null);
   const [hasUploadedDocument, setHasUploadedDocument] = useState(false);
   const [highlightedCard, setHighlightedCard] = useState(null);
   const [expandedCards, setExpandedCards] = useState(new Set());
@@ -218,8 +218,8 @@ const BusinessSetupPage = () => {
   })));
 
   // Regenerating flag aliases
-  const isAnalysisRegenerating = isTypeRegenerating('swot') || isTypeRegenerating('purchaseCriteria') || isTypeRegenerating('loyaltyNPS') || isTypeRegenerating('porters') || isTypeRegenerating('pestel');
-  const isStrategicRegenerating = isTypeRegenerating('strategic');
+  const isAnalysisRegenerating = isTypeRegenerating('swot') || isTypeRegenerating('purchaseCriteria') || isTypeRegenerating('loyaltyNPS') || isTypeRegenerating('porters') || isTypeRegenerating('pestel') || isTypeRegenerating('initial') || isTypeRegenerating('essential') || isTypeRegenerating('advanced');
+  const isStrategicRegenerating = isTypeRegenerating('strategic') || isTypeRegenerating('initial') || isTypeRegenerating('essential') || isTypeRegenerating('advanced');
   const isFullSwotRegenerating = isTypeRegenerating('fullSwot');
   const isCompetitiveAdvantageRegenerating = isTypeRegenerating('competitiveAdvantage');
   const isExpandedCapabilityRegenerating = isTypeRegenerating('expandedCapability');
@@ -635,12 +635,25 @@ const BusinessSetupPage = () => {
     return 'initial';
   };
 
-  const handleRegeneratePhase = async (phaseOverride = null, alsoRegenerateStrategic = false) => {
+  const handleRegeneratePhase = async (phaseOverride = null, alsoRegenerateStrategic = false, options = {}) => {
     const targetPhase = phaseOverride || getCurrentPhase();
-    await regeneratePhase(targetPhase, questions, userAnswers, selectedBusinessId, showToastMessage);
+    
+    // Merge uploadedFile from options into userAnswers context for the store
+    const mergedAnswers = { ...userAnswers };
+    if (options?.uploadedFile) {
+      mergedAnswers.uploadedFile = options.uploadedFile;
+    } else if (uploadedFileForAnalysis) {
+      mergedAnswers.uploadedFile = uploadedFileForAnalysis;
+    }
+
+    await regeneratePhase(targetPhase, questions, mergedAnswers, selectedBusinessId, showToastMessage);
     if (alsoRegenerateStrategic && targetPhase !== 'advanced') {
       await handleStrategicAnalysisRegenerate(true);
     }
+  };
+
+  const setUploadedFile = (file) => {
+    setUploadedFileForAnalysis(file);
   };
 
   const loadExistingAnalysisData = useCallback((phaseAnalysisArray) => {
@@ -675,7 +688,7 @@ const BusinessSetupPage = () => {
     isRegeneratingRef.current = true;
     try {
       if (options?.onlyFinancial) {
-        await handleRegeneratePhase('financial', false, true);
+        await handleRegeneratePhase('financial', false, options);
         return;
       }
 
@@ -867,7 +880,11 @@ const BusinessSetupPage = () => {
     }
   };
 
+  const clearProjectCache = useProjectStore(state => state.clearCache);
+
   const handleKickstartSuccess = () => {
+    // Clear project-store caches so the Projects page fetches fresh data
+    clearProjectCache(selectedBusinessId);
     setShowProjectsTab(true);
     setActiveTab("projects");
   };
@@ -1256,7 +1273,16 @@ const BusinessSetupPage = () => {
                     {showProjectsTab && hasProjectAccess && (
                       <button
                         className={`mobile-menu-item ${activeTab === "projects" ? "active" : ""}`}
-                        onClick={() => { setActiveTab("projects"); closeModal('mobileMenu'); }}
+                        onClick={() => {
+                          useProjectStore.getState().clearCache(selectedBusinessId);
+                          if (activeTab === 'projects') {
+                            useProjectStore.getState().checkAllAccess(selectedBusinessId);
+                            useProjectStore.getState().fetchTeamRankings(selectedBusinessId);
+                          } else {
+                            setActiveTab('projects');
+                          }
+                          closeModal('mobileMenu');
+                        }}
                       >
                         <Briefcase size={18} />
                         <span>{t("Projects")}</span>
@@ -1385,7 +1411,16 @@ const BusinessSetupPage = () => {
                                 {showProjectsTab && hasProjectAccess && (
                                   <button 
                                     className={`dropdown-item ${activeTab === 'projects' ? 'active' : ''}`} 
-                                    onClick={() => { setActiveTab('projects'); setActiveNavDropdown(null); }}
+                                    onClick={() => {
+                                      useProjectStore.getState().clearCache(selectedBusinessId);
+                                      if (activeTab === 'projects') {
+                                        useProjectStore.getState().checkAllAccess(selectedBusinessId);
+                                        useProjectStore.getState().fetchTeamRankings(selectedBusinessId);
+                                      } else {
+                                        setActiveTab('projects');
+                                      }
+                                      setActiveNavDropdown(null);
+                                    }}
                                   >
                                     <Briefcase size={14} />
                                     <span>{t("Projects")}</span>
@@ -1529,10 +1564,11 @@ const BusinessSetupPage = () => {
                               );
                             }}
                             onAnalysisRegenerate={handleRegenerateAllAnalysis}
+                            onUploadedFileUpdate={setUploadedFile}
                             isAnalysisRegenerating={isAnalysisRegenerating}
                             isStrategicRegenerating={isStrategicRegenerating}
-                            isFinancialRegeneratingProp={isProfitabilityAnalysisRegenerating || isGrowthTrackerRegenerating || isLiquidityEfficiencyRegenerating || isInvestmentPerformanceRegenerating || isLeverageRiskRegenerating}
-                            isEssentialPhaseGenerating={isFullSwotRegenerating || isCompetitiveAdvantageRegenerating || isExpandedCapabilityRegenerating || isStrategicRadarRegenerating || isProductivityRegenerating || isMaturityRegenerating}
+                            isFinancialRegeneratingProp={isProfitabilityAnalysisRegenerating || isGrowthTrackerRegenerating || isLiquidityEfficiencyRegenerating || isInvestmentPerformanceRegenerating || isLeverageRiskRegenerating || isTypeRegenerating('financial')}
+                            isEssentialPhaseGenerating={isFullSwotRegenerating || isCompetitiveAdvantageRegenerating || isExpandedCapabilityRegenerating || isStrategicRadarRegenerating || isProductivityRegenerating || isMaturityRegenerating || isTypeRegenerating('initial') || isTypeRegenerating('essential') || isTypeRegenerating('advanced')}
                             highlightedMissingQuestions={highlightedMissingQuestions}
                             onClearHighlight={() => setHighlightedMissingQuestions(null)}
                             isLaunchedStatus={isLaunchedStatus}
@@ -1720,6 +1756,7 @@ const BusinessSetupPage = () => {
 
 
                         onAnalysisRegenerate={handleRegenerateAllAnalysis}
+                        onUploadedFileUpdate={setUploadedFile}
                         isAnalysisRegenerating={isAnalysisRegenerating}
                         isStrategicRegenerating={isStrategicRegenerating}
                         isEssentialPhaseGenerating={isFullSwotRegenerating || isCompetitiveAdvantageRegenerating || isExpandedCapabilityRegenerating || isStrategicRadarRegenerating || isProductivityRegenerating || isMaturityRegenerating}
@@ -1829,6 +1866,7 @@ const BusinessSetupPage = () => {
                       }}
 
                       onAnalysisRegenerate={handleRegenerateAllAnalysis}
+                      onUploadedFileUpdate={setUploadedFile}
                       isAnalysisRegenerating={isAnalysisRegenerating}
                       isStrategicRegenerating={isStrategicRegenerating}
                       isEssentialPhaseGenerating={isFullSwotRegenerating || isCompetitiveAdvantageRegenerating || isExpandedCapabilityRegenerating || isStrategicRadarRegenerating || isProductivityRegenerating || isMaturityRegenerating}

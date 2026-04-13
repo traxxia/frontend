@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useTranslation } from "../hooks/useTranslation";
 import { Container } from "react-bootstrap";
 import axios from "axios";
@@ -95,7 +95,8 @@ const ProjectsSection = ({
     launchProjects,
     lockRanking,
     reviewProject: reviewProjectAction,
-    adhocUpdateProject: adhocUpdateProjectAction
+    adhocUpdateProject: adhocUpdateProjectAction,
+    clearCache
   } = useProjectStore();
 
   const { addToast, openModal, closeModal, isModalOpen } = useUIStore();
@@ -128,6 +129,7 @@ const ProjectsSection = ({
   }, [activeView]);
 
   const location = useLocation();
+  const navigate = useNavigate();
   const [viewMode, setViewMode] = useState(location.state?.viewMode || "projects"); // "projects" or "ranking"
   const [currentProject, setCurrentProject] = useState(null);
   
@@ -241,9 +243,14 @@ const ProjectsSection = ({
     completedDetails: 0,
   };
 
-  const normalizeId = (id) => String(id);
+  const normalizeId = (id) => {
+    if (!id) return '';
+    return typeof id === 'object' ? String(id) : String(id);
+  };
+
   const rankMap = useMemo(() => (projects || []).reduce((acc, p) => {
-    acc[normalizeId(p._id)] = p.rank;
+    const id = normalizeId(p._id);
+    if (id) acc[id] = p.rank;
     return acc;
   }, {}), [projects]);
 
@@ -416,6 +423,7 @@ const ProjectsSection = ({
       if (success) {
         setLaunched(true);
         addToast({ message: t("Projects_launched_Ready_for_execution."), type: "success" });
+        clearCache(selectedBusinessId);
         await loadProjects();
         setSelectedProjectIds([]); // Clear selection
       } else {
@@ -447,6 +455,7 @@ const ProjectsSection = ({
     const { success, error } = await deleteProject(projectId);
     if (success) {
       handleShowToast("Project killed successfully!", "success");
+      clearCache(selectedBusinessId);
       await loadProjects();
     } else {
       handleShowToast(error || "Failed to kill project.", "error");
@@ -501,6 +510,7 @@ const ProjectsSection = ({
       if (success) {
         handleShowToast("Project created successfully!", "success");
         await unlockAllFieldsSafe(currentProject?._id);
+        clearCache(selectedBusinessId);
         await loadProjects();
         handleBackToList();
       } else {
@@ -524,6 +534,7 @@ const ProjectsSection = ({
       if (success) {
         handleShowToast("Project updated successfully!", "success");
         await unlockAllFieldsSafe(currentProject?._id);
+        clearCache(selectedBusinessId);
         await loadProjects();
         handleBackToList();
       } else {
@@ -576,6 +587,7 @@ const ProjectsSection = ({
 
       if (success) {
         handleShowToast(reviewType === "review" ? "Review submitted successfully!" : "Update submitted successfully!", "success");
+        clearCache(selectedBusinessId);
         await loadProjects();
       } else {
         handleShowToast(error || "Failed to process update", "error");
@@ -669,6 +681,8 @@ const ProjectsSection = ({
               setViewMode("projects");
               setShowRankScreen(false);
               setShowTeamRankings(false);
+              clearCache(selectedBusinessId);
+              loadProjects();
             }}
             className={`view-mode-tab ${viewMode === "projects" ? "active" : ""}`}
             style={{
@@ -705,6 +719,8 @@ const ProjectsSection = ({
                 setShowRankScreen(true);
                 setShowTeamRankings(false);
               }
+              clearCache(selectedBusinessId);
+              loadProjects();
             }}
             className={`view-mode-tab ${viewMode === "ranking" ? "active" : ""}`}
             style={{
@@ -778,7 +794,7 @@ const ProjectsSection = ({
               )}
             </div>
 
-            {isLoading || isRankingsLoading ? (
+            {isLoading && projects.length === 0 ? (
               <div className="d-flex justify-content-center align-items-center py-5" style={{ minHeight: "300px" }}>
                 <div className="spinner-border text-primary" role="status">
                   <span className="visually-hidden">Loading...</span>
@@ -791,9 +807,10 @@ const ProjectsSection = ({
                     show={showRankScreen}
                     projects={rankedProjects}
                     onLockRankings={handleLockProjectRanking}
-                    onRankSaved={() => {
-                      refreshTeamRankings();
-                      if (lockSummary.total_users === 0) {
+                    onRankSaved={async () => {
+                      clearCache(selectedBusinessId);
+                      await refreshTeamRankings();
+                      if (useProjectStore.getState().lockSummary.total_users === 0) {
                         setViewMode("projects");
                         setShowRankScreen(false);
                         setShowTeamRankings(false);

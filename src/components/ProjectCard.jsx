@@ -68,7 +68,7 @@ const ProjectCard = ({
 
 
   return (
-    <div className={`project-card ${project.status === "Killed" ? "killed" : ""} ${(project.status?.toLowerCase() === "launched" ? "draft" : (project.status?.toLowerCase().replace(" ", "-") || "draft"))}-border`}>
+    <div className={`project-card ${project.status === "Killed" ? "killed" : ""} ${((project.status?.toLowerCase() === "active" || project.launch_status === "launched") ? "active" : (project.status?.toLowerCase().replace(" ", "-") || "draft"))}-border`}>
       <div className="project-header">
         <div className="project-header-content">
           {isAdmin && !isArchived && getUserLimits().project && 
@@ -88,7 +88,7 @@ const ProjectCard = ({
             />
           )}
 
-          {rankMap && rankMap[String(project._id)] !== null && rankMap[String(project._id)] !== undefined && !isViewer && (
+          {(rankMap?.[String(project?._id)] !== null && rankMap?.[String(project?._id)] !== undefined) && !isViewer && (
             <div className="project-rank-badge">
               Rank {rankMap[String(project._id)]}
             </div>

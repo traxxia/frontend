@@ -6,8 +6,10 @@ import { Target, Loader, TrendingUp, TrendingDown, AlertTriangle, Zap, ChevronDo
 import { useTranslation } from "../hooks/useTranslation";
 import { useAuthStore, useAnalysisStore } from "../store";
 import AnalysisEmptyState from './AnalysisEmptyState';
-import AnalysisError from './AnalysisError';
 import { checkMissingQuestionsAndRedirect, ANALYSIS_TYPES } from '../services/missingQuestionsService';
+import { useAutoScroll } from '../hooks/useAutoScroll';
+import { StreamingRow } from './StreamingManager';
+import { STREAMING_CONFIG } from '../hooks/streamingConfig';
 
 const SwotAnalysis = ({
   analysisResult: propAnalysisResult,
@@ -20,9 +22,11 @@ const SwotAnalysis = ({
   selectedBusinessId,
   onRedirectToBrief,
   hideImproveButton = false,
+  streamingManager,
+  cardId,
+  isExpanded = true,
 }) => {
   const { t } = useTranslation();
-  const token = useAuthStore(state => state.token);
   
   const {
     swotAnalysis: storeAnalysisResult,
@@ -37,6 +41,8 @@ const SwotAnalysis = ({
   const [expandedSections, setExpandedSections] = useState({
     swotAnalysis: true
   });
+  
+  const [visibleRows, setVisibleRows] = useState(0);
 
   const handleRedirectToBrief = (missingQuestionsData = null) => {
     if (onRedirectToBrief) {
@@ -57,13 +63,6 @@ const SwotAnalysis = ({
     );
   };
 
-  const toggleSection = (sectionKey) => {
-    setExpandedSections(prev => ({
-      ...prev,
-      [sectionKey]: !prev[sectionKey]
-    }));
-  };
-
   const handleRegenerate = async () => {
     if (onRegenerate) {
       try {
@@ -75,11 +74,6 @@ const SwotAnalysis = ({
     } else {
       await regenerateIndividualAnalysis('swot', questions, userAnswers, selectedBusinessId);
     }
-  };
-
-  const handleRetry = () => {
-    setErrorMessage('');
-    handleRegenerate();
   };
 
   const isSwotDataIncomplete = (data) => {
@@ -141,37 +135,6 @@ const SwotAnalysis = ({
     }
   };
 
-  if (isRegenerating) {
-    return (
-      <div className="porters-container">
-        <div className="loading-state">
-          <Loader size={24} className="loading-spinner" />
-          <span>Regenerating SWOT Analysis...</span>
-        </div>
-      </div>
-    );
-  }
-
-  if (errorMessage || (isSwotDataIncomplete(analysisResult) && Object.keys(userAnswers).length > 0)) {
-    return (
-      <div className="porters-container">
-        <AnalysisEmptyState
-          analysisType="swot"
-          analysisDisplayName="SWOT Analysis"
-          icon={Target}
-          onImproveAnswers={handleMissingQuestionsCheck}
-          onRegenerate={handleRegenerate}
-          isRegenerating={isRegenerating}
-          canRegenerate={canRegenerate}
-          userAnswers={userAnswers}
-          minimumAnswersRequired={3}
-          showImproveButton={false}
-          showRegenerateButton={false}
-        />
-      </div>
-    );
-  }
-
   const prepareSwotTableData = () => {
     const tableData = [];
     if (swotData) {
@@ -200,6 +163,62 @@ const SwotAnalysis = ({
 
   const swotTableData = prepareSwotTableData();
 
+  // Unified streaming logic
+  useEffect(() => {
+    if (isRegenerating) {
+      setVisibleRows(0);
+    } else if (swotTableData.length > 0) {
+      // ONLY stream if specifically requested (via regenerate button)
+      if (!streamingManager?.shouldStream(cardId)) {
+        setVisibleRows(swotTableData.length);
+        return;
+      }
+
+      const interval = setInterval(() => {
+        setVisibleRows(prev => {
+          if (prev < swotTableData.length) return prev + 1;
+          clearInterval(interval);
+          streamingManager?.stopStreaming(cardId);
+          return prev;
+        });
+      }, STREAMING_CONFIG.ROW_INTERVAL);
+      return () => clearInterval(interval);
+    }
+  }, [isRegenerating, swotTableData.length, streamingManager, cardId]);
+
+  const { lastRowRef } = useAutoScroll(streamingManager, cardId, isExpanded, visibleRows);
+
+  if (isRegenerating && visibleRows === 0) {
+    return (
+      <div className="porters-container">
+        <div className="loading-state">
+          <Loader size={24} className="loading-spinner modern-animate-spin" />
+          <span>Regenerating SWOT Analysis...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (errorMessage || (isSwotDataIncomplete(analysisResult) && Object.keys(userAnswers).length > 0)) {
+    return (
+      <div className="porters-container">
+        <AnalysisEmptyState
+          analysisType="swot"
+          analysisDisplayName="SWOT Analysis"
+          icon={Target}
+          onImproveAnswers={handleMissingQuestionsCheck}
+          onRegenerate={handleRegenerate}
+          isRegenerating={isRegenerating}
+          canRegenerate={canRegenerate}
+          userAnswers={userAnswers}
+          minimumAnswersRequired={3}
+          showImproveButton={false}
+          showRegenerateButton={false}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="porters-container"
       data-analysis-type="swot"
@@ -208,39 +227,43 @@ const SwotAnalysis = ({
 
       {swotData && swotTableData.length > 0 && (
         <div className="section-container">
-          {expandedSections.swotAnalysis !== false && (
-            <div className="table-container">
-              <table className="data-table forces-table">
-                <thead>
-                  <tr>
-                    <th>Type</th>
-                    <th>Category</th>
-                    <th>Description</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {swotTableData.map((row, index) => (
-                    <tr key={index}>
-                      <td>
-                        <div className="force-name">
-                          {getSwotIcon(row.type)}
-                          <span>{row.label}</span>
-                        </div>
-                      </td>
-                      <td>
-                        <span className={`status-badge ${getSwotTypeColor(row.type)}`}>
-                          {row.label}
-                        </span>
-                      </td>
-                      <td className="implications-cell">
-                        {row.item}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
+          <div className="table-container">
+            <table className="data-table forces-table">
+              <thead>
+                <tr>
+                  <th>Type</th>
+                  <th>Category</th>
+                  <th>Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                {swotTableData.slice(0, visibleRows).map((row, index) => (
+                  <StreamingRow 
+                    key={`${row.type}-${index}`}
+                    isVisible={true}
+                    isLast={index === visibleRows - 1}
+                    lastRowRef={lastRowRef}
+                    isStreaming={streamingManager?.shouldStream(cardId)}
+                  >
+                    <td>
+                      <div className="force-name">
+                        {getSwotIcon(row.type)}
+                        <span>{row.label}</span>
+                      </div>
+                    </td>
+                    <td>
+                      <span className={`status-badge ${getSwotTypeColor(row.type)}`}>
+                        {row.label}
+                      </span>
+                    </td>
+                    <td className="implications-cell">
+                      {row.item}
+                    </td>
+                  </StreamingRow>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
     </div>

@@ -364,19 +364,6 @@
   font-weight: 500;
 }
 
-.animate-spin {
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  from {
-    transform: rotate(0deg);
-  }
-
-  to {
-    transform: rotate(360deg);
-  }
-}
 
 .modern-status-icon.completed {
   color: #3b82f6;
@@ -1082,7 +1069,7 @@
   background: white;
   border-radius: 12px;
   padding: 20px 24px;
-  margin: 10px 10px 20px 10px;
+  margin: 10px;
   border: 1px solid #e2e8f0;
   box-shadow: 0 1px 3px rgba(0,0,0,0.05);
 }

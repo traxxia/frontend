@@ -19,10 +19,10 @@ export const useProjectStore = create((set, get) => ({
   isLoading: false,
   error: null,
 
-  fetchProjects: async (businessId) => {
+  fetchProjects: async (businessId, options = {}) => {
     const token = useAuthStore.getState().token;
     if (!token || !businessId) return;
-    set({ isLoading: true, error: null });
+    if (!options.silent) set({ isLoading: true, error: null });
     try {
       const response = await axios.get(API_BASE_URL + '/api/projects', {
         headers: { Authorization: 'Bearer ' + token },
@@ -37,7 +37,7 @@ export const useProjectStore = create((set, get) => ({
       });
       return response.data;
     } catch (err) {
-      set({ error: err.response?.data?.error || err.message, isLoading: false });
+      if (!options.silent) set({ error: err.response?.data?.error || err.message, isLoading: false });
       throw err;
     }
   },
@@ -53,6 +53,7 @@ export const useProjectStore = create((set, get) => ({
 
     const fetchPromise = (async () => {
       try {
+        set({ isLoading: true });
         const response = await axios.get(API_BASE_URL + '/api/projects/check-all-access', {
           headers: { Authorization: 'Bearer ' + token },
           params: { business_id: businessId }
@@ -61,11 +62,13 @@ export const useProjectStore = create((set, get) => ({
           accessControl: {
             hasRerankAccess: response.data.has_rerank_access || false,
             projectsEditAccess: response.data.projects_edit_access || {},
-          }
+          },
+          isLoading: false
         });
         return response.data;
       } catch (err) {
         checkAllAccessCache.delete(cacheKey);
+        set({ isLoading: false });
         console.error('Error checking project access:', err);
         throw err;
       }
@@ -75,18 +78,25 @@ export const useProjectStore = create((set, get) => ({
     return fetchPromise;
   },
 
-  fetchTeamRankings: async (businessId) => {
+  fetchTeamRankings: async (businessId, options = {}) => {
     const token = useAuthStore.getState().token;
     const userId = useAuthStore.getState().userId;
     if (!token || !businessId || !userId) return;
 
     const cacheKey = `rank-${businessId}-${userId}`;
     if (teamRankingsCache.has(cacheKey)) {
-      return await teamRankingsCache.get(cacheKey);
+      const cachedData = await teamRankingsCache.get(cacheKey);
+      set({ 
+        projects: cachedData?.projects || [],
+        businessStatus: cachedData?.business_status,
+        lockSummary: cachedData?.ranking_lock_summary || { locked_users_count: 0, total_users: 0, locked_users: [] }
+      });
+      return cachedData;
     }
 
     const fetchPromise = (async () => {
       try {
+        if (!options.silent) set({ isLoading: true });
         const response = await axios.get(API_BASE_URL + `/api/projects/rank/${userId}`, {
           headers: { Authorization: 'Bearer ' + token },
           params: { business_id: businessId }
@@ -95,10 +105,12 @@ export const useProjectStore = create((set, get) => ({
           projects: response.data.projects || [],
           businessStatus: response.data.business_status,
           lockSummary: response.data.ranking_lock_summary || { locked_users_count: 0, total_users: 0, locked_users: [] },
+          ...(options.silent ? {} : { isLoading: false })
         });
         return response.data;
       } catch (err) {
         teamRankingsCache.delete(cacheKey);
+        if (!options.silent) set({ isLoading: false });
         console.error('Error fetching team rankings:', err);
         throw err;
       }
@@ -243,7 +255,12 @@ export const useProjectStore = create((set, get) => ({
       }, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      set({ aiRankings: response.data.projects || [], isLoading: false });
+      // Map aiRankings to the expected format for the store if needed
+      const persistedRankings = aiRankings.map(r => ({
+        project_id: r.project_id,
+        rank: r.rank
+      }));
+      set({ aiRankings: response.data.projects || persistedRankings, isLoading: false });
       return { success: true, data: response.data };
     } catch (err) {
       set({ error: err.response?.data?.error || err.message, isLoading: false });
@@ -465,4 +482,19 @@ export const useProjectStore = create((set, get) => ({
   clearProjects: () => set({ projects: [], selectedProject: null, teamRankings: [], aiRankings: [] }),
   projectCount: () => get().projects.length,
   getProjectById: (id) => get().projects.find(p => p._id === id || p.id === id),
+
+  // Clears all module-level API caches so the next load fetches fresh data.
+  // Call this before navigating to the Projects page after a kickstart.
+  clearCache: (businessId) => {
+    if (businessId) {
+      checkAllAccessCache.delete(`access-${businessId}`);
+      const userId = useAuthStore.getState().userId;
+      if (userId) {
+        teamRankingsCache.delete(`rank-${businessId}-${userId}`);
+      }
+    } else {
+      checkAllAccessCache.clear();
+      teamRankingsCache.clear();
+    }
+  },
 }));

@@ -13,29 +13,29 @@ code {
 }
 
 /* Global Animations */
-@keyframes spin {
+@keyframes antigravity-spin {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
 }
 
-@keyframes global-spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
-@-webkit-keyframes spin {
+@-webkit-keyframes antigravity-spin {
   from { -webkit-transform: rotate(0deg); }
   to { -webkit-transform: rotate(360deg); }
 }
 
 .animate-spin,
 .loading-spinner,
-.lucide-loader,
-.lucide-refresh-cw,
-.lucide-loader-2 {
-  animation: spin 1s linear infinite !important;
-  -webkit-animation: spin 1s linear infinite !important;
+.antigravity-rotating,
+.spinner {
   display: inline-block !important;
+  animation: antigravity-spin 1s linear infinite !important;
+  -webkit-animation: antigravity-spin 1s linear infinite !important;
+}
+
+/* Specific fix for SVG elements (like Lucide icons) to ensure they rotate around their center */
+svg.animate-spin,
+svg.loading-spinner,
+svg.antigravity-rotating,
+svg.spinner {
   transform-origin: center !important;
-  transform-box: fill-box !important;
 }

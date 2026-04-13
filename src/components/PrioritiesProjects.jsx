@@ -3,7 +3,7 @@ import { Card, Button, Form, Badge, Spinner, Modal } from "react-bootstrap";
 import { ChevronRight, ArrowRight } from "react-bootstrap-icons";
 import { Folder, CheckCircle, Rocket, Info, AlertTriangle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useAuthStore, useAnalysisStore } from "../store";
+import { useAuthStore, useAnalysisStore, useProjectStore } from "../store";
 import { useTranslation } from "../hooks/useTranslation";
 import PlanLimitModal from "./PlanLimitModal";
 import "../styles/PrioritiesProjects.css";
@@ -21,6 +21,7 @@ const PrioritiesProjects = ({ selectedBusinessId, onSuccess, onStayOnPriorities,
   const kickstartData = useAnalysisStore(state => state.kickstartData);
   const fetchKickstartData = useAnalysisStore(state => state.fetchKickstartData);
   const kickstartProject = useAnalysisStore(state => state.kickstartProject);
+  const clearProjectCache = useProjectStore(state => state.clearCache);
 
   const [selected, setSelected] = useState([]);
   const [expandedId, setExpandedId] = useState(null);
@@ -116,12 +117,14 @@ const PrioritiesProjects = ({ selectedBusinessId, onSuccess, onStayOnPriorities,
 
   const handleConfirmRedirect = useCallback(() => {
     setShowSuccessModal(false);
+    // Clear project-store caches so the Projects page fetches fresh data
+    clearProjectCache(selectedBusinessId);
     if (onSuccess) {
       onSuccess();
     } else {
       navigate(`/projects?business_id=${selectedBusinessId}`);
     }
-  }, [onSuccess, navigate, selectedBusinessId]);
+  }, [onSuccess, navigate, selectedBusinessId, clearProjectCache]);
 
   if (loading) {
     return (

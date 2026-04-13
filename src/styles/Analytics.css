@@ -5954,9 +5954,11 @@
 
  .gauge-content {
    position: absolute;
-   top: 60%;
-   transform: translate(-50%, -30%);
+   top: 50%;
+   left: 50%;
+   transform: translate(-50%, -20%);
    text-align: center;
+   width: 100%;
  }
 
  .score-number {

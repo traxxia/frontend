@@ -492,7 +492,6 @@ const ProfitabilityAnalysis = ({
           readOnly={readOnly}
           fileUploadMessage="Upload Excel or CSV files with financial data for profitability analysis"
           acceptedFileTypes=".xlsx,.xls,.csv"
-          customMessage=" ."
         />
       );
     }
