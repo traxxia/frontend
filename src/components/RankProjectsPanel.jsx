@@ -40,16 +40,16 @@ const isKilled = (p) => p?.status?.toLowerCase() === 'killed';
 // Projects that are "live" or in active development (Active, Launched, etc.)
 // Projects that MUST be in the ranking list (Step 2)
 const isMandatoryOrActive = (p) => 
-  (isLaunched(p) || isActiveStatus(p) || (p.ai_rank !== null && p.ai_rank !== undefined)) && 
+  (isLaunched(p) || isActiveStatus(p)) && 
   !isTerminalStatus(p);
 
 // Projects that MUST be ranked (Collaborators see AI ranked ones too)
 const isMandatoryForCollaborator = (p) =>
-  ((p.ai_rank !== null && p.ai_rank !== undefined) || isLaunched(p) || isActiveStatus(p)) &&
+  (isLaunched(p) || isActiveStatus(p)) &&
   !isTerminalStatus(p);
 
 // Projects that are considered "Draft" or "Unlaunched"
-const isDraftProject = (p) => !isLaunched(p) && !isActiveStatus(p) && !isTerminalStatus(p) && p.ai_rank === null;
+const isDraftProject = (p) => !isLaunched(p) && !isActiveStatus(p) && !isTerminalStatus(p);
 
 /* ---------- RATIONALE TOGGLE (UI ONLY) ---------- */
 function RationaleToggle({ eventKey, children }) {

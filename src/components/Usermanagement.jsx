@@ -11,7 +11,9 @@ import AdminTable from "./AdminTable";
 import MetricCard from "./MetricCard";
 import "../styles/AdminTableStyles.css";
 import { OverlayTrigger, Tooltip } from "react-bootstrap";
-import { useAuthStore, useProjectStore } from "../store";
+ import { useAuthStore, useProjectStore } from "../store";
+ import { usePlanDetails, useCompanies, useAdminUsers, useBusinesses, useProjects, useCompanyCollaborators } from "../hooks/useQueries";
+ import { useQueryClient } from "@tanstack/react-query";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -38,85 +40,101 @@ const CustomToggle = React.forwardRef(({ onClick, disabled }, ref) => (
 ));
 
 const UserManagement = ({ onToast }) => {
+  const { t } = useTranslation();
+  const { user, token } = useAuthStore();
+  const currentRole = user?.role;
+  const isSuperAdmin = currentRole === 'super_admin';
+  const isAdmin = currentRole === 'admin' || currentRole === 'super_admin' || currentRole === 'company_admin';
+
+  const fetchUsers = () => {
+    queryClient.invalidateQueries({ queryKey: ["adminUsers"] });
+  };
+
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedRole, setSelectedRole] = useState("All Roles");
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
-  const [users, setUsers] = useState([]);
-  const [lastPageBeforeSearch, setLastPageBeforeSearch] = useState(1);
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
-  const { t } = useTranslation();
-
-  // Plan Limit Modal state
-  const [showPlanLimitModal, setShowPlanLimitModal] = useState(false);
-  const [planLimitConfig, setPlanLimitConfig] = useState({ title: '', message: '', subMessage: '' });
-
-  const [showErrorModal, setShowErrorModal] = useState(false);
-  const [errorModalConfig, setErrorModalConfig] = useState({ title: '', message: '' });
-
-  const [errors, setErrors] = useState({});
+  const [isLoading, setIsLoading] = useState(false); // Legacy
+  const [isAssigning, setIsAssigning] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Pagination & Search state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [lastPageBeforeSearch, setLastPageBeforeSearch] = useState(1);
+  const itemsPerPage = 10;
+
+  // Modal contexts
   const [showModal, setShowModal] = useState(false);
   const [newName, setNewName] = useState("");
   const [newEmail, setNewEmail] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [newRole, setNewRole] = useState("");
+  const [selectedCompanyId, setSelectedCompanyId] = useState("");
+  const [errors, setErrors] = useState({});
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const token = useAuthStore(state => state.token);
-  const currentRole = useAuthStore(state => state.userRole);
-  const userPlan = useAuthStore(state => state.userPlan);
-  const isSuperAdmin = useAuthStore(state => state.isSuperAdmin());
-  const isAdmin = useAuthStore(state => state.isAdmin);
 
   const [showAssignModal, setShowAssignModal] = useState(false);
   const [assignUserId, setAssignUserId] = useState("");
   const [assignBusinessId, setAssignBusinessId] = useState("");
-  const [showGiveAccessModal, setShowGiveAccessModal] = useState(false);
-  const [showConfirm, setShowConfirm] = useState(false);
-  const [pendingUserId, setPendingUserId] = useState(null);
-  const [pendingUserName, setPendingUserName] = useState("");
-  const [pendingRole, setPendingRole] = useState(null);
-  const [isReactivating, setIsReactivating] = useState(false);
-  const [isRoleChanging, setIsRoleChanging] = useState(false);
-
-  const [accessType, setAccessType] = useState("reRanking");
-  const [allBusinesses, setAllBusinesses] = useState([]);
-  const [launchedBusinesses, setLaunchedBusinesses] = useState([]);
-  const [accessBusinessId, setAccessBusinessId] = useState("");
-  const [projects, setProjects] = useState([]);
-  const [selectedProjectId, setSelectedProjectId] = useState("");
-  const [loadingProjects, setLoadingProjects] = useState(false);
-  const [launchedProjectMap, setLaunchedProjectMap] = useState({});
-  const [collaborators, setCollaborators] = useState([]);
-  const [selectedCollaboratorIds, setSelectedCollaboratorIds] = useState([]);
-  const [loadingCollaborators, setLoadingCollaborators] = useState(false);
-  const [showAccessConfirmation, setShowAccessConfirmation] = useState(false);
+  const [assigningBusinessCollaborators, setAssigningBusinessCollaborators] = useState([]);
   const [assignErrors, setAssignErrors] = useState({});
+
+  const [showGiveAccessModal, setShowGiveAccessModal] = useState(false);
+  const [accessBusinessId, setAccessBusinessId] = useState("");
+  const [selectedProjectId, setSelectedProjectId] = useState("");
+  const [selectedCollaboratorIds, setSelectedCollaboratorIds] = useState([]);
   const [accessErrors, setAccessErrors] = useState({});
+  const [accessType, setAccessType] = useState("reRanking");
+  const [showAccessConfirmation, setShowAccessConfirmation] = useState(false);
   const [isGrantingAccess, setIsGrantingAccess] = useState(false);
 
-  // token, currentRole, isAdmin, userPlan, isSuperAdmin are now handled by store selectors above
-  const [companies, setCompanies] = useState([]);
-  const [selectedCompanyId, setSelectedCompanyId] = useState("");
-  const [isLoading, setIsLoading] = useState(true);
-  const [usage, setUsage] = useState(null);
-  const [isAssigning, setIsAssigning] = useState(false);
-  const [assigningBusinessCollaborators, setAssigningBusinessCollaborators] = useState([]);
+  // Confirmation state
+  const [pendingUserId, setPendingUserId] = useState(null);
+  const [pendingUserName, setPendingUserName] = useState("");
+  const [pendingRole, setPendingRole] = useState("");
+  const [isReactivating, setIsReactivating] = useState(false);
+  const [isRoleChanging, setIsRoleChanging] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
+
+  // Plan level & errors
+  const [showPlanLimitModal, setShowPlanLimitModal] = useState(false);
+  const [planLimitConfig, setPlanLimitConfig] = useState({});
+  const [showErrorModal, setShowErrorModal] = useState(false);
+  const [errorModalConfig, setErrorModalConfig] = useState({});
+
+  const queryClient = useQueryClient();
+
+  // --- TanStack Query hooks ---
+  const { data: usageData, isLoading: loadingPlans } = usePlanDetails();
+  const usage = usageData?.usage;
+  const { data: users = [], isLoading: loadingUsers } = useAdminUsers();
+  const { data: companies = [], isLoading: loadingCompanies } = useCompanies();
+  const { data: businessData = [], isLoading: loadingBusinesses } = useBusinesses();
+  
+  const { data: collaboratorData = [], isLoading: loadingCollaborators } = useCompanyCollaborators(accessBusinessId);
+  const { data: projectData = [], isLoading: loadingProjects } = useProjects(accessBusinessId);
+
+  // Derive specialized business lists
+  const allBusinesses = React.useMemo(() => businessData, [businessData]);
+  const launchedBusinesses = React.useMemo(() => 
+    businessData.filter(b => (b.status || "").toLowerCase() === 'launched' || b.has_launched_projects === true),
+    [businessData]
+  );
+  
+  const collaborators = React.useMemo(() => collaboratorData, [collaboratorData]);
+  const projects = React.useMemo(() => {
+    return (projectData || []).filter(p => {
+      const s = (p.status || "").toLowerCase().trim().replace(/[-_\s]/g, '');
+      return s === 'active' || s === 'atrisk' || s === 'paused';
+    });
+  }, [projectData]);
+
+  const loadLaunchedBusinessAndProjects = () => {
+    // Legacy placeholder, now handled by TanStack hooks
+  };
 
 
-  const fetchPlanDetails = useCallback(async () => {
-    if (!token) return;
-    try {
-      const res = await axios.get(`${BACKEND_URL}/api/subscription/plan-details`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setUsage(res.data.usage);
-    } catch (err) {
-      console.error("Failed to fetch plan details", err);
-    }
-  }, [token]);
 
   const handleOpenModal = () => {
     setNewName("");
@@ -158,7 +176,6 @@ const UserManagement = ({ onToast }) => {
 
   const handleOpenGiveAccessModal = () => {
     setAccessBusinessId("");
-    setProjects([]);
     setSelectedProjectId("");
     setSelectedCollaboratorIds([]);
     setAccessErrors({});
@@ -246,9 +263,13 @@ const UserManagement = ({ onToast }) => {
         headers: { Authorization: `Bearer ${token}` }
       });
       onToast(t("User_added_successfully"), "success");
-      await fetchUsers();
-      await fetchPlanDetails(); // Refresh usage after adding user
+      
+      // Invalidate queries to trigger parallel refetch
+      queryClient.invalidateQueries({ queryKey: ["adminUsers"] });
+      queryClient.invalidateQueries({ queryKey: ["planDetails"] });
+      
       handleCloseModal();
+
     } catch (error) {
       const message = error.response?.data?.message || error.response?.data?.error || t("Failed_to_add_user");
       setErrors(prev => ({ ...prev, apiError: message }));
@@ -257,24 +278,6 @@ const UserManagement = ({ onToast }) => {
     }
   };
 
-  const companiesFetchedRef = useRef(false);
-  useEffect(() => {
-    if (!isSuperAdmin || companiesFetchedRef.current) return;
-    const fetchCompanies = async () => {
-      try {
-        companiesFetchedRef.current = true;
-        const res = await axios.get(`${BACKEND_URL}/api/companies`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        const data = Array.isArray(res.data) ? res.data : res.data.companies || [];
-        setCompanies(data);
-      } catch (err) {
-        console.error("Failed to fetch companies", err);
-        companiesFetchedRef.current = false;
-      }
-    };
-    fetchCompanies();
-  }, [isSuperAdmin, token]);
 
   const handleRoleUpdate = async (userId, role) => {
     // Dynamic Limit Check for role update
@@ -301,8 +304,10 @@ const UserManagement = ({ onToast }) => {
         headers: { Authorization: `Bearer ${token}` }
       });
       onToast(t("User_updated_successfully"), "success");
-      fetchUsers();
-      fetchPlanDetails();
+      
+      queryClient.invalidateQueries({ queryKey: ["adminUsers"] });
+      queryClient.invalidateQueries({ queryKey: ["planDetails"] });
+
     } catch (error) {
       console.error(error);
       onToast(error.response?.data?.error || t("Failed_to_update_role"), "error");
@@ -341,15 +346,16 @@ const UserManagement = ({ onToast }) => {
     try {
       const { setBusinessAccessMode, grantProjectEditAccess, grantRankingAccess } = useProjectStore.getState();
 
+      const tasks = [];
       if (accessType === "reRanking") {
-        await setBusinessAccessMode(accessBusinessId, "reRanking");
+        tasks.push(setBusinessAccessMode(accessBusinessId, "reRanking"));
+        tasks.push(grantRankingAccess(accessBusinessId, selectedCollaboratorIds));
+      } else if (accessType === "projectEdit") {
+        tasks.push(grantProjectEditAccess(accessBusinessId, selectedProjectId, selectedCollaboratorIds));
       }
-      if (accessType === "projectEdit") {
-        await grantProjectEditAccess(accessBusinessId, selectedProjectId, selectedCollaboratorIds);
-      }
-      if (accessType === "reRanking") {
-        await grantRankingAccess(accessBusinessId, selectedCollaboratorIds);
-      }
+      
+      await Promise.all(tasks);
+
       onToast(t("Access_granted_successfully"), "success");
       setShowAccessConfirmation(false);
       setSelectedProjectId("");
@@ -383,7 +389,8 @@ const UserManagement = ({ onToast }) => {
       });
       onToast(t("User_assigned_successfully"), "success");
       handleCloseAssignModal();
-      fetchPlanDetails();
+      queryClient.invalidateQueries({ queryKey: ["planDetails"] });
+      queryClient.invalidateQueries({ queryKey: ["collaborators", assignBusinessId] });
     } catch (error) {
       console.error(error);
       onToast(error.response?.data?.message || error.response?.data?.error || t("Failed_to_assign_user"), "error");
@@ -401,54 +408,6 @@ const UserManagement = ({ onToast }) => {
     }
   };
 
-  const hasFetched = useRef(false);
-
-
-  const fetchUsers = useCallback(async () => {
-    if (!token) return;
-    try {
-      setIsLoading(true);
-      const res = await axios.get(`${BACKEND_URL}/api/admin/users`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      const data = Array.isArray(res.data) ? res.data : res.data.users || [];
-      setUsers(data);
-    } catch (error) {
-      onToast(t("Failed_to_fetch_users"), "error");
-    } finally {
-      setIsLoading(false);
-    }
-  }, [token, t, onToast]);
-
-  const fetchBusinesses = useCallback(async () => {
-    if (!token) return;
-    try {
-      const res = await axios.get(`${BACKEND_URL}/api/businesses`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      const data = Array.isArray(res.data) 
-        ? res.data 
-        : [...(res.data.businesses || []), ...(res.data.collaborating_businesses || [])];
-      
-      const activeBusinesses = data.filter(b => 
-        (b.status || "").toLowerCase() !== 'archived' && 
-        (b.access_mode || "").toLowerCase() !== 'archived' &&
-        (b.status || "").toLowerCase() !== 'deleted'
-      );
-      setAllBusinesses(activeBusinesses);
-    } catch (error) {
-      console.error("Failed to fetch businesses", error);
-    }
-  }, [token]);
-
-  useEffect(() => {
-    if (token && !hasFetched.current) {
-      fetchUsers();
-      fetchBusinesses();
-      fetchPlanDetails();
-      hasFetched.current = true;
-    }
-  }, [token, fetchUsers, fetchBusinesses, fetchPlanDetails]);
 
   const handleSearch = (value) => {
     if (searchTerm === "" && value !== "") setLastPageBeforeSearch(currentPage);
@@ -502,109 +461,6 @@ const UserManagement = ({ onToast }) => {
     return new Date(iso).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
   };
 
-  const loadLaunchedBusinessAndProjects = async () => {
-    try {
-      setLoadingProjects(true);
-      const businessRes = await axios.get(`${BACKEND_URL}/api/businesses`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      const allBiz = Array.isArray(businessRes.data) 
-        ? businessRes.data 
-        : [...(businessRes.data.businesses || []), ...(businessRes.data.collaborating_businesses || [])];
-      
-      const validBusinesses = allBiz.filter((b) => 
-        ((b.status || "").toLowerCase() === 'launched' || b.has_launched_projects === true) &&
-        (b.status || "").toLowerCase() !== 'archived' &&
-        (b.access_mode || "").toLowerCase() !== 'archived' &&
-        (b.status || "").toLowerCase() !== 'deleted'
-      );
-      
-      setLaunchedBusinesses(validBusinesses);
-    } catch (err) {
-      console.error("Failed to load launched data", err);
-    } finally {
-      setLoadingProjects(false);
-    }
-  };
-
-  const fetchProjectsByBusiness = async (businessId) => {
-    if (!businessId) {
-      setProjects([]);
-      return;
-    }
-    try {
-      setLoadingProjects(true);
-      const res = await axios.get(`${BACKEND_URL}/api/projects`, { 
-        params: { business_id: businessId },
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      const allProjects = res.data.projects || [];
-      
-      const biz = launchedBusinesses.find(b => b._id === businessId);
-      const isBizLaunched = (biz?.status || "").toLowerCase() === 'launched';
-      
-      const filtered = allProjects.filter(p => {
-        const s = (p.status || "").toLowerCase().trim().replace(/[-_\s]/g, '');
-        return s === 'active' || s === 'atrisk' || s === 'paused';
-      });
-      
-      setProjects(filtered);
-    } catch (err) {
-      console.error("Failed to fetch projects", err);
-      setProjects([]);
-    } finally {
-      setLoadingProjects(false);
-    }
-  };
-
-  useEffect(() => {
-    if (accessBusinessId) {
-      fetchCollaboratorsByBusiness(accessBusinessId);
-      fetchProjectsByBusiness(accessBusinessId);
-    } else {
-      setCollaborators([]);
-      setProjects([]);
-    }
-  }, [accessBusinessId]);
-
-  const fetchCollaboratorsByBusiness = async (businessId) => {
-    if (!businessId) return;
-    try {
-      setLoadingCollaborators(true);
-      const res = await axios.get(`${BACKEND_URL}/api/businesses/${businessId}/collaborators`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setCollaborators(res.data.collaborators || []);
-      setSelectedCollaboratorIds([]);
-    } catch (err) {
-      console.error("Failed to fetch collaborators", err);
-    } finally {
-      setLoadingCollaborators(false);
-    }
-  };
-
-  const fetchCurrentBusinessCollaborators = async (businessId) => {
-    if (!businessId) {
-      setAssigningBusinessCollaborators([]);
-      return;
-    }
-    try {
-      const res = await axios.get(`${BACKEND_URL}/api/businesses/${businessId}/collaborators`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setAssigningBusinessCollaborators(res.data.collaborators || []);
-    } catch (err) {
-      console.error("Failed to fetch current business collaborators", err);
-    }
-  };
-
-  useEffect(() => {
-    if (showAssignModal && assignBusinessId) {
-      fetchCurrentBusinessCollaborators(assignBusinessId);
-    } else if (!showAssignModal) {
-      setAssigningBusinessCollaborators([]);
-    }
-  }, [assignBusinessId, showAssignModal]);
 
 
   const getSelectedCollaboratorNames = () => collaborators.filter(c => selectedCollaboratorIds.includes(c._id)).map(c => c.name);

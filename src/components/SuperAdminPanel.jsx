@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { createPortal } from "react-dom";
 import { useLocation, useSearchParams, useNavigate } from "react-router-dom";
 import {
@@ -42,6 +43,7 @@ const SuperAdminPanel = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const queryClient = useQueryClient();
 
   // Derive activeTab from URL 'tab' parameter, default to "companies"
   const activeTab = searchParams.get('tab') || "companies";
@@ -109,6 +111,12 @@ const SuperAdminPanel = () => {
       icon: ClipboardList,
       superAdminOnly: true,
     },
+    {
+      id: "stale_bets",
+      label: t('stale_bets') || "Stale Bets",
+      icon: History,
+      superAdminOnly: true,
+    },
   ];
 
   const tabs = allTabs.filter((tab) => {
@@ -150,6 +158,8 @@ const SuperAdminPanel = () => {
         return <AcademyFeedbackAdmin onToast={showToastMessage} />;
       case "plans":
         return <PlanManagement onToast={showToastMessage} />;
+      case "stale_bets":
+        return <StaleBetsAdmin onToast={showToastMessage} />;
       default:
         return <CompanyManagement onToast={showToastMessage} />;
     }
@@ -200,7 +210,15 @@ const SuperAdminPanel = () => {
             <button
               key={tab.id}
               className={`nav-tab ${activeTab === tab.id ? "active" : ""}`}
-              onClick={() => navigate(`?tab=${tab.id}`, { replace: true })}
+              onClick={() => {
+                navigate(`?tab=${tab.id}`, { replace: true });
+                if (tab.id === 'access_management') {
+                  queryClient.invalidateQueries({ queryKey: ["accessControl"] });
+                  queryClient.invalidateQueries({ queryKey: ["businesses"] });
+                } else if (tab.id === 'subscription') {
+                  queryClient.invalidateQueries({ queryKey: ["planDetails"] });
+                }
+              }}
             >
               <IconComponent size={20} />
               <span>{tab.label}</span>

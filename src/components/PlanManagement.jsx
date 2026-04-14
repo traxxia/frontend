@@ -5,6 +5,8 @@ import axios from 'axios';
 import AdminTable from './AdminTable';
 import { useTranslation } from '../hooks/useTranslation';
 import { useAuthStore } from '../store/authStore';
+import { usePlans } from '../hooks/useQueries';
+import { useQueryClient } from '@tanstack/react-query';
 import '../styles/PlanManagement.css';
 
 const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
@@ -560,8 +562,11 @@ const PlanModal = ({ show, plan, onClose, onSave, isSubmitting, onToast }) => {
 
 const PlanManagement = ({ onToast }) => {
     const { t } = useTranslation();
-    const [plans, setPlans] = useState([]);
-    const [loading, setLoading] = useState(true);
+    const queryClient = useQueryClient();
+
+    // --- TanStack Query Hook ---
+    const { data: plans = [], isLoading: loading } = usePlans();
+
     const [searchTerm, setSearchTerm] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
     const pageSize = 10;
@@ -574,32 +579,9 @@ const PlanManagement = ({ onToast }) => {
 
     const getAuthToken = () => useAuthStore.getState().token;
 
-    const loadPlans = useCallback(async () => {
-        try {
-            setLoading(true);
-            const token = getAuthToken();
-            const response = await axios.get(`${API_BASE_URL}/api/plans`, {
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'x-include-inactive': 'true'
-                }
-            });
-            setPlans(response.data.plans || []);
-        } catch (error) {
-            console.error('Error loading plans:', error);
-            onToast(error.response?.data?.error || 'Failed to load plans', 'error');
-        } finally {
-            setLoading(false);
-        }
-    }, [onToast]);
-
-    const initializedRef = useRef(false);
-
-    useEffect(() => {
-        if (initializedRef.current) return;
-        initializedRef.current = true;
-        loadPlans();
-    }, [loadPlans]);
+    const loadPlans = () => {
+        // Handled by hook
+    };
 
     const handleSavePlan = async (planData) => {
         setModalState(prev => ({ ...prev, isSubmitting: true }));
@@ -614,7 +596,7 @@ const PlanManagement = ({ onToast }) => {
             const successMsg = isEdit ? t('plan_updated_success') : t('plan_created_success');
             onToast(successMsg || `Plan successfully ${isEdit ? 'updated' : 'created'}`, 'success');
             setModalState({ show: false, plan: null, isSubmitting: false });
-            loadPlans();
+            queryClient.invalidateQueries({ queryKey: ["plans"] });
         } catch (error) {
             console.error('Error saving plan:', error);
             const defaultError = !!modalState.plan ? t('failed_to_update_plan') : t('failed_to_create_plan');

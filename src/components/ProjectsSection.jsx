@@ -10,6 +10,10 @@ import { useProjectForm } from "../hooks/useProjectForm";
 import { AI_PAGE_CONTEXTS } from "../utils/aiContexts";
 
 import { useAuthStore, useProjectStore, useUIStore, useBusinessStore } from "../store";
+import { useProjects } from "../hooks/useQueries";
+
+import { useQueryClient } from "@tanstack/react-query";
+
 
 import { Users, CheckCircle, Plus, ListOrdered, Rocket } from "lucide-react";
 import RankProjectsPanel from "../components/RankProjectsPanel";
@@ -82,11 +86,9 @@ const ProjectsSection = ({
   const getUserLimits = () => userLimits || {};
 
   const {
-    projects,
-    lockSummary,
-    businessStatus,
-    isLoading,
-    fetchProjects,
+    lockSummary: storeLockSummary,
+    businessStatus: storeBusinessStatus,
+    fetchProjects: fetchProjectsStore,
     fetchTeamRankings: fetchTeamRankingsStore,
     checkAllAccess: checkAllAccessStore,
     deleteProject,
@@ -100,6 +102,15 @@ const ProjectsSection = ({
     viewMode,
     setViewMode
   } = useProjectStore();
+
+  const queryClient = useQueryClient();
+  const { data: projects = [], isLoading: isLoadingProjects } = useProjects(selectedBusinessId);
+
+  
+  const lockSummary = storeLockSummary || { total_users: 0, locked_users_count: 0, locked_users: [] };
+  const businessStatus = storeBusinessStatus || "draft";
+
+
 
   const { addToast, openModal, closeModal, isModalOpen } = useUIStore();
 
@@ -172,6 +183,41 @@ const ProjectsSection = ({
       );
     }
   }, [activeView, viewMode]);
+  
+  // Consolidate data refresh logic
+  const refreshAllData = useCallback(async (options = { silent: true }) => {
+    if (!selectedBusinessId) return;
+    
+    console.log("ProjectsSection: Refreshing all data (View Transition)");
+    
+    // 1. Clear custom store caches to bypass Zimmmer-level Map caching
+    clearCache(selectedBusinessId);
+    
+    // 2. Invalidate TanStack queries to trigger fresh network requests
+    queryClient.invalidateQueries({ queryKey: ["projects", selectedBusinessId] });
+    queryClient.invalidateQueries({ queryKey: ["rankingsSummary", selectedBusinessId] });
+    queryClient.invalidateQueries({ queryKey: ["teamRankings", selectedBusinessId] });
+    queryClient.invalidateQueries({ queryKey: ["grantedAccess", selectedBusinessId] });
+
+    // 3. Trigger immediate Zustand store refreshes
+    await Promise.all([
+      fetchProjectsStore(selectedBusinessId, { silent: options.silent }),
+      fetchTeamRankingsStore(selectedBusinessId, { silent: options.silent }),
+      checkAllAccessStore(selectedBusinessId)
+    ]);
+  }, [selectedBusinessId, clearCache, queryClient, fetchProjectsStore, fetchTeamRankingsStore, checkAllAccessStore]);
+
+  // Trigger fresh fetch on mount AND on any major view transition (Redirects)
+  useEffect(() => {
+    if (selectedBusinessId) {
+      // We only want to trigger this when arriving at the main lists
+      const isMainView = activeView === "list" || viewMode === "ranking";
+      if (isMainView) {
+        refreshAllData();
+      }
+    }
+  }, [selectedBusinessId, viewMode, activeView, refreshAllData]);
+
   // Sync prop to internal state
   useEffect(() => {
     setApiIsArchived(isArchived);
@@ -263,7 +309,12 @@ const ProjectsSection = ({
 
   const rankMap = useMemo(() => (projects || []).reduce((acc, p) => {
     const id = normalizeId(p._id);
-    if (id) acc[id] = p.rank;
+    if (id) {
+      const displayRank = (p.rank !== null && p.rank !== undefined) ? p.rank : p.ai_rank;
+      if (displayRank !== null && displayRank !== undefined) {
+        acc[id] = displayRank;
+      }
+    }
     return acc;
   }, {}), [projects]);
 
@@ -368,20 +419,23 @@ const ProjectsSection = ({
 
   const loadProjects = useCallback(async () => {
     try {
-      await checkAllAccessStore(selectedBusinessId);
-      const result = await fetchTeamRankingsStore(selectedBusinessId);
+      // Parallelize access check and rankings fetch
+      const [accessResult, rankingsResult] = await Promise.all([
+        checkAllAccessStore(selectedBusinessId),
+        fetchTeamRankingsStore(selectedBusinessId)
+      ]);
 
-      if (!result) return;
+      if (!rankingsResult) return;
 
-      const { businessStatus: backendStatus, lockSummary: lockSummaryData } = useProjectStore.getState();
+      const lockSummaryData = rankingsResult.lockSummary || { locked_users: [] };
       checkIfCurrentUserLocked(lockSummaryData.locked_users);
 
-      if (result.businessAccessMode) {
-        const apiArchived = result.businessAccessMode === 'archived' || result.businessAccessMode === 'hidden';
+      if (rankingsResult.businessAccessMode) {
+        const apiArchived = rankingsResult.businessAccessMode === 'archived' || rankingsResult.businessAccessMode === 'hidden';
         setApiIsArchived(apiArchived);
       }
 
-      const currentStatus = backendStatus || "draft";
+      const currentStatus = rankingsResult.businessStatus || "draft";
       if (currentStatus === "draft") {
         setProjectCreationLocked(false);
         setFinalizeCompleted(false);
@@ -404,6 +458,7 @@ const ProjectsSection = ({
     }
   }, [checkAllAccessStore, checkIfCurrentUserLocked, fetchTeamRankingsStore, selectedBusinessId]);
 
+
   const refreshTeamRankings = useCallback(async () => {
     await loadProjects();
   }, [loadProjects]);
@@ -425,7 +480,18 @@ const ProjectsSection = ({
 
   const handleLaunchProjects = useCallback(async () => {
     if (selectedProjectIds.length === 0) {
-      handleShowToast("Please select at least one project to launch.", "error");
+      handleShowToast(t("Please select at least one project to launch."), "error");
+      return;
+    }
+
+    // Check if all selected projects have been ranked
+    const unrankedProjects = selectedProjectIds.filter(id => {
+      const rank = rankMap[String(id)];
+      return rank === null || rank === undefined;
+    });
+
+    if (unrankedProjects.length > 0) {
+      handleShowToast(t("One or more selected projects are not ranked. All projects must be ranked before launch."), "error", 5000);
       return;
     }
 
@@ -437,8 +503,11 @@ const ProjectsSection = ({
         setLaunched(true);
         addToast({ message: t("Projects_launched_Ready_for_execution."), type: "success" });
         clearCache(selectedBusinessId);
+        queryClient.invalidateQueries({ queryKey: ["projects", selectedBusinessId] });
+        queryClient.invalidateQueries({ queryKey: ["teamRankings", selectedBusinessId] });
         await loadProjects();
         setSelectedProjectIds([]); // Clear selection
+
       } else {
         handleShowToast(error || "Failed to launch projects.", "error", 7000);
       }
@@ -469,8 +538,11 @@ const ProjectsSection = ({
     if (success) {
       handleShowToast("Project killed successfully!", "success");
       clearCache(selectedBusinessId);
+      queryClient.invalidateQueries({ queryKey: ["projects", selectedBusinessId] });
+      queryClient.invalidateQueries({ queryKey: ["teamRankings", selectedBusinessId] });
       await loadProjects();
     } else {
+
       handleShowToast(error || "Failed to kill project.", "error");
     }
   }, [isViewer, isSuperAdmin, deleteProject, loadProjects, handleShowToast]);
@@ -524,8 +596,11 @@ const ProjectsSection = ({
         handleShowToast("Project created successfully!", "success");
         await unlockAllFieldsSafe(currentProject?._id);
         clearCache(selectedBusinessId);
+        queryClient.invalidateQueries({ queryKey: ["projects", selectedBusinessId] });
+        queryClient.invalidateQueries({ queryKey: ["teamRankings", selectedBusinessId] });
         await loadProjects();
         handleBackToList();
+
       } else {
         handleShowToast(error || "Failed to create project.", "error");
       }
@@ -548,8 +623,11 @@ const ProjectsSection = ({
         handleShowToast("Project updated successfully!", "success");
         await unlockAllFieldsSafe(currentProject?._id);
         clearCache(selectedBusinessId);
+        queryClient.invalidateQueries({ queryKey: ["projects", selectedBusinessId] });
+        queryClient.invalidateQueries({ queryKey: ["teamRankings", selectedBusinessId] });
         await loadProjects();
         handleBackToList();
+
       } else {
         handleShowToast(error || "Failed to update project.", "error");
       }
@@ -601,8 +679,11 @@ const ProjectsSection = ({
       if (success) {
         handleShowToast(reviewType === "review" ? "Review submitted successfully!" : "Update submitted successfully!", "success");
         clearCache(selectedBusinessId);
+        queryClient.invalidateQueries({ queryKey: ["projects", selectedBusinessId] });
+        queryClient.invalidateQueries({ queryKey: ["teamRankings", selectedBusinessId] });
         await loadProjects();
       } else {
+
         handleShowToast(error || "Failed to process update", "error");
       }
 
@@ -737,8 +818,9 @@ const ProjectsSection = ({
               )}
             </div>
 
-            {isLoading && projects.length === 0 ? (
+            {isLoadingProjects && projects.length === 0 ? (
               <div className="d-flex justify-content-center align-items-center py-5" style={{ minHeight: "300px" }}>
+
                 <div className="spinner-border text-primary" role="status">
                   <span className="visually-hidden">Loading...</span>
                 </div>
@@ -751,8 +833,7 @@ const ProjectsSection = ({
                     projects={rankedProjects}
                     onLockRankings={handleLockProjectRanking}
                     onRankSaved={async () => {
-                      clearCache(selectedBusinessId);
-                      await refreshTeamRankings();
+                      await refreshAllData();
                       if (useProjectStore.getState().lockSummary.total_users === 0) {
                         setViewMode("projects");
                         setShowRankScreen(false);
@@ -860,8 +941,9 @@ const ProjectsSection = ({
             </div>
 
             <ProjectsList
-              isLoading={isLoading}
+              isLoading={isLoadingProjects}
               sortedProjects={sortedProjects}
+
               rankMap={rankMap}
               finalizeCompleted={finalizeCompleted}
               launched={launched}

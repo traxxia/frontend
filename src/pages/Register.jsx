@@ -1,14 +1,15 @@
-import React, { useState, useEffect } from 'react';
+ import React, { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
-import { FaEye, FaEyeSlash, FaCheck, FaTimes, FaAngleLeft, FaAngleRight, FaSpinner, FaUser, FaBuilding, FaSave } from 'react-icons/fa';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Modal, Button } from 'react-bootstrap';
-import '../styles/Register.css';
-import logo from '../assets/01a2750def81a5872ec67b2b5ec01ff5e9d69d0e.png';
-
-import { useNavigate } from 'react-router-dom';
-import { useTranslation } from '../hooks/useTranslation';
-import PricingPlanCard from '../components/PricingPlanCard';
+ import { FaEye, FaEyeSlash, FaCheck, FaTimes, FaAngleLeft, FaAngleRight, FaSpinner, FaUser, FaBuilding, FaSave } from 'react-icons/fa';
+ import { motion, AnimatePresence } from 'framer-motion';
+ import { Modal, Button } from 'react-bootstrap';
+ import '../styles/Register.css';
+ import logo from '../assets/01a2750def81a5872ec67b2b5ec01ff5e9d69d0e.png';
+ 
+ import { useNavigate } from 'react-router-dom';
+ import { useTranslation } from '../hooks/useTranslation';
+ import PricingPlanCard from '../components/PricingPlanCard';
+ import { usePlans, useCompanies } from '../hooks/useQueries';
 
 // Stripe imports removed from top-level for lazy loading
 import PaymentForm from '../components/PaymentForm';
@@ -127,7 +128,7 @@ const Register = () => {
     terms: false,
   });
   const [isNewCompany, setIsNewCompany] = useState(false);
-  const [plans, setPlans] = useState([]);
+  // const [plans, setPlans] = useState([]);
   const [selectedPlanId, setSelectedPlanId] = useState('');
   // const [loadingPlans, setLoadingPlans] = useState(true);
 
@@ -138,9 +139,13 @@ const Register = () => {
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [modalMessage, setModalMessage] = useState('');
   const [isError, setIsError] = useState(false);
-  const [companies, setCompanies] = useState([]);
-  const [loadingCompanies, setLoadingCompanies] = useState(true);
+  // const [companies, setCompanies] = useState([]);
+  // const [loadingCompanies, setLoadingCompanies] = useState(true);
   const [isCheckingEmail, setIsCheckingEmail] = useState(false);
+
+  // TanStack Query hooks
+  const { data: plans = [], isLoading: loadingPlans } = usePlans();
+  const { data: companies = [], isLoading: loadingCompanies } = useCompanies();
 
   const [showTermsModal, setShowTermsModal] = useState(false);
   const [showPrivacyModal, setShowPrivacyModal] = useState(false);
@@ -162,38 +167,12 @@ const Register = () => {
     return null;
   }, [activeTab, isNewCompany]);
 
-  const fetchPlans = React.useCallback(async () => {
-    try {
-      const response = await axios.get(`${API_BASE_URL}/api/plans`);
-      if (response.data.plans) {
-        setPlans(response.data.plans);
-        // Auto-select the cheapest available plan instead of hardcoding a name
-        const sorted = [...response.data.plans].sort((a, b) => a.price - b.price);
-        if (sorted.length > 0) setSelectedPlanId(sorted[0]._id);
-      }
-    } catch (error) {
-      console.error('Error fetching plans:', error);
-    } finally {
-      // setLoadingPlans(false);
-    }
-  }, [API_BASE_URL]);
-
-  const fetchCompanies = React.useCallback(async () => {
-    setLoadingCompanies(true);
-    try {
-      const response = await axios.get(`${API_BASE_URL}/api/companies`);
-      if (response.data.companies) setCompanies(response.data.companies);
-    } catch (error) {
-      console.error('Error fetching companies:', error);
-    } finally {
-      setLoadingCompanies(false);
-    }
-  }, [API_BASE_URL]);
-
   useEffect(() => {
-    fetchCompanies();
-    fetchPlans();
-  }, [fetchCompanies, fetchPlans]);
+    if (plans.length > 0 && !selectedPlanId) {
+      const sorted = [...plans].sort((a, b) => a.price - b.price);
+      setSelectedPlanId(sorted[0]._id);
+    }
+  }, [plans, selectedPlanId]);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;

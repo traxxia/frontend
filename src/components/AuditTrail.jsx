@@ -25,10 +25,9 @@ import "../styles/audittrail.css";
 import { useTranslation } from '@/hooks/useTranslation';
 
 import { useAuthStore } from '../store/authStore';
+import { useAuditTrailQuery } from '../hooks/useQueries';
 
 const AuditTrail = ({ onToast }) => {
-  const [auditEntries, setAuditEntries] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({
     event_type: '',
     start_date: '',
@@ -39,11 +38,14 @@ const AuditTrail = ({ onToast }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [lastPageBeforeSearch, setLastPageBeforeSearch] = useState(1);
   const itemsPerPage = 10;
-  const [pagination, setPagination] = useState({});
-  const [initialLoad, setInitialLoad] = useState(true);
+
+  // --- TanStack Query Hook ---
+  const { data, isLoading: loading } = useAuditTrailQuery(currentPage, itemsPerPage, filters);
+  const auditEntries = data?.audit_entries || [];
+  const pagination = data?.pagination || {};
+  const analysisStats = data?.analysis_statistics || [];
   const [expandedAnalysis, setExpandedAnalysis] = useState({});
   const [loadingAnalysisData, setLoadingAnalysisData] = useState({});
-  const [analysisStats, setAnalysisStats] = useState([]);
   const [currentUserRole, setCurrentUserRole] = useState('user'); // Track current user role
   const { t } = useTranslation();
 
@@ -75,87 +77,7 @@ const AuditTrail = ({ onToast }) => {
     }
   }, []);
 
-  const initializedRef = useRef(false);
-
-  // Initial load effect
-  useEffect(() => {
-    if (!currentUserRole || initializedRef.current) return;
-    initializedRef.current = true;
-
-    const initializeData = async () => {
-      try {
-        fetchAuditTrail();
-      } catch (error) {
-        onToast('Error initializing data', 'error');
-      } finally {
-        setInitialLoad(false);
-      }
-    };
-
-    initializeData();
-  }, [currentUserRole]);
-
-
-  // Consolidated fetch effect for all filters
-  useEffect(() => {
-    if (!initialLoad) {
-      fetchAuditTrail();
-    }
-  }, [
-    filters.event_type,
-    filters.start_date,
-    filters.end_date,
-    filters.include_analysis_data
-  ]);
-
-
-  const fetchAuditTrail = async () => {
-    try {
-      setLoading(true);
-      const token = useAuthStore.getState().token;
-
-      if (!token || token === 'undefined' || token === 'null') {
-        onToast('Session expired. Please login again.', 'error');
-        return;
-      }
-
-      const params = new URLSearchParams();
-      // Fetch up to 500 entries for local filtering/pagination
-      params.append('limit', '500');
-
-      Object.keys(filters).forEach(key => {
-        const value = filters[key];
-        if (value && key !== 'quick_date') {
-          params.append(key, value);
-        }
-      });
-
-      const response = await fetch(`${REACT_APP_BACKEND_URL}/api/admin/audit-trail?${params}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setAuditEntries(data.audit_entries);
-        setPagination(data.pagination);
-        setAnalysisStats(data.analysis_statistics || []);
-      } else {
-        const errorData = await response.json();
-        if (response.status === 401 || response.status === 403) {
-          onToast('Session expired. Please login again.', 'error');
-        } else {
-          onToast(`Failed to fetch audit trail: ${errorData.error}`, 'error');
-        }
-      }
-    } catch (error) {
-      onToast('Error fetching audit trail', 'error');
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Legacy fetch functions removed, now handled by hook
 
   const closeModal = () => {
     setModalData({

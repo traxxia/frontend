@@ -1,15 +1,21 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Plus, HelpCircle, Edit, Save, X, ChevronDown, ChevronRight, Trash2, GripVertical, AlertCircle, FileText, CheckCircle2, ListChecks, Layers } from 'lucide-react';
 import '../styles/question-management.css';
-import { useTranslation } from '@/hooks/useTranslation';
+import { useTranslation } from '../hooks/useTranslation';
 import { useAuthStore } from '../store/authStore';
 import AdminTable from './AdminTable';
 import MetricCard from './MetricCard';
+import { useGlobalQuestions } from '../hooks/useQueries';
+import { useQueryClient } from '@tanstack/react-query';
 
 const QuestionManagement = ({ onToast }) => {
-  const [questions, setQuestions] = useState([]);
-  const [questionsByPhase, setQuestionsByPhase] = useState({});
-  const [isLoading, setIsLoading] = useState(true);
+  const { t } = useTranslation();
+  const queryClient = useQueryClient();
+
+  // --- TanStack Query Hook ---
+  const { data: qData, isLoading } = useGlobalQuestions();
+  const questions = qData || [];
+
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [editingQuestion, setEditingQuestion] = useState(null);
@@ -20,62 +26,30 @@ const QuestionManagement = ({ onToast }) => {
   const [collapsedPhases, setCollapsedPhases] = useState({});
   const [draggedItem, setDraggedItem] = useState(null);
   const [isReordering, setIsReordering] = useState(false);
-  const { t } = useTranslation();
 
   const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
   const getAuthToken = () => useAuthStore.getState().token;
 
   const phases = ['initial', 'essential', 'advanced'];
 
-  const initializedRef = useRef(false);
+  // Group questions by phase (Memoized for performance)
+  const questionsByPhase = React.useMemo(() => {
+    const grouped = questions.reduce((acc, question) => {
+      const phase = question.phase || 'initial';
+      if (!acc[phase]) acc[phase] = [];
+      acc[phase].push(question);
+      return acc;
+    }, {});
 
-  useEffect(() => {
-    if (initializedRef.current) return;
-    initializedRef.current = true;
-    loadQuestions();
-  }, []);
+    Object.keys(grouped).forEach(phase => {
+      grouped[phase].sort((a, b) => (a.order || 0) - (b.order || 0));
+    });
 
-  const loadQuestions = async () => {
-    try {
-      setIsLoading(true);
-      const token = getAuthToken();
+    return grouped;
+  }, [questions]);
 
-      const response = await fetch(`${API_BASE_URL}/api/questions`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setQuestions(data.questions);
-
-        // Group questions by phase
-        const groupedQuestions = data.questions.reduce((acc, question) => {
-          const phase = question.phase || 'initial';
-          if (!acc[phase]) {
-            acc[phase] = [];
-          }
-          acc[phase].push(question);
-          return acc;
-        }, {});
-
-        // Sort questions within each phase by order
-        Object.keys(groupedQuestions).forEach(phase => {
-          groupedQuestions[phase].sort((a, b) => (a.order || 0) - (b.order || 0));
-        });
-
-        setQuestionsByPhase(groupedQuestions);
-      } else {
-        onToast('Failed to load questions', 'error');
-      }
-    } catch (error) {
-      console.error('Error loading questions:', error);
-      onToast('Error loading questions', 'error');
-    } finally {
-      setIsLoading(false);
-    }
+  const loadQuestions = () => {
+    // Handled by hook
   };
 
   const handleCreateQuestion = async (formData) => {
@@ -93,10 +67,9 @@ const QuestionManagement = ({ onToast }) => {
       });
 
       if (response.ok) {
-        const data = await response.json();
         onToast('Question created successfully', 'success');
         setShowCreateForm(false);
-        loadQuestions();
+        queryClient.invalidateQueries({ queryKey: ["questions"] });
       } else {
         const error = await response.json();
         onToast(error.error || 'Failed to create question', 'error');
@@ -124,10 +97,9 @@ const QuestionManagement = ({ onToast }) => {
       });
 
       if (response.ok) {
-        const data = await response.json();
         onToast('Question updated successfully', 'success');
         setEditingQuestion(null);
-        loadQuestions();
+        queryClient.invalidateQueries({ queryKey: ["questions"] });
       } else {
         const error = await response.json();
         onToast(error.error || 'Failed to update question', 'error');
@@ -157,9 +129,8 @@ const QuestionManagement = ({ onToast }) => {
       });
 
       if (response.ok) {
-        const data = await response.json();
         onToast('Question deleted successfully', 'success');
-        loadQuestions();
+        queryClient.invalidateQueries({ queryKey: ["questions"] });
       } else {
         const error = await response.json();
         onToast(error.error || 'Failed to delete question', 'error');
@@ -197,9 +168,8 @@ const QuestionManagement = ({ onToast }) => {
       });
 
       if (response.ok) {
-        const result = await response.json();
         onToast('Questions reordered successfully', 'success');
-        loadQuestions();
+        queryClient.invalidateQueries({ queryKey: ["questions"] });
       } else {
         const error = await response.json();
         console.error('Reorder error:', error);
@@ -246,11 +216,6 @@ const QuestionManagement = ({ onToast }) => {
     const [draggedQuestion] = phaseQuestions.splice(draggedIndex, 1);
     phaseQuestions.splice(targetIndex, 0, draggedQuestion);
 
-    setQuestionsByPhase(prev => ({
-      ...prev,
-      [targetPhase]: phaseQuestions
-    }));
-
     handleReorderQuestions(phaseQuestions, targetPhase);
     setDraggedItem(null);
   };
@@ -280,7 +245,7 @@ const QuestionManagement = ({ onToast }) => {
           iconColor="blue"
         />
         <MetricCard
-          label={t("total_questions") || "Total Questions"}
+          label={t("initial_phase") || "Initial Phase"}
           value={questionsByPhase.initial?.length || 0}
           icon={CheckCircle2}
           iconColor="green"

@@ -4,52 +4,28 @@ import Pagination from './Pagination';
 import { MdRefresh, MdUnfoldMore, MdArrowUpward, MdArrowDownward } from 'react-icons/md';
 import { useTranslation } from '../hooks/useTranslation';
 import { useAuthStore } from '../store';
+import { useStaleProjects } from '../hooks/useQueries';
 
 const StaleBetsAdmin = ({ onToast }) => {
   const { t } = useTranslation();
-  const [staleProjects, setStaleProjects] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  // --- TanStack Query Hook ---
+  const { data, isLoading: loading, error: queryError } = useStaleProjects();
+  const staleProjects = data?.stale_projects || [];
   
-  const [sortField, setSortField] = useState('next_review_date');
-  const [sortOrder, setSortOrder] = useState('asc'); // asc / desc
-  const [currentPage, setCurrentPage] = useState(1);
-  const projectsPerPage = 10;
+  useEffect(() => {
+    if (queryError) setError(queryError.message || "Failed to fetch stale projects");
+  }, [queryError]);
 
-  const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
-
-  const fetchStaleProjects = async () => {
-    setLoading(true);
-    setError('');
-    try {
-      const token = useAuthStore.getState().token;
-      const response = await fetch(`${API_BASE_URL}/api/admin/stale-projects`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (!response.ok) {
-        throw new Error(t('failed_to_fetch_stale_projects') || "Failed to fetch stale projects");
-      }
-
-      const data = await response.json();
-      setStaleProjects(data.stale_projects || []);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
+  const fetchStaleProjects = () => {
+    // TanStack Query handles refetching automatically or via invalidateQueries
   };
 
   const initializedRef = useRef(false);
-
-  useEffect(() => {
-    if (initializedRef.current) return;
-    initializedRef.current = true;
-    fetchStaleProjects();
-  }, []);
+  const [error, setError] = useState('');
+  const [sortField, setSortField] = useState('next_review_date');
+  const [sortOrder, setSortOrder] = useState('asc'); 
+  const [currentPage, setCurrentPage] = useState(1);
+  const projectsPerPage = 10;
 
   const handleSort = (field) => {
     if (sortField === field) {

@@ -26,6 +26,8 @@ import { useTranslation } from "../hooks/useTranslation";
 import { useAuthStore } from "../store/authStore";
 import UpgradeModal from "./UpgradeModal";
 import AdminTable from "./AdminTable";
+import { usePlanDetails } from "../hooks/useQueries";
+import { useQueryClient } from "@tanstack/react-query";
 import "../styles/SubscriptionTab.css";
 
 /* --- helpers --- */
@@ -450,57 +452,21 @@ const PaymentMethodsSection = ({
 /* --- main --- */
 const SubscriptionTab = ({ onToast }) => {
   const { t } = useTranslation();
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [subscription, setSubscription] = useState(null);
+  const queryClient = useQueryClient();
+  const token = useAuthStore((state) => state.token);
+  const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
+
+  // --- TanStack Query Hook ---
+  const { data: subscription, isLoading: loading, error: queryError } = usePlanDetails();
+
+  const handlePaymentMethodsUpdate = (data) => {
+    queryClient.invalidateQueries({ queryKey: ["planDetails"] });
+  };
+
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [selectedPlanId, setSelectedPlanId] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
-
-  const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
-  const token = useAuthStore.getState().token;
-
-  const fetchSubDetails = async () => {
-    try {
-      setLoading(true);
-      const res = await fetch(`${API_BASE_URL}/api/subscription/plan-details`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
-      if (!res.ok) throw new Error("Failed to fetch subscription details");
-      const data = await res.json();
-      setSubscription(data);
-
-      // Sync limits and plan to global auth store
-      useAuthStore.getState().updateUser({ 
-          userPlan: data.plan,
-          userLimits: data.plan_limits || data.usage || {} 
-      });
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const initializedRef = useRef(false);
-
-  useEffect(() => {
-    if (initializedRef.current) return;
-    initializedRef.current = true;
-    fetchSubDetails();
-  }, []);
-
-  const handlePaymentMethodsUpdate = (data) => {
-    setSubscription((prev) => ({
-      ...prev,
-      payment_methods: data.payment_methods,
-      default_payment_method_id: data.default_payment_method_id,
-    }));
-  };
 
   const handleSelectPlan = (id) => {
     setSelectedPlanId(id);
@@ -516,7 +482,7 @@ const SubscriptionTab = ({ onToast }) => {
         </span>
       </div>
     );
-  if (error) return <Alert variant="danger">{error}</Alert>;
+  if (queryError) return <Alert variant="danger">{queryError.message || "Failed to load subscription details"}</Alert>;
   if (!subscription) return null;
 
   const {
@@ -898,7 +864,7 @@ const SubscriptionTab = ({ onToast }) => {
         paymentMethod={payment_methods}
         initialPlanId={selectedPlanId}
         onUpgradeSuccess={(updatedSub) => {
-          setSubscription(updatedSub);
+          queryClient.invalidateQueries({ queryKey: ["planDetails"] });
           if (onToast)
             onToast(
               t("plan_updated_success") || "Plan updated successfully!",

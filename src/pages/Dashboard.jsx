@@ -25,6 +25,9 @@ import { useTranslation } from '../hooks/useTranslation';
 
 import PlanLimitModal from '../components/PlanLimitModal';
 import { useAuthStore, useBusinessStore, useUIStore, useSubscriptionStore } from '../store';
+import { useBusinesses, usePlanDetails } from '../hooks/useQueries';
+import { useQueryClient } from '@tanstack/react-query';
+
 import { getUserLimits } from '../utils/authUtils';
 import UserTour from "../components/UserTour";
 
@@ -166,10 +169,6 @@ const Dashboard = () => {
   const { t } = useTranslation();
   const ENABLE_PMF = getUserLimits().pmf;
   const { 
-    businesses, 
-    collaboratingBusinesses, 
-    deletedBusinesses, 
-    isLoading: isLoadingBusinesses,
     isCreating: isCreatingBusiness,
     isDeleting: isDeletingBusiness,
     error: businessError,
@@ -182,6 +181,23 @@ const Dashboard = () => {
     selectedBusinessId,
     clearErrors
   } = useBusinessStore();
+
+  const queryClient = useQueryClient();
+  const { 
+    data: allBusinessesQuery = [], 
+    isLoading: isLoadingBusinesses 
+  } = useBusinesses();
+
+  const { 
+    data: planDetailsQuery
+  } = usePlanDetails();
+
+  const usage = planDetailsQuery?.usage;
+
+  const collaboratingBusinesses = []; // Keeping it as an empty array for now as per previous placeholder logic
+  const deletedBusinesses = []; 
+
+
   const {
     openModal,
     closeModal,
@@ -220,29 +236,32 @@ const Dashboard = () => {
   const [activeSlide, setActiveSlide] = useState(0);
 
   // Plan Limit Modal state from store
-  const { usage, fetchPlanDetails } = useSubscriptionStore();
+
 
   // Custom menu state for alternatives
 
   const [, setHoveredItem] = useState(null);
   // const [showUpgradeModal, setShowUpgradeModal] = useState(false);
-  const myBusinesses = useMemo(() => businesses.filter(
+  const myBusinesses = useMemo(() => allBusinessesQuery.filter(
     b => Boolean(b.has_projects) === false
-  ), [businesses]);
+  ), [allBusinessesQuery]);
 
-  const projectPhaseBusinesses = useMemo(() => businesses.filter(
+  const projectPhaseBusinesses = useMemo(() => allBusinessesQuery.filter(
     b => Boolean(b.has_projects) === true
-  ), [businesses]);
+  ), [allBusinessesQuery]);
+
 
   /* 
     fetchPlanDetails is now handled by useSubscriptionStore
   */
 
-  // Fetch businesses on component mount
+  // Fetching is now handled by useQuery hooks above.
+  // We can keep the effect for any side effects if needed, 
+  // but TanStack Query handles the initial load automatically.
   useEffect(() => {
-    fetchBusinesses();
-    fetchPlanDetails();
-  }, [fetchBusinesses, fetchPlanDetails]);
+    // Optional: add any side effects here
+  }, []);
+
 
   /*
   const fetchSubscriptionDetails = async () => {
@@ -293,14 +312,20 @@ const Dashboard = () => {
     try {
       clearErrors();
       await deleteBusinessAction(businessId);
-      await fetchPlanDetails();
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['businesses'] }),
+        queryClient.invalidateQueries({ queryKey: ['planDetails'] })
+      ]);
+
       closeModal('deleteBusiness');
       setBusinessToDelete(null);
       addToast({ message: t('business_deleted_successfully'), type: 'success' });
     } catch (error) {
       console.error('Error deleting business:', error);
     }
-  }, [deleteBusinessAction, fetchPlanDetails, t, closeModal, addToast, clearErrors]);
+  }, [deleteBusinessAction, t, closeModal, addToast, clearErrors]);
+
+
 
   const createBusiness = useCallback(async () => {
     try {
@@ -317,13 +342,19 @@ const Dashboard = () => {
         city: '',
         country: ''
       });
-      await fetchPlanDetails();
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['businesses'] }),
+        queryClient.invalidateQueries({ queryKey: ['planDetails'] })
+      ]);
+
       closeModal('createBusiness');
+
       if (ENABLE_PMF) openModal('pmfOnboarding');
     } catch (error) {
       console.error('Error creating business:', error);
     }
-  }, [createBusinessAction, businessFormData, setSelectedBusinessId, fetchPlanDetails, t, ENABLE_PMF, closeModal, openModal, addToast]);
+  }, [createBusinessAction, businessFormData, setSelectedBusinessId, t, ENABLE_PMF, closeModal, openModal, addToast]);
+
 
   // Validation Functions
   const validateForm = useCallback(() => {
@@ -601,16 +632,17 @@ const Dashboard = () => {
       {isModalOpen('insights') ? (
         ENABLE_PMF ? (
           <PMFInsights
-            businessId={newlyCreatedBusiness?._id || selectedBusinessId || businesses[0]?._id}
+            businessId={newlyCreatedBusiness?._id || selectedBusinessId || allBusinessesQuery[0]?._id}
             onContinue={() => {
               closeModal('insights');
               navigate("/businesspage", {
                 state: {
-                  business: newlyCreatedBusiness || businesses.find(b => b._id === (selectedBusinessId || businesses[0]?._id)) || businesses[0]
+                  business: newlyCreatedBusiness || allBusinessesQuery.find(b => b._id === (selectedBusinessId || allBusinessesQuery[0]?._id)) || allBusinessesQuery[0]
                 }
               });
             }}
           />
+
         ) : null
       ) : (
         <>
@@ -1073,7 +1105,7 @@ const Dashboard = () => {
             <PMFOnboardingModal
               show={isModalOpen('pmfOnboarding')}
               onHide={() => closeModal('pmfOnboarding')}
-              businessId={newlyCreatedBusiness?._id || selectedBusinessId || businesses[0]?._id}
+              businessId={newlyCreatedBusiness?._id || selectedBusinessId || allBusinessesQuery[0]?._id}
               onSubmit={(pmfFormData) => {
                 closeModal('pmfOnboarding');
                 // Instead of showing standalone insights, go straight to the business page
@@ -1081,11 +1113,12 @@ const Dashboard = () => {
                 closeModal('insights');
                 navigate("/businesspage", {
                   state: {
-                    business: newlyCreatedBusiness || businesses.find(b => b._id === (selectedBusinessId || businesses[0]?._id))
+                    business: newlyCreatedBusiness || allBusinessesQuery.find(b => b._id === (selectedBusinessId || allBusinessesQuery[0]?._id))
                   }
                 });
               }}
             />
+
           )}
 
           {/* Create Business Modal */}

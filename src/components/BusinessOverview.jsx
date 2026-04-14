@@ -8,13 +8,19 @@ import "../styles/AdminTableStyles.css";
 
 import { useAuthStore } from '../store/authStore';
 
+import { useAdminBusinesses } from '../hooks/useQueries';
+import { useQueryClient } from '@tanstack/react-query';
+
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
 const BusinessOverview = ({ onToast }) => {
     const { t } = useTranslation();
-    const [businesses, setBusinesses] = useState([]);
-    const [filteredBusinesses, setFilteredBusinesses] = useState([]);
-    const [loading, setLoading] = useState(true);
+    const queryClient = useQueryClient();
+
+    // --- TanStack Query Hook ---
+    const { data: qBusinesses = [], isLoading: loading } = useAdminBusinesses();
+    const businesses = qBusinesses;
+
     const [searchTerm, setSearchTerm] = useState("");
     const [currentPage, setCurrentPage] = useState(1);
     const [pageBeforeSearch, setPageBeforeSearch] = useState(1);
@@ -30,29 +36,8 @@ const BusinessOverview = ({ onToast }) => {
 
     const token = useAuthStore(state => state.token);
 
-    const initializedRef = useRef(false);
-
-    useEffect(() => {
-        if (initializedRef.current) return;
-        initializedRef.current = true;
-        fetchBusinesses();
-    }, []);
-
-    const fetchBusinesses = async () => {
-        try {
-            setLoading(true);
-            const res = await axios.get(`${BACKEND_URL}/api/admin/businesses`, {
-                headers: { Authorization: `Bearer ${token}` },
-            });
-            const data = res.data.businesses || [];
-            setBusinesses(data);
-            setFilteredBusinesses(data);
-        } catch (error) {
-            console.error("Error fetching businesses:", error);
-            onToast(t("failed_to_fetch_businesses") || "Failed to fetch businesses", "error");
-        } finally {
-            setLoading(false);
-        }
+    const fetchBusinesses = () => {
+        // Handled by hook
     };
 
     const handleSearch = (value) => {
@@ -61,28 +46,23 @@ const BusinessOverview = ({ onToast }) => {
         setSearchTerm(value);
     };
 
-    useEffect(() => {
-        const filtered = businesses.filter((biz) => {
-    const search = searchTerm.toLowerCase();
+    const filteredBusinesses = React.useMemo(() => {
+        if (!searchTerm) return businesses;
+        const search = searchTerm.toLowerCase();
+        return businesses.filter((biz) => {
+            const collaboratorText = (biz.collaborators || [])
+                .map(c => `${c.name} ${c.email}`)
+                .join(" ")
+                .toLowerCase();
 
-    const collaboratorText = (biz.collaborators || [])
-        .map(c => `${c.name} ${c.email}`)
-        .join(" ")
-        .toLowerCase();
-
-    return (
-        biz.business_name?.toLowerCase().includes(search) ||
-        biz.owner_name?.toLowerCase().includes(search) ||
-        biz.owner_email?.toLowerCase().includes(search) ||
-        collaboratorText.includes(search) ||
-        new Date(biz.created_at).toLocaleDateString().toLowerCase().includes(search)
-    );
-});
-        setFilteredBusinesses(filtered);
-        if (searchTerm) {
-            const newTotalPages = Math.ceil(filtered.length / itemsPerPage);
-            if (currentPage > newTotalPages && newTotalPages > 0) setCurrentPage(1);
-        }
+            return (
+                biz.business_name?.toLowerCase().includes(search) ||
+                biz.owner_name?.toLowerCase().includes(search) ||
+                biz.owner_email?.toLowerCase().includes(search) ||
+                collaboratorText.includes(search) ||
+                new Date(biz.created_at).toLocaleDateString().toLowerCase().includes(search)
+            );
+        });
     }, [searchTerm, businesses]);
 
     useEffect(() => {
@@ -153,17 +133,7 @@ const BusinessOverview = ({ onToast }) => {
             });
             onToast(t("participant_removed_successfully") || "Participant removed successfully", "success");
             
-            // Update local state to reflect removal
-            const updatedBusinesses = businesses.map(biz => {
-                if (biz._id === businessId) {
-                    return {
-                        ...biz,
-                        collaborators: (biz.collaborators || []).filter(c => c.id !== userId)
-                    };
-                }
-                return biz;
-            });
-            setBusinesses(updatedBusinesses);
+            queryClient.invalidateQueries({ queryKey: ["adminBusinesses"] });
             
             // Also update selectedBizForCollab if modal is open
             if (selectedBizForCollab && selectedBizForCollab._id === businessId) {
