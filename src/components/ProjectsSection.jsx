@@ -82,6 +82,7 @@ const ProjectsSection = ({
 }) => {
   const { selectedBusinessId } = useBusinessStore();
   const { t } = useTranslation();
+  const readOnlyIndicator = isArchived ? <span className="read-only-indicator">{t('read_only')}</span> : null;
   const { userRole, userId: myUserId, userName: user, userLimits } = useAuthStore();
   const getUserLimits = () => userLimits || {};
 
@@ -769,7 +770,7 @@ const ProjectsSection = ({
           <>
             <div className="d-flex align-items-center justify-content-between gap-2 mb-4 flex-wrap">
               <div className="d-flex align-items-center gap-2 flex-grow-1">
-                {!isViewer && !isArchived && (
+                {!isViewer && (
                   <div className="status-tabs-container" style={{ WebkitOverflowScrolling: 'touch', overflowX: 'auto' }}>
                     <button
                       onClick={() => {
@@ -779,7 +780,7 @@ const ProjectsSection = ({
                       className={`status-tab ${showRankScreen ? 'active' : ''} ${isRankingBlinking ? 'blink-highlight' : ''}`}
                     >
                       <ListOrdered size={16} />
-                      {t("Rank_Projects")}
+                      {t("Rank_Projects")} {readOnlyIndicator}
                     </button>
 
                     {lockSummary.total_users > 0 && (
@@ -788,7 +789,7 @@ const ProjectsSection = ({
                         className={`status-tab ${showTeamRankings ? 'active' : ''}`}
                       >
                         <Users size={16} />
-                        {t("Rankings_View")}
+                        {t("Rankings_View")} {readOnlyIndicator}
                       </button>
                     )}
                   </div>

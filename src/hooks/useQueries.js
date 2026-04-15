@@ -26,8 +26,6 @@ export const useBusinesses = () => {
       const filterActive = (list) =>
         (list || []).filter(
           (b) =>
-            (b.status || '').toLowerCase() !== 'archived' &&
-            (b.access_mode || '').toLowerCase() !== 'archived' &&
             (b.status || '').toLowerCase() !== 'deleted'
         );
 
