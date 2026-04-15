@@ -122,17 +122,31 @@ const UserManagement = ({ onToast }) => {
   const { data: projectData = [], isLoading: loadingProjects } = useProjects(accessBusinessId);
 
   // Derive specialized business lists
-  const allBusinesses = React.useMemo(() => businessData, [businessData]);
+  const allBusinesses = React.useMemo(() => 
+    businessData.filter(b => {
+      const s = (b.status || "").toLowerCase();
+      const am = (b.access_mode || "").toLowerCase();
+      return s !== "deleted" && s !== "archived" && s !== "inactive" && am !== "archived" && am !== "hidden";
+    }), 
+    [businessData]
+  );
   const launchedBusinesses = React.useMemo(() =>
-    businessData.filter(b => (b.status || "").toLowerCase() === 'launched' || b.has_launched_projects === true),
+    businessData.filter(b => {
+      const s = (b.status || "").toLowerCase();
+      const am = (b.access_mode || "").toLowerCase();
+      const isLaunched = s === "launched" || b.has_launched_projects === true;
+      const isActive = s !== "deleted" && s !== "archived" && s !== "inactive" && am !== "archived" && am !== "hidden";
+      return isLaunched && isActive;
+    }),
     [businessData]
   );
 
   const collaborators = React.useMemo(() => collaboratorData, [collaboratorData]);
   const projects = React.useMemo(() => {
     return (projectData || []).filter(p => {
-      const s = (p.status || "").toLowerCase().trim().replace(/[-_\s]/g, '');
-      return s === 'active' || s === 'atrisk' || s === 'paused';
+      const s = (p.status || "").toLowerCase().trim().replace(/[-_\s]/g, "");
+      const isArchivedOrDeleted = s === "deleted" || s === "archived" || p.access_mode === "archived" || p.access_mode === "hidden";
+      return (s === "active" || s === "atrisk" || s === "paused") && !isArchivedOrDeleted;
     });
   }, [projectData]);
 
