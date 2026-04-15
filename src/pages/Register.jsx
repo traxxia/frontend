@@ -147,6 +147,26 @@ const Register = () => {
   const { data: plans = [], isLoading: loadingPlans } = usePlans();
   const { data: companies = [], isLoading: loadingCompanies } = useCompanies();
 
+  const [isCompanyDropdownOpen, setIsCompanyDropdownOpen] = useState(false);
+  const [companySearch, setCompanySearch] = useState('');
+  const companyDropdownRef = React.useRef(null);
+
+  const filteredCompanies = useMemo(() => {
+    return companies.filter(c =>
+      c.company_name.toLowerCase().includes(companySearch.toLowerCase())
+    );
+  }, [companies, companySearch]);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (companyDropdownRef.current && !companyDropdownRef.current.contains(event.target)) {
+        setIsCompanyDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
   const [showTermsModal, setShowTermsModal] = useState(false);
   const [showPrivacyModal, setShowPrivacyModal] = useState(false);
 
@@ -597,23 +617,60 @@ const Register = () => {
                                     className="form-group-custom"
                                   >
                                     <label>{t("select_company")} <span className="required">*</span></label>
-                                    <div className="select-wrapper">
+                                    <div className="custom-select-container" ref={companyDropdownRef}>
                                       {loadingCompanies ? (
                                         <div className="loading-select"><FaSpinner className="spinner" /> Loading...</div>
                                       ) : (
-                                        <select
-                                          name="company_id"
-                                          value={form.company_id}
-                                          onChange={handleChange}
-                                          className={errors.company_id ? 'error' : ''}
-                                        >
-                                          <option value="">{t('select_a_company')}</option>
-                                          {companies.map((c) => (
-                                            <option key={c._id} value={c._id}>
-                                              {c.company_name}
-                                            </option>
-                                          ))}
-                                        </select>
+                                        <>
+                                          <div
+                                            className={`custom-select-header ${isCompanyDropdownOpen ? 'open' : ''} ${errors.company_id ? 'error' : ''}`}
+                                            onClick={() => setIsCompanyDropdownOpen(!isCompanyDropdownOpen)}
+                                          >
+                                            <span>
+                                              {form.company_id
+                                                ? companies.find(c => c._id === form.company_id)?.company_name || t('select_a_company')
+                                                : t('select_a_company')}
+                                            </span>
+                                            {isCompanyDropdownOpen ? <FaChevronUp /> : <FaChevronDown />}
+                                          </div>
+
+                                          {isCompanyDropdownOpen && (
+                                            <div className="custom-select-dropdown">
+                                              <div className="search-box-wrapper">
+                                                <input
+                                                  type="text"
+                                                  placeholder={t('type_a_company') || 'Type a company'}
+                                                  value={companySearch}
+                                                  onChange={(e) => setCompanySearch(e.target.value)}
+                                                  onClick={(e) => e.stopPropagation()}
+                                                  autoFocus
+                                                />
+                                                <FaSearch className="search-icon" />
+                                              </div>
+
+                                              <div className="options-list">
+                                                {filteredCompanies.length > 0 ? (
+                                                  filteredCompanies.map((c) => (
+                                                    <div
+                                                      key={c._id}
+                                                      className={`option-item ${form.company_id === c._id ? 'selected' : ''}`}
+                                                      onClick={() => {
+                                                        setForm({ ...form, company_id: c._id });
+                                                        setIsCompanyDropdownOpen(false);
+                                                        setCompanySearch('');
+                                                        if (errors.company_id) setErrors({ ...errors, company_id: '' });
+                                                      }}
+                                                    >
+                                                      {c.company_name}
+                                                    </div>
+                                                  ))
+                                                ) : (
+                                                  <div className="no-options">{t('no_companies_found') || 'No companies found'}</div>
+                                                )}
+                                              </div>
+                                            </div>
+                                          )}
+                                        </>
                                       )}
                                     </div>
                                   </motion.div>
