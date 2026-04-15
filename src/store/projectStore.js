@@ -7,6 +7,7 @@ const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
 
 const checkAllAccessCache = new Map();
 const teamRankingsCache = new Map();
+const projectsCache = new Map();
 
 export const useProjectStore = create((set, get) => ({
   projects: [],
@@ -23,25 +24,37 @@ export const useProjectStore = create((set, get) => ({
   fetchProjects: async (businessId, options = {}) => {
     const token = useAuthStore.getState().token;
     if (!token || !businessId) return;
-    if (!options.silent) set({ isLoading: true, error: null });
-    try {
-      const response = await axios.get(API_BASE_URL + '/api/projects', {
-        headers: { Authorization: 'Bearer ' + token },
-        params: { business_id: businessId }
-      });
-      
-      const projects = response.data.projects || [];
-      set({ 
-        projects, 
-        businessStatus: response.data.business_status || 'draft',
-        lockSummary: response.data.ranking_lock_summary || { total_users: 0, locked_users_count: 0, locked_users: [] },
-        isLoading: false 
-      });
-      return response.data;
-    } catch (err) {
-      if (!options.silent) set({ error: err.response?.data?.error || err.message, isLoading: false });
-      throw err;
+
+    const cacheKey = `projects-${businessId}`;
+    if (projectsCache.has(cacheKey)) {
+      return projectsCache.get(cacheKey);
     }
+
+    const fetchPromise = (async () => {
+      if (!options.silent) set({ isLoading: true, error: null });
+      try {
+        const response = await axios.get(API_BASE_URL + '/api/projects', {
+          headers: { Authorization: 'Bearer ' + token },
+          params: { business_id: businessId }
+        });
+        
+        const projects = response.data.projects || [];
+        set({ 
+          projects, 
+          businessStatus: response.data.business_status || 'draft',
+          lockSummary: response.data.ranking_lock_summary || { total_users: 0, locked_users_count: 0, locked_users: [] },
+          isLoading: false 
+        });
+        return response.data;
+      } catch (err) {
+        projectsCache.delete(cacheKey);
+        if (!options.silent) set({ error: err.response?.data?.error || err.message, isLoading: false });
+        throw err;
+      }
+    })();
+
+    projectsCache.set(cacheKey, fetchPromise);
+    return fetchPromise;
   },
 
   checkAllAccess: async (businessId) => {
@@ -50,7 +63,7 @@ export const useProjectStore = create((set, get) => ({
 
     const cacheKey = `access-${businessId}`;
     if (checkAllAccessCache.has(cacheKey)) {
-      return await checkAllAccessCache.get(cacheKey);
+      return checkAllAccessCache.get(cacheKey);
     }
 
     const fetchPromise = (async () => {
@@ -88,7 +101,8 @@ export const useProjectStore = create((set, get) => ({
 
     const cacheKey = `rank-${businessId}-${userId}`;
     if (teamRankingsCache.has(cacheKey)) {
-      const cachedData = await teamRankingsCache.get(cacheKey);
+      const cachedPromise = teamRankingsCache.get(cacheKey);
+      const cachedData = await cachedPromise;
       set({ 
         projects: cachedData?.projects || [],
         businessStatus: cachedData?.business_status,
@@ -238,6 +252,21 @@ export const useProjectStore = create((set, get) => ({
       }, {
         headers: { Authorization: `Bearer ${token}` }
       });
+
+      // Clear all related caches to force a fresh fetch
+      const cacheKey = `teamRankings-${businessId}`;
+      const projCacheKey = `projects-${businessId}`;
+      const accessCacheKey = `checkAccess-${businessId}`;
+      
+      teamRankingsCache.delete(cacheKey);
+      projectsCache.delete(projCacheKey);
+      checkAllAccessCache.delete(accessCacheKey);
+
+      // Refresh data
+      await get().fetchProjects(businessId, { silent: true });
+      await get().fetchTeamRankings(businessId, { silent: true });
+      await get().checkAllAccess(businessId);
+
       set({ isLoading: false });
       return { success: true, data: response.data };
     } catch (err) {
@@ -492,6 +521,7 @@ export const useProjectStore = create((set, get) => ({
   clearCache: (businessId) => {
     if (businessId) {
       checkAllAccessCache.delete(`access-${businessId}`);
+      projectsCache.delete(`projects-${businessId}`);
       const userId = useAuthStore.getState().userId;
       if (userId) {
         teamRankingsCache.delete(`rank-${businessId}-${userId}`);

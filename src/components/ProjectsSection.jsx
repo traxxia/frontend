@@ -189,7 +189,10 @@ const ProjectsSection = ({
   const refreshAllData = useCallback(async (options = { silent: true }) => {
     if (!selectedBusinessId) return;
     
-    console.log("ProjectsSection: Refreshing all data (View Transition)");
+    // Update signature to prevent immediate redundant automated refresh
+    lastRefreshRef.current = `${selectedBusinessId}-${viewMode}-${activeView}`;
+    
+    console.log("ProjectsSection: Refreshing all data (Manual/View Transition)");
     
     // 1. Clear custom store caches to bypass Zimmmer-level Map caching
     clearCache(selectedBusinessId);
@@ -200,20 +203,37 @@ const ProjectsSection = ({
     queryClient.invalidateQueries({ queryKey: ["teamRankings", selectedBusinessId] });
     queryClient.invalidateQueries({ queryKey: ["grantedAccess", selectedBusinessId] });
 
-    // 3. Trigger immediate Zustand store refreshes
-    await Promise.all([
-      fetchProjectsStore(selectedBusinessId, { silent: options.silent }),
+    // 3. Trigger immediate Zustand store refreshes (Projects handled via Query Invalidation)
+    const [_, rankingsResult] = await Promise.all([
       fetchTeamRankingsStore(selectedBusinessId, { silent: options.silent }),
       checkAllAccessStore(selectedBusinessId)
     ]);
+
+    if (rankingsResult?.businessAccessMode) {
+      const apiArchived = rankingsResult.businessAccessMode === 'archived' || rankingsResult.businessAccessMode === 'hidden';
+      setApiIsArchived(apiArchived);
+    }
   }, [selectedBusinessId, clearCache, queryClient, fetchProjectsStore, fetchTeamRankingsStore, checkAllAccessStore]);
 
+  // Signature guard to prevent redundant calls during rapid state/view transitions
+  const lastRefreshRef = useRef("");
+  
   // Trigger fresh fetch on mount AND on any major view transition (Redirects)
   useEffect(() => {
     if (selectedBusinessId) {
+      // Create a unique signature for the current data state
+      const signature = `${selectedBusinessId}-${viewMode}-${activeView}`;
+      
+      // If we've already refreshed for this specific view configuration, skip it
+      if (lastRefreshRef.current === signature) {
+        console.log("ProjectsSection: Skipping redundant refresh for signature:", signature);
+        return;
+      }
+
       // We only want to trigger this when arriving at the main lists
       const isMainView = activeView === "list" || viewMode === "ranking";
       if (isMainView) {
+        lastRefreshRef.current = signature;
         refreshAllData();
       }
     }
@@ -245,10 +265,10 @@ const ProjectsSection = ({
     setShowRankScreen(false);
   }, []);
 
-  // UPDATED: This should reflect if the CURRENT USER has locked their ranking
-  const [projectCreationLocked, setProjectCreationLocked] = useState(false);
-  const [finalizeCompleted, setFinalizeCompleted] = useState(false);
-  const [launched, setLaunched] = useState(false);
+  // Derived status flags based on businessStatus from store
+  const projectCreationLocked = useMemo(() => ["prioritizing", "prioritized", "launched"].includes(businessStatus), [businessStatus]);
+  const finalizeCompleted = useMemo(() => ["prioritized", "launched"].includes(businessStatus), [businessStatus]);
+  const launched = useMemo(() => businessStatus === "launched", [businessStatus]);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const isProjectsLoadingRef = useRef(false);
@@ -320,16 +340,33 @@ const ProjectsSection = ({
     return typeof id === 'object' ? String(id) : String(id);
   };
 
-  const rankMap = useMemo(() => (projects || []).reduce((acc, p) => {
-    const id = normalizeId(p._id);
-    if (id) {
-      const displayRank = (p.rank !== null && p.rank !== undefined) ? p.rank : p.ai_rank;
-      if (displayRank !== null && displayRank !== undefined) {
-        acc[id] = displayRank;
+  const storeProjects = useProjectStore(state => state.projects);
+  const rankMap = useMemo(() => {
+    // Priority 1: User-specific ranks from the Zustand store (populated via fetchTeamRankings)
+    // Priority 2: Global ranks from the TanStack Query projects list
+    const projectsToProcess = projects || [];
+    const storeRankingMap = (storeProjects || []).reduce((acc, p) => {
+      const id = normalizeId(p._id || p.project_id);
+      if (id) acc[id] = p.rank;
+      return acc;
+    }, {});
+
+    return projectsToProcess.reduce((acc, p) => {
+      const id = normalizeId(p._id);
+      if (id) {
+        // Check store first for collaborator's personal rank, then fallback to p.rank (global) or p.ai_rank
+        const storeRank = storeRankingMap[id];
+        const displayRank = (storeRank !== null && storeRank !== undefined) ? storeRank : 
+                          ((p.rank !== null && p.rank !== undefined) ? p.rank : p.ai_rank);
+        
+        if (displayRank !== null && displayRank !== undefined) {
+          acc[id] = displayRank;
+        }
       }
-    }
-    return acc;
-  }, {}), [projects]);
+      return acc;
+    }, {});
+  }, [projects, storeProjects]);
+
 
   const adminRankMap = useMemo(() => (adminRanks || []).reduce((acc, r) => {
     acc[normalizeId(r.project_id)] = r.rank;
@@ -423,73 +460,15 @@ const ProjectsSection = ({
 
 
 
-  const checkIfCurrentUserLocked = useCallback((lockedUsers) => {
-    if (!Array.isArray(lockedUsers) || lockedUsers.length === 0) {
-      return false;
-    }
-    return lockedUsers.some(user => user.user_id.toString() === myUserId);
-  }, [myUserId]);
-
-  const loadProjects = useCallback(async () => {
-    try {
-      // Parallelize access check and rankings fetch
-      const [accessResult, rankingsResult] = await Promise.all([
-        checkAllAccessStore(selectedBusinessId),
-        fetchTeamRankingsStore(selectedBusinessId)
-      ]);
-
-      if (!rankingsResult) return;
-
-      const lockSummaryData = rankingsResult.lockSummary || { locked_users: [] };
-      checkIfCurrentUserLocked(lockSummaryData.locked_users);
-
-      if (rankingsResult.businessAccessMode) {
-        const apiArchived = rankingsResult.businessAccessMode === 'archived' || rankingsResult.businessAccessMode === 'hidden';
-        setApiIsArchived(apiArchived);
-      }
-
-      const currentStatus = rankingsResult.businessStatus || "draft";
-      if (currentStatus === "draft") {
-        setProjectCreationLocked(false);
-        setFinalizeCompleted(false);
-        setLaunched(false);
-      } else if (currentStatus === "prioritizing") {
-        setProjectCreationLocked(true);
-        setFinalizeCompleted(false);
-        setLaunched(false);
-      } else if (currentStatus === "prioritized") {
-        setProjectCreationLocked(true);
-        setFinalizeCompleted(true);
-        setLaunched(false);
-      } else if (currentStatus === "launched") {
-        setProjectCreationLocked(true);
-        setFinalizeCompleted(true);
-        setLaunched(true);
-      }
-    } catch (err) {
-      console.error("Error in loadProjects:", err);
-    }
-  }, [checkAllAccessStore, checkIfCurrentUserLocked, fetchTeamRankingsStore, selectedBusinessId]);
-
-
-  const refreshTeamRankings = useCallback(async () => {
-    await loadProjects();
-  }, [loadProjects]);
-
-  useEffect(() => {
-    return () => {
-      window.dispatchEvent(new CustomEvent('ai_context_changed', { detail: { projectId: null } }));
-    };
-  }, []);
 
   const handleLockProjectRanking = useCallback(async () => {
     try {
       await lockRanking();
-      await loadProjects();
+      await refreshAllData();
     } catch (err) {
       console.error("Failed to lock project ranking:", err);
     }
-  }, [lockRanking, loadProjects]);
+  }, [lockRanking, refreshAllData]);
 
   const handleLaunchProjects = useCallback(async () => {
     if (selectedProjectIds.length === 0) {
@@ -513,12 +492,11 @@ const ProjectsSection = ({
       const { success, error } = await launchProjects(selectedProjectIds);
 
       if (success) {
-        setLaunched(true);
         addToast({ message: t("Projects_launched_Ready_for_execution."), type: "success" });
         clearCache(selectedBusinessId);
         queryClient.invalidateQueries({ queryKey: ["projects", selectedBusinessId] });
         queryClient.invalidateQueries({ queryKey: ["teamRankings", selectedBusinessId] });
-        await loadProjects();
+        await refreshAllData();
         setSelectedProjectIds([]); // Clear selection
 
       } else {
@@ -527,7 +505,7 @@ const ProjectsSection = ({
     } finally {
       setIsSubmitting(false);
     }
-  }, [selectedProjectIds, launchProjects, loadProjects, handleShowToast]);
+  }, [selectedProjectIds, launchProjects, refreshAllData, handleShowToast]);
 
   const toggleProjectSelection = useCallback((projectId) => {
     setSelectedProjectIds((prev) =>
@@ -553,12 +531,12 @@ const ProjectsSection = ({
       clearCache(selectedBusinessId);
       queryClient.invalidateQueries({ queryKey: ["projects", selectedBusinessId] });
       queryClient.invalidateQueries({ queryKey: ["teamRankings", selectedBusinessId] });
-      await loadProjects();
+      await refreshAllData();
     } else {
 
       handleShowToast(error || "Failed to kill project.", "error");
     }
-  }, [isViewer, isSuperAdmin, deleteProject, loadProjects, handleShowToast]);
+  }, [isViewer, isSuperAdmin, deleteProject, refreshAllData, handleShowToast]);
 
   const handlePerformReview = useCallback((project) => {
     setSelectedReviewProject(project);
@@ -611,7 +589,7 @@ const ProjectsSection = ({
         clearCache(selectedBusinessId);
         queryClient.invalidateQueries({ queryKey: ["projects", selectedBusinessId] });
         queryClient.invalidateQueries({ queryKey: ["teamRankings", selectedBusinessId] });
-        await loadProjects();
+        await refreshAllData();
         handleBackToList();
 
       } else {
@@ -620,7 +598,7 @@ const ProjectsSection = ({
     } finally {
       setIsSubmitting(false);
     }
-  }, [validateForm, getPayload, selectedBusinessId, createProject, currentProject?._id, loadProjects, handleBackToList, handleShowToast]);
+  }, [validateForm, getPayload, selectedBusinessId, createProject, currentProject?._id, refreshAllData, handleBackToList, handleShowToast]);
 
 
 
@@ -638,7 +616,7 @@ const ProjectsSection = ({
         clearCache(selectedBusinessId);
         queryClient.invalidateQueries({ queryKey: ["projects", selectedBusinessId] });
         queryClient.invalidateQueries({ queryKey: ["teamRankings", selectedBusinessId] });
-        await loadProjects();
+        await refreshAllData();
         handleBackToList();
 
       } else {
@@ -647,7 +625,7 @@ const ProjectsSection = ({
     } finally {
       setIsSubmitting(false);
     }
-  }, [updateProject, currentProject?._id, loadProjects, handleBackToList, handleShowToast]);
+  }, [updateProject, currentProject?._id, refreshAllData, handleBackToList, handleShowToast]);
 
   const handleSave = useCallback(async () => {
     if (!canEditProject(currentProject, isEditor, myUserId, businessStatus, apiIsArchived)) {
@@ -694,7 +672,7 @@ const ProjectsSection = ({
         clearCache(selectedBusinessId);
         queryClient.invalidateQueries({ queryKey: ["projects", selectedBusinessId] });
         queryClient.invalidateQueries({ queryKey: ["teamRankings", selectedBusinessId] });
-        await loadProjects();
+        await refreshAllData();
       } else {
 
         handleShowToast(error || "Failed to process update", "error");
@@ -705,26 +683,25 @@ const ProjectsSection = ({
       const errorMsg = err.response?.data?.error || "Failed to process update";
       handleShowToast(errorMsg, "error");
     }
-  }, [selectedReviewProject?._id, reviewType, loadProjects, handleShowToast]);
+  }, [selectedReviewProject?._id, reviewType, refreshAllData, handleShowToast]);
 
 
   const handleAccordionSelect = useCallback((eventKey) => {
     setActiveAccordionKey((prevKey) => {
       const nextKey = prevKey === eventKey ? null : eventKey;
       if (nextKey === "0" && prevKey !== "0") {
-        refreshTeamRankings();
+        refreshAllData();
       }
       return nextKey;
     });
-  }, [refreshTeamRankings]);
+  }, [refreshAllData]);
 
 
   useEffect(() => {
-    if (!selectedBusinessId) return;
-    loadProjects();
-  }, [selectedBusinessId, loadProjects]);
-
-  // Removed redundant loadTeamRankings and loadAdminRankings effects as they are now in loadProjects
+    return () => {
+      window.dispatchEvent(new CustomEvent('ai_context_changed', { detail: { projectId: null } }));
+    };
+  }, []);
 
   const renderProjectForm = () => {
     // Use ProjectDetails component for view mode

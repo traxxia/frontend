@@ -552,9 +552,9 @@ const BusinessSetupPage = () => {
       if (!selectedBusinessId) return;
 
       try {
-        // Use the centralized service with promise-caching
-        const projects = await apiService.getProjects(selectedBusinessId);
-        const hasProjects = projects.length > 0;
+        // Use the synchronized store method which handles promise caching
+        const data = await useProjectStore.getState().fetchProjects(selectedBusinessId, { silent: true });
+        const hasProjects = (data?.projects || []).length > 0;
         
         setShowProjectsTab(hasProjects && hasProjectAccess);
         
@@ -1439,7 +1439,6 @@ const BusinessSetupPage = () => {
                                       className={`dropdown-item ${activeTab === 'projects' && useProjectStore.getState().viewMode === 'projects' ? 'active' : ''}`} 
                                       onClick={() => {
                                         useProjectStore.getState().setViewMode('projects');
-                                        useProjectStore.getState().clearCache(selectedBusinessId);
                                         if (activeTab !== 'projects') {
                                           setActiveTab('projects');
                                         }
@@ -1454,11 +1453,7 @@ const BusinessSetupPage = () => {
                                       className={`dropdown-item ${activeTab === 'projects' && useProjectStore.getState().viewMode === 'ranking' ? 'active' : ''}`} 
                                       onClick={() => {
                                         useProjectStore.getState().setViewMode('ranking');
-                                        useProjectStore.getState().clearCache(selectedBusinessId);
-                                        if (activeTab === 'projects') {
-                                          useProjectStore.getState().checkAllAccess(selectedBusinessId);
-                                          useProjectStore.getState().fetchTeamRankings(selectedBusinessId);
-                                        } else {
+                                        if (activeTab !== 'projects') {
                                           setActiveTab('projects');
                                         }
                                         setActiveNavDropdown(null);

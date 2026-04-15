@@ -136,11 +136,9 @@ export const useProjects = (businessId) => {
   return useQuery({
     queryKey: ['projects', businessId],
     queryFn: async () => {
-      const res = await axios.get(`${BACKEND_URL}/api/projects`, {
-        params: { business_id: businessId },
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      return res.data.projects || [];
+      const { useProjectStore } = await import('../store');
+      const data = await useProjectStore.getState().fetchProjects(businessId, { silent: true });
+      return data.projects || [];
     },
     enabled: !!token && !!businessId,
     staleTime: 0,
