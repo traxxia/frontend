@@ -79,7 +79,7 @@ const AcademyNavigation = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
 
     const renderCategoryIcon = (iconName) => {
         const IconComponent = LucideIcons[iconName];
-        return IconComponent ? <IconComponent size={20} /> : <LucideIcons.BookOpen size={20} />;
+        return IconComponent ? <IconComponent size={16} /> : <LucideIcons.BookOpen size={16} />;
     };
 
     return (
@@ -144,9 +144,9 @@ const AcademyNavigation = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
                                                     className="article-link"
                                                     onClick={() => handleArticleClick(category.id, article.id)}
                                                 >
-                                                    {article.title}
+                                                    <span className="article-title-text">{article.title}</span>
                                                     {isArticleActive && (
-                                                        <LucideIcons.ChevronRight size={14} className="active-indicator" />
+                                                        <LucideIcons.ChevronRight size={14} className="active-indicator flex-shrink-0 ml-2" />
                                                     )}
                                                 </button>
                                             </li>

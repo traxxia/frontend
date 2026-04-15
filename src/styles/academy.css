@@ -229,7 +229,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: var(--spacing-md) var(--spacing-lg);
+  padding: var(--spacing-sm) var(--spacing-md);
   background: none;
   border: none;
   cursor: pointer;
@@ -270,9 +270,19 @@
 .category-title {
   display: flex;
   align-items: center;
-  gap: var(--spacing-md);
-  font-size: 1.2rem !important;
-  font-weight: var(--font-weight-semibold);
+  gap: var(--spacing-sm);
+  font-size: 12px;
+  font-weight: var(--font-weight-medium);
+  flex: 1; /* Help manage overflow alongside right elements */
+  min-width: 0; /* Enable truncation in flex container */
+}
+.category-title span {
+  text-align: left;
+}
+.category-title svg {
+  min-width: 16px;
+  max-width: 16px;
+  flex-shrink: 0;
 }
 
 .category-chevron {
@@ -340,7 +350,7 @@
   border: none;
   text-align: left;
   cursor: pointer;
-  font-size: var(--font-size-sm);
+  font-size: 12px;
   color: var(--color-text-secondary);
   transition: var(--transition-normal);
 }
@@ -353,6 +363,11 @@
 .active-article .article-link {
   color: var(--color-primary);
   font-weight: var(--font-weight-medium);
+}
+
+.article-title-text {
+  text-align: left;
+  flex: 1;
 }
 
 .active-indicator {
