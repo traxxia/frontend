@@ -96,7 +96,8 @@ const ProjectCard = ({
       <div className="card-header-premium">
         <div className="card-title-container-premium">
           {isAdmin && !isArchived && getUserLimits().project &&
-            !["completed", "scaled", "killed"].includes(project.status?.toLowerCase()) && (
+            !["completed", "scaled", "killed"].includes(project.status?.toLowerCase()) &&
+            project.launch_status !== 'launched' && (
               <input
                 type="checkbox"
                 checked={isSelected}
