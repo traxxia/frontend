@@ -43,9 +43,9 @@ const isMandatoryOrActive = (p) =>
   (isLaunched(p) || isActiveStatus(p)) && 
   !isTerminalStatus(p);
 
-// Projects that MUST be ranked (Collaborators see AI ranked ones too)
+// Projects that MUST be ranked (Collaborators see AI ranked ones too and any admin-ranked ones)
 const isMandatoryForCollaborator = (p) =>
-  (isLaunched(p) || isActiveStatus(p)) &&
+  (isLaunched(p) || isActiveStatus(p) || p.is_admin_ranked) &&
   !isTerminalStatus(p);
 
 // Projects that are considered "Draft" or "Unlaunched"
@@ -89,7 +89,10 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, onRankSaved, isAdmi
   const [initialAllRanked, setInitialAllRanked] = useState(false);
 
   useEffect(() => {
-    if (!userHasLockedRanking) {
+    if (userHasLockedRanking) {
+      setHasEverSaved(true);
+      setIsSaved(true);
+    } else {
       setHasEverSaved(false);
       setIsSaved(false);
     }
@@ -113,7 +116,7 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, onRankSaved, isAdmi
           ((b.ai_rank !== null && b.ai_rank !== undefined) ? b.ai_rank : Infinity);
 
         if (rankA !== rankB) return rankA - rankB;
-        return new Date(b.updated_at) - new Date(a.updated_at);
+        return new Date(b.updated_at || b.created_at || 0) - new Date(a.updated_at || a.created_at || 0);
       });
 
       setProjectList(sortedMandatory.map(p => ({
@@ -793,10 +796,11 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, onRankSaved, isAdmi
               ← {t("Back to Selection")}
             </Button>
           )}
-          {step === 2 && ((!isAdmin && userHasRerankAccess) || (isAdmin && !initialAllRanked)) && projectList.length > 0 && (
+          {step === 2 && (!hasEverSaved || isAdmin || userHasRerankAccess) && !isRankingLocked && projectList.length > 0 && (
             <Button
+              variant="primary"
               className="btn-save-rank responsive-btn w-100-mobile"
-              onClick={handleSaveRankings}
+              onClick={handleSaveAndClose}
               disabled={isSaving || isArchived}
             >
               {isSaving ? "Saving..." : t("Save_Rankings")}

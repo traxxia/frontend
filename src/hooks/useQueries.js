@@ -56,6 +56,13 @@ export const usePlanDetails = () => {
       const res = await axios.get(`${BACKEND_URL}/api/subscription/plan-details`, {
         headers: { Authorization: `Bearer ${token}` },
       });
+      
+      // Auto-sync frontend auth limits so the user doesn't have to logout/login
+      // to see new tabs when their subscription plan is upgraded behind the scenes
+      if (res.data?.plan_limits) {
+        useAuthStore.getState().updateUser({ userLimits: res.data.plan_limits });
+      }
+      
       return res.data;
     },
     enabled: !!token,
@@ -267,7 +274,8 @@ export const useAdminBusinesses = () => {
       return res.data.businesses || [];
     },
     enabled: !!token,
-    staleTime: 60 * 1000, // 1 minute
+    staleTime: 0,              // Always consider data stale
+    refetchOnMount: 'always',  // Always refetch when component mounts
   });
 };
 

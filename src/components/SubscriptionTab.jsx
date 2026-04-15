@@ -49,9 +49,9 @@ const fmtDate = (
 const fmtTime = (iso) =>
   iso
     ? new Date(iso).toLocaleTimeString([], {
-        hour: "2-digit",
-        minute: "2-digit",
-      })
+      hour: "2-digit",
+      minute: "2-digit",
+    })
     : "";
 
 const buildFeatureRows = (limits = {}) => [
@@ -865,6 +865,9 @@ const SubscriptionTab = ({ onToast }) => {
         initialPlanId={selectedPlanId}
         onUpgradeSuccess={(updatedSub) => {
           queryClient.invalidateQueries({ queryKey: ["planDetails"] });
+          // Plan changes can affect business access_mode/status — refresh admin view
+          queryClient.invalidateQueries({ queryKey: ["adminBusinesses"] });
+          queryClient.invalidateQueries({ queryKey: ["businesses"] });
           if (onToast)
             onToast(
               t("plan_updated_success") || "Plan updated successfully!",
