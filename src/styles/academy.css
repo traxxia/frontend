@@ -57,8 +57,7 @@
   flex-direction: column;
   position: sticky;
   top: 0;
-  left: 0;
-  overflow-y: auto;
+  left: 0; 
   overscroll-behavior: contain;
   transition: var(--transition-slow);
   z-index: 1000;
@@ -218,6 +217,7 @@
 /* Navigation Categories */
 .academy-nav-categories {
   padding: var(--spacing-md) 0;
+  overflow-y: auto;
 }
 
 .category-section {

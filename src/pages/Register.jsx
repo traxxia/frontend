@@ -1,15 +1,15 @@
- import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
- import { FaEye, FaEyeSlash, FaCheck, FaTimes, FaAngleLeft, FaAngleRight, FaSpinner, FaUser, FaBuilding, FaSave } from 'react-icons/fa';
- import { motion, AnimatePresence } from 'framer-motion';
- import { Modal, Button } from 'react-bootstrap';
- import '../styles/Register.css';
- import logo from '../assets/01a2750def81a5872ec67b2b5ec01ff5e9d69d0e.png';
- 
- import { useNavigate } from 'react-router-dom';
- import { useTranslation } from '../hooks/useTranslation';
- import PricingPlanCard from '../components/PricingPlanCard';
- import { usePlans, useCompanies } from '../hooks/useQueries';
+import { FaUser, FaEnvelope, FaLock, FaCheck, FaBuilding, FaRocket, FaGlobe, FaChevronRight, FaChevronLeft, FaSave, FaSpinner, FaEye, FaEyeSlash, FaSearch, FaChevronDown, FaChevronUp, FaTimes, FaAngleLeft, FaAngleRight } from 'react-icons/fa';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Modal, Button } from 'react-bootstrap';
+import '../styles/Register.css';
+import logo from '../assets/01a2750def81a5872ec67b2b5ec01ff5e9d69d0e.png';
+
+import { useNavigate } from 'react-router-dom';
+import { useTranslation } from '../hooks/useTranslation';
+import PricingPlanCard from '../components/PricingPlanCard';
+import { usePlans, useCompanies } from '../hooks/useQueries';
 
 // Stripe imports removed from top-level for lazy loading
 import PaymentForm from '../components/PaymentForm';
@@ -175,10 +175,14 @@ const Register = () => {
   }, [plans, selectedPlanId]);
 
   const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
+    let { name, value, type, checked } = e.target;
+
     setForm({ ...form, [name]: type === 'checkbox' ? checked : value });
     if (errors[name]) setErrors({ ...errors, [name]: '' });
   };
+
+  const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+  const isDark = currentTheme === 'dark';
 
   const validateTab1 = () => {
     const newErrors = {};
@@ -186,11 +190,11 @@ const Register = () => {
       newErrors.name = t('first_name_required') || 'Name is required';
     } else {
       const name = form.name.trim();
-      const nameRegex = /^[a-zA-Z\s]+$/;
+      const hasLetter = /[a-zA-Z\u00C0-\u017F]/.test(name);
       if (name.length < 2) {
         newErrors.name = t('Name_must_be_at_least_2_characters_long') || 'Name must be at least 2 characters long';
-      } else if (!nameRegex.test(name)) {
-        newErrors.name = t('Name_can_only_contain_letters_and_spaces') || 'Name can only contain letters and spaces';
+      } else if (!hasLetter) {
+        newErrors.name = t('Name_must_contain_at_least_one_letter') || 'Name must contain at least one letter';
       }
     }
 
@@ -567,7 +571,7 @@ const Register = () => {
                               </div>
                             </div>
 
-                            <div className="selection-content" style={{ overflow: 'hidden' }}>
+                            <div className="selection-content">
                               <AnimatePresence mode="wait" initial={false}>
                                 {isNewCompany ? (
                                   <motion.div
@@ -597,10 +601,17 @@ const Register = () => {
                                       {loadingCompanies ? (
                                         <div className="loading-select"><FaSpinner className="spinner" /> Loading...</div>
                                       ) : (
-                                        <select name="company_id" value={form.company_id} onChange={handleChange} className={errors.company_id ? 'error' : ''} required>
+                                        <select
+                                          name="company_id"
+                                          value={form.company_id}
+                                          onChange={handleChange}
+                                          className={errors.company_id ? 'error' : ''}
+                                        >
                                           <option value="">{t('select_a_company')}</option>
                                           {companies.map((c) => (
-                                            <option key={c._id} value={c._id}>{c.company_name}</option>
+                                            <option key={c._id} value={c._id}>
+                                              {c.company_name}
+                                            </option>
                                           ))}
                                         </select>
                                       )}
@@ -668,7 +679,7 @@ const Register = () => {
                               </button>
                             ) : (
                               <button type="button" onClick={() => handleNext()} disabled={isSubmitting} className="btn-vibrant btn-primary-vibrant create-account-btn">
-                                {isSubmitting ? <><FaSpinner className="spinner" />{t("saving")}</> : <><FaSave />{t("createAccount")}</>}
+                                {isSubmitting ? <><FaSpinner className="spinner" />{t("saving")}</> : <><FaSave />{t("join_company")}</>}
                               </button>
                             )}
                           </div>

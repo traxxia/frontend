@@ -929,3 +929,184 @@
   margin-top: 0 !important;
   border-top: 1px solid var(--color-border-light) !important;
 }
+
+.stripe-input-wrapper {
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border-medium);
+  border-radius: var(--border-radius-md);
+  padding: 12px 14px;
+  transition: border-color 0.2s ease;
+}
+
+.stripe-input-wrapper:focus-within {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px rgba(72, 100, 161, 0.1);
+}
+
+[data-theme="dark"] .stripe-input-wrapper {
+  background: #2a2a2a;
+  border-color: #444;
+}
+
+@media (max-width: 600px) {
+  .payment-methods-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Visual Card Preview */
+.visual-card-wrapper {
+  display: flex;
+  justify-content: center;
+  perspective: 1000px;
+}
+
+.visual-card {
+  width: 100%;
+  max-width: 340px;
+  height: 220px;
+  border-radius: 16px;
+  padding: 24px;
+  color: white;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  transition: background 0.5s ease;
+  background: linear-gradient(135deg, #485563, #29323c);
+}
+
+.visual-card.brand-visa {
+  background: linear-gradient(135deg, #005bea, #00c6fb);
+}
+
+.visual-card.brand-mastercard {
+  background: linear-gradient(135deg, #f79d00, #64f38c);
+  background: linear-gradient(135deg, #ee0979, #ff6a00);
+}
+
+.visual-card.brand-amex {
+  background: linear-gradient(135deg, #11998e, #38ef7d);
+}
+
+.visual-card.brand-discover {
+  background: linear-gradient(135deg, #f12711, #f5af19);
+}
+
+.visual-card.brand-unknown {
+  background: linear-gradient(135deg, #304352, #d7d2cc);
+}
+
+.card-chip {
+  color: #fbbf24;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+}
+
+.card-brand-logo {
+  position: absolute;
+  top: 20px;
+  right: 24px;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+}
+
+.card-number-display {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 1.4rem;
+  letter-spacing: 2px;
+  text-shadow: 0 2px 2px rgba(0, 0, 0, 0.4);
+  margin-top: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.card-number-display.complete {
+  color: #fff;
+}
+
+.valid-check {
+  color: #4ade80;
+}
+
+.card-meta {
+  display: flex;
+  justify-content: space-between;
+  margin-top: auto;
+}
+
+.meta-label {
+  display: block;
+  font-size: 0.6rem;
+  text-transform: uppercase;
+  opacity: 0.8;
+  letter-spacing: 1px;
+}
+
+.meta-value {
+  display: block;
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.3);
+}
+
+/* Compact Success Modal (Toast Style) */
+.compact-success-modal {
+  max-width: 350px !important;
+  width: 100% !important;
+  position: absolute !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  margin: 0 !important;
+  height: auto !important;
+  min-height: unset !important;
+}
+
+.compact-success-modal .modal-content {
+  border-radius: 12px !important;
+  border: none !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15) !important;
+  background: #ffffff !important;
+  height: auto !important;
+  min-height: unset !important;
+  width: 100% !important;
+  margin: 0 !important;
+  overflow: hidden !important;
+}
+
+.compact-success-modal .modal-body {
+  padding: 1rem 1.25rem !important;
+  display: block !important;
+  text-align: center !important;
+  margin: 0 !important;
+}
+
+.compact-success-modal .registration-icon-container {
+  margin-bottom: 0.5rem !important;
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+}
+
+.compact-success-modal .registration-status-title {
+  margin-bottom: 0.25rem !important;
+  font-size: 1.1rem !important;
+  font-weight: 600 !important;
+}
+
+.registration-success-message {
+  font-weight: 500 !important;
+  font-size: 0.95rem !important;
+  line-height: 1.4 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* Ensure no footer extra space if it exists */
+.compact-success-modal .modal-footer {
+  padding: 0.75rem !important;
+  margin-top: 0 !important;
+  border-top: 1px solid var(--color-border-light) !important;
+}
+
