@@ -5,6 +5,7 @@ import { Folder, CheckCircle, Rocket, Info, AlertTriangle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore, useAnalysisStore, useProjectStore } from "../store";
 import { useTranslation } from "../hooks/useTranslation";
+import { usePlanDetails } from "../hooks/useQueries";
 import PlanLimitModal from "./PlanLimitModal";
 import "../styles/PrioritiesProjects.css";
 
@@ -31,6 +32,9 @@ const PrioritiesProjects = ({ selectedBusinessId, onSuccess, onStayOnPriorities,
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [lastKickstartedCount, setLastKickstartedCount] = useState(0);
   const [showNoCollaboratorsModal, setShowNoCollaboratorsModal] = useState(false);
+
+  const { data: usageData } = usePlanDetails();
+  const usage = usageData?.usage;
 
   const priorities = useMemo(() => kickstartData?.priorities || [], [kickstartData]);
   const hasCollaborators = kickstartData?.hasCollaborators ?? true;
@@ -191,6 +195,9 @@ const PrioritiesProjects = ({ selectedBusinessId, onSuccess, onStayOnPriorities,
         title={t("upgrade_required") || "Upgrade Required"}
         message={t("kickstart_limit_msg") || "Project kickstarting is only available on upgraded plans."}
         subMessage={t("upgrade_to_execute") || "Upgrade to Advanced to execute your strategy with AI-powered kickstart."}
+        plan={usage?.plan}
+        limit={usage?.project?.limit}
+        isAdmin={isAdmin}
       />
 
       {priorities.map((item, idx) => {

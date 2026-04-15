@@ -10,7 +10,8 @@ import {
   Modal,
   Form,
   Alert,
-  Accordion
+  Accordion,
+  Carousel
 } from "react-bootstrap";
 import {
   Info, X, Trash2, AlertTriangle, Check
@@ -293,21 +294,10 @@ const Dashboard = () => {
   // fetchPlanDetails and fetchSubscriptionDetails remain (or could be moved to store later)
   // Removed local fetchBusinesses as it's now in businessStore
 
-  // Sync active slide for How It Works carousel
-  useEffect(() => {
-    if (isModalOpen('howItWorks')) {
-      const carouselEl = document.getElementById('howItWorksCarousel');
-      if (carouselEl) {
-        const handleSlid = (event) => {
-          setActiveSlide(event.to);
-        };
-        carouselEl.addEventListener('slid.bs.carousel', handleSlid);
-        return () => carouselEl.removeEventListener('slid.bs.carousel', handleSlid);
-      }
-    } else {
-      setActiveSlide(0);
-    }
-  }, [isModalOpen, activeSlide]); // Fixed: Added meaningful dependencies
+  // Handle carousel slide selection
+  const handleSelect = (selectedIndex) => {
+    setActiveSlide(selectedIndex);
+  };
 
 
 
@@ -1017,74 +1007,36 @@ const Dashboard = () => {
 
                 <h2 className="mb-4">{t('how_it_works')}</h2>
 
-                <div id="howItWorksCarousel" className="carousel slide" data-bs-ride="carousel" data-bs-interval="5000">
-                  <div className="carousel-indicators">
-                    {[...Array(10)].map((_, i) => (
-                      <button
-                        key={i}
-                        type="button"
-                        data-bs-target="#howItWorksCarousel"
-                        data-bs-slide-to={i}
-                        className={i === 0 ? "active" : ""}
-                        aria-label={`Slide ${i + 1}`}
-                      ></button>
-                    ))}
-                  </div>
-
-                  <div className="carousel-inner">
-                    <div className="carousel-item active">
-                      <img src="/slides/slide1.jpeg" className="d-block w-100" alt={t('step_1_login_alt')} />
-                    </div>
-                    <div className="carousel-item">
-                      <img src="/slides/slide2.jpeg" className="d-block w-100" alt={t('step_2_create_business_alt')} />
-                    </div>
-                    <div className="carousel-item">
-                      <img src="/slides/slide3.jpeg" className="d-block w-100" alt={t('step_3_onboarding_pmf_alt')} />
-                    </div>
-                    <div className="carousel-item">
-                      <img src="/slides/slide4.jpeg" className="d-block w-100" alt={t('step_4_aha_insights_alt')} />
-                    </div>
-                    <div className="carousel-item">
-                      <img src="/slides/slide5.jpeg" className="d-block w-100" alt={t('step_5_exec_summary_alt')} />
-                    </div>
-                    <div className="carousel-item">
-                      <img src="/slides/slide6.jpeg" className="d-block w-100" alt={t('step_6_kickstart_projects_alt')} />
-                    </div>
-                    <div className="carousel-item">
-                      <img src="/slides/slide7.jpeg" className="d-block w-100" alt={t('step_7_project_ranking_alt')} />
-                    </div>
-                    <div className="carousel-item">
-                      <img src="/slides/slide8.jpeg" className="d-block w-100" alt={t('step_8_ai_answers_alt')} />
-                    </div>
-                    <div className="carousel-item">
-                      <img src="/slides/slide9.jpeg" className="d-block w-100" alt={t('step_9_insights_6cs_alt')} />
-                    </div>
-                    <div className="carousel-item">
-                      <img src="/slides/slide10.jpeg" className="d-block w-100" alt={t('step_10_strategic_alt')} />
-                    </div>
-                  </div>
-
-                  <button
-                    className="carousel-control-prev"
-                    type="button"
-                    data-bs-target="#howItWorksCarousel"
-                    data-bs-slide="prev"
-                    aria-label={t('previous')}
-                  >
-                    <span className="carousel-control-prev-icon" aria-hidden="true"></span>
-                    <span className="visually-hidden">{t('previous')}</span>
-                  </button>
-                  <button
-                    className="carousel-control-next"
-                    type="button"
-                    data-bs-target="#howItWorksCarousel"
-                    data-bs-slide="next"
-                    aria-label={t('next')}
-                  >
-                    <span className="carousel-control-next-icon" aria-hidden="true"></span>
-                    <span className="visually-hidden">{t('next')}</span>
-                  </button>
-                </div>
+                <Carousel
+                  id="howItWorksCarousel"
+                  activeIndex={activeSlide}
+                  onSelect={handleSelect}
+                  interval={5000}
+                  indicators={true}
+                  controls={true}
+                  variant="dark"
+                >
+                  {[
+                    { src: "/slides/slide1.jpeg", alt: 'step_1_login_alt' },
+                    { src: "/slides/slide2.jpeg", alt: 'step_2_create_business_alt' },
+                    { src: "/slides/slide3.jpeg", alt: 'step_3_onboarding_pmf_alt' },
+                    { src: "/slides/slide4.jpeg", alt: 'step_4_aha_insights_alt' },
+                    { src: "/slides/slide5.jpeg", alt: 'step_5_exec_summary_alt' },
+                    { src: "/slides/slide6.jpeg", alt: 'step_6_kickstart_projects_alt' },
+                    { src: "/slides/slide7.jpeg", alt: 'step_7_project_ranking_alt' },
+                    { src: "/slides/slide8.jpeg", alt: 'step_8_ai_answers_alt' },
+                    { src: "/slides/slide9.jpeg", alt: 'step_9_insights_6cs_alt' },
+                    { src: "/slides/slide10.jpeg", alt: 'step_10_strategic_alt' },
+                  ].map((slide, index) => (
+                    <Carousel.Item key={index}>
+                      <img
+                        src={slide.src}
+                        className="d-block w-100"
+                        alt={t(slide.alt)}
+                      />
+                    </Carousel.Item>
+                  ))}
+                </Carousel>
 
                 <div className="carousel-external-caption text-center mt-2">
                   <h5>{t(getStepKeys(activeSlide).title)}</h5>

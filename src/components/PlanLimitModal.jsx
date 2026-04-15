@@ -5,7 +5,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from '../hooks/useTranslation';
 import '../styles/PlanLimitModal.css';
 
-const PlanLimitModal = ({ show, onHide, onAction, title, message, subMessage, plan = 'Essential', limit = 1, isAdmin = true }) => {
+const PlanLimitModal = ({ show, onHide, onAction, title, message, subMessage, plan = '', limit = 1, isAdmin = true }) => {
     const { t } = useTranslation();
     const navigate = useNavigate();
     const location = useLocation();

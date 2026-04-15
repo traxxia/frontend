@@ -29,6 +29,7 @@ import {
   ChevronUp,
   Info,
 } from 'lucide-react';
+import { usePlanDetails } from "../hooks/useQueries";
 import AnalysisEmptyState from './AnalysisEmptyState';
 import { checkMissingQuestionsAndRedirect, ANALYSIS_TYPES } from '../services/missingQuestionsService';
 import KickstartProjectsCard from "../components/KickstartProjectsCard";
@@ -80,6 +81,9 @@ const StrategicAnalysis = ({
   const [hasKickstarted, setHasKickstarted] = useState(false);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [showPlanLimitModal, setShowPlanLimitModal] = useState(false);
+
+  const { data: usageData } = usePlanDetails();
+  const usage = usageData?.usage;
 
   useEffect(() => {
     if (localStrategicData) {
@@ -2599,6 +2603,9 @@ const StrategicAnalysis = ({
         title={t('execution_upgrade_title') || "Execution Engine Locked"}
         message={t('execution_upgrade_msg') || "Upgrade to Execute Strategy"}
         subMessage={t('execution_upgrade_submsg') || "The execution engine and project kickstart features are available for upgraded plans."}
+        plan={usage?.plan}
+        limit={usage?.strategic?.limit}
+        isAdmin={userRole === 'admin' || userRole === 'super_admin' || userRole === 'company_admin'}
       />
     </div>
   );
