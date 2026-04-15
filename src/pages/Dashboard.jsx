@@ -264,7 +264,12 @@ const Dashboard = () => {
   // We can keep the effect for any side effects if needed, 
   // but TanStack Query handles the initial load automatically.
   useEffect(() => {
-    // Optional: add any side effects here
+    // Preload the first few slides for the "How it works" modal
+    const slidesToPreload = ["/slides/slide1.jpeg", "/slides/slide2.jpeg", "/slides/slide3.jpeg"];
+    slidesToPreload.forEach(src => {
+      const img = new Image();
+      img.src = src;
+    });
   }, []);
 
 
@@ -1033,6 +1038,7 @@ const Dashboard = () => {
                         src={slide.src}
                         className="d-block w-100"
                         alt={t(slide.alt)}
+                        loading={index === 0 ? "eager" : "lazy"}
                       />
                     </Carousel.Item>
                   ))}

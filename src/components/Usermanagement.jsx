@@ -41,8 +41,8 @@ const CustomToggle = React.forwardRef(({ onClick, disabled }, ref) => (
 
 const UserManagement = ({ onToast }) => {
   const { t } = useTranslation();
-  const { user, token } = useAuthStore();
-  const currentRole = user?.role;
+  const { userRole, token } = useAuthStore();
+  const currentRole = userRole;
   const isSuperAdmin = currentRole === 'super_admin';
   const isAdmin = currentRole === 'admin' || currentRole === 'super_admin' || currentRole === 'company_admin';
 
@@ -541,7 +541,7 @@ const UserManagement = ({ onToast }) => {
         );
       }
     },
-    ...(currentRole === "company_admin" ? [{
+    ...(isAdmin ? [{
       key: "actions",
       label: t("Action"),
       render: (_, row) => {
