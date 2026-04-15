@@ -133,6 +133,7 @@ const AddCardModalContent = ({
   stripeComponents,
   stripe,
   elements,
+  paymentMethods = [],
 }) => {
   const { t } = useTranslation();
   const { CardNumberElement, CardExpiryElement, CardCvcElement } =
@@ -163,6 +164,22 @@ const AddCardModalContent = ({
 
       if (stripeError) {
         setError(stripeError.message);
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Local duplicate check
+      const card = paymentMethod.card;
+      const isDuplicate = paymentMethods.some(
+        (pm) =>
+          pm.last4 === card.last4 &&
+          pm.brand === card.brand &&
+          pm.exp_month === card.exp_month &&
+          pm.exp_year === card.exp_year,
+      );
+
+      if (isDuplicate) {
+        setError(t("This card is already linked to your account."));
         setIsSubmitting(false);
         return;
       }
@@ -253,6 +270,7 @@ const AddCardModal = ({
   apiBase,
   token,
   onToast,
+  paymentMethods,
 }) => {
   const [stripeComponents, setStripeComponents] = useState(null);
 
@@ -278,6 +296,7 @@ const AddCardModal = ({
             token={token}
             onToast={onToast}
             stripeComponents={stripeComponents}
+            paymentMethods={paymentMethods}
           />
         </stripeComponents.Elements>
       )}
@@ -444,6 +463,7 @@ const PaymentMethodsSection = ({
         apiBase={apiBase}
         token={token}
         onToast={onToast}
+        paymentMethods={paymentMethods}
       />
     </div>
   );

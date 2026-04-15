@@ -92,6 +92,21 @@ const UpgradeModalContent = ({
                     setLocalError(stripeError.message);
                     return;
                 }
+
+                // Local duplicate check
+                const card = paymentMethod.card;
+                const isDuplicate = paymentMethods.some(pm =>
+                    pm.last4 === card.last4 &&
+                    pm.brand === card.brand &&
+                    pm.exp_month === card.exp_month &&
+                    pm.exp_year === card.exp_year
+                );
+
+                if (isDuplicate) {
+                    setLocalError(t("This card is already linked to your account."));
+                    return;
+                }
+
                 paymentMethodId = paymentMethod.id;
                 saveNewCard = true;
             } catch (err) {
