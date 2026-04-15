@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 // Stripe imports removed for lazy loading
 import { FaCreditCard, FaPaypal, FaUniversity, FaCheck, FaMicrochip, FaCcVisa, FaCcMastercard, FaCcAmex, FaCcDiscover, FaCcDinersClub, FaCcJcb } from 'react-icons/fa';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -55,9 +55,29 @@ const PaymentForm = ({
     const [cardBrand, setCardBrand] = useState('unknown');
     const [cardComplete, setCardComplete] = useState(false);
 
+    const cardDetailsRef = useRef(null);
+    const [pendingScroll, setPendingScroll] = useState(false);
+
+    useEffect(() => {
+        if (pendingScroll && isActive && paymentMethodType === 'card' && cardDetailsRef.current) {
+            const timer = setTimeout(() => {
+                cardDetailsRef.current.scrollIntoView({ 
+                    behavior: 'smooth', 
+                    block: 'start' 
+                });
+                setPendingScroll(false);
+            }, 100);
+            return () => clearTimeout(timer);
+        }
+    }, [pendingScroll, isActive, paymentMethodType]);
+
     const handleMethodSelect = useCallback((type) => {
         setPaymentMethodType(type);
         if (onMethodSelect) onMethodSelect(type);
+        
+        if (type === 'card') {
+            setPendingScroll(true);
+        }
     }, [onMethodSelect]);
 
     const stripeElementOptions = useMemo(() => ({
@@ -110,6 +130,7 @@ const PaymentForm = ({
 
                 {paymentMethodType === 'card' && isActive && (
                     <motion.div
+                        ref={cardDetailsRef}
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         transition={{ duration: 0.3 }}

@@ -1,6 +1,6 @@
 import React, { useState, useContext } from "react";
 import axios from "axios";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation, Link } from "react-router-dom";
 import "../styles/Login.css";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faEye, faEyeSlash } from "@fortawesome/free-solid-svg-icons";
@@ -90,7 +90,7 @@ const Login = () => {
 
   return (
     <div className="login-container">
-      <LanguageTranslator isLoginPage={true} />
+      <LanguageTranslator disabled={isLoading} />
 
       <div className="login-left-section">
         <div className="company-branding">
@@ -107,7 +107,7 @@ const Login = () => {
 
       <div className="login-right-section">
         <div className="theme-icon-toggle">
-          <button onClick={toggleTheme} className="theme-toggle-button">
+          <button onClick={toggleTheme} className="theme-toggle-button" disabled={isLoading}>
             <FontAwesomeIcon
               icon={theme === "dark" ? faSun : faMoon}
               style={{ fontSize: "20px" }}
@@ -152,10 +152,11 @@ const Login = () => {
                   placeholder={t("password")}
                   disabled={isLoading}
                 />
-                <button
+                 <button
                   type="button"
                   className="toggle-password"
                   onClick={togglePasswordVisibility}
+                  disabled={isLoading}
                   aria-label={
                     showPassword ? t("hide_password") : t("show_password")
                   }
@@ -183,11 +184,11 @@ const Login = () => {
 
           <div className="login-footer">
             <p>
-              {t("not_member")} <a href="/register">{t("register_now")}</a>
+              {t("not_member")} <a href="/register" className={isLoading ? "disabled-link" : ""} onClick={(e) => isLoading && e.preventDefault()}>{t("register_now")}</a>
             </p>
             <hr className="divider" />
             <p>
-              <a href="/academy">📚 {t("explore_traxxia_academy")}</a>
+              <Link to="/academy" className={isLoading ? "disabled-link" : ""} onClick={(e) => isLoading && e.preventDefault()}>📚 {t("explore_traxxia_academy")}</Link>
             </p>
           </div>
         </div>

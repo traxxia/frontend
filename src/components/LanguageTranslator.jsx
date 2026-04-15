@@ -6,7 +6,7 @@ import '../styles/LanguageTranslator.css';
  * LanguageTranslator - Dropdown component for switching application language
  * Uses the Zustand languageStore for reactive updates across the entire app.
  */
-const LanguageTranslator = () => {
+const LanguageTranslator = ({ disabled }) => {
   const currentLanguage = useLanguageStore(state => state.currentLanguage);
   const setLanguage = useLanguageStore(state => state.setLanguage);
 
@@ -22,6 +22,7 @@ const LanguageTranslator = () => {
         onChange={handleLanguageChange}
         className="language-dropdown"
         aria-label="Select Language"
+        disabled={disabled}
       >
         <option value="en">English</option>
         <option value="es">Español</option>

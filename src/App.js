@@ -167,25 +167,19 @@ const App = () => {
             <Route
               path="/academy"
               element={
-                <ProtectedRoute>
-                  <AcademyPage />
-                </ProtectedRoute>
+                <AcademyPage />
               }
             />
             <Route
               path="/academy/:category"
               element={
-                <ProtectedRoute>
-                  <AcademyPage />
-                </ProtectedRoute>
+                <AcademyPage />
               }
             />
             <Route
               path="/academy/:category/:article"
               element={
-                <ProtectedRoute>
-                  <AcademyPage />
-                </ProtectedRoute>
+                <AcademyPage />
               }
             />
             <Route
