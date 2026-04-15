@@ -168,7 +168,7 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const ENABLE_PMF = getUserLimits().pmf;
-  const { 
+  const {
     isCreating: isCreatingBusiness,
     isDeleting: isDeletingBusiness,
     error: businessError,
@@ -183,19 +183,23 @@ const Dashboard = () => {
   } = useBusinessStore();
 
   const queryClient = useQueryClient();
-  const { 
-    data: allBusinessesQuery = [], 
-    isLoading: isLoadingBusinesses 
+  const {
+    data: businessesData,
+    isLoading: isLoadingBusinesses
   } = useBusinesses();
 
-  const { 
+  const {
     data: planDetailsQuery
   } = usePlanDetails();
 
   const usage = planDetailsQuery?.usage;
 
-  const collaboratingBusinesses = []; // Keeping it as an empty array for now as per previous placeholder logic
-  const deletedBusinesses = []; 
+  // Derive business lists from the query response
+  const ownedBusinesses = businessesData?.businesses || [];
+  const collaboratingBusinesses = businessesData?.collaborating_businesses || [];
+  const deletedBusinesses = businessesData?.deleted_businesses || [];
+  // Combined list for any code that needs all active businesses
+  const allBusinessesQuery = [...ownedBusinesses, ...collaboratingBusinesses];
 
 
   const {
@@ -242,13 +246,13 @@ const Dashboard = () => {
 
   const [, setHoveredItem] = useState(null);
   // const [showUpgradeModal, setShowUpgradeModal] = useState(false);
-  const myBusinesses = useMemo(() => allBusinessesQuery.filter(
+  const myBusinesses = useMemo(() => ownedBusinesses.filter(
     b => Boolean(b.has_projects) === false
-  ), [allBusinessesQuery]);
+  ), [ownedBusinesses]);
 
-  const projectPhaseBusinesses = useMemo(() => allBusinessesQuery.filter(
+  const projectPhaseBusinesses = useMemo(() => ownedBusinesses.filter(
     b => Boolean(b.has_projects) === true
-  ), [allBusinessesQuery]);
+  ), [ownedBusinesses]);
 
 
   /* 

@@ -17,18 +17,30 @@ export const useBusinesses = () => {
       const res = await axios.get(`${BACKEND_URL}/api/businesses`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      const data = Array.isArray(res.data) 
-        ? res.data 
-        : [...(res.data.businesses || []), ...(res.data.collaborating_businesses || [])];
-      
-      return data.filter(b => 
-        (b.status || "").toLowerCase() !== 'archived' && 
-        (b.access_mode || "").toLowerCase() !== 'archived' &&
-        (b.status || "").toLowerCase() !== 'deleted'
-      );
+
+      // If the server returns the legacy flat-array format, wrap it for backward compat
+      if (Array.isArray(res.data)) {
+        return { businesses: res.data, collaborating_businesses: [] };
+      }
+
+      const filterActive = (list) =>
+        (list || []).filter(
+          (b) =>
+            (b.status || '').toLowerCase() !== 'archived' &&
+            (b.access_mode || '').toLowerCase() !== 'archived' &&
+            (b.status || '').toLowerCase() !== 'deleted'
+        );
+
+      return {
+        businesses: filterActive(res.data.businesses),
+        collaborating_businesses: filterActive(res.data.collaborating_businesses),
+        deleted_businesses: res.data.deleted_businesses || [],
+        overall_stats: res.data.overall_stats,
+      };
     },
     enabled: !!token,
-    staleTime: 60 * 1000, // 1 minute
+    staleTime: 0, // Always fresh so collaborators see newly assigned businesses immediately
+    refetchOnMount: 'always',
   });
 };
 
@@ -196,17 +208,12 @@ export const useAcademyArticle = (articlePath) => {
  * Hook to fetch all pricing plans.
  */
 export const usePlans = () => {
-  const token = useAuthStore((state) => state.token);
-
   return useQuery({
     queryKey: ['plans'],
     queryFn: async () => {
-      const res = await axios.get(`${BACKEND_URL}/api/plans`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await axios.get(`${BACKEND_URL}/api/plans`);
       return res.data.plans || [];
     },
-    enabled: !!token,
     staleTime: 10 * 60 * 1000, // 10 minutes (static)
   });
 };
@@ -215,17 +222,12 @@ export const usePlans = () => {
  * Hook to fetch all companies (public list).
  */
 export const useCompanies = () => {
-  const token = useAuthStore((state) => state.token);
-
   return useQuery({
     queryKey: ['companies'],
     queryFn: async () => {
-      const res = await axios.get(`${BACKEND_URL}/api/companies`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await axios.get(`${BACKEND_URL}/api/companies`);
       return res.data.companies || [];
     },
-    enabled: !!token,
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 };

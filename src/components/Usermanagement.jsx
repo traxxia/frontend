@@ -11,9 +11,9 @@ import AdminTable from "./AdminTable";
 import MetricCard from "./MetricCard";
 import "../styles/AdminTableStyles.css";
 import { OverlayTrigger, Tooltip } from "react-bootstrap";
- import { useAuthStore, useProjectStore } from "../store";
- import { usePlanDetails, useCompanies, useAdminUsers, useBusinesses, useProjects, useCompanyCollaborators } from "../hooks/useQueries";
- import { useQueryClient } from "@tanstack/react-query";
+import { useAuthStore, useProjectStore } from "../store";
+import { usePlanDetails, useCompanies, useAdminUsers, useBusinesses, useProjects, useCompanyCollaborators } from "../hooks/useQueries";
+import { useQueryClient } from "@tanstack/react-query";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -110,18 +110,24 @@ const UserManagement = ({ onToast }) => {
   const usage = usageData?.usage;
   const { data: users = [], isLoading: loadingUsers } = useAdminUsers();
   const { data: companies = [], isLoading: loadingCompanies } = useCompanies();
-  const { data: businessData = [], isLoading: loadingBusinesses } = useBusinesses();
-  
+  const { data: businessesRaw, isLoading: loadingBusinesses } = useBusinesses();
+  // Combine owned + collaborating into a flat list for the admin view
+  const businessData = React.useMemo(() => [
+    ...(businessesRaw?.businesses || []),
+    ...(businessesRaw?.collaborating_businesses || [])
+  ], [businessesRaw]);
+
+
   const { data: collaboratorData = [], isLoading: loadingCollaborators } = useCompanyCollaborators(accessBusinessId);
   const { data: projectData = [], isLoading: loadingProjects } = useProjects(accessBusinessId);
 
   // Derive specialized business lists
   const allBusinesses = React.useMemo(() => businessData, [businessData]);
-  const launchedBusinesses = React.useMemo(() => 
+  const launchedBusinesses = React.useMemo(() =>
     businessData.filter(b => (b.status || "").toLowerCase() === 'launched' || b.has_launched_projects === true),
     [businessData]
   );
-  
+
   const collaborators = React.useMemo(() => collaboratorData, [collaboratorData]);
   const projects = React.useMemo(() => {
     return (projectData || []).filter(p => {
@@ -263,11 +269,11 @@ const UserManagement = ({ onToast }) => {
         headers: { Authorization: `Bearer ${token}` }
       });
       onToast(t("User_added_successfully"), "success");
-      
+
       // Invalidate queries to trigger parallel refetch
       queryClient.invalidateQueries({ queryKey: ["adminUsers"] });
       queryClient.invalidateQueries({ queryKey: ["planDetails"] });
-      
+
       handleCloseModal();
 
     } catch (error) {
@@ -304,7 +310,7 @@ const UserManagement = ({ onToast }) => {
         headers: { Authorization: `Bearer ${token}` }
       });
       onToast(t("User_updated_successfully"), "success");
-      
+
       queryClient.invalidateQueries({ queryKey: ["adminUsers"] });
       queryClient.invalidateQueries({ queryKey: ["planDetails"] });
 
@@ -353,7 +359,7 @@ const UserManagement = ({ onToast }) => {
       } else if (accessType === "projectEdit") {
         tasks.push(grantProjectEditAccess(accessBusinessId, selectedProjectId, selectedCollaboratorIds));
       }
-      
+
       await Promise.all(tasks);
 
       onToast(t("Access_granted_successfully"), "success");
@@ -549,37 +555,37 @@ const UserManagement = ({ onToast }) => {
               <Dropdown.Toggle as={CustomToggle} />
               <Dropdown.Menu align="end">
                 {(row.role_name?.toLowerCase() !== "collaborator" || isArchived) && (
-                  <Dropdown.Item onClick={() => { 
-                    setPendingUserId(row._id); 
+                  <Dropdown.Item onClick={() => {
+                    setPendingUserId(row._id);
                     setPendingUserName(row.name);
-                    setPendingRole("collaborator"); 
-                    setIsReactivating(isArchived); 
+                    setPendingRole("collaborator");
+                    setIsReactivating(isArchived);
                     setIsRoleChanging((row.role_name || row.role)?.toLowerCase() !== "collaborator");
-                    setShowConfirm(true); 
+                    setShowConfirm(true);
                   }}>
                     <UserCog size={16} className="me-2" /> {isArchived && row.role_name?.toLowerCase() === "collaborator" ? t("Reactivate_Collaborator") : t("Collaborator")}
                   </Dropdown.Item>
                 )}
                 {(row.role_name?.toLowerCase() !== "viewer" || isArchived) && (
-                  <Dropdown.Item onClick={() => { 
-                    setPendingUserId(row._id); 
+                  <Dropdown.Item onClick={() => {
+                    setPendingUserId(row._id);
                     setPendingUserName(row.name);
-                    setPendingRole("viewer"); 
-                    setIsReactivating(isArchived); 
+                    setPendingRole("viewer");
+                    setIsReactivating(isArchived);
                     setIsRoleChanging((row.role_name || row.role)?.toLowerCase() !== "viewer");
-                    setShowConfirm(true); 
+                    setShowConfirm(true);
                   }}>
                     <User size={16} className="me-2" /> {isArchived && row.role_name?.toLowerCase() === "viewer" ? t("Reactivate_Viewer") : t("Viewer")}
                   </Dropdown.Item>
                 )}
                 {(row.role_name?.toLowerCase() !== "user" || isArchived) && (
-                  <Dropdown.Item onClick={() => { 
-                    setPendingUserId(row._id); 
+                  <Dropdown.Item onClick={() => {
+                    setPendingUserId(row._id);
                     setPendingUserName(row.name);
-                    setPendingRole("user"); 
-                    setIsReactivating(isArchived); 
+                    setPendingRole("user");
+                    setIsReactivating(isArchived);
                     setIsRoleChanging((row.role_name || row.role)?.toLowerCase() !== "user");
-                    setShowConfirm(true); 
+                    setShowConfirm(true);
                   }}>
                     <ShieldCheck size={16} className="me-2" /> {isArchived && row.role_name?.toLowerCase() === "user" ? t("Reactivate_User") : t("User")}
                   </Dropdown.Item>
@@ -868,9 +874,21 @@ const UserManagement = ({ onToast }) => {
           <Form onSubmit={handleAssign} noValidate>
             <Form.Group className="mb-3">
               <Form.Label>{t("business")}</Form.Label>
-              <Form.Select 
-                value={assignBusinessId} 
-                onChange={(e) => setAssignBusinessId(e.target.value)} 
+              <Form.Select
+                value={assignBusinessId}
+                onChange={(e) => {
+                  const bizId = e.target.value;
+                  setAssignBusinessId(bizId);
+                  setAssignUserId(""); // Reset user selection when business changes
+                  // Populate current collaborators of the selected business so the user
+                  // dropdown can filter them out
+                  const selectedBiz = businessData.find(b => b._id === bizId);
+                  setAssigningBusinessCollaborators(
+                    (selectedBiz?.collaborators || []).map(c =>
+                      typeof c === "object" ? c : { _id: c }
+                    )
+                  );
+                }}
                 isInvalid={!!assignErrors.business}
                 disabled={allBusinesses.length === 0}
               >
@@ -898,9 +916,9 @@ const UserManagement = ({ onToast }) => {
                     const isAlreadyAssigned = assigningBusinessCollaborators.some(c => c._id === u._id);
                     return !isArchivedOrDeleted && ["Collaborator", "User", "Viewer"].includes(roleName) && !isAlreadyAssigned;
                   });
-                  
+
                   const showNoUsers = assignBusinessId && filtered.length === 0;
-                  
+
                   return (
                     <>
                       <option value="">{showNoUsers ? t("No_Users_Found") : t("Select_user")}</option>
@@ -925,8 +943,8 @@ const UserManagement = ({ onToast }) => {
             <Form.Group className="mb-3"><Form.Label className="fw-bold">{t("Access_Type")}</Form.Label><div className="mt-2 ms-3"><Form.Check type="radio" label={t("Enable_Reranking_Project")} checked={accessType === "reRanking"} onChange={() => setAccessType("reRanking")} /><Form.Check type="radio" label={t("Edit_the_Project")} checked={accessType === "projectEdit"} onChange={() => setAccessType("projectEdit")} /></div></Form.Group>
             <Form.Group className="mb-3">
               <Form.Label>{t("business")}</Form.Label>
-              <Form.Select 
-                value={accessBusinessId} 
+              <Form.Select
+                value={accessBusinessId}
                 onChange={(e) => {
                   setAccessBusinessId(e.target.value);
                   if (accessErrors.business) {
@@ -936,7 +954,7 @@ const UserManagement = ({ onToast }) => {
                       return next;
                     });
                   }
-                }} 
+                }}
                 isInvalid={!!accessErrors.business}
               >
                 <option value="">
@@ -951,8 +969,8 @@ const UserManagement = ({ onToast }) => {
             {accessType === "projectEdit" && (
               <Form.Group className="mb-3">
                 <Form.Label>{t("Project")}</Form.Label>
-                <Form.Select 
-                  value={selectedProjectId} 
+                <Form.Select
+                  value={selectedProjectId}
                   onChange={(e) => {
                     setSelectedProjectId(e.target.value);
                     if (accessErrors.project) {
@@ -962,8 +980,8 @@ const UserManagement = ({ onToast }) => {
                         return next;
                       });
                     }
-                  }} 
-                  isInvalid={!!accessErrors.project} 
+                  }}
+                  isInvalid={!!accessErrors.project}
                   disabled={!accessBusinessId}
                 >
                   <option value="">{loadingProjects ? t("Loading_projects") : t("Select_Project")}</option>
@@ -976,20 +994,30 @@ const UserManagement = ({ onToast }) => {
               <Form.Label>{t("Participants")}</Form.Label>
               <div className="collaborator-checkbox-list" style={{ maxHeight: "350px", overflowY: "auto", border: "1px solid #dee2e6", borderRadius: "4px", padding: "17px" }}>
                 {(() => {
+                  // Find selected business from ALL business data (not just launched)
+                  const selectedBizData = businessData.find(b => b._id?.toString() === accessBusinessId?.toString());
+
                   const filteredCollaborators = collaborators.filter(c => {
                     // Filter out viewers
                     if (c.role_name?.toLowerCase() === 'viewer') return false;
 
+                    const cId = c._id?.toString();
+
                     if (accessType === "reRanking") {
-                      const biz = launchedBusinesses.find(b => b._id === accessBusinessId);
-                      const existing = biz?.allowed_ranking_collaborators || [];
-                      return !existing.some(id => id.toString() === c._id.toString());
+                      // Exclude collaborators already granted reranking access
+                      const existing = (selectedBizData?.allowed_ranking_collaborators || []);
+                      const alreadyHas = existing.some(id => id?.toString() === cId);
+                      return !alreadyHas;
                     }
-                    if (accessType === "projectEdit" && selectedProjectId) {
-                      const project = projects.find(p => p._id === selectedProjectId);
+
+                    if (accessType === "projectEdit") {
+                      if (!selectedProjectId) return true; // No project chosen yet — show all
+                      const project = projects.find(p => p._id?.toString() === selectedProjectId?.toString());
                       const existing = project?.allowed_collaborators || [];
-                      return !existing.some(id => id.toString() === c._id.toString());
+                      const alreadyHas = existing.some(id => id?.toString() === cId);
+                      return !alreadyHas;
                     }
+
                     return true;
                   });
 
@@ -1022,10 +1050,10 @@ const UserManagement = ({ onToast }) => {
         <Modal.Body>
           {(() => {
             const roleName = t(pendingRole?.charAt(0).toUpperCase() + pendingRole?.slice(1));
-            const msgKey = isReactivating 
-              ? (isRoleChanging ? "Reactivate_And_Change_Role_Confirm_Msg" : "Reactivate_User_Confirm_Msg") 
+            const msgKey = isReactivating
+              ? (isRoleChanging ? "Reactivate_And_Change_Role_Confirm_Msg" : "Reactivate_User_Confirm_Msg")
               : "Change_role_confirm_msg";
-            
+
             const message = t(msgKey, { user: "__USER__", role: "__ROLE__" });
             const parts = message.split(/(__USER__|__ROLE__)/);
 

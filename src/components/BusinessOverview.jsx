@@ -66,11 +66,11 @@ const BusinessOverview = ({ onToast }) => {
     }, [searchTerm, businesses]);
 
     useEffect(() => {
-    window.scrollTo({
-        top: 0,
-        behavior: "smooth"
-    });
-}, [currentPage]);
+        window.scrollTo({
+            top: 0,
+            behavior: "smooth"
+        });
+    }, [currentPage]);
 
     const totalItems = filteredBusinesses.length;
     const totalPages = Math.ceil(totalItems / itemsPerPage);
@@ -124,7 +124,7 @@ const BusinessOverview = ({ onToast }) => {
 
     const confirmRemoveParticipant = async () => {
         if (!pendingRemoval) return;
-        
+
         const { businessId, userId } = pendingRemoval;
 
         try {
@@ -132,9 +132,9 @@ const BusinessOverview = ({ onToast }) => {
                 headers: { Authorization: `Bearer ${token}` },
             });
             onToast(t("participant_removed_successfully") || "Participant removed successfully", "success");
-            
+
             queryClient.invalidateQueries({ queryKey: ["adminBusinesses"] });
-            
+
             // Also update selectedBizForCollab if modal is open
             if (selectedBizForCollab && selectedBizForCollab._id === businessId) {
                 setSelectedBizForCollab({
@@ -216,28 +216,28 @@ const BusinessOverview = ({ onToast }) => {
             key: "status",
             label: t("status"),
             render: (_, row) => {
-                const s = row.status?.toLowerCase();
-                const isArchived = s === "archived" || (row.access_mode || "").toLowerCase() === "archived";
+                const s = (row.status || "").toLowerCase();
+                const accessMode = (row.access_mode || "").toLowerCase();
                 const isDeleted = s === "deleted";
-                const isActiveState = s === "launched" || s === "lauched" || s === "prioritizing" || s === "prioritization";
+                const isArchived = s === "archived" || accessMode === "archived" || accessMode === "hidden";
 
-                let label = getStatusLabel(row.status);
-                let statusColor = "#16a34a"; // Default active green
-                let statusBg = "#dcfce7";
+                let label, statusColor, statusBg;
 
                 if (isDeleted) {
                     label = t("deleted") || "Deleted";
                     statusColor = "#dc2626";
                     statusBg = "#fee2e2";
                 } else if (isArchived) {
-                    label = t("archived");
+                    label = t("archived") || "Archived";
                     statusColor = "#ecaa1cff";
                     statusBg = "#FCF9C3";
-                } else if (isActiveState) {
+                } else {
+                    // Everything else (launched, prioritized, kick_start, draft, etc.) → Active
                     label = t("active") || "Active";
                     statusColor = "#16a34a";
                     statusBg = "#dcfce7";
                 }
+
                 return (
                     <span style={{
                         padding: "4px 8px",
@@ -254,6 +254,7 @@ const BusinessOverview = ({ onToast }) => {
                 );
             },
         },
+
         {
             key: "created_at",
             label: t("created"),
@@ -270,9 +271,9 @@ const BusinessOverview = ({ onToast }) => {
                 title={t("business_overview") || "Business Overview"}
                 count={filteredBusinesses.length}
                 countLabel={
-                  filteredBusinesses.length === 1
-                  ? t("business") || "Business"
-                  : t("businesses") || "Businesses"
+                    filteredBusinesses.length === 1
+                        ? t("business") || "Business"
+                        : t("businesses") || "Businesses"
                 }
                 columns={columns}
                 data={paginatedBusinesses}
@@ -315,7 +316,7 @@ const BusinessOverview = ({ onToast }) => {
                                         <span className="admin-collab-name">{collab.name}</span>
                                         <span className="admin-collab-email">{collab.email}</span>
                                     </div>
-                                    <button 
+                                    <button
                                         className="admin-collab-remove-btn"
                                         onClick={() => handleRemoveParticipant(selectedBizForCollab._id, collab.id, collab.name)}
                                         title={t("remove_participant") || "Remove Participant"}
@@ -353,7 +354,7 @@ const BusinessOverview = ({ onToast }) => {
                             <p className="mb-2" style={{ color: '#4b5563', lineHeight: '1.5' }}>
                                 {t("confirm_remove_participant_prefix") || "Are you sure you want to remove participant"} <strong>{pendingRemoval?.userName || "this participant"}</strong>?
                             </p>
-                             <p style={{ margin: 0, color: '#6b7280', fontSize: '0.9rem', lineHeight: '1.4', fontStyle: 'italic' }}>
+                            <p style={{ margin: 0, color: '#6b7280', fontSize: '0.9rem', lineHeight: '1.4', fontStyle: 'italic' }}>
                                 <AlertCircle size={14} style={{ marginRight: '6px', color: '#f59e0b', verticalAlign: 'text-bottom' }} />
                                 {t("reassign_ownership_notice") || "Any projects currently owned by this participant will be automatically reassigned to the business owner."}
                             </p>

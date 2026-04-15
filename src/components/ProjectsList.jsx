@@ -3,7 +3,7 @@ import { Row, Col, Spinner } from "react-bootstrap";
 import ProjectCard from "./ProjectCard";
 import { useTranslation } from '../hooks/useTranslation';
 import { getUserLimits } from '../utils/authUtils';
-import { useAuthStore } from '../store/authStore';
+import { useAuthStore } from '../store';
 
 const ProjectsList = ({
   isLoading,
@@ -32,6 +32,7 @@ const ProjectsList = ({
   myUserId,
 }) => {
   const { t } = useTranslation();
+  const userPlan = useAuthStore((state) => state.userPlan);
   const [showMenuId, setShowMenuId] = useState(null);
 
   // Close menu when clicking outside
@@ -125,7 +126,7 @@ const ProjectsList = ({
               onAdhocUpdate={onAdhocUpdate}
               canReviewProject={canReviewProject}
               myUserId={myUserId}
-              isCheckboxDisabled={isArchived || selectionDisabled || !getUserLimits().project || useAuthStore.getState().userPlan === 'essential'}
+              isCheckboxDisabled={isArchived || selectionDisabled || !getUserLimits().project || userPlan === 'essential'}
             />
           </Col>
         ))}

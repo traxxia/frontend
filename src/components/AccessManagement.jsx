@@ -17,8 +17,13 @@ const AccessManagement = ({ onToast }) => {
     const queryClient = useQueryClient();
 
     // --- TanStack Query Hooks ---
-    const { data: businessesQuery = [], isLoading: fetchingBusinesses } = useBusinesses();
-    const businesses = businessesQuery.filter(b => 
+    const { data: businessesRaw, isLoading: fetchingBusinesses } = useBusinesses();
+    // Combine owned + collaborating for the admin access management view
+    const businessesQuery = React.useMemo(() => [
+        ...(businessesRaw?.businesses || []),
+        ...(businessesRaw?.collaborating_businesses || [])
+    ], [businessesRaw]);
+    const businesses = businessesQuery.filter(b =>
         ((b.status || "").toLowerCase() === 'launched' || b.has_launched_projects === true) &&
         b.has_access_grants === true
     );
@@ -26,7 +31,7 @@ const AccessManagement = ({ onToast }) => {
     const [selectedBusinessId, setSelectedBusinessId] = useState("");
 
     const { data: accessData, isLoading: loadingAccess } = useAccessControlQuery(selectedBusinessId);
-    
+
     // Auto-select first business if none selected
     useEffect(() => {
         if (!selectedBusinessId && businesses.length > 0) {
@@ -56,7 +61,7 @@ const AccessManagement = ({ onToast }) => {
         try {
             setRevoking(true);
             const { revokeAccess } = useProjectStore.getState();
-            
+
             const result = await revokeAccess(
                 revokeDetails.business_id,
                 revokeDetails.user.user_id,
