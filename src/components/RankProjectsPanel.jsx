@@ -289,7 +289,7 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, onRankSaved, isAdmi
 
   const handleDragEnd = (result) => {
     if (!result.destination) return;
-    if (!isAdmin && !userHasRerankAccess) return;
+    if (!isAdmin && !userHasRerankAccess && !userHasRankingAccess) return;
 
     const sourceIndex = result.source.index;
     const destIndex = result.destination.index;
@@ -611,7 +611,7 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, onRankSaved, isAdmi
                       key={item._id}
                       draggableId={item._id}
                       index={index}
-                      isDragDisabled={isArchived || (!isAdmin && !userHasRerankAccess)}
+                      isDragDisabled={isArchived || (!isAdmin && !userHasRerankAccess && !userHasRankingAccess)}
                     >
                       {(provided, snapshot) => (
                         <Card
@@ -642,7 +642,7 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, onRankSaved, isAdmi
 
                               <div
                                 className="rank-move-buttons responsive-move-buttons"
-                                style={{ cursor: (!isAdmin && !userHasRerankAccess) ? "not-allowed" : "grab" }}
+                                style={{ cursor: (!isAdmin && !userHasRerankAccess && !userHasRankingAccess) ? "not-allowed" : "grab" }}
                               >
                                 <ChevronUp size={18} />
                                 <ChevronDown size={18} />
@@ -744,7 +744,7 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, onRankSaved, isAdmi
               variant="primary"
               className="responsive-btn w-100-mobile"
               onClick={handleNextToRanking}
-              disabled={isGeneratingAI || isArchived}
+              disabled={isGeneratingAI || isArchived || !hasSelectionChanged}
             >
               {isGeneratingAI ? t("Fetching AI Rankings...") : t("Next: Rank Projects")}
             </Button>
@@ -763,11 +763,13 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, onRankSaved, isAdmi
               variant="primary"
               className="btn-save-rank responsive-btn w-100-mobile"
               onClick={handleSaveAndClose}
-              disabled={isSaving || (isSaved && !hasRankingsChanged()) || isArchived}
+              disabled={isSaving || (isSaved && !hasRankingsChanged() && !userHasRerankAccess && !userHasRankingAccess) || isArchived}
             >
               {isSaving ? "Saving..." : t("Save_Rankings")}
             </Button>
           )}
+
+
           {/* Lock Rankings removed - saving is final */}
         </Col>
       </Row>
