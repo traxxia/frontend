@@ -13,7 +13,7 @@ export const useProjectStore = create((set, get) => ({
   selectedProject: null,
   teamRankings: [],
   aiRankings: [],
-  accessControl: { hasRerankAccess: false, projectsEditAccess: {} },
+  accessControl: { hasRerankAccess: false, hasRankingAccess: false, projectsEditAccess: {} },
   lockSummary: { locked_users_count: 0, total_users: 0, locked_users: [] },
   businessStatus: 'draft',
   viewMode: 'projects', // 'projects' or 'ranking'
@@ -34,6 +34,7 @@ export const useProjectStore = create((set, get) => ({
       set({ 
         projects, 
         businessStatus: response.data.business_status || 'draft',
+        lockSummary: response.data.ranking_lock_summary || { total_users: 0, locked_users_count: 0, locked_users: [] },
         isLoading: false 
       });
       return response.data;
@@ -62,6 +63,7 @@ export const useProjectStore = create((set, get) => ({
         set({
           accessControl: {
             hasRerankAccess: response.data.has_rerank_access || false,
+            hasRankingAccess: response.data.has_ranking_access || false,
             projectsEditAccess: response.data.projects_edit_access || {},
           },
           isLoading: false

@@ -238,6 +238,8 @@ const ProjectsSection = ({
 
 
 
+
+
   const onToggleTeamRankings = useCallback(() => {
     setShowTeamRankings(true);
     setShowRankScreen(false);
@@ -257,6 +259,7 @@ const ProjectsSection = ({
 
   const {
     userHasRerankAccess,
+    userHasRankingAccess,
     canEditProject,
     canReviewProject
   } = useAccessControl(selectedBusinessId);
@@ -269,9 +272,18 @@ const ProjectsSection = ({
     validateForm,
   } = useProjectForm();
 
+  // Reset sub-view to list whenever viewMode changes (Top-level navigation)
+  useEffect(() => {
+    if (activeView !== "list") {
+      setActiveView("list");
+      setCurrentProject(null);
+      resetForm();
+    }
+  }, [viewMode, setActiveView, resetForm]);
+
   const isViewer = userRole === "viewer";
   const isEditor = userRole === "super_admin" || userRole === "company_admin" || userRole === "collaborator" || userRole === "user";
-  const isSuperAdmin = userRole === "super_admin" || userRole === "company_admin";
+  const isSuperAdmin = userRole === "super_admin" || userRole === "company_admin" || userRole === "admin";
 
   const allCollaboratorsLocked =
     lockSummary.locked_users_count === lockSummary.total_users;
@@ -801,7 +813,7 @@ const ProjectsSection = ({
               {isSuperAdmin && lockSummary.total_users > 0 && (
                 <div className="collaborator-progress-compact d-flex align-items-center gap-2 px-3 py-2 mt-md-0 mt-2" style={{
                   backgroundColor: '#f8fafc',
-                  borderRadius: '100px', // Matches status-tabs
+                  borderRadius: '10px', // Matches status-tabs
                   border: '1px solid #e2e8f0',
                   fontSize: '13px',
                   whiteSpace: 'nowrap'
@@ -847,6 +859,7 @@ const ProjectsSection = ({
                     isRankingLocked={isRankingLocked}
                     businessStatus={businessStatus}
                     userHasRerankAccess={userHasRerankAccess}
+                    userHasRankingAccess={userHasRankingAccess}
                     onShowToast={handleShowToast}
                     isArchived={apiIsArchived}
                     userHasLockedRanking={userHasLockedRank}
@@ -878,17 +891,20 @@ const ProjectsSection = ({
               gap: '20px',
               flexWrap: 'wrap'
             }}>
-              <div className="status-tabs-container">
-                {CATEGORIES.map((cat) => (
-                  <button
-                    key={cat.id}
-                    className={`status-tab ${selectedCategory === cat.id ? "active" : ""}`}
-                    onClick={() => setSelectedCategory(cat.id)}
-                  >
-                    <span className="status-name">{t(cat.label)}</span>
-                    <span className="status-count">{categoryCounts[cat.id] || 0}</span>
-                  </button>
-                ))}
+              <div className="d-flex align-items-center gap-3 flex-wrap">
+                <div className="status-tabs-container">
+                  {CATEGORIES.map((cat) => (
+                    <button
+                      key={cat.id}
+                      className={`status-tab ${selectedCategory === cat.id ? "active" : ""}`}
+                      onClick={() => setSelectedCategory(cat.id)}
+                    >
+                      <span className="status-name">{t(cat.label)}</span>
+                      <span className="status-count">{categoryCounts[cat.id] || 0}</span>
+                    </button>
+                  ))}
+                </div>
+ 
               </div>
 
               <div className="management-buttons d-flex gap-2">

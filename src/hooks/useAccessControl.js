@@ -82,6 +82,7 @@ export const useAccessControl = (selectedBusinessId) => {
 
   return {
     userHasRerankAccess: accessControl.hasRerankAccess,
+    userHasRankingAccess: accessControl.hasRankingAccess,
     userHasProjectEditAccess: accessControl.projectsEditAccess,
     checkBusinessAccess,
     checkProjectsAccess,
