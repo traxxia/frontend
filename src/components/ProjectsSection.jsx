@@ -159,6 +159,7 @@ const ProjectsSection = ({
   }, [location.state?.viewMode, setViewMode]);
   const [activeAccordionKey, setActiveAccordionKey] = useState(null);
   const [pendingSavePayload, setPendingSavePayload] = useState(null);
+  const [pendingStateChanges, setPendingStateChanges] = useState([]);
   const [selectedReviewProject, setSelectedReviewProject] = useState(null);
   const [reviewType, setReviewType] = useState("review");
 
@@ -644,9 +645,31 @@ const ProjectsSection = ({
 
       const oldStatus = (currentProject.status || "Draft").toLowerCase();
       const newStatus = (payload.status || "Draft").toLowerCase();
+      const oldLearningState = (currentProject.learning_state || "Testing").toLowerCase();
+      const newLearningState = (payload.learning_state || "Testing").toLowerCase();
 
-      if (oldStatus !== newStatus) {
+      const statusChanged = oldStatus !== newStatus;
+      const learningStateChanged = oldLearningState !== newLearningState;
+
+      // If either status or learning state changed, show justification modal
+      if (statusChanged || learningStateChanged) {
+        const changes = [];
+        if (statusChanged) {
+          changes.push({
+            label: t("Status"),
+            oldValue: currentProject.status || "Draft",
+            newValue: payload.status || "Draft"
+          });
+        }
+        if (learningStateChanged) {
+          changes.push({
+            label: t("Learning State"),
+            oldValue: currentProject.learning_state || "Testing",
+            newValue: payload.learning_state || "Testing"
+          });
+        }
         setPendingSavePayload(payload);
+        setPendingStateChanges(changes);
         openModal('stateChange');
         setIsSubmitting(false);
         return;
@@ -657,7 +680,7 @@ const ProjectsSection = ({
       console.error("Error in prepare save:", err);
       setIsSubmitting(false);
     }
-  }, [canEditProject, currentProject, isEditor, myUserId, businessStatus, apiIsArchived, validateForm, getPayload, selectedBusinessId, executeSave, handleShowToast]);
+  }, [canEditProject, currentProject, isEditor, myUserId, businessStatus, apiIsArchived, validateForm, getPayload, selectedBusinessId, executeSave, handleShowToast, t]);
 
   const submitReview = useCallback(async (data) => {
     if (!selectedReviewProject?._id) return;
@@ -977,15 +1000,16 @@ const ProjectsSection = ({
         onHide={() => {
           closeModal('stateChange');
           setPendingSavePayload(null);
+          setPendingStateChanges([]);
         }}
         onConfirm={(justification) => {
           closeModal('stateChange');
           if (pendingSavePayload) {
             executeSave(pendingSavePayload, justification);
           }
+          setPendingStateChanges([]);
         }}
-        oldState={currentProject?.status || t("Draft")}
-        newState={pendingSavePayload?.status || t("Unknown")}
+        changes={pendingStateChanges}
       />
 
       {isGeneratingAIRankings && (
