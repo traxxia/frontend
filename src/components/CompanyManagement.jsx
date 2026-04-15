@@ -430,7 +430,7 @@ const CompanyManagement = ({ onToast }) => {
       render: (_, row) => (
         <div style={{ minWidth: '80px' }}>
           <div className="admin-cell-primary" style={{ fontSize: '0.8rem' }}>
-            {row.total_users ?? 0}
+            {row.active_users ?? 0}
           </div>
         </div>
       ),

@@ -182,7 +182,7 @@ const ProjectCard = ({
                 !isTerminal && (
                   <div onClick={() => onDelete(project._id)} className="menu-item delete"><Trash2 size={14} /> {t("delete")}</div>
                 )}
-              {userCanReview && !isArchived && !['completed', 'scaled'].includes(project.status?.toLowerCase()) && (
+              {userCanReview && !isArchived && !['completed', 'scaled', 'killed'].includes(project.status?.toLowerCase()) && (
                 <>
                   <div onClick={() => onPerformReview(project)} className="menu-item"><CheckCircle size={14} /> {t("Perform_Review")}</div>
                   <div onClick={() => onAdhocUpdate(project)} className="menu-item"><Edit2 size={14} /> {t("Ad_Hoc_Update")}</div>

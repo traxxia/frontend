@@ -30,10 +30,14 @@ export const useAccessControl = (selectedBusinessId) => {
       if (!limits.project || isArchived) return false;
       if (!project) return false;
 
+      const status = project.status?.toLowerCase();
+      if (['completed', 'scaled', 'killed'].includes(status)) return false;
+
       const isProjectLaunched = 
         project.launch_status?.toLowerCase() === 'launched' || 
         project.launch_status?.toLowerCase() === 'pending_launch' || 
         project.status?.toLowerCase() === 'launched';
+
       const isProjectActive = project.status?.toLowerCase() === 'active';
 
       if (businessStatus === "launched" || isProjectLaunched || isProjectActive) {
@@ -68,11 +72,15 @@ export const useAccessControl = (selectedBusinessId) => {
       if (isArchived) return false;
       if (!project) return false;
 
+      const status = project.status?.toLowerCase();
+      if (['completed', 'scaled', 'killed'].includes(status)) return false;
+
       const isProjectLaunched = 
         project.launch_status?.toLowerCase() === 'launched' || 
         project.status?.toLowerCase() === 'launched' || 
         project.status?.toLowerCase() === 'active';
       if (!isProjectLaunched) return false;
+
 
       const isOwner = project.accountable_owner_id && project.accountable_owner_id.toString() === myUserId;
       return isOwner === true;

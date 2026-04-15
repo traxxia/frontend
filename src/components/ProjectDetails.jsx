@@ -341,7 +341,7 @@ const ProjectDetails = ({
                                     <Edit2 size={14} /> {t("Edit")}
                                 </button>
                             )}
-                            {canReview && !["completed", "scaled"].includes(project.status?.toLowerCase()) && (
+                            {canReview && !["completed", "scaled", "killed"].includes(project.status?.toLowerCase()) && (
                                 <>
                                     <button className="btn-review" onClick={() => onPerformReview(project)} style={{ background: '#059669', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '4px', fontSize: '13px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}>
                                         <CheckCircle size={14} /> {t("Perform_Review")}
