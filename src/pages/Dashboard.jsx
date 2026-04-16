@@ -311,18 +311,21 @@ const Dashboard = () => {
     try {
       clearErrors();
       await deleteBusinessAction(businessId);
+      
+      // Close modal and show toast immediately
+      closeModal('deleteBusiness');
+      setBusinessToDelete(null);
+      addToast({ message: t('business_deleted_successfully'), type: 'success' });
+
+      // Refresh data in background
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['businesses'] }),
         queryClient.invalidateQueries({ queryKey: ['planDetails'] })
       ]);
-
-      closeModal('deleteBusiness');
-      setBusinessToDelete(null);
-      addToast({ message: t('business_deleted_successfully'), type: 'success' });
     } catch (error) {
       console.error('Error deleting business:', error);
     }
-  }, [deleteBusinessAction, t, closeModal, addToast, clearErrors]);
+  }, [deleteBusinessAction, t, closeModal, addToast, clearErrors, queryClient]);
 
 
 
@@ -333,7 +336,15 @@ const Dashboard = () => {
       if (data.business && (data.business._id || data.business.id)) {
         setSelectedBusinessId(data.business._id || data.business.id);
       }
+
+      // Close modal and show success toast immediately
+      closeModal('createBusiness');
       addToast({ message: t('business_created_successfully'), type: 'success' });
+
+      // Open PMF onboarding if enabled
+      if (ENABLE_PMF) openModal('pmfOnboarding');
+
+      // Clear form data
       setBusinessFormData({
         business_name: '',
         business_purpose: '',
@@ -341,18 +352,16 @@ const Dashboard = () => {
         city: '',
         country: ''
       });
+
+      // Refresh data in background
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['businesses'] }),
         queryClient.invalidateQueries({ queryKey: ['planDetails'] })
       ]);
-
-      closeModal('createBusiness');
-
-      if (ENABLE_PMF) openModal('pmfOnboarding');
     } catch (error) {
       console.error('Error creating business:', error);
     }
-  }, [createBusinessAction, businessFormData, setSelectedBusinessId, t, ENABLE_PMF, closeModal, openModal, addToast]);
+  }, [createBusinessAction, businessFormData, setSelectedBusinessId, t, ENABLE_PMF, closeModal, openModal, addToast, queryClient]);
 
 
   // Validation Functions
