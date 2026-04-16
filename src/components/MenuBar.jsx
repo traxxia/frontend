@@ -10,6 +10,8 @@ import {
   FileText,
   Shield,
   BookOpen,
+  Briefcase,
+  Building,
 } from "lucide-react";
 import "../styles/menubar.css";
 import { useTranslation } from "../hooks/useTranslation";
@@ -50,7 +52,7 @@ const MenuBar = () => {
     } finally {
       // Clear the local state first
       logout();
-      
+
       // Perform a full page reload to the login page to ensure all memory state is cleared
       window.location.href = "/login";
     }
@@ -120,24 +122,45 @@ const MenuBar = () => {
               <Dropdown.Toggle
                 variant="link"
                 id="dropdown-user"
-                className="user-menu p-0 border-0 shadow-none"
+                className="user-menu p-0 border-0 shadow-none d-flex align-items-center justify-content-center"
               >
-                <User size={20} className="navbar_icon" />
+                <div
+                  className="user-initial-avatar"
+                  style={{
+                    width: '32px',
+                    height: '32px',
+                    borderRadius: '50%',
+                    background: 'linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%)',
+                    color: '#4338ca',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontWeight: 'bold',
+                    fontSize: '15px',
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+                    border: '1px solid #a5b4fc',
+                    cursor: 'pointer'
+                  }}
+                >
+                  {userName ? userName.charAt(0).toUpperCase() : "U"}
+                </div>
               </Dropdown.Toggle>
               <Dropdown.Menu align="end" className="traxia-dropdown">
                 <Dropdown.Header className="text-muted small">
-                  {t("signed_in_as")}: <strong>{userName}</strong>
+                  <User size={16} className="me-2" style={{ color: '#6366f1' }} /><strong>{userName}</strong>
                   {userRole && (
-                    <div className="text-muted" style={{ fontSize: "0.75rem" }}>
-                      {t("role")}:{" "}
-                      {userRole
-                        .replace("_", " ")
-                        .replace(/\b\w/g, (l) => l.toUpperCase())}
+                    <div className="text-muted mt-1 d-flex align-items-center" style={{ fontSize: "0.75rem" }}>
+                      <Briefcase size={14} className="me-2" style={{ color: '#6366f1' }} />
+                      <span>{" "}
+                        {userRole
+                          .replace("_", " ")
+                          .replace(/\b\w/g, (l) => l.toUpperCase())}</span>
                     </div>
                   )}
                   {companyName && (
-                    <div className="text-muted" style={{ fontSize: "0.75rem" }}>
-                      {t("company") || "Company"}: {companyName}
+                    <div className="text-muted mt-1 d-flex align-items-center" style={{ fontSize: "0.75rem" }}>
+                      <Building size={14} className="me-2" style={{ color: '#6366f1' }} />
+                      <span> {companyName}</span>
                     </div>
                   )}
                 </Dropdown.Header>
