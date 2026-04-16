@@ -34,6 +34,7 @@ import "../styles/businesspage.css";
 import "../styles/business.css";
 import { useStreamingManager } from '../components/StreamingManager';
 import ProjectsSection from "../components/ProjectsSection";
+import RankingSection from "../components/RankingSection";
 import PMFInsightsTab from "../components/PMFInsightsTab";
 import ExecutiveSummary from "../components/ExecutiveSummary";
 import PrioritiesProjects from "../components/PrioritiesProjects";
@@ -238,7 +239,21 @@ const BusinessSetupPage = () => {
   const expandedCapabilityData = expandedCapability;
   const strategicRadarData = strategicRadar;
 
-  const [activeTab, setActiveTab] = useState("executive");
+  const [activeTab, setActiveTab] = useState(() => {
+    // Initializing state directly from URL prevents flickering on refresh
+    const searchParams = new URLSearchParams(window.location.search);
+    const urlTab = searchParams.get('tab');
+    if (urlTab) return urlTab;
+
+    // Use location state if available (for internal navigation)
+    if (window.__businessPageNavState?.initialTab) return window.__businessPageNavState.initialTab;
+
+    // Fallback based on user plan
+    const { pmf: hasPmfAccess, project: hasProjectAccess } = getUserLimits();
+    if (hasPmfAccess) return "executive";
+    if (hasProjectAccess) return "projects";
+    return "advanced";
+  });
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [isAnalysisExpanded, setIsAnalysisExpanded] = useState(true);
   const [isSliding, setIsSliding] = useState(false);
@@ -302,41 +317,40 @@ const BusinessSetupPage = () => {
   const isArchived = (currentBusiness?.access_mode === 'archived' || currentBusiness?.access_mode === 'hidden') || (businessData?.access_mode === 'archived' || businessData?.access_mode === 'hidden');
   const canShowRegenerateButtons = canRegenerate && !isArchived;
 
-  // Set initial tab from URL query param (?tab=executive) or navigation state.
-  // URL param takes priority so page refresh / shared URLs restore the correct tab.
+  // 1. Sync URL -> State (Initial load and Browser Back/Forward)
   useEffect(() => {
     const urlTab = searchParams.get('tab');
-    const initialTab = urlTab || location.state?.initialTab;
+    if (!urlTab) return;
 
-    // Helper to determine the best default tab based on plan limits
-    const getDefaultTab = () => {
-      if (hasPmfAccess) return "executive";
-      if (hasProjectAccess) return "projects";
-      return "advanced";
-    };
-
-    if (initialTab) {
-      // Check if user has access to the requested initial tab
-      const isPmfTab = ["executive", "priorities"].includes(initialTab);
-      const isProjectTab = initialTab === "projects";
+    if (urlTab !== activeTab) {
+      // Check access before switching
+      const isPmfTab = ["executive", "priorities"].includes(urlTab);
+      const isProjectTab = urlTab === "projects" || urlTab === "ranking";
       
       if ((isPmfTab && !hasPmfAccess) || (isProjectTab && !hasProjectAccess)) {
-        setActiveTab(getDefaultTab());
+        console.warn("Blocking access to unauthorized tab:", urlTab);
       } else {
-        setActiveTab(initialTab);
+        setActiveTab(urlTab);
       }
-    } else {
-      setActiveTab(getDefaultTab());
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams, hasPmfAccess, hasProjectAccess]); // NOTE: activeTab omitted intentionally
+
+  // 2. Sync State -> URL (When user clicks UI buttons)
+  useEffect(() => {
+    const urlTab = searchParams.get('tab');
+    if (activeTab !== urlTab) {
+      const newParams = new URLSearchParams(searchParams);
+      newParams.set('tab', activeTab);
+      setSearchParams(newParams, { replace: true });
     }
 
-    // Clean up the temporary window flag used by useBusinessSetup's initializer
+    // Clean up navigation state flags
     delete window.__businessPageNavState;
-    // Always expand the analysis panel (no chat section)
     if (window.innerWidth > 768) {
       setIsAnalysisExpanded(true);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [location.key, searchParams, hasPmfAccess, hasProjectAccess, setActiveTab, setIsAnalysisExpanded]);
+  }, [activeTab]); // NOTE: triggers when UI updates activeTab
 
   useEffect(() => {
     let pageContext = null;
@@ -380,7 +394,7 @@ const BusinessSetupPage = () => {
       // If we don't have the full business object OR it doesn't match the current ID, fetch it
       if (!currentBusiness || (currentBusiness._id !== selectedBusinessId && currentBusiness.id !== selectedBusinessId)) {
         // Skip fetch if we are on Priorities or Projects tab and already have basic info (optimization)
-        if ((activeTab === 'priorities' || activeTab === 'projects') && selectedBusinessName && selectedBusinessName !== "") {
+        if ((activeTab === 'priorities' || activeTab === 'projects' || activeTab === 'ranking') && selectedBusinessName && selectedBusinessName !== "") {
           console.log("Skipping business recovery fetch for tab:", activeTab);
           return;
         }
@@ -535,7 +549,7 @@ const BusinessSetupPage = () => {
 
   // Ensure Projects tab button appears once projects is active (only if user has project access)
   useEffect(() => {
-    if (activeTab === 'projects' && !showProjectsTab && hasProjectAccess) {
+    if ((activeTab === 'projects' || activeTab === 'ranking') && !showProjectsTab && hasProjectAccess) {
       setShowProjectsTab(true);
       if (selectedBusinessId) {
         setBusinessSetting(selectedBusinessId, 'showProjectsTab', true);
@@ -546,7 +560,7 @@ const BusinessSetupPage = () => {
   // Automatically show Projects tab if this business already has projects
   // Skip this check when on the projects tab itself (handled by ProjectsSection) or if already visible
   useEffect(() => {
-    if (showProjectsTab || !selectedBusinessId || activeTab === 'projects') return;
+    if (showProjectsTab || !selectedBusinessId || activeTab === 'projects' || activeTab === 'ranking') return;
 
     const fetchProjectsForBusiness = async () => {
       if (!selectedBusinessId) return;
@@ -1081,7 +1095,7 @@ const BusinessSetupPage = () => {
                       {activeTab === "advanced" && t("Answers/Brief")}
                       {activeTab === "insights" && (hasPmfAccess ? t("insights") : "Insights")}
                       {activeTab === "strategic" && (hasPmfAccess ? t("strategic") : "S.T.R.A.T.E.G.I.C")}
-                      {activeTab === "projects" && t("Projects")}
+                      {(activeTab === "projects" || activeTab === "ranking") && t("Projects")}
                     </span>
                   </div>
                 </div>
@@ -1093,7 +1107,7 @@ const BusinessSetupPage = () => {
                   {activeTab === "advanced" && t("Questions and Answers")}
                   {activeTab === "insights" && (hasPmfAccess ? t("Insights") : "Insights")}
                   {activeTab === "strategic" && (hasPmfAccess ? t("strategic") : "S.T.R.A.T.E.G.I.C")}
-                  {activeTab === "projects" && t("Projects")}
+                  {(activeTab === "projects" || activeTab === "ranking") && t("Projects")}
                 </>
               )}
             </div>
@@ -1278,7 +1292,9 @@ const BusinessSetupPage = () => {
                         <button
                           className={`mobile-menu-item ${activeTab === 'projects' && useProjectStore.getState().viewMode === 'projects' ? 'active' : ''}`}
                           onClick={() => {
-                            window.location.href = '/businesspage?tab=projects';
+                            useProjectStore.getState().setViewMode('projects');
+                            setActiveTab('projects');
+                            closeModal('mobileMenu');
                           }}
                         >
                           <Briefcase size={18} />
@@ -1286,15 +1302,15 @@ const BusinessSetupPage = () => {
                         </button>
                         
                         <button
-                          className={`mobile-menu-item ${activeTab === 'projects' && useProjectStore.getState().viewMode === 'ranking' ? 'active' : ''}`}
+                          className={`mobile-menu-item ${activeTab === 'ranking' ? 'active' : ''}`}
                           onClick={() => {
                             useProjectStore.getState().setViewMode('ranking');
                             useProjectStore.getState().clearCache(selectedBusinessId);
-                            if (activeTab === 'projects') {
+                            if (activeTab === 'ranking') {
                               useProjectStore.getState().checkAllAccess(selectedBusinessId);
                               useProjectStore.getState().fetchTeamRankings(selectedBusinessId);
                             } else {
-                              setActiveTab('projects');
+                              setActiveTab('ranking');
                             }
                             closeModal('mobileMenu');
                           }}
@@ -1315,7 +1331,7 @@ const BusinessSetupPage = () => {
       <div className={`main-container ${isAnalysisExpanded && !isMobile ? "analysis-expanded" : ""}`}>
 
         {questionsLoaded && (
-          <div className={`info-panel ${isMobile ? (activeTab === "advanced" || activeTab === "insights" || activeTab === "strategic" || activeTab === "projects" || activeTab === "priorities" || activeTab === "aha" || activeTab === "executive" ? "active" : "") : ""} ${isAnalysisExpanded && !isMobile ? "expanded" : ""}`}>
+          <div className={`info-panel ${isMobile ? (['advanced', 'insights', 'strategic', 'projects', 'ranking', 'priorities', 'aha', 'executive'].includes(activeTab) ? "active" : "") : ""} ${isAnalysisExpanded && !isMobile ? "expanded" : ""}`}>
             {!isMobile && isAnalysisExpanded && (
               <div className="desktop-expanded-analysis">
                 <div className="expanded-analysis-view">
@@ -1401,15 +1417,14 @@ const BusinessSetupPage = () => {
                         {(hasPmfAccess || (showProjectsTab && hasProjectAccess)) && (
                           <div className={`nav-dropdown-wrapper ${activeNavDropdown === 'execution' ? 'open' : ''}`}>
                             <button 
-                              className={`nav-dropdown-trigger ${['priorities', 'projects'].includes(activeTab) ? 'active' : ''}`}
+                              className={`nav-dropdown-trigger ${['priorities', 'projects', 'ranking'].includes(activeTab) ? 'active' : ''}`}
                               onClick={() => setActiveNavDropdown(activeNavDropdown === 'execution' ? null : 'execution')}
                             >
                               {/* Dynamically show active tab target name or category name */}
                               {(() => {
                                 if (activeTab === "priorities") return t("Priorities");
-                                if (activeTab === "projects") {
-                                  const viewMode = useProjectStore.getState().viewMode;
-                                  return viewMode === "ranking" ? t("Ranking") : t("Projects");
+                                if (activeTab === "projects" || activeTab === "ranking") {
+                                  return activeTab === "ranking" ? t("Ranking") : t("Projects");
                                 }
                                 return t("Execution");
                               })()}
@@ -1430,10 +1445,12 @@ const BusinessSetupPage = () => {
                                 {showProjectsTab && hasProjectAccess && (
                                   <>
                                     <div className="dropdown-section-label">{t("Projects")}</div>
-                                    <button 
-                                      className={`dropdown-item ${activeTab === 'projects' && useProjectStore.getState().viewMode === 'projects' ? 'active' : ''}`} 
+                                  <button 
+                                      className={`dropdown-item ${activeTab === 'projects' ? 'active' : ''}`} 
                                       onClick={() => {
-                                        window.location.href = '/businesspage?tab=projects';
+                                        useProjectStore.getState().setViewMode('projects');
+                                        setActiveTab('projects');
+                                        setActiveNavDropdown(null);
                                       }}
                                     >
                                       <Briefcase size={14} />
@@ -1441,12 +1458,10 @@ const BusinessSetupPage = () => {
                                     </button>
                                     
                                     <button 
-                                      className={`dropdown-item ${activeTab === 'projects' && useProjectStore.getState().viewMode === 'ranking' ? 'active' : ''}`} 
+                                      className={`dropdown-item ${activeTab === 'ranking' ? 'active' : ''}`} 
                                       onClick={() => {
                                         useProjectStore.getState().setViewMode('ranking');
-                                        if (activeTab !== 'projects') {
-                                          setActiveTab('projects');
-                                        }
+                                        setActiveTab('ranking');
                                         setActiveNavDropdown(null);
                                       }}
                                     >
@@ -1666,6 +1681,12 @@ const BusinessSetupPage = () => {
                           onProjectCountChange={handleProjectCountChange}
                           companyAdminIds={companyAdminIds}
                           isArchived={isArchived}
+                        />
+                      )}
+                      {activeTab === "ranking" && hasProjectAccess && (
+                        <RankingSection
+                          isArchived={isArchived}
+                          companyAdminIds={companyAdminIds}
                         />
                       )}
                       {hasPmfAccess && activeTab === "priorities" && (
