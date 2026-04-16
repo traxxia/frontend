@@ -1,6 +1,6 @@
 import React, { useState, useContext } from "react";
 import axios from "axios";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation, Link } from "react-router-dom";
 import "../styles/Login.css";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faEye, faEyeSlash } from "@fortawesome/free-solid-svg-icons";
@@ -11,8 +11,9 @@ import apple from "../assets/apple.png";
 import LanguageTranslator from "../components/LanguageTranslator";
 import { useTranslation } from "../hooks/useTranslation";
 import { faSun, faMoon } from "@fortawesome/free-solid-svg-icons";
-import { ThemeContext } from "../components/ThemeComponent";
 import ErrorModal from "../components/ErrorModal";
+import { useAuthStore } from "../store/authStore";
+import { useUIStore } from "../store/uiStore";
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -22,7 +23,8 @@ const Login = () => {
   const [showErrorModal, setShowErrorModal] = useState(false);
   const [modalMessage, setModalMessage] = useState("");
   const navigate = useNavigate();
-  const { theme, toggleTheme } = useContext(ThemeContext);
+  const theme = useUIStore((state) => state.theme);
+  const toggleTheme = useUIStore((state) => state.toggleTheme);
   const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
   const { t } = useTranslation();
 
@@ -51,30 +53,13 @@ const Login = () => {
         password,
       });
 
-      sessionStorage.setItem("token", res.data.token);
-      sessionStorage.setItem("userId", res.data.user.id);
-      sessionStorage.setItem("userName", res.data.user.name);
-      sessionStorage.setItem("userEmail", res.data.user.email);
-      sessionStorage.setItem("userRole", res.data.user.role);
-      sessionStorage.setItem("userPlan", res.data.user.plan_name || "");
-      sessionStorage.setItem("userCompany", res.data.user.company?.name || "");
-      if (res.data.user.company) {
-        sessionStorage.setItem("companyId", res.data.user.company.id || "");
-        sessionStorage.setItem("companyName", res.data.user.company.name || "");
-        sessionStorage.setItem("companyLogo", res.data.user.company.logo || "");
-        sessionStorage.setItem("companyIndustry", res.data.user.company.industry || "");
-      }
-      // Store feature-access limits from the login response directly
-      sessionStorage.setItem("userLimits", JSON.stringify(res.data.user.limits || {}));
-      sessionStorage.setItem(
-        "isAdmin",
-        ["super_admin", "company_admin"].includes(res.data.user.role) ? "true" : "false"
-      );
+      // Use Zustand auth store instead of sessionStorage
+      const setAuth = useAuthStore.getState().setAuth;
+      setAuth(res.data);
 
       const currentLang = window.getCurrentLanguage
         ? window.getCurrentLanguage()
         : "en";
-      sessionStorage.setItem("appLanguage", currentLang);
 
       if (res.data.user.role === "super_admin") {
         navigate("/super-admin");
@@ -83,9 +68,17 @@ const Login = () => {
       }
     } catch (err) {
       console.error(err.response?.data || err.message);
-      const errorMessage = err.response?.data?.error || t("login_failed");
-      setModalMessage(errorMessage);
-      setShowErrorModal(true);
+      const errorData = err.response?.data;
+      
+      if (errorData?.error === 'incorrect_email') {
+        setErrors({ email: t("incorrect_email") !== "incorrect_email" ? t("incorrect_email") : errorData.message || "Incorrect email address" });
+      } else if (errorData?.error === 'incorrect_password') {
+        setErrors({ password: t("incorrect_password") !== "incorrect_password" ? t("incorrect_password") : errorData.message || "Incorrect password" });
+      } else {
+        const errorMessage = errorData?.error || t("login_failed");
+        setModalMessage(errorMessage);
+        setShowErrorModal(true);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -97,7 +90,7 @@ const Login = () => {
 
   return (
     <div className="login-container">
-      <LanguageTranslator isLoginPage={true} />
+      <LanguageTranslator disabled={isLoading} />
 
       <div className="login-left-section">
         <div className="company-branding">
@@ -113,8 +106,8 @@ const Login = () => {
       </div>
 
       <div className="login-right-section">
-        <div className="theme-icon-toggle" >
-          <button onClick={toggleTheme} className="theme-toggle-button">
+        <div className="theme-icon-toggle">
+          <button onClick={toggleTheme} className="theme-toggle-button" disabled={isLoading}>
             <FontAwesomeIcon
               icon={theme === "dark" ? faSun : faMoon}
               style={{ fontSize: "20px" }}
@@ -133,13 +126,16 @@ const Login = () => {
                   value={email}
                   onChange={(e) => {
                     setEmail(e.target.value);
-                    if (errors.email) setErrors((prev) => ({ ...prev, email: "" }));
+                    if (errors.email)
+                      setErrors((prev) => ({ ...prev, email: "" }));
                   }}
                   placeholder={t("email_address")}
                   disabled={isLoading}
                 />
               </div>
-              {errors.email && <span className="error-message">{errors.email}</span>}
+              {errors.email && (
+                <span className="error-message">{errors.email}</span>
+              )}
             </div>
 
             <div className="form-group">
@@ -150,15 +146,17 @@ const Login = () => {
                   value={password}
                   onChange={(e) => {
                     setPassword(e.target.value);
-                    if (errors.password) setErrors((prev) => ({ ...prev, password: "" }));
+                    if (errors.password)
+                      setErrors((prev) => ({ ...prev, password: "" }));
                   }}
                   placeholder={t("password")}
                   disabled={isLoading}
                 />
-                <button
+                 <button
                   type="button"
                   className="toggle-password"
                   onClick={togglePasswordVisibility}
+                  disabled={isLoading}
                   aria-label={
                     showPassword ? t("hide_password") : t("show_password")
                   }
@@ -170,7 +168,9 @@ const Login = () => {
                   />
                 </button>
               </div>
-              {errors.password && <span className="error-message">{errors.password}</span>}
+              {errors.password && (
+                <span className="error-message">{errors.password}</span>
+              )}
             </div>
 
             <button
@@ -184,11 +184,11 @@ const Login = () => {
 
           <div className="login-footer">
             <p>
-              {t("not_member")} <a href="/register">{t("register_now")}</a>
+              {t("not_member")} <a href="/register" className={isLoading ? "disabled-link" : ""} onClick={(e) => isLoading && e.preventDefault()}>{t("register_now")}</a>
             </p>
             <hr className="divider" />
             <p>
-              <a href="/academy">📚 {t("explore_traxxia_academy")}</a>
+              <Link to="/academy" className={isLoading ? "disabled-link" : ""} onClick={(e) => isLoading && e.preventDefault()}>📚 {t("explore_traxxia_academy")}</Link>
             </p>
           </div>
         </div>

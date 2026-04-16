@@ -1,12 +1,19 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import './styles/index.css';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import App from './App';
 import reportWebVitals from './utils/reportWebVitals';
-import './styles/variables.css';
-import './styles/menubar.css';
-import './styles/dashboard.css';
-import { ThemeProvider } from './components/ThemeComponent';
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      cacheTime: 10 * 60 * 1000, // 10 minutes
+      retry: 1,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 // Create the root once
 const root = ReactDOM.createRoot(document.getElementById('root'));
@@ -14,9 +21,9 @@ const root = ReactDOM.createRoot(document.getElementById('root'));
 // Render the App component
 root.render(
   <React.StrictMode>
-    <ThemeProvider>
+    <QueryClientProvider client={queryClient}>
       <App />
-    </ThemeProvider>
+    </QueryClientProvider>
   </React.StrictMode>
 );
 

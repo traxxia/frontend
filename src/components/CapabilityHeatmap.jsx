@@ -4,6 +4,8 @@ import { useTranslation } from "../hooks/useTranslation";
 import AnalysisEmptyState from './AnalysisEmptyState';
 import { checkMissingQuestionsAndRedirect, ANALYSIS_TYPES } from '../services/missingQuestionsService';
 
+import { useAuthStore } from '../store/authStore';
+
 const CapabilityHeatmap = ({
   questions = [],
   userAnswers = {},
@@ -28,7 +30,7 @@ const CapabilityHeatmap = ({
   const { t } = useTranslation();
 
   const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
-  const getAuthToken = () => sessionStorage.getItem('token');
+  const getAuthToken = () => useAuthStore.getState().token;
 
   const extractCapabilityData = (data) => {
     if (!data) return null;

@@ -5,6 +5,7 @@ import AcademyNavigation from '../components/AcademyNavigation';
 import MarkdownRenderer from '../components/MarkdownRenderer';
 import AcademyFeedback from '../components/AcademyFeedback';
 import { findArticleById, findCategoryById, getBreadcrumbs, academyStructure, resolveAcademyPath } from '../utils/academyIndex';
+import { useAcademyArticle } from '../hooks/useQueries';
 
 import * as LucideIcons from 'lucide-react';
 import '../styles/academy.css';
@@ -21,15 +22,17 @@ import '../styles/academy.css';
 const AcademyPage = () => {
     const { category, article } = useParams();
     const navigate = useNavigate(); // Hook for navigation
-    const [content, setContent] = useState('');
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState(null);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [currentArticle, setCurrentArticle] = useState(null);
     const [searchQuery, setSearchQuery] = useState('');
     const [searchResults, setSearchResults] = useState([]);
     const [prevArticle, setPrevArticle] = useState(null);
     const [nextArticle, setNextArticle] = useState(null);
+
+    const articleData = article ? findArticleById(article) : null;
+    const { data: content = '', isLoading: loading, error: queryError } = useAcademyArticle(articleData?.path);
+
+    const error = queryError ? queryError.message : (article && !articleData ? 'Article not found' : null);
 
     useEffect(() => {
         window.scrollTo(0, 0);
@@ -68,26 +71,15 @@ const AcademyPage = () => {
 
     useEffect(() => {
         if (!category || !article) {
-            // Show welcome/home page
             setCurrentArticle(null);
-            setContent('');
-            setError(null);
+            setPrevArticle(null);
+            setNextArticle(null);
             return;
         }
 
-        // Load article content
-        const loadArticle = async () => {
-            setLoading(true);
-            setError(null);
-
-            const articleData = findArticleById(article);
-            if (!articleData) {
-                setError('Article not found');
-                setLoading(false);
-                return;
-            }
-
-            setCurrentArticle(articleData);
+        const articleDataObj = findArticleById(article);
+        if (articleDataObj) {
+            setCurrentArticle(articleDataObj);
 
             // Find next and previous articles globally across all categories
             const allArticles = academyStructure.categories.flatMap(cat =>
@@ -99,28 +91,11 @@ const AcademyPage = () => {
                 setPrevArticle(index > 0 ? allArticles[index - 1] : null);
                 setNextArticle(index < allArticles.length - 1 ? allArticles[index + 1] : null);
             }
-
-
-
-            try {
-                // Import markdown file dynamically
-                const response = await fetch(`/academy-content/${articleData.path}`);
-
-                if (!response.ok) {
-                    throw new Error(`Failed to load article: ${response.statusText}`);
-                }
-
-                const text = await response.text();
-                setContent(text);
-            } catch (err) {
-                console.error('Error loading article:', err);
-                setError(`Failed to load article content. ${err.message}`);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        loadArticle();
+        } else {
+            setCurrentArticle(null);
+            setPrevArticle(null);
+            setNextArticle(null);
+        }
     }, [category, article]);
 
     // Handle internal link clicks to use React Router instead of page reload
@@ -149,7 +124,7 @@ const AcademyPage = () => {
             contentDiv.addEventListener('click', handleLinkClick);
             return () => contentDiv.removeEventListener('click', handleLinkClick);
         }
-    }, [content]); // Re-attach when content changes
+    }, [content, category, navigate]); // Re-attach when content or category changes
 
     const breadcrumbs = getBreadcrumbs(category, article);
 

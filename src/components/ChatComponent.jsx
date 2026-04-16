@@ -6,6 +6,11 @@ import FinancialTemplatesPopup from './FinancialTemplatesPopup';
 import { detectTemplateType, validateAgainstTemplate, formatValidationResults } from '../utils/templateValidator';
 import { formatDate } from '../utils/dateUtils';
 
+import { useAuthStore } from '../store/authStore';
+import { useGlobalQuestions, useConversations } from '../hooks/useQueries';
+import { useQueryClient } from '@tanstack/react-query';
+
+
 const ChatComponent = ({
   selectedBusinessId,
   userAnswers = {},
@@ -34,8 +39,61 @@ const ChatComponent = ({
   const [showFileUpload, setShowFileUpload] = useState(false);
   const [showTemplatesPopup, setShowTemplatesPopup] = useState(false);
   const [showToast, setShowToast] = useState({ show: false, message: '', type: 'success' });
-  const [hasUploadedDocument, setHasUploadedDocument] = useState(false);
-  const { t } = useTranslation();
+   const { t } = useTranslation();
+
+  const queryClient = useQueryClient();
+  const { data: questionsQuery } = useGlobalQuestions();
+  const { data: conversationsQuery, isLoading: isLoadingConversations } = useConversations(selectedBusinessId);
+
+  // Sync isLoading
+  useEffect(() => {
+    setIsLoading(isLoadingConversations);
+  }, [isLoadingConversations]);
+
+  // Sync questions and start/process chat
+  useEffect(() => {
+    if (questionsQuery && conversationsQuery && !hasInitialized.current) {
+      setQuestions(questionsQuery);
+      onQuestionsLoaded?.(questionsQuery);
+
+      if (conversationsQuery.conversations?.length > 0) {
+        processConversationsData(conversationsQuery, questionsQuery);
+      } else {
+        startFreshConversation(questionsQuery);
+      }
+      hasInitialized.current = true;
+    }
+  }, [questionsQuery, conversationsQuery, onQuestionsLoaded]);
+
+  // Sync metadata
+  useEffect(() => {
+    if (conversationsQuery) {
+      const documentExists = conversationsQuery.document_info?.has_document === true;
+      setHasUploadedDocument(documentExists);
+
+      if (documentExists && conversationsQuery.document_info) {
+        setUploadedFileInfo({
+          name: conversationsQuery.document_info.filename || 'Financial Document',
+          size: conversationsQuery.document_info.file_size || 0,
+          uploadDate: conversationsQuery.document_info.upload_date ?
+            new Date(conversationsQuery.document_info.upload_date).toLocaleDateString() :
+            'Previously uploaded'
+        });
+      } else {
+        setUploadedFileInfo(null);
+      }
+
+      const businessInfo = conversationsQuery.business_info;
+      if (businessInfo) {
+        setBusinessUploadDecision({
+          upload_decision_made: businessInfo.upload_decision_made === true,
+          upload_decision: businessInfo.upload_decision || null
+        });
+      }
+    }
+  }, [conversationsQuery]);
+
+
   const messagesEndRef = useRef(null);
   const hasInitialized = useRef(false);
   const processingAnswer = useRef(false);
@@ -44,7 +102,7 @@ const ChatComponent = ({
   const [uploadedFileInfo, setUploadedFileInfo] = useState(null);
   const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
   const ML_API_BASE_URL = process.env.REACT_APP_ML_BACKEND_URL || 'http://127.0.0.1:8000';
-  const getAuthToken = () => sessionStorage.getItem('token');
+  const getAuthToken = () => useAuthStore.getState().token;
   const [uploadedFileForAnalysis, setUploadedFileForAnalysis] = useState(null);
   const [businessUploadDecision, setBusinessUploadDecision] = useState({
     upload_decision_made: false,
@@ -54,7 +112,7 @@ const ChatComponent = ({
   const [userRole, setUserRole] = useState("");
 
   useEffect(() => {
-    const role = sessionStorage.getItem("userRole");
+    const role = useAuthStore(state => state.userRole);
     setUserRole(role);
   }, []);
 
@@ -71,11 +129,6 @@ const ChatComponent = ({
   }, []);
 
 
-  useEffect(() => {
-    if (selectedBusinessId) {
-      loadQuestionsAndConversations();
-    }
-  }, [selectedBusinessId]);
 
 
   useEffect(() => {
@@ -299,84 +352,12 @@ const ChatComponent = ({
   };
 
   const loadQuestionsAndConversations = async () => {
-    try {
-      setIsLoading(true);
-      const token = getAuthToken();
-
-      const questionsResponse = await fetch(`${API_BASE_URL}/api/questions`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (!questionsResponse.ok) throw new Error('Failed to load questions');
-
-      const questionsData = await questionsResponse.json();
-      const availableQuestions = questionsData.questions || [];
-
-      setQuestions(availableQuestions);
-      onQuestionsLoaded?.(availableQuestions);
-      const conversationUrl = `${API_BASE_URL}/api/conversations${selectedBusinessId ? `?business_id=${selectedBusinessId}` : ''}`;
-
-      const conversationsResponse = await fetch(conversationUrl, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (conversationsResponse.ok) {
-        const conversationsData = await conversationsResponse.json();
-        const documentExists = conversationsData.document_info?.has_document === true;
-        setHasUploadedDocument(documentExists);
-
-        if (documentExists && conversationsData.document_info) {
-          setUploadedFileInfo({
-            name: conversationsData.document_info.filename || 'Financial Document',
-            size: conversationsData.document_info.file_size || 0,
-            uploadDate: conversationsData.document_info.upload_date ?
-              new Date(conversationsData.document_info.upload_date).toLocaleDateString() :
-              'Previously uploaded'
-          });
-        } else {
-          setUploadedFileInfo(null);
-        }
-        const businessInfo = conversationsData.business_info;
-        if (businessInfo) {
-          const uploadDecisionMade = businessInfo.upload_decision_made === true;
-          const uploadDecision = businessInfo.upload_decision || null;
-
-          setBusinessUploadDecision({
-            upload_decision_made: uploadDecisionMade,
-            upload_decision: uploadDecision
-          });
-        } else {
-          setBusinessUploadDecision({ upload_decision_made: false, upload_decision: null });
-        }
-
-        if (conversationsData.conversations?.length > 0) {
-          processConversationsData(conversationsData, availableQuestions);
-        } else {
-          startFreshConversation(availableQuestions);
-        }
-      } else {
-        setHasUploadedDocument(false);
-        setBusinessUploadDecision({ upload_decision_made: false, upload_decision: null });
-        setUploadedFileInfo(null);
-        startFreshConversation(availableQuestions);
-      }
-
-    } catch (error) {
-      console.error('Error loading data:', error);
-      showToastMessage('Error loading data. Please refresh the page.', 'error');
-      setHasUploadedDocument(false);
-      setBusinessUploadDecision({ upload_decision_made: false, upload_decision: null });
-      setUploadedFileInfo(null);
-    } finally {
-      setIsLoading(false);
-    }
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: ['globalQuestions'] }),
+      queryClient.invalidateQueries({ queryKey: ['conversations', selectedBusinessId] })
+    ]);
   };
+
 
   const startFreshConversation = (availableQuestions) => {
     const firstQuestion = findNextUnansweredQuestion(availableQuestions, new Set());
@@ -766,30 +747,16 @@ const ChatComponent = ({
       const result = await response.json();
 
       if (response.ok) {
+        queryClient.invalidateQueries({ queryKey: ['conversations', selectedBusinessId] });
+        
         if (isComplete) {
-          const conversationResponse = await fetch(`${API_BASE_URL}/api/conversations?business_id=${selectedBusinessId}`, {
-            headers: {
-              'Authorization': `Bearer ${token}`,
-              'Content-Type': 'application/json'
-            }
-          });
+          // Optimization: Instead of a manual GET fetch (waterfall), 
+          // we use the local knowledge that we just completed this question.
+          // The background refetch will eventually sync everything perfectly.
+          
+          // Fallback to locally provided answer text for immediate UI update
+          onNewAnswer?.(questionId, answerText);
 
-          if (conversationResponse.ok) {
-            const conversationData = await conversationResponse.json();
-            const questionConversation = conversationData.conversations.find(conv => conv.question_id === questionId);
-
-            if (questionConversation) {
-              const allAnswers = questionConversation.conversation_flow
-                .filter(item => item.type === 'answer')
-                .map(a => a.text.trim())
-                .filter(text => text.length > 0);
-
-              const concatenatedAnswer = allAnswers.join('. ');
-              onNewAnswer?.(questionId, concatenatedAnswer);
-            }
-          } else {
-            onNewAnswer?.(questionId, answerText);
-          }
           if (onQuestionCompleted) {
             await onQuestionCompleted(questionId);
           }
@@ -830,7 +797,11 @@ const ChatComponent = ({
       if (!response.ok) {
         throw new Error(result.error || 'Failed to skip question');
       }
+
+      queryClient.invalidateQueries({ queryKey: ['conversations', selectedBusinessId] });
       let canonicalAnswer = '[Question Skipped]';
+
+
       if (selectedBusinessId) {
         try {
           const convResp = await fetch(`${API_BASE_URL}/api/conversations?business_id=${selectedBusinessId}`, {
@@ -932,7 +903,10 @@ const ChatComponent = ({
         throw new Error(result.error || 'Failed to save file to database');
       }
 
+      queryClient.invalidateQueries({ queryKey: ['conversations', selectedBusinessId] });
+
       return {
+
         ...result,
         documentInfo: {
           has_document: true,

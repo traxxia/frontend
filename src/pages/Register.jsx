@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
-import { FaEye, FaEyeSlash, FaCheck, FaTimes, FaAngleLeft, FaAngleRight, FaSpinner, FaUser, FaBuilding, FaSave, FaBriefcase, FaEnvelope, FaCreditCard, FaPaypal, FaUniversity, FaLock, FaMicrochip, FaCcVisa, FaCcMastercard, FaCcAmex, FaCcDiscover, FaCcDinersClub, FaCcJcb } from 'react-icons/fa';
+import { FaUser, FaEnvelope, FaLock, FaCheck, FaBuilding, FaRocket, FaGlobe, FaChevronRight, FaChevronLeft, FaSave, FaSpinner, FaEye, FaEyeSlash, FaSearch, FaChevronDown, FaChevronUp, FaTimes, FaAngleLeft, FaAngleRight, FaTimesCircle } from 'react-icons/fa';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Modal, Button } from 'react-bootstrap';
 import '../styles/Register.css';
@@ -9,16 +9,15 @@ import logo from '../assets/01a2750def81a5872ec67b2b5ec01ff5e9d69d0e.png';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from '../hooks/useTranslation';
 import PricingPlanCard from '../components/PricingPlanCard';
+import { usePlans, useCompanies } from '../hooks/useQueries';
 
-import { loadStripe } from '@stripe/stripe-js';
-import { Elements, CardNumberElement, CardExpiryElement, CardCvcElement, useStripe, useElements } from '@stripe/react-stripe-js';
+// Stripe imports removed from top-level for lazy loading
 import PaymentForm from '../components/PaymentForm';
 
 
-const PaymentStep = ({ onBack, onSubmit, isSubmitting, error, selectedPlanPrice }) => {
+const PaymentStep = ({ onBack, onSubmit, isSubmitting, error, selectedPlanPrice, stripeComponents, stripe, elements }) => {
   const { t } = useTranslation();
-  const stripe = useStripe();
-  const elements = useElements();
+  const { CardNumberElement } = stripeComponents;
   const [localError, setLocalError] = useState(null);
   const [cardHolderName, setCardHolderName] = useState('');
 
@@ -86,6 +85,9 @@ const PaymentStep = ({ onBack, onSubmit, isSubmitting, error, selectedPlanPrice 
           onCardChange={() => {
             if (localError) setLocalError(null);
           }}
+          stripe={stripe}
+          elements={elements}
+          stripeComponents={stripeComponents}
         />
       </div>
 
@@ -99,6 +101,12 @@ const PaymentStep = ({ onBack, onSubmit, isSubmitting, error, selectedPlanPrice 
       </div>
     </motion.div>
   );
+};
+const StripeHookWrapper = (props) => {
+  const { stripeComponents } = props;
+  const stripe = stripeComponents.useStripe();
+  const elements = stripeComponents.useElements();
+  return <PaymentStep {...props} stripe={stripe} elements={elements} />;
 };
 
 const Register = () => {
@@ -117,12 +125,13 @@ const Register = () => {
     company_id: '',
     company_name: '',
     job_title: '',
+    role: 'user',
     terms: false,
   });
   const [isNewCompany, setIsNewCompany] = useState(false);
-  const [plans, setPlans] = useState([]);
+  // const [plans, setPlans] = useState([]);
   const [selectedPlanId, setSelectedPlanId] = useState('');
-  const [loadingPlans, setLoadingPlans] = useState(true);
+  // const [loadingPlans, setLoadingPlans] = useState(true);
 
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -131,61 +140,77 @@ const Register = () => {
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [modalMessage, setModalMessage] = useState('');
   const [isError, setIsError] = useState(false);
-  const [companies, setCompanies] = useState([]);
-  const [loadingCompanies, setLoadingCompanies] = useState(true);
+  // const [companies, setCompanies] = useState([]);
+  // const [loadingCompanies, setLoadingCompanies] = useState(true);
   const [isCheckingEmail, setIsCheckingEmail] = useState(false);
+
+  // TanStack Query hooks
+  const { data: plans = [], isLoading: loadingPlans } = usePlans();
+  const { data: companies = [], isLoading: loadingCompanies } = useCompanies();
+
+  const [isCompanyDropdownOpen, setIsCompanyDropdownOpen] = useState(false);
+  const [isRoleDropdownOpen, setIsRoleDropdownOpen] = useState(false);
+  const [companySearch, setCompanySearch] = useState('');
+  const [submitError, setSubmitError] = useState(null);
+  const companyDropdownRef = React.useRef(null);
+  const roleDropdownRef = React.useRef(null);
+  const errorBoxRef = React.useRef(null);
+
+  const filteredCompanies = useMemo(() => {
+    return companies.filter(c =>
+      c.company_name.toLowerCase().includes(companySearch.toLowerCase())
+    );
+  }, [companies, companySearch]);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (companyDropdownRef.current && !companyDropdownRef.current.contains(event.target)) {
+        setIsCompanyDropdownOpen(false);
+      }
+      if (roleDropdownRef.current && !roleDropdownRef.current.contains(event.target)) {
+        setIsRoleDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const [showTermsModal, setShowTermsModal] = useState(false);
   const [showPrivacyModal, setShowPrivacyModal] = useState(false);
 
   const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
 
-  // Lazy load Stripe only when needed for the payment step
-  const stripePromise = React.useMemo(() => {
+  const [stripeComponents, setStripeComponents] = useState(null);
+
+  // Lazy load Stripe and its React components only when needed for the payment step
+  const stripePromise = React.useMemo(async () => {
     if (activeTab === 3 && isNewCompany) {
-      return loadStripe(process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY);
+      const [stripeJs, reactStripeJs] = await Promise.all([
+        import('@stripe/stripe-js'),
+        import('@stripe/react-stripe-js')
+      ]);
+      setStripeComponents(reactStripeJs);
+      return stripeJs.loadStripe(process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY);
     }
     return null;
   }, [activeTab, isNewCompany]);
 
   useEffect(() => {
-    fetchCompanies();
-    fetchPlans();
-  }, []);
-
-  const fetchPlans = async () => {
-    try {
-      const response = await axios.get(`${API_BASE_URL}/api/plans`);
-      if (response.data.plans) {
-        setPlans(response.data.plans);
-        // Auto-select the cheapest available plan instead of hardcoding a name
-        const sorted = [...response.data.plans].sort((a, b) => a.price - b.price);
-        if (sorted.length > 0) setSelectedPlanId(sorted[0]._id);
-      }
-    } catch (error) {
-      console.error('Error fetching plans:', error);
-    } finally {
-      setLoadingPlans(false);
+    if (plans.length > 0 && !selectedPlanId) {
+      const sorted = [...plans].sort((a, b) => a.price - b.price);
+      setSelectedPlanId(sorted[0]._id);
     }
-  };
-
-  const fetchCompanies = async () => {
-    setLoadingCompanies(true);
-    try {
-      const response = await axios.get(`${API_BASE_URL}/api/companies`);
-      if (response.data.companies) setCompanies(response.data.companies);
-    } catch (error) {
-      console.error('Error fetching companies:', error);
-    } finally {
-      setLoadingCompanies(false);
-    }
-  };
+  }, [plans, selectedPlanId]);
 
   const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
+    let { name, value, type, checked } = e.target;
+
     setForm({ ...form, [name]: type === 'checkbox' ? checked : value });
     if (errors[name]) setErrors({ ...errors, [name]: '' });
   };
+
+  const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+  const isDark = currentTheme === 'dark';
 
   const validateTab1 = () => {
     const newErrors = {};
@@ -193,11 +218,11 @@ const Register = () => {
       newErrors.name = t('first_name_required') || 'Name is required';
     } else {
       const name = form.name.trim();
-      const nameRegex = /^[a-zA-Z\s]+$/;
+      const hasLetter = /[a-zA-Z\u00C0-\u017F]/.test(name);
       if (name.length < 2) {
         newErrors.name = t('Name_must_be_at_least_2_characters_long') || 'Name must be at least 2 characters long';
-      } else if (!nameRegex.test(name)) {
-        newErrors.name = t('Name_can_only_contain_letters_and_spaces') || 'Name can only contain letters and spaces';
+      } else if (!hasLetter) {
+        newErrors.name = t('Name_must_contain_at_least_one_letter') || 'Name must contain at least one letter';
       }
     }
 
@@ -325,6 +350,7 @@ const Register = () => {
         }
       } else {
         userData.company_id = form.company_id;
+        userData.role = form.role;
       }
 
       const response = await axios.post(`${API_BASE_URL}/api/register`, userData);
@@ -339,12 +365,21 @@ const Register = () => {
 
     } catch (err) {
       setIsSubmitting(false);
+      const errorMessage = err.response?.data?.error || 'Registration failed.';
+      setSubmitError(errorMessage);
+      
+      // Still show the modal for critical failures but the inline alert is the primary focus
       setIsError(true);
-      setModalMessage(err.response?.data?.error || 'Registration failed.');
+      setModalMessage(errorMessage);
+      
+      if (errorMessage && errorMessage.includes('limit')) {
+        // Specific scroll for limit errors to the dropdown area
+        errorBoxRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+      
       if (err.response?.data?.error && err.response.data.error.includes('Payment')) {
         setErrors({ payment: err.response.data.error });
       }
-      setShowSuccessModal(true);
     }
   };
 
@@ -375,6 +410,31 @@ const Register = () => {
                 <h1>{t('register_title')}</h1>
                 <p>{t('create_account_subtitle')}</p>
               </div>
+
+              <AnimatePresence mode="wait">
+                {submitError && (
+                  <motion.div 
+                    initial={{ opacity: 0, height: 0, marginBottom: 0 }}
+                    animate={{ opacity: 1, height: 'auto', marginBottom: 20 }}
+                    exit={{ opacity: 0, height: 0, marginBottom: 0 }}
+                    className="registration-error-box"
+                    ref={errorBoxRef}
+                  >
+                    <div className="error-icon">
+                      <FaTimesCircle />
+                    </div>
+                    <div className="error-content">
+                      <p>{submitError}</p>
+                      {submitError.includes('limit') && (
+                        <span className="error-action">{t('contact_admin_to_upgrade')}</span>
+                      )}
+                    </div>
+                    <button className="error-close" onClick={() => setSubmitError(null)}>
+                      <FaTimes />
+                    </button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
 
               <div className="register-steps-container">
                 <div className={`step-item ${activeTab >= 1 ? 'active' : ''} ${activeTab > 1 ? 'completed' : ''}`}>
@@ -574,7 +634,7 @@ const Register = () => {
                               </div>
                             </div>
 
-                            <div className="selection-content" style={{ overflow: 'hidden' }}>
+                            <div className="selection-content">
                               <AnimatePresence mode="wait" initial={false}>
                                 {isNewCompany ? (
                                   <motion.div
@@ -600,16 +660,60 @@ const Register = () => {
                                     className="form-group-custom"
                                   >
                                     <label>{t("select_company")} <span className="required">*</span></label>
-                                    <div className="select-wrapper">
+                                    <div className="custom-select-container" ref={companyDropdownRef}>
                                       {loadingCompanies ? (
                                         <div className="loading-select"><FaSpinner className="spinner" /> Loading...</div>
                                       ) : (
-                                        <select name="company_id" value={form.company_id} onChange={handleChange} className={errors.company_id ? 'error' : ''} required>
-                                          <option value="">{t('select_a_company')}</option>
-                                          {companies.map((c) => (
-                                            <option key={c._id} value={c._id}>{c.company_name}</option>
-                                          ))}
-                                        </select>
+                                        <>
+                                          <div
+                                            className={`custom-select-header ${isCompanyDropdownOpen ? 'open' : ''} ${errors.company_id ? 'error' : ''}`}
+                                            onClick={() => setIsCompanyDropdownOpen(!isCompanyDropdownOpen)}
+                                          >
+                                            <span>
+                                              {form.company_id
+                                                ? companies.find(c => c._id === form.company_id)?.company_name || t('select_a_company')
+                                                : t('select_a_company')}
+                                            </span>
+                                            {isCompanyDropdownOpen ? <FaChevronUp /> : <FaChevronDown />}
+                                          </div>
+
+                                          {isCompanyDropdownOpen && (
+                                            <div className="custom-select-dropdown">
+                                              <div className="search-box-wrapper">
+                                                <input
+                                                  type="text"
+                                                  placeholder={t('type_a_company') || 'Type a company'}
+                                                  value={companySearch}
+                                                  onChange={(e) => setCompanySearch(e.target.value)}
+                                                  onClick={(e) => e.stopPropagation()}
+                                                  autoFocus
+                                                />
+                                                <FaSearch className="search-icon" />
+                                              </div>
+
+                                              <div className="options-list">
+                                                {filteredCompanies.length > 0 ? (
+                                                  filteredCompanies.map((c) => (
+                                                    <div
+                                                      key={c._id}
+                                                      className={`option-item ${form.company_id === c._id ? 'selected' : ''}`}
+                                                      onClick={() => {
+                                                        setForm({ ...form, company_id: c._id });
+                                                        setIsCompanyDropdownOpen(false);
+                                                        setCompanySearch('');
+                                                        if (errors.company_id) setErrors({ ...errors, company_id: '' });
+                                                      }}
+                                                    >
+                                                      {c.company_name}
+                                                    </div>
+                                                  ))
+                                                ) : (
+                                                  <div className="no-options">{t('no_companies_found') || 'No companies found'}</div>
+                                                )}
+                                              </div>
+                                            </div>
+                                          )}
+                                        </>
                                       )}
                                     </div>
                                   </motion.div>
@@ -619,6 +723,46 @@ const Register = () => {
                             <div ref={companyErrorRef}>
                               {(errors.company_name || errors.company_id) && <div className="error-message">{errors.company_name || errors.company_id}</div>}
                             </div>
+
+                            {!isNewCompany && (
+                              <div className="form-group-custom full-width-field mt-3">
+                                <label>{t("role")} <span className="required">*</span></label>
+                                <div className="custom-select-container" ref={roleDropdownRef}>
+                                  <div
+                                    className={`custom-select-header ${isRoleDropdownOpen ? 'open' : ''}`}
+                                    onClick={() => setIsRoleDropdownOpen(!isRoleDropdownOpen)}
+                                  >
+                                    <span>
+                                      {form.role ? t(form.role === 'company_admin' ? 'Org_Admin' : form.role.charAt(0).toUpperCase() + form.role.slice(1)) : t('Select_Role')}
+                                    </span>
+                                    {isRoleDropdownOpen ? <FaChevronUp /> : <FaChevronDown />}
+                                  </div>
+
+                                  {isRoleDropdownOpen && (
+                                    <div className="custom-select-dropdown">
+                                      <div className="options-list">
+                                        {[
+                                          { id: 'collaborator', name: t('Collaborator') },
+                                          { id: 'user', name: t('User') },
+                                          { id: 'viewer', name: t('Viewer') }
+                                        ].map((r) => (
+                                          <div
+                                            key={r.id}
+                                            className={`option-item ${form.role === r.id ? 'selected' : ''}`}
+                                            onClick={() => {
+                                              setForm({ ...form, role: r.id });
+                                              setIsRoleDropdownOpen(false);
+                                            }}
+                                          >
+                                            {r.name}
+                                          </div>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            )}
                           </div>
 
                           <AnimatePresence>
@@ -675,7 +819,7 @@ const Register = () => {
                               </button>
                             ) : (
                               <button type="button" onClick={() => handleNext()} disabled={isSubmitting} className="btn-vibrant btn-primary-vibrant create-account-btn">
-                                {isSubmitting ? <><FaSpinner className="spinner" />{t("saving")}</> : <><FaSave />{t("createAccount")}</>}
+                                {isSubmitting ? <><FaSpinner className="spinner" />{t("saving")}</> : <><FaSave />{t("join_company")}</>}
                               </button>
                             )}
                           </div>
@@ -685,16 +829,17 @@ const Register = () => {
                   </motion.div>
                 )}
 
-                {activeTab === 3 && isNewCompany && stripePromise && (
-                  <Elements stripe={stripePromise}>
-                    <PaymentStep
+                {activeTab === 3 && isNewCompany && stripeComponents && (
+                  <stripeComponents.Elements stripe={stripePromise}>
+                    <StripeHookWrapper
                       onBack={handleBack}
                       onSubmit={handleSubmit}
                       isSubmitting={isSubmitting}
                       error={errors.payment}
                       showSaveCheckbox={false}
+                      stripeComponents={stripeComponents}
                     />
-                  </Elements>
+                  </stripeComponents.Elements>
                 )}
               </AnimatePresence>
             </motion.div>

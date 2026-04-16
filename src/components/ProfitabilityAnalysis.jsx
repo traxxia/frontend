@@ -1,7 +1,8 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { TrendingUp, Loader, Info, AlertCircle } from 'lucide-react';
 import '../styles/goodPhase.css';
 import { useTranslation } from "../hooks/useTranslation";
+import { useAuthStore, useAnalysisStore } from "../store";
 import AnalysisEmptyState from './AnalysisEmptyState';
 import FinancialEmptyState from './FinancialEmptyState';
 import CitationSource from './CitationSource';
@@ -11,11 +12,10 @@ const ProfitabilityAnalysis = ({
   questions = [],
   userAnswers = {},
   businessName = "Your Business",
-  onDataGenerated,
   onRegenerate,
-  isRegenerating = false,
+  isRegenerating: propIsRegenerating = false,
   canRegenerate = true,
-  profitabilityData = null,
+  profitabilityData: propProfitabilityData = null,
   selectedBusinessId,
   onRedirectToBrief,
   onRedirectToChat,
@@ -26,21 +26,42 @@ const ProfitabilityAnalysis = ({
   readOnly = false,
   documentInfo = null,
 }) => {
-  const [analysisData, setAnalysisData] = useState(profitabilityData);
+  const { t } = useTranslation();
+  
+  // Use Zustand store
+  const { 
+    profitabilityData: storeProfitabilityData,
+    isRegenerating: isTypeRegenerating,
+    regenerateIndividualAnalysis 
+  } = useAnalysisStore();
+
+  const isRegenerating = propIsRegenerating || isTypeRegenerating('profitabilityAnalysis');
+
+  // Normalize data from store or props
+  const analysisData = useMemo(() => {
+    const rawData = propProfitabilityData || storeProfitabilityData;
+    if (!rawData) return null;
+
+    const normalized = rawData.profitability || 
+                       rawData.profitability_analysis || 
+                       rawData.profitabilityAnalysis || 
+                       rawData.ProfitabilityAnalysis || 
+                       (Object.keys(rawData).length > 0 && !rawData.profitability ? rawData : null);
+
+    return normalized ? { profitability: normalized } : null;
+  }, [propProfitabilityData, storeProfitabilityData]);
+
   const [error, setError] = useState(null);
 
-  const isMounted = useRef(false);
-  const hasInitialized = useRef(false);
   const fileInputRef = useRef(null);
-  const { t } = useTranslation();
 
-  const handleRedirectToBrief = (missingQuestionsData = null) => {
+  const handleRedirectToBrief = useCallback((missingQuestionsData = null) => {
     if (onRedirectToBrief) {
       onRedirectToBrief(missingQuestionsData);
     }
-  };
+  }, [onRedirectToBrief]);
 
-  const handleMissingQuestionsCheck = async () => {
+  const handleMissingQuestionsCheck = useCallback(async () => {
     try {
       const analysisConfig = ANALYSIS_TYPES.profitability || {
         displayName: 'Profitability Analysis',
@@ -59,12 +80,12 @@ const ProfitabilityAnalysis = ({
     } catch (error) {
       console.error('Error checking missing questions:', error);
     }
-  };
+  }, [selectedBusinessId, handleRedirectToBrief]);
 
-  const isProfitabilityDataIncomplete = (data) => {
+  const isProfitabilityDataIncomplete = useCallback((data) => {
     if (!data) return true;
 
-    const profitabilityMetrics = data.profitability || data.profitability_analysis || data.profitabilityAnalysis || data.ProfitabilityAnalysis || (Object.keys(data).length > 0 && !data.profitability ? data : null);
+    const profitabilityMetrics = data.profitability;
 
     if (!profitabilityMetrics || typeof profitabilityMetrics !== 'object') {
       return true;
@@ -82,9 +103,9 @@ const ProfitabilityAnalysis = ({
     });
 
     return !hasValidMetric;
-  };
+  }, []);
 
-  const handleRegenerate = async () => {
+  const handleRegenerate = useCallback(async () => {
     if (onRegenerate) {
       try {
         setError(null);
@@ -94,13 +115,18 @@ const ProfitabilityAnalysis = ({
         setError('Failed to regenerate analysis. Please try again.');
       }
     } else {
-      setAnalysisData(null);
-      setError(null);
+      try {
+        setError(null);
+        await regenerateIndividualAnalysis('profitabilityAnalysis', questions, userAnswers, selectedBusinessId);
+      } catch (error) {
+        console.error('Error during regeneration:', error);
+        setError('Failed to regenerate analysis. Please try again.');
+      }
     }
-  };
+  }, [onRegenerate, regenerateIndividualAnalysis, questions, userAnswers, selectedBusinessId]);
 
   // Helper function to get traffic light color based on value vs threshold
-  const getTrafficLightColor = (value, threshold, isHigherBetter = true) => {
+  const getTrafficLightColor = useCallback((value, threshold, isHigherBetter = true) => {
     if (!threshold || threshold === 'NA' || threshold === null || threshold === undefined) {
       return '#6b7280'; // Gray for NA
     }
@@ -121,10 +147,10 @@ const ProfitabilityAnalysis = ({
       if (numValue <= numThreshold * 1.1) return '#f59e0b'; // Yellow - within 10% of threshold
       return '#ef4444'; // Red - above threshold
     }
-  };
+  }, []);
 
   // Helper function to parse percentage values
-  const parsePercentageValue = (value) => {
+  const parsePercentageValue = useCallback((value) => {
     if (value === null || value === undefined || value === '' || value === 'NA') return 0;
 
     if (typeof value === 'string') {
@@ -137,10 +163,10 @@ const ProfitabilityAnalysis = ({
     }
 
     return 0;
-  };
+  }, []);
 
   // Helper function to get citation URL for a metric
-  const getCitationUrl = (metricKey, citations) => {
+  const getCitationUrl = useCallback((metricKey, citations) => {
     if (!citations) return null;
 
     // Check for exact match first
@@ -160,23 +186,25 @@ const ProfitabilityAnalysis = ({
     }
 
     return null;
-  };
+  }, []);
 
   // Paired Bar Chart Component
-  const PairedBarChart = ({ metrics, thresholds, citations }) => {
+  const PairedBarChart = React.memo(({ metrics, thresholds, citations }) => {
     const [containerWidth, setContainerWidth] = useState(600);
     const containerRef = useRef(null);
 
-    const chartData = Object.entries(metrics)
-      .filter(([key, value]) => value !== null && value !== undefined && value !== '')
-      .map(([key, value]) => ({
-        metric: key,
-        actualValue: parsePercentageValue(value),
-        benchmarkValue: parsePercentageValue(thresholds[key]),
-        color: getTrafficLightColor(value, thresholds[key], true),
-        hasData: value !== null && value !== undefined && value !== '',
-        citationUrl: getCitationUrl(key.toLowerCase().replace(' ', '_'), citations)
-      }));
+    const chartData = useMemo(() => {
+      return Object.entries(metrics)
+        .filter(([key, value]) => value !== null && value !== undefined && value !== '')
+        .map(([key, value]) => ({
+          metric: key,
+          actualValue: parsePercentageValue(value),
+          benchmarkValue: parsePercentageValue(thresholds[key]),
+          color: getTrafficLightColor(value, thresholds[key], true),
+          hasData: value !== null && value !== undefined && value !== '',
+          citationUrl: getCitationUrl(key.toLowerCase().replace(' ', '_'), citations)
+        }));
+    }, [metrics, thresholds, citations]);
 
     useEffect(() => {
       const updateWidth = () => {
@@ -201,17 +229,17 @@ const ProfitabilityAnalysis = ({
     );
     const chartHeight = chartData.length * 100 + 20;
     const chartWidth = containerWidth;
-    const leftMargin = 140; // Reduced from 160
+    const leftMargin = 140;
     const rightMargin = 60;
-    const barHeight = 22; // Slightly reduced from 25
-    const groupSpacing = 100; // Reduced from 120
+    const barHeight = 22;
+    const groupSpacing = 100;
 
     return (
       <div
         ref={containerRef}
         style={{
           width: '100%',
-          padding: '20px', // Reduced from 24
+          padding: '20px',
           background: '#fff',
           borderRadius: '12px',
           border: '1px solid #e5e7eb',
@@ -220,15 +248,15 @@ const ProfitabilityAnalysis = ({
         <div style={{
           display: 'flex',
           justifyContent: 'space-between',
-          alignItems: 'center', // Changed to center for title/legend alignment
-          marginBottom: '16px', // Reduced from 20
+          alignItems: 'center',
+          marginBottom: '16px',
           flexWrap: 'wrap',
-          gap: '12px' // Reduced from 16
+          gap: '12px'
         }}>
           <h3 style={{
             margin: 0,
             color: '#111827',
-            fontSize: '16px', // Slightly reduced from 18
+            fontSize: '16px',
             fontWeight: '600',
             letterSpacing: '-0.01em'
           }}>
@@ -348,39 +376,9 @@ const ProfitabilityAnalysis = ({
         </div>
       </div>
     );
-  };
+  });
 
-  useEffect(() => {
-    if (profitabilityData) {
-      const normalized = profitabilityData.profitability || profitabilityData.profitability_analysis || profitabilityData.profitabilityAnalysis || profitabilityData.ProfitabilityAnalysis || (Object.keys(profitabilityData).length > 0 && !profitabilityData.profitability ? profitabilityData : null);
-
-      if (normalized && typeof normalized === 'object') {
-        setAnalysisData({ profitability: normalized });
-        setError(null);
-
-        if (onDataGenerated) {
-          onDataGenerated({ profitability: normalized });
-        }
-      }
-    }
-  }, [profitabilityData, onDataGenerated]);
-
-  useEffect(() => {
-    if (hasInitialized.current) return;
-
-    isMounted.current = true;
-    hasInitialized.current = true;
-
-    if (profitabilityData) {
-      setAnalysisData(profitabilityData);
-    }
-
-    return () => {
-      isMounted.current = false;
-    };
-  }, [profitabilityData]);
-
-  const handleFileUpload = (file) => {
+  const handleFileUpload = useCallback((file) => {
     if (file) {
       const allowedTypes = [
         'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
@@ -394,49 +392,15 @@ const ProfitabilityAnalysis = ({
         setError('Please upload an Excel or CSV file.');
       }
     }
-  };
+  }, []);
 
-  const removeFile = () => {
+  const removeFile = useCallback(() => {
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
-  };
+  }, []);
 
-  const formatPercentage = (value) => {
-    if (value === null || value === undefined || value === '') return null;
-
-    if (typeof value === 'string') {
-      if (value.includes('%')) return value;
-      const numValue = parseFloat(value);
-      if (isNaN(numValue)) return null;
-      return `${(numValue).toFixed(3)}%`;
-    }
-
-    if (typeof value === 'number') {
-      return `${(value).toFixed(3)}%`;
-    }
-
-    return null;
-  };
-
-  const formatThreshold = (threshold) => {
-    if (!threshold || threshold === 'NA') return 'NA';
-
-    if (typeof threshold === 'string') {
-      if (threshold.includes('%')) return threshold;
-      const numValue = parseFloat(threshold);
-      if (isNaN(numValue)) return 'NA';
-      return `${(numValue).toFixed(1)}%`;
-    }
-
-    if (typeof threshold === 'number') {
-      return `${(threshold).toFixed(1)}%`;
-    }
-
-    return 'NA';
-  };
-
-  const getDisplayName = (key) => {
+  const getDisplayName = useCallback((key) => {
     const displayNames = {
       'gross_margin': 'Gross Margin',
       'operating_margin': 'Operating Margin',
@@ -445,14 +409,14 @@ const ProfitabilityAnalysis = ({
       'net_margin': 'Net Margin'
     };
     return displayNames[key] || key.replace('_', ' ').toUpperCase();
-  };
+  }, []);
 
-  const extractProfitabilityMetrics = (data) => {
+  const extractProfitabilityMetrics = useCallback((data) => {
     if (!data) {
       return { metrics: {}, thresholds: {}, citations: {} };
     }
 
-    const profitabilityData = data.profitability || data.profitability_analysis || data.profitabilityAnalysis || data.ProfitabilityAnalysis || (Object.keys(data).length > 0 && !data.profitability ? data : null);
+    const profitabilityData = data.profitability;
     if (!profitabilityData) {
       return { metrics: {}, thresholds: {}, citations: {} };
     }
@@ -474,7 +438,7 @@ const ProfitabilityAnalysis = ({
     });
 
     return { metrics, thresholds, citations };
-  };
+  }, [getDisplayName]);
 
   // Show loading state
   if (isRegenerating) {
@@ -528,7 +492,6 @@ const ProfitabilityAnalysis = ({
           readOnly={readOnly}
           fileUploadMessage="Upload Excel or CSV files with financial data for profitability analysis"
           acceptedFileTypes=".xlsx,.xls,.csv"
-          customMessage=" ."
         />
       );
     }
@@ -600,4 +563,4 @@ const ProfitabilityAnalysis = ({
   );
 };
 
-export default ProfitabilityAnalysis;
+export default React.memo(ProfitabilityAnalysis);

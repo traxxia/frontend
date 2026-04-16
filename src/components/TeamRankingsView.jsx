@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Table, Badge, Spinner, Collapse, Card } from "react-bootstrap";
 import { Users, Sparkles, ChevronDown, ChevronUp, ChevronRight } from "lucide-react";
 import { useTranslation } from "../hooks/useTranslation";
-import { fetchConsensusAnalysis, fetchCollaboratorConsensus } from "../services/consensusService";
+import { useProjectStore } from "../store";
 
 const TeamRankingsView = ({
   activeAccordionKey,
@@ -22,19 +22,12 @@ const TeamRankingsView = ({
   const [consensusMode, setConsensusMode] = useState("ai");
   const [expandedRows, setExpandedRows] = useState(new Set());
 
-  // Load data immediately on mount (or when businessId changes), as parent now controls visibility
+  // Load data immediately on mount (or when businessId/mode changes)
   useEffect(() => {
     if (businessId) {
       loadConsensusData();
     }
-  }, [businessId]);
-
-  // Reload if mode changes
-  useEffect(() => {
-    if (businessId) {
-      loadConsensusData();
-    }
-  }, [consensusMode]);
+  }, [businessId, consensusMode]);
 
 
   const loadConsensusData = async () => {
@@ -43,6 +36,7 @@ const TeamRankingsView = ({
     setLoadingConsensus(true);
     try {
       let response;
+      const { fetchConsensusAnalysis, fetchCollaboratorConsensus } = useProjectStore.getState();
       if (consensusMode === "ai") {
         response = await fetchConsensusAnalysis(businessId);
       } else {
@@ -50,14 +44,15 @@ const TeamRankingsView = ({
       }
 
       const consensusMap = {};
-      if (response.consensus_data && Array.isArray(response.consensus_data)) {
-        response.consensus_data.forEach((data) => {
+      const actualData = response.data || response;
+      if (actualData.consensus_data && Array.isArray(actualData.consensus_data)) {
+        actualData.consensus_data.forEach((data) => {
           consensusMap[String(data.project_id)] = data;
         });
       }
 
       setConsensusData(consensusMap);
-      setConsensusSummary(response.consensus_summary);
+      setConsensusSummary(actualData.consensus_summary);
     } catch (error) {
       console.error("Failed to load consensus data:", error);
       setConsensusData({});
@@ -86,7 +81,8 @@ const TeamRankingsView = ({
 
   // Render collaborator rankings details
   const renderCollaboratorDetails = (consensus) => {
-    if (!consensus || !consensus.collaborator_rankings || consensus.collaborator_rankings.length === 0) {
+    const collabData = consensus?.collaborator_rankings || consensus?.collaborator_ranks;
+    if (!collabData || collabData.length === 0) {
       return <div className="text-center text-muted py-2"><small>No rankings available</small></div>;
     }
 
@@ -103,19 +99,19 @@ const TeamRankingsView = ({
               </tr>
             </thead>
             <tbody>
-              {consensus.collaborator_rankings.map((collab, idx) => (
+              {collabData.map((collab, idx) => (
                 <tr key={idx}>
                   <td>
                     <div className="d-flex align-items-center gap-2">
-                      <div className="collab-avatar-small">{collab.user_name.charAt(0)}</div>
-                      <span className="fw-medium">{collab.user_name}</span>
+                      <div className="collab-avatar-small">{collab.user_name ? collab.user_name.charAt(0) : (collab.user_id ? "U" : "?")}</div>
+                      <span className="fw-medium">{collab.user_name || `User ${collab.user_id?.substring(0, 4) || idx}`}</span>
                     </div>
                   </td>
                   <td className="text-center">
                     <Badge bg="light" text="dark" className="border">#{collab.rank}</Badge>
                   </td>
                   <td className="text-muted small">
-                    {collab.rationale || "No rationale"}
+                    {collab.rationale || collab.rationals || "No rationale"}
                   </td>
                 </tr>
               ))}
@@ -184,7 +180,7 @@ const TeamRankingsView = ({
                   )}
                   {(!isSuperAdmin && userRole !== 'viewer') && <th className="text-center">{t("my_rank")}</th>}
                   {consensusMode === "ai" && <th className="text-center">{t("ai_rank")}</th>}
-                  {isSuperAdmin && consensusMode === "ai" && <th className="text-center">{t("consensus")}</th>}
+                  {isSuperAdmin && consensusMode === "ai" && <th className="text-center" style={{ minWidth: '100px' }}>{t("consensus")}</th>}
                 </tr>
               </thead>
               <tbody>
@@ -194,7 +190,8 @@ const TeamRankingsView = ({
                   const aiRank = p.ai_rank;
                   const consensus = consensusData[key];
                   const isExpanded = expandedRows.has(key);
-                  const hasCollaboratorData = consensus?.collaborator_rankings?.length > 0;
+                  const collabData = consensus?.collaborator_rankings || consensus?.collaborator_ranks;
+                  const hasCollaboratorData = collabData?.length > 0;
 
                   return (
                     <React.Fragment key={p._id}>
@@ -227,7 +224,17 @@ const TeamRankingsView = ({
 
                         {isSuperAdmin && consensusMode === "ai" && (
                           <td className="text-center">
-                            {consensus ? getConsensusEmoji(consensus.consensus_score) : "-"}
+                            {consensus ? (
+                              <div className="d-flex align-items-center justify-content-center gap-2">
+                                <span>{getConsensusEmoji(consensus.consensus_score)}</span>
+                                <span className="small fw-bold" style={{ color: 
+                                  consensus.consensus_score === 'green' ? '#10b981' : 
+                                  consensus.consensus_score === 'yellow' ? '#f59e0b' : 
+                                  consensus.consensus_score === 'red' ? '#ef4444' : '#64748b'
+                                }}>
+                                </span>
+                              </div>
+                            ) : "-"}
                           </td>
                         )}
                       </tr>

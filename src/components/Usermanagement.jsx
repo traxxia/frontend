@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Row, Col, Card, Form, Button, Dropdown, Modal, Alert, Spinner } from "react-bootstrap";
 import { Crown, UserCog, User, ShieldCheck, MoreVertical, Plus, Eye, EyeOff, Activity, Users, Shield, History } from "lucide-react";
 import "../styles/usermanagement.css";
@@ -11,6 +11,9 @@ import AdminTable from "./AdminTable";
 import MetricCard from "./MetricCard";
 import "../styles/AdminTableStyles.css";
 import { OverlayTrigger, Tooltip } from "react-bootstrap";
+import { useAuthStore, useProjectStore } from "../store";
+import { usePlanDetails, useCompanies, useAdminUsers, useBusinesses, useProjects, useCompanyCollaborators } from "../hooks/useQueries";
+import { useQueryClient } from "@tanstack/react-query";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -37,82 +40,131 @@ const CustomToggle = React.forwardRef(({ onClick, disabled }, ref) => (
 ));
 
 const UserManagement = ({ onToast }) => {
+  const { t } = useTranslation();
+  const { userRole, token } = useAuthStore();
+  const currentRole = userRole;
+  const isSuperAdmin = currentRole === 'super_admin';
+  const isAdmin = currentRole === 'admin' || currentRole === 'super_admin' || currentRole === 'company_admin';
+
+  const fetchUsers = () => {
+    queryClient.invalidateQueries({ queryKey: ["adminUsers"] });
+  };
+
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedRole, setSelectedRole] = useState("All Roles");
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
-  const [users, setUsers] = useState([]);
-  const [lastPageBeforeSearch, setLastPageBeforeSearch] = useState(1);
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
-  const { t } = useTranslation();
-
-  // Plan Limit Modal state
-  const [showPlanLimitModal, setShowPlanLimitModal] = useState(false);
-  const [planLimitConfig, setPlanLimitConfig] = useState({ title: '', message: '', subMessage: '' });
-
-  const [showErrorModal, setShowErrorModal] = useState(false);
-  const [errorModalConfig, setErrorModalConfig] = useState({ title: '', message: '' });
-
-  const [errors, setErrors] = useState({});
+  const [isLoading, setIsLoading] = useState(false); // Legacy
+  const [isAssigning, setIsAssigning] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Pagination & Search state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [lastPageBeforeSearch, setLastPageBeforeSearch] = useState(1);
+  const itemsPerPage = 10;
+
+  // Modal contexts
   const [showModal, setShowModal] = useState(false);
   const [newName, setNewName] = useState("");
   const [newEmail, setNewEmail] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [newRole, setNewRole] = useState("");
+  const [selectedCompanyId, setSelectedCompanyId] = useState("");
+  const [errors, setErrors] = useState({});
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const token = sessionStorage.getItem("token");
 
   const [showAssignModal, setShowAssignModal] = useState(false);
   const [assignUserId, setAssignUserId] = useState("");
   const [assignBusinessId, setAssignBusinessId] = useState("");
-  const [showGiveAccessModal, setShowGiveAccessModal] = useState(false);
-  const [showConfirm, setShowConfirm] = useState(false);
-  const [pendingUserId, setPendingUserId] = useState(null);
-  const [pendingUserName, setPendingUserName] = useState("");
-  const [pendingRole, setPendingRole] = useState(null);
-  const [isReactivating, setIsReactivating] = useState(false);
-  const [isRoleChanging, setIsRoleChanging] = useState(false);
-
-  const [accessType, setAccessType] = useState("reRanking");
-  const [allBusinesses, setAllBusinesses] = useState([]);
-  const [launchedBusinesses, setLaunchedBusinesses] = useState([]);
-  const [accessBusinessId, setAccessBusinessId] = useState("");
-  const [projects, setProjects] = useState([]);
-  const [selectedProjectId, setSelectedProjectId] = useState("");
-  const [loadingProjects, setLoadingProjects] = useState(false);
-  const [launchedProjectMap, setLaunchedProjectMap] = useState({});
-  const [collaborators, setCollaborators] = useState([]);
-  const [selectedCollaboratorIds, setSelectedCollaboratorIds] = useState([]);
-  const [loadingCollaborators, setLoadingCollaborators] = useState(false);
-  const [showAccessConfirmation, setShowAccessConfirmation] = useState(false);
+  const [assigningBusinessCollaborators, setAssigningBusinessCollaborators] = useState([]);
   const [assignErrors, setAssignErrors] = useState({});
+
+  const [showGiveAccessModal, setShowGiveAccessModal] = useState(false);
+  const [accessBusinessId, setAccessBusinessId] = useState("");
+  const [selectedProjectId, setSelectedProjectId] = useState("");
+  const [selectedCollaboratorIds, setSelectedCollaboratorIds] = useState([]);
   const [accessErrors, setAccessErrors] = useState({});
+  const [accessType, setAccessType] = useState("reRanking");
+  const [showAccessConfirmation, setShowAccessConfirmation] = useState(false);
   const [isGrantingAccess, setIsGrantingAccess] = useState(false);
 
-  axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
-  const currentRole = sessionStorage.getItem("userRole");
-  const isAdmin = ["super_admin", "company_admin"].includes(currentRole?.toLowerCase());
-  const userPlan = sessionStorage.getItem("userPlan");
-  const isSuperAdmin = currentRole === "super_admin";
-  const [companies, setCompanies] = useState([]);
-  const [selectedCompanyId, setSelectedCompanyId] = useState("");
-  const [isLoading, setIsLoading] = useState(true);
-  const [usage, setUsage] = useState(null);
-  const [isAssigning, setIsAssigning] = useState(false);
-  const [assigningBusinessCollaborators, setAssigningBusinessCollaborators] = useState([]);
+  // Confirmation state
+  const [pendingUserId, setPendingUserId] = useState(null);
+  const [pendingUserName, setPendingUserName] = useState("");
+  const [pendingRole, setPendingRole] = useState("");
+  const [isReactivating, setIsReactivating] = useState(false);
+  const [isRoleChanging, setIsRoleChanging] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
+
+  // Plan level & errors
+  const [showPlanLimitModal, setShowPlanLimitModal] = useState(false);
+  const [planLimitConfig, setPlanLimitConfig] = useState({});
+  const [showErrorModal, setShowErrorModal] = useState(false);
+  const [errorModalConfig, setErrorModalConfig] = useState({});
+
+  const queryClient = useQueryClient();
+
+  // --- TanStack Query hooks ---
+  const { data: usageData, isLoading: loadingPlans } = usePlanDetails();
+  const usage = usageData?.usage;
+  const { data: users = [], isLoading: loadingUsers } = useAdminUsers();
+  const { data: companies = [], isLoading: loadingCompanies } = useCompanies();
+  const { data: businessesRaw, isLoading: loadingBusinesses } = useBusinesses();
+  // Combine owned + collaborating into a flat list for the admin view
+  const businessData = React.useMemo(() => [
+    ...(businessesRaw?.businesses || []),
+    ...(businessesRaw?.collaborating_businesses || [])
+  ], [businessesRaw]);
 
 
-  const fetchPlanDetails = async () => {
-    try {
-      const res = await axios.get(`${BACKEND_URL}/api/subscription/plan-details`);
-      setUsage(res.data.usage);
-    } catch (err) {
-      console.error("Failed to fetch plan details", err);
-    }
+  const { data: collaboratorData = [], isLoading: loadingCollaborators } = useCompanyCollaborators(accessBusinessId);
+  const { data: projectData = [], isLoading: loadingProjects } = useProjects(accessBusinessId);
+
+  // Derive specialized business lists
+  const allBusinesses = React.useMemo(() => 
+    businessData.filter(b => {
+      const s = (b.status || "").toLowerCase().trim();
+      const am = (b.access_mode || "").toLowerCase().trim();
+      
+      const isDeleted = s === "deleted" || am === "deleted";
+      const isArchived = s === "archived" || am === "archived";
+      const isInactive = s === "inactive" || am === "inactive" || am === "hidden";
+      
+      return !isDeleted && !isArchived && !isInactive;
+    }), 
+    [businessData]
+  );
+  const launchedBusinesses = React.useMemo(() =>
+    businessData.filter(b => {
+      const s = (b.status || "").toLowerCase().trim();
+      const am = (b.access_mode || "").toLowerCase().trim();
+      
+      const isDeleted = s === "deleted" || am === "deleted";
+      const isArchived = s === "archived" || am === "archived";
+      const isInactive = s === "inactive" || am === "inactive" || am === "hidden";
+      
+      const isLaunched = s === "launched" || b.has_launched_projects === true;
+      
+      return !isDeleted && !isArchived && !isInactive && isLaunched;
+    }),
+    [businessData]
+  );
+
+  const collaborators = React.useMemo(() => collaboratorData, [collaboratorData]);
+  const projects = React.useMemo(() => {
+    return (projectData || []).filter(p => {
+      const s = (p.status || "").toLowerCase().trim().replace(/[-_\s]/g, "");
+      const isArchivedOrDeleted = s === "deleted" || s === "archived" || p.access_mode === "archived" || p.access_mode === "hidden";
+      return (s === "active" || s === "atrisk" || s === "paused") && !isArchivedOrDeleted;
+    });
+  }, [projectData]);
+
+  const loadLaunchedBusinessAndProjects = () => {
+    // Legacy placeholder, now handled by TanStack hooks
   };
+
+
 
   const handleOpenModal = () => {
     setNewName("");
@@ -154,7 +206,6 @@ const UserManagement = ({ onToast }) => {
 
   const handleOpenGiveAccessModal = () => {
     setAccessBusinessId("");
-    setProjects([]);
     setSelectedProjectId("");
     setSelectedCollaboratorIds([]);
     setAccessErrors({});
@@ -238,11 +289,17 @@ const UserManagement = ({ onToast }) => {
       role: newRole,
     };
     try {
-      await axios.post(`${BACKEND_URL}/api/admin/users`, payload);
+      await axios.post(`${BACKEND_URL}/api/admin/users`, payload, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       onToast(t("User_added_successfully"), "success");
-      await fetchUsers();
-      await fetchPlanDetails(); // Refresh usage after adding user
+
+      // Invalidate queries to trigger parallel refetch
+      queryClient.invalidateQueries({ queryKey: ["adminUsers"] });
+      queryClient.invalidateQueries({ queryKey: ["planDetails"] });
+
       handleCloseModal();
+
     } catch (error) {
       const message = error.response?.data?.message || error.response?.data?.error || t("Failed_to_add_user");
       setErrors(prev => ({ ...prev, apiError: message }));
@@ -251,19 +308,6 @@ const UserManagement = ({ onToast }) => {
     }
   };
 
-  useEffect(() => {
-    if (!isSuperAdmin) return;
-    const fetchCompanies = async () => {
-      try {
-        const res = await axios.get(`${BACKEND_URL}/api/companies`);
-        const data = Array.isArray(res.data) ? res.data : res.data.companies || [];
-        setCompanies(data);
-      } catch (err) {
-        console.error("Failed to fetch companies", err);
-      }
-    };
-    fetchCompanies();
-  }, [isSuperAdmin]);
 
   const handleRoleUpdate = async (userId, role) => {
     // Dynamic Limit Check for role update
@@ -286,10 +330,14 @@ const UserManagement = ({ onToast }) => {
     }
 
     try {
-      await axios.put(`${BACKEND_URL}/api/admin/users/${userId}/role`, { role });
+      await axios.put(`${BACKEND_URL}/api/admin/users/${userId}/role`, { role }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       onToast(t("User_updated_successfully"), "success");
-      fetchUsers();
-      fetchPlanDetails();
+
+      queryClient.invalidateQueries({ queryKey: ["adminUsers"] });
+      queryClient.invalidateQueries({ queryKey: ["planDetails"] });
+
     } catch (error) {
       console.error(error);
       onToast(error.response?.data?.error || t("Failed_to_update_role"), "error");
@@ -326,15 +374,18 @@ const UserManagement = ({ onToast }) => {
   const handleGiveProjectAccess = async () => {
     setIsGrantingAccess(true);
     try {
+      const { setBusinessAccessMode, grantProjectEditAccess, grantRankingAccess } = useProjectStore.getState();
+
+      const tasks = [];
       if (accessType === "reRanking") {
-        await axios.put(`${BACKEND_URL}/api/projects/edit-access`, { scope: "reRanking", business_id: accessBusinessId });
+        tasks.push(setBusinessAccessMode(accessBusinessId, "reRanking"));
+        tasks.push(grantRankingAccess(accessBusinessId, selectedCollaboratorIds));
+      } else if (accessType === "projectEdit") {
+        tasks.push(grantProjectEditAccess(accessBusinessId, selectedProjectId, selectedCollaboratorIds));
       }
-      if (accessType === "projectEdit") {
-        await axios.patch(`${BACKEND_URL}/api/businesses/${accessBusinessId}/project/${selectedProjectId}/allowed-collaborators`, { collaborator_ids: selectedCollaboratorIds });
-      }
-      if (accessType === "reRanking") {
-        await axios.patch(`${BACKEND_URL}/api/businesses/${accessBusinessId}/allowed-ranking-collaborators`, { collaborator_ids: selectedCollaboratorIds });
-      }
+
+      await Promise.all(tasks);
+
       onToast(t("Access_granted_successfully"), "success");
       setShowAccessConfirmation(false);
       setSelectedProjectId("");
@@ -342,7 +393,7 @@ const UserManagement = ({ onToast }) => {
       setAccessBusinessId("");
     } catch (err) {
       console.error(err);
-      onToast(err.response?.data?.error || t("Failed_to_give_access"), "error");
+      onToast(err.error || t("Failed_to_give_access"), "error");
     } finally {
       setIsGrantingAccess(false);
     }
@@ -363,10 +414,13 @@ const UserManagement = ({ onToast }) => {
 
     setIsAssigning(true);
     try {
-      await axios.post(`${BACKEND_URL}/api/businesses/${assignBusinessId}/collaborators`, { user_id: assignUserId });
+      await axios.post(`${BACKEND_URL}/api/businesses/${assignBusinessId}/collaborators`, { user_id: assignUserId }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       onToast(t("User_assigned_successfully"), "success");
       handleCloseAssignModal();
-      fetchPlanDetails();
+      queryClient.invalidateQueries({ queryKey: ["planDetails"] });
+      queryClient.invalidateQueries({ queryKey: ["collaborators", assignBusinessId] });
     } catch (error) {
       console.error(error);
       onToast(error.response?.data?.message || error.response?.data?.error || t("Failed_to_assign_user"), "error");
@@ -384,43 +438,6 @@ const UserManagement = ({ onToast }) => {
     }
   };
 
-  useEffect(() => {
-    fetchUsers();
-    fetchBusinesses();
-    fetchPlanDetails();
-  }, []);
-
-  const fetchUsers = async () => {
-    try {
-      setIsLoading(true);
-      const res = await axios.get(`${BACKEND_URL}/api/admin/users`);
-      const data = Array.isArray(res.data) ? res.data : res.data.users || [];
-      setUsers(data);
-    } catch (error) {
-      onToast(t("Failed_to_fetch_users"), "error");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const fetchBusinesses = async () => {
-    try {
-      const res = await axios.get(`${BACKEND_URL}/api/businesses`);
-      const data = Array.isArray(res.data) 
-        ? res.data 
-        : [...(res.data.businesses || []), ...(res.data.collaborating_businesses || [])];
-      
-      // Filter out archived businesses
-      const activeBusinesses = data.filter(b => 
-        (b.status || "").toLowerCase() !== 'archived' && 
-        (b.access_mode || "").toLowerCase() !== 'archived' &&
-        (b.status || "").toLowerCase() !== 'deleted'
-      );
-      setAllBusinesses(activeBusinesses);
-    } catch (error) {
-      console.error("Failed to fetch businesses", error);
-    }
-  };
 
   const handleSearch = (value) => {
     if (searchTerm === "" && value !== "") setLastPageBeforeSearch(currentPage);
@@ -474,100 +491,6 @@ const UserManagement = ({ onToast }) => {
     return new Date(iso).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
   };
 
-  const loadLaunchedBusinessAndProjects = async () => {
-    try {
-      setLoadingProjects(true);
-      const businessRes = await axios.get(`${BACKEND_URL}/api/businesses`);
-      const allBiz = Array.isArray(businessRes.data) 
-        ? businessRes.data 
-        : [...(businessRes.data.businesses || []), ...(businessRes.data.collaborating_businesses || [])];
-      
-      const validBusinesses = allBiz.filter((b) => 
-        ((b.status || "").toLowerCase() === 'launched' || b.has_launched_projects === true) &&
-        (b.status || "").toLowerCase() !== 'archived' &&
-        (b.access_mode || "").toLowerCase() !== 'archived' &&
-        (b.status || "").toLowerCase() !== 'deleted'
-      );
-      
-      setLaunchedBusinesses(validBusinesses);
-    } catch (err) {
-      console.error("Failed to load launched data", err);
-    } finally {
-      setLoadingProjects(false);
-    }
-  };
-
-  const fetchProjectsByBusiness = async (businessId) => {
-    if (!businessId) {
-      setProjects([]);
-      return;
-    }
-    try {
-      setLoadingProjects(true);
-      const res = await axios.get(`${BACKEND_URL}/api/projects`, { params: { business_id: businessId } });
-      const allProjects = res.data.projects || [];
-      
-      const biz = launchedBusinesses.find(b => b._id === businessId);
-      const isBizLaunched = (biz?.status || "").toLowerCase() === 'launched';
-      
-      const filtered = allProjects.filter(p => {
-        const s = (p.status || "").toLowerCase().trim().replace(/[-_\s]/g, '');
-        return s === 'active' || s === 'atrisk' || s === 'paused';
-      });
-      
-      setProjects(filtered);
-    } catch (err) {
-      console.error("Failed to fetch projects", err);
-      setProjects([]);
-    } finally {
-      setLoadingProjects(false);
-    }
-  };
-
-  useEffect(() => {
-    if (accessBusinessId) {
-      fetchCollaboratorsByBusiness(accessBusinessId);
-      fetchProjectsByBusiness(accessBusinessId);
-    } else {
-      setCollaborators([]);
-      setProjects([]);
-    }
-  }, [accessBusinessId]);
-
-  const fetchCollaboratorsByBusiness = async (businessId) => {
-    if (!businessId) return;
-    try {
-      setLoadingCollaborators(true);
-      const res = await axios.get(`${BACKEND_URL}/api/businesses/${businessId}/collaborators`);
-      setCollaborators(res.data.collaborators || []);
-      setSelectedCollaboratorIds([]);
-    } catch (err) {
-      console.error("Failed to fetch collaborators", err);
-    } finally {
-      setLoadingCollaborators(false);
-    }
-  };
-
-  const fetchCurrentBusinessCollaborators = async (businessId) => {
-    if (!businessId) {
-      setAssigningBusinessCollaborators([]);
-      return;
-    }
-    try {
-      const res = await axios.get(`${BACKEND_URL}/api/businesses/${businessId}/collaborators`);
-      setAssigningBusinessCollaborators(res.data.collaborators || []);
-    } catch (err) {
-      console.error("Failed to fetch current business collaborators", err);
-    }
-  };
-
-  useEffect(() => {
-    if (showAssignModal && assignBusinessId) {
-      fetchCurrentBusinessCollaborators(assignBusinessId);
-    } else if (!showAssignModal) {
-      setAssigningBusinessCollaborators([]);
-    }
-  }, [assignBusinessId, showAssignModal]);
 
 
   const getSelectedCollaboratorNames = () => collaborators.filter(c => selectedCollaboratorIds.includes(c._id)).map(c => c.name);
@@ -642,7 +565,7 @@ const UserManagement = ({ onToast }) => {
         );
       }
     },
-    ...(currentRole === "company_admin" ? [{
+    ...(isAdmin ? [{
       key: "actions",
       label: t("Action"),
       render: (_, row) => {
@@ -656,37 +579,37 @@ const UserManagement = ({ onToast }) => {
               <Dropdown.Toggle as={CustomToggle} />
               <Dropdown.Menu align="end">
                 {(row.role_name?.toLowerCase() !== "collaborator" || isArchived) && (
-                  <Dropdown.Item onClick={() => { 
-                    setPendingUserId(row._id); 
+                  <Dropdown.Item onClick={() => {
+                    setPendingUserId(row._id);
                     setPendingUserName(row.name);
-                    setPendingRole("collaborator"); 
-                    setIsReactivating(isArchived); 
+                    setPendingRole("collaborator");
+                    setIsReactivating(isArchived);
                     setIsRoleChanging((row.role_name || row.role)?.toLowerCase() !== "collaborator");
-                    setShowConfirm(true); 
+                    setShowConfirm(true);
                   }}>
                     <UserCog size={16} className="me-2" /> {isArchived && row.role_name?.toLowerCase() === "collaborator" ? t("Reactivate_Collaborator") : t("Collaborator")}
                   </Dropdown.Item>
                 )}
                 {(row.role_name?.toLowerCase() !== "viewer" || isArchived) && (
-                  <Dropdown.Item onClick={() => { 
-                    setPendingUserId(row._id); 
+                  <Dropdown.Item onClick={() => {
+                    setPendingUserId(row._id);
                     setPendingUserName(row.name);
-                    setPendingRole("viewer"); 
-                    setIsReactivating(isArchived); 
+                    setPendingRole("viewer");
+                    setIsReactivating(isArchived);
                     setIsRoleChanging((row.role_name || row.role)?.toLowerCase() !== "viewer");
-                    setShowConfirm(true); 
+                    setShowConfirm(true);
                   }}>
                     <User size={16} className="me-2" /> {isArchived && row.role_name?.toLowerCase() === "viewer" ? t("Reactivate_Viewer") : t("Viewer")}
                   </Dropdown.Item>
                 )}
                 {(row.role_name?.toLowerCase() !== "user" || isArchived) && (
-                  <Dropdown.Item onClick={() => { 
-                    setPendingUserId(row._id); 
+                  <Dropdown.Item onClick={() => {
+                    setPendingUserId(row._id);
                     setPendingUserName(row.name);
-                    setPendingRole("user"); 
-                    setIsReactivating(isArchived); 
+                    setPendingRole("user");
+                    setIsReactivating(isArchived);
                     setIsRoleChanging((row.role_name || row.role)?.toLowerCase() !== "user");
-                    setShowConfirm(true); 
+                    setShowConfirm(true);
                   }}>
                     <ShieldCheck size={16} className="me-2" /> {isArchived && row.role_name?.toLowerCase() === "user" ? t("Reactivate_User") : t("User")}
                   </Dropdown.Item>
@@ -784,7 +707,7 @@ const UserManagement = ({ onToast }) => {
         onPageChange={setCurrentPage}
         totalItems={totalItems}
         itemsPerPage={itemsPerPage}
-        loading={isLoading}
+        loading={loadingUsers || loadingPlans || loadingCompanies || loadingBusinesses}
         emptyMessage={t("No_Users_Found")}
         emptySubMessage={
           searchTerm
@@ -975,9 +898,21 @@ const UserManagement = ({ onToast }) => {
           <Form onSubmit={handleAssign} noValidate>
             <Form.Group className="mb-3">
               <Form.Label>{t("business")}</Form.Label>
-              <Form.Select 
-                value={assignBusinessId} 
-                onChange={(e) => setAssignBusinessId(e.target.value)} 
+              <Form.Select
+                value={assignBusinessId}
+                onChange={(e) => {
+                  const bizId = e.target.value;
+                  setAssignBusinessId(bizId);
+                  setAssignUserId(""); // Reset user selection when business changes
+                  // Populate current collaborators of the selected business so the user
+                  // dropdown can filter them out
+                  const selectedBiz = businessData.find(b => b._id === bizId);
+                  setAssigningBusinessCollaborators(
+                    (selectedBiz?.collaborators || []).map(c =>
+                      typeof c === "object" ? c : { _id: c }
+                    )
+                  );
+                }}
                 isInvalid={!!assignErrors.business}
                 disabled={allBusinesses.length === 0}
               >
@@ -999,15 +934,37 @@ const UserManagement = ({ onToast }) => {
                 disabled={!assignBusinessId}
               >
                 {(() => {
-                  const filtered = users.filter(u => {
-                    const isArchivedOrDeleted = u.status === 'inactive' || u.status === 'deleted' || u.access_mode === 'archived';
-                    const roleName = formatRole(u.role_name || u.role);
-                    const isAlreadyAssigned = assigningBusinessCollaborators.some(c => c._id === u._id);
-                    return !isArchivedOrDeleted && ["Collaborator", "User", "Viewer"].includes(roleName) && !isAlreadyAssigned;
-                  });
-                  
+                    const selectedBiz = businessData.find(b => b._id === assignBusinessId);
+                    const ownerId = selectedBiz?.user_id?.toString();
+                    
+                    // NEW: Check if the business was created by a regular 'user' role
+                    const ownerUser = users.find(u => u._id?.toString() === ownerId);
+                    const ownerRole = (ownerUser?.role_name || ownerUser?.role)?.toLowerCase();
+                    const isOwnerRegularUser = ownerRole === 'user';
+
+                    const filtered = users.filter(u => {
+                      const isArchivedOrDeleted = u.status === 'inactive' || u.status === 'deleted' || u.access_mode === 'archived';
+                      const rawRole = (u.role_name || u.role)?.toLowerCase();
+                      const roleName = formatRole(u.role_name || u.role);
+                      const isAlreadyAssigned = assigningBusinessCollaborators.some(c => c._id === u._id);
+
+                      const isOwner = u._id?.toString() === ownerId;
+                      const isSuperAdminUser = rawRole === "super_admin";
+                      const isOrgAdminUser = rawRole === "company_admin";
+
+                      // Allow 'Org Admin' to be assigned if the business was created by a regular user
+                      const isEligibleRole = ["Collaborator", "User", "Viewer"].includes(roleName) || 
+                                            (isOrgAdminUser && isOwnerRegularUser);
+
+                      return !isArchivedOrDeleted &&
+                        isEligibleRole &&
+                        !isAlreadyAssigned &&
+                        !isOwner &&
+                        !isSuperAdminUser;
+                    });
+
                   const showNoUsers = assignBusinessId && filtered.length === 0;
-                  
+
                   return (
                     <>
                       <option value="">{showNoUsers ? t("No_Users_Found") : t("Select_user")}</option>
@@ -1032,8 +989,8 @@ const UserManagement = ({ onToast }) => {
             <Form.Group className="mb-3"><Form.Label className="fw-bold">{t("Access_Type")}</Form.Label><div className="mt-2 ms-3"><Form.Check type="radio" label={t("Enable_Reranking_Project")} checked={accessType === "reRanking"} onChange={() => setAccessType("reRanking")} /><Form.Check type="radio" label={t("Edit_the_Project")} checked={accessType === "projectEdit"} onChange={() => setAccessType("projectEdit")} /></div></Form.Group>
             <Form.Group className="mb-3">
               <Form.Label>{t("business")}</Form.Label>
-              <Form.Select 
-                value={accessBusinessId} 
+              <Form.Select
+                value={accessBusinessId}
                 onChange={(e) => {
                   setAccessBusinessId(e.target.value);
                   if (accessErrors.business) {
@@ -1043,7 +1000,7 @@ const UserManagement = ({ onToast }) => {
                       return next;
                     });
                   }
-                }} 
+                }}
                 isInvalid={!!accessErrors.business}
               >
                 <option value="">
@@ -1058,8 +1015,8 @@ const UserManagement = ({ onToast }) => {
             {accessType === "projectEdit" && (
               <Form.Group className="mb-3">
                 <Form.Label>{t("Project")}</Form.Label>
-                <Form.Select 
-                  value={selectedProjectId} 
+                <Form.Select
+                  value={selectedProjectId}
                   onChange={(e) => {
                     setSelectedProjectId(e.target.value);
                     if (accessErrors.project) {
@@ -1069,8 +1026,8 @@ const UserManagement = ({ onToast }) => {
                         return next;
                       });
                     }
-                  }} 
-                  isInvalid={!!accessErrors.project} 
+                  }}
+                  isInvalid={!!accessErrors.project}
                   disabled={!accessBusinessId}
                 >
                   <option value="">{loadingProjects ? t("Loading_projects") : t("Select_Project")}</option>
@@ -1083,20 +1040,32 @@ const UserManagement = ({ onToast }) => {
               <Form.Label>{t("Participants")}</Form.Label>
               <div className="collaborator-checkbox-list" style={{ maxHeight: "350px", overflowY: "auto", border: "1px solid #dee2e6", borderRadius: "4px", padding: "17px" }}>
                 {(() => {
+                  // Find selected business from ALL business data (not just launched)
+                  const selectedBizData = businessData.find(b => b._id?.toString() === accessBusinessId?.toString());
+
                   const filteredCollaborators = collaborators.filter(c => {
-                    // Filter out viewers
-                    if (c.role_name?.toLowerCase() === 'viewer') return false;
+                    const cId = c._id?.toString();
+                    const isOwner = cId === selectedBizData?.user_id?.toString();
+
+                    // Filter out viewers and administrators (unless they are the business owner)
+                    const role = c.role_name?.toLowerCase();
+                    if (!isOwner && (role === 'viewer' || role === 'company_admin' || role === 'super_admin')) return false;
 
                     if (accessType === "reRanking") {
-                      const biz = launchedBusinesses.find(b => b._id === accessBusinessId);
-                      const existing = biz?.allowed_ranking_collaborators || [];
-                      return !existing.some(id => id.toString() === c._id.toString());
+                      // Exclude collaborators already granted reranking access
+                      const existing = (selectedBizData?.allowed_ranking_collaborators || []);
+                      const alreadyHas = existing.some(id => id?.toString() === cId);
+                      return !alreadyHas;
                     }
-                    if (accessType === "projectEdit" && selectedProjectId) {
-                      const project = projects.find(p => p._id === selectedProjectId);
+
+                    if (accessType === "projectEdit") {
+                      if (!selectedProjectId) return true; // No project chosen yet — show all
+                      const project = projects.find(p => p._id?.toString() === selectedProjectId?.toString());
                       const existing = project?.allowed_collaborators || [];
-                      return !existing.some(id => id.toString() === c._id.toString());
+                      const alreadyHas = existing.some(id => id?.toString() === cId);
+                      return !alreadyHas;
                     }
+
                     return true;
                   });
 
@@ -1129,10 +1098,10 @@ const UserManagement = ({ onToast }) => {
         <Modal.Body>
           {(() => {
             const roleName = t(pendingRole?.charAt(0).toUpperCase() + pendingRole?.slice(1));
-            const msgKey = isReactivating 
-              ? (isRoleChanging ? "Reactivate_And_Change_Role_Confirm_Msg" : "Reactivate_User_Confirm_Msg") 
+            const msgKey = isReactivating
+              ? (isRoleChanging ? "Reactivate_And_Change_Role_Confirm_Msg" : "Reactivate_User_Confirm_Msg")
               : "Change_role_confirm_msg";
-            
+
             const message = t(msgKey, { user: "__USER__", role: "__ROLE__" });
             const parts = message.split(/(__USER__|__ROLE__)/);
 

@@ -1,16 +1,18 @@
-import React, { useState, useEffect } from 'react';
-import { Users, Search, Loader, Plus, ChevronRight, ChevronLeft, } from 'lucide-react';
-import Pagination from '../components/Pagination';
-import { formatDate } from '../utils/dateUtils';
+import React, { useState, useMemo } from 'react';
+import { useAuthStore } from '../store';
+import { useAdminUsers, useCompanies } from '../hooks/useQueries';
+import { useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from '../hooks/useTranslation';
+import { Loader, Plus, Search, Users } from 'lucide-react';
+import Pagination from './Pagination';
 
 
 
 const UserOverview = ({ onToast }) => {
-  const [users, setUsers] = useState([]);
-  const [companies, setCompanies] = useState([]);
+  // const [users, setUsers] = useState([]);
+  // const [companies, setCompanies] = useState([]);
   const [roles, setRoles] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
+  // const [isLoading, setIsLoading] = useState(true);
   const [selectedCompany, setSelectedCompany] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [showAddUser, setShowAddUser] = useState(false);
@@ -31,7 +33,27 @@ const UserOverview = ({ onToast }) => {
   const [currentPage, setCurrentPage] = useState(1);
 
   const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
-  const getAuthToken = () => sessionStorage.getItem('token');
+  const token = useAuthStore(state => state.token);
+  const queryClient = useQueryClient();
+
+  // --- Hooks ---
+  const { data: rawUsers = [], isLoading: isLoadingUsers } = useAdminUsers(selectedCompany);
+  const { data: companiesData = [], isLoading: isLoadingCompanies } = useCompanies();
+  const companies = companiesData || [];
+
+  const isLoading = isLoadingUsers || isLoadingCompanies;
+
+  const users = React.useMemo(() => rawUsers.map(user => ({
+    id: user._id,
+    name: user.name,
+    email: user.email,
+    company_name: user.company_name || 'N/A',
+    role: user.role_name || 'user',
+    status: 'active',
+    created_at: user.created_at
+  })), [rawUsers]);
+
+  const getAuthToken = () => token;
 
   // Validation function for individual fields
   const validateField = (fieldName, value) => {
@@ -94,105 +116,7 @@ const UserOverview = ({ onToast }) => {
 
   // Check if form is valid
 
-  useEffect(() => {
-    loadInitialData();
-  }, []);
-
-  useEffect(() => {
-    loadUsers();
-  }, [selectedCompany]);
-
-  const loadInitialData = async () => {
-    try {
-      const token = getAuthToken();
-
-      // Load companies in parallel - using the admin endpoint for super admin
-      const companiesResponse = await fetch(`${API_BASE_URL}/api/admin/companies`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-
-      if (companiesResponse.ok) {
-        const companiesData = await companiesResponse.json();
-        setCompanies(companiesData.companies);
-      } else {
-        // Fallback to public companies endpoint
-        const publicCompaniesResponse = await fetch(`${API_BASE_URL}/api/companies`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-        if (publicCompaniesResponse.ok) {
-          const publicCompaniesData = await publicCompaniesResponse.json();
-          setCompanies(publicCompaniesData.companies);
-        }
-      }
-
-      await loadUsers();
-    } catch (error) {
-      console.error('Error loading initial data:', error);
-      onToast('Error loading data', 'error');
-    }
-  };
-  const filteredUsers = users.filter(user => {
-    return (
-      user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-  });
-  // Pagination logic
-  const ITEMS_PER_PAGE = 10;
-  const totalPages = Math.ceil(filteredUsers.length / ITEMS_PER_PAGE);
-  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-  const paginatedUsers = filteredUsers.slice(startIndex, startIndex + ITEMS_PER_PAGE);
-
-  const loadUsers = async () => {
-    try {
-      setIsLoading(true);
-      const token = getAuthToken();
-      let url = `${API_BASE_URL}/api/admin/users`;
-
-      // Build query parameters properly
-      const params = new URLSearchParams();
-      if (selectedCompany) {
-        params.append('company_id', selectedCompany);
-      }
-
-      // Append query string if there are parameters
-      if (params.toString()) {
-        url += `?${params.toString()}`;
-      }
-
-      const response = await fetch(url, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-
-        // Map the backend response to match frontend expectations
-        const mappedUsers = data.users.map(user => ({
-          id: user._id,
-          name: user.name,
-          email: user.email,
-          company_name: user.company_name || 'N/A',
-          role: user.role_name || 'user',
-          status: 'active', // Default status since backend doesn't seem to have this field
-          created_at: user.created_at
-        }));
-        setUsers(mappedUsers);
-      } else {
-        const errorData = await response.json();
-        console.error('Error response:', errorData);
-        onToast(`Failed to load users: ${errorData.error || 'Unknown error'}`, 'error');
-      }
-    } catch (error) {
-      console.error('Error loading users:', error);
-      onToast('Error loading users', 'error');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  // Legacy effects removed, data is now hook-driven.
 
 
 
@@ -246,7 +170,7 @@ const UserOverview = ({ onToast }) => {
         setShowAddUser(false);
         setNewUser({ name: '', email: '', password: '', company_id: '', job_title: '' });
         setFormErrors({ name: '', email: '', password: '' });
-        await loadUsers();
+        queryClient.invalidateQueries({ queryKey: ['adminUsers'] });
       } else {
         onToast(data.error || data.message || 'User creation failed', 'error');
       }
@@ -257,6 +181,20 @@ const UserOverview = ({ onToast }) => {
       setIsCreating(false);
     }
   };
+
+  // Derived filtered visibility
+  const filteredUsers = React.useMemo(() => users.filter(user => {
+    return (
+      user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.email.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }), [users, searchTerm]);
+
+  // Pagination logic
+  const ITEMS_PER_PAGE = 10;
+  const totalPages = Math.ceil(filteredUsers.length / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const paginatedUsers = filteredUsers.slice(startIndex, startIndex + ITEMS_PER_PAGE);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -281,14 +219,7 @@ const UserOverview = ({ onToast }) => {
     </div>
   );
 
-  if (isLoading) {
-    return (
-      <div className="loading-container">
-        <Loader size={24} className="spinner" />
-        <span>Loading users...</span>
-      </div>
-    );
-  }
+  // Loading state moved into main render to preserve header
 
   return (
     <>
@@ -381,6 +312,13 @@ const UserOverview = ({ onToast }) => {
             </button>
           </div>
         </div>
+        
+        {/* ---- Premium Loading Bar ---- */}
+        {isLoading && (
+          <div className="admin-loading-bar-container" style={{ margin: '15px 0' }}>
+            <div className="admin-loading-bar" />
+          </div>
+        )}
 
         {/* Filters */}
         <div className="filters-section">

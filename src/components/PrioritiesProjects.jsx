@@ -1,55 +1,50 @@
-import React, { useState, useEffect } from "react";
-import { Card, Button, Form, Row, Col, Badge, Spinner, ProgressBar, Modal } from "react-bootstrap";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
+import { Card, Button, Form, Badge, Spinner, Modal } from "react-bootstrap";
 import { ChevronRight, ArrowRight } from "react-bootstrap-icons";
 import { Folder, CheckCircle, Rocket, Info, AlertTriangle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { AnalysisApiService } from "../services/analysisApiService";
+import { useAuthStore, useAnalysisStore, useProjectStore } from "../store";
 import { useTranslation } from "../hooks/useTranslation";
+import { usePlanDetails } from "../hooks/useQueries";
 import PlanLimitModal from "./PlanLimitModal";
 import "../styles/PrioritiesProjects.css";
-import { getUserLimits } from "../utils/authUtils";
 
-const PrioritiesProjects = ({ selectedBusinessId, companyAdminIds, onSuccess, onStayOnPriorities, onToastMessage, onStartOnboarding, refreshTrigger }) => {
+const PrioritiesProjects = ({ selectedBusinessId, onSuccess, onStayOnPriorities, onToastMessage, onStartOnboarding, refreshTrigger }) => {
   const { t } = useTranslation();
-  const [priorities, setPriorities] = useState([]);
+  const navigate = useNavigate();
+  
+  const userRole = useAuthStore(state => state.userRole);
+  const userLimits = useAuthStore(state => state.userLimits);
+  const isAdmin = useAuthStore(state => state.isAdmin);
+  const isViewer = userRole?.toLowerCase() === "viewer";
+  const hasProjectsAccess = userLimits?.project === true;
+
+  const kickstartData = useAnalysisStore(state => state.kickstartData);
+  const fetchKickstartData = useAnalysisStore(state => state.fetchKickstartData);
+  const kickstartProject = useAnalysisStore(state => state.kickstartProject);
+  const clearProjectCache = useProjectStore(state => state.clearCache);
+
   const [selected, setSelected] = useState([]);
   const [expandedId, setExpandedId] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [kickstarting, setKickstarting] = useState(false);
   const [showPlanLimitModal, setShowPlanLimitModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [lastKickstartedCount, setLastKickstartedCount] = useState(0);
-  const [hasCollaborators, setHasCollaborators] = useState(true);
   const [showNoCollaboratorsModal, setShowNoCollaboratorsModal] = useState(false);
-  const navigate = useNavigate();
-  const userRole = (
-    sessionStorage.getItem("role") ||
-    sessionStorage.getItem("userRole") ||
-    ""
-  ).toLowerCase();
-  const isAdmin = userRole === "company_admin" || userRole === "super_admin";
-  const isViewer = userRole === "viewer";
-  const hasProjectsAccess = getUserLimits().project === true;
 
-  // API Service setup
-  const ML_API_BASE_URL = process.env.REACT_APP_ML_BACKEND_URL;
-  const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
-  const getAuthToken = () => sessionStorage.getItem("token");
-  const apiService = new AnalysisApiService(ML_API_BASE_URL, API_BASE_URL, getAuthToken);
+  const { data: usageData } = usePlanDetails();
+  const usage = usageData?.usage;
+
+  const priorities = useMemo(() => kickstartData?.priorities || [], [kickstartData]);
+  const hasCollaborators = kickstartData?.hasCollaborators ?? true;
 
   useEffect(() => {
     const fetchData = async () => {
       if (!selectedBusinessId) return;
       setLoading(true);
-      setPriorities([]); // Clear old data to show loader during refresh
       try {
-        const data = await apiService.getKickstartData(selectedBusinessId);
-        if (data && data.priorities) {
-          setPriorities(data.priorities);
-          if (data.hasCollaborators !== undefined) {
-            setHasCollaborators(data.hasCollaborators);
-          }
-        }
+        await fetchKickstartData(selectedBusinessId, true);
       } catch (error) {
         console.error("Error fetching kickstart data:", error);
       } finally {
@@ -58,21 +53,21 @@ const PrioritiesProjects = ({ selectedBusinessId, companyAdminIds, onSuccess, on
     };
 
     fetchData();
-  }, [selectedBusinessId, refreshTrigger]);
+  }, [selectedBusinessId, refreshTrigger, fetchKickstartData]);
 
-  const toggleExpand = (idx) => {
+  const toggleExpand = useCallback((idx) => {
     setExpandedId((prev) => (prev === idx ? null : idx));
-  };
+  }, []);
 
-  const toggleSelection = (idx) => {
+  const toggleSelection = useCallback((idx) => {
     setSelected((prev) =>
       prev.includes(idx)
         ? prev.filter((item) => item !== idx)
         : [...prev, idx]
     );
-  };
+  }, []);
 
-  const handleKickstart = async () => {
+  const handleKickstart = useCallback(async () => {
     if (selected.length === 0) return;
 
     if (!hasProjectsAccess) {
@@ -92,9 +87,8 @@ const PrioritiesProjects = ({ selectedBusinessId, companyAdminIds, onSuccess, on
       const selectedPriorities = selected.map(idx => priorities[idx]);
       let totalProjectsCreated = 0;
 
-      // Process projects sequentially or wait for all, but ensure we handle errors
       for (const priority of selectedPriorities) {
-        const response = await apiService.kickstartProject({
+        const response = await kickstartProject({
           businessId: selectedBusinessId,
           priority: priority
         });
@@ -106,13 +100,7 @@ const PrioritiesProjects = ({ selectedBusinessId, companyAdminIds, onSuccess, on
       }
 
       // Refresh data to show kickstarted status
-      const data = await apiService.getKickstartData(selectedBusinessId);
-      if (data && data.priorities) {
-        setPriorities(data.priorities);
-        if (data.hasCollaborators !== undefined) {
-          setHasCollaborators(data.hasCollaborators);
-        }
-      }
+      await fetchKickstartData(selectedBusinessId);
       setSelected([]);
       setLastKickstartedCount(totalProjectsCreated);
       setShowSuccessModal(true);
@@ -129,16 +117,22 @@ const PrioritiesProjects = ({ selectedBusinessId, companyAdminIds, onSuccess, on
     } finally {
       setKickstarting(false);
     }
-  };
+  }, [selected, hasProjectsAccess, priorities, isAdmin, hasCollaborators, showNoCollaboratorsModal, selectedBusinessId, t, onToastMessage, kickstartProject, fetchKickstartData]);
 
-  const handleConfirmRedirect = () => {
+  const handleConfirmRedirect = useCallback(() => {
     setShowSuccessModal(false);
+    // Clear project-store caches so the Projects page fetches fresh data
+    clearProjectCache(selectedBusinessId);
+    
+    // Set view mode to projects to ensure we see the card view
+    useProjectStore.getState().setViewMode('projects');
+
     if (onSuccess) {
       onSuccess();
     } else {
       navigate(`/projects?business_id=${selectedBusinessId}`);
     }
-  };
+  }, [onSuccess, navigate, selectedBusinessId, clearProjectCache]);
 
   if (loading) {
     return (
@@ -171,7 +165,7 @@ const PrioritiesProjects = ({ selectedBusinessId, companyAdminIds, onSuccess, on
   return (
     <div className="container my-4 priorities-container">
 
-      {isAdmin && hasProjectsAccess && (
+      {isAdmin && (
         <Card className="kickstart-card mb-4">
           <Card.Body className="d-flex justify-content-between align-items-center">
             <div>
@@ -201,16 +195,18 @@ const PrioritiesProjects = ({ selectedBusinessId, companyAdminIds, onSuccess, on
         title={t("upgrade_required") || "Upgrade Required"}
         message={t("kickstart_limit_msg") || "Project kickstarting is only available on upgraded plans."}
         subMessage={t("upgrade_to_execute") || "Upgrade to Advanced to execute your strategy with AI-powered kickstart."}
+        plan={usage?.plan}
+        limit={usage?.project?.limit}
+        isAdmin={isAdmin}
       />
 
       {priorities.map((item, idx) => {
         const isExpanded = expandedId === idx;
-        const isAlreadyKickstarted = item.isKickstarted;
         const actions = item.actions || [];
 
         // Calculate granular progress
         const totalActions = actions.length;
-        const kickstartedActions = actions.filter(a => a.isKickstarted).length;
+        const kickstartedActions = actions.filter(a => a.isKickstarted || a.status === 'kickstarted').length;
         const progressPercent = totalActions > 0 ? (kickstartedActions / totalActions) * 100 : 0;
         const isFullyKickstarted = progressPercent === 100 && totalActions > 0;
         const isPartiallyKickstarted = progressPercent > 0 && progressPercent < 100;
@@ -222,7 +218,7 @@ const PrioritiesProjects = ({ selectedBusinessId, companyAdminIds, onSuccess, on
                 {/* TOP SECTION */}
                 <div className="priority-top justify-content-between">
                   <div className="d-flex align-items-center gap-3">
-                    {isAdmin && hasProjectsAccess && (
+                    {isAdmin && (
                       <div onClick={(e) => e.stopPropagation()}>
                         <Form.Check
                           type="checkbox"
@@ -266,7 +262,7 @@ const PrioritiesProjects = ({ selectedBusinessId, companyAdminIds, onSuccess, on
 
                   {actions.map((action, actionIdx) => {
                     const actionText = typeof action === 'object' ? (action.action || action.Action || JSON.stringify(action)) : action;
-                    const isActionKickstarted = action.isKickstarted;
+                    const isActionKickstarted = action.isKickstarted || action.status === 'kickstarted';
                     return (
                       <div key={actionIdx} className={`project-row ${isActionKickstarted ? 'kickstarted' : ''}`}>
                         <div className="d-flex align-items-center justify-content-between w-100">
@@ -298,7 +294,6 @@ const PrioritiesProjects = ({ selectedBusinessId, companyAdminIds, onSuccess, on
         </Card.Body>
       </Card>
 
-      {/* SUCCESS MODAL (New) */}
       <Modal
         show={showSuccessModal}
         onHide={() => setShowSuccessModal(false)}
@@ -329,7 +324,6 @@ const PrioritiesProjects = ({ selectedBusinessId, companyAdminIds, onSuccess, on
         </Modal.Body>
       </Modal>
 
-      {/* NO COLLABORATORS CONFIRMATION MODAL */}
       <Modal
         show={showNoCollaboratorsModal}
         onHide={() => { if (!kickstarting) setShowNoCollaboratorsModal(false); }}

@@ -13,6 +13,8 @@ import LiquidityEfficiency from './LiquidityEfficiency';
 import InvestmentPerformance from './InvestmentPerformance';
 import LeverageRisk from './LeverageRisk';
 
+import { useAuthStore } from '../store/authStore';
+
 const ExcelAnalysisManager = ({
   questions = [],
   userAnswers = {},
@@ -38,7 +40,7 @@ const ExcelAnalysisManager = ({
 
   const ML_API_BASE_URL = process.env.REACT_APP_ML_BACKEND_URL || 'http://127.0.0.1:8000';
   const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
-  const getAuthToken = () => sessionStorage.getItem('token');
+  const getAuthToken = () => useAuthStore.getState().token;
 
   // Initialize Excel Analysis Service
   const excelAnalysisService = new ExcelAnalysisService(
@@ -279,7 +281,7 @@ const ExcelAnalysisManager = ({
           <div className="error-icon">⚠️</div>
           <h3>Analysis Error</h3>
           <p>{error}</p>
-          {sessionStorage.getItem("userRole") !== "viewer" && (
+          {useAuthStore(state => state.userRole) !== "viewer" && (
             <button onClick={() => {
               setError(null);
               generateExcelAnalysis();

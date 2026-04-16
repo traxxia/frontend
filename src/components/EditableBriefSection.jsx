@@ -9,6 +9,8 @@ import '../styles/CompanyManagement.css';
 
 
 
+import { useAuthStore } from '../store/authStore';
+
 const EditableField = ({
   field,
   editingField,
@@ -18,8 +20,11 @@ const EditableField = ({
   handleEdit,
   isAnalysisRegenerating,
   isStrategicRegenerating,
+  isFinancialRegeneratingProp,
   isSaving,
   isEssentialPhaseGenerating,
+  isEnriching,
+  isApplyingEnrichment,
   isLaunchedStatus,
   inputRefs,
   fieldRefs,
@@ -126,7 +131,7 @@ const EditableField = ({
             className="edit-button prominent"
             onClick={() => handleEdit(field)}
             type="button"
-            disabled={isAnalysisRegenerating || isStrategicRegenerating || isSaving || isEssentialPhaseGenerating}
+            disabled={isAnalysisRegenerating || isStrategicRegenerating || isSaving || isEssentialPhaseGenerating || isEnriching || isApplyingEnrichment}
             title="Edit answer"
             style={{
               marginTop: '0',
@@ -163,7 +168,7 @@ const EditableField = ({
             ref={el => inputRefs.current[field.key] = el}
             className="edit-textarea"
             defaultValue={field.value === '[Question Skipped]' ? '' : field.value}
-            disabled={isAnalysisRegenerating || isStrategicRegenerating || isSaving || isEssentialPhaseGenerating}
+            disabled={isAnalysisRegenerating || isStrategicRegenerating || isSaving || isEssentialPhaseGenerating || isEnriching || isApplyingEnrichment}
             style={{ minHeight: '100px', resize: 'vertical' }}
             placeholder={`Enter your answer for: ${field.label}`}
             onChange={(e) => handleAutoSave(field, e.target.value)}
@@ -172,7 +177,7 @@ const EditableField = ({
             <div className="auto-save-status" style={{ fontSize: '12px', color: '#6b7280', display: 'flex', alignItems: 'center', gap: '4px' }}>
               {isSaving ? (
                 <>
-                  <Loader size={12} className="spinner" />
+                  <Loader size={12} className="antigravity-rotating" />
                   Saving...
                 </>
               ) : isEdited ? (
@@ -185,7 +190,7 @@ const EditableField = ({
             <div style={{ display: 'flex', gap: '8px' }}>
               <button
                 onClick={handleCancel}
-                disabled={isSaving || isEssentialPhaseGenerating}
+                disabled={isSaving || isEssentialPhaseGenerating || isEnriching || isApplyingEnrichment}
                 className="cancel-button enhanced"
                 title="Cancel changes"
                 style={{
@@ -198,7 +203,7 @@ const EditableField = ({
                   color: '#374151',
                   border: '1px solid #d1d5db',
                   borderRadius: '6px',
-                  cursor: (isSaving || isEssentialPhaseGenerating) ? 'not-allowed' : 'pointer',
+                  cursor: (isSaving || isEssentialPhaseGenerating || isEnriching || isApplyingEnrichment) ? 'not-allowed' : 'pointer',
                   fontWeight: '500',
                   transition: 'all 0.2s'
                 }}
@@ -220,7 +225,7 @@ const EditableField = ({
               </button>
               <button
                 onClick={() => handleSave(field)}
-                disabled={isSaving || isEssentialPhaseGenerating}
+                disabled={isSaving || isEssentialPhaseGenerating || isEnriching || isApplyingEnrichment}
                 className="save-button enhanced"
                 title="Save changes"
                 style={{
@@ -250,7 +255,7 @@ const EditableField = ({
                   }
                 }}
               >
-                {isSaving ? <Loader size={14} className="spinner" /> : <Check size={14} />}
+                {isSaving ? <Loader size={14} className="antigravity-rotating" /> : <Check size={14} />}
                 {t("Save")}
               </button>
             </div>
@@ -260,9 +265,9 @@ const EditableField = ({
       ) : (
         <div
           className="item-text"
-          onClick={() => canEdit && !(isSaving || isEssentialPhaseGenerating) && handleEdit(field)}
+          onClick={() => canEdit && !(isSaving || isEssentialPhaseGenerating || isEnriching || isApplyingEnrichment) && handleEdit(field)}
           style={{
-            cursor: (!canEdit || isSaving || isEssentialPhaseGenerating) ? 'default' : 'pointer',
+            cursor: (!canEdit || isSaving || isEssentialPhaseGenerating || isEnriching || isApplyingEnrichment) ? 'default' : 'pointer',
             color: !field.value ? '#9ca3af' : 'inherit',
             fontStyle: !field.value ? 'italic' : 'normal'
           }}
@@ -408,7 +413,7 @@ const FinancialUploadBlock = ({
               style={styles.actionBtn}
               disabled={isAnalysisRegenerating || isStrategicRegenerating}
             >
-              <RefreshCw size={12} className={isAnalysisRegenerating || isStrategicRegenerating ? "animate-spin" : ""} />
+              <RefreshCw size={12} className={isAnalysisRegenerating || isStrategicRegenerating ? "antigravity-rotating" : ""} />
               {t("Replace") || "Replace"}
             </button>
           )}
@@ -548,7 +553,7 @@ const AIAnswerSupportBlock = ({
           }
         }}
       >
-        {isEnriching ? <Loader size={18} className="spinner" /> : <Wand2 size={18} />}
+        {isEnriching ? <Loader size={18} className="antigravity-rotating" /> : <Wand2 size={18} />}
        {isEnriching ? t("generating_suggestions") : t("generate_ai_answers")}
       </button>
     </div>
@@ -562,6 +567,7 @@ const EditableBriefSection = ({
   onAnswerUpdate,
   onBusinessDataUpdate,
   onAnalysisRegenerate,
+  onUploadedFileUpdate,
   isEssentialPhaseGenerating = false,
   isAnalysisRegenerating = false,
   isStrategicRegenerating = false,
@@ -599,7 +605,7 @@ const EditableBriefSection = ({
   }, [isFinancialRegeneratingProp, isAnalysisRegenerating, isStrategicRegenerating]);
 
   const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
-  const getAuthToken = () => sessionStorage.getItem('token');
+  const getAuthToken = () => useAuthStore.getState().token;
   const ML_API_BASE_URL = process.env.REACT_APP_ML_BACKEND_URL;
   const analysisService = useRef(new AnalysisApiService(ML_API_BASE_URL, API_BASE_URL, getAuthToken)).current;
 
@@ -611,7 +617,7 @@ const EditableBriefSection = ({
   const [userRole, setUserRole] = useState("");
 
   useEffect(() => {
-    const role = (sessionStorage.getItem("role") || sessionStorage.getItem("userRole") || "").toLowerCase();
+    const role = (useAuthStore.getState().userRole || useAuthStore.getState().userRole || "").toLowerCase();
     setUserRole(role);
   }, []);
 
@@ -625,11 +631,7 @@ const EditableBriefSection = ({
     }
   }, [questions, userAnswers]);
 
-  useEffect(() => {
-    if (selectedBusinessId && !documentInfo) {
-      loadDocumentInfo();
-    }
-  }, [selectedBusinessId, documentInfo]);
+  // Removed redundant document info fetch as it is now handled and passed down by BusinessSetupPage
 
   useEffect(() => {
     if (documentInfo) {
@@ -1139,9 +1141,13 @@ const EditableBriefSection = ({
       //showToastMessage(`✅ File uploaded successfully! Detected as ${validation.templateName}. Running financial analysis...`, 'success');
 
       // Also notify parent to refresh display
+      if (onUploadedFileUpdate) {
+        onUploadedFileUpdate(file);
+      }
+
       if (onAnalysisRegenerate) {
         setIsFinancialRegenerating(true);
-        onAnalysisRegenerate({ onlyFinancial: true });
+        onAnalysisRegenerate({ onlyFinancial: true, uploadedFile: file });
       }
     } catch (error) {
       console.error('File upload/validation error:', error);
@@ -1324,7 +1330,7 @@ const EditableBriefSection = ({
                   cursor: isApplyingEnrichment ? 'not-allowed' : 'pointer'
                 }}
               >
-                {isApplyingEnrichment ? <Loader size={14} className="spinner" /> : <Check size={14} />}
+                {isApplyingEnrichment ? <Loader size={14} className="antigravity-rotating" /> : <Check size={14} />}
                 Apply All Answers
               </button>
             </div>
@@ -1354,15 +1360,14 @@ const EditableBriefSection = ({
         </div>
       )}
 
-      {(isAnalysisRegenerating || isStrategicRegenerating || isSaving || isEssentialPhaseGenerating || isApplyingEnrichment) && (
+      {(isAnalysisRegenerating || isStrategicRegenerating || isSaving || isEssentialPhaseGenerating || isApplyingEnrichment || isFileUploading) && (
         <div className="analysis-regenerating-banner">
-          <Loader size={16} className="spinner" />
+          <Loader size={16} className="antigravity-rotating" />
           <span>
-            {isApplyingEnrichment ? 'Applying enriched answers...' :
-              isSaving ? 'Saving changes...' :
-                isEssentialPhaseGenerating ? 'Generating essential phase analysis...' :
-                  isFinancialRegenerating ? 'Regenerating financial insights like profitability, growth tracker, liquidity, investment performance, leverage and risk insight...' :
-                    (isAnalysisRegenerating || isStrategicRegenerating) ? 'Regenerating Insights & STRATEGIC...' : ''}
+            {isApplyingEnrichment ? 'Generating AI answers and regenerating insights...' :
+              (isFileUploading || isFinancialRegenerating) ? 'Regenerating financial insights like profitability, growth tracker, liquidity, investment performance, leverage and risk insight...' :
+                isSaving ? 'Saving changes...' :
+                  (isEssentialPhaseGenerating || isAnalysisRegenerating || isStrategicRegenerating) ? 'Generating all Insights & STRATEGIC analysis...' : ''}
           </span>
         </div>
       )}
@@ -1371,7 +1376,7 @@ const EditableBriefSection = ({
         <div className="progress-info">
           {isLoading ? (
             <span className="progress-text">
-              <Loader size={16} className="spinner" style={{ display: 'inline', marginRight: '8px' }} />
+              <Loader size={16} className="antigravity-rotating" style={{ display: 'inline', marginRight: '8px' }} />
               Loading progress...
             </span>
           ) : (
@@ -1412,7 +1417,7 @@ const EditableBriefSection = ({
         <div className="brief-list">
           {isLoading ? (
             <div className="loading-state" style={{ textAlign: 'center', padding: '2rem' }}>
-              <Loader size={24} className="spinner" />
+              <Loader size={24} className="antigravity-rotating" />
               <p>Loading your business information...</p>
             </div>
           ) : briefFields.length > 0 ? (
@@ -1464,6 +1469,8 @@ const EditableBriefSection = ({
                     isStrategicRegenerating={isStrategicRegenerating}
                     isSaving={isSaving}
                     isEssentialPhaseGenerating={isEssentialPhaseGenerating}
+                    isEnriching={isEnriching}
+                    isApplyingEnrichment={isApplyingEnrichment}
                     isLaunchedStatus={isLaunchedStatus}
                     inputRefs={inputRefs}
                     fieldRefs={fieldRefs}

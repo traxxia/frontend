@@ -15,23 +15,10 @@
   text-align: center;
 }
 
+
 .loading-spinner {
   color: #3b82f6;
   margin-bottom: 16px;
-}
-
-.spin-animation {
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  from {
-    transform: rotate(0deg);
-  }
-
-  to {
-    transform: rotate(360deg);
-  }
 }
 
 .loading-title {

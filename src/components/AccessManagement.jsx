@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Table, Badge, Spinner, Form, Button, Modal } from "react-bootstrap";
 import { Shield, Lock, Pencil, Users, AlertCircle, Trash2, Activity, Key, ListOrdered, FileEdit, ShieldOff, FolderX, UserMinus } from "lucide-react";
 import axios from "axios";
@@ -8,82 +8,43 @@ import MetricCard from "./MetricCard";
 import "../styles/AdminTableStyles.css";
 import "../styles/accessmanagement.css";
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+import { useBusinesses, useAccessControlQuery } from '../hooks/useQueries';
+import { useQueryClient } from '@tanstack/react-query';
+import { useAuthStore, useProjectStore } from "../store";
 
 const AccessManagement = ({ onToast }) => {
     const { t } = useTranslation();
-    const [loading, setLoading] = useState(false);
-    const [accessData, setAccessData] = useState(null);
-    const [businesses, setBusinesses] = useState([]);
+    const queryClient = useQueryClient();
+
+    // --- TanStack Query Hooks ---
+    const { data: businessesRaw, isLoading: fetchingBusinesses } = useBusinesses();
+    // Combine owned + collaborating for the admin access management view
+    const businessesQuery = React.useMemo(() => [
+        ...(businessesRaw?.businesses || []),
+        ...(businessesRaw?.collaborating_businesses || [])
+    ], [businessesRaw]);
+    const businesses = businessesQuery.filter(b =>
+        ((b.status || "").toLowerCase() === 'launched' || b.has_launched_projects === true) &&
+        b.has_access_grants === true
+    );
+
     const [selectedBusinessId, setSelectedBusinessId] = useState("");
+
+    const { data: accessData, isLoading: loadingAccess } = useAccessControlQuery(selectedBusinessId);
+
+    // Auto-select first business if none selected
+    useEffect(() => {
+        if (!selectedBusinessId && businesses.length > 0) {
+            setSelectedBusinessId(businesses[0]._id);
+        }
+    }, [businesses, selectedBusinessId]);
+
     const [showRevokeModal, setShowRevokeModal] = useState(false);
     const [revokeDetails, setRevokeDetails] = useState(null);
     const [revoking, setRevoking] = useState(false);
-    const [fetchingBusinesses, setFetchingBusinesses] = useState(true);
-    const token = sessionStorage.getItem("token");
+    const token = useAuthStore(state => state.token);
 
-    useEffect(() => {
-        fetchBusinesses();
-    }, []);
-
-    useEffect(() => {
-        if (selectedBusinessId) {
-            fetchAccessData();
-        }
-    }, [selectedBusinessId]);
-
-    const fetchBusinesses = async () => {
-        try {
-            setFetchingBusinesses(true);
-            const res = await axios.get(`${BACKEND_URL}/api/businesses`, {
-                headers: { Authorization: `Bearer ${token}` },
-            });
-
-            const data = Array.isArray(res.data)
-                ? res.data
-                : [...(res.data.businesses || []), ...(res.data.collaborating_businesses || [])];
-
-            const businessesWithGrants = data.filter(b =>
-                ((b.status || "").toLowerCase() === 'launched' || b.has_launched_projects === true) &&
-                (b.status || "").toLowerCase() !== 'archived' &&
-                (b.access_mode || "").toLowerCase() !== 'archived' &&
-                (b.status || "").toLowerCase() !== 'deleted' &&
-                b.has_access_grants === true
-            );
-            setBusinesses(businessesWithGrants);
-
-            // Handle selection if current is gone or none selected
-            if (businessesWithGrants.length === 0) {
-                setSelectedBusinessId("");
-            } else if (!selectedBusinessId || !businessesWithGrants.find(b => b._id === selectedBusinessId)) {
-                setSelectedBusinessId(businessesWithGrants[0]._id);
-            }
-        } catch (err) {
-            console.error("Failed to fetch businesses", err);
-            onToast("Failed to load businesses", "error");
-        } finally {
-            setFetchingBusinesses(false);
-        }
-    };
-
-    const fetchAccessData = async () => {
-        if (!selectedBusinessId) return;
-
-        try {
-            setLoading(true);
-            const res = await axios.get(`${BACKEND_URL}/api/projects/granted-access`, {
-                headers: { Authorization: `Bearer ${token}` },
-                params: { business_id: selectedBusinessId },
-            });
-
-            setAccessData(res.data);
-        } catch (err) {
-            console.error("Failed to fetch access data", err);
-            onToast("Failed to load access data", "error");
-        } finally {
-            setLoading(false);
-        }
-    };
+    const isLoading = fetchingBusinesses || loadingAccess;
 
     const handleOpenRevokeModal = (user, accessType) => {
         setRevokeDetails({
@@ -99,36 +60,26 @@ const AccessManagement = ({ onToast }) => {
 
         try {
             setRevoking(true);
+            const { revokeAccess } = useProjectStore.getState();
 
-            await axios.post(
-                `${BACKEND_URL}/api/projects/revoke-access`,
-                {
-                    business_id: revokeDetails.business_id,
-                    user_id: revokeDetails.user.user_id,
-                    access_type: revokeDetails.accessType
-                },
-                {
-                    headers: { Authorization: `Bearer ${token}` }
-                }
+            const result = await revokeAccess(
+                revokeDetails.business_id,
+                revokeDetails.user.user_id,
+                revokeDetails.accessType
             );
 
-            onToast(
-                `Successfully revoked ${revokeDetails.accessType === "all" ? "all access" : revokeDetails.accessType + " access"} for ${revokeDetails.user.user_name}`,
-                "success"
-            );
-
-            setShowRevokeModal(false);
-            setRevokeDetails(null);
-
-            // Refresh both businesses list (in case no grants left) and current access data
-            await fetchBusinesses();
-            await fetchAccessData();
-        } catch (err) {
-            console.error("Failed to revoke access", err);
-            onToast(
-                err.response?.data?.error || "Failed to revoke access",
-                "error"
-            );
+            if (result.success) {
+                onToast(
+                    `Successfully revoked ${revokeDetails.accessType === "all" ? "all access" : revokeDetails.accessType + " access"} for ${revokeDetails.user.user_name}`,
+                    "success"
+                );
+                setShowRevokeModal(false);
+                setRevokeDetails(null);
+                queryClient.invalidateQueries({ queryKey: ["accessControl", selectedBusinessId] });
+                queryClient.invalidateQueries({ queryKey: ["businesses"] });
+            } else {
+                onToast(result.error || "Failed to revoke access", "error");
+            }
         } finally {
             setRevoking(false);
         }
@@ -232,7 +183,6 @@ const AccessManagement = ({ onToast }) => {
         }
     ];
 
-    const isLoading = fetchingBusinesses || loading;
     const rerankCount = accessData?.access_list?.filter(u => u.has_rerank_access).length || 0;
     const editCount = accessData?.access_list?.filter(u => u.has_project_edit_access).length || 0;
 

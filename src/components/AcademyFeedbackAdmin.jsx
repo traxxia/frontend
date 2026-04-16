@@ -1,9 +1,11 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from '../hooks/useTranslation';
 import AdminTable from './AdminTable';
 import { ThumbsUp, ThumbsDown, MessageSquareMore, Eye } from 'lucide-react';
 import { formatDate } from '../utils/dateUtils';
 import { Modal, Button } from 'react-bootstrap';
+
+import { useAuthStore } from '../store/authStore';
 
 const AcademyFeedbackAdmin = ({ onToast }) => {
     const { t } = useTranslation();
@@ -28,9 +30,13 @@ const AcademyFeedbackAdmin = ({ onToast }) => {
     const itemsPerPage = 10;
 
     const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
-    const getAuthToken = () => sessionStorage.getItem('token');
+    const getAuthToken = () => useAuthStore.getState().token;
+
+    const initializedRef = useRef(false);
 
     useEffect(() => {
+        if (initializedRef.current) return;
+        initializedRef.current = true;
         loadFeedback();
     }, []);
 

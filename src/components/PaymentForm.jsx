@@ -1,9 +1,35 @@
-import React, { useState } from 'react';
-import { CardNumberElement, CardExpiryElement, CardCvcElement, useStripe, useElements } from '@stripe/react-stripe-js';
-import { FaCreditCard, FaPaypal, FaUniversity, FaCheck, FaLock, FaMicrochip, FaCcVisa, FaCcMastercard, FaCcAmex, FaCcDiscover, FaCcDinersClub, FaCcJcb } from 'react-icons/fa';
+import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react';
+// Stripe imports removed for lazy loading
+import { FaCreditCard, FaPaypal, FaUniversity, FaCheck, FaMicrochip, FaCcVisa, FaCcMastercard, FaCcAmex, FaCcDiscover, FaCcDinersClub, FaCcJcb } from 'react-icons/fa';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from "../hooks/useTranslation";
 import '../styles/Register.css'; // Reusing Register styles for consistency
+
+const STRIPE_STYLE = {
+    base: {
+        fontSize: '16px',
+        color: '#424770',
+        '::placeholder': {
+            color: '#aab7c4',
+        },
+        iconColor: '#666EE8',
+    },
+    invalid: {
+        color: '#9e2146',
+    },
+};
+
+const getBrandIcon = (brand) => {
+    switch (brand) {
+        case 'visa': return <FaCcVisa size={40} />;
+        case 'mastercard': return <FaCcMastercard size={40} />;
+        case 'amex': return <FaCcAmex size={40} />;
+        case 'discover': return <FaCcDiscover size={40} />;
+        case 'diners': return <FaCcDinersClub size={40} />;
+        case 'jcb': return <FaCcJcb size={40} />;
+        default: return <FaCreditCard size={40} />;
+    }
+};
 
 const PaymentForm = ({
     onSubmit,
@@ -16,51 +42,52 @@ const PaymentForm = ({
     onMethodSelect,
     cardHolderName = '',
     onCardHolderNameChange = () => { },
-    onCardChange = () => { }
+    onCardChange = () => { },
+    stripe,
+    elements,
+    stripeComponents
 }) => {
     const { t } = useTranslation();
-    const stripe = useStripe();
-    const elements = useElements();
+    const { CardNumberElement, CardExpiryElement, CardCvcElement } = stripeComponents || {};
+    
     const [localError, setLocalError] = useState(null);
     const [paymentMethodType, setPaymentMethodType] = useState('card');
     const [cardBrand, setCardBrand] = useState('unknown');
     const [cardComplete, setCardComplete] = useState(false);
 
-    const handleMethodSelect = (type) => {
+    const cardDetailsRef = useRef(null);
+    const [pendingScroll, setPendingScroll] = useState(false);
+
+    useEffect(() => {
+        if (pendingScroll && isActive && paymentMethodType === 'card' && cardDetailsRef.current) {
+            const timer = setTimeout(() => {
+                cardDetailsRef.current.scrollIntoView({ 
+                    behavior: 'smooth', 
+                    block: 'start' 
+                });
+                setPendingScroll(false);
+            }, 100);
+            return () => clearTimeout(timer);
+        }
+    }, [pendingScroll, isActive, paymentMethodType]);
+
+    const handleMethodSelect = useCallback((type) => {
         setPaymentMethodType(type);
         if (onMethodSelect) onMethodSelect(type);
-    };
-
-    const stripeElementOptions = {
-        style: {
-            base: {
-                fontSize: '16px',
-                color: '#424770',
-                '::placeholder': {
-                    color: '#aab7c4',
-                },
-                iconColor: '#666EE8',
-            },
-            invalid: {
-                color: '#9e2146',
-            },
-        },
-        disabled: isSubmitting,
-    };
-
-    const getBrandIcon = (brand) => {
-        switch (brand) {
-            case 'visa': return <FaCcVisa size={40} />;
-            case 'mastercard': return <FaCcMastercard size={40} />;
-            case 'amex': return <FaCcAmex size={40} />;
-            case 'discover': return <FaCcDiscover size={40} />;
-            case 'diners': return <FaCcDinersClub size={40} />;
-            case 'jcb': return <FaCcJcb size={40} />;
-            default: return <FaCreditCard size={40} />;
+        
+        if (type === 'card') {
+            setPendingScroll(true);
         }
-    };
+    }, [onMethodSelect]);
 
-    const handleStripeChange = (e) => {
+    const stripeElementOptions = useMemo(() => ({
+        style: STRIPE_STYLE,
+        disabled: isSubmitting,
+    }), [isSubmitting]);
+
+
+
+    const handleStripeChange = useCallback((e) => {
         if (e.elementType === 'cardNumber') {
             setCardBrand(e.brand || 'unknown');
             setCardComplete(e.complete);
@@ -71,7 +98,7 @@ const PaymentForm = ({
         } else {
             setLocalError(null);
         }
-    };
+    }, [onCardChange]);
 
     return (
         <div className="payment-form-container">
@@ -103,6 +130,7 @@ const PaymentForm = ({
 
                 {paymentMethodType === 'card' && isActive && (
                     <motion.div
+                        ref={cardDetailsRef}
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         transition={{ duration: 0.3 }}

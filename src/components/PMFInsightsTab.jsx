@@ -12,15 +12,18 @@ import { useTranslation } from "../hooks/useTranslation";
 import { Modal } from "react-bootstrap";
 
 
-const PMFInsightsTab = ({ selectedBusinessId, onStartOnboarding, refreshTrigger }) => {
+import { useAuthStore, useBusinessStore, useUIStore } from '../store';
+
+const PMFInsightsTab = ({ onStartOnboarding, refreshTrigger }) => {
+  const { selectedBusinessId } = useBusinessStore();
   const { t } = useTranslation();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [showOverwriteModal, setShowOverwriteModal] = useState(false);
   const [overwrittenBy, setOverwrittenBy] = useState("");
   const userRole = (
-    sessionStorage.getItem("role") ||
-    sessionStorage.getItem("userRole") ||
+    useAuthStore.getState().userRole ||
+    useAuthStore.getState().userRole ||
     ""
   ).toLowerCase();
   const isViewer = userRole === "viewer";
@@ -28,7 +31,7 @@ const PMFInsightsTab = ({ selectedBusinessId, onStartOnboarding, refreshTrigger 
   // API Service setup
   const ML_API_BASE_URL = process.env.REACT_APP_ML_BACKEND_URL;
   const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
-  const getAuthToken = () => sessionStorage.getItem("token");
+  const getAuthToken = () => useAuthStore.getState().token;
   const analysisService = new AnalysisApiService(ML_API_BASE_URL, API_BASE_URL, getAuthToken);
 
   useEffect(() => {
@@ -36,9 +39,6 @@ const PMFInsightsTab = ({ selectedBusinessId, onStartOnboarding, refreshTrigger 
 
     const fetchInsights = async () => {
       let businessId = selectedBusinessId;
-      if (!businessId) {
-        businessId = sessionStorage.getItem('activeBusinessId');
-      }
 
       if (!businessId) {
         console.warn("PMFInsightsTab: No business ID found, skipping fetch.");
@@ -53,9 +53,9 @@ const PMFInsightsTab = ({ selectedBusinessId, onStartOnboarding, refreshTrigger 
 
           // --- OVERWRITE DETECTION (AHA Page) ---
           if (result && result.user_id) {
-            const currentUserId = sessionStorage.getItem("userId");
+            const currentUserId = useAuthStore.getState().userId;
             const bId = String(businessId);
-            const expectedUserId = localStorage.getItem(`pmf_expecting_my_data_${bId}`);
+            const expectedUserId = useUIStore.getState().getBusinessSetting(bId, 'pmfExpectingMyData');
 
             if (expectedUserId) {
               const getStrId = (val) => {
@@ -303,10 +303,10 @@ const PMFInsightsTab = ({ selectedBusinessId, onStartOnboarding, refreshTrigger 
               className="px-4 rounded-3 fw-semibold"
               onClick={() => {
                 setShowOverwriteModal(false);
-                const bId = String(selectedBusinessId || sessionStorage.getItem('activeBusinessId'));
+                const bId = String(selectedBusinessId);
                 if (bId) {
-                  localStorage.removeItem(`pmf_expecting_my_data_${bId}`);
-                  localStorage.removeItem(`pmf_last_submission_${bId}`);
+                  useUIStore.getState().setBusinessSetting(bId, 'pmfExpectingMyData', null);
+                  useUIStore.getState().setBusinessSetting(bId, 'pmfLastSubmission', null);
                 }
               }}
             >

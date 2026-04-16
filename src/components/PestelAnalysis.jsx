@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useTranslation } from "../hooks/useTranslation";
 import { ChevronDown, ChevronRight, BarChart3, TrendingUp, Loader } from 'lucide-react';
+import { useAuthStore, useAnalysisStore } from "../store";
 import AnalysisEmptyState from './AnalysisEmptyState';
 import { checkMissingQuestionsAndRedirect, ANALYSIS_TYPES } from '../services/missingQuestionsService';
 import { StreamingRow } from './StreamingManager';
@@ -8,10 +9,10 @@ import { useAutoScroll } from '../hooks/useAutoScroll';
 import { STREAMING_CONFIG } from '../hooks/streamingConfig';
 
 const PestelAnalysis = ({
-  pestelData,
+  pestelData: propPestelData,
   businessName = "Your Business",
   onRegenerate,
-  isRegenerating = false,
+  isRegenerating: propIsRegenerating = false,
   canRegenerate = true,
   questions = [],
   userAnswers = {},
@@ -23,6 +24,17 @@ const PestelAnalysis = ({
   hideImproveButton = false,
 }) => {
   const { t } = useTranslation();
+  const token = useAuthStore(state => state.token);
+  
+  const {
+    pestelData: storePestelData,
+    isRegenerating: isTypeRegenerating,
+    regenerateIndividualAnalysis
+  } = useAnalysisStore();
+
+  const pestelData = propPestelData || storePestelData;
+  const isRegenerating = propIsRegenerating || isTypeRegenerating('pestel');
+
   const [expandedSections, setExpandedSections] = useState({
     executive: true,
     factors: true,
@@ -37,9 +49,6 @@ const PestelAnalysis = ({
 
   const { lastRowRef, userHasScrolled, setUserHasScrolled } = useAutoScroll(streamingManager, cardId, isExpanded, visibleRows);
 
-  const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
-  const getAuthToken = () => sessionStorage.getItem('token');
-
   const handleRedirectToBrief = (missingQuestionsData = null) => {
     if (onRedirectToBrief) {
       onRedirectToBrief(missingQuestionsData);
@@ -48,7 +57,6 @@ const PestelAnalysis = ({
 
   const handleMissingQuestionsCheck = async () => {
     const analysisConfig = ANALYSIS_TYPES.pestel;
-
     await checkMissingQuestionsAndRedirect(
       'pestel',
       selectedBusinessId,
@@ -73,6 +81,9 @@ const PestelAnalysis = ({
     if (onRegenerate) {
       streamingManager.resetCard(cardId);
       onRegenerate();
+    } else {
+      streamingManager.resetCard(cardId);
+      await regenerateIndividualAnalysis('pestel', questions, userAnswers, selectedBusinessId);
     }
   };
 
@@ -80,28 +91,16 @@ const PestelAnalysis = ({
     if (!data || isPestelDataIncomplete(data)) {
       return 0;
     }
-
     const analysis = data.pestel_analysis || data.pestelAnalysis || data.pestel || data.PestelAnalysis || data;
     let total = 0;
-
-    if (analysis.factor_summary) {
-      total += Object.keys(analysis.factor_summary).length;
-    }
-
-    if (analysis.key_improvements && Array.isArray(analysis.key_improvements)) {
-      total += analysis.key_improvements.length;
-    }
-
+    if (analysis.factor_summary) total += Object.keys(analysis.factor_summary).length;
+    if (analysis.key_improvements && Array.isArray(analysis.key_improvements)) total += analysis.key_improvements.length;
     return total;
   };
 
   useEffect(() => {
     const totalRows = calculateTotalRows(pestelData);
-
-    if (totalRows === 0) {
-      return;
-    }
-
+    if (totalRows === 0) return;
     if (!streamingManager?.shouldStream(cardId)) {
       setVisibleRows(totalRows);
     }
@@ -109,11 +108,9 @@ const PestelAnalysis = ({
 
   const typeText = (text, rowIndex, field, delay = 0) => {
     if (!text) return;
-
     setTimeout(() => {
       let currentIndex = 0;
       const key = `${rowIndex}-${field}`;
-
       const interval = setInterval(() => {
         if (currentIndex <= text.length) {
           setTypingTexts(prev => ({
@@ -129,19 +126,11 @@ const PestelAnalysis = ({
   };
 
   useEffect(() => {
-    if (!streamingManager?.shouldStream(cardId)) {
-      return;
-    }
-
-    if (!pestelData || isRegenerating || isPestelDataIncomplete(pestelData)) {
-      return;
-    }
+    if (!streamingManager?.shouldStream(cardId)) return;
+    if (!pestelData || isRegenerating || isPestelDataIncomplete(pestelData)) return;
 
     const analysis = pestelData.pestel_analysis || pestelData.pestelAnalysis || pestelData.pestel || pestelData.PestelAnalysis || pestelData;
-
-    if (streamingIntervalRef.current) {
-      clearInterval(streamingIntervalRef.current);
-    }
+    if (streamingIntervalRef.current) clearInterval(streamingIntervalRef.current);
 
     setVisibleRows(0);
     setTypingTexts({});
@@ -153,13 +142,11 @@ const PestelAnalysis = ({
     streamingIntervalRef.current = setInterval(() => {
       if (currentRow < totalItems) {
         setVisibleRows(currentRow + 1);
-
         let rowsProcessed = 0;
 
         if (analysis.factor_summary) {
           const factorEntries = Object.entries(analysis.factor_summary);
           const factorIndex = currentRow - rowsProcessed;
-
           if (factorIndex >= 0 && factorIndex < factorEntries.length) {
             const [factor, data] = factorEntries[factorIndex];
             typeText(factor.toUpperCase(), currentRow, 'factor', 0);
@@ -167,19 +154,16 @@ const PestelAnalysis = ({
             currentRow++;
             return;
           }
-
           rowsProcessed += factorEntries.length;
         }
 
         if (analysis.key_improvements && Array.isArray(analysis.key_improvements)) {
           const improvementIndex = currentRow - rowsProcessed;
-
           if (improvementIndex >= 0 && improvementIndex < analysis.key_improvements.length) {
             const improvement = analysis.key_improvements[improvementIndex];
             typeText(improvement, currentRow, 'improvement', 0);
           }
         }
-
         currentRow++;
       } else {
         clearInterval(streamingIntervalRef.current);
@@ -190,17 +174,13 @@ const PestelAnalysis = ({
     }, STREAMING_CONFIG.ROW_INTERVAL);
 
     return () => {
-      if (streamingIntervalRef.current) {
-        clearInterval(streamingIntervalRef.current);
-      }
+      if (streamingIntervalRef.current) clearInterval(streamingIntervalRef.current);
     };
   }, [cardId, pestelData, isRegenerating, streamingManager, setUserHasScrolled]);
 
   useEffect(() => {
     return () => {
-      if (streamingIntervalRef.current) {
-        clearInterval(streamingIntervalRef.current);
-      }
+      if (streamingIntervalRef.current) clearInterval(streamingIntervalRef.current);
     };
   }, []);
 
@@ -254,7 +234,6 @@ const PestelAnalysis = ({
       factorIndices[factor] = currentRowIndex++;
     });
   }
-
   if (analysis.key_improvements && Array.isArray(analysis.key_improvements)) {
     analysis.key_improvements.forEach((_, index) => {
       improvementsIndices[index] = currentRowIndex++;
@@ -271,14 +250,12 @@ const PestelAnalysis = ({
       data-analysis-name="PESTEL Analysis"
       data-analysis-order="7"
     >
-
       {analysis.factor_summary && (
         <div className="section-container">
           <div className="section-header" onClick={() => toggleSection('factors')}>
             <h3>{t("pestel_card1")}</h3>
             {expandedSections.factors ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
           </div>
-
           {expandedSections.factors && (
             <div className="table-container">
               <table className="data-table">
@@ -296,7 +273,6 @@ const PestelAnalysis = ({
                     const rowIndex = factorIndices[factor];
                     const isVisible = rowIndex < visibleRows;
                     const isLast = rowIndex === visibleRows - 1;
-
                     return (
                       <StreamingRow
                         key={factor}
@@ -310,21 +286,11 @@ const PestelAnalysis = ({
                             <span>{hasStreamed ? factor.toUpperCase() : (typingTexts[`${rowIndex}-factor`] || factor.toUpperCase())}</span>
                           </div>
                         </td>
-                        <td>
-                          {hasStreamed ? (data?.strategic_priority || 'N/A') : (typingTexts[`${rowIndex}-priority`] || (data?.strategic_priority || 'N/A'))}
-                        </td>
-                        <td style={{ opacity: isVisible ? 1 : 0, transition: !isStreaming ? 'none' : 'opacity 0.3s 0.4s' }}>
-                          {data?.total_mentions || 0}
-                        </td>
-                        <td style={{ opacity: isVisible ? 1 : 0, transition: !isStreaming ? 'none' : 'opacity 0.3s 0.5s' }}>
-                          {data?.high_impact_count || 0}
-                        </td>
+                        <td>{hasStreamed ? (data?.strategic_priority || 'N/A') : (typingTexts[`${rowIndex}-priority`] || (data?.strategic_priority || 'N/A'))}</td>
+                        <td style={{ opacity: isVisible ? 1 : 0, transition: !isStreaming ? 'none' : 'opacity 0.3s 0.4s' }}>{data?.total_mentions || 0}</td>
+                        <td style={{ opacity: isVisible ? 1 : 0, transition: !isStreaming ? 'none' : 'opacity 0.3s 0.5s' }}>{data?.high_impact_count || 0}</td>
                         <td style={{ opacity: isVisible ? 1 : 0, transition: !isStreaming ? 'none' : 'opacity 0.3s 0.6s' }}>
-                          <div className="forces-tags">
-                            {(data?.key_themes || []).map((theme, idx) => (
-                              <span key={idx} className="force-tag">{theme}</span>
-                            ))}
-                          </div>
+                          <div className="forces-tags">{(data?.key_themes || []).map((theme, idx) => (<span key={idx} className="force-tag">{theme}</span>))}</div>
                         </td>
                       </StreamingRow>
                     );
@@ -342,7 +308,6 @@ const PestelAnalysis = ({
             <h3>{t("porter_card3")}</h3>
             {expandedSections.improvements ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
           </div>
-
           {expandedSections.improvements && (
             <div className="table-container">
               <table className="data-table">
@@ -351,21 +316,12 @@ const PestelAnalysis = ({
                     const rowIndex = improvementsIndices[index];
                     const isVisible = rowIndex < visibleRows;
                     const isLast = rowIndex === visibleRows - 1;
-
                     return (
-                      <StreamingRow
-                        key={index}
-                        isVisible={isVisible}
-                        isLast={isLast && isStreaming}
-                        lastRowRef={lastRowRef}
-                        isStreaming={isStreaming}
-                      >
+                      <StreamingRow key={index} isVisible={isVisible} isLast={isLast && isStreaming} lastRowRef={lastRowRef} isStreaming={isStreaming}>
                         <td>
                           <div className="force-name">
                             <TrendingUp size={16} />
-                            <span>
-                              {hasStreamed ? improvement : (typingTexts[`${rowIndex}-improvement`] || improvement)}
-                            </span>
+                            <span>{hasStreamed ? improvement : (typingTexts[`${rowIndex}-improvement`] || improvement)}</span>
                           </div>
                         </td>
                       </StreamingRow>
@@ -377,9 +333,8 @@ const PestelAnalysis = ({
           )}
         </div>
       )}
-
     </div>
   );
 };
 
-export default PestelAnalysis;
+export default PestelAnalysis;

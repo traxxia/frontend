@@ -1,13 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Modal, Button, Row, Col, Spinner, Alert, Form } from 'react-bootstrap';
 import { ArrowRight, Zap, CreditCard, Check, AlertTriangle } from 'lucide-react';
-import { loadStripe } from '@stripe/stripe-js';
-import { Elements, useStripe, useElements, CardNumberElement } from '@stripe/react-stripe-js';
+// Stripe imports removed for lazy loading
 import PricingPlanCard from './PricingPlanCard';
 import PlanConfigurationModal from './PlanConfigurationModal';
 import PaymentForm from './PaymentForm';
 import '../styles/UpgradeModal.css';
 import { useTranslation } from '../hooks/useTranslation';
+import { useAuthStore } from '../store/authStore';
 
 // Stripe initialization will be handled inside the component for lazy loading
 
@@ -25,11 +25,13 @@ const UpgradeModalContent = ({
     defaultPaymentMethodId,
     submitting,
     onProcessUpgrade,
-    selectedPlan
+    selectedPlan,
+    stripe,
+    elements,
+    stripeComponents
 }) => {
     const { t } = useTranslation();
-    const stripe = useStripe();
-    const elements = useElements();
+    const { CardNumberElement } = stripeComponents || {};
 
     // Default to the default PM, or 'new' if none exist
     const [selectedMethodId, setSelectedMethodId] = useState('new');
@@ -90,6 +92,21 @@ const UpgradeModalContent = ({
                     setLocalError(stripeError.message);
                     return;
                 }
+
+                // Local duplicate check
+                const card = paymentMethod.card;
+                const isDuplicate = paymentMethods.some(pm =>
+                    pm.last4 === card.last4 &&
+                    pm.brand === card.brand &&
+                    pm.exp_month === card.exp_month &&
+                    pm.exp_year === card.exp_year
+                );
+
+                if (isDuplicate) {
+                    setLocalError(t("This card is already linked to your account."));
+                    return;
+                }
+
                 paymentMethodId = paymentMethod.id;
                 saveNewCard = true;
             } catch (err) {
@@ -231,6 +248,7 @@ const UpgradeModalContent = ({
                                 onCardChange={() => {
                                     if (localError) setLocalError(null);
                                 }}
+                                stripeComponents={stripeComponents}
                             />
                         </div>
 
@@ -265,10 +283,19 @@ const UpgradeModalContent = ({
 };
 
 const UpgradeModal = ({ show, onHide, onUpgradeSuccess, paymentMethod, initialPlanId }) => {
+    const [stripeComponents, setStripeComponents] = useState(null);
+
+    const updateUser = useAuthStore(state => state.updateUser);
+
     // Lazy load Stripe only when the modal is active
-    const stripePromise = React.useMemo(() => {
+    const stripePromise = React.useMemo(async () => {
         if (!show) return null;
-        return loadStripe(process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY);
+        const [stripeJs, reactStripeJs] = await Promise.all([
+            import('@stripe/stripe-js'),
+            import('@stripe/react-stripe-js')
+        ]);
+        setStripeComponents(reactStripeJs);
+        return stripeJs.loadStripe(process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY);
     }, [show]);
 
     const [loading, setLoading] = useState(true);
@@ -296,7 +323,7 @@ const UpgradeModal = ({ show, onHide, onUpgradeSuccess, paymentMethod, initialPl
         try {
             setLoading(true);
             setError(null);
-            const token = sessionStorage.getItem('token');
+            const token = useAuthStore.getState().token;
 
             const [plansRes, subRes] = await Promise.all([
                 fetch(`${API_BASE_URL}/api/plans`, { headers: { 'Authorization': `Bearer ${token}` } }),
@@ -337,7 +364,7 @@ const UpgradeModal = ({ show, onHide, onUpgradeSuccess, paymentMethod, initialPl
         try {
             setSubmitting(true);
             setError(null);
-            const token = sessionStorage.getItem('token');
+            const token = useAuthStore.getState().token;
 
             const response = await fetch(`${API_BASE_URL}/api/subscription/upgrade`, {
                 method: 'PUT',
@@ -368,7 +395,10 @@ const UpgradeModal = ({ show, onHide, onUpgradeSuccess, paymentMethod, initialPl
                 return;
             }
 
-            sessionStorage.setItem('userPlan', data.plan);
+            updateUser({ 
+                userPlan: data.plan,
+                userLimits: data.plan_limits || data.limits || data.usage || {}
+            });
             if (onUpgradeSuccess) onUpgradeSuccess(data);
             onHide();
         } catch (err) {
@@ -382,7 +412,7 @@ const UpgradeModal = ({ show, onHide, onUpgradeSuccess, paymentMethod, initialPl
         try {
             setSubmitting(true);
             setError(null);
-            const token = sessionStorage.getItem('token');
+            const token = useAuthStore.getState().token;
 
             const response = await fetch(`${API_BASE_URL}/api/subscription/process-configuration`, {
                 method: 'POST',
@@ -399,7 +429,10 @@ const UpgradeModal = ({ show, onHide, onUpgradeSuccess, paymentMethod, initialPl
                 throw new Error(data.error || 'Configuration failed');
             }
 
-            sessionStorage.setItem('userPlan', data.subscription_plan || data.plan || selectedPlan?.name || 'unknown');
+            updateUser({ 
+                userPlan: data.subscription_plan || data.plan || selectedPlan?.name || 'unknown',
+                userLimits: data.plan_limits || data.limits || data.usage || {}
+            });
             if (onUpgradeSuccess) onUpgradeSuccess(data);
             setShowConfigurationModal(false);
             onHide();
@@ -415,22 +448,25 @@ const UpgradeModal = ({ show, onHide, onUpgradeSuccess, paymentMethod, initialPl
     return (
         <>
             <Modal show={show} onHide={onHide} size="lg" centered scrollable className="upgrade-modal" backdrop="static" keyboard={false}>
-                <Elements stripe={stripePromise}>
-                    <UpgradeModalContent
-                        onHide={onHide}
-                        loading={loading}
-                        error={error}
-                        plans={plans}
-                        subscription={subscription}
-                        selectedPlanId={selectedPlanId}
-                        setSelectedPlanId={setSelectedPlanId}
-                        paymentMethods={subscription?.payment_methods}
-                        defaultPaymentMethodId={subscription?.default_payment_method_id}
-                        submitting={submitting}
-                        onProcessUpgrade={processUpgrade}
-                        selectedPlan={selectedPlan}
-                    />
-                </Elements>
+                {stripeComponents && (
+                    <stripeComponents.Elements stripe={stripePromise}>
+                        <UpgradeModalStripeWrapper
+                            onHide={onHide}
+                            loading={loading}
+                            error={error}
+                            plans={plans}
+                            subscription={subscription}
+                            selectedPlanId={selectedPlanId}
+                            setSelectedPlanId={setSelectedPlanId}
+                            paymentMethods={subscription?.payment_methods}
+                            defaultPaymentMethodId={subscription?.default_payment_method_id}
+                            submitting={submitting}
+                            onProcessUpgrade={processUpgrade}
+                            selectedPlan={selectedPlan}
+                            stripeComponents={stripeComponents}
+                        />
+                    </stripeComponents.Elements>
+                )}
             </Modal>
 
             <PlanConfigurationModal
@@ -443,6 +479,13 @@ const UpgradeModal = ({ show, onHide, onUpgradeSuccess, paymentMethod, initialPl
             />
         </>
     );
+};
+
+const UpgradeModalStripeWrapper = (props) => {
+    const { stripeComponents } = props;
+    const stripe = stripeComponents.useStripe();
+    const elements = stripeComponents.useElements();
+    return <UpgradeModalContent {...props} stripe={stripe} elements={elements} />;
 };
 
 export default UpgradeModal;

@@ -1,18 +1,26 @@
-import React, { useState, useEffect } from "react";
-import { Search, Users, Building2, Activity, TrendingUp, X, Trash2 } from "lucide-react";
+import React, { useState, useEffect, useRef } from "react";
+import { Search, Users, Building2, Activity, TrendingUp, X, Trash2, AlertCircle } from "lucide-react";
 import axios from "axios";
 import { useTranslation } from "../hooks/useTranslation";
 import AdminTable from "./AdminTable";
 import MetricCard from "./MetricCard";
 import "../styles/AdminTableStyles.css";
 
+import { useAuthStore } from '../store/authStore';
+
+import { useAdminBusinesses } from '../hooks/useQueries';
+import { useQueryClient } from '@tanstack/react-query';
+
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
 const BusinessOverview = ({ onToast }) => {
     const { t } = useTranslation();
-    const [businesses, setBusinesses] = useState([]);
-    const [filteredBusinesses, setFilteredBusinesses] = useState([]);
-    const [loading, setLoading] = useState(true);
+    const queryClient = useQueryClient();
+
+    // --- TanStack Query Hook ---
+    const { data: qBusinesses = [], isLoading: loading } = useAdminBusinesses();
+    const businesses = qBusinesses;
+
     const [searchTerm, setSearchTerm] = useState("");
     const [currentPage, setCurrentPage] = useState(1);
     const [pageBeforeSearch, setPageBeforeSearch] = useState(1);
@@ -26,27 +34,10 @@ const BusinessOverview = ({ onToast }) => {
     const [showConfirmModal, setShowConfirmModal] = useState(false);
     const [pendingRemoval, setPendingRemoval] = useState(null);
 
-    const token = sessionStorage.getItem("token");
+    const token = useAuthStore(state => state.token);
 
-    useEffect(() => {
-        fetchBusinesses();
-    }, []);
-
-    const fetchBusinesses = async () => {
-        try {
-            setLoading(true);
-            const res = await axios.get(`${BACKEND_URL}/api/admin/businesses`, {
-                headers: { Authorization: `Bearer ${token}` },
-            });
-            const data = res.data.businesses || [];
-            setBusinesses(data);
-            setFilteredBusinesses(data);
-        } catch (error) {
-            console.error("Error fetching businesses:", error);
-            onToast(t("failed_to_fetch_businesses") || "Failed to fetch businesses", "error");
-        } finally {
-            setLoading(false);
-        }
+    const fetchBusinesses = () => {
+        // Handled by hook
     };
 
     const handleSearch = (value) => {
@@ -55,36 +46,31 @@ const BusinessOverview = ({ onToast }) => {
         setSearchTerm(value);
     };
 
-    useEffect(() => {
-        const filtered = businesses.filter((biz) => {
-    const search = searchTerm.toLowerCase();
+    const filteredBusinesses = React.useMemo(() => {
+        if (!searchTerm) return businesses;
+        const search = searchTerm.toLowerCase();
+        return businesses.filter((biz) => {
+            const collaboratorText = (biz.collaborators || [])
+                .map(c => `${c.name} ${c.email}`)
+                .join(" ")
+                .toLowerCase();
 
-    const collaboratorText = (biz.collaborators || [])
-        .map(c => `${c.name} ${c.email}`)
-        .join(" ")
-        .toLowerCase();
-
-    return (
-        biz.business_name?.toLowerCase().includes(search) ||
-        biz.owner_name?.toLowerCase().includes(search) ||
-        biz.owner_email?.toLowerCase().includes(search) ||
-        collaboratorText.includes(search) ||
-        new Date(biz.created_at).toLocaleDateString().toLowerCase().includes(search)
-    );
-});
-        setFilteredBusinesses(filtered);
-        if (searchTerm) {
-            const newTotalPages = Math.ceil(filtered.length / itemsPerPage);
-            if (currentPage > newTotalPages && newTotalPages > 0) setCurrentPage(1);
-        }
+            return (
+                biz.business_name?.toLowerCase().includes(search) ||
+                biz.owner_name?.toLowerCase().includes(search) ||
+                biz.owner_email?.toLowerCase().includes(search) ||
+                collaboratorText.includes(search) ||
+                new Date(biz.created_at).toLocaleDateString().toLowerCase().includes(search)
+            );
+        });
     }, [searchTerm, businesses]);
 
     useEffect(() => {
-    window.scrollTo({
-        top: 0,
-        behavior: "smooth"
-    });
-}, [currentPage]);
+        window.scrollTo({
+            top: 0,
+            behavior: "smooth"
+        });
+    }, [currentPage]);
 
     const totalItems = filteredBusinesses.length;
     const totalPages = Math.ceil(totalItems / itemsPerPage);
@@ -138,7 +124,7 @@ const BusinessOverview = ({ onToast }) => {
 
     const confirmRemoveParticipant = async () => {
         if (!pendingRemoval) return;
-        
+
         const { businessId, userId } = pendingRemoval;
 
         try {
@@ -146,19 +132,9 @@ const BusinessOverview = ({ onToast }) => {
                 headers: { Authorization: `Bearer ${token}` },
             });
             onToast(t("participant_removed_successfully") || "Participant removed successfully", "success");
-            
-            // Update local state to reflect removal
-            const updatedBusinesses = businesses.map(biz => {
-                if (biz._id === businessId) {
-                    return {
-                        ...biz,
-                        collaborators: (biz.collaborators || []).filter(c => c.id !== userId)
-                    };
-                }
-                return biz;
-            });
-            setBusinesses(updatedBusinesses);
-            
+
+            queryClient.invalidateQueries({ queryKey: ["adminBusinesses"] });
+
             // Also update selectedBizForCollab if modal is open
             if (selectedBizForCollab && selectedBizForCollab._id === businessId) {
                 setSelectedBizForCollab({
@@ -215,13 +191,15 @@ const BusinessOverview = ({ onToast }) => {
                                     <div className="admin-cell-primary" style={{ fontSize: "0.85rem" }}>{c.name}</div>
                                     <div className="admin-cell-secondary">{c.email}</div>
                                 </div>
-                                <button
-                                    className="admin-collab-remove-btn inline"
-                                    onClick={() => handleRemoveParticipant(row._id, c.id, c.name)}
-                                    title={t("remove_participant") || "Remove Participant"}
-                                >
-                                    <Trash2 size={12} />
-                                </button>
+                                {c.role_name !== "super_admin" && c.role_name !== "company_admin" && (
+                                    <button
+                                        className="admin-collab-remove-btn inline"
+                                        onClick={() => handleRemoveParticipant(row._id, c.id, c.name)}
+                                        title={t("remove_participant") || "Remove Participant"}
+                                    >
+                                        <Trash2 size={12} />
+                                    </button>
+                                )}
                             </div>
                         ))}
                         {hasMore && (
@@ -240,28 +218,28 @@ const BusinessOverview = ({ onToast }) => {
             key: "status",
             label: t("status"),
             render: (_, row) => {
-                const s = row.status?.toLowerCase();
-                const isArchived = s === "archived" || (row.access_mode || "").toLowerCase() === "archived";
+                const s = (row.status || "").toLowerCase();
+                const accessMode = (row.access_mode || "").toLowerCase();
                 const isDeleted = s === "deleted";
-                const isActiveState = s === "launched" || s === "lauched" || s === "prioritizing" || s === "prioritization";
+                const isArchived = s === "archived" || accessMode === "archived" || accessMode === "hidden";
 
-                let label = getStatusLabel(row.status);
-                let statusColor = "#16a34a"; // Default active green
-                let statusBg = "#dcfce7";
+                let label, statusColor, statusBg;
 
                 if (isDeleted) {
                     label = t("deleted") || "Deleted";
                     statusColor = "#dc2626";
                     statusBg = "#fee2e2";
                 } else if (isArchived) {
-                    label = t("archived");
+                    label = t("archived") || "Archived";
                     statusColor = "#ecaa1cff";
                     statusBg = "#FCF9C3";
-                } else if (isActiveState) {
+                } else {
+                    // Everything else (launched, prioritized, kick_start, draft, etc.) → Active
                     label = t("active") || "Active";
                     statusColor = "#16a34a";
                     statusBg = "#dcfce7";
                 }
+
                 return (
                     <span style={{
                         padding: "4px 8px",
@@ -278,6 +256,7 @@ const BusinessOverview = ({ onToast }) => {
                 );
             },
         },
+
         {
             key: "created_at",
             label: t("created"),
@@ -294,9 +273,9 @@ const BusinessOverview = ({ onToast }) => {
                 title={t("business_overview") || "Business Overview"}
                 count={filteredBusinesses.length}
                 countLabel={
-                  filteredBusinesses.length === 1
-                  ? t("business") || "Business"
-                  : t("businesses") || "Businesses"
+                    filteredBusinesses.length === 1
+                        ? t("business") || "Business"
+                        : t("businesses") || "Businesses"
                 }
                 columns={columns}
                 data={paginatedBusinesses}
@@ -339,13 +318,15 @@ const BusinessOverview = ({ onToast }) => {
                                         <span className="admin-collab-name">{collab.name}</span>
                                         <span className="admin-collab-email">{collab.email}</span>
                                     </div>
-                                    <button 
-                                        className="admin-collab-remove-btn"
-                                        onClick={() => handleRemoveParticipant(selectedBizForCollab._id, collab.id, collab.name)}
-                                        title={t("remove_participant") || "Remove Participant"}
-                                    >
-                                        <Trash2 size={16} />
-                                    </button>
+                                    {collab.role_name !== "super_admin" && collab.role_name !== "company_admin" && (
+                                        <button
+                                            className="admin-collab-remove-btn"
+                                            onClick={() => handleRemoveParticipant(selectedBizForCollab._id, collab.id, collab.name)}
+                                            title={t("remove_participant") || "Remove Participant"}
+                                        >
+                                            <Trash2 size={16} />
+                                        </button>
+                                    )}
                                 </div>
                             ))}
                         </div>
@@ -374,8 +355,16 @@ const BusinessOverview = ({ onToast }) => {
                             </button>
                         </div>
                         <div className="admin-modal-body">
-                            <p style={{ margin: 0, color: '#4b5563', lineHeight: '1.5' }}>
+                            <p className="mb-2" style={{ color: '#4b5563', lineHeight: '1.5' }}>
                                 {t("confirm_remove_participant_prefix") || "Are you sure you want to remove participant"} <strong>{pendingRemoval?.userName || "this participant"}</strong>?
+                            </p>
+                            <p style={{ margin: 0, color: '#6b7280', fontSize: '0.9rem', lineHeight: '1.4', fontStyle: 'italic' }}>
+                                <AlertCircle size={14} style={{ marginRight: '6px', color: '#f59e0b', verticalAlign: 'text-bottom' }} />
+                                {t("reassign_ownership_notice") || "Any projects currently owned by this participant will be automatically reassigned to the business owner."}
+                            </p>
+                            <p className="mt-2" style={{ margin: 0, color: '#6b7280', fontSize: '0.9rem', lineHeight: '1.4', fontStyle: 'italic' }}>
+                                <AlertCircle size={14} style={{ marginRight: '6px', color: '#f59e0b', verticalAlign: 'text-bottom' }} />
+                                {t("revoke_access_notice") || "Administrative access (reranking/project edit) will also be revoked for this participant in this business."}
                             </p>
                         </div>
                         <div className="admin-modal-footer" style={{ gap: '10px' }}>

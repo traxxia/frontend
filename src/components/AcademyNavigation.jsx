@@ -4,6 +4,8 @@ import { academyStructure, findCategoryById } from '../utils/academyIndex';
 import * as LucideIcons from 'lucide-react';
 import '../styles/academy.css';
 
+import { useAuthStore } from '../store/authStore';
+
 const AcademyNavigation = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
     const { category: activeCategory, article: activeArticle } = useParams();
     const navigate = useNavigate();
@@ -13,7 +15,7 @@ const AcademyNavigation = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
     const navRef = useRef(null);
 
     useEffect(() => {
-        const storedRole = sessionStorage.getItem('userRole');
+        const storedRole = useAuthStore.getState().userRole;
         setUserRole(storedRole || '');
     }, []);
 
@@ -77,7 +79,7 @@ const AcademyNavigation = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
 
     const renderCategoryIcon = (iconName) => {
         const IconComponent = LucideIcons[iconName];
-        return IconComponent ? <IconComponent size={20} /> : <LucideIcons.BookOpen size={20} />;
+        return IconComponent ? <IconComponent size={16} /> : <LucideIcons.BookOpen size={16} />;
     };
 
     return (
@@ -142,9 +144,9 @@ const AcademyNavigation = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
                                                     className="article-link"
                                                     onClick={() => handleArticleClick(category.id, article.id)}
                                                 >
-                                                    {article.title}
+                                                    <span className="article-title-text">{article.title}</span>
                                                     {isArticleActive && (
-                                                        <LucideIcons.ChevronRight size={14} className="active-indicator" />
+                                                        <LucideIcons.ChevronRight size={14} className="active-indicator flex-shrink-0 ml-2" />
                                                     )}
                                                 </button>
                                             </li>

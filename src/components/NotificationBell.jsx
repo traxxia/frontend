@@ -1,64 +1,53 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { Dropdown } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 import { Bell, BellOff, X } from 'lucide-react';
 import { useTranslation } from '../hooks/useTranslation';
 
+import { useAuthStore, useBusinessStore, useNotificationStore } from '../store';
+
 const NotificationBell = () => {
-  const [notifications, setNotifications] = useState([]);
-  const [unreadCount, setUnreadCount] = useState(0);
+  const { 
+    notifications, 
+    unreadCount, 
+    fetchNotifications, 
+    markAsRead, 
+    deleteNotification, 
+    markAllAsRead 
+  } = useNotificationStore();
+  
+  const { setSelectedBusinessId } = useBusinessStore();
   const REACT_APP_BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
   const navigate = useNavigate();
   const { t } = useTranslation();
 
   useEffect(() => {
     fetchNotifications();
-  }, []);
-
-  const fetchNotifications = async () => {
-    try {
-      const token = sessionStorage.getItem('token');
-      if (!token) return;
-      const res = await fetch(`${REACT_APP_BACKEND_URL}/api/notifications`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setNotifications(data.notifications || []);
-        setUnreadCount(data.unread_count || 0);
-      }
-    } catch (err) {
-      console.error('Failed to fetch notifications', err);
-    }
-  };
+  }, [fetchNotifications]);
 
   const handleNotificationClick = async (notif) => {
     console.log("Notification clicked:", notif);
     
     // 1. Mark as read in the background asynchronously, don't block navigation
     if (!notif.is_read) {
-      const token = sessionStorage.getItem('token');
-      fetch(`${REACT_APP_BACKEND_URL}/api/notifications/${notif._id}/read`, {
-        method: 'PUT',
-        headers: { 'Authorization': `Bearer ${token}` }
-      }).catch(err => console.error('Error marking as read', err));
-
-      setNotifications(prev => prev.map(n => n._id === notif._id ? { ...n, is_read: true } : n));
-      setUnreadCount(prev => Math.max(0, prev - 1));
+      markAsRead(notif._id);
     }
 
     try {
-      const isStaleProject = notif.type === 'stale_bet' || notif.type === 'stale_project' || notif.type === 'review_reminder' || 
+      const isStaleProject = notif.type === 'stale_bet' || notif.type === 'stale_project' || notif.type === 'review_reminder' || notif.type === 'review-reminder' || 
                              (notif.title && (notif.title.toLowerCase().includes('stale') || notif.title.toLowerCase().includes('atrasada') || notif.title.toLowerCase().includes('reminder')));
+
+      const isRankingNotif = notif.type === 'admin_ranked_projects' || notif.type === 'collaborator_ranked_projects' || notif.type === 'ranking_status_change' || notif.type === 'project_ranking' || notif.type === 'time_to_rank_projects' ||
+                             (notif.title && (notif.title.toLowerCase().includes('rank')));
 
       console.log("Is stale project?", isStaleProject);
 
       // Extract explicit business ID if available to set the correct business context
-      const targetBusinessId = notif.business_id || notif.metadata?.business_id || notif.project?.business_id || notif.reference_id;
+      const targetBusinessId = notif.business_id || notif.action_data?.business_id || notif.metadata?.business_id || notif.project?.business_id || notif.reference_id;
       
       if (targetBusinessId) {
          console.log("Setting active business:", targetBusinessId);
-         sessionStorage.setItem('activeBusinessId', targetBusinessId);
+         setSelectedBusinessId(targetBusinessId);
       } else if (isStaleProject && notif.message) {
          // Attempt to extract the business name from the message to aid the user
          const nameMatch = notif.message.match(/under\s+"([^"]+)"/i) || notif.message.match(/project.*under\s+([^ ]+)/i);
@@ -67,7 +56,7 @@ const NotificationBell = () => {
              console.log("Extracted business name from message:", businessName);
              try {
                 // We must map this name to a business ID because the backend payload lacks it
-                const token = sessionStorage.getItem('token');
+                const token = useAuthStore.getState().token;
                 const res = await fetch(`${REACT_APP_BACKEND_URL}/api/businesses`, {
                   headers: { 'Authorization': `Bearer ${token}` }
                 });
@@ -79,12 +68,12 @@ const NotificationBell = () => {
                    
                    const found = allBusinesses.find(b => b.business_name === businessName);
                    if (found) {
-                      const foundId = found._id || found.id;
-                      console.log("Matched business name to ID:", foundId);
-                      sessionStorage.setItem('activeBusinessId', foundId);
-                   } else {
-                      console.log("Could not find a business matching the name:", businessName);
-                   }
+                       const foundId = found._id || found.id;
+                       console.log("Matched business name to ID:", foundId);
+                       setSelectedBusinessId(foundId);
+                    } else {
+                       console.log("Could not find a business matching the name:", businessName);
+                    }
                 }
              } catch (e) {
                 console.error("Failed to resolve business name to ID", e);
@@ -96,10 +85,10 @@ const NotificationBell = () => {
          try {
            const url = new URL(notif.action_link, window.location.origin);
            const bId = url.searchParams.get('business_id') || url.searchParams.get('businessId');
-           if (bId) {
-              console.log("Setting active business from URL:", bId);
-              sessionStorage.setItem('activeBusinessId', bId);
-           }
+            if (bId) {
+               console.log("Setting active business from URL:", bId);
+               setSelectedBusinessId(bId);
+            }
          } catch (e) {
            console.error("URL parsing error:", e);
          }
@@ -114,6 +103,11 @@ const NotificationBell = () => {
            navPath = '/businesspage';
         }
         navOptions = { state: { initialTab: 'projects' } };
+      } else if (isRankingNotif) {
+        if (!navPath.includes('/businesspage')) {
+           navPath = '/businesspage';
+        }
+        navOptions = { state: { initialTab: 'projects', viewMode: 'ranking' } };
       }
 
       // If action link explicitly requests a tab via query params, use it
@@ -136,37 +130,12 @@ const NotificationBell = () => {
 
   const handleDeleteNotification = async (e, notifId) => {
     e.stopPropagation();
-    try {
-      const token = sessionStorage.getItem('token');
-      const res = await fetch(`${REACT_APP_BACKEND_URL}/api/notifications/${notifId}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      if (res.ok) {
-        const notif = notifications.find(n => n._id === notifId);
-        setNotifications(prev => prev.filter(n => n._id !== notifId));
-        if (notif && !notif.is_read) {
-          setUnreadCount(prev => Math.max(0, prev - 1));
-        }
-      }
-    } catch (err) {
-      console.error('Error deleting notification', err);
-    }
+    deleteNotification(notifId);
   };
 
   const handleMarkAllRead = async (e) => {
     if (e) e.stopPropagation();
-    try {
-      const token = sessionStorage.getItem('token');
-      await fetch(`${REACT_APP_BACKEND_URL}/api/notifications/read-all`, {
-        method: 'PUT',
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
-      setUnreadCount(0);
-    } catch (err) {
-      console.error('Error marking all as read', err);
-    }
+    markAllAsRead();
   };
 
   return (
@@ -203,13 +172,14 @@ const NotificationBell = () => {
             notifications.map((notif) => (
               <Dropdown.Item
                 key={notif._id}
-                className={`d-flex flex-column align-items-start py-2 px-3 border-bottom text-wrap ${!notif.is_read ? 'bg-light' : ''}`}
+                className={`d-flex flex-column align-items-start py-2 px-3 border-bottom text-wrap ${!notif.is_read ? 'bg-white' : 'bg-light'}`}
+                style={{ transition: 'all 0.2s ease', opacity: notif.is_read ? 0.85 : 1 }}
                 onClick={() => handleNotificationClick(notif)}
               >
                 <div className="d-flex justify-content-between align-items-start w-100 mb-1">
-                  <strong style={{ fontSize: '0.85rem', paddingRight: '20px' }}>{notif.title}</strong>
+                  <strong style={{ fontSize: '0.85rem', paddingRight: '20px', fontWeight: !notif.is_read ? '700' : '500', color: !notif.is_read ? '#212529' : '#6c757d' }}>{notif.title}</strong>
                   <div className="d-flex align-items-center">
-                    {!notif.is_read && <span className="badge bg-primary rounded-circle me-2" style={{ width: '8px', height: '8px', padding: 0 }}></span>}
+                    {!notif.is_read && <span className="badge bg-primary rounded-pill me-2 px-2 py-1" style={{ fontSize: '0.65rem' }}>New</span>}
                     <div
                       className="text-muted opacity-50 pe-auto"
                       style={{ padding: '4px', margin: '-4px', cursor: 'pointer' }}
@@ -221,7 +191,7 @@ const NotificationBell = () => {
                     </div>
                   </div>
                 </div>
-                <small className="text-muted" style={{ fontSize: '0.75rem', lineHeight: '1.2', whiteSpace: 'normal', paddingRight: '15px' }}>{notif.message}</small>
+                <small className={!notif.is_read ? "text-dark" : "text-muted"} style={{ fontSize: '0.75rem', lineHeight: '1.2', whiteSpace: 'normal', paddingRight: '15px' }}>{notif.message}</small>
                 <small className="text-muted mt-1" style={{ fontSize: '0.65rem' }}>{new Date(notif.created_at).toLocaleDateString()}</small>
               </Dropdown.Item>
             ))

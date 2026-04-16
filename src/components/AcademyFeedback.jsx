@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { useTranslation } from '../hooks/useTranslation';
 import '../styles/academy.css';
 
+import { useAuthStore } from '../store/authStore';
+
 const AcademyFeedback = ({ articleId }) => {
     const [submitted, setSubmitted] = useState(false);
     const [feedbackType, setFeedbackType] = useState(null); // 'yes' or 'no'
@@ -23,13 +25,13 @@ const AcademyFeedback = ({ articleId }) => {
             feedback: text
         };
         try {
-            // App stores ID in sessionStorage as "userId" during login
-            const storedUserId = sessionStorage.getItem('userId');
+            // Get user ID from Zustand auth store
+            const storedUserId = useAuthStore.getState().userId;
             if (storedUserId) {
                 payload.userId = storedUserId;
             }
         } catch (e) {
-            console.warn('Could not read userId from sessionStorage', e);
+            console.warn('Could not read userId from authStore', e);
         }
 
         try {

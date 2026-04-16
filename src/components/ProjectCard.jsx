@@ -1,12 +1,9 @@
 import React from "react";
 import {
-  Pencil,
   Trash2,
-  Users,
   Edit2,
   Eye,
   AlertTriangle,
-  TrendingUp,
   Target,
   Zap,
   CheckCircle,
@@ -30,6 +27,7 @@ const getStrategicSignal = (project) => {
   const theme = project.strategic_theme || "None";
   return { impact, theme };
 };
+
 
 const ProjectCard = ({
   project,
@@ -60,7 +58,6 @@ const ProjectCard = ({
 }) => {
   const { t } = useTranslation();
 
-  const { impact, theme } = getStrategicSignal(project);
 
   // Determine if user can edit this project
   const userCanEdit = canEditProject ? canEditProject(project) : true;
@@ -68,91 +65,103 @@ const ProjectCard = ({
   const statusLower = project.status?.toLowerCase();
   const isTerminal = ["completed", "scaled", "killed"].includes(statusLower);
 
-  const getStatusIcon = (status) => {
-    switch (status) {
-      case 'Active': return <PlayCircle size={14} color="green" />;
-      case 'At Risk': return <AlertTriangle size={14} color="red" />;
-      case 'Paused': return <PauseCircle size={14} color="orange" />;
-      case 'Completed': return <CheckCircle size={14} color="#2563eb" />;
-      case 'Killed': return <XCircle size={14} color="grey" />;
-      case 'Scaled': return <CheckCircle size={14} color="purple" />;
-      default: return <Edit2 size={14} color="grey" />; // Draft
-    }
-  };
+  const statusClass = (() => {
+    const status = project.status?.toLowerCase()?.trim();
 
-  const getThemeIcon = (themeName) => {
-    switch (themeName) {
-      case "Growth": return <Rocket size={14} />;
-      case "Efficiency": return <Bolt size={14} />;
-      case "Innovation": return <Lightbulb size={14} />;
-      case "CustomerExperience": return <Heart size={14} />;
-      case "RiskMitigation": return <Shield size={14} />;
-      case "Platform": return <Boxes size={14} />;
-      default: return <Target size={14} />;
+    const statusMap = {
+      "draft": "draft",
+      "active": "active",
+      "at risk": "at-risk",
+      "paused": "paused",
+      "killed": "killed",
+      "completed": "completed",
+      "scaled": "scaled"
+    };
+
+    if (status && statusMap[status]) {
+      return statusMap[status];
     }
-  };
+
+    if (!status && project.launch_status === "launched") {
+      return "active";
+    }
+
+    // Default
+    return "draft";
+  })();
 
   return (
-    <div className={`project-card ${project.status === "Killed" ? "killed" : ""} ${(project.status?.toLowerCase() === "launched" ? "draft" : (project.status?.toLowerCase().replace(" ", "-") || "draft"))}-border`}>
-      <div className="project-header">
-        <div className="project-header-content">
-          {isAdmin && !isArchived && getUserLimits().project && 
-            !["completed", "scaled", "killed"].includes(project.status?.toLowerCase()) && (
-            <input
-              type="checkbox"
-              checked={isSelected}
-              onChange={() => onToggleSelection(project._id)}
-              onClick={(e) => e.stopPropagation()}
-              style={{
-                width: '25px',
-                height: '20px',
-                cursor: 'pointer',
-                accentColor: '#9333ea',
-                flexShrink: 0
-              }}
-            />
-          )}
+    <div className={`project-card-premium ${statusClass}-border`}>
+      {/* Header: Selection, Rank, Title, Menu */}
+      <div className="card-header-premium">
+        <div className="card-title-container-premium">
+          {isAdmin && !isArchived && getUserLimits().project &&
+            !["completed", "scaled", "killed"].includes(project.status?.toLowerCase()) &&
+            project.launch_status !== 'launched' && (
+              <input
+                type="checkbox"
+                checked={isSelected}
+                onChange={() => onToggleSelection(project._id)}
+                onClick={(e) => e.stopPropagation()}
+                style={{
+                  width: '18px',
+                  height: '18px',
+                  cursor: 'pointer',
+                  accentColor: '#9333ea',
+                  flexShrink: 0
+                }}
+              />
+            )}
 
-          {rankMap && rankMap[String(project._id)] !== null && rankMap[String(project._id)] !== undefined && !isViewer && (
-            <div className="project-rank-badge">
-              Rank {rankMap[String(project._id)]}
-            </div>
-          )}
+          {(() => {
+            const displayRank = rankMap?.[String(project?._id)] ?? project.rank ?? project.ai_rank;
+            if (displayRank === null || displayRank === undefined || isViewer) return null;
+            return (
+              <div className="card-rank-badge-premium">
+                #{displayRank}
+              </div>
+            );
+          })()}
 
-          <h3 className="project-title" style={{ marginBottom: 0 }}>
+          <h3 className="card-title-premium" title={project.project_name}>
             {project.project_name}
-            {userCanReview && project.launch_status === 'launched' && ((project.is_stale || (project.next_review_date && (new Date(project.next_review_date).setHours(0, 0, 0, 0) < new Date().setHours(0, 0, 0, 0)))) ? (
-              <span
-                className="review-badge stale"
-                onClick={(e) => { e.stopPropagation(); onPerformReview(project); }}
-              >
-                <AlertTriangle size={12} /> {t("Stale")}
-              </span>
-            ) : (
-              project.next_review_date && (
-                (() => {
-                  const nextDate = new Date(project.next_review_date);
-                  nextDate.setHours(0, 0, 0, 0);
-                  const today = new Date();
-                  today.setHours(0, 0, 0, 0);
-                  const diffDays = Math.round((nextDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-
-                  if (diffDays >= 0 && diffDays <= 3) {
-                    return (
-                      <span
-                        className="review-badge due"
-                        onClick={(e) => { e.stopPropagation(); onPerformReview(project); }}
-                      >
-                        <Clock size={12} /> {t("Pending_Review") || "Pending Review"}
-                      </span>
-                    );
-                  }
-                  return null;
-                })()
-              )
-            ))}
           </h3>
+
+          {/* Review Badges */}
+          {userCanReview && project.launch_status === 'launched' && ((project.is_stale || (project.next_review_date && (new Date(project.next_review_date).setHours(0, 0, 0, 0) < new Date().setHours(0, 0, 0, 0)))) ? (
+            <span
+              className="footer-status-premium"
+              style={{ background: '#fef2f2', color: '#dc2626', cursor: 'pointer', fontSize: '11px' }}
+              onClick={(e) => { e.stopPropagation(); onPerformReview(project); }}
+            >
+              <AlertTriangle size={10} /> {t("Stale")}
+            </span>
+          ) : (
+            project.next_review_date && (
+              (() => {
+                const nextDate = new Date(project.next_review_date);
+                nextDate.setHours(0, 0, 0, 0);
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                const diffDays = Math.round((nextDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+
+                if (diffDays >= 0 && diffDays <= 3) {
+                  return (
+                    <span
+                      className="footer-status-premium"
+                      style={{ background: '#fffbeb', color: '#d97706', cursor: 'pointer', fontSize: '11px' }}
+                      onClick={(e) => { e.stopPropagation(); onPerformReview(project); }}
+                    >
+                      <Clock size={10} /> {t("Due")}
+                    </span>
+                  );
+                }
+                return null;
+              })()
+            )
+          ))}
         </div>
+
         <div className="project-menu-container">
           <button
             className="menu-button"
@@ -172,12 +181,12 @@ const ProjectCard = ({
               ) : (
                 <div onClick={() => onEdit(project)} className="menu-item"><Edit2 size={14} /> {t("edit")}</div>
               )}
-              {!isViewer && !isArchived && isAdmin && 
-                (!projectCreationLocked || project.status?.toLowerCase() === "draft" || !project.status) && 
+              {!isViewer && !isArchived && isAdmin &&
+                (!projectCreationLocked || project.status?.toLowerCase() === "draft" || !project.status) &&
                 !isTerminal && (
-                <div onClick={() => onDelete(project._id)} className="menu-item delete"><Trash2 size={14} /> {t("delete")}</div>
-              )}
-              {userCanReview && !isArchived && !['completed', 'scaled'].includes(project.status?.toLowerCase()) && (
+                  <div onClick={() => onDelete(project._id)} className="menu-item delete"><Trash2 size={14} /> {t("delete")}</div>
+                )}
+              {userCanReview && !isArchived && !['completed', 'scaled', 'killed'].includes(project.status?.toLowerCase()) && (
                 <>
                   <div onClick={() => onPerformReview(project)} className="menu-item"><CheckCircle size={14} /> {t("Perform_Review")}</div>
                   <div onClick={() => onAdhocUpdate(project)} className="menu-item"><Edit2 size={14} /> {t("Ad_Hoc_Update")}</div>
@@ -188,53 +197,61 @@ const ProjectCard = ({
         </div>
       </div>
 
-      <p className="project-last-edited" style={{ marginBottom: "8px", fontSize: "12px" }}>
-        {t("Project_Description")}: <span className="project-last-edited-name" style={{ color: "#475569" }}>{project.description ? project.description : "None"}</span>
+      {/* Description */}
+      <p className="card-description-premium">
+        {project.description ? project.description : t("No description provided.")}
       </p>
 
-      {/* Grid for Impact, Effort, Risk */}
-      <div className="card-grid-details">
-        <div>
-          <span className="details-label">{t("Impact")}</span>
-          <span className={`property-badge impact-${project.impact?.toLowerCase() || 'low'}`}>
-            <Zap size={10} /> {project.impact ? project.impact.charAt(0).toUpperCase() + project.impact.slice(1).toLowerCase() : 'None'}
-          </span>
+      {/* Attributes Grid */}
+      <div className="attribute-row-premium">
+        <div className="attribute-item-premium">
+          <span className="attribute-label-premium">{t("Impact")}</span>
+          <div className="attribute-value-premium">
+            <Zap size={12} />
+            <span className={`badge-minimal impact-${project.impact?.toLowerCase() || 'low'}-min`}>
+              {project.impact ? t(project.impact) : t("None")}
+            </span>
+          </div>
         </div>
-        <div>
-          <span className="details-label">{t("Effort")}</span>
-          <span className={`property-badge ${project.effort ? `effort-${project.effort.toLowerCase()}` : 'property-badge-none'}`}>
-            <Clock size={10} /> {project.effort ? project.effort.charAt(0).toUpperCase() + project.effort.slice(1).toLowerCase() : 'N/A'}
-          </span>
+        <div className="attribute-item-premium">
+          <span className="attribute-label-premium">{t("Effort")}</span>
+          <div className="attribute-value-premium">
+            <Clock size={12} />
+            <span className={`badge-minimal effort-${project.effort?.toLowerCase() || 'medium'}-min`}>
+              {project.effort ? t(project.effort) : t("N/A")}
+            </span>
+          </div>
         </div>
-        <div>
-          <span className="details-label">{t("Risk")}</span>
-          <span className={`property-badge ${project.risk ? `risk-${project.risk.toLowerCase()}` : 'property-badge-none'}`}>
-            <AlertTriangle size={10} /> {project.risk ? project.risk.charAt(0).toUpperCase() + project.risk.slice(1).toLowerCase() : 'N/A'}
-          </span>
+        <div className="attribute-item-premium">
+          <span className="attribute-label-premium">{t("Risk")}</span>
+          <div className="attribute-value-premium">
+            <AlertTriangle size={12} />
+            <span className={`badge-minimal risk-${project.risk?.toLowerCase() || 'low'}-min`}>
+              {project.risk ? t(project.risk) : t("N/A")}
+            </span>
+          </div>
         </div>
-        <div>
-          <span className="details-label">{t("Owner")}</span>
-          <span className="project-last-edited-name" style={{ fontSize: "12px", fontWeight: "600" }}>
-            {project.accountable_owner || project.created_by || t("Unassigned")}
-          </span>
+        <div className="attribute-item-premium">
+          <span className="attribute-label-premium">{t("Owner")}</span>
+          <div className="attribute-value-premium">
+            <Target size={12} />
+            <span style={{ fontSize: '12px', fontWeight: '600' }}>
+              {project.accountable_owner || project.created_by || t("Unassigned")}
+            </span>
+          </div>
         </div>
       </div>
 
-      {/* Strategic Decision / Bet */}
-      {project.strategic_decision && (
-        <div className="strategic-bet-container">
-          <span className="strategic-bet-label">{t("Strategic Bet")}</span>
-          <div className="strategic-bet-text">"{project.strategic_decision}"</div>
-        </div>
-      )}
 
-      {/* Footer Info */}
-      <div style={{ marginTop: "auto", paddingTop: "12px", borderTop: "1px solid #f3f4f6", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <span className="status-badge">
+
+      {/* Footer: Status and Date */}
+      <div className="card-footer-premium">
+        <span className={`status-badge status-${(project.status || "Draft").toLowerCase().replace(" ", "-")}`} style={{ fontSize: '11px' }}>
           {project.status && t(project.status) !== project.status ? t(project.status) : (project.status || t("Draft"))}
         </span>
-        <div className="project-card-footer" style={{ borderTop: "none", fontSize: "10px", color: "#94a3b8" }}>
-          {t("Created")} {new Date(project.created_at).toLocaleDateString()}
+        <div className="footer-date-premium">
+          <Clock size={10} />
+          {new Date(project.created_at).toLocaleDateString()}
         </div>
       </div>
     </div>

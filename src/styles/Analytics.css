@@ -1423,7 +1423,7 @@
    height: 120px;
    filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1));
    position: relative;
-   right: 45px;
+   right: 0px;
    bottom: 45px;
  }
 
@@ -2743,11 +2743,6 @@
    min-width: 120px;
  }
 
- .ch-cell-data:hover,
- .ch-cell-data.selected {
-   border: 2px solid #2563eb;
- }
-
  .ch-channel-name,
  .ch-product-name {
    font-size: 14px;
@@ -2772,28 +2767,7 @@
    gap: 4px;
  }
 
- .ch-cell-value {
-   font-size: 16px;
-   font-weight: 700;
-   color: #1f2937;
-   text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8);
- }
-
- .ch-cell-volume {
-   font-size: 10px;
-   color: #000;
-   font-weight: 500;
- }
-
  @media (max-width: 1024px) {
-   .ch-heatmap-wrapper {
-     padding: 16px;
-   }
-
-   .ch-cell {
-     min-width: 100px;
-     min-height: 70px;
-   }
 
    .ch-product-header {
      width: 120px;
@@ -2820,14 +2794,6 @@
      width: 100px;
    }
 
-   .ch-cell-value {
-     font-size: 14px;
-   }
-
-   .ch-cell-volume {
-     font-size: 9px;
-   }
-
    .ch-channel-name,
    .ch-product-name {
      font-size: 12px;
@@ -2840,14 +2806,6 @@
  }
 
  @media (max-width: 480px) {
-   .ch-cell {
-     min-width: 70px;
-     min-height: 50px;
-   }
-
-   .ch-cell-value {
-     font-size: 12px;
-   }
 
    .ch-channel-name,
    .ch-product-name {
@@ -2860,29 +2818,6 @@
    justify-content: space-between;
    align-items: center;
    margin-bottom: 0px;
- }
-
- .ch-legend-gradient {
-   display: flex;
-   flex-direction: column;
-   align-items: center;
-   gap: 8px;
- }
-
- .ch-gradient-bar {
-   width: 120px;
-   height: 12px;
-   border-radius: 6px;
-   box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
- }
-
- .ch-gradient-labels {
-   display: flex;
-   justify-content: space-between;
-   width: 120px;
-   font-size: 12px;
-   color: #6b7280;
-   font-weight: 500;
  }
 
  @media (max-width: 768px) {
@@ -2961,18 +2896,6 @@
    height: 8px;
    border-radius: 50%;
    flex-shrink: 0;
- }
-
- .ln-zone-card.detractors .ln-zone-indicator {
-   background-color: #ef4444;
- }
-
- .ln-zone-card.passives .ln-zone-indicator {
-   background-color: #f59e0b;
- }
-
- .ln-zone-card.promoters .ln-zone-indicator {
-   background-color: #10b981;
  }
 
  .ln-zone-content h4 {
@@ -3152,25 +3075,10 @@
    }
  }
 
- .ch-heatmap-scroll {
-   overflow-x: auto;
-   width: 100%;
-   -webkit-overflow-scrolling: touch;
- }
-
  @media (max-width: 480px) {
-   .ch-heatmap {
-     min-width: 500px;
-   }
 
    .ch-heatmap-wrapper {
      width: fit-content;
-   }
-
-   .ch-cell {
-     min-width: 60px;
-     min-height: 40px;
-     font-size: 12px;
    }
 
    .ch-cell-header,
@@ -3185,12 +3093,6 @@
    .ch-product-total,
    .ch-channel-total {
      font-size: 11px;
-   }
-
-   .ch-tooltip {
-     font-size: 10px;
-     padding: 6px;
-     max-width: 200px;
    }
 
    .ch-tooltip-header {
@@ -4023,13 +3925,6 @@
  }
 
  @keyframes spin {
-   from {
-     transform: rotate(0deg);
-   }
-
-   to {
-     transform: rotate(360deg);
-   }
  }
 
  .competitive-advantage-loading h3 {
@@ -4612,18 +4507,6 @@
    }
  }
 
- .header-content h1 {
-   margin: 0;
-   font-size: 1.5rem;
-   font-weight: 700;
- }
-
- .header-content p {
-   margin: 0.25rem 0 0 0;
-   opacity: 0.9;
-   font-size: 0.9rem;
- }
-
  /* Loading State */
  .full-swot-loading {
    display: flex;
@@ -4643,13 +4526,6 @@
  }
 
  @keyframes spin {
-   from {
-     transform: rotate(0deg);
-   }
-
-   to {
-     transform: rotate(360deg);
-   }
  }
 
  .full-swot-loading h3 {
@@ -4686,22 +4562,6 @@
  .full-swot-error p {
    margin: 0 0 1.5rem 0;
    color: #6b7280;
- }
-
- .retry-btn {
-   background: #ef4444;
-   color: white;
-   border: none;
-   padding: 0.75rem 1.5rem;
-   border-radius: 8px;
-   font-weight: 600;
-   cursor: pointer;
-   transition: all 0.2s ease;
- }
-
- .retry-btn:hover {
-   background: #dc2626;
-   transform: translateY(-1px);
  }
 
  /* Empty State */
@@ -4835,15 +4695,6 @@
    flex-shrink: 0;
  }
 
- .score-badge {
-   padding: 0.25rem 0.5rem;
-   border-radius: 4px;
-   color: white;
-   font-size: 0.75rem;
-   font-weight: 600;
-   white-space: nowrap;
- }
-
  .category-badge {
    padding: 0.25rem 0.5rem;
    border-radius: 4px;
@@ -4951,13 +4802,6 @@
  }
 
  @keyframes spin {
-   from {
-     transform: rotate(0deg);
-   }
-
-   to {
-     transform: rotate(360deg);
-   }
  }
 
  .empty-icon {
@@ -5112,13 +4956,6 @@
  }
 
  @keyframes spin {
-   from {
-     transform: rotate(0deg);
-   }
-
-   to {
-     transform: rotate(360deg);
-   }
  }
 
  /* Loading and Empty States */
@@ -5271,10 +5108,6 @@
 
  .table-value {
    color: #000;
- }
-
- .text-center {
-   text-align: center;
  }
 
  /* Badges and Tags */
@@ -5763,10 +5596,6 @@
 
  /* Responsive Design */
  @media (max-width: 768px) {
-   .phase-tabs-wrapper {
-     flex-direction: column;
-     gap: 8px;
-   }
 
    .data-grid {
      grid-template-columns: 1fr;
@@ -6125,9 +5954,11 @@
 
  .gauge-content {
    position: absolute;
-   top: 60%;
-   transform: translate(-50%, -30%);
+   top: 50%;
+   left: 50%;
+   transform: translate(-50%, -20%);
    text-align: center;
+   width: 100%;
  }
 
  .score-number {
@@ -6814,9 +6645,6 @@
 
  /* Animations */
  @keyframes spin {
-   to {
-     transform: rotate(360deg);
-   }
  }
 
  @keyframes shimmer {
@@ -6995,13 +6823,6 @@
  }
 
  @keyframes spin {
-   from {
-     transform: rotate(0deg);
-   }
-
-   to {
-     transform: rotate(360deg);
-   }
  }
 
  .table-section {
@@ -7702,13 +7523,6 @@
  }
 
  @keyframes spin {
-   from {
-     transform: rotate(0deg);
-   }
-
-   to {
-     transform: rotate(360deg);
-   }
  }
 
  .empty-icon {
@@ -8523,13 +8337,6 @@
  }
 
  @keyframes spin {
-   from {
-     transform: rotate(0deg);
-   }
-
-   to {
-     transform: rotate(360deg);
-   }
  }
 
  /* Error State */
@@ -9096,15 +8903,6 @@
  }
 
  @keyframes fadeInUp {
-   from {
-     opacity: 0;
-     transform: translateY(20px);
-   }
-
-   to {
-     opacity: 1;
-     transform: translateY(0);
-   }
  }
 
  /* Traffic light indicator hover effects */
@@ -9378,13 +9176,6 @@
  }
 
  @keyframes spin {
-   from {
-     transform: rotate(0deg);
-   }
-
-   to {
-     transform: rotate(360deg);
-   }
  }
 
  .loading-state {

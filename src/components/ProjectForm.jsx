@@ -5,6 +5,11 @@ import { TrendingUp, Zap, AlertTriangle, Circle, Diamond, Rocket, Bolt, Lightbul
 import { validateField } from "../utils/validation";
 import "../styles/NewProjectPage.css";
 
+import { useAuthStore } from '../store/authStore';
+
+// Module-level cache to deduplicate requests across re-renders
+const eligibleOwnersCache = new Map();
+
 
 const impactOptions = [
   { value: "High", label: "High - Game changer", icon: <Circle size={14} color="green" fill="green" /> },
@@ -345,39 +350,65 @@ const ProjectForm = ({
   const [eligibleOwners, setEligibleOwners] = useState([]);
 
   useEffect(() => {
-    if (selectedBusinessId) {
+    // Only fetch for New or Edit mode
+    if (selectedBusinessId && mode !== "view") {
+      const cacheKey = `owners-${selectedBusinessId}`;
+
       const fetchOwners = async () => {
-        try {
-          const response = await fetch(`${process.env.REACT_APP_BACKEND_URL || "http://localhost:5000"}/api/businesses/${selectedBusinessId}/eligible-owners`, {
-            headers: {
-              "Authorization": `Bearer ${sessionStorage.getItem("token")}`
-            }
-          });
-          const data = await response.json();
-          if (data.eligible_owners) {
-            setEligibleOwners(data.eligible_owners);
-          }
-        } catch (err) {
-          console.error("Failed to fetch eligible owners:", err);
+        if (eligibleOwnersCache.has(cacheKey)) {
+          const owners = await eligibleOwnersCache.get(cacheKey);
+          setEligibleOwners(owners || []);
+          return;
         }
+
+        const fetchPromise = (async () => {
+          try {
+            const response = await fetch(`${process.env.REACT_APP_BACKEND_URL || "http://localhost:5000"}/api/businesses/${selectedBusinessId}/eligible-owners`, {
+              headers: {
+                "Authorization": `Bearer ${useAuthStore.getState().token}`
+              }
+            });
+            const data = await response.json();
+            return data.eligible_owners || [];
+          } catch (err) {
+            console.error("Failed to fetch eligible owners:", err);
+            return [];
+          }
+        })();
+
+        eligibleOwnersCache.set(cacheKey, fetchPromise);
+        const owners = await fetchPromise;
+        setEligibleOwners(owners);
       };
+
       fetchOwners();
     }
-  }, [selectedBusinessId]);
+  }, [selectedBusinessId, mode]);
 
   useEffect(() => {
     // DEFAULT: Set business owner as default if currently empty
     // This applies to new projects AND existing projects with no owner assigned yet.
     if (!accountableOwnerId && eligibleOwners.length > 0) {
-      const admin =
-        eligibleOwners.find(o => o.is_company_admin) ||
-        eligibleOwners.find(o => o.is_business_owner);
-      if (admin) {
-        setAccountableOwnerId(String(admin._id));
-        setAccountableOwner(admin.name || admin.email);
+      // 1. Try to find a match for the existing name (which might be created_by fallback from useProjectForm)
+      const existingMatch = accountableOwner ? eligibleOwners.find(o => 
+        o.name === accountableOwner || o.email === accountableOwner
+      ) : null;
+
+      if (existingMatch) {
+        setAccountableOwnerId(String(existingMatch._id));
+        setAccountableOwner(existingMatch.name || existingMatch.email);
+      } else {
+        // 2. Fallback: Find first admin or business owner
+        const admin =
+          eligibleOwners.find(o => o.is_company_admin) ||
+          eligibleOwners.find(o => o.is_business_owner);
+        if (admin) {
+          setAccountableOwnerId(String(admin._id));
+          setAccountableOwner(admin.name || admin.email);
+        }
       }
     }
-  }, [accountableOwnerId, eligibleOwners, setAccountableOwnerId, setAccountableOwner]);
+  }, [accountableOwnerId, accountableOwner, eligibleOwners, setAccountableOwnerId, setAccountableOwner]);
 
   // Refs for error fields
   const projectNameRef = useRef(null);

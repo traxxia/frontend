@@ -2,8 +2,6 @@ import React from "react";
 import { Breadcrumb } from "react-bootstrap";
 import { useTranslation } from "../hooks/useTranslation";
 import {
-    TrendingUp,
-    Zap,
     Circle,
     Diamond,
     Rocket,
@@ -13,18 +11,88 @@ import {
     Shield,
     Boxes,
     Clock,
-    DollarSign,
     ArrowLeft,
     Edit3,
-    PlayCircle,
     AlertTriangle,
-    PauseCircle,
     XCircle,
     CheckCircle,
     Edit2,
     Info
 } from "lucide-react";
 import "../styles/ProjectDetails.css";
+
+const getImpactIcon = (impact) => {
+    const normalizedImpact = !impact ? "" : impact.charAt(0).toUpperCase() + impact.slice(1).toLowerCase();
+    switch (normalizedImpact) {
+        case "High":
+            return <Circle size={14} color="green" fill="green" />;
+        case "Medium":
+            return <Circle size={14} color="gold" fill="gold" />;
+        case "Low":
+            return <Circle size={14} color="gray" fill="gray" />;
+        default:
+            return <Circle size={14} color="gray" />;
+    }
+};
+
+const getEffortIcon = (effort) => {
+    const normalizedEffort = !effort ? "" : effort.charAt(0).toUpperCase() + effort.slice(1).toLowerCase();
+    switch (normalizedEffort) {
+        case "Small":
+            return <Diamond size={14} fill="black" color="black" />;
+        case "Medium":
+            return (
+                <div style={{ display: "flex", gap: "2px" }}>
+                    <Diamond size={14} fill="black" color="black" />
+                    <Diamond size={14} fill="black" color="black" />
+                </div>
+            );
+        case "Large":
+            return (
+                <div style={{ display: "flex", gap: "2px" }}>
+                    <Diamond size={14} fill="black" color="black" />
+                    <Diamond size={14} fill="black" color="black" />
+                    <Diamond size={14} fill="black" color="black" />
+                </div>
+            );
+        default:
+            return null;
+    }
+};
+
+const getRiskIcon = (risk) => {
+    const normalizedRisk = !risk ? "" : risk.charAt(0).toUpperCase() + risk.slice(1).toLowerCase();
+    switch (normalizedRisk) {
+        case "Low":
+            return <Circle size={14} color="green" fill="green" />;
+        case "Medium":
+            return <Circle size={14} color="gold" fill="gold" />;
+        case "High":
+            return <Circle size={14} color="red" fill="red" />;
+        default:
+            return <Circle size={14} color="gray" />;
+    }
+};
+
+const getThemeIcon = (theme) => {
+    switch (theme) {
+        case "Growth":
+            return <Rocket size={16} color="#e11d48" />;
+        case "Efficiency":
+            return <Bolt size={16} color="#f59e0b" />;
+        case "Innovation":
+            return <Lightbulb size={16} color="#facc15" />;
+        case "CustomerExperience":
+            return <Heart size={16} color="#dc2626" fill="#dc2626" />;
+        case "RiskMitigation":
+            return <Shield size={16} color="#3b82f6" />;
+        case "Platform":
+            return <Boxes size={16} color="#fb923c" />;
+        default:
+            return null;
+    }
+};
+
 
 const ProjectDetails = ({
     project,
@@ -36,6 +104,34 @@ const ProjectDetails = ({
     canReview = false
 }) => {
     const { t } = useTranslation();
+
+    const isPendingReview = React.useMemo(() => {
+        if (!project || !project.next_review_date) return false;
+        if (project.is_stale || new Date(project.next_review_date).getTime() < new Date().setHours(0, 0, 0, 0)) return false;
+        const nextDate = new Date(project.next_review_date);
+        nextDate.setHours(0, 0, 0, 0);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const diffDays = Math.round((nextDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+        return diffDays >= 0 && diffDays <= 3;
+    }, [project]);
+
+    const terminalStatusInfo = React.useMemo(() => {
+        const statusLower = (project?.status || "").toLowerCase();
+        const isTerminal = statusLower === "completed" || statusLower === "scaled" || statusLower === "killed";
+        if (!isTerminal) return null;
+
+        let message = "Project reached a final state cannot be edited further.";
+        if (statusLower === "completed") message = "Project reached Completed state cannot be edited further.";
+        else if (statusLower === "scaled") message = "Project reached Scaled state cannot be edited further.";
+        else if (statusLower === "killed") message = "Project reached Killed state cannot be edited further.";
+
+        const latestTerminalLog = project?.decision_log && [...project.decision_log]
+            .reverse()
+            .find(log => (log.to_status || "").toLowerCase() === statusLower);
+
+        return { isTerminal, message, justification: latestTerminalLog?.justification };
+    }, [project]);
 
     if (!project) {
         return (
@@ -50,106 +146,6 @@ const ProjectDetails = ({
         );
     }
 
-    const getImpactIcon = (impact) => {
-        const normalizedImpact = !impact ? "" : impact.charAt(0).toUpperCase() + impact.slice(1).toLowerCase();
-        switch (normalizedImpact) {
-            case "High":
-                return <Circle size={14} color="green" fill="green" />;
-            case "Medium":
-                return <Circle size={14} color="gold" fill="gold" />;
-            case "Low":
-                return <Circle size={14} color="gray" fill="gray" />;
-            default:
-                return <Circle size={14} color="gray" />;
-        }
-    };
-
-    const getEffortIcon = (effort) => {
-        const normalizedEffort = !effort ? "" : effort.charAt(0).toUpperCase() + effort.slice(1).toLowerCase();
-        switch (normalizedEffort) {
-            case "Small":
-                return <Diamond size={14} fill="black" color="black" />;
-            case "Medium":
-                return (
-                    <div style={{ display: "flex", gap: "2px" }}>
-                        <Diamond size={14} fill="black" color="black" />
-                        <Diamond size={14} fill="black" color="black" />
-                    </div>
-                );
-            case "Large":
-                return (
-                    <div style={{ display: "flex", gap: "2px" }}>
-                        <Diamond size={14} fill="black" color="black" />
-                        <Diamond size={14} fill="black" color="black" />
-                        <Diamond size={14} fill="black" color="black" />
-                    </div>
-                );
-            default:
-                return null;
-        }
-    };
-
-    const getRiskIcon = (risk) => {
-        const normalizedRisk = !risk ? "" : risk.charAt(0).toUpperCase() + risk.slice(1).toLowerCase();
-        switch (normalizedRisk) {
-            case "Low":
-                return <Circle size={14} color="green" fill="green" />;
-            case "Medium":
-                return <Circle size={14} color="gold" fill="gold" />;
-            case "High":
-                return <Circle size={14} color="red" fill="red" />;
-            default:
-                return <Circle size={14} color="gray" />;
-        }
-    };
-
-    const getThemeIcon = (theme) => {
-        switch (theme) {
-            case "Growth":
-                return <Rocket size={16} color="#e11d48" />;
-            case "Efficiency":
-                return <Bolt size={16} color="#f59e0b" />;
-            case "Innovation":
-                return <Lightbulb size={16} color="#facc15" />;
-            case "CustomerExperience":
-                return <Heart size={16} color="#dc2626" fill="#dc2626" />;
-            case "RiskMitigation":
-                return <Shield size={16} color="#3b82f6" />;
-            case "Platform":
-                return <Boxes size={16} color="#fb923c" />;
-            default:
-                return null;
-        }
-    };
-
-    const getStatusIcon = (status) => {
-        switch (status) {
-            case "Active":
-                return <PlayCircle size={16} color="green" />;
-            case "At Risk":
-                return <AlertTriangle size={16} color="red" />;
-            case "Paused":
-                return <PauseCircle size={16} color="orange" />;
-            case "Killed":
-                return <XCircle size={16} color="grey" />;
-            case "Scaled":
-                return <CheckCircle size={16} color="purple" />;
-            default:
-                return <Edit2 size={16} color="grey" />;
-        }
-    };
-
-    const isPendingReview = (() => {
-        if (!project || !project.next_review_date) return false;
-        if (project.is_stale || new Date(project.next_review_date).getTime() < new Date().setHours(0, 0, 0, 0)) return false;
-        const nextDate = new Date(project.next_review_date);
-        nextDate.setHours(0, 0, 0, 0);
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        const diffDays = Math.round((nextDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-        return diffDays >= 0 && diffDays <= 3;
-    })();
-
     return (
         <div className="project-details-container">
             {/* Breadcrumb */}
@@ -162,52 +158,32 @@ const ProjectDetails = ({
                 </Breadcrumb>
             </div>
 
-            {(() => {
-                const statusLower = (project.status || "").toLowerCase();
-                const isTerminal = statusLower === "completed" || statusLower === "scaled" || statusLower === "killed";
-                if (!isTerminal) return null;
-                return (
-                    <div className="terminal-status-banner" style={{
-                        backgroundColor: "#eff6ff",
-                        border: "1px solid #dbeafe",
-                        borderRadius: "8px",
-                        padding: "10px 16px",
-                        marginBottom: "20px",
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "10px",
-                        color: "#1e40af"
-                    }}>
-                        <Info size={18} color="#2563eb" style={{ flexShrink: 0 }} />
-                        <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap", fontSize: "14px" }}>
-                            <span style={{ fontWeight: "600" }}>
-                                {(() => {
-                                    if (statusLower === "completed") return "Project reached Completed state cannot be edited further.";
-                                    if (statusLower === "scaled") return "Project reached Scaled state cannot be edited further.";
-                                    if (statusLower === "killed") return "Project reached Killed state cannot be edited further.";
-                                    return "Project reached a final state cannot be edited further.";
-                                })()}
-                            </span>
-                            {project.decision_log && project.decision_log.length > 0 && (() => {
-                                const latestTerminalLog = [...project.decision_log]
-                                    .reverse()
-                                    .find(log => (log.to_status || "").toLowerCase() === statusLower);
-                                if (latestTerminalLog) {
-                                    return (
-                                        <>
-                                            <span style={{ color: "#3b82f6", opacity: 0.8 }}>•</span>
-                                            <span style={{ fontStyle: "italic", color: "#1d4ed8" }}>
-                                                "{latestTerminalLog.justification || t("No_justification_provided")}"
-                                            </span>
-                                        </>
-                                    );
-                                }
-                                return null;
-                            })()}
-                        </div>
+            {terminalStatusInfo && (
+                <div className="terminal-status-banner" style={{
+                    backgroundColor: "#eff6ff",
+                    border: "1px solid #dbeafe",
+                    borderRadius: "8px",
+                    padding: "10px 16px",
+                    marginBottom: "20px",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "10px",
+                    color: "#1e40af"
+                }}>
+                    <Info size={18} color="#2563eb" style={{ flexShrink: 0 }} />
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap", fontSize: "14px" }}>
+                        <span style={{ fontWeight: "600" }}>{terminalStatusInfo.message}</span>
+                        {terminalStatusInfo.justification && (
+                            <>
+                                <span style={{ color: "#3b82f6", opacity: 0.8 }}>•</span>
+                                <span style={{ fontStyle: "italic", color: "#1d4ed8" }}>
+                                    "{terminalStatusInfo.justification || t("No_justification_provided")}"
+                                </span>
+                            </>
+                        )}
                     </div>
-                );
-            })()}
+                </div>
+            )}
 
             {/* Header with Title and Actions */}
             <div className="details-header mb-4">
@@ -230,22 +206,11 @@ const ProjectDetails = ({
                         <label className="detail-label">{t("Project_Description")}</label>
                         <p className="detail-value">{project.description || t("Not_Available")}</p>
                     </div>
-                    <div className="detail-item">
-                        <label className="detail-label">{t("Why_This_Matters")}</label>
-                        <p className="detail-value">{project.why_this_matters || t("Not_Available")}</p>
-                    </div>
-                    <div className="detail-item full-width">
-                        <label className="detail-label">
-                            {t("Strategic_Decision_Bet")}
-                            <small className="field-sub-label">{t("Strategic_Decision_Sublabel")}</small>
-                        </label>
-                        <p className="detail-value">{project.strategic_decision || t("Not_Available")}</p>
-                    </div>
 
                     <div className="grid-2">
                         <div className="detail-item">
                             <label className="detail-label">{t("Accountable_Owner")}</label>
-                            <p className="detail-value">{project.accountable_owner || t("Not_Available")}</p>
+                            <p className="detail-value">{project.accountable_owner || project.created_by || t("Not_Available")}</p>
                         </div>
                         <div className="detail-item">
                             <label className="detail-label">{t("Impact")}</label>
@@ -376,7 +341,7 @@ const ProjectDetails = ({
                                     <Edit2 size={14} /> {t("Edit")}
                                 </button>
                             )}
-                            {canReview && !["completed", "scaled"].includes(project.status?.toLowerCase()) && (
+                            {canReview && !["completed", "scaled", "killed"].includes(project.status?.toLowerCase()) && (
                                 <>
                                     <button className="btn-review" onClick={() => onPerformReview(project)} style={{ background: '#059669', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '4px', fontSize: '13px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}>
                                         <CheckCircle size={14} /> {t("Perform_Review")}
