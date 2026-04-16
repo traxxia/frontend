@@ -1689,7 +1689,7 @@
 }
 
 .question-item {
-  margin-bottom: 20px;
+  margin-bottom: 0px;
   overflow: visible; /* Ensure textarea can expand */
   height: auto; /* Allow natural height */
 }

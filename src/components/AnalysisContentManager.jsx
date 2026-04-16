@@ -433,7 +433,27 @@ const AnalysisContentManager = (props) => {
     handleRedirectToBrief,
     questions: propsQuestions,
     userAnswers: propsUserAnswers,
-    businessData: propsBusinessData
+    businessData: propsBusinessData,
+    // Multi-user/History support: Prioritize these props if provided
+    swotAnalysisResult,
+    purchaseCriteriaData,
+    loyaltyNPSData,
+    portersData: propsPortersData,
+    pestelData: propsPestelData,
+    fullSwotData: propsFullSwotData,
+    competitiveAdvantageData,
+    expandedCapabilityData,
+    strategicRadarData,
+    productivityData: propsProductivityData,
+    maturityData: propsMaturityData,
+    competitiveLandscapeData,
+    coreAdjacencyData,
+    profitabilityData: propsProfitabilityData,
+    growthTrackerData: propsGrowthTrackerData,
+    liquidityEfficiencyData: propsLiquidityEfficiencyData,
+    investmentPerformanceData: propsInvestmentPerformanceData,
+    leverageRiskData: propsLeverageRiskData,
+    strategicData: propsStrategicData
   } = props;
 
   const {
@@ -512,13 +532,25 @@ const AnalysisContentManager = (props) => {
 
   const renderAnalysisCard = useCallback((analysisKey, config) => {
     const dataMap = {
-      swot: swotAnalysis, purchaseCriteria, loyaltyNPS, porters: portersData,
-      pestel: pestelData, fullSwot: fullSwotData, competitiveAdvantage,
-      expandedCapability, strategicRadar, productivityMetrics: productivityData,
-      maturityScore: maturityData, competitiveLandscape, coreAdjacency,
-      profitabilityAnalysis: profitabilityData, growthTracker: growthTrackerData,
-      liquidityEfficiency: liquidityEfficiencyData, investmentPerformance: investmentPerformanceData,
-      leverageRisk: leverageRiskData, strategic: strategicData
+      swot: swotAnalysisResult || swotAnalysis,
+      purchaseCriteria: purchaseCriteriaData || purchaseCriteria,
+      loyaltyNPS: loyaltyNPSData || loyaltyNPS,
+      porters: propsPortersData || portersData,
+      pestel: propsPestelData || pestelData,
+      fullSwot: propsFullSwotData || fullSwotData,
+      competitiveAdvantage: competitiveAdvantageData || competitiveAdvantage,
+      expandedCapability: expandedCapabilityData || expandedCapability,
+      strategicRadar: strategicRadarData || strategicRadar,
+      productivityMetrics: propsProductivityData || productivityData,
+      maturityScore: propsMaturityData || maturityData,
+      competitiveLandscape: competitiveLandscapeData || competitiveLandscape,
+      coreAdjacency: coreAdjacencyData || coreAdjacency,
+      profitabilityAnalysis: propsProfitabilityData || profitabilityData,
+      growthTracker: propsGrowthTrackerData || growthTrackerData,
+      liquidityEfficiency: propsLiquidityEfficiencyData || liquidityEfficiencyData,
+      investmentPerformance: propsInvestmentPerformanceData || investmentPerformanceData,
+      leverageRisk: propsLeverageRiskData || leverageRiskData,
+      strategic: propsStrategicData || strategicData
     };
 
     const data = dataMap[analysisKey];
