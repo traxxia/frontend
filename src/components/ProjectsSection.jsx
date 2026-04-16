@@ -491,9 +491,14 @@ const ProjectsSection = ({
       if (success) {
         addToast({ message: t("Projects_launched_Ready_for_execution."), type: "success" });
         
-        // Immediately update TanStack Query cache with fresh project data
+        // Immediately update TanStack Query cache with fresh project data, merging to preserve ranks
         if (data && data.projects) {
-          queryClient.setQueryData(["projects", selectedBusinessId], data.projects);
+          queryClient.setQueryData(["projects", selectedBusinessId], (oldProjects = []) => {
+            return data.projects.map(newProj => {
+              const existingProj = oldProjects.find(p => String(p._id) === String(newProj._id));
+              return existingProj ? { ...existingProj, ...newProj } : newProj;
+            });
+          });
         }
 
         clearCache(selectedBusinessId);

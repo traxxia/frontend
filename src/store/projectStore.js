@@ -179,8 +179,12 @@ export const useProjectStore = create((set, get) => ({
         headers: { Authorization: 'Bearer ' + token }
       });
       set((state) => ({
-        projects: state.projects.map(p => p._id === projectId || p.id === projectId ? response.data.project : p),
-        selectedProject: state.selectedProject?._id === projectId ? response.data.project : state.selectedProject,
+        projects: state.projects.map(p => 
+          (p._id === projectId || p.id === projectId) 
+            ? { ...p, ...response.data.project } 
+            : p
+        ),
+        selectedProject: state.selectedProject?._id === projectId ? { ...state.selectedProject, ...response.data.project } : state.selectedProject,
         isLoading: false,
       }));
       return { success: true, project: response.data.project };
@@ -218,8 +222,14 @@ export const useProjectStore = create((set, get) => ({
         headers: { Authorization: 'Bearer ' + token }
       });
       // Update projects list from response
+      // Update projects list from response by merging into existing state
       if (response.data.projects) {
-        set({ projects: response.data.projects });
+        set((state) => ({
+          projects: response.data.projects.map(newProj => {
+            const existingProj = state.projects.find(p => String(p._id) === String(newProj._id));
+            return existingProj ? { ...existingProj, ...newProj } : newProj;
+          })
+        }));
       }
       set({ isLoading: false });
       return { success: true, data: response.data };
@@ -333,7 +343,11 @@ export const useProjectStore = create((set, get) => ({
         headers: { Authorization: `Bearer ${token}` }
       });
       set((state) => ({
-        projects: state.projects.map(p => p._id === projectId || p.id === projectId ? response.data.project : p),
+        projects: state.projects.map(p => 
+          (p._id === projectId || p.id === projectId) 
+            ? { ...p, ...response.data.project } 
+            : p
+        ),
         isLoading: false
       }));
       return { success: true, data: response.data };
@@ -352,7 +366,11 @@ export const useProjectStore = create((set, get) => ({
         headers: { Authorization: `Bearer ${token}` }
       });
       set((state) => ({
-        projects: state.projects.map(p => p._id === projectId || p.id === projectId ? response.data.project : p),
+        projects: state.projects.map(p => 
+          (p._id === projectId || p.id === projectId) 
+            ? { ...p, ...response.data.project } 
+            : p
+        ),
         isLoading: false
       }));
       return { success: true, data: response.data };
