@@ -210,7 +210,7 @@ const ProjectDetails = ({
                     <div className="grid-2">
                         <div className="detail-item">
                             <label className="detail-label">{t("Accountable_Owner")}</label>
-                            <p className="detail-value">{project.accountable_owner || t("Not_Available")}</p>
+                            <p className="detail-value">{project.accountable_owner || project.created_by || t("Not_Available")}</p>
                         </div>
                         <div className="detail-item">
                             <label className="detail-label">{t("Impact")}</label>

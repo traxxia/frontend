@@ -124,19 +124,29 @@ const UserManagement = ({ onToast }) => {
   // Derive specialized business lists
   const allBusinesses = React.useMemo(() => 
     businessData.filter(b => {
-      const s = (b.status || "").toLowerCase();
-      const am = (b.access_mode || "").toLowerCase();
-      return s !== "deleted" && s !== "archived" && s !== "inactive" && am !== "archived" && am !== "hidden";
+      const s = (b.status || "").toLowerCase().trim();
+      const am = (b.access_mode || "").toLowerCase().trim();
+      
+      const isDeleted = s === "deleted" || am === "deleted";
+      const isArchived = s === "archived" || am === "archived";
+      const isInactive = s === "inactive" || am === "inactive" || am === "hidden";
+      
+      return !isDeleted && !isArchived && !isInactive;
     }), 
     [businessData]
   );
   const launchedBusinesses = React.useMemo(() =>
     businessData.filter(b => {
-      const s = (b.status || "").toLowerCase();
-      const am = (b.access_mode || "").toLowerCase();
+      const s = (b.status || "").toLowerCase().trim();
+      const am = (b.access_mode || "").toLowerCase().trim();
+      
+      const isDeleted = s === "deleted" || am === "deleted";
+      const isArchived = s === "archived" || am === "archived";
+      const isInactive = s === "inactive" || am === "inactive" || am === "hidden";
+      
       const isLaunched = s === "launched" || b.has_launched_projects === true;
-      const isActive = s !== "deleted" && s !== "archived" && s !== "inactive" && am !== "archived" && am !== "hidden";
-      return isLaunched && isActive;
+      
+      return !isDeleted && !isArchived && !isInactive && isLaunched;
     }),
     [businessData]
   );
@@ -697,7 +707,7 @@ const UserManagement = ({ onToast }) => {
         onPageChange={setCurrentPage}
         totalItems={totalItems}
         itemsPerPage={itemsPerPage}
-        loading={isLoading}
+        loading={loadingUsers || loadingPlans || loadingCompanies || loadingBusinesses}
         emptyMessage={t("No_Users_Found")}
         emptySubMessage={
           searchTerm
@@ -924,12 +934,34 @@ const UserManagement = ({ onToast }) => {
                 disabled={!assignBusinessId}
               >
                 {(() => {
-                  const filtered = users.filter(u => {
-                    const isArchivedOrDeleted = u.status === 'inactive' || u.status === 'deleted' || u.access_mode === 'archived';
-                    const roleName = formatRole(u.role_name || u.role);
-                    const isAlreadyAssigned = assigningBusinessCollaborators.some(c => c._id === u._id);
-                    return !isArchivedOrDeleted && ["Collaborator", "User", "Viewer"].includes(roleName) && !isAlreadyAssigned;
-                  });
+                    const selectedBiz = businessData.find(b => b._id === assignBusinessId);
+                    const ownerId = selectedBiz?.user_id?.toString();
+                    
+                    // NEW: Check if the business was created by a regular 'user' role
+                    const ownerUser = users.find(u => u._id?.toString() === ownerId);
+                    const ownerRole = (ownerUser?.role_name || ownerUser?.role)?.toLowerCase();
+                    const isOwnerRegularUser = ownerRole === 'user';
+
+                    const filtered = users.filter(u => {
+                      const isArchivedOrDeleted = u.status === 'inactive' || u.status === 'deleted' || u.access_mode === 'archived';
+                      const rawRole = (u.role_name || u.role)?.toLowerCase();
+                      const roleName = formatRole(u.role_name || u.role);
+                      const isAlreadyAssigned = assigningBusinessCollaborators.some(c => c._id === u._id);
+
+                      const isOwner = u._id?.toString() === ownerId;
+                      const isSuperAdminUser = rawRole === "super_admin";
+                      const isOrgAdminUser = rawRole === "company_admin";
+
+                      // Allow 'Org Admin' to be assigned if the business was created by a regular user
+                      const isEligibleRole = ["Collaborator", "User", "Viewer"].includes(roleName) || 
+                                            (isOrgAdminUser && isOwnerRegularUser);
+
+                      return !isArchivedOrDeleted &&
+                        isEligibleRole &&
+                        !isAlreadyAssigned &&
+                        !isOwner &&
+                        !isSuperAdminUser;
+                    });
 
                   const showNoUsers = assignBusinessId && filtered.length === 0;
 
@@ -1012,10 +1044,12 @@ const UserManagement = ({ onToast }) => {
                   const selectedBizData = businessData.find(b => b._id?.toString() === accessBusinessId?.toString());
 
                   const filteredCollaborators = collaborators.filter(c => {
-                    // Filter out viewers
-                    if (c.role_name?.toLowerCase() === 'viewer') return false;
-
                     const cId = c._id?.toString();
+                    const isOwner = cId === selectedBizData?.user_id?.toString();
+
+                    // Filter out viewers and administrators (unless they are the business owner)
+                    const role = c.role_name?.toLowerCase();
+                    if (!isOwner && (role === 'viewer' || role === 'company_admin' || role === 'super_admin')) return false;
 
                     if (accessType === "reRanking") {
                       // Exclude collaborators already granted reranking access

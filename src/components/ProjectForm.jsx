@@ -389,15 +389,26 @@ const ProjectForm = ({
     // DEFAULT: Set business owner as default if currently empty
     // This applies to new projects AND existing projects with no owner assigned yet.
     if (!accountableOwnerId && eligibleOwners.length > 0) {
-      const admin =
-        eligibleOwners.find(o => o.is_company_admin) ||
-        eligibleOwners.find(o => o.is_business_owner);
-      if (admin) {
-        setAccountableOwnerId(String(admin._id));
-        setAccountableOwner(admin.name || admin.email);
+      // 1. Try to find a match for the existing name (which might be created_by fallback from useProjectForm)
+      const existingMatch = accountableOwner ? eligibleOwners.find(o => 
+        o.name === accountableOwner || o.email === accountableOwner
+      ) : null;
+
+      if (existingMatch) {
+        setAccountableOwnerId(String(existingMatch._id));
+        setAccountableOwner(existingMatch.name || existingMatch.email);
+      } else {
+        // 2. Fallback: Find first admin or business owner
+        const admin =
+          eligibleOwners.find(o => o.is_company_admin) ||
+          eligibleOwners.find(o => o.is_business_owner);
+        if (admin) {
+          setAccountableOwnerId(String(admin._id));
+          setAccountableOwner(admin.name || admin.email);
+        }
       }
     }
-  }, [accountableOwnerId, eligibleOwners, setAccountableOwnerId, setAccountableOwner]);
+  }, [accountableOwnerId, accountableOwner, eligibleOwners, setAccountableOwnerId, setAccountableOwner]);
 
   // Refs for error fields
   const projectNameRef = useRef(null);

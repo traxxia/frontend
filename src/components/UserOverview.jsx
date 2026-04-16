@@ -219,14 +219,7 @@ const UserOverview = ({ onToast }) => {
     </div>
   );
 
-  if (isLoading) {
-    return (
-      <div className="loading-container">
-        <Loader size={24} className="spinner" />
-        <span>Loading users...</span>
-      </div>
-    );
-  }
+  // Loading state moved into main render to preserve header
 
   return (
     <>
@@ -319,6 +312,13 @@ const UserOverview = ({ onToast }) => {
             </button>
           </div>
         </div>
+        
+        {/* ---- Premium Loading Bar ---- */}
+        {isLoading && (
+          <div className="admin-loading-bar-container" style={{ margin: '15px 0' }}>
+            <div className="admin-loading-bar" />
+          </div>
+        )}
 
         {/* Filters */}
         <div className="filters-section">
