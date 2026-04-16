@@ -74,12 +74,26 @@ const prepareForCapture = () => {
   // 1. Expand all collapsed categories first
   const categories = document.querySelectorAll('.category-content.collapsed');
   categories.forEach(category => {
+    // Record original class
     changes.push({
       element: category,
       property: 'className',
       oldValue: category.className,
       newValue: category.className.replace('collapsed', 'expanded')
     });
+    
+    // Record original styles
+    changes.push({
+      element: category,
+      property: 'maxHeight',
+      oldValue: category.style.maxHeight
+    });
+    changes.push({
+      element: category,
+      property: 'overflow',
+      oldValue: category.style.overflow
+    });
+
     category.className = category.className.replace('collapsed', 'expanded');
     category.style.maxHeight = 'none';
     category.style.overflow = 'visible';
@@ -88,12 +102,26 @@ const prepareForCapture = () => {
   // 2. Expand all cards
   const cards = document.querySelectorAll('.modern-card-content.collapsed');
   cards.forEach(card => {
+    // Record original class
     changes.push({
       element: card,
       property: 'className',
       oldValue: card.className,
       newValue: card.className.replace('collapsed', 'expanded')
     });
+    
+    // Record original styles
+    changes.push({
+      element: card,
+      property: 'maxHeight',
+      oldValue: card.style.maxHeight
+    });
+    changes.push({
+      element: card,
+      property: 'overflow',
+      oldValue: card.style.overflow
+    });
+
     card.className = card.className.replace('collapsed', 'expanded');
     card.style.maxHeight = 'none';
     card.style.overflow = 'visible';
@@ -491,18 +519,27 @@ const PDFExportButton = ({
           justifyContent: 'center',
           zIndex: 10000
         }}>
+          <style>{`
+            @keyframes spin-loader {
+              from { transform: rotate(0deg); }
+              to { transform: rotate(360deg); }
+            }
+          `}</style>
           <div style={{
             backgroundColor: 'white',
             borderRadius: '12px',
             padding: '24px',
+            textShadow: 'none',
             textAlign: 'center',
             boxShadow: '0 10px 30px rgba(0, 0, 0, 0.3)',
             minWidth: '280px'
           }}>
             <Loader size={32} style={{
               color: '#1a73e8',
-              animation: 'spin 1s linear infinite',
-              marginBottom: '12px'
+              animation: 'spin-loader 1s linear infinite',
+              marginBottom: '12px',
+              display: 'inline-block',
+              transformOrigin: 'center'
             }} />
             <h3 style={{ margin: '0 0 8px 0', fontSize: '16px', color: '#1f2937' }}>
   {t("Generating PDF")}
@@ -541,7 +578,11 @@ const PDFExportButton = ({
       >
         {isExportingPDF ? (
           <>
-            <Loader size={18} style={{ animation: 'spin 1s linear infinite' }} />
+            <Loader size={18} style={{ 
+              animation: 'spin-loader 1s linear infinite',
+              display: 'inline-block',
+              transformOrigin: 'center'
+            }} />
             {showText && <span style={{ marginLeft: '8px' }}>Generating...</span>}
           </>
         ) : (
