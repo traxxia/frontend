@@ -312,9 +312,16 @@ export class AnalysisApiService {
     if (!businessId) return null;
 
     const cacheKey = `kickstart-${businessId}`;
-    if (forceRefresh) {
-      kickstartRequestCache.delete(cacheKey);
-    } else if (kickstartRequestCache.has(cacheKey)) {
+    
+    // If not forcing refresh and we have data, return it
+    if (!forceRefresh && kickstartRequestCache.has(cacheKey)) {
+      return await kickstartRequestCache.get(cacheKey);
+    }
+
+    // If forcing refresh, we still check for an existing request in flight to avoid 
+    // duplicate concurrent calls. Since mutations clear this cache, any existing
+    // promise here is fresh enough to satisfy concurrent callers.
+    if (kickstartRequestCache.has(cacheKey)) {
       return await kickstartRequestCache.get(cacheKey);
     }
 
