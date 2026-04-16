@@ -490,13 +490,21 @@ const ProjectsSection = ({
 
     try {
       setIsSubmitting(true);
-      const { success, error } = await launchProjects(selectedProjectIds);
+      const { success, error, data } = await launchProjects(selectedProjectIds);
 
       if (success) {
         addToast({ message: t("Projects_launched_Ready_for_execution."), type: "success" });
+        
+        // Immediately update TanStack Query cache with fresh project data
+        if (data && data.projects) {
+          queryClient.setQueryData(["projects", selectedBusinessId], data.projects);
+        }
+
         clearCache(selectedBusinessId);
+        // We still invalidate to ensure total sync, but setQueryData fixed the immediate "old data" issue
         queryClient.invalidateQueries({ queryKey: ["projects", selectedBusinessId] });
         queryClient.invalidateQueries({ queryKey: ["teamRankings", selectedBusinessId] });
+        
         await refreshAllData();
         setSelectedProjectIds([]); // Clear selection
 

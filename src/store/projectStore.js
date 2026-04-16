@@ -217,6 +217,10 @@ export const useProjectStore = create((set, get) => ({
       const response = await axios.post(API_BASE_URL + '/api/projects/launch', { project_ids: projectIds }, {
         headers: { Authorization: 'Bearer ' + token }
       });
+      // Update projects list from response
+      if (response.data.projects) {
+        set({ projects: response.data.projects });
+      }
       set({ isLoading: false });
       return { success: true, data: response.data };
     } catch (err) {
