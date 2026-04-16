@@ -44,7 +44,7 @@ const PrioritiesProjects = ({ selectedBusinessId, onSuccess, onStayOnPriorities,
       if (!selectedBusinessId) return;
       setLoading(true);
       try {
-        await fetchKickstartData(selectedBusinessId, true);
+        await fetchKickstartData(selectedBusinessId, false);
       } catch (error) {
         console.error("Error fetching kickstart data:", error);
       } finally {
