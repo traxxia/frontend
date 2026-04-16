@@ -505,7 +505,7 @@ const Dashboard = () => {
       const current = usage.workspaces?.current || 0;
       const limit = usage.workspaces?.limit || 0;
 
-      if (current >= limit && isAdmin) {
+      if (current >= limit) {
         openModal('planLimit');
         return;
       }
@@ -632,7 +632,6 @@ const Dashboard = () => {
         plan={usage?.plan}
         limit={usage?.workspaces?.limit}
         isAdmin={isAdmin}
-        message="plan limit for business is reached please upgrade"
       />
 
 
@@ -1327,6 +1326,7 @@ const Dashboard = () => {
               </Button>
             </Modal.Footer>
           </Modal>
+
 
           {/* <UpgradeModal
             show={isModalOpen('upgrade')}
