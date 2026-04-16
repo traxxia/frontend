@@ -301,11 +301,11 @@ export const useAnalysisStore = create((set, get) => ({
     }
   },
 
-  fetchKickstartData: async (businessId) => {
+  fetchKickstartData: async (businessId, forceRefresh = false) => {
     if (!businessId) return;
     try {
       const apiService = getApiService();
-      const data = await apiService.getKickstartData(businessId);
+      const data = await apiService.getKickstartData(businessId, forceRefresh);
       set({ kickstartData: data });
       return data;
     } catch (err) {

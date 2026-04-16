@@ -308,11 +308,13 @@ export class AnalysisApiService {
     }
   }
 
-  async getKickstartData(businessId) {
+  async getKickstartData(businessId, forceRefresh = false) {
     if (!businessId) return null;
 
     const cacheKey = `kickstart-${businessId}`;
-    if (kickstartRequestCache.has(cacheKey)) {
+    if (forceRefresh) {
+      kickstartRequestCache.delete(cacheKey);
+    } else if (kickstartRequestCache.has(cacheKey)) {
       return await kickstartRequestCache.get(cacheKey);
     }
 
