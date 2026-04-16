@@ -1278,12 +1278,7 @@ const BusinessSetupPage = () => {
                         <button
                           className={`mobile-menu-item ${activeTab === 'projects' && useProjectStore.getState().viewMode === 'projects' ? 'active' : ''}`}
                           onClick={() => {
-                            useProjectStore.getState().setViewMode('projects');
-                            useProjectStore.getState().clearCache(selectedBusinessId);
-                            if (activeTab !== 'projects') {
-                              setActiveTab('projects');
-                            }
-                            closeModal('mobileMenu');
+                            window.location.href = '/businesspage?tab=projects';
                           }}
                         >
                           <Briefcase size={18} />
@@ -1438,11 +1433,7 @@ const BusinessSetupPage = () => {
                                     <button 
                                       className={`dropdown-item ${activeTab === 'projects' && useProjectStore.getState().viewMode === 'projects' ? 'active' : ''}`} 
                                       onClick={() => {
-                                        useProjectStore.getState().setViewMode('projects');
-                                        if (activeTab !== 'projects') {
-                                          setActiveTab('projects');
-                                        }
-                                        setActiveNavDropdown(null);
+                                        window.location.href = '/businesspage?tab=projects';
                                       }}
                                     >
                                       <Briefcase size={14} />

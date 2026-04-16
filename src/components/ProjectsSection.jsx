@@ -376,18 +376,14 @@ const ProjectsSection = ({
 
   const sortedProjects = useMemo(() => {
     return [...projects].sort((a, b) => {
-      const rankA = rankMap[String(a._id)];
-      const rankB = rankMap[String(b._id)];
+      const idA = normalizeId(a._id);
+      const idB = normalizeId(b._id);
 
-      // Primary: manual rank
-      // Secondary: AI rank
-      const rA = (rankA !== null && rankA !== undefined) ? rankA :
-        ((a.ai_rank !== null && a.ai_rank !== undefined) ? a.ai_rank : Infinity);
-      const rB = (rankB !== null && rankB !== undefined) ? rankB :
-        ((b.ai_rank !== null && b.ai_rank !== undefined) ? b.ai_rank : Infinity);
+      const rA = rankMap[idA] !== undefined ? rankMap[idA] : Infinity;
+      const rB = rankMap[idB] !== undefined ? rankMap[idB] : Infinity;
 
       if (rA === rB) {
-        return new Date(b.updated_at) - new Date(a.updated_at);
+        return new Date(b.created_at) - new Date(a.created_at);
       }
       return rA - rB;
     });
