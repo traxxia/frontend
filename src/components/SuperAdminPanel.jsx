@@ -111,12 +111,6 @@ const SuperAdminPanel = () => {
       icon: ClipboardList,
       superAdminOnly: true,
     },
-    {
-      id: "stale_bets",
-      label: t('stale_bets') || "Stale Bets",
-      icon: History,
-      superAdminOnly: true,
-    },
   ];
 
   const tabs = allTabs.filter((tab) => {

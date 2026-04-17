@@ -565,7 +565,7 @@ const PlanManagement = ({ onToast }) => {
     const queryClient = useQueryClient();
 
     // --- TanStack Query Hook ---
-    const { data: plans = [], isLoading: loading } = usePlans();
+    const { data: plans = [], isLoading: loading } = usePlans(true);
 
     const [searchTerm, setSearchTerm] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
