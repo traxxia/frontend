@@ -342,22 +342,18 @@ const BusinessSetupPage = () => {
 
   // 1. Sync URL -> State (Initial load and Browser Back/Forward)
   useEffect(() => {
-    const urlTab = searchParams.get('tab');
-    if (!urlTab) {
-       // Also check for redirection state if query param is missing
-       if (location.state?.initialTab) {
-          setActiveTab(location.state.initialTab);
-       }
-       return;
-    }
+    // Prioritize explicit state passed via navigate(), fallback to URL query
+    const targetTab = location.state?.initialTab || searchParams.get('tab');
+    
+    if (!targetTab) return;
 
-    if (urlTab !== activeTab) {
+    if (targetTab !== activeTab) {
       // Check access before switching
-      const isPmfTab = ["executive", "priorities"].includes(urlTab);
-      const isProjectTab = urlTab === "projects" || urlTab === "ranking";
+      const isPmfTab = ["executive", "priorities"].includes(targetTab);
+      const isProjectTab = targetTab === "projects" || targetTab === "ranking";
       
       if ((isPmfTab && !hasPmfAccess) || (isProjectTab && !hasProjectAccess)) {
-        console.warn("Blocking access to unauthorized tab:", urlTab);
+        console.warn("Blocking access to unauthorized tab:", targetTab);
         
         const isAdminRole = ['super_admin', 'company_admin', 'org_admin'].includes(userRole?.toLowerCase());
         const subMessageKey = isAdminRole ? "no_access_modal_sub_admin" : "no_access_modal_sub_user";
@@ -371,27 +367,32 @@ const BusinessSetupPage = () => {
         setActiveTab(safeTab);
         return;
       } else {
-        setActiveTab(urlTab);
+        setActiveTab(targetTab);
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams, hasPmfAccess, hasProjectAccess]); // NOTE: activeTab omitted intentionally
-
+  }, [searchParams, location.key, location.state, hasPmfAccess, hasProjectAccess]); // location.key firmly triggers this on any navigation
+  
   // 2. Sync State -> URL (When user clicks UI buttons)
   useEffect(() => {
-    const urlTab = searchParams.get('tab');
-    if (activeTab !== urlTab) {
-      const newParams = new URLSearchParams(searchParams);
-      newParams.set('tab', activeTab);
-      setSearchParams(newParams, { replace: true });
-    }
+    // ONLY push activeTab to the URL if it differs from what's already there
+    // Using the function callback on setSearchParams guarantees we don't inappropriately respond to searchParams changes.
+    setSearchParams(prevParams => {
+      const urlTab = prevParams.get('tab');
+      if (activeTab && activeTab !== urlTab) {
+        const newParams = new URLSearchParams(prevParams);
+        newParams.set('tab', activeTab);
+        return newParams;
+      }
+      return prevParams; // no-op
+    }, { replace: true });
 
     // Clean up navigation state flags
     delete window.__businessPageNavState;
     if (window.innerWidth > 768) {
       setIsAnalysisExpanded(true);
     }
-  }, [activeTab]); // NOTE: triggers when UI updates activeTab
+  }, [activeTab, setSearchParams]); // NOTE: triggers ONLY when UI updates activeTab
 
   useEffect(() => {
     let pageContext = null;
