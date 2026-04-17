@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react';
+import { getUserLimits } from '../utils/authUtils';
 
 export const useBusinessSetup = (business, selectedBusinessId) => {
   // UI State
@@ -13,14 +14,19 @@ export const useBusinessSetup = (business, selectedBusinessId) => {
       return urlTab;
     }
     // Read react-router navigation state stored temporarily
-    const navState = window.__businessPageNavState;
+    const navState = window.history.state?.usr;
     if (navState?.initialTab) {
-      if (navState.initialTab === 'brief') return 'advanced';
       if (navState.initialTab === 'analysis') return 'insights';
       return navState.initialTab;
     }
-    // Default: executive summary on all screens (Executive Summary is the landing tab from Dashboard)
-    return 'executive';
+
+    // Fallback based on user plan priority: PMF > Insights/Strategic > Projects
+    const { pmf: hasPmfAccess, insight: hasInsightAccess, strategic: hasStrategicAccess, project: hasProjectAccess } = getUserLimits();
+    if (hasPmfAccess) return "executive";
+    if (hasInsightAccess || hasStrategicAccess) return "advanced";
+    if (hasProjectAccess) return "projects";
+    
+    return "advanced";
   });
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [isAnalysisExpanded, setIsAnalysisExpanded] = useState(false);

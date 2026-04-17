@@ -44,6 +44,7 @@ import { answerService } from "../services/answerService";
 import { AI_PAGE_CONTEXTS } from "../utils/aiContexts";
 import { getUserLimits } from '../utils/authUtils';
 import CustomTooltip from "../components/CustomTooltip";
+import PlanLimitModal from "../components/PlanLimitModal";
 
 const CARD_TO_CATEGORY_MAP = {
   "profitability-analysis": "costs-financial",
@@ -246,6 +247,9 @@ const BusinessSetupPage = () => {
   const isInvestmentPerformanceRegenerating = isTypeRegenerating('investmentPerformance');
   const isLeverageRiskRegenerating = isTypeRegenerating('leverageRisk');
 
+  const [accessModalMessage, setAccessModalMessage] = useState('');
+  const [accessModalSubMessage, setAccessModalSubMessage] = useState('');
+
   // Data aliases for components that expect explicit prop names
   const competitiveAdvantageData = competitiveAdvantage;
   const expandedCapabilityData = expandedCapability;
@@ -263,11 +267,13 @@ const BusinessSetupPage = () => {
     // Fallback to location state directly from the router
     if (window.history.state?.usr?.initialTab) return window.history.state.usr.initialTab;
 
-    // Fallback based on user plan
-    const { pmf: hasPmfAccess, project: hasProjectAccess } = getUserLimits();
+    // Fallback based on user plan priority: PMF > Insights/Strategic > Projects
+    const { pmf: hasPmfAccess, insight: hasInsightAccess, strategic: hasStrategicAccess, project: hasProjectAccess } = getUserLimits();
     if (hasPmfAccess) return "executive";
+    if (hasInsightAccess || hasStrategicAccess) return "advanced";
     if (hasProjectAccess) return "projects";
-    return "advanced";
+    
+    return "advanced"; // Ultimate fallback
   });
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [isAnalysisExpanded, setIsAnalysisExpanded] = useState(true);
@@ -348,6 +354,18 @@ const BusinessSetupPage = () => {
       
       if ((isPmfTab && !hasPmfAccess) || (isProjectTab && !hasProjectAccess)) {
         console.warn("Blocking access to unauthorized tab:", targetTab);
+        
+        const isAdminRole = ['super_admin', 'company_admin', 'org_admin'].includes(userRole?.toLowerCase());
+        const subMessageKey = isAdminRole ? "no_access_modal_sub_admin" : "no_access_modal_sub_user";
+        
+        setAccessModalMessage(t('no_access_modal_msg'));
+        setAccessModalSubMessage(t(subMessageKey));
+        openModal('noFeatureAccess');
+        
+        // Redirect to a safe tab
+        const safeTab = hasPmfAccess ? "executive" : (hasInsightAccess || hasStrategicAccess ? "advanced" : "advanced");
+        setActiveTab(safeTab);
+        return;
       } else {
         setActiveTab(targetTab);
       }
@@ -942,6 +960,28 @@ const BusinessSetupPage = () => {
   const getPhaseSpecificOptions = (phase) => {
     const unlockedFeatures = phaseManager.getUnlockedFeatures();
 
+    // Label to Data Availability mapping
+    const dataAvailabilityMap = {
+      "swot_analysis": !!swotAnalysis,
+      "Porters_Five_Forces": !!portersData,
+      "PESTEL_Analysis": !!pestelData,
+      "Purchase_Criteria": !!purchaseCriteria,
+      "Loyalty_&_NPS": !!loyaltyNPS,
+      "Full_SWOT_Portfolio": !!fullSwotData,
+      "Strategic_Positioning_Radar": !!strategicRadar,
+      "Competitive_Advantage_Matrix": !!competitiveAdvantage,
+      "Capability_Heatmap": !!expandedCapability,
+      "Maturity_Score": !!maturityData,
+      "Competitive_Landscape": !!competitiveLandscape,
+      "Core": !!coreAdjacency,
+      "Productivity_Metrics": !!productivityData,
+      "Profitability_Analysis": !!profitabilityData,
+      "Growth_Tracker": !!growthTrackerData,
+      "Liquidity_Efficiency": !!liquidityEfficiencyData,
+      "Investment_Performance": !!investmentPerformanceData,
+      "Leverage_Risk": !!leverageRiskData
+    };
+
     const categoryOptions = {
       initial: {
         "Context/Industry": ["swot_analysis", "Porters_Five_Forces", "PESTEL_Analysis"],
@@ -981,7 +1021,21 @@ const BusinessSetupPage = () => {
       }
     }
 
-    return categoryOptions[phase] || {};
+    const selectedOptions = categoryOptions[phase] || {};
+    
+    // Filter out options that don't have data
+    const filteredOptions = {};
+    Object.entries(selectedOptions).forEach(([category, items]) => {
+      // Keep only items that have analysis data available
+      const filteredItems = items.filter(item => dataAvailabilityMap[item]);
+      
+      // Only include the category if it has at least one item with data
+      if (filteredItems.length > 0) {
+        filteredOptions[category] = filteredItems;
+      }
+    });
+
+    return filteredOptions;
   };
 
   useEffect(() => {
@@ -1132,7 +1186,7 @@ const BusinessSetupPage = () => {
                     <span>
                       {activeTab === "executive" && t("Executive Summary")}
                       {activeTab === "priorities" && t("Priorities")}
-                      {activeTab === "advanced" && t("Answers/Brief")}
+                      {activeTab === "advanced" && (hasInsightAccess || hasStrategicAccess) && t("Answers/Brief")}
                       {activeTab === "insights" && (hasPmfAccess ? t("insights") : "Insights")}
                       {activeTab === "strategic" && (hasPmfAccess ? t("strategic") : "S.T.R.A.T.E.G.I.C")}
                       {(activeTab === "projects" || activeTab === "ranking") && t("Projects")}
@@ -1144,7 +1198,7 @@ const BusinessSetupPage = () => {
                   {activeTab === "aha" && t("aha")}
                   {activeTab === "executive" && t("Executive Summary")}
                   {activeTab === "priorities" && t("Priorities & Projects")}
-                  {activeTab === "advanced" && t("Questions and Answers")}
+                  {activeTab === "advanced" && (hasInsightAccess || hasStrategicAccess) && t("Questions and Answers")}
                   {activeTab === "insights" && (hasPmfAccess ? t("Insights") : "Insights")}
                   {activeTab === "strategic" && (hasPmfAccess ? t("strategic") : "S.T.R.A.T.E.G.I.C")}
                   {(activeTab === "projects" || activeTab === "ranking") && t("Projects")}
@@ -1286,14 +1340,18 @@ const BusinessSetupPage = () => {
                     </div>
 
                     <div className="mobile-nav-sub-group mt-3">
-                      <div className="mobile-nav-sub-group-header">{t("Advanced")}</div>
-                      <button
-                        className={`mobile-menu-item ${activeTab === "advanced" ? "active" : ""}`}
-                        onClick={() => { handleBriefTabClick(); closeModal('mobileMenu'); }}
-                      >
-                        <HelpCircle size={18} />
-                        <span>{t("Answers/Brief")}</span>
-                      </button>
+                      {(hasInsightAccess || hasStrategicAccess) && (
+                        <>
+                          <div className="mobile-nav-sub-group-header">{t("Advanced")}</div>
+                          <button
+                            className={`mobile-menu-item ${activeTab === "advanced" ? "active" : ""}`}
+                            onClick={() => { handleBriefTabClick(); closeModal('mobileMenu'); }}
+                          >
+                            <HelpCircle size={18} />
+                            <span>{t("Answers/Brief")}</span>
+                          </button>
+                        </>
+                      )}
                       {hasInsightAccess && (
                         <button
                           className={`mobile-menu-item ${activeTab === "insights" ? "active" : ""}`}
@@ -1422,14 +1480,18 @@ const BusinessSetupPage = () => {
                                 </>
                               )}
 
-                              <div className="dropdown-section-label mt-2">{t("Advanced")}</div>
-                              <button 
-                                className={`dropdown-item ${activeTab === 'advanced' ? 'active' : ''}`} 
-                                onClick={() => { handleBriefTabClick(); setActiveNavDropdown(null); }}
-                              >
-                                <HelpCircle size={14} />
-                                <span>{t("Answers/Brief")}</span>
-                              </button>
+                              {(hasInsightAccess || hasStrategicAccess) && (
+                                <>
+                                  <div className="dropdown-section-label mt-2">{t("Advanced")}</div>
+                                  <button 
+                                    className={`dropdown-item ${activeTab === 'advanced' ? 'active' : ''}`} 
+                                    onClick={() => { handleBriefTabClick(); setActiveNavDropdown(null); }}
+                                  >
+                                    <HelpCircle size={14} />
+                                    <span>{t("Answers/Brief")}</span>
+                                  </button>
+                                </>
+                              )}
                               {hasInsightAccess && (
                                 <button 
                                   className={`dropdown-item ${activeTab === 'insights' ? 'active' : ''}`} 
@@ -1527,8 +1589,7 @@ const BusinessSetupPage = () => {
                             {showDropdown && (() => {
                               const categoryOptions = getPhaseSpecificOptions(currentPhase);
                               return Object.keys(categoryOptions).length > 0 && (
-                                <div className="dropdown-menu-options">
-                                  <div className="dropdown-main-header">{t("Insights & Recommendations")}</div>
+                                <div className="dropdown-menu-options"> 
                                   {Object.entries(categoryOptions).map(([category, items]) =>
                                   items.length > 0 && (
                                     <div key={category}>
@@ -1773,13 +1834,15 @@ const BusinessSetupPage = () => {
                             <span>{t("Executive Summary")}</span>
                           </button>
                         )}
-                        <button
-                          className={`desktop-tab ${activeTab === "advanced" ? "active" : ""}`}
-                          onClick={handleBriefTabClick}
-                        >
-                          <HelpCircle size={16} />
-                          <span>{t("Answers/Brief")}</span>
-                        </button>
+                        {(hasInsightAccess || hasStrategicAccess) && (
+                          <button
+                            className={`desktop-tab ${activeTab === "advanced" ? "active" : ""}`}
+                            onClick={handleBriefTabClick}
+                          >
+                            <HelpCircle size={16} />
+                            <span>{t("Answers/Brief")}</span>
+                          </button>
+                        )}
                         {hasInsightAccess && (
                           <button className={`desktop-tab ${activeTab === "insights" ? "active" : ""}`} onClick={handleAnalysisTabClick}>
                             <TrendingUp size={16} />
@@ -2079,6 +2142,15 @@ const BusinessSetupPage = () => {
           }}
         />
       )}
+
+      <PlanLimitModal
+        show={isModalOpen('noFeatureAccess')}
+        onHide={() => closeModal('noFeatureAccess')}
+        title={t('no_access_modal_title')}
+        message={accessModalMessage}
+        subMessage={accessModalSubMessage}
+        isAdmin={['super_admin', 'company_admin', 'org_admin'].includes(userRole?.toLowerCase())}
+      />
     </div>
   );
 };
