@@ -106,7 +106,7 @@ const RankingSection = ({ isArchived, companyAdminIds, setActiveTab }) => {
   }, [addToast]);
 
   // ─── Stable data refresh (called once on mount + manually on user actions) ───
-  const hasFetchedRef = useRef(false);
+  const fetchedBusinessIdRef = useRef(null);
 
   const refreshData = useCallback(async (options = { silent: true }) => {
     if (!selectedBusinessId) return;
@@ -132,8 +132,8 @@ const RankingSection = ({ isArchived, companyAdminIds, setActiveTab }) => {
 
   // ─── Fetch gracefully on mount instead of a hard refresh (which clears cache) ───
   useEffect(() => {
-    if (!selectedBusinessId || hasFetchedRef.current) return;
-    hasFetchedRef.current = true;
+    if (!selectedBusinessId || fetchedBusinessIdRef.current === selectedBusinessId) return;
+    fetchedBusinessIdRef.current = selectedBusinessId;
     
     // useProjects handles projects list automatically. We just need to load rankings and access:
     const store = useProjectStore.getState();
