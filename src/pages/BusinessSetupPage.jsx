@@ -118,6 +118,7 @@ const BusinessSetupPage = () => {
   useEffect(() => {
     if (location.state?.businessId && location.state.businessId !== selectedBusinessId) {
       console.log("Navigation-driven business context switch to:", location.state.businessId);
+      resetAnalysis(); // Clear old business data immediately
       setSelectedBusinessId(location.state.businessId);
     }
   }, [location.state?.businessId, selectedBusinessId, setSelectedBusinessId]);
@@ -188,6 +189,7 @@ const BusinessSetupPage = () => {
     questions, questionsLoaded, userAnswers, completedQuestions,
     setQuestions, setQuestionsLoaded, initializeBusinessData, setUserAnswer, setAnalysisData, fetchAnalysisData,
     regeneratePhase, regenerateIndividualAnalysis,
+    resetAnalysis,
     swotAnalysis, purchaseCriteria, loyaltyNPS, portersData, pestelData,
     fullSwotData, competitiveAdvantage, strategicData, expandedCapability,
     strategicRadar, productivityData, maturityData, competitiveLandscape,
