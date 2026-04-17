@@ -4,7 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import { Bell, BellOff, X } from 'lucide-react';
 import { useTranslation } from '../hooks/useTranslation';
 
-import { useAuthStore, useBusinessStore, useNotificationStore } from '../store';
+import { useAuthStore, useBusinessStore, useNotificationStore, useProjectStore } from '../store';
+import { useQueryClient } from '@tanstack/react-query';
 
 const NotificationBell = () => {
   const {
@@ -19,6 +20,7 @@ const NotificationBell = () => {
   const { setSelectedBusinessId } = useBusinessStore();
   const REACT_APP_BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { t } = useTranslation();
 
   useEffect(() => {
@@ -169,12 +171,18 @@ const NotificationBell = () => {
         window.__businessPageNavState = navOptions.state;
       }
 
-      console.log("Navigating to:", navPath, navOptions);
-      if (window.location.pathname.includes('/businesspage') && navPath.includes('/businesspage')) {
-        window.location.assign(navPath);
-      } else {
-        navigate(navPath, navOptions);
+      if (targetBusinessId) {
+        // Clear zustand internal module caches so they don't instantly return stale promises
+        useProjectStore.getState().clearCache(targetBusinessId);
+        
+        // Invalidate queries so TanStack query refetches data immediately
+        queryClient.invalidateQueries({ queryKey: ["projects", targetBusinessId] });
+        queryClient.invalidateQueries({ queryKey: ["teamRankings", targetBusinessId] });
+        queryClient.invalidateQueries({ queryKey: ["rankingsSummary", targetBusinessId] });
       }
+
+      console.log("Navigating to:", navPath, navOptions);
+      navigate(navPath, navOptions);
     } catch (routeErr) {
       console.error("Routing error:", routeErr);
       navigate('/dashboard'); // Fallback
