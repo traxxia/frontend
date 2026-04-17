@@ -186,7 +186,7 @@ const BusinessSetupPage = () => {
 
   const {
     questions, questionsLoaded, userAnswers, completedQuestions,
-    setQuestions, setUserAnswer, setAnalysisData, fetchAnalysisData,
+    setQuestions, setQuestionsLoaded, initializeBusinessData, setUserAnswer, setAnalysisData, fetchAnalysisData,
     regeneratePhase, regenerateIndividualAnalysis,
     swotAnalysis, purchaseCriteria, loyaltyNPS, portersData, pestelData,
     fullSwotData, competitiveAdvantage, strategicData, expandedCapability,
@@ -225,6 +225,8 @@ const BusinessSetupPage = () => {
     investmentPerformanceData: state.investmentPerformanceData,
     leverageRiskData: state.leverageRiskData,
     isRegenerating: state.isRegenerating,
+    setQuestionsLoaded: state.setQuestionsLoaded,
+    initializeBusinessData: state.initializeBusinessData,
   })));
 
   // Regenerating flag aliases
@@ -492,7 +494,8 @@ const BusinessSetupPage = () => {
       if (!selectedBusinessId) return;
       try {
         if (!token) return;
-
+        setQuestionsLoaded(false);
+        setApiLoading('fetchAnalysisDataThroughBackend', true);
         hasLoadedQuestionsRef.current = loadKey;
 
         // Use the enhanced Answers API universally for all tabs to get questions and answers
@@ -502,26 +505,16 @@ const BusinessSetupPage = () => {
           // 1. Handle Document Info
           const documentExists = responseData.document_info?.has_document === true;
           setHasUploadedDocument(documentExists);
-          
-          if (responseData.document_info && responseData.document_info.has_document) {
-            setDocumentInfo(responseData.document_info);
-          } else {
-            // Use the service which now has local promise-caching to avoid duplicate requests
-            const doc = await apiService.fetchFinancialDocument(selectedBusinessId);
-            if (doc) {
-              setDocumentInfo(doc);
-            } else {
-              setDocumentInfo({ has_document: false });
-            }
-          }
+          setDocumentInfo(responseData.document_info || { has_document: false });
 
           // 2. Handle Questions and Answers mapping
+          let finalAnswers = {};
+          let finalCompleted = [];
+
           if (responseData.questions?.length > 0) {
-            setQuestions(responseData.questions); // This internally sets questionsLoaded: true
-            
             const answersMap = {};
             const answerIdsMap = {};
-            
+
             responseData.data?.forEach(ans => {
               if (ans.question_id && ans.answer) {
                 const qIdStr = String(ans.question_id);
@@ -529,20 +522,34 @@ const BusinessSetupPage = () => {
                 answerIdsMap[qIdStr] = ans._id;
               }
             });
-            
-            if (Object.keys(answersMap).length > 0) {
-              Object.entries(answersMap).forEach(([qId, ans]) => setUserAnswer(qId, ans));
-              setAnswerIds(answerIdsMap);
-            }
-          } else {
-            useAnalysisStore.setState({ questionsLoaded: true });
+
+            finalAnswers = answersMap;
+            finalCompleted = Object.keys(answersMap);
+            setAnswerIds(answerIdsMap);
           }
+
+          // 3. Fetch analysis results silently (don't set loaded=true inside fetchAnalysisData)
+          let analysisUpdates = {};
+          if (Object.keys(finalAnswers).length > 0) {
+            analysisUpdates = await fetchAnalysisData(selectedBusinessId, true);
+          }
+
+          // 4. ATOMIC INITIALIZATION
+          initializeBusinessData({
+            questions: responseData.questions || [],
+            userAnswers: finalAnswers,
+            completedQuestions: finalCompleted,
+            analysisUpdates: analysisUpdates || {},
+            questionsLoaded: true
+          });
         } else {
-          useAnalysisStore.setState({ questionsLoaded: true });
+          setQuestionsLoaded(true);
         }
       } catch (error) {
         console.error('Error loading data:', error);
-        useAnalysisStore.setState({ questionsLoaded: true });
+        setQuestionsLoaded(true);
+      } finally {
+        setApiLoading('fetchAnalysisDataThroughBackend', false);
       }
     };
 
@@ -1077,7 +1084,7 @@ const BusinessSetupPage = () => {
         </div>
       )}
 
-      {isMobile && questionsLoaded && (
+      {isMobile && (
         <>
           <div className="mobile-header">
             <div className="mobile-header-top">
@@ -1103,7 +1110,7 @@ const BusinessSetupPage = () => {
             </div>
 
             <div className="mobile-active-tab">
-              {(['executive', 'advanced', 'insights', 'strategic', 'priorities', 'projects'].includes(activeTab)) ? (
+              {(['executive', 'advanced', 'insights', 'strategic', 'priorities', 'projects', 'ranking'].includes(activeTab)) ? (
                 <div className="mobile-tab-selector">
                   <div className="mobile-tab-trigger no-dropdown">
                     <span>
@@ -1347,8 +1354,7 @@ const BusinessSetupPage = () => {
 
       <div className={`main-container ${isAnalysisExpanded && !isMobile ? "analysis-expanded" : ""}`}>
 
-        {questionsLoaded && (
-          <div className={`info-panel ${isMobile ? (['advanced', 'insights', 'strategic', 'projects', 'ranking', 'priorities', 'aha', 'executive'].includes(activeTab) ? "active" : "") : ""} ${isAnalysisExpanded && !isMobile ? "expanded" : ""}`}>
+        <div className={`info-panel ${isMobile ? (['advanced', 'insights', 'strategic', 'projects', 'ranking', 'priorities', 'aha', 'executive'].includes(activeTab) ? "active" : "") : ""} ${isAnalysisExpanded && !isMobile ? "expanded" : ""}`}>
             {!isMobile && isAnalysisExpanded && (
               <div className="desktop-expanded-analysis">
                 <div className="expanded-analysis-view">
@@ -1535,6 +1541,17 @@ const BusinessSetupPage = () => {
                               currentPhase={currentPhase}
                               disabled={isAnalysisRegenerating}
                               unlockedFeatures={unlockedFeatures}
+                              fullSwotData={fullSwotData}
+                              competitiveAdvantageData={competitiveAdvantageData}
+                              expandedCapabilityData={expandedCapabilityData}
+                              strategicRadarData={strategicRadarData}
+                              productivityData={productivityData}
+                              maturityData={maturityData}
+                              profitabilityData={profitabilityData}
+                              growthTrackerData={growthTrackerData}
+                              liquidityEfficiencyData={liquidityEfficiencyData}
+                              investmentPerformanceData={investmentPerformanceData}
+                              leverageRiskData={leverageRiskData}
                             />
                           </CustomTooltip>
 
@@ -1673,6 +1690,7 @@ const BusinessSetupPage = () => {
                           leverageRiskRef={leverageRiskRef}
                           competitiveLandscapeRef={competitiveLandscapeRef}
                           coreAdjacencyRef={coreAdjacencyRef}
+                          questionsLoaded={questionsLoaded}
                         />}
                       {activeTab === "strategic" && hasStrategicAccess && (
                         <div className="strategic-section">
@@ -1690,6 +1708,7 @@ const BusinessSetupPage = () => {
                             hasProjectsTab={showProjectsTab}
                             onToastMessage={showToastMessage}
                             hasStrategicAccess={hasStrategicAccess}
+                            questionsLoaded={questionsLoaded}
                           />
                         </div>
                       )}
@@ -1855,7 +1874,8 @@ const BusinessSetupPage = () => {
                       <div className="analysis-content">
                         <AnalysisContentManager
                           {...analysisProps}
-                          canRegenerate={canShowRegenerateButtons} />
+                          canRegenerate={canShowRegenerateButtons}
+                          questionsLoaded={questionsLoaded} />
                       </div>
                     </div>
                   )}
@@ -1878,6 +1898,7 @@ const BusinessSetupPage = () => {
                         streamingManager={streamingManager}
                         isExpanded={true}
                         hasProjectsTab={showProjectsTab}
+                        questionsLoaded={questionsLoaded}
                       />
                     </div>
                   )}
@@ -1963,9 +1984,10 @@ const BusinessSetupPage = () => {
                 {activeTab === "insights" && hasInsightAccess && (
                   <div className="analysis-section">
                     <div className="analysis-content">
-                      <AnalysisContentManager
-                        {...analysisProps}
-                        canRegenerate={canShowRegenerateButtons} />
+                        <AnalysisContentManager
+                          {...analysisProps}
+                          canRegenerate={canShowRegenerateButtons}
+                          questionsLoaded={questionsLoaded} />
                     </div>
                   </div>
                 )}
@@ -1989,6 +2011,7 @@ const BusinessSetupPage = () => {
                       isExpanded={true}
                       onKickstartProjects={() => setActiveTab("projects")}
                       hasProjectsTab={showProjectsTab}
+                      questionsLoaded={questionsLoaded}
                     />
                   </div>
                 )}
@@ -1997,6 +2020,12 @@ const BusinessSetupPage = () => {
                     onProjectCountChange={handleProjectCountChange}
                     companyAdminIds={companyAdminIds}
                     isArchived={isArchived}
+                  />
+                )}
+                {activeTab === "ranking" && hasProjectAccess && (
+                  <RankingSection
+                    isArchived={isArchived}
+                    companyAdminIds={companyAdminIds}
                   />
                 )}
                 {hasPmfAccess && activeTab === "priorities" && (
@@ -2010,11 +2039,10 @@ const BusinessSetupPage = () => {
                     refreshTrigger={pmfRefreshTrigger}
                   />
                 )}
-              </div>
-            )}
           </div>
         )}
       </div>
+    </div>
       <UpgradeModal
         show={isModalOpen('upgrade')}
         onHide={() => closeModal('upgrade')}

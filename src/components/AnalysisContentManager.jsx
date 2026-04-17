@@ -453,7 +453,8 @@ const AnalysisContentManager = (props) => {
     liquidityEfficiencyData: propsLiquidityEfficiencyData,
     investmentPerformanceData: propsInvestmentPerformanceData,
     leverageRiskData: propsLeverageRiskData,
-    strategicData: propsStrategicData
+    strategicData: propsStrategicData,
+    questionsLoaded
   } = props;
 
   const {
@@ -757,12 +758,22 @@ const AnalysisContentManager = (props) => {
     return result;
   }, [currentAnalyses, renderAnalysisCard, CATEGORIES, ANALYSIS_CONFIG]);
 
+  if (!questionsLoaded) {
+    return (
+      <div className="modern-locked-state">
+        <Loader size={60} className="modern-locked-icon antigravity-rotating" />
+        <h3>{t("Preparing Analysis...")}</h3>
+        <p>{t("We're gathering the latest data to build your insights.")}</p>
+      </div>
+    );
+  }
+
   if (!unlockedFeatures.analysis) {
     return (
       <div className="modern-locked-state">
         <Lock size={60} className="modern-locked-icon" />
-        <h3>Analysis Locked</h3>
-        <p>Start answering questions in the business brief to unlock your comprehensive business analysis.</p>
+        <h3>{t("Analysis Locked")}</h3>
+        <p>{t("Start answering questions in the business brief to unlock your comprehensive business analysis.")}</p>
       </div>
     );
   }
