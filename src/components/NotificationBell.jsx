@@ -67,8 +67,7 @@ const NotificationBell = () => {
 
       const hasTargetBusinessId = !!targetBusinessId;
       if (hasTargetBusinessId) {
-        console.log("Setting active business:", targetBusinessId);
-        setSelectedBusinessId(targetBusinessId);
+        console.log("Target business identified for navigation:", targetBusinessId);
       } else if (isStaleProject && notif.message) {
         // Attempt to extract the business name from the message to aid the user
         const nameMatch = notif.message.match(/under\s+"([^"]+)"/i) || notif.message.match(/project.*under\s+([^ ]+)/i);
@@ -91,7 +90,7 @@ const NotificationBell = () => {
               if (found) {
                 const foundId = found._id || found.id;
                 console.log("Matched business name to ID:", foundId);
-                setSelectedBusinessId(foundId);
+                targetBusinessId = foundId;
               } else {
                 console.log("Could not find a business matching the name:", businessName);
               }
@@ -108,8 +107,7 @@ const NotificationBell = () => {
           const url = new URL(notif.action_link, window.location.origin);
           const bId = url.searchParams.get('business_id') || url.searchParams.get('businessId');
           if (bId) {
-            console.log("Reinforcing active business from URL:", bId);
-            setSelectedBusinessId(bId);
+            console.log("Reinforcing target business from URL:", bId);
             targetBusinessId = bId;
           }
         } catch (e) {

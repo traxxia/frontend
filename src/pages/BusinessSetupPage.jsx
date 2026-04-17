@@ -230,6 +230,7 @@ const BusinessSetupPage = () => {
     isRegenerating: state.isRegenerating,
     setQuestionsLoaded: state.setQuestionsLoaded,
     initializeBusinessData: state.initializeBusinessData,
+    resetAnalysis: state.resetAnalysis,
   })));
 
   // Regenerating flag aliases
