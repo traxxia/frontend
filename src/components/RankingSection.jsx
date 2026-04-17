@@ -15,7 +15,7 @@ import TeamRankingsView from "./TeamRankingsView";
 import ToastNotifications from "./ToastNotifications";
 import "../styles/ProjectsSection.css";
 
-const RankingSection = ({ isArchived, companyAdminIds }) => {
+const RankingSection = ({ isArchived, companyAdminIds, setActiveTab }) => {
   const { t } = useTranslation();
   const { selectedBusinessId } = useBusinessStore();
   const { userRole, userId: myUserId, userName: user } = useAuthStore();
@@ -48,6 +48,7 @@ const RankingSection = ({ isArchived, companyAdminIds }) => {
   const [showTeamRankings, setShowTeamRankings] = useState(isViewer);
   const [activeAccordionKey, setActiveAccordionKey] = useState(null);
   const [apiIsArchived, setApiIsArchived] = useState(isArchived);
+  const [isTransitioning, setIsTransitioning] = useState(false);
 
   // Sync isArchived prop
   useEffect(() => { setApiIsArchived(isArchived); }, [isArchived]);
@@ -226,12 +227,13 @@ const RankingSection = ({ isArchived, companyAdminIds }) => {
         )}
       </div>
 
-      {/* Loading spinner */}
-      {isLoadingProjects && projects.length === 0 ? (
-        <div className="d-flex justify-content-center align-items-center py-5" style={{ minHeight: 300 }}>
-          <div className="spinner-border text-primary" role="status">
+      {/* Loading spinner or Transition overlay */}
+      {(isTransitioning || (isLoadingProjects && projects.length === 0)) ? (
+        <div className="d-flex flex-column justify-content-center align-items-center py-5" style={{ minHeight: 400 }}>
+          <div className="spinner-border text-primary mb-3" role="status" style={{ width: '3rem', height: '3rem' }}>
             <span className="visually-hidden">Loading...</span>
           </div>
+          <p className="text-muted">{isTransitioning ? t("Processing rankings and updating view...") : t("Loading projects...")}</p>
         </div>
       ) : (
         <>
@@ -241,12 +243,23 @@ const RankingSection = ({ isArchived, companyAdminIds }) => {
               projects={rankedProjects}
               onLockRankings={handleLockProjectRanking}
               onRankSaved={async () => {
-                await refreshData();
-                if (useProjectStore.getState().lockSummary.total_users === 0) {
-                  // No collaborators — switch back to projects view via navigation
-                  useProjectStore.getState().setViewMode("projects");
-                } else {
-                  onToggleTeamRankings();
+                setIsTransitioning(true);
+                try {
+                  await refreshData();
+                  const currentLockSummary = useProjectStore.getState().lockSummary;
+                  if (!currentLockSummary || currentLockSummary.total_users === 0) {
+                    // No collaborators — switch back to projects view via navigation
+                    useProjectStore.getState().setViewMode("projects");
+                    if (setActiveTab) {
+                      setActiveTab("projects");
+                    }
+                  } else {
+                    onToggleTeamRankings();
+                  }
+                } finally {
+                  // We stay in transitioning state if redirecting, 
+                  // but if we just toggle view, we stop it after a short delay
+                  setTimeout(() => setIsTransitioning(false), 500);
                 }
               }}
               isAdmin={isSuperAdmin}

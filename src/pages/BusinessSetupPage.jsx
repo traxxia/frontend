@@ -312,6 +312,8 @@ const BusinessSetupPage = () => {
 
   useEffect(() => {
     if (selectedBusinessId) {
+      // Clear the local fetch cache when business changes so we re-fetch everything for the new business
+      fetchedAnalysisKeys.current.clear();
       fetchAnalysisData(selectedBusinessId);
     }
   }, [selectedBusinessId, fetchAnalysisData]);
@@ -1001,12 +1003,23 @@ const BusinessSetupPage = () => {
   useEffect(() => {
     if (activeTab !== 'insights' && activeTab !== 'strategic') return;
     
+    // Check if we need to force a refresh for the strategic tab
+    const forceRefresh = activeTab === 'strategic';
+
     const fetchKey = `${selectedBusinessId}-${activeTab}`;
     if (selectedBusinessId && questionsLoaded && !fetchedAnalysisKeys.current.has(fetchKey)) {
       fetchedAnalysisKeys.current.add(fetchKey);
-      setTimeout(() => phaseManager.loadExistingAnalysis(), 100);
+      setTimeout(() => {
+        // Use the store's fetchAnalysisData directly with forceRefresh if needed
+        // This ensures the store is updated and the backend is hit
+        if (forceRefresh) {
+          fetchAnalysisData(selectedBusinessId, true, true);
+        } else {
+          phaseManager.loadExistingAnalysis();
+        }
+      }, 100);
     }
-  }, [selectedBusinessId, questionsLoaded, activeTab]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [selectedBusinessId, questionsLoaded, activeTab, fetchAnalysisData]);
 
   useEffect(() => {
     const handleResize = () => {
@@ -1725,6 +1738,7 @@ const BusinessSetupPage = () => {
                         <RankingSection
                           isArchived={isArchived}
                           companyAdminIds={companyAdminIds}
+                          setActiveTab={setActiveTab}
                         />
                       )}
                       {hasPmfAccess && activeTab === "priorities" && (
