@@ -99,7 +99,8 @@ export const useAnalysisStore = create((set, get) => ({
   streamingText: {},
   isStreaming: {},
 
-  setQuestions: (questions) => set({ questions, questionsLoaded: true }),
+  setQuestions: (questions) => set({ questions }),
+  setQuestionsLoaded: (loaded) => set({ questionsLoaded: loaded }),
 
   setUserAnswer: (questionId, answer) => set((state) => ({
     userAnswers: { ...state.userAnswers, [questionId]: answer },
@@ -107,6 +108,15 @@ export const useAnalysisStore = create((set, get) => ({
       ? [...new Set([...state.completedQuestions, questionId])]
       : state.completedQuestions.filter(id => id !== questionId),
   })),
+
+  initializeBusinessData: ({ questions, userAnswers, completedQuestions, analysisUpdates = {}, questionsLoaded = true }) => 
+    set((state) => ({
+      questions: questions !== undefined ? questions : state.questions,
+      userAnswers: userAnswers !== undefined ? userAnswers : state.userAnswers,
+      completedQuestions: completedQuestions !== undefined ? completedQuestions : state.completedQuestions,
+      ...analysisUpdates,
+      questionsLoaded
+    })),
 
   setAnalysisData: (type, data) => {
     const keyMap = {
@@ -144,12 +154,12 @@ export const useAnalysisStore = create((set, get) => ({
 
   resetAnalysis: () => set(initialState),
 
-  fetchAnalysisData: async (businessId) => {
+  fetchAnalysisData: async (businessId, skipLoadingFlag = false) => {
     if (!businessId) return;
     const { token } = useAuthStore.getState();
     if (!token) return;
 
-    set({ questionsLoaded: false });
+    if (!skipLoadingFlag) set({ questionsLoaded: false });
     try {
       const apiService = getApiService();
       const newsAnalysisData = await apiService.fetchAnalysisDataThroughBackend(businessId);
@@ -197,7 +207,9 @@ export const useAnalysisStore = create((set, get) => ({
           : analysis.analysis_data;
       });
 
-      set({ ...updates, questionsLoaded: true });
+      set({ ...updates });
+      if (!skipLoadingFlag) set({ questionsLoaded: true });
+      return updates;
     } catch (err) {
       console.error('Failed to fetch analysis data:', err);
       set({ questionsLoaded: true });

@@ -34,18 +34,36 @@ const NotificationBell = () => {
     }
 
     try {
+      // 1. Identify if this is a specialized notification type
       const isStaleProject = notif.type === 'stale_bet' || notif.type === 'stale_project' || notif.type === 'review_reminder' || notif.type === 'review-reminder' || 
                              (notif.title && (notif.title.toLowerCase().includes('stale') || notif.title.toLowerCase().includes('atrasada') || notif.title.toLowerCase().includes('reminder')));
 
       const isRankingNotif = notif.type === 'admin_ranked_projects' || notif.type === 'collaborator_ranked_projects' || notif.type === 'ranking_status_change' || notif.type === 'project_ranking' || notif.type === 'time_to_rank_projects' ||
                              (notif.title && (notif.title.toLowerCase().includes('rank')));
 
-      console.log("Is stale project?", isStaleProject);
-
-      // Extract explicit business ID if available to set the correct business context
-      const targetBusinessId = notif.business_id || notif.action_data?.business_id || notif.metadata?.business_id || notif.project?.business_id || notif.reference_id;
+      // 2. Extract business ID with proper priority
+      // Priority: Link Param > Direct Property > Action Data > Metadata > Project Property
+      let targetBusinessId = null;
       
-      if (targetBusinessId) {
+      // A. Check action link first as it's the most explicit
+      if (notif.action_link) {
+          try {
+             const url = new URL(notif.action_link, window.location.origin);
+             targetBusinessId = url.searchParams.get('business_id') || url.searchParams.get('businessId');
+          } catch(e) {}
+      }
+      
+      // B. Fallback to properties if link didn't have it
+      if (!targetBusinessId) {
+          targetBusinessId = notif.business_id || 
+                           notif.action_data?.business_id || 
+                           notif.metadata?.business_id || 
+                           notif.project?.business_id || 
+                           (!notif.type?.includes('project') && notif.reference_id); // Only use reference_id if not a project notif
+      }
+
+      const hasTargetBusinessId = !!targetBusinessId;
+      if (hasTargetBusinessId) {
          console.log("Setting active business:", targetBusinessId);
          setSelectedBusinessId(targetBusinessId);
       } else if (isStaleProject && notif.message) {
@@ -81,13 +99,15 @@ const NotificationBell = () => {
          }
       }
 
+      // If action link explicitly requests a business via search params (redundant with A but kept for safety)
       if (notif.action_link) {
          try {
            const url = new URL(notif.action_link, window.location.origin);
            const bId = url.searchParams.get('business_id') || url.searchParams.get('businessId');
             if (bId) {
-               console.log("Setting active business from URL:", bId);
+               console.log("Reinforcing active business from URL:", bId);
                setSelectedBusinessId(bId);
+               targetBusinessId = bId;
             }
          } catch (e) {
            console.error("URL parsing error:", e);
@@ -107,7 +127,12 @@ const NotificationBell = () => {
         if (!navPath.includes('/businesspage')) {
            navPath = '/businesspage';
         }
-        navOptions = { state: { initialTab: 'projects', viewMode: 'ranking' } };
+        navOptions = { state: { ...navOptions.state, initialTab: 'ranking' } };
+      }
+
+      // Add business ID to navigation state to ensure target page handles the context switch
+      if (targetBusinessId) {
+        navOptions.state = { ...navOptions.state, businessId: targetBusinessId };
       }
 
       // If action link explicitly requests a tab via query params, use it
@@ -115,9 +140,18 @@ const NotificationBell = () => {
           try {
              const url = new URL(navPath, window.location.origin);
              const tab = url.searchParams.get('tab');
-             if (tab) navOptions = { state: { initialTab: tab } };
+             if (tab) {
+                navOptions = { state: { ...navOptions.state, initialTab: tab } };
+                // Sync with global hook state for immediate pickup
+                window.__businessPageNavState = navOptions.state;
+             }
              navPath = url.pathname;
           } catch(e) {}
+      }
+
+      // Ensure state is globally accessible for component initializers
+      if (navOptions.state?.initialTab) {
+        window.__businessPageNavState = navOptions.state;
       }
 
       console.log("Navigating to:", navPath, navOptions);

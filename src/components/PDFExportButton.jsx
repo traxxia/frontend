@@ -12,6 +12,7 @@ const PHASE_COMPONENTS = {
     { selector: '[data-component="pestel-analysis"]', name: 'PESTEL Analysis' }
   ],
   essential: [
+    { selector: '[data-component="swot-analysis"]', name: 'SWOT Analysis' },
     { selector: '[data-component="purchase-criteria"]', name: 'Purchase Criteria Matrix' },
     { selector: '[data-component="loyalty-nps"]', name: 'Loyalty & NPS Analysis' },
     { selector: '[data-component="porters-analysis"]', name: "Porter's Five Forces" },
@@ -26,6 +27,7 @@ const PHASE_COMPONENTS = {
     { selector: '[data-component="core-adjacency"]', name: 'Core' }
   ],
   good: [
+    { selector: '[data-component="swot-analysis"]', name: 'SWOT Analysis' },
     { selector: '[data-component="profitability-analysis"]', name: 'Profitability Analysis' },
     { selector: '[data-component="growth-tracker"]', name: 'Growth Tracker' },
     { selector: '[data-component="liquidity-efficiency"]', name: 'Liquidity & Efficiency' },
@@ -45,6 +47,7 @@ const PHASE_COMPONENTS = {
     { selector: '[data-component="core-adjacency"]', name: 'Core' }
   ],
   advanced: [
+    { selector: '[data-component="swot-analysis"]', name: 'SWOT Analysis' },
     { selector: '[data-component="profitability-analysis"]', name: 'Profitability Analysis' },
     { selector: '[data-component="growth-tracker"]', name: 'Growth Tracker' },
     { selector: '[data-component="liquidity-efficiency"]', name: 'Liquidity & Efficiency' },
@@ -168,9 +171,9 @@ const restoreChanges = (changes) => {
 // Function to determine actual export phase based on unlocked features
 const getExportPhase = (unlockedFeatures = {}) => {
   if (unlockedFeatures.advancedPhase) return 'advanced';
-  if (unlockedFeatures.goodPhase) return 'good';
-  if (unlockedFeatures.fullSwot) return 'essential';
-  if (unlockedFeatures.analysis) return 'initial';
+  if (unlockedFeatures.goodPhase || unlockedFeatures.hasDocument) return 'good';
+  if (unlockedFeatures.essentialPhase || unlockedFeatures.fullSwot) return 'essential';
+  if (unlockedFeatures.initialPhase || unlockedFeatures.analysis) return 'initial';
   return 'initial';
 };
 

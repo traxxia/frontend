@@ -114,7 +114,7 @@ export const useBusinessStore = create(
 
       setSelectedBusinessId: (selectedBusinessId) => {
         const business = [...get().businesses, ...get().collaboratingBusinesses].find(b => b._id === selectedBusinessId || b.id === selectedBusinessId);
-        set({ selectedBusinessId, selectedBusiness: business || get().selectedBusiness });
+        set({ selectedBusinessId, selectedBusiness: business || null });
       },
 
       clearSelection: () => set({ selectedBusiness: null, selectedBusinessId: null }),
