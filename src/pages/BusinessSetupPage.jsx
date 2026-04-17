@@ -114,6 +114,14 @@ const BusinessSetupPage = () => {
     }
   }, [location.state?.business, selectedBusinessId, setSelectedBusinessId]);
 
+  // Handle explicit business context switch from navigation state (e.g., via Notifications)
+  useEffect(() => {
+    if (location.state?.businessId && location.state.businessId !== selectedBusinessId) {
+      console.log("Navigation-driven business context switch to:", location.state.businessId);
+      setSelectedBusinessId(location.state.businessId);
+    }
+  }, [location.state?.businessId, selectedBusinessId, setSelectedBusinessId]);
+
   // Unified business name and admins (derived from store)
   const selectedBusinessName = currentBusiness?.business_name || "";
   const companyAdminIds = currentBusiness?.company_admin_id || [];
@@ -247,6 +255,9 @@ const BusinessSetupPage = () => {
 
     // Use location state if available (for internal navigation)
     if (window.__businessPageNavState?.initialTab) return window.__businessPageNavState.initialTab;
+    
+    // Fallback to location state directly from the router
+    if (window.history.state?.usr?.initialTab) return window.history.state.usr.initialTab;
 
     // Fallback based on user plan
     const { pmf: hasPmfAccess, project: hasProjectAccess } = getUserLimits();
@@ -320,7 +331,13 @@ const BusinessSetupPage = () => {
   // 1. Sync URL -> State (Initial load and Browser Back/Forward)
   useEffect(() => {
     const urlTab = searchParams.get('tab');
-    if (!urlTab) return;
+    if (!urlTab) {
+       // Also check for redirection state if query param is missing
+       if (location.state?.initialTab) {
+          setActiveTab(location.state.initialTab);
+       }
+       return;
+    }
 
     if (urlTab !== activeTab) {
       // Check access before switching
