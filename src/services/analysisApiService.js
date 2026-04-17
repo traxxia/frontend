@@ -105,11 +105,11 @@ export class AnalysisApiService {
     this.excelAnalysisCache = null; // Cache the excel-analysis result
   }
 
-  async fetchAnalysisDataThroughBackend(businessId) {
+  async fetchAnalysisDataThroughBackend(businessId, forceRefresh = false) {
     if (!businessId) return [];
     
     const cacheKey = `analysis-${businessId}`;
-    if (analysisDataCache.has(cacheKey)) {
+    if (!forceRefresh && analysisDataCache.has(cacheKey)) {
       return await analysisDataCache.get(cacheKey);
     }
     
@@ -117,7 +117,7 @@ export class AnalysisApiService {
       try {
         const token = this.getAuthToken();
         if (!token) return [];
-        return await AnalysisService.getAnalysis(this.API_BASE_URL, token, businessId);
+        return await AnalysisService.getAnalysis(this.API_BASE_URL, token, businessId, forceRefresh);
       } catch (error) {
         analysisDataCache.delete(cacheKey);
         throw error;
