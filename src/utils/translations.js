@@ -1747,6 +1747,9 @@ export const staticTranslations = {
     "strategic_access": "Strategic Access",
     "projects_access": "Projects Access",
     "mark_all_read": "Mark all as read",
+
+
+    "AI-inferred from your data": "AI-inferred from your data",
     "no_access_dashboard_message": "You don't have access to this business. Please upgrade your plan or contact admin.",
     "no_access_modal_title": "Feature Restricted",
     "no_access_modal_msg": "Premium Access Required",
@@ -3500,6 +3503,8 @@ export const staticTranslations = {
     "mark_all_read": "Marcar todo como leído",
     'incorrect_email': 'Dirección de correo electrónico incorrecta',
     'incorrect_password': 'Contraseña incorrecta',
+
+    "AI-inferred from your data": "AI-inferred a partir de sus datos"
     "no_access_dashboard_message": "No tienes acceso a este negocio. Por favor, actualiza tu plan o contacta al administrador.",
     "no_access_modal_title": "Función Restringida",
     "no_access_modal_msg": "Acceso Premium Requerido",
