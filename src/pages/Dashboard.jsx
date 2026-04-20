@@ -20,7 +20,7 @@ import MenuBar from "../components/MenuBar";
 import PMFOnboardingModal from "../components/PMFOnboardingModal";
 import PMFInsights from "../components/PMFInsights";
 import "../styles/dashboard.css";
-import { CircularProgressbar, buildStyles } from 'react-circular-progressbar';
+import { CircularProgressbar, buildStyles } from 'react-circular-progressbar/dist/index.js';
 import 'react-circular-progressbar/dist/styles.css';
 import { useTranslation } from '../hooks/useTranslation';
 
@@ -233,8 +233,9 @@ const Dashboard = () => {
   const [businessToDelete, setBusinessToDelete] = useState(null);
   // isLoadingBusinesses is now from store
 
-  // Deletion cooldown state
   const [cooldownMessage] = useState('');
+  const [accessModalMessage, setAccessModalMessage] = useState('');
+  const [accessModalSubMessage, setAccessModalSubMessage] = useState('');
 
 
   // Tour modal state
@@ -505,7 +506,7 @@ const Dashboard = () => {
       const current = usage.workspaces?.current || 0;
       const limit = usage.workspaces?.limit || 0;
 
-      if (current >= limit && isAdmin) {
+      if (current >= limit) {
         openModal('planLimit');
         return;
       }
@@ -608,12 +609,33 @@ const Dashboard = () => {
 
   // Event Handlers
   const handleBusinessClick = useCallback((business) => {
+    const limits = getUserLimits();
+    const hasAnyAccess = limits.pmf || limits.project || limits.strategic || limits.insight;
+
+    // If no feature access is available, block navigation and trigger modal
+    if (!hasAnyAccess) {
+      const isAdminRole = ['super_admin', 'company_admin', 'org_admin'].includes(userRole?.toLowerCase());
+      const subMessageKey = isAdminRole ? "no_access_modal_sub_admin" : "no_access_modal_sub_user";
+      
+      setAccessModalMessage(t('no_access_modal_msg'));
+      setAccessModalSubMessage(t(subMessageKey));
+      openModal('noFeatureAccess');
+      return;
+    }
+
     const businessId = business._id || business.id;
     if (businessId) {
       selectBusiness(business);
     }
-    navigate('/businesspage', { state: { business, initialTab: 'executive' } });
-  }, [selectBusiness, navigate]);
+
+    // Determine initial tab based on priority: PMF > Insights/Strategic > Projects
+    let initialTab = 'advanced';
+    if (limits.pmf) initialTab = 'executive';
+    else if (limits.insight || limits.strategic) initialTab = 'advanced';
+    else if (limits.project) initialTab = 'projects';
+
+    navigate('/businesspage', { state: { business, initialTab } });
+  }, [selectBusiness, navigate, addToast, t]);
 
   const handleCloseModal = useCallback(() => {
     closeModal('howItWorks');
@@ -632,7 +654,6 @@ const Dashboard = () => {
         plan={usage?.plan}
         limit={usage?.workspaces?.limit}
         isAdmin={isAdmin}
-        message="plan limit for business is reached please upgrade"
       />
 
 
@@ -1327,6 +1348,16 @@ const Dashboard = () => {
               </Button>
             </Modal.Footer>
           </Modal>
+
+          <PlanLimitModal
+            show={isModalOpen('noFeatureAccess')}
+            onHide={() => closeModal('noFeatureAccess')}
+            title={t('no_access_modal_title')}
+            message={accessModalMessage}
+            subMessage={accessModalSubMessage}
+            isAdmin={isAdmin}
+          />
+
 
           {/* <UpgradeModal
             show={isModalOpen('upgrade')}

@@ -33,11 +33,11 @@ export const AnalysisService = {
      * @param {string} businessId 
      * @returns {Promise<Array>}
      */
-    async getAnalysis(apiBaseUrl, token, businessId) {
+    async getAnalysis(apiBaseUrl, token, businessId, forceRefresh = false) {
         if (!businessId) return [];
 
         const cacheKey = `analysis-${businessId}`;
-        if (analysisRequestCache.has(cacheKey)) {
+        if (!forceRefresh && analysisRequestCache.has(cacheKey)) {
             return await analysisRequestCache.get(cacheKey);
         }
 

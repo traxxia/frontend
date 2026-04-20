@@ -90,8 +90,6 @@ const ProjectsSection = ({
     lockSummary: storeLockSummary,
     businessStatus: storeBusinessStatus,
     fetchProjects: fetchProjectsStore,
-    fetchTeamRankings: fetchTeamRankingsStore,
-    checkAllAccess: checkAllAccessStore,
     deleteProject,
     createProject,
     updateProject,
@@ -100,8 +98,6 @@ const ProjectsSection = ({
     reviewProject: reviewProjectAction,
     adhocUpdateProject: adhocUpdateProjectAction,
     clearCache,
-    viewMode,
-    setViewMode
   } = useProjectStore();
 
   const queryClient = useQueryClient();
@@ -121,10 +117,11 @@ const ProjectsSection = ({
   const containerRef = useRef(null);
 
   useEffect(() => {
-    if (onProjectCountChange) {
+    // Prevent unmounting the page incorrectly: only report count when loading has finished
+    if (onProjectCountChange && !isLoadingProjects) {
       onProjectCountChange(projects.length);
     }
-  }, [projects.length, onProjectCountChange]);
+  }, [projects.length, isLoadingProjects, onProjectCountChange]);
 
   useEffect(() => {
     if (activeView !== "list") {
@@ -146,17 +143,7 @@ const ProjectsSection = ({
   const navigate = useNavigate();
   const [currentProject, setCurrentProject] = useState(null);
   
-  // Set initial state based on viewMode
-  const initialIsViewer = useAuthStore.getState().isViewer();
-  const [showRankScreen, setShowRankScreen] = useState(location.state?.viewMode === "ranking" && !initialIsViewer);
-  const [showTeamRankings, setShowTeamRankings] = useState(location.state?.viewMode === "ranking" && initialIsViewer);
-
-  // Sync viewMode from location if it changes
-  useEffect(() => {
-    if (location.state?.viewMode === 'ranking') {
-      setViewMode('ranking');
-    }
-  }, [location.state?.viewMode, setViewMode]);
+  // Remove ranking specific view mode syncs as this is now handled by RankingSection
   const [activeAccordionKey, setActiveAccordionKey] = useState(null);
   const [pendingSavePayload, setPendingSavePayload] = useState(null);
   const [pendingStateChanges, setPendingStateChanges] = useState([]);
@@ -174,7 +161,7 @@ const ProjectsSection = ({
     } else if (activeView === "edit" || activeView === "view") {
       pageContext = AI_PAGE_CONTEXTS.PROJECT_EDIT;
     } else {
-      pageContext = viewMode === "ranking" ? AI_PAGE_CONTEXTS.PROJECT_RANKING || AI_PAGE_CONTEXTS.PROJECTS : AI_PAGE_CONTEXTS.PROJECTS;
+      pageContext = AI_PAGE_CONTEXTS.PROJECTS;
     }
 
     if (pageContext) {
@@ -184,87 +171,92 @@ const ProjectsSection = ({
         })
       );
     }
-  }, [activeView, viewMode]);
+  }, [activeView]);
   
   // Consolidate data refresh logic
+  // Uses getState()-based stable refs to avoid re-creating this callback on every Zustand update
   const refreshAllData = useCallback(async (options = { silent: true }) => {
     if (!selectedBusinessId) return;
     
     // Update signature to prevent immediate redundant automated refresh
-    lastRefreshRef.current = `${selectedBusinessId}-${viewMode}-${activeView}`;
+    lastRefreshRef.current = `${selectedBusinessId}-${activeView}`;
     
-    console.log("ProjectsSection: Refreshing all data (Manual/View Transition)");
+    console.log("ProjectsSection: Refreshing all data");
     
-    // 1. Clear custom store caches to bypass Zimmmer-level Map caching
-    clearCache(selectedBusinessId);
+    // 1. Clear custom store caches
+    useProjectStore.getState().clearCache(selectedBusinessId);
     
-    // 2. Invalidate TanStack queries to trigger fresh network requests
+    // 2. Invalidate TanStack queries
     queryClient.invalidateQueries({ queryKey: ["projects", selectedBusinessId] });
     queryClient.invalidateQueries({ queryKey: ["rankingsSummary", selectedBusinessId] });
-    queryClient.invalidateQueries({ queryKey: ["teamRankings", selectedBusinessId] });
     queryClient.invalidateQueries({ queryKey: ["grantedAccess", selectedBusinessId] });
 
-    // 3. Trigger immediate Zustand store refreshes (Projects handled via Query Invalidation)
-    const [_, rankingsResult] = await Promise.all([
-      fetchTeamRankingsStore(selectedBusinessId, { silent: options.silent }),
-      checkAllAccessStore(selectedBusinessId)
-    ]);
+    // 3. Trigger store refreshes using stable getState() calls
+    const accessData = await useProjectStore.getState().checkAllAccess(selectedBusinessId);
 
-    if (rankingsResult?.businessAccessMode) {
-      const apiArchived = rankingsResult.businessAccessMode === 'archived' || rankingsResult.businessAccessMode === 'hidden';
+    if (accessData?.businessAccessMode) {
+      const apiArchived = accessData.businessAccessMode === 'archived' || accessData.businessAccessMode === 'hidden';
       setApiIsArchived(apiArchived);
     }
-  }, [selectedBusinessId, clearCache, queryClient, fetchProjectsStore, fetchTeamRankingsStore, checkAllAccessStore]);
+  }, [selectedBusinessId, queryClient]); // stable deps only
 
   // Signature guard to prevent redundant calls during rapid state/view transitions
   const lastRefreshRef = useRef("");
+  const hasMountedRef = useRef(false);
   
-  // Trigger fresh fetch on mount AND on any major view transition (Redirects)
+  // Trigger fresh fetch on mount only. The signature guard prevents repeat calls
+  // for the same view configuration (e.g. switching tabs back and forth).
+  // Trigger fresh fetch on mount only. The signature guard prevents repeat calls
+  // for the same view configuration (e.g. switching tabs back and forth).
   useEffect(() => {
-    if (selectedBusinessId) {
-      // Create a unique signature for the current data state
-      const signature = `${selectedBusinessId}-${viewMode}-${activeView}`;
-      
-      // If we've already refreshed for this specific view configuration, skip it
-      if (lastRefreshRef.current === signature) {
-        console.log("ProjectsSection: Skipping redundant refresh for signature:", signature);
-        return;
-      }
+    if (!selectedBusinessId) return;
 
-      // We only want to trigger this when arriving at the main lists
-      const isMainView = activeView === "list" || viewMode === "ranking";
+    // On mount: fetch access data (useProjects handles projects fetching automatically)
+    if (!hasMountedRef.current) {
+      hasMountedRef.current = true;
+      const isMainView = activeView === "list";
       if (isMainView) {
+        const signature = `${selectedBusinessId}-${activeView}`;
         lastRefreshRef.current = signature;
-        refreshAllData();
+        
+        // Fetch access control only. It's cached in projectStore.
+        useProjectStore.getState().checkAllAccess(selectedBusinessId).then(accessData => {
+          if (accessData?.businessAccessMode) {
+            setApiIsArchived(
+              accessData.businessAccessMode === 'archived' || accessData.businessAccessMode === 'hidden'
+            );
+          }
+        }).catch(err => console.error(err));
       }
+      return;
     }
-  }, [selectedBusinessId, viewMode, activeView, refreshAllData]);
+
+    // After mount: only refresh if view transitions (e.g. navigating back to list from edit)
+    const signature = `${selectedBusinessId}-${activeView}`;
+    if (lastRefreshRef.current === signature) {
+      // console.log("ProjectsSection: Skipping redundant refresh for signature:", signature);
+      return;
+    }
+
+    const isMainView = activeView === "list";
+    if (isMainView) {
+      lastRefreshRef.current = signature;
+      refreshAllData();
+    }
+  }, [selectedBusinessId, activeView]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Sync prop to internal state
   useEffect(() => {
     setApiIsArchived(isArchived);
   }, [isArchived]);
 
-  // Initial screen state based on viewMode and role
-  useEffect(() => {
-    if (viewMode === "ranking") {
-      const isViewerRole = userRole === 'viewer';
-      setShowRankScreen(!isViewerRole);
-      setShowTeamRankings(isViewerRole);
-    } else {
-      setShowRankScreen(false);
-      setShowTeamRankings(false);
-    }
-  }, [viewMode, userRole]);
 
 
 
 
 
-  const onToggleTeamRankings = useCallback(() => {
-    setShowTeamRankings(true);
-    setShowRankScreen(false);
-  }, []);
+
+
 
   // Derived status flags based on businessStatus from store
   const projectCreationLocked = useMemo(() => ["prioritizing", "prioritized", "launched"].includes(businessStatus), [businessStatus]);
@@ -293,14 +285,9 @@ const ProjectsSection = ({
     validateForm,
   } = useProjectForm();
 
-  // Reset sub-view to list whenever viewMode changes (Top-level navigation)
-  useEffect(() => {
-    if (activeView !== "list") {
-      setActiveView("list");
-      setCurrentProject(null);
-      resetForm();
-    }
-  }, [viewMode, setActiveView, resetForm]);
+
+  // Reset sub-view to list whenever activeView goes entirely out of scope (Top-level navigation)
+  // Since viewMode was removed, we don't have an equivalent top-level reset trigger here unless needed.
 
   const isViewer = userRole === "viewer";
   const isEditor = userRole === "super_admin" || userRole === "company_admin" || userRole === "collaborator" || userRole === "user";
@@ -376,18 +363,14 @@ const ProjectsSection = ({
 
   const sortedProjects = useMemo(() => {
     return [...projects].sort((a, b) => {
-      const rankA = rankMap[String(a._id)];
-      const rankB = rankMap[String(b._id)];
+      const idA = normalizeId(a._id);
+      const idB = normalizeId(b._id);
 
-      // Primary: manual rank
-      // Secondary: AI rank
-      const rA = (rankA !== null && rankA !== undefined) ? rankA :
-        ((a.ai_rank !== null && a.ai_rank !== undefined) ? a.ai_rank : Infinity);
-      const rB = (rankB !== null && rankB !== undefined) ? rankB :
-        ((b.ai_rank !== null && b.ai_rank !== undefined) ? b.ai_rank : Infinity);
+      const rA = rankMap[idA] !== undefined ? rankMap[idA] : Infinity;
+      const rB = rankMap[idB] !== undefined ? rankMap[idB] : Infinity;
 
       if (rA === rB) {
-        return new Date(b.updated_at) - new Date(a.updated_at);
+        return new Date(b.created_at) - new Date(a.created_at);
       }
       return rA - rB;
     });
@@ -490,13 +473,26 @@ const ProjectsSection = ({
 
     try {
       setIsSubmitting(true);
-      const { success, error } = await launchProjects(selectedProjectIds);
+      const { success, error, data } = await launchProjects(selectedProjectIds);
 
       if (success) {
         addToast({ message: t("Projects_launched_Ready_for_execution."), type: "success" });
+        
+        // Immediately update TanStack Query cache with fresh project data, merging to preserve ranks
+        if (data && data.projects) {
+          queryClient.setQueryData(["projects", selectedBusinessId], (oldProjects = []) => {
+            return data.projects.map(newProj => {
+              const existingProj = oldProjects.find(p => String(p._id) === String(newProj._id));
+              return existingProj ? { ...existingProj, ...newProj } : newProj;
+            });
+          });
+        }
+
         clearCache(selectedBusinessId);
+        // We still invalidate to ensure total sync, but setQueryData fixed the immediate "old data" issue
         queryClient.invalidateQueries({ queryKey: ["projects", selectedBusinessId] });
         queryClient.invalidateQueries({ queryKey: ["teamRankings", selectedBusinessId] });
+        
         await refreshAllData();
         setSelectedProjectIds([]); // Clear selection
 
@@ -774,123 +770,16 @@ const ProjectsSection = ({
 
   const renderProjectList = () => {
     // isReadOnly is now defined at the top level of the component
-
     return (
       <>
-        {/* View mode handled via global navigation dropdown */}
-        {viewMode === "ranking" ? (
-          <>
-            <div className="d-flex align-items-center justify-content-between gap-2 mb-4 flex-wrap">
-              <div className="d-flex align-items-center gap-2 flex-grow-1">
-                {!isViewer && (
-                  <div className="status-tabs-container" style={{ WebkitOverflowScrolling: 'touch', overflowX: 'auto' }}>
-                    <button
-                      onClick={() => {
-                        setShowRankScreen(true);
-                        setShowTeamRankings(false);
-                      }}
-                      className={`status-tab ${showRankScreen ? 'active' : ''} ${isRankingBlinking ? 'blink-highlight' : ''}`}
-                    >
-                      <ListOrdered size={16} />
-                      {t("Rank_Projects")} {readOnlyIndicator}
-                    </button>
-
-                    {lockSummary.total_users > 0 && (
-                      <button
-                        onClick={onToggleTeamRankings}
-                        className={`status-tab ${showTeamRankings ? 'active' : ''}`}
-                      >
-                        <Users size={16} />
-                        {t("Rankings_View")} {readOnlyIndicator}
-                      </button>
-                    )}
-                  </div>
-                )}
-
-              </div>
-
-              {/* Repositioned Collaborator Progress - Admin Only */}
-              {isSuperAdmin && lockSummary.total_users > 0 && (
-                <div className="collaborator-progress-compact d-flex align-items-center gap-2 px-3 py-2 mt-md-0 mt-2" style={{
-                  backgroundColor: '#f8fafc',
-                  borderRadius: '10px', // Matches status-tabs
-                  border: '1px solid #e2e8f0',
-                  fontSize: '13px',
-                  whiteSpace: 'nowrap'
-                }}>
-                  <Users size={16} className="text-primary" />
-                  <span className="fw-600 text-slate-700" style={{ fontWeight: '600' }}>{t("Collaborator Progress")}:</span>
-                  <span className="badge bg-primary rounded-pill" style={{ fontSize: '11px' }}>
-                    {lockSummary.locked_users_count} / {lockSummary.total_users}
-                  </span>
-
-                  {lockSummary.total_users > 0 && lockSummary.locked_users_count === lockSummary.total_users && (
-                    <CheckCircle size={14} className="text-success" />
-                  )}
-                </div>
-              )}
-            </div>
-
-            {isLoadingProjects && projects.length === 0 ? (
-              <div className="d-flex justify-content-center align-items-center py-5" style={{ minHeight: "300px" }}>
-
-                <div className="spinner-border text-primary" role="status">
-                  <span className="visually-hidden">Loading...</span>
-                </div>
-              </div>
-            ) : (
-              <>
-                {showRankScreen && (
-                  <RankProjectsPanel
-                    show={showRankScreen}
-                    projects={rankedProjects}
-                    onLockRankings={handleLockProjectRanking}
-                    onRankSaved={async () => {
-                      await refreshAllData();
-                      if (useProjectStore.getState().lockSummary.total_users === 0) {
-                        setViewMode("projects");
-                        setShowRankScreen(false);
-                        setShowTeamRankings(false);
-                      } else {
-                        onToggleTeamRankings();
-                      }
-                    }}
-                    isAdmin={isSuperAdmin}
-                    isRankingLocked={isRankingLocked}
-                    businessStatus={businessStatus}
-                    userHasRerankAccess={userHasRerankAccess}
-                    userHasRankingAccess={userHasRankingAccess}
-                    onShowToast={handleShowToast}
-                    isArchived={apiIsArchived}
-                    userHasLockedRanking={userHasLockedRank}
-                  />
-                )}
-
-                {showTeamRankings && (
-                  <TeamRankingsView
-                    activeAccordionKey={activeAccordionKey}
-                    onAccordionSelect={handleAccordionSelect}
-                    isSuperAdmin={isSuperAdmin}
-                    user={user}
-                    sortedProjects={sortedProjects}
-                    rankMap={rankMap}
-                    adminRankMap={adminRankMap}
-                    userRole={userRole}
-                    businessId={selectedBusinessId}
-                  />
-                )}
-              </>
-            )}
-          </>
-        ) : (
-          <>
-            <div className="management-row-container mb-4" style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              gap: '20px',
-              flexWrap: 'wrap'
-            }}>
+        {/* We are no longer checking viewMode === "ranking" as ranking has its own separate standalone component RankingSection.jsx */}
+        <div className="management-row-container mb-4" style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: '20px',
+          flexWrap: 'wrap'
+        }}>
               <div className="d-flex align-items-center gap-3 flex-wrap">
                 <div className="status-tabs-container">
                   {CATEGORIES.map((cat) => (
@@ -986,8 +875,6 @@ const ProjectsSection = ({
               onToggleSelection={toggleProjectSelection}
               selectionDisabled={isGeneratingAIRankings || businessStatus !== "draft"}
             />
-          </>
-        )}
       </>
     );
   };

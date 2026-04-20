@@ -3,30 +3,32 @@ import { useProjectStore, useAuthStore } from "../store";
 
 
 export const useAccessControl = (selectedBusinessId) => {
-  const { 
-    accessControl, 
-    checkAllAccess: checkAllAccessStore 
-  } = useProjectStore();
+  const accessControl = useProjectStore(state => state.accessControl);
+  const userLimits = useAuthStore(state => state.userLimits) || { project: true };
 
-  const getUserLimits = () => {
-    return useAuthStore.getState().userLimits || { project: true };
-  };
+  // Use getState() for action methods to avoid reactive subscription churn.
+  // Extracting action functions via useProjectStore() subscribes to ALL store updates,
+  // giving you a new function reference on every Zustand state change.
+  const checkAllAccessStable = useCallback(
+    (bizId) => useProjectStore.getState().checkAllAccess(bizId),
+    [] // stable - never recreated
+  );
 
   const checkBusinessAccess = useCallback(async () => {
-    return await checkAllAccessStore(selectedBusinessId);
-  }, [selectedBusinessId, checkAllAccessStore]);
+    return await checkAllAccessStable(selectedBusinessId);
+  }, [selectedBusinessId, checkAllAccessStable]);
 
   const checkProjectsAccess = useCallback(
     async (projectIds) => {
-      const data = await checkAllAccessStore(selectedBusinessId);
+      const data = await checkAllAccessStable(selectedBusinessId);
       return data?.projects_edit_access || {};
     },
-    [selectedBusinessId, checkAllAccessStore]
+    [selectedBusinessId, checkAllAccessStable]
   );
 
   const canEditProject = useCallback(
     (project, isEditor, myUserId, businessStatus, isArchived) => {
-      const limits = getUserLimits();
+      const limits = userLimits;
       if (!limits.project || isArchived) return false;
       if (!project) return false;
 
@@ -60,12 +62,12 @@ export const useAccessControl = (selectedBusinessId) => {
   );
 
   const isReadOnlyMode = useCallback((isArchived) => {
-    return !getUserLimits().project || isArchived;
-  }, []);
+    return !userLimits.project || isArchived;
+  }, [userLimits.project]);
 
   const checkAllAccess = useCallback(async () => {
-    return await checkAllAccessStore(selectedBusinessId);
-  }, [selectedBusinessId, checkAllAccessStore]);
+    return await checkAllAccessStable(selectedBusinessId);
+  }, [selectedBusinessId, checkAllAccessStable]);
 
   const canReviewProject = useCallback(
     (project, isAdmin, myUserId, isArchived) => {

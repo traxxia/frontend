@@ -60,15 +60,29 @@ const StrategicAnalysis = ({
     streamingManager,
     cardId,
     isExpanded = true,
+    strategicData: propsStrategicData,
+    pestelData: propsPestelData,
+    portersData: propsPortersData,
+    userAnswers: propsUserAnswers,
+    questionsLoaded
   }) => {
     const { userRole, token, userId } = useAuthStore();
     const { setSelectedBusinessId } = useBusinessStore();
     const { 
-      strategicData, pestelData, portersData, userAnswers,
+      strategicData: storeStrategicData, 
+      pestelData: storePestelData, 
+      portersData: storePortersData, 
+      userAnswers: storeUserAnswers,
       isRegenerating: isTypeRegenerating 
     } = useAnalysisStore();
   
-    const [localStrategicData, setLocalStrategicData] = useState(strategicData);
+    // Prioritize props over store for multi-user/history support
+    const displayStrategicData = propsStrategicData || storeStrategicData;
+    const pestelData = propsPestelData || storePestelData;
+    const portersData = propsPortersData || storePortersData;
+    const userAnswers = propsUserAnswers || storeUserAnswers;
+
+    const [localStrategicData, setLocalStrategicData] = useState(displayStrategicData);
     const isRegenerating = propsIsRegenerating || isTypeRegenerating('strategic');
   const t = useTranslation().t;
   const ENABLE_PMF = getUserLimits().pmf;
@@ -482,27 +496,27 @@ const StrategicAnalysis = ({
 
 
   useEffect(() => {
-    if (strategicData) {
-      setLocalStrategicData(strategicData);
+    if (displayStrategicData) {
+      setLocalStrategicData(displayStrategicData);
       setHasGenerated(true);
       setErrorMessage('');
       setIsLoading(false);
 
-      const isFresh = strategicData._isFreshGeneration === true;
+      const isFresh = displayStrategicData._isFreshGeneration === true;
 
       // Only expand on fresh generation
-      if (isFresh && !isStrategicDataIncomplete(strategicData)) {
+      if (isFresh && !isStrategicDataIncomplete(displayStrategicData)) {
         setCollapsedCategories(new Set([]));
       } else if (!hasInitialized.current) {
         // First load - keep collapsed
         hasInitialized.current = true;
         setCollapsedCategories(new Set(['strategy-block', 'execution-block', 'sustainability-block']));
       }
-    } else if (strategicData === null) {
+    } else if (displayStrategicData === null) {
       setLocalStrategicData(null);
       setHasGenerated(false);
     }
-  }, [strategicData]);
+  }, [displayStrategicData]);
 
 
 
@@ -2644,6 +2658,31 @@ const StrategicAnalysis = ({
               Review Brief
             </button>
           </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!questionsLoaded) {
+    return (
+      <div className="strategic-analysis-container">
+        <div className="modern-locked-state" style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '60px 20px',
+          textAlign: 'center',
+          background: 'rgba(255, 255, 255, 0.5)',
+          borderRadius: '16px',
+          border: '1px dashed #cbd5e1',
+          margin: '20px'
+        }}>
+          <Loader size={60} className="modern-locked-icon antigravity-rotating" style={{ color: '#94a3b8', marginBottom: '20px' }} />
+          <h3 style={{ fontSize: '20px', fontWeight: '700', color: '#334155', marginBottom: '12px' }}>{t("Preparing Strategic Analysis...")}</h3>
+          <p style={{ maxWidth: '400px', color: '#64748b', lineHeight: '1.6' }}>
+            {t("We're gathering the latest data to build your strategic insights.")}
+          </p>
         </div>
       </div>
     );

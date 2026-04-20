@@ -99,10 +99,10 @@ const ExecutiveSummary = ({ businessId, onStartOnboarding, refreshTrigger }) => 
 
   // Robust check for empty content
   const hasActualContent = data && (
-    (data.top_priorities && Array.isArray(data.top_priorities) && data.top_priorities.length > 0) || 
+    (data.top_priorities && Array.isArray(data.top_priorities) && data.top_priorities.length > 0) ||
     (data.topPriorities && Array.isArray(data.topPriorities) && data.topPriorities.length > 0) ||
     (data["Top Priorities"] && Array.isArray(data["Top Priorities"]) && data["Top Priorities"].length > 0) ||
-    data.how_to_compete || 
+    data.how_to_compete ||
     data.howToCompete ||
     (data.new_adjacencies_to_explore && Array.isArray(data.new_adjacencies_to_explore) && data.new_adjacencies_to_explore.length > 0) ||
     (data.newAdjacencies && Array.isArray(data.newAdjacencies) && data.newAdjacencies.length > 0)
@@ -185,19 +185,40 @@ const ExecutiveSummary = ({ businessId, onStartOnboarding, refreshTrigger }) => 
             {expandedSections.ahaInsights && (
               <div className="exc-section-body">
                 <div className="exc-aha-vertical-tiles">
-                  {topAhaInsights.map((insight, idx) => (
-                    <div key={idx} className="exc-aha-tile full-width">
-                      <div className="exc-aha-tile-header">
-                        <span className="exc-aha-tile-category">{insight.type || t("Insight")}</span>
+                  {topAhaInsights.map((insight, idx) => {
+                    const conf = (insight.confidence || '').toLowerCase();
+                    let confBg = 'bg-secondary-subtle';
+                    let confText = 'text-secondary';
+                    if (conf.includes('high')) {
+                      confBg = 'bg-success-subtle';
+                      confText = 'text-success';
+                    } else if (conf.includes('medium')) {
+                      confBg = 'bg-warning-subtle';
+                      confText = 'text-warning';
+                    } else if (conf.includes('low')) {
+                      confBg = 'bg-danger-subtle';
+                      confText = 'text-danger';
+                    }
+
+                    return (
+                      <div key={idx} className="exc-aha-tile full-width">
+                        <div className="exc-aha-tile-header d-flex justify-content-between align-items-center">
+                          <span className="exc-aha-tile-category">{insight.type || t("Insight")}</span>
+                          {insight.confidence && (
+                            <span className={`badge rounded-pill ${confBg} ${confText} px-3 py-2 fw-semibold`}>
+                              {t("Confidence")}: {insight.confidence.charAt(0).toUpperCase() + insight.confidence.slice(1)}
+                            </span>
+                          )}
+                        </div>
+                        <h5 className="exc-aha-tile-title">{insight.title}</h5>
+                        <ul className="exc-aha-tile-details">
+                          {(insight.details || insight.key_points || []).slice(0, 3).map((detail, dIdx) => (
+                            <li key={dIdx}>{detail}</li>
+                          ))}
+                        </ul>
                       </div>
-                      <h5 className="exc-aha-tile-title">{insight.title}</h5>
-                      <ul className="exc-aha-tile-details">
-                        {(insight.details || insight.key_points || []).slice(0, 3).map((detail, dIdx) => (
-                          <li key={dIdx}>{detail}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             )}

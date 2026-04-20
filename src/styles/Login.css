@@ -174,9 +174,23 @@
 }
 
 .login-subtitle {
-  color: var(--color-text-secondary);
   margin-bottom: var(--spacing-lg);
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-medium);
+  background: var(--gradient-primary);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  color: transparent;
+  display: inline-block;
+  opacity: 0.9;
+  letter-spacing: 0.5px;
+  transition: transform var(--transition-normal), opacity var(--transition-normal);
+}
+
+.login-subtitle:hover {
+  opacity: 1;
+  transform: translateY(-2px);
 }
 
 .form-group label {

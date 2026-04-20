@@ -152,6 +152,13 @@ const AdminTable = ({
                     </div>
                 </div>
             )}
+            
+            {/* ---- Linear Loading Bar ---- */}
+            {loading && (
+                <div className="admin-loading-bar-container">
+                    <div className="admin-loading-bar" />
+                </div>
+            )}
 
             {/* ---- Table Body ---- */}
             {loading ? (

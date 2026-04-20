@@ -28,6 +28,11 @@ export const staticTranslations = {
     'Are you sure you want to proceed without collaborators? You can also continue without any participants for now—this is perfectly fine, and you can always add them later.': 'Are you sure you want to proceed without collaborators? You can also continue without any participants for now—this is perfectly fine, and you can always add them later.',
     'Kickstart to Projects': 'Kickstart to Projects',
     'Add Collaborators First': 'Add Collaborators First',
+    'login_subtitle': 'Transform your business strategy into action.',
+    'estimated_time_30_60': 'Estimated time: 30-60 seconds',
+    'maturity_details_subdimension': 'Maturity details by sub-dimension',
+    'focus_capability_gaps': 'We focus on specific capability gaps and strengths, not generic maturity scores.',
+    'ai_refinement_helper': 'Traxxia will start from your INITIAL answers, propose refined versions, and label them AI‑REFINED. You can edit or revert to INITIAL at any time.',
 
     // ===========================
     // REGISTRATION
@@ -144,6 +149,11 @@ export const staticTranslations = {
     'password': 'Password',
     'confirm_password': 'Confirm Password',
     'role': 'Role',
+    'Select_Role': 'Select Role',
+    'Org_Admin': 'Org Admin',
+    'Collaborator': 'Collaborator',
+    'User': 'User',
+    'Viewer': 'Viewer',
     'company': 'Company',
     'Adding_User': 'Adding User...',
     'Assign_Business_Access': 'Assign Business Access',
@@ -205,6 +215,7 @@ export const staticTranslations = {
     "create_business_plans": "Create business plans step by step with the S.T.R.A.T.E.G.I.C framework. Activate AI capabilities for analysis, prediction, and decision-making.",
     "my_businesses": "Businesses",
     "create_business": "Create Business",
+    "company_business_limit_reached": "Business limit reached for your company. Please contact your administrator for more support.",
     "authentication_required": "Authentication required",
     "failed_to_load_businesses": "Failed to load businesses",
     "network_error": "Network error. Please try again.",
@@ -1480,7 +1491,7 @@ export const staticTranslations = {
     "financial_data": "Financial Data",
     "report_templates_statements": "Report templates & statements",
     "generating_suggestions": "Generating Suggestions...",
-    "generate_ai_answers": "Generate AI Answers",
+    "generate_ai_answers": "Refine INITIAL answers with AI",
     "get_started": "Get Started",
     "initial": "Initial",
     "essential": "Essential",
@@ -1739,6 +1750,11 @@ export const staticTranslations = {
 
 
     "AI-inferred from your data": "AI-inferred from your data",
+    "no_access_dashboard_message": "You don't have access to this business. Please upgrade your plan or contact admin.",
+    "no_access_modal_title": "Feature Restricted",
+    "no_access_modal_msg": "Premium Access Required",
+    "no_access_modal_sub_admin": "Your current plan does not include access to this business data. Upgrade now to unlock advanced AI insights and strategic tools.",
+    "no_access_modal_sub_user": "Your current plan does not include access to this business data. Please upgrade your plan or contact your administrator."
 
 
   },
@@ -1938,6 +1954,11 @@ export const staticTranslations = {
     'Are you sure you want to proceed without collaborators? You can also continue without any participants for now—this is perfectly fine, and you can always add them later.': '¿Está seguro de que desea continuar sin colaboradores? También puede continuar sin participantes por ahora; esto está perfectamente bien y siempre puede agregarlos más tarde.',
     'Kickstart to Projects': 'Iniciar hacia proyectos',
     'Add Collaborators First': 'Agregar colaboradores primero',
+    'login_subtitle': 'Transforma la estrategia de tu negocio en acción.',
+    'estimated_time_30_60': 'Tiempo estimado: 30-60 segundos',
+    'maturity_details_subdimension': 'Detalles de madurez por subdimensión',
+    'focus_capability_gaps': 'Nos enfocamos en brechas de capacidad específicas y fortalezas, no en puntajes de madurez genéricos.',
+    'ai_refinement_helper': 'Traxxia comenzará con sus respuestas INICIALES, propondrá versiones refinadas y las etiquetará como REFINADAS POR IA. Puede editar o revertir a INICIAL en cualquier momento.',
 
     // ===========================
     // REGISTRO
@@ -2026,6 +2047,7 @@ export const staticTranslations = {
     "create_business_plans": "Crea planes de negocio paso a paso con el marco S.T.R.A.T.E.G.I.C. Activa las capacidades de IA para análisis, predicción y toma de decisiones.",
     "my_businesses": "Mis Negocios",
     "create_business": "Crear Negocio",
+    "company_business_limit_reached": "Se ha alcanzado el límite de negocios para su empresa. Por favor, póngase en contacto con su administrador para obtener más ayuda.",
     "authentication_required": "Se requiere autenticación",
     "failed_to_load_businesses": "Error al cargar los negocios",
     "network_error": "Error de red. Por favor, inténtalo de nuevo.",
@@ -3483,6 +3505,11 @@ export const staticTranslations = {
     'incorrect_password': 'Contraseña incorrecta',
 
     "AI-inferred from your data": "AI-inferred a partir de sus datos"
+    "no_access_dashboard_message": "No tienes acceso a este negocio. Por favor, actualiza tu plan o contacta al administrador.",
+    "no_access_modal_title": "Función Restringida",
+    "no_access_modal_msg": "Acceso Premium Requerido",
+    "no_access_modal_sub_admin": "Tu plan actual no incluye acceso a los datos de este negocio. Actualiza ahora para desbloquear insights premium de IA y herramientas estratégicas.",
+    "no_access_modal_sub_user": "Tu plan actual no incluye acceso a los datos de este negocio. Por favor, actualiza tu plan o contacta a tu administrador."
   }
 };
 

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
-import { FaUser, FaEnvelope, FaLock, FaCheck, FaBuilding, FaRocket, FaGlobe, FaChevronRight, FaChevronLeft, FaSave, FaSpinner, FaEye, FaEyeSlash, FaSearch, FaChevronDown, FaChevronUp, FaTimes, FaAngleLeft, FaAngleRight } from 'react-icons/fa';
+import { FaUser, FaEnvelope, FaLock, FaCheck, FaBuilding, FaRocket, FaGlobe, FaChevronRight, FaChevronLeft, FaSave, FaSpinner, FaEye, FaEyeSlash, FaSearch, FaChevronDown, FaChevronUp, FaTimes, FaAngleLeft, FaAngleRight, FaTimesCircle } from 'react-icons/fa';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Modal, Button } from 'react-bootstrap';
 import '../styles/Register.css';
@@ -125,6 +125,7 @@ const Register = () => {
     company_id: '',
     company_name: '',
     job_title: '',
+    role: 'user',
     terms: false,
   });
   const [isNewCompany, setIsNewCompany] = useState(false);
@@ -148,8 +149,12 @@ const Register = () => {
   const { data: companies = [], isLoading: loadingCompanies } = useCompanies();
 
   const [isCompanyDropdownOpen, setIsCompanyDropdownOpen] = useState(false);
+  const [isRoleDropdownOpen, setIsRoleDropdownOpen] = useState(false);
   const [companySearch, setCompanySearch] = useState('');
+  const [submitError, setSubmitError] = useState(null);
   const companyDropdownRef = React.useRef(null);
+  const roleDropdownRef = React.useRef(null);
+  const errorBoxRef = React.useRef(null);
 
   const filteredCompanies = useMemo(() => {
     return companies.filter(c =>
@@ -161,6 +166,9 @@ const Register = () => {
     const handleClickOutside = (event) => {
       if (companyDropdownRef.current && !companyDropdownRef.current.contains(event.target)) {
         setIsCompanyDropdownOpen(false);
+      }
+      if (roleDropdownRef.current && !roleDropdownRef.current.contains(event.target)) {
+        setIsRoleDropdownOpen(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -342,6 +350,7 @@ const Register = () => {
         }
       } else {
         userData.company_id = form.company_id;
+        userData.role = form.role;
       }
 
       const response = await axios.post(`${API_BASE_URL}/api/register`, userData);
@@ -356,12 +365,21 @@ const Register = () => {
 
     } catch (err) {
       setIsSubmitting(false);
+      const errorMessage = err.response?.data?.error || 'Registration failed.';
+      setSubmitError(errorMessage);
+      
+      // Still show the modal for critical failures but the inline alert is the primary focus
       setIsError(true);
-      setModalMessage(err.response?.data?.error || 'Registration failed.');
+      setModalMessage(errorMessage);
+      
+      if (errorMessage && errorMessage.includes('limit')) {
+        // Specific scroll for limit errors to the dropdown area
+        errorBoxRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+      
       if (err.response?.data?.error && err.response.data.error.includes('Payment')) {
         setErrors({ payment: err.response.data.error });
       }
-      setShowSuccessModal(true);
     }
   };
 
@@ -392,6 +410,31 @@ const Register = () => {
                 <h1>{t('register_title')}</h1>
                 <p>{t('create_account_subtitle')}</p>
               </div>
+
+              <AnimatePresence mode="wait">
+                {submitError && (
+                  <motion.div 
+                    initial={{ opacity: 0, height: 0, marginBottom: 0 }}
+                    animate={{ opacity: 1, height: 'auto', marginBottom: 20 }}
+                    exit={{ opacity: 0, height: 0, marginBottom: 0 }}
+                    className="registration-error-box"
+                    ref={errorBoxRef}
+                  >
+                    <div className="error-icon">
+                      <FaTimesCircle />
+                    </div>
+                    <div className="error-content">
+                      <p>{submitError}</p>
+                      {submitError.includes('limit') && (
+                        <span className="error-action">{t('contact_admin_to_upgrade')}</span>
+                      )}
+                    </div>
+                    <button className="error-close" onClick={() => setSubmitError(null)}>
+                      <FaTimes />
+                    </button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
 
               <div className="register-steps-container">
                 <div className={`step-item ${activeTab >= 1 ? 'active' : ''} ${activeTab > 1 ? 'completed' : ''}`}>
@@ -680,6 +723,46 @@ const Register = () => {
                             <div ref={companyErrorRef}>
                               {(errors.company_name || errors.company_id) && <div className="error-message">{errors.company_name || errors.company_id}</div>}
                             </div>
+
+                            {!isNewCompany && (
+                              <div className="form-group-custom full-width-field mt-3">
+                                <label>{t("role")} <span className="required">*</span></label>
+                                <div className="custom-select-container" ref={roleDropdownRef}>
+                                  <div
+                                    className={`custom-select-header ${isRoleDropdownOpen ? 'open' : ''}`}
+                                    onClick={() => setIsRoleDropdownOpen(!isRoleDropdownOpen)}
+                                  >
+                                    <span>
+                                      {form.role ? t(form.role === 'company_admin' ? 'Org_Admin' : form.role.charAt(0).toUpperCase() + form.role.slice(1)) : t('Select_Role')}
+                                    </span>
+                                    {isRoleDropdownOpen ? <FaChevronUp /> : <FaChevronDown />}
+                                  </div>
+
+                                  {isRoleDropdownOpen && (
+                                    <div className="custom-select-dropdown">
+                                      <div className="options-list">
+                                        {[
+                                          { id: 'collaborator', name: t('Collaborator') },
+                                          { id: 'user', name: t('User') },
+                                          { id: 'viewer', name: t('Viewer') }
+                                        ].map((r) => (
+                                          <div
+                                            key={r.id}
+                                            className={`option-item ${form.role === r.id ? 'selected' : ''}`}
+                                            onClick={() => {
+                                              setForm({ ...form, role: r.id });
+                                              setIsRoleDropdownOpen(false);
+                                            }}
+                                          >
+                                            {r.name}
+                                          </div>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            )}
                           </div>
 
                           <AnimatePresence>
