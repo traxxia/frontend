@@ -233,7 +233,7 @@ const ExecutiveSummary = ({ businessId, onStartOnboarding, refreshTrigger }) => 
                 <div className="exc-subsection-body">
                   <h3 className="exc-subsection-title">{t("Current Core")}</h3>
                   <p className="exc-source-label">
-                    <Info size={14} /> {t("Profit arenas inferred from your data")}
+                    <Info size={14} /> {t("AI-inferred from your data")}
                   </p>
                   <p className="exc-content-text">
                     <strong>{t("Segments")}:</strong> {data?.onboarding_data?.customerSegment1 || data?.onboarding_data?.customerSegment2 || data?.onboarding_data?.customerSegment3 ? [data?.onboarding_data?.customerSegment1, data?.onboarding_data?.customerSegment2, data?.onboarding_data?.customerSegment3].filter(Boolean).join(", ") : "N/A"}

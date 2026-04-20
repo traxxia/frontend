@@ -181,8 +181,8 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  margin-bottom: 10px;
-  padding-bottom: 12px;
+  /* margin-bottom: 10px; */
+  padding: 8px;
 }
 
 .pillar-title {
@@ -251,9 +251,9 @@
   box-shadow: 0 2px 8px rgba(165, 243, 252, 0.15);
 }
 
-.analysis-data-header {
+/* .analysis-data-header {
   border-bottom: 1px solid #a5f3fc;
-}
+} */
 
 .analysis-data-icon {
   color: #06b6d4;
@@ -265,9 +265,9 @@
   box-shadow: 0 2px 8px rgba(186, 230, 253, 0.15);
 }
 
-.technology-header {
+/* .technology-header {
   border-bottom: 1px solid #bae6fd;
-}
+} */
 
 .technology-icon {
   color: #0ea5e9;
@@ -279,9 +279,9 @@
   box-shadow: 0 2px 8px rgba(167, 243, 208, 0.15);
 }
 
-.execution-header {
+/* .execution-header {
   border-bottom: 1px solid #a7f3d0;
-}
+} */
 
 .execution-icon {
   color: #10b981;
@@ -293,9 +293,9 @@
   box-shadow: 0 2px 8px rgba(199, 210, 254, 0.15);
 }
 
-.governance-header {
+/* .governance-header {
   border-bottom: 1px solid #c7d2fe;
-}
+} */
 
 .governance-icon {
   color: #6366f1;
@@ -307,9 +307,9 @@
   box-shadow: 0 2px 8px rgba(249, 168, 212, 0.15);
 }
 
-.innovation-header {
+/* .innovation-header {
   border-bottom: 1px solid #f9a8d4;
-}
+} */
 
 .innovation-icon {
   color: #ec4899;
@@ -321,9 +321,9 @@
   box-shadow: 0 2px 8px rgba(252, 211, 77, 0.15);
 }
 
-.culture-header {
+/* .culture-header {
   border-bottom: 1px solid #fcd34d;
-}
+} */
 
 .culture-icon {
   color: #f59e0b;

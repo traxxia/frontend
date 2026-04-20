@@ -1735,7 +1735,10 @@ export const staticTranslations = {
     "pmf_access": "PMF Access",
     "strategic_access": "Strategic Access",
     "projects_access": "Projects Access",
-    "mark_all_read": "Mark all as read"
+    "mark_all_read": "Mark all as read",
+
+
+    "AI-inferred from your data": "AI-inferred from your data",
 
 
   },
@@ -3478,6 +3481,8 @@ export const staticTranslations = {
     "mark_all_read": "Marcar todo como leído",
     'incorrect_email': 'Dirección de correo electrónico incorrecta',
     'incorrect_password': 'Contraseña incorrecta',
+
+    "AI-inferred from your data": "AI-inferred a partir de sus datos"
   }
 };
 
