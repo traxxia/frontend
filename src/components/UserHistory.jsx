@@ -1517,6 +1517,7 @@ const AnalysisTab = ({
           leverageRiskData={analysisData.leverageRiskData}
           competitiveLandscapeData={analysisData.competitiveLandscapeData}
           coreAdjacencyData={analysisData.coreAdjacencyData}
+          questionsLoaded={true}
           setSwotAnalysisResult={() => { }}
           setCustomerSegmentationData={() => { }}
           setPurchaseCriteriaData={() => { }}
@@ -1693,6 +1694,9 @@ const StrategicTab = ({
           userAnswers={analysisData.userAnswers}
           businessName={analysisData.businessName}
           strategicData={analysisData.strategic}
+          portersData={analysisData.porters}
+          pestelData={analysisData.pestel}
+          selectedBusinessId={selectedBusinessId}
           phaseAnalysisArray={analysisData.phaseAnalysisArray || []}
           onRegenerate={null}
           isRegenerating={false}
@@ -1701,6 +1705,8 @@ const StrategicTab = ({
           hideDownload={true}
           hideImproveButton={true}
           hideKickstart={true}
+          isExpanded={true}
+          questionsLoaded={true}
         />
       </div>
     </div>
