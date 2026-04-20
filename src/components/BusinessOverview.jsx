@@ -191,13 +191,15 @@ const BusinessOverview = ({ onToast }) => {
                                     <div className="admin-cell-primary" style={{ fontSize: "0.85rem" }}>{c.name}</div>
                                     <div className="admin-cell-secondary">{c.email}</div>
                                 </div>
-                                <button
-                                    className="admin-collab-remove-btn inline"
-                                    onClick={() => handleRemoveParticipant(row._id, c.id, c.name)}
-                                    title={t("remove_participant") || "Remove Participant"}
-                                >
-                                    <Trash2 size={12} />
-                                </button>
+                                {c.role_name !== "super_admin" && c.role_name !== "company_admin" && (
+                                    <button
+                                        className="admin-collab-remove-btn inline"
+                                        onClick={() => handleRemoveParticipant(row._id, c.id, c.name)}
+                                        title={t("remove_participant") || "Remove Participant"}
+                                    >
+                                        <Trash2 size={12} />
+                                    </button>
+                                )}
                             </div>
                         ))}
                         {hasMore && (
@@ -316,13 +318,15 @@ const BusinessOverview = ({ onToast }) => {
                                         <span className="admin-collab-name">{collab.name}</span>
                                         <span className="admin-collab-email">{collab.email}</span>
                                     </div>
-                                    <button
-                                        className="admin-collab-remove-btn"
-                                        onClick={() => handleRemoveParticipant(selectedBizForCollab._id, collab.id, collab.name)}
-                                        title={t("remove_participant") || "Remove Participant"}
-                                    >
-                                        <Trash2 size={16} />
-                                    </button>
+                                    {collab.role_name !== "super_admin" && collab.role_name !== "company_admin" && (
+                                        <button
+                                            className="admin-collab-remove-btn"
+                                            onClick={() => handleRemoveParticipant(selectedBizForCollab._id, collab.id, collab.name)}
+                                            title={t("remove_participant") || "Remove Participant"}
+                                        >
+                                            <Trash2 size={16} />
+                                        </button>
+                                    )}
                                 </div>
                             ))}
                         </div>

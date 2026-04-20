@@ -227,13 +227,7 @@ const QuestionManagement = ({ onToast }) => {
     }));
   };
 
-  if (isLoading) {
-    return (
-      <div className="question-management__loading">
-        <div>Loading questions...</div>
-      </div>
-    );
-  }
+  // Loading state moved into main render to preserve header and metrics
 
   return (
     <div className="question-management">
@@ -274,6 +268,13 @@ const QuestionManagement = ({ onToast }) => {
           {t('add_question')}
         </button>
       </div>
+
+      {/* ---- Premium Loading Bar ---- */}
+      {isLoading && (
+        <div className="admin-loading-bar-container" style={{ marginBottom: '1.5rem' }}>
+          <div className="admin-loading-bar" />
+        </div>
+      )}
 
       {showCreateForm && (
         <CreateQuestionForm

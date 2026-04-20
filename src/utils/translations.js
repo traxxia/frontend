@@ -1746,7 +1746,12 @@ export const staticTranslations = {
     "pmf_access": "PMF Access",
     "strategic_access": "Strategic Access",
     "projects_access": "Projects Access",
-    "mark_all_read": "Mark all as read"
+    "mark_all_read": "Mark all as read",
+    "no_access_dashboard_message": "You don't have access to this business. Please upgrade your plan or contact admin.",
+    "no_access_modal_title": "Feature Restricted",
+    "no_access_modal_msg": "Premium Access Required",
+    "no_access_modal_sub_admin": "Your current plan does not include access to this business data. Upgrade now to unlock advanced AI insights and strategic tools.",
+    "no_access_modal_sub_user": "Your current plan does not include access to this business data. Please upgrade your plan or contact your administrator."
 
 
   },
@@ -3495,6 +3500,11 @@ export const staticTranslations = {
     "mark_all_read": "Marcar todo como leído",
     'incorrect_email': 'Dirección de correo electrónico incorrecta',
     'incorrect_password': 'Contraseña incorrecta',
+    "no_access_dashboard_message": "No tienes acceso a este negocio. Por favor, actualiza tu plan o contacta al administrador.",
+    "no_access_modal_title": "Función Restringida",
+    "no_access_modal_msg": "Acceso Premium Requerido",
+    "no_access_modal_sub_admin": "Tu plan actual no incluye acceso a los datos de este negocio. Actualiza ahora para desbloquear insights premium de IA y herramientas estratégicas.",
+    "no_access_modal_sub_user": "Tu plan actual no incluye acceso a los datos de este negocio. Por favor, actualiza tu plan o contacta a tu administrador."
   }
 };
 

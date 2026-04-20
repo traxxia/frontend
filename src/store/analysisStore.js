@@ -99,7 +99,8 @@ export const useAnalysisStore = create((set, get) => ({
   streamingText: {},
   isStreaming: {},
 
-  setQuestions: (questions) => set({ questions, questionsLoaded: true }),
+  setQuestions: (questions) => set({ questions }),
+  setQuestionsLoaded: (loaded) => set({ questionsLoaded: loaded }),
 
   setUserAnswer: (questionId, answer) => set((state) => ({
     userAnswers: { ...state.userAnswers, [questionId]: answer },
@@ -107,6 +108,15 @@ export const useAnalysisStore = create((set, get) => ({
       ? [...new Set([...state.completedQuestions, questionId])]
       : state.completedQuestions.filter(id => id !== questionId),
   })),
+
+  initializeBusinessData: ({ questions, userAnswers, completedQuestions, analysisUpdates = {}, questionsLoaded = true }) => 
+    set((state) => ({
+      questions: questions !== undefined ? questions : state.questions,
+      userAnswers: userAnswers !== undefined ? userAnswers : state.userAnswers,
+      completedQuestions: completedQuestions !== undefined ? completedQuestions : state.completedQuestions,
+      ...analysisUpdates,
+      questionsLoaded
+    })),
 
   setAnalysisData: (type, data) => {
     const keyMap = {
@@ -144,15 +154,36 @@ export const useAnalysisStore = create((set, get) => ({
 
   resetAnalysis: () => set(initialState),
 
-  fetchAnalysisData: async (businessId) => {
+  fetchAnalysisData: async (businessId, skipLoadingFlag = false, forceRefresh = false) => {
     if (!businessId) return;
     const { token } = useAuthStore.getState();
     if (!token) return;
 
-    set({ questionsLoaded: false });
+    if (!skipLoadingFlag) set({ questionsLoaded: false });
+    
+    // Always reset the analysis-related state when fetching for a potentially different business
+    // or when forcing a refresh. This prevents data "bleeding" between different business contexts.
+    const resetData = {
+      swotAnalysis: null, purchaseCriteria: null, loyaltyNPS: null,
+      portersData: null, pestelData: null, fullSwotData: null,
+      competitiveAdvantage: null, strategicData: null,
+      expandedCapability: null, strategicRadar: null,
+      productivityData: null, maturityData: null,
+      competitiveLandscape: null, coreAdjacency: null,
+      profitabilityData: null, growthTrackerData: null,
+      liquidityEfficiencyData: null, investmentPerformanceData: null,
+      leverageRiskData: null,
+      financialBalanceData: null, costEfficiencyData: null,
+      operationalEfficiencyData: null, financialPerformanceData: null,
+      channelEffectivenessData: null, channelHeatmapData: null,
+      customerSegmentationData: null, cultureProfileData: null,
+      strategicGoalsData: null,
+    };
+    set(resetData);
+
     try {
       const apiService = getApiService();
-      const newsAnalysisData = await apiService.fetchAnalysisDataThroughBackend(businessId);
+      const newsAnalysisData = await apiService.fetchAnalysisDataThroughBackend(businessId, forceRefresh);
       
       const latestAnalysisByType = {};
       newsAnalysisData
@@ -197,7 +228,9 @@ export const useAnalysisStore = create((set, get) => ({
           : analysis.analysis_data;
       });
 
-      set({ ...updates, questionsLoaded: true });
+      set({ ...updates });
+      if (!skipLoadingFlag) set({ questionsLoaded: true });
+      return updates;
     } catch (err) {
       console.error('Failed to fetch analysis data:', err);
       set({ questionsLoaded: true });

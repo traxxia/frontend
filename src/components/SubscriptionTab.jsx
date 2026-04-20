@@ -493,43 +493,35 @@ const SubscriptionTab = ({ onToast }) => {
     setShowUpgradeModal(true);
   };
 
-  if (loading)
-    return (
-      <div className="st-loader">
-        <Spinner animation="border" size="sm" style={{ color: "#6366f1" }} />
-        <span>
-          {t("loading_subscription_details") || "Loading subscription details…"}
-        </span>
-      </div>
-    );
+  // Loading state moved into the main render to preserve header
   if (queryError) return <Alert variant="danger">{queryError.message || "Failed to load subscription details"}</Alert>;
-  if (!subscription) return null;
+  if (!subscription && !loading) return null;
 
   const {
-    plan,
-    usage,
+    plan = "Free",
+    usage = {},
     available_plans = [],
     billing_history = [],
     payment_methods = [],
-    default_payment_method_id,
-    company_name,
-    start_date,
-    end_date,
-    is_unlimited,
-    billing_cycle,
-    total_days,
-  } = subscription;
+    default_payment_method_id = null,
+    company_name = "N/A",
+    start_date = null,
+    end_date = null,
+    is_unlimited = false,
+    billing_cycle = "monthly",
+    total_days = 31,
+  } = subscription || {};
 
   const currentPlanName = plan.toLowerCase();
   const currentPlanData = available_plans.find(
     (p) => p.name.toLowerCase() === currentPlanName,
   );
   const displayLimits =
-    currentPlanData?.limits || subscription.original_plan_limits || {};
+    currentPlanData?.limits || subscription?.original_plan_limits || {};
   const displayPrice =
     currentPlanData?.price ||
-    subscription.original_plan_price ||
-    subscription.plan_price ||
+    subscription?.original_plan_price ||
+    subscription?.plan_price ||
     0;
 
   const daysRemaining = getDaysRemaining(end_date);
@@ -629,6 +621,14 @@ const SubscriptionTab = ({ onToast }) => {
           </div>
         </Alert>
       </div>
+      
+      {/* ---- Premium Loading Bar ---- */}
+      {loading && (
+        <div className="admin-loading-bar-container" style={{ marginBottom: '1rem' }}>
+          <div className="admin-loading-bar" />
+        </div>
+      )}
+
       {/* === HEADER === */}
       <div className="st-header-clean">
         <div className="st-header-main">

@@ -12,6 +12,7 @@ const PHASE_COMPONENTS = {
     { selector: '[data-component="pestel-analysis"]', name: 'PESTEL Analysis' }
   ],
   essential: [
+    { selector: '[data-component="swot-analysis"]', name: 'SWOT Analysis' },
     { selector: '[data-component="purchase-criteria"]', name: 'Purchase Criteria Matrix' },
     { selector: '[data-component="loyalty-nps"]', name: 'Loyalty & NPS Analysis' },
     { selector: '[data-component="porters-analysis"]', name: "Porter's Five Forces" },
@@ -26,6 +27,7 @@ const PHASE_COMPONENTS = {
     { selector: '[data-component="core-adjacency"]', name: 'Core' }
   ],
   good: [
+    { selector: '[data-component="swot-analysis"]', name: 'SWOT Analysis' },
     { selector: '[data-component="profitability-analysis"]', name: 'Profitability Analysis' },
     { selector: '[data-component="growth-tracker"]', name: 'Growth Tracker' },
     { selector: '[data-component="liquidity-efficiency"]', name: 'Liquidity & Efficiency' },
@@ -45,6 +47,7 @@ const PHASE_COMPONENTS = {
     { selector: '[data-component="core-adjacency"]', name: 'Core' }
   ],
   advanced: [
+    { selector: '[data-component="swot-analysis"]', name: 'SWOT Analysis' },
     { selector: '[data-component="profitability-analysis"]', name: 'Profitability Analysis' },
     { selector: '[data-component="growth-tracker"]', name: 'Growth Tracker' },
     { selector: '[data-component="liquidity-efficiency"]', name: 'Liquidity & Efficiency' },
@@ -74,12 +77,26 @@ const prepareForCapture = () => {
   // 1. Expand all collapsed categories first
   const categories = document.querySelectorAll('.category-content.collapsed');
   categories.forEach(category => {
+    // Record original class
     changes.push({
       element: category,
       property: 'className',
       oldValue: category.className,
       newValue: category.className.replace('collapsed', 'expanded')
     });
+    
+    // Record original styles
+    changes.push({
+      element: category,
+      property: 'maxHeight',
+      oldValue: category.style.maxHeight
+    });
+    changes.push({
+      element: category,
+      property: 'overflow',
+      oldValue: category.style.overflow
+    });
+
     category.className = category.className.replace('collapsed', 'expanded');
     category.style.maxHeight = 'none';
     category.style.overflow = 'visible';
@@ -88,12 +105,26 @@ const prepareForCapture = () => {
   // 2. Expand all cards
   const cards = document.querySelectorAll('.modern-card-content.collapsed');
   cards.forEach(card => {
+    // Record original class
     changes.push({
       element: card,
       property: 'className',
       oldValue: card.className,
       newValue: card.className.replace('collapsed', 'expanded')
     });
+    
+    // Record original styles
+    changes.push({
+      element: card,
+      property: 'maxHeight',
+      oldValue: card.style.maxHeight
+    });
+    changes.push({
+      element: card,
+      property: 'overflow',
+      oldValue: card.style.overflow
+    });
+
     card.className = card.className.replace('collapsed', 'expanded');
     card.style.maxHeight = 'none';
     card.style.overflow = 'visible';
@@ -140,9 +171,9 @@ const restoreChanges = (changes) => {
 // Function to determine actual export phase based on unlocked features
 const getExportPhase = (unlockedFeatures = {}) => {
   if (unlockedFeatures.advancedPhase) return 'advanced';
-  if (unlockedFeatures.goodPhase) return 'good';
-  if (unlockedFeatures.fullSwot) return 'essential';
-  if (unlockedFeatures.analysis) return 'initial';
+  if (unlockedFeatures.goodPhase || unlockedFeatures.hasDocument) return 'good';
+  if (unlockedFeatures.essentialPhase || unlockedFeatures.fullSwot) return 'essential';
+  if (unlockedFeatures.initialPhase || unlockedFeatures.analysis) return 'initial';
   return 'initial';
 };
 
@@ -155,6 +186,7 @@ const captureComponent = async (selector, name) => {
 
   try {
     const html2canvas = (await import('html2canvas')).default;
+    const rect = component.getBoundingClientRect();
 
     const canvas = await html2canvas(component, {
       scale: 2,
@@ -162,34 +194,54 @@ const captureComponent = async (selector, name) => {
       allowTaint: true,
       backgroundColor: '#ffffff',
       logging: false,
-      removeContainer: true,
-      imageTimeout: 2000,
-      windowWidth: component.scrollWidth,
-      windowHeight: component.scrollHeight,
+      width: rect.width || component.offsetWidth,
+      height: rect.height || component.offsetHeight,
+      imageTimeout: 5000,
       onclone: (clonedDoc) => {
+        // Find the cloned element
+        const clonedComponent = clonedDoc.querySelector(selector);
+        if (clonedComponent) {
+          clonedComponent.style.margin = '0 auto';
+          clonedComponent.style.padding = '20px'; 
+          clonedComponent.style.width = '1100px'; // Fixed width for consistent desktop-like layout
+          clonedComponent.style.backgroundColor = 'white';
+        }
+
         const style = clonedDoc.createElement('style');
         style.textContent = `
           * { 
             animation: none !important; 
             transition: none !important; 
             opacity: 1 !important;
+            text-shadow: none !important;
           }
 
-          /* FIX ALIGNMENT */
+          /* ENSURE FULL VISIBILITY */
+          .category-content, .modern-card-content {
+            max-height: none !important;
+            height: auto !important;
+            overflow: visible !important;
+            display: block !important;
+            opacity: 1 !important;
+            visibility: visible !important;
+          }
+
+          /* FIX ALIGNMENT AND REMOVE SHADOWS FOR PDF */
+          .modern-analysis-card {
+            box-shadow: none !important;
+            border: 1px solid #e2e8f0 !important;
+            margin-bottom: 20px !important;
+          }
+
           [data-component="maturity"],
           [data-component="competitive-landscape"],
-          [data-component="core-adjacency"] {
+          [data-component="core-adjacency"],
+          [data-component="strategic-direction"],
+          [data-component="strategic-execution"],
+          [data-component="strategic-sustainability"] {
             width: 100% !important;
             max-width: 100% !important;
             margin: 0 !important;
-            padding: 0 !important;
-          }
-
-          /* FORCE INNER ELEMENTS FULL WIDTH */
-          [data-component="maturity"] *,
-          [data-component="competitive-landscape"] *,
-          [data-component="core-adjacency"] * {
-            max-width: 100% !important;
           }
         `;
         clonedDoc.head.appendChild(style);
@@ -217,24 +269,52 @@ const PDFExportButton = ({
     style = {},
     exportType = "insights", // "insights" or "strategic"
     unlockedFeatures = {},
-    showText = false
+    showText = false,
+    // Multi-user/History support: Prioritize these props if provided
+    swotAnalysis: propsSwotAnalysis,
+    purchaseCriteria: propsPurchaseCriteria,
+    loyaltyNPS: propsLoyaltyNPS,
+    portersData: propsPortersData,
+    pestelData: propsPestelData,
+    fullSwotData: propsFullSwotData,
+    competitiveAdvantage: propsCompetitiveAdvantage,
+    strategicData: propsStrategicData,
+    expandedCapability: propsExpandedCapability,
+    strategicRadar: propsStrategicRadar,
+    productivityData: propsProductivityData,
+    maturityData: propsMaturityData,
+    competitiveLandscape: propsCompetitiveLandscape,
+    coreAdjacency: propsCoreAdjacency,
+    profitabilityData: propsProfitabilityData,
+    growthTrackerData: propsGrowthTrackerData,
+    liquidityEfficiencyData: propsLiquidityEfficiencyData,
+    investmentPerformanceData: propsInvestmentPerformanceData,
+    leverageRiskData: propsLeverageRiskData,
   }) => {
     const [isExportingPDF, setIsExportingPDF] = useState(false);
+    const [exportProgress, setExportProgress] = useState({ current: 0, total: 0, sectionName: '' });
     const { t } = useTranslation();
     
     const {
-      swotAnalysis, purchaseCriteria, loyaltyNPS, portersData, pestelData,
-      fullSwotData, competitiveAdvantage, strategicData, expandedCapability,
-      strategicRadar, productivityData, maturityData, competitiveLandscape,
-      coreAdjacency, profitabilityData, growthTrackerData, liquidityEfficiencyData,
-      investmentPerformanceData, leverageRiskData
+      swotAnalysis: storeSwotLines, // Rename slightly to avoid shadowed vars if needed
     } = useAnalysisStore();
+
+    // Prioritize props over store for multi-user/history support
+    const displaySwot = propsSwotAnalysis || storeSwotLines;
+    const displayStrategicData = propsStrategicData || useAnalysisStore.getState().strategicData;
+    const displayPortersData = propsPortersData || useAnalysisStore.getState().portersData;
+    const displayPestelData = propsPestelData || useAnalysisStore.getState().pestelData;
+    // ... etc. But actually for Strategic Analysis, we mainly need strategicData
+
 
 
 
   // Main strategic export function
   const handleDownloadStrategicAnalysis = useCallback(async () => {
-    if (!strategicData) {
+    // Re-fetch store data if needed or use display variable
+    const exportStrategicData = propsStrategicData || useAnalysisStore.getState().strategicData;
+
+    if (!exportStrategicData) {
       onToastMessage?.('No strategic analysis data available to export. Generate strategic analysis first.', 'warning');
       return;
     }
@@ -243,6 +323,7 @@ const PDFExportButton = ({
 
     try {
       setIsExportingPDF(true);
+      setExportProgress({ current: 0, total: 3, sectionName: 'Preparing...' });
       currentChanges = prepareForCapture();
       await new Promise(resolve => setTimeout(resolve, 300));
 
@@ -271,9 +352,16 @@ const PDFExportButton = ({
         { selector: '[data-component="strategic-sustainability"]', name: 'Sustainability & Long-Term Reinforcement' },
       ];
 
-     let capturedCount = 0;
+      let capturedCount = 0;
 
-      for (const { selector, name } of strategicBlocks) {
+      for (let i = 0; i < strategicBlocks.length; i++) {
+        const { selector, name } = strategicBlocks[i];
+        setExportProgress({ 
+          current: i + 1, 
+          total: strategicBlocks.length, 
+          sectionName: `Capturing ${name}...` 
+        });
+
         const result = await captureComponent(selector, name);
 
         if (!result?.imgData || !result?.canvas) {
@@ -292,19 +380,28 @@ const PDFExportButton = ({
         pdf.text(name, marginX, marginTop);
 
         const canvas = result.canvas;
-        const imgWidth = pageWidth - marginX * 2;
+        const availableWidth = pageWidth - marginX * 2;
+        const availableHeight = pageHeight - marginTop - 30; // Leave space for title and margins
 
-        const imgHeight = (canvas.height * imgWidth) / canvas.width;
-        const maxHeight = pageHeight - 40;
-        const finalHeight = Math.min(imgHeight, maxHeight);
+        let imgWidth = availableWidth;
+        let imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+        // Proportional scaling if height exceeds page
+        if (imgHeight > availableHeight) {
+          imgHeight = availableHeight;
+          imgWidth = (canvas.width * imgHeight) / canvas.height;
+        }
+
+        // Center horizontally if scaled down
+        const xPos = marginX + (availableWidth - imgWidth) / 2;
 
         pdf.addImage(
           result.imgData,
           'PNG',
-          marginX,
+          xPos,
           marginTop + 10,
           imgWidth,
-          finalHeight
+          imgHeight
         );
 
         capturedCount++;
@@ -334,7 +431,7 @@ const PDFExportButton = ({
       if (currentChanges.length > 0) restoreChanges(currentChanges);
       setIsExportingPDF(false);
     }
-  }, [businessName, onToastMessage, strategicData]);
+  }, [businessName, onToastMessage, propsStrategicData]);
 
 
   // Main analysis export function (enhanced with phase-by-phase content)
@@ -350,6 +447,7 @@ const PDFExportButton = ({
 
     try {
       setIsExportingPDF(true);
+      setExportProgress({ current: 0, total: 0, sectionName: 'Preparing analysis...' });
       currentChanges = prepareForCapture();
       await new Promise(resolve => setTimeout(resolve, 1000));
 
@@ -395,8 +493,17 @@ const PDFExportButton = ({
       }
 
       let capturedCount = 0;
+      setExportProgress({ current: 0, total: visibleComponents.length, sectionName: 'Pre-processing components...' });
 
-      for (const { selector, name } of visibleComponents) {
+      for (let i = 0; i < visibleComponents.length; i++) {
+        const { selector, name } = visibleComponents[i];
+        
+        setExportProgress({ 
+          current: i + 1, 
+          total: visibleComponents.length, 
+          sectionName: `Capturing ${name}...` 
+        });
+
         const result = await captureComponent(selector, name);
 
         if (!result?.imgData || !result?.canvas) {
@@ -411,20 +518,29 @@ const PDFExportButton = ({
         pdf.setTextColor(59, 130, 246);
         pdf.text(name, 20, 25);
 
-        const imgWidth = pageWidth - 40;
         const canvas = result.canvas;
+        const availableWidth = pageWidth - 40;
+        const availableHeight = pageHeight - 50;
 
-        const imgHeight = (canvas.height * imgWidth) / canvas.width;
-        const maxHeight = pageHeight - 60;
-        const finalHeight = Math.min(imgHeight, maxHeight);
+        let imgWidth = availableWidth;
+        let imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+        // Proportional scaling
+        if (imgHeight > availableHeight) {
+          imgHeight = availableHeight;
+          imgWidth = (canvas.width * imgHeight) / canvas.height;
+        }
+
+        // Center horizontally
+        const xPos = 20 + (availableWidth - imgWidth) / 2;
 
         pdf.addImage(
           result.imgData,
           'PNG',
-          20,
-          35,
+          xPos,
+          30,
           imgWidth,
-          finalHeight
+          imgHeight
         );
 
         capturedCount++;
@@ -461,11 +577,11 @@ const PDFExportButton = ({
       setIsExportingPDF(false);
     }
   }, [exportType, unlockedFeatures, businessName, onToastMessage,
-      swotAnalysis, purchaseCriteria, loyaltyNPS, portersData, pestelData,
-      fullSwotData, competitiveAdvantage, expandedCapability,
-      strategicRadar, productivityData, maturityData, competitiveLandscape,
-      coreAdjacency, profitabilityData, growthTrackerData, liquidityEfficiencyData,
-      investmentPerformanceData, leverageRiskData]);
+      propsSwotAnalysis, propsPurchaseCriteria, propsLoyaltyNPS, propsPortersData, propsPestelData,
+      propsFullSwotData, propsCompetitiveAdvantage, propsStrategicData, propsExpandedCapability,
+      propsStrategicRadar, propsProductivityData, propsMaturityData, propsCompetitiveLandscape,
+      propsCoreAdjacency, propsProfitabilityData, propsGrowthTrackerData, propsLiquidityEfficiencyData,
+      propsInvestmentPerformanceData, propsLeverageRiskData]);
 
   // Main strategic export function
   const handleDownload = exportType === "strategic" ? handleDownloadStrategicAnalysis : handleDownloadPhaseAnalysis;
@@ -491,26 +607,40 @@ const PDFExportButton = ({
           justifyContent: 'center',
           zIndex: 10000
         }}>
+          <style>{`
+            @keyframes spin-loader {
+              from { transform: rotate(0deg); }
+              to { transform: rotate(360deg); }
+            }
+          `}</style>
           <div style={{
             backgroundColor: 'white',
             borderRadius: '12px',
             padding: '24px',
+            textShadow: 'none',
             textAlign: 'center',
             boxShadow: '0 10px 30px rgba(0, 0, 0, 0.3)',
             minWidth: '280px'
           }}>
             <Loader size={32} style={{
               color: '#1a73e8',
-              animation: 'spin 1s linear infinite',
-              marginBottom: '12px'
+              animation: 'spin-loader 1s linear infinite',
+              marginBottom: '12px',
+              display: 'inline-block',
+              transformOrigin: 'center'
             }} />
             <h3 style={{ margin: '0 0 8px 0', fontSize: '16px', color: '#1f2937' }}>
   {t("Generating PDF")}
 </h3>
 
 <p style={{ margin: 0, fontSize: '14px', color: '#6b7280' }}>
-  {t("Capturing analysis...")}
+  {exportProgress.sectionName || t("Capturing analysis...")}
 </p>
+{exportProgress.total > 0 && (
+  <div style={{ marginTop: '12px', fontSize: '12px', color: '#3b82f6', fontWeight: 'bold' }}>
+    {exportProgress.current} / {exportProgress.total}
+  </div>
+)}
           </div>
         </div>
       )}
@@ -541,7 +671,11 @@ const PDFExportButton = ({
       >
         {isExportingPDF ? (
           <>
-            <Loader size={18} style={{ animation: 'spin 1s linear infinite' }} />
+            <Loader size={18} style={{ 
+              animation: 'spin-loader 1s linear infinite',
+              display: 'inline-block',
+              transformOrigin: 'center'
+            }} />
             {showText && <span style={{ marginLeft: '8px' }}>Generating...</span>}
           </>
         ) : (

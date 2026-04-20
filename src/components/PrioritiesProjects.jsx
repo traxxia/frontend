@@ -56,7 +56,7 @@ const PrioritiesProjects = ({ selectedBusinessId, onSuccess, onStayOnPriorities,
       if (!selectedBusinessId) return;
       setLoading(true);
       try {
-        await fetchKickstartData(selectedBusinessId, true);
+        await fetchKickstartData(selectedBusinessId, false);
       } catch (error) {
         console.error("Error fetching kickstart data:", error);
       } finally {
@@ -80,12 +80,12 @@ const PrioritiesProjects = ({ selectedBusinessId, onSuccess, onStayOnPriorities,
   }, []);
 
   const handleKickstart = useCallback(async () => {
-    if (selected.length === 0) return;
-
     if (!hasProjectsAccess) {
       setShowPlanLimitModal(true);
       return;
     }
+
+    if (selected.length === 0) return;
 
     // Check for collaborators if admin - only if no projects have been kickstarted yet
     const anyProjectKickstarted = priorities.some(p => p.isKickstarted || (p.actions && p.actions.some(a => a.isKickstarted)));
@@ -251,9 +251,9 @@ const PrioritiesProjects = ({ selectedBusinessId, onSuccess, onStayOnPriorities,
       <PlanLimitModal
         show={showPlanLimitModal}
         onHide={() => setShowPlanLimitModal(false)}
-        title={t("upgrade_required") || "Upgrade Required"}
-        message={t("kickstart_limit_msg") || "Project kickstarting is only available on upgraded plans."}
-        subMessage={t("upgrade_to_execute") || "Upgrade to Advanced to execute your strategy with AI-powered kickstart."}
+        title={t("no_access_modal_title")}
+        message={t("no_access_modal_msg")}
+        subMessage={t(isAdmin ? "no_access_modal_sub_admin" : "no_access_modal_sub_user")}
         plan={usage?.plan}
         limit={usage?.project?.limit}
         isAdmin={isAdmin}
