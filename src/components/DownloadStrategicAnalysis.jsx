@@ -220,7 +220,7 @@ const DownloadStrategicAnalysis = ({
             }
 
             // Generate filename
-            const fileName = `Strategic_Analysis_${businessName ? businessName.replace(/[^a-z0-9]/gi, '_') : 'Report'}_${new Date().toISOString().split('T')[0]}.pdf`;
+            const fileName = `${businessName ? businessName.replace(/[^a-z0-9]/gi, '_') : 'Report'}_Strategic_Analysis_${new Date().toISOString().split('T')[0]}.pdf`;
             
             // Save the PDF
             pdf.save(fileName);

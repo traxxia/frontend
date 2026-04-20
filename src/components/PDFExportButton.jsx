@@ -65,6 +65,12 @@ const PHASE_COMPONENTS = {
   ],
   'advanced-brief': [
     { selector: '[data-component="advanced-brief"]', name: 'Questions & Answers' }
+  ],
+  executive: [
+    { selector: '[data-component="executive-aha"]', name: 'AHA Insights' },
+    { selector: '[data-component="executive-where"]', name: 'Where to Compete' },
+    { selector: '[data-component="executive-how"]', name: 'How to Compete' },
+    { selector: '[data-component="executive-priorities"]', name: 'Strategic Priorities' }
   ]
 };
 
@@ -86,7 +92,7 @@ const prepareForCapture = () => {
   });
 
   // 2. Expand all cards
-  const cards = document.querySelectorAll('.modern-card-content.collapsed');
+  const cards = document.querySelectorAll('.modern-card-content.collapsed, .exc-section-body.collapsed');
   cards.forEach(card => {
     changes.push({
       element: card,
@@ -321,7 +327,7 @@ const PDFExportButton = ({
         .replace(/[^a-z0-9]/gi, '_');
 
       const timestamp = new Date().toISOString().split('T')[0];
-      const filename = `${safeName}_Analysis_${timestamp}.pdf`;
+      const filename = `${safeName}_Strategic_Analysis_${timestamp}.pdf`;
 
       pdf.save(filename);
 
@@ -339,7 +345,7 @@ const PDFExportButton = ({
 
   // Main analysis export function (enhanced with phase-by-phase content)
   const handleDownloadPhaseAnalysis = useCallback(async () => {
-    const exportPhase = exportType === "advanced-brief" ? "advanced-brief" : getExportPhase(unlockedFeatures);
+    const exportPhase = (exportType === "advanced-brief" || exportType === "executive") ? exportType : getExportPhase(unlockedFeatures);
 
     if (!exportPhase) {
       onToastMessage?.('Unable to determine export phase', 'error');
@@ -445,7 +451,15 @@ const PDFExportButton = ({
         .replace(/[^a-z0-9]/gi, '_');
 
       const timestamp = new Date().toISOString().split('T')[0];
-      const filename = `${safeName}_Analysis_${timestamp}.pdf`;
+      
+      let typeLabel = "Insights";
+      if (exportPhase === "executive") {
+        typeLabel = "Executive_Summary";
+      } else if (exportPhase === "advanced-brief") {
+        typeLabel = "Questions_And_Answers";
+      }
+      
+      const filename = `${safeName}_${typeLabel}_${timestamp}.pdf`;
 
       pdf.save(filename);
 

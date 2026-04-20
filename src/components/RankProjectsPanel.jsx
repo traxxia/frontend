@@ -17,7 +17,8 @@ import { Lock, ChevronUp, ChevronDown, AlertTriangle } from "lucide-react";
 import axios from "axios";
 import "../styles/RankProjectsPanel.css";
 import { validateRationale } from "../utils/validation";
-import { Checkbox } from "lucide-react"; // Import Checkbox icon if needed or use native
+import ConfirmationModal from "./ConfirmationModal";
+import { Checkbox } from "lucide-react"; 
 
 /* ---------- PROJECT FILTERING HELPERS ---------- */
 const isLaunched = (p) => {
@@ -86,6 +87,7 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, onRankSaved, isAdmi
   const [initialSelectedDraftIds, setInitialSelectedDraftIds] = useState([]);
   const [isGeneratingAI, setIsGeneratingAI] = useState(false);
   const [rationaleErrors, setRationaleErrors] = useState({});
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [initialAllRanked, setInitialAllRanked] = useState(false);
   const hasInitialized = useRef(false);
 
@@ -517,10 +519,13 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, onRankSaved, isAdmi
     }
   };
 
-  const handleSaveAndClose = async () => {
-    await handleSaveRankings();
-    // No explicit close here, as onRankSaved might be used by parent to close.
-    // However, the user said "collapse the rank projects view", so I'll ensure parent is notified.
+  const handleSaveAndClose = () => {
+    // Only show confirmation if there are actually changes to save or it's the first save
+    if (hasRankingsChanged() || !hasEverSaved) {
+      setShowConfirmModal(true);
+    } else {
+      handleSaveRankings();
+    }
   };
 
   const renderStep1 = () => (
@@ -832,6 +837,16 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, onRankSaved, isAdmi
           </Button>
         </Modal.Footer>
       </Modal>
+
+      <ConfirmationModal
+        show={showConfirmModal}
+        onHide={() => setShowConfirmModal(false)}
+        onConfirm={handleSaveRankings}
+        title={t("Save Rankings?")}
+        message={t("Are you sure you want to save these rankings? This will update the project order for all team members.")}
+        confirmVariant="primary"
+        confirmText={t("Save")}
+      />
     </div>
   );
 };

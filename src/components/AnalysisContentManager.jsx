@@ -431,6 +431,7 @@ const AnalysisContentManager = (props) => {
     hasInsightAccess = true,
     selectedBusinessId,
     handleRedirectToBrief,
+    triggerConfirmation,
     questions: propsQuestions,
     userAnswers: propsUserAnswers,
     businessData: propsBusinessData
@@ -506,9 +507,24 @@ const AnalysisContentManager = (props) => {
 
   const createSimpleRegenerationHandler = useCallback((analysisKey) => () => {
     const cardId = analysisKey.replace(/([A-Z])/g, '-$1').toLowerCase();
-    streamingManager.startStreaming(cardId);
-    regenerateIndividualAnalysis(analysisKey, questions, userAnswers, selectedBusinessId, props.showToastMessage, props.uploadedFileForAnalysis);
-  }, [streamingManager, regenerateIndividualAnalysis, questions, userAnswers, selectedBusinessId, props.showToastMessage, props.uploadedFileForAnalysis]);
+    const config = ANALYSIS_CONFIG[analysisKey];
+    const sectionName = config?.title || t("Analysis");
+
+    const onConfirm = () => {
+      streamingManager.startStreaming(cardId);
+      regenerateIndividualAnalysis(analysisKey, questions, userAnswers, selectedBusinessId, props.showToastMessage, props.uploadedFileForAnalysis);
+    };
+
+    if (triggerConfirmation) {
+      triggerConfirmation(
+        t("confirm_regeneration_title"),
+        t("confirm_regeneration_message", { section: sectionName }),
+        onConfirm
+      );
+    } else {
+      onConfirm();
+    }
+  }, [triggerConfirmation, ANALYSIS_CONFIG, t, streamingManager, regenerateIndividualAnalysis, questions, userAnswers, selectedBusinessId, props.showToastMessage, props.uploadedFileForAnalysis]);
 
   const renderAnalysisCard = useCallback((analysisKey, config) => {
     const dataMap = {
@@ -746,7 +762,7 @@ const AnalysisContentManager = (props) => {
         <div className="analysis-regenerating-banner" style={{ margin: '10px 0' }}>
           <Loader size={16} className="antigravity-rotating" />
           <span>
-            {isFinancialRegenerating 
+            {isFinancialRegenerating
               ? t("Regenerating financial insights like profitability, growth tracker, liquidity, investment performance, leverage and risk insight...")
               : t("Generating all Insights & STRATEGIC analysis...")}
           </span>

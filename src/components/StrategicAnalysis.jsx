@@ -60,6 +60,7 @@ const StrategicAnalysis = ({
     streamingManager,
     cardId,
     isExpanded = true,
+    triggerConfirmation,
   }) => {
     const { userRole, token, userId } = useAuthStore();
     const { setSelectedBusinessId } = useBusinessStore();
@@ -296,23 +297,35 @@ const StrategicAnalysis = ({
   };
 
   const handleRegenerate = async () => {
-    if (onRegenerate) {
-      try {
-        setCollapsedCategories(new Set(['strategy-block', 'execution-block', 'sustainability-block']));
-        setLocalStrategicData(null);
-        setIsLoading(true);
+    const executeRegenerate = async () => {
+      if (onRegenerate) {
+        try {
+          setCollapsedCategories(new Set(['strategy-block', 'execution-block', 'sustainability-block']));
+          setLocalStrategicData(null);
+          setIsLoading(true);
 
-        await new Promise(resolve => setTimeout(resolve, 50));
+          await new Promise(resolve => setTimeout(resolve, 50));
 
-        await onRegenerate();
-      } catch (error) {
-        console.error('❌ ERROR in regeneration:', error);
-        setErrorMessage(error.message || 'Failed to regenerate strategic analysis');
-      } finally {
-        setIsLoading(false);
+          await onRegenerate();
+        } catch (error) {
+          console.error('❌ ERROR in regeneration:', error);
+          setErrorMessage(error.message || 'Failed to regenerate strategic analysis');
+        } finally {
+          setIsLoading(false);
+        }
+      } else {
+        setErrorMessage('Regeneration not available');
       }
+    };
+
+    if (triggerConfirmation) {
+      triggerConfirmation(
+        t("confirm_regeneration_title", { section: 'S.T.R.A.T.E.G.I.C.' }),
+        t("confirm_regeneration_message", { section: 'S.T.R.A.T.E.G.I.C.' }),
+        executeRegenerate
+      );
     } else {
-      setErrorMessage('Regeneration not available');
+      await executeRegenerate();
     }
   };
 

@@ -383,7 +383,7 @@ const HistoryPDFDownload = ({
       // Generate filename - same as original
       const timestamp = new Date().toISOString().split('T')[0];
       const phaseLabel = exportPhase.charAt(0).toUpperCase() + exportPhase.slice(1);
-      const filename = `${businessName.replace(/[^a-z0-9]/gi, '_')}_${phaseLabel}_Phase_${timestamp}.pdf`;
+      const filename = `${businessName.replace(/[^a-z0-9]/gi, '_')}_Insights_${phaseLabel}_Phase_${timestamp}.pdf`;
       
       // Save the PDF
       pdf.save(filename);
