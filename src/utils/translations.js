@@ -28,6 +28,11 @@ export const staticTranslations = {
     'Are you sure you want to proceed without collaborators? You can also continue without any participants for now—this is perfectly fine, and you can always add them later.': 'Are you sure you want to proceed without collaborators? You can also continue without any participants for now—this is perfectly fine, and you can always add them later.',
     'Kickstart to Projects': 'Kickstart to Projects',
     'Add Collaborators First': 'Add Collaborators First',
+    'login_subtitle': 'Transform your business strategy into action.',
+    'estimated_time_30_60': 'Estimated time: 30-60 seconds',
+    'maturity_details_subdimension': 'Maturity details by sub-dimension',
+    'focus_capability_gaps': 'We focus on specific capability gaps and strengths, not generic maturity scores.',
+    'ai_refinement_helper': 'Traxxia will start from your INITIAL answers, propose refined versions, and label them AI‑REFINED. You can edit or revert to INITIAL at any time.',
 
     // ===========================
     // REGISTRATION
@@ -1486,7 +1491,7 @@ export const staticTranslations = {
     "financial_data": "Financial Data",
     "report_templates_statements": "Report templates & statements",
     "generating_suggestions": "Generating Suggestions...",
-    "generate_ai_answers": "Generate AI Answers",
+    "generate_ai_answers": "Refine INITIAL answers with AI",
     "get_started": "Get Started",
     "initial": "Initial",
     "essential": "Essential",
@@ -1946,6 +1951,11 @@ export const staticTranslations = {
     'Are you sure you want to proceed without collaborators? You can also continue without any participants for now—this is perfectly fine, and you can always add them later.': '¿Está seguro de que desea continuar sin colaboradores? También puede continuar sin participantes por ahora; esto está perfectamente bien y siempre puede agregarlos más tarde.',
     'Kickstart to Projects': 'Iniciar hacia proyectos',
     'Add Collaborators First': 'Agregar colaboradores primero',
+    'login_subtitle': 'Transforma la estrategia de tu negocio en acción.',
+    'estimated_time_30_60': 'Tiempo estimado: 30-60 segundos',
+    'maturity_details_subdimension': 'Detalles de madurez por subdimensión',
+    'focus_capability_gaps': 'Nos enfocamos en brechas de capacidad específicas y fortalezas, no en puntajes de madurez genéricos.',
+    'ai_refinement_helper': 'Traxxia comenzará con sus respuestas INICIALES, propondrá versiones refinadas y las etiquetará como REFINADAS POR IA. Puede editar o revertir a INICIAL en cualquier momento.',
 
     // ===========================
     // REGISTRO

@@ -18,6 +18,7 @@
 .env.test.local
 .env.production.local
 .env
+
 # Traxxia Academy documentation tracking
 /docs/traxxia-academy/
 

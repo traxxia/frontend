@@ -36,9 +36,9 @@ const MaturityScore = ({
 }) => {
   const token = useAuthStore(state => state.token);
   const {
-      maturityData: storeMaturityData,
-      isRegenerating: isTypeRegenerating,
-      regenerateIndividualAnalysis
+    maturityData: storeMaturityData,
+    isRegenerating: isTypeRegenerating,
+    regenerateIndividualAnalysis
   } = useAnalysisStore();
 
   const rawMaturityData = propMaturityData || storeMaturityData;
@@ -85,11 +85,11 @@ const MaturityScore = ({
 
   const handleRegenerate = useCallback(async () => {
     if (onRegenerate) {
-        streamingManager?.resetCard(cardId);
-        await onRegenerate();
+      streamingManager?.resetCard(cardId);
+      await onRegenerate();
     } else {
-        streamingManager?.resetCard(cardId);
-        await regenerateIndividualAnalysis('maturityScore', questions, userAnswers, selectedBusinessId);
+      streamingManager?.resetCard(cardId);
+      await regenerateIndividualAnalysis('maturityScore', questions, userAnswers, selectedBusinessId);
     }
   }, [onRegenerate, streamingManager, cardId, regenerateIndividualAnalysis, questions, userAnswers, selectedBusinessId]);
 
@@ -473,40 +473,16 @@ const MaturityScore = ({
     return (
       <div className="section-container">
         <div className="section-header" onClick={() => toggleSection('areas')}>
-          <h3>{t('Maturity_by_Business_Area')}</h3>
+          <h3>{t('maturity_details_subdimension') || 'Maturity details by sub-dimension'}</h3>
           {expandedSections.areas ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
         </div>
         {expandedSections.areas !== false && (
-          <div className="table-container">
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th>{t('Business_Area')}</th>
-                  <th>{t('Score')}</th>
-                  <th>{t('Level')}</th>
-                  <th>{t('Industry_Benchmark')}</th>
-                  <th>{t('Gap_Analysis')}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {transformedData.dimensions.map((dimension, index) => {
-                  const rowIndex = dimensionIndices[dimension.name];
-                  const isVisible = rowIndex < visibleRows;
-                  return (
-                    <StreamingRow key={index} isVisible={isVisible} isLast={rowIndex === visibleRows - 1 && isStreaming} lastRowRef={lastRowRef} isStreaming={isStreaming}>
-                      <td><div className="force-name">{getDimensionIcon(dimension.name)}<span>{hasStreamed ? dimension.name : (typingTexts[`${rowIndex}-name`] || dimension.name)}</span></div></td>
-                      <td><span className="score-badge1">{hasStreamed ? dimension.score : (typingTexts[`${rowIndex}-score`] || dimension.score)}</span></td>
-                      <td><span className={`status-badge ${getScoreClass(dimension.score)}`}>{hasStreamed ? dimension.level : (typingTexts[`${rowIndex}-level`] || dimension.level)}</span></td>
-                      <td style={{ opacity: isVisible ? 1 : 0, transition: !isStreaming ? 'none' : 'opacity 0.3s 0.6s' }}>{dimension.benchmark || 'N/A'}</td>
-                      <td style={{ opacity: isVisible ? 1 : 0, transition: !isStreaming ? 'none' : 'opacity 0.3s 0.8s' }}>{dimension.gap && <span className={dimension.gap > 0 ? 'benchmark-positive' : 'benchmark-negative'}>{dimension.gap}</span>}</td>
-                    </StreamingRow>
-                  );
-                })}
-              </tbody>
-            </table>
+          <div className="table-container pt-3">
+            <p className="text-muted fw-semibold mb-3 px-3">
+              {t("focus_capability_gaps") || "We focus on specific capability gaps and strengths, not generic maturity scores."}
+            </p>
             {transformedData.dimensions.some(d => d.subDimensions?.length) && (
-              <div className="subsection">
-                <h4>{t('Sub-Dimension_Details')}</h4>
+              <div className="subsection border-0 pt-0 mt-0">
                 <table className="data-table">
                   <thead>
                     <tr><th>{t('Area')}</th><th>{t('Sub-Dimension')}</th><th>{t('Score')}</th><th>{t('description')}</th></tr>
@@ -700,14 +676,14 @@ const MaturityScore = ({
       data-analysis-order="8"
     >
       <div className="dashboard-content">
-        {renderGaugeChart(transformedData)}
-        {renderMaturityOverview(transformedData)}
+        {/* {renderGaugeChart(transformedData)} */}
+        {/* {renderMaturityOverview(transformedData)} */}
         {renderBusinessAreas(transformedData)}
-        {renderCrossScoring(transformedData)}
-        {renderProgressionPath(transformedData)}
+        {/* {renderCrossScoring(transformedData)} */}
+        {/* {renderProgressionPath(transformedData)} */}
       </div>
     </div>
   );
 };
 
-export default MaturityScore;
+export default MaturityScore;
