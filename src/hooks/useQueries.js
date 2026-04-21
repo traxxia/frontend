@@ -320,6 +320,26 @@ export const useCompanyCollaborators = (businessId) => {
 };
 
 /**
+ * Hook to fetch cross-project paginated decision logs for the current user's business.
+ */
+export const useAllDecisionLogsQuery = (page = 1, limit = 20, filters = {}) => {
+  const token = useAuthStore((state) => state.token);
+
+  return useQuery({
+    queryKey: ['allDecisionLogs', page, limit, filters],
+    queryFn: async () => {
+      const res = await axios.get(`${BACKEND_URL}/api/decision-logs`, {
+        params: { page, limit, ...filters },
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      return res.data;
+    },
+    enabled: !!token,
+    staleTime: 30 * 1000, // 30 seconds
+  });
+};
+
+/**
  * Hook to fetch paginated audit trail data.
  */
 export const useAuditTrailQuery = (page = 1, limit = 10, filters = {}) => {

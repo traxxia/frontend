@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Breadcrumb } from "react-bootstrap";
 import { useTranslation } from "../hooks/useTranslation";
 import {
@@ -24,6 +24,7 @@ import {
     DollarSign
 } from "lucide-react";
 import "../styles/ProjectDetails.css";
+import { decisionLogApiService } from "../services/decisionLogApiService";
 
 const getImpactIcon = (impact) => {
     const normalizedImpact = !impact ? "" : impact.charAt(0).toUpperCase() + impact.slice(1).toLowerCase();
@@ -136,6 +137,98 @@ const ProjectDetails = ({
 
         return { isTerminal, message, justification: latestTerminalLog?.justification };
     }, [project]);
+
+    // --- Decision Log state ---
+    const [decisionLogs, setDecisionLogs] = useState(project?.decision_log || []);
+    const [logsLoading, setLogsLoading] = useState(false);
+    const [logsError, setLogsError] = useState("");
+    const [sortOrder, setSortOrder] = useState("desc");
+    const [logTypeFilter, setLogTypeFilter] = useState("");
+    const [executionStateFilter, setExecutionStateFilter] = useState("");
+    const [page, setPage] = useState(1);
+    const [totalLogs, setTotalLogs] = useState(project?.decision_log?.length || 0);
+    const [selectedLogDetails, setSelectedLogDetails] = useState(null);
+    const [showCreateForm, setShowCreateForm] = useState(false);
+    const [newLogType, setNewLogType] = useState("manual");
+    const [newExecutionState, setNewExecutionState] = useState(project?.status || "Draft");
+    const [newJustification, setNewJustification] = useState("");
+    const [isCreatingLog, setIsCreatingLog] = useState(false);
+
+    const pageSize = 8;
+
+    const fetchDecisionLogs = React.useCallback(async (targetPage = 1) => {
+        if (!project?._id) return;
+        setLogsLoading(true);
+        setLogsError("");
+        try {
+            const response = await decisionLogApiService.getProjectLogs(project._id, {
+                limit: pageSize,
+                skip: (targetPage - 1) * pageSize,
+                sort_order: sortOrder,
+                log_type: logTypeFilter || undefined,
+                execution_state: executionStateFilter || undefined,
+            });
+            setDecisionLogs(response.logs || []);
+            setTotalLogs(response.total || 0);
+        } catch (error) {
+            setLogsError(error?.response?.data?.error || "Failed to load decision logs");
+            setDecisionLogs(project?.decision_log || []);
+            setTotalLogs((project?.decision_log || []).length);
+        } finally {
+            setLogsLoading(false);
+        }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [project?._id, sortOrder, logTypeFilter, executionStateFilter]);
+
+    useEffect(() => {
+        setPage(1);
+        setDecisionLogs(project?.decision_log || []);
+        setTotalLogs((project?.decision_log || []).length);
+        setSelectedLogDetails(null);
+    }, [project?._id, project?.decision_log]);
+
+    useEffect(() => {
+        fetchDecisionLogs(page);
+    }, [fetchDecisionLogs, page]);
+
+    const totalPages = useMemo(() => {
+        if (!totalLogs) return 1;
+        return Math.max(1, Math.ceil(totalLogs / pageSize));
+    }, [totalLogs]);
+
+    const handleCreateManualLog = async () => {
+        const justification = newJustification.trim();
+        if (!justification || !project?._id) return;
+        setIsCreatingLog(true);
+        setLogsError("");
+        try {
+            await decisionLogApiService.createDecisionLog(project._id, {
+                log_type: newLogType,
+                decision: "manual_decision",
+                execution_state: newExecutionState,
+                assumption_state: project?.learning_state || "Testing",
+                justification,
+                metadata: { source: "project_details_manual_form" },
+            });
+            setNewJustification("");
+            setShowCreateForm(false);
+            setPage(1);
+            fetchDecisionLogs(1);
+        } catch (error) {
+            setLogsError(error?.response?.data?.error || "Failed to create decision log");
+        } finally {
+            setIsCreatingLog(false);
+        }
+    };
+
+    const handleOpenDetails = async (decisionLogId) => {
+        try {
+            const details = await decisionLogApiService.getDecisionDetails(decisionLogId);
+            setSelectedLogDetails(details.log || null);
+        } catch (error) {
+            setLogsError(error?.response?.data?.error || "Failed to load decision details");
+        }
+    };
 
     if (!project) {
         return (
@@ -543,35 +636,169 @@ const ProjectDetails = ({
             </div>
 
             {/* Decision Log */}
-            {/* {project.decision_log && project.decision_log.length > 0 && (
-                <div className="details-card mt-4">
+            <div className="details-card mt-4">
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
                     <h3 className="card-title">📜 {t("Decision_Log") || "Decision Log"}</h3>
+                    {canEdit && (
+                        <button className="btn-edit" onClick={() => setShowCreateForm((prev) => !prev)}>
+                            {showCreateForm ? (t("Cancel") || "Cancel") : (t("Add_Decision_Log") || "Add Decision Log")}
+                        </button>
+                    )}
+                </div>
+
+                {showCreateForm && (
+                    <div style={{ marginBottom: "16px", padding: "12px", border: "1px solid #e2e8f0", borderRadius: "8px" }}>
+                        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "10px", marginBottom: "10px" }}>
+                            <select value={newLogType} onChange={(e) => setNewLogType(e.target.value)} className="form-select">
+                                <option value="manual">{t("Manual") || "Manual"}</option>
+                                <option value="review_update">{t("Review") || "Review"}</option>
+                                <option value="adhoc_update">{t("Ad_Hoc_Update") || "Ad Hoc Update"}</option>
+                            </select>
+                            <select value={newExecutionState} onChange={(e) => setNewExecutionState(e.target.value)} className="form-select">
+                                <option>Draft</option>
+                                <option>Active</option>
+                                <option>At Risk</option>
+                                <option>Paused</option>
+                                <option>Killed</option>
+                                <option>Completed</option>
+                                <option>Scaled</option>
+                            </select>
+                        </div>
+                        <textarea
+                            className="form-control"
+                            rows={3}
+                            value={newJustification}
+                            onChange={(e) => setNewJustification(e.target.value)}
+                            placeholder={t("Please provide a mandatory justification for the decision log...") || "Add a clear justification"}
+                        />
+                        <div style={{ marginTop: "10px", display: "flex", justifyContent: "flex-end" }}>
+                            <button
+                                className="btn-edit"
+                                disabled={isCreatingLog || !newJustification.trim()}
+                                onClick={handleCreateManualLog}
+                            >
+                                {isCreatingLog ? (t("Saving...") || "Saving...") : (t("Save") || "Save")}
+                            </button>
+                        </div>
+                    </div>
+                )}
+
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "10px", marginBottom: "12px" }}>
+                    <select className="form-select" value={logTypeFilter} onChange={(e) => { setLogTypeFilter(e.target.value); setPage(1); }}>
+                        <option value="">{t("All_Types") || "All Types"}</option>
+                        <option value="manual">{t("Manual") || "Manual"}</option>
+                        <option value="status_change">{t("Status_Change") || "Status Change"}</option>
+                        <option value="review_update">{t("Review") || "Review"}</option>
+                        <option value="adhoc_update">{t("Ad_Hoc_Update") || "Ad Hoc Update"}</option>
+                        <option value="cadence_review">{t("Cadence_Review") || "Cadence Review"}</option>
+                    </select>
+                    <select className="form-select" value={executionStateFilter} onChange={(e) => { setExecutionStateFilter(e.target.value); setPage(1); }}>
+                        <option value="">{t("All_States") || "All States"}</option>
+                        <option>Draft</option>
+                        <option>Active</option>
+                        <option>At Risk</option>
+                        <option>Paused</option>
+                        <option>Killed</option>
+                        <option>Completed</option>
+                        <option>Scaled</option>
+                    </select>
+                    <select className="form-select" value={sortOrder} onChange={(e) => { setSortOrder(e.target.value); setPage(1); }}>
+                        <option value="desc">{t("Newest_First") || "Newest first"}</option>
+                        <option value="asc">{t("Oldest_First") || "Oldest first"}</option>
+                    </select>
+                </div>
+
+                {logsError && <p style={{ color: "#dc2626", marginBottom: "10px" }}>{logsError}</p>}
+                {logsLoading ? (
+                    <p>{t("Loading") || "Loading"}...</p>
+                ) : (
                     <div className="table-responsive">
                         <table className="table">
                             <thead>
                                 <tr>
                                     <th>{t("Date") || "Date"}</th>
-                                    <th>{t("Transition") || "Transition"}</th>
+                                    <th>{t("Log_Type") || "Log Type"}</th>
+                                    <th>{t("Decision") || "Decision"}</th>
+                                    <th>{t("Execution_State") || "Execution State"}</th>
                                     <th>{t("Justification") || "Justification"}</th>
+                                    <th>{t("Details") || "Details"}</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {project.decision_log.map((log, index) => (
-                                    <tr key={index}>
-                                        <td>{new Date(log.changed_at).toLocaleDateString()}</td>
-                                        <td>
-                                            <span className="badge bg-secondary">{log.from_status}</span>
-                                            {" ➔ "}
-                                            <span className="badge bg-primary">{log.to_status}</span>
+                                {decisionLogs.length === 0 ? (
+                                    <tr>
+                                        <td colSpan={6} style={{ textAlign: "center", color: "#6b7280", padding: "20px" }}>
+                                            {t("No_decision_logs_available") || "No decision logs available"}
                                         </td>
-                                        <td>{log.justification}</td>
                                     </tr>
-                                ))}
+                                ) : (
+                                    decisionLogs.map((log) => (
+                                        <tr key={String(log._id)}>
+                                            <td>{new Date(log.created_at || log.changed_at).toLocaleString()}</td>
+                                            <td>{log.log_type || "-"}</td>
+                                            <td>{log.decision || `${log.from_status || "-"} → ${log.to_status || "-"}`}</td>
+                                            <td>{log.execution_state || log.to_status || "-"}</td>
+                                            <td style={{ maxWidth: "240px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                                                {log.justification || "-"}
+                                            </td>
+                                            <td>
+                                                <button
+                                                    className="btn-edit"
+                                                    onClick={() => handleOpenDetails(log._id)}
+                                                    style={{ padding: "4px 10px", fontSize: "12px" }}
+                                                >
+                                                    {t("View") || "View"}
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    ))
+                                )}
                             </tbody>
                         </table>
                     </div>
+                )}
+
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "8px" }}>
+                    <small>{`${t("Total") || "Total"}: ${totalLogs}`}</small>
+                    <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+                        <button
+                            className="btn-edit"
+                            style={{ padding: "4px 10px", fontSize: "12px" }}
+                            disabled={page <= 1}
+                            onClick={() => setPage((prev) => Math.max(1, prev - 1))}
+                        >
+                            {t("Prev") || "Prev"}
+                        </button>
+                        <small>{`${page} / ${totalPages}`}</small>
+                        <button
+                            className="btn-edit"
+                            style={{ padding: "4px 10px", fontSize: "12px" }}
+                            disabled={page >= totalPages}
+                            onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))}
+                        >
+                            {t("Next") || "Next"}
+                        </button>
+                    </div>
                 </div>
-            )} */}
+
+                {selectedLogDetails && (
+                    <div style={{ marginTop: "14px", borderTop: "1px solid #e5e7eb", paddingTop: "10px" }}>
+                        <h5 style={{ fontSize: "14px", fontWeight: 700 }}>{t("Decision_Log_Details") || "Decision Log Details"}</h5>
+                        <p style={{ marginBottom: "6px" }}><strong>{t("Decision") || "Decision"}:</strong> {selectedLogDetails.decision || "-"}</p>
+                        <p style={{ marginBottom: "6px" }}><strong>{t("Type") || "Type"}:</strong> {selectedLogDetails.log_type || "-"}</p>
+                        <p style={{ marginBottom: "6px" }}><strong>{t("Execution_State") || "Execution State"}:</strong> {selectedLogDetails.execution_state || "-"}</p>
+                        <p style={{ marginBottom: "6px" }}><strong>{t("Assumption_State") || "Assumption State"}:</strong> {selectedLogDetails.assumption_state || "-"}</p>
+                        <p style={{ marginBottom: "6px" }}><strong>{t("Justification") || "Justification"}:</strong> {selectedLogDetails.justification || "-"}</p>
+                        <button
+                            className="btn-edit"
+                            style={{ padding: "4px 10px", fontSize: "12px", marginTop: "6px" }}
+                            onClick={() => setSelectedLogDetails(null)}
+                        >
+                            {t("Close") || "Close"}
+                        </button>
+                    </div>
+                )}
+            </div>
         </div>
     );
 };
