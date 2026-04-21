@@ -3504,7 +3504,7 @@ export const staticTranslations = {
     'incorrect_email': 'Dirección de correo electrónico incorrecta',
     'incorrect_password': 'Contraseña incorrecta',
 
-    "AI-inferred from your data": "AI-inferred a partir de sus datos"
+    "AI-inferred from your data": "AI-inferred a partir de sus datos",
     "no_access_dashboard_message": "No tienes acceso a este negocio. Por favor, actualiza tu plan o contacta al administrador.",
     "no_access_modal_title": "Función Restringida",
     "no_access_modal_msg": "Acceso Premium Requerido",
