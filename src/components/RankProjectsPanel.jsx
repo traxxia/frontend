@@ -241,18 +241,8 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, onRankSaved, isAdmi
       }
     } catch (err) {
       console.error("AI Ranking Error:", err);
-      if (err.message !== "No AI rankings returned") {
-        onShowToast("ML ranking service failed. Proceeding with manual ranking.", "warning");
-      }
-      // Fallback: manually map projects
-      const fallbackList = selectedProjects.map(p => ({
-        ...p,
-        rationale: "",
-        description: p.description || p.project_description || ""
-      }));
-      setProjectList(fallbackList);
-      setInitialOrder(fallbackList.map(p => p._id));
-      setStep(2);
+      // If AI ranking fails, do not proceed to step 2
+      onShowToast("ai ranking api is failed", "error");
     } finally {
       setIsGeneratingAI(false);
     }

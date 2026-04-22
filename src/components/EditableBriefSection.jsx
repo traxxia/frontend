@@ -535,6 +535,18 @@ const AIAnswerSupportBlock = ({
           </div>
         </div>
       </div>
+      
+      <div style={{ 
+        fontSize: '11.5px', 
+        color: '#5b21b6', 
+        marginBottom: '12px', 
+        lineHeight: '1.4', 
+        paddingLeft: '10px', 
+        borderLeft: '2px solid #8b5cf6',
+        opacity: 0.85
+      }}>
+        {t("ai_refinement_helper") || "Traxxia will start from your INITIAL answers, propose refined versions, and label them AI‑REFINED. You can edit or revert to INITIAL at any time."}
+      </div>
 
       <button
         onClick={onGenerateEnrichment}
@@ -556,6 +568,12 @@ const AIAnswerSupportBlock = ({
         {isEnriching ? <Loader size={18} className="antigravity-rotating" /> : <Wand2 size={18} />}
        {isEnriching ? t("generating_suggestions") : t("generate_ai_answers")}
       </button>
+      
+      {isEnriching && (
+        <div style={{ textAlign: 'center', fontSize: '11px', color: '#6d28d9', marginTop: '8px', fontWeight: '600' }}>
+          {t("estimated_time_30_60") || "Estimated time: 30 - 60 sec"}
+        </div>
+      )}
     </div>
   );
 };

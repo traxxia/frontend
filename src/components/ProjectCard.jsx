@@ -113,11 +113,15 @@ const ProjectCard = ({
               />
             )}
 
-          {(rankMap?.[String(project?._id)] !== null && rankMap?.[String(project?._id)] !== undefined) && !isViewer && (
-            <div className="card-rank-badge-premium">
-              #{rankMap[String(project._id)]}
-            </div>
-          )}
+          {(() => {
+            const displayRank = rankMap?.[String(project?._id)] ?? project.rank ?? project.ai_rank;
+            if (displayRank === null || displayRank === undefined || isViewer) return null;
+            return (
+              <div className="card-rank-badge-premium">
+                #{displayRank}
+              </div>
+            );
+          })()}
 
           <h3 className="card-title-premium" title={project.project_name}>
             {project.project_name}

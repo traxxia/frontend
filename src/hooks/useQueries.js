@@ -210,11 +210,17 @@ export const useAcademyArticle = (articlePath) => {
 /**
  * Hook to fetch all pricing plans.
  */
-export const usePlans = () => {
+export const usePlans = (includeInactive = false) => {
+  const token = useAuthStore((state) => state.token);
+
   return useQuery({
-    queryKey: ['plans'],
+    queryKey: ['plans', includeInactive],
     queryFn: async () => {
-      const res = await axios.get(`${BACKEND_URL}/api/plans`);
+      const config = {
+        params: includeInactive ? { include_inactive: true } : {},
+        headers: token ? { Authorization: `Bearer ${token}` } : {}
+      };
+      const res = await axios.get(`${BACKEND_URL}/api/plans`, config);
       return res.data.plans || [];
     },
     staleTime: 10 * 60 * 1000, // 10 minutes (static)

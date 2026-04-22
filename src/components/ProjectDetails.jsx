@@ -17,7 +17,11 @@ import {
     XCircle,
     CheckCircle,
     Edit2,
-    Info
+    Info,
+    Zap,
+    TrendingUp,
+    Lock,
+    DollarSign
 } from "lucide-react";
 import "../styles/ProjectDetails.css";
 
@@ -198,250 +202,348 @@ const ProjectDetails = ({
             </div>
 
 
-            {/* Strategic Core */}
-            <div className="details-card">
-                <h3 className="card-title">🎯 {t("Strategic_Core")}</h3>
-                <div className="details-grid">
-                    <div className="detail-item">
-                        <label className="detail-label">{t("Project_Description")}</label>
-                        <p className="detail-value">{project.description || t("Not_Available")}</p>
-                    </div>
-
-                    <div className="grid-2">
-                        <div className="detail-item">
-                            <label className="detail-label">{t("Accountable_Owner")}</label>
-                            <p className="detail-value">{project.accountable_owner || project.created_by || t("Not_Available")}</p>
-                        </div>
-                        <div className="detail-item">
-                            <label className="detail-label">{t("Impact")}</label>
-                            <div className="detail-value">
-                                <div className="detail-value-with-icon">
-                                    {getImpactIcon(project.impact)}
-                                    <span>{project.impact ? t(project.impact.charAt(0).toUpperCase() + project.impact.slice(1).toLowerCase()) : t("Not_Available")}</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="detail-item full-width">
-                        <label className="detail-label">
-                            {t("Key_Assumptions_Tested")}
-                            <small className="field-sub-label">{t("Key_Assumptions_Sublabel")}</small>
+            {/* Required Information */}
+            <div className="form-card">
+                <h3 className="section-title">{t("Required_Information")}</h3>
+                
+                {/* Project Name */}
+                <div className="field-row">
+                    <div className="field-label-row">
+                        <label className="field-label">
+                            {t("Project_Name")}
                         </label>
-                        {project.key_assumptions && project.key_assumptions.length > 0 ? (
-                            <ul className="assumptions-list" style={{ marginTop: '8px' }}>
-                                {project.key_assumptions.filter(a => a).map((assumption, idx) => (
-                                    <li key={idx}>{assumption}</li>
-                                ))}
-                            </ul>
-                        ) : (
-                            <p className="detail-value">{t("Not_Available")}</p>
-                        )}
                     </div>
-
-                    <div className="grid-2">
-                        <div className="detail-item">
-                            <label className="detail-label">
-                                {t("Continue_If_Label")}
-                                <small className="field-sub-label">{t("Continue_If_Sublabel")}</small>
-                            </label>
-                            <p className="detail-value">{project.success_criteria || t("Not_Available")}</p>
-                        </div>
-                        <div className="detail-item">
-                            <label className="detail-label">
-                                {t("Stop_If_Label")}
-                                <small className="field-sub-label">{t("Stop_If_Sublabel")}</small>
-                            </label>
-                            <p className="detail-value">{project.kill_criteria || t("Not_Available")}</p>
-                        </div>
+                    <div className="detail-value-display" style={{ fontWeight: '700', fontSize: '16px' }}>
+                        {project.project_name}
                     </div>
+                </div>
 
-                    <div className="grid-2">
-                        <div className="detail-item">
-                            <label className="detail-label">{t("Status")}</label>
-                            <div className="detail-value">
-                                <div className="detail-value-with-icon">
-                                    {(() => {
-                                        // Valid project statuses (case-insensitive check)
-                                        const validProjectStatuses = ["draft", "active", "at risk", "paused", "killed", "scaled"];
-                                        const statusLower = (project.status || "").toLowerCase();
-                                        const isValidStatus = validProjectStatuses.includes(statusLower);
-
-                                        // Normalize to proper case for display
-                                        const statusMap = {
-                                            "draft": "Draft",
-                                            "active": "Active",
-                                            "at risk": "At Risk",
-                                            "paused": "Paused",
-                                            "killed": "Killed",
-                                            "completed": "Completed",
-                                            "scaled": "Scaled"
-                                        };
-
-                                        // If no status or invalid status, default to Draft
-                                        const displayStatus = isValidStatus ? statusMap[statusLower] : "Draft";
-
-                                        return (
-                                            <>
-                                                <span>{t(displayStatus)}</span>
-                                            </>
-                                        );
-                                    })()}
-                                </div>
-                            </div>
-                        </div>
-                        <div className="detail-item">
-                            <label className="detail-label">{t("Learning_State")}</label>
-                            <div className="detail-value">
-                                <div className="detail-value-with-icon">
-                                    {project.learning_state === "Validated" && <CheckCircle size={16} color="green" />}
-                                    {project.learning_state === "Invalidated" && <XCircle size={16} color="red" />}
-                                    {project.learning_state === "Testing" && <Clock size={16} color="blue" />}
-                                    <span>{project.learning_state ? t(project.learning_state) : t("Testing")}</span>
-                                </div>
-                            </div>
-                        </div>
+                {/* Project Description */}
+                <div className="field-row">
+                    <div className="field-label-row">
+                        <label className="field-label">
+                            {t("Project_Description")}
+                        </label>
                     </div>
-
-                    <div className="grid-2">
-                        <div className="detail-item">
-                            <label className="detail-label">{t("Review_Cadence")}</label>
-                            <p className="detail-value">{project.review_cadence ? t(project.review_cadence) : t("Not_Available")}</p>
-                        </div>
-                        <div className="detail-item">
-                            <label className="detail-label">{t("Next_Review_Date")}</label>
-                            <div className="detail-value" style={{ display: 'flex', alignItems: 'center' }}>
-                                <span style={{
-                                    color: (project.is_stale || (project.next_review_date && new Date(project.next_review_date).getTime() < new Date().setHours(0, 0, 0, 0))) ? '#ef4444' : (isPendingReview ? '#d97706' : 'inherit'),
-                                    fontWeight: '600'
-                                }}>
-                                    {project.next_review_date ? new Date(project.next_review_date).toLocaleDateString() : t("Not_Available")}
-                                </span>
-                                {(project.is_stale || (project.next_review_date && new Date(project.next_review_date).getTime() < new Date().setHours(0, 0, 0, 0))) ? (
-                                    <span className="review-badge stale">
-                                        <AlertTriangle size={12} /> {t("Stale")}
-                                    </span>
-                                ) : isPendingReview && (
-                                    <span className="review-badge due">
-                                        <Clock size={12} /> {t("Pending_Review") || "Pending Review"}
-                                    </span>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="grid-2">
-                        <div className="detail-item">
-                            <label className="detail-label">{t("Last_Reviewed")}</label>
-                            <p className="detail-value">{project.last_reviewed ? new Date(project.last_reviewed).toLocaleDateString() : t("Never")}</p>
-                        </div>
-                        <div className="detail-item" style={{ display: 'flex', alignItems: 'flex-end', gap: '8px' }}>
-                            {canEdit && !["completed", "scaled", "killed"].includes(project.status?.toLowerCase()) && (
-                                <button className="btn-edit" onClick={() => onEdit(project)} style={{ padding: '6px 12px', fontSize: '13px' }}>
-                                    <Edit2 size={14} /> {t("Edit")}
-                                </button>
-                            )}
-                            {canReview && !["completed", "scaled", "killed"].includes(project.status?.toLowerCase()) && (
-                                <>
-                                    <button className="btn-review" onClick={() => onPerformReview(project)} style={{ background: '#059669', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '4px', fontSize: '13px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                        <CheckCircle size={14} /> {t("Perform_Review")}
-                                    </button>
-                                    <button className="btn-adhoc" onClick={() => onAdhocUpdate(project)} style={{ background: '#4b5563', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '4px', fontSize: '13px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                        <Edit3 size={14} /> {t("Ad_Hoc_Update")}
-                                    </button>
-                                </>
-                            )}
-                        </div>
+                    <div className="detail-value-display">
+                        {project.description || t("Not_Available")}
                     </div>
                 </div>
             </div>
 
+            {/* Strategic Core */}
+            <div className="form-card">
+                <h3 className="section-title">{t("Strategic_Core")}</h3>
+                
+                {/* Accountable Owner */}
+                <div className="field-row">
+                    <div className="field-label-row">
+                        <label className="field-label">
+                            <Zap size={14} /> {t("Accountable_Owner")}
+                        </label>
+                    </div>
+                    <div className="detail-value-display">
+                        {project.accountable_owner || project.created_by || t("Not_Available")}
+                    </div>
+                </div>
+
+                {/* Key Assumptions */}
+                <div className="field-row">
+                    <div className="field-label-row">
+                        <label className="field-label">
+                            {t("Key_Assumptions_Tested")}
+                        </label>
+                    </div>
+                    {project.key_assumptions && project.key_assumptions.length > 0 ? (
+                        <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                            {project.key_assumptions.filter(a => a).map((assumption, idx) => (
+                                <div key={idx} className="detail-value-display" style={{ padding: '8px 12px', background: '#f8fafc', borderRadius: '6px', border: '1px solid #e2e8f0' }}>
+                                    {assumption}
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="detail-value-display">{t("Not_Available")}</div>
+                    )}
+                </div>
+
+                {/* Success & Kill Criteria */}
+                <div className="grid-2">
+                    <div className="field-row">
+                        <div className="field-label-row">
+                            <label className="field-label">
+                                {t("Continue_If_Label")}
+                            </label>
+                        </div>
+                        <div className="detail-value-display">
+                            {project.success_criteria || t("Not_Available")}
+                        </div>
+                    </div>
+                    <div className="field-row">
+                        <div className="field-label-row">
+                            <label className="field-label">
+                                {t("Stop_If_Label")}
+                            </label>
+                        </div>
+                        <div className="detail-value-display">
+                            {project.kill_criteria || t("Not_Available")}
+                        </div>
+                    </div>
+                </div>
+
+                {/* Status, Cadence, Learning State */}
+                <div className="grid-3" style={{ marginTop: '16px' }}>
+                    <div className="field-row">
+                        <div className="field-label-row">
+                            <label className="field-label">
+                                <Clock size={16} /> {t("Review_Cadence")}
+                            </label>
+                        </div>
+                        <div className="detail-value-display">
+                            {project.review_cadence ? t(project.review_cadence) : t("Not_Available")}
+                        </div>
+                    </div>
+
+                    <div className="field-row">
+                        <div className="field-label-row">
+                            <label className="field-label">
+                                <TrendingUp size={16} /> {t("Status")}
+                            </label>
+                        </div>
+                        <div className="detail-value-display">
+                            <div className="detail-value-with-icon">
+                                {(() => {
+                                    const validProjectStatuses = ["draft", "active", "at risk", "paused", "killed", "scaled"];
+                                    const statusLower = (project.status || "").toLowerCase();
+                                    const isValidStatus = validProjectStatuses.includes(statusLower);
+                                    const statusMap = {
+                                        "draft": "Draft",
+                                        "active": "Active",
+                                        "at risk": "At Risk",
+                                        "paused": "Paused",
+                                        "killed": "Killed",
+                                        "completed": "Completed",
+                                        "scaled": "Scaled"
+                                    };
+                                    const displayStatus = isValidStatus ? statusMap[statusLower] : "Draft";
+                                    return <span>{t(displayStatus)}</span>;
+                                })()}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="field-row">
+                        <div className="field-label-row">
+                            <label className="field-label">
+                                <Zap size={16} /> {t("Learning_State")}
+                            </label>
+                        </div>
+                        <div className="detail-value-display">
+                            <div className="detail-value-with-icon">
+                                {project.learning_state === "Validated" && <CheckCircle size={16} color="green" />}
+                                {project.learning_state === "Invalidated" && <XCircle size={16} color="red" />}
+                                {project.learning_state === "Testing" && <Clock size={16} color="blue" />}
+                                <span>{project.learning_state ? t(project.learning_state) : t("Testing")}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Review Dates (View-specific but in Strategic Core) */}
+                <div className="grid-2">
+                    <div className="field-row">
+                        <div className="field-label-row">
+                            <label className="field-label">
+                                <Clock size={16} /> {t("Next_Review_Date")}
+                            </label>
+                        </div>
+                        <div className="detail-value-display" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <span style={{
+                                color: (project.is_stale || (project.next_review_date && new Date(project.next_review_date).getTime() < new Date().setHours(0, 0, 0, 0))) ? '#ef4444' : (isPendingReview ? '#d97706' : 'inherit'),
+                                fontWeight: '600'
+                            }}>
+                                {project.next_review_date ? new Date(project.next_review_date).toLocaleDateString() : t("Not_Available")}
+                            </span>
+                            {(project.is_stale || (project.next_review_date && new Date(project.next_review_date).getTime() < new Date().setHours(0, 0, 0, 0))) ? (
+                                <span className="review-badge stale">
+                                    <AlertTriangle size={12} /> {t("Stale")}
+                                </span>
+                            ) : isPendingReview && (
+                                <span className="review-badge due">
+                                    <Clock size={12} /> {t("Pending_Review") || "Pending Review"}
+                                </span>
+                            )}
+                        </div>
+                    </div>
+                    <div className="field-row">
+                        <div className="field-label-row">
+                            <label className="field-label">
+                                {t("Last_Reviewed")}
+                            </label>
+                        </div>
+                        <div className="detail-value-display">
+                            {project.last_reviewed ? new Date(project.last_reviewed).toLocaleDateString() : t("Never")}
+                        </div>
+                    </div>
+                </div>
+
+                {/* Actions */}
+                <div className="field-row" style={{ display: 'flex', gap: '12px', marginTop: '8px' }}>
+                    {canEdit && !["completed", "scaled", "killed"].includes(project.status?.toLowerCase()) && (
+                        <button className="btn-edit" onClick={() => onEdit(project)} style={{ padding: '8px 16px', fontSize: '13px' }}>
+                            <Edit2 size={14} /> {t("Edit")}
+                        </button>
+                    )}
+                    {canReview && !["completed", "scaled", "killed"].includes(project.status?.toLowerCase()) && (
+                        <>
+                            <button className="btn-review" onClick={() => onPerformReview(project)} style={{ background: '#059669', color: 'white', border: 'none', padding: '8px 16px', borderRadius: '4px', fontSize: '13px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                <CheckCircle size={14} /> {t("Perform_Review")}
+                            </button>
+                            <button className="btn-adhoc" onClick={() => onAdhocUpdate(project)} style={{ background: '#4b5563', color: 'white', border: 'none', padding: '8px 16px', borderRadius: '4px', fontSize: '13px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                <Edit3 size={14} /> {t("Ad_Hoc_Update")}
+                            </button>
+                        </>
+                    )}
+                </div>
+            </div>
+
             {/* Strategic Context */}
-            <div className="details-card">
-                <h3 className="card-title">{t("Strategic_Context")}</h3>
-                <div className="details-grid-3">
-                    <div className="detail-item">
-                        <label className="detail-label">{t("Impact")}</label>
-                        <div className="detail-value">
+            <div className="form-card">
+                <h3 className="section-title">{t("Strategic_Context")}</h3>
+                <div className="grid-2">
+                    <div className="field-row">
+                        <div className="field-label-row">
+                            <label className="field-label">
+                                <TrendingUp size={16} /> {t("Impact")}
+                            </label>
+                        </div>
+                        <div className="detail-value-display">
                             <div className="detail-value-with-icon">
                                 {getImpactIcon(project.impact)}
                                 <span>{project.impact ? t(project.impact.charAt(0).toUpperCase() + project.impact.slice(1).toLowerCase()) : t("Not_Available")}</span>
                             </div>
                         </div>
                     </div>
-                    <div className="detail-item">
-                        <label className="detail-label">{t("Effort")}</label>
-                        <div className="detail-value">
+                    <div className="field-row">
+                        <div className="field-label-row">
+                            <label className="field-label">
+                                <Zap size={16} /> {t("Effort")}
+                            </label>
+                        </div>
+                        <div className="detail-value-display">
                             <div className="detail-value-with-icon">
                                 {getEffortIcon(project.effort)}
                                 <span>{project.effort ? t(project.effort.charAt(0).toUpperCase() + project.effort.slice(1).toLowerCase()) : "N/A"}</span>
                             </div>
                         </div>
                     </div>
-                    <div className="detail-item">
-                        <label className="detail-label">{t("Risk")}</label>
-                        <div className="detail-value">
+                </div>
+
+                <div className="grid-2">
+                    <div className="field-row">
+                        <div className="field-label-row">
+                            <label className="field-label">
+                                <AlertTriangle size={16} /> {t("Risk")}
+                            </label>
+                        </div>
+                        <div className="detail-value-display">
                             <div className="detail-value-with-icon">
                                 {getRiskIcon(project.risk)}
                                 <span>{project.risk ? t(project.risk.charAt(0).toUpperCase() + project.risk.slice(1).toLowerCase()) : "N/A"}</span>
                             </div>
                         </div>
                     </div>
-                    {project.strategic_theme && (
-                        <div className="detail-item">
-                            <label className="detail-label">{t("Strategic_Theme")}</label>
-                            <div className="detail-value">
-                                <div className="detail-value-with-icon">
-                                    {getThemeIcon(project.strategic_theme)}
-                                    <span>{project.strategic_theme ? t(project.strategic_theme) : t("Not_Available")}</span>
-                                </div>
+                    <div className="field-row">
+                        <div className="field-label-row">
+                            <label className="field-label">
+                                <Lock size={16} /> {t("Strategic_Theme_Horizon")}
+                            </label>
+                        </div>
+                        <div className="detail-value-display">
+                            <div className="detail-value-with-icon">
+                                {getThemeIcon(project.strategic_theme)}
+                                <span>{project.strategic_theme ? t(project.strategic_theme) : t("Not_Available")}</span>
                             </div>
                         </div>
-                    )}
+                    </div>
+                </div>
+
+                <div className="field-row">
+                    <div className="field-label-row">
+                        <label className="field-label">{t("Dependencies")}</label>
+                    </div>
+                    <div className="detail-value-display">
+                        {project.dependencies || t("Not_Available")}
+                    </div>
                 </div>
             </div>
 
-            {/* Additional Details */}
-            <div className="details-card">
-                <h3 className="card-title">{t("Additional_Details")}</h3>
-                <div className="details-grid">
-                    <div className="detail-item">
-                        <label className="detail-label">{t("Constraints_Non_Negotiables")}</label>
-                        <p className="detail-value">{project.constraints_non_negotiables || project.high_level_requirements || t("Not_Available")}</p>
+            {/* Detailed Planning */}
+            <div className="form-card">
+                <h3 className="section-title">{t("Detailed_Planning")}</h3>
+                
+                <div className="field-row">
+                    <div className="field-label-row">
+                        <label className="field-label">{t("Constraints_Non_Negotiables")}</label>
                     </div>
-                    <div className="detail-item">
-                        <label className="detail-label">{t("Dependencies")}</label>
-                        <p className="detail-value">{project.dependencies || t("Not_Available")}</p>
+                    <div className="detail-value-display">
+                        {project.constraints_non_negotiables || project.high_level_requirements || t("Not_Available")}
                     </div>
-                    <div className="detail-item">
-                        <label className="detail-label">{t("Explicitly_Out_of_Scope")}</label>
-                        <p className="detail-value">{project.explicitly_out_of_scope || project.scope_definition || t("Not_Available")}</p>
+                </div>
+
+                <div className="field-row">
+                    <div className="field-label-row">
+                        <label className="field-label">{t("Explicitly_Out_of_Scope")}</label>
                     </div>
-                    <div className="detail-item">
-                        <label className="detail-label">{t("Expected_Outcome")}</label>
-                        <p className="detail-value">{project.expected_outcome || t("Not_Available")}</p>
+                    <div className="detail-value-display">
+                        {project.explicitly_out_of_scope || project.scope_definition || t("Not_Available")}
                     </div>
-                    <div className="detail-item">
-                        <label className="detail-label">{t("Success_Metrics")}</label>
-                        <p className="detail-value">{project.success_metrics || t("Not_Available")}</p>
+                </div>
+
+                <div className="field-row">
+                    <div className="field-label-row">
+                        <label className="field-label">{t("Expected_Outcome")}</label>
                     </div>
-                    <div className="detail-item">
-                        <label className="detail-label">{t("Estimated_Timeline")}</label>
-                        <p className="detail-value">{project.estimated_timeline || t("Not_Available")}</p>
+                    <div className="detail-value-display">
+                        {project.expected_outcome || t("Not_Available")}
                     </div>
-                    <div className="detail-item">
-                        <label className="detail-label">{t("Budget_Estimate")}</label>
-                        <div className="detail-value">
-                            <div className="detail-value-with-icon">
-                                <span>{project.budget_estimate || t("Not_Available")}</span>
-                            </div>
+                </div>
+
+                <div className="field-row">
+                    <div className="field-label-row">
+                        <label className="field-label">{t("Success_Metrics")}</label>
+                    </div>
+                    <div className="detail-value-display">
+                        {project.success_metrics || t("Not_Available")}
+                    </div>
+                </div>
+
+                <div className="grid-2">
+                    <div className="field-row">
+                        <div className="field-label-row">
+                            <label className="field-label">
+                                <Clock size={16} /> {t("Estimated_Timeline")}
+                            </label>
+                        </div>
+                        <div className="detail-value-display">
+                            {project.estimated_timeline || t("Not_Available")}
+                        </div>
+                    </div>
+                    <div className="field-row">
+                        <div className="field-label-row">
+                            <label className="field-label">
+                                <DollarSign size={16} /> {t("Budget_Estimate")}
+                            </label>
+                        </div>
+                        <div className="detail-value-display">
+                            {project.budget_estimate || t("Not_Available")}
                         </div>
                     </div>
                 </div>
             </div>
 
             {/* Decision Log */}
-            {project.decision_log && project.decision_log.length > 0 && (
+            {/* {project.decision_log && project.decision_log.length > 0 && (
                 <div className="details-card mt-4">
                     <h3 className="card-title">📜 {t("Decision_Log") || "Decision Log"}</h3>
                     <div className="table-responsive">
@@ -469,7 +571,7 @@ const ProjectDetails = ({
                         </table>
                     </div>
                 </div>
-            )}
+            )} */}
         </div>
     );
 };

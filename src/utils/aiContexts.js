@@ -9,7 +9,7 @@ export const AI_PAGE_CONTEXTS = {
     },
     PRIORITIES: {
         current_page: "PMF Priorities Dashboard",
-        page_description: "It bridges the gap between strategy and execution. It identifies strategic priorities (typically the top 3–5 priorities) and breaks them down into specific tactical projects that can be tracked."
+        page_description: "It bridges the gap between strategy and execution. It identifies strategic priorities (typically the top 5 priorities) and breaks them down into specific tactical projects that can be tracked."
     },
     ADVANCED: {
         current_page: "Advanced Dashboard",

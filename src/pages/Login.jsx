@@ -5,9 +5,6 @@ import "../styles/Login.css";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faEye, faEyeSlash } from "@fortawesome/free-solid-svg-icons";
 import logo from "../assets/01a2750def81a5872ec67b2b5ec01ff5e9d69d0e.png";
-import facebook from "../assets/facebook (1).png";
-import social from "../assets/social.png";
-import apple from "../assets/apple.png";
 import LanguageTranslator from "../components/LanguageTranslator";
 import { useTranslation } from "../hooks/useTranslation";
 import { faSun, faMoon } from "@fortawesome/free-solid-svg-icons";
@@ -69,7 +66,6 @@ const Login = () => {
     } catch (err) {
       console.error(err.response?.data || err.message);
       const errorData = err.response?.data;
-      
       if (errorData?.error === 'incorrect_email') {
         setErrors({ email: t("incorrect_email") !== "incorrect_email" ? t("incorrect_email") : errorData.message || "Incorrect email address" });
       } else if (errorData?.error === 'incorrect_password') {
@@ -116,6 +112,7 @@ const Login = () => {
         </div>
         <div className="login-box">
           <h2>{t("welcome")}</h2>
+          <p className="login-subtitle">{t("login_subtitle")}</p>
 
           <form onSubmit={handleSubmit} noValidate>
             <div className="form-group">
@@ -152,7 +149,7 @@ const Login = () => {
                   placeholder={t("password")}
                   disabled={isLoading}
                 />
-                 <button
+                <button
                   type="button"
                   className="toggle-password"
                   onClick={togglePasswordVisibility}

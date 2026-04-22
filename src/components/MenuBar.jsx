@@ -10,6 +10,8 @@ import {
   FileText,
   Shield,
   BookOpen,
+  Briefcase,
+  Building,
 } from "lucide-react";
 import "../styles/menubar.css";
 import { useTranslation } from "../hooks/useTranslation";
@@ -50,7 +52,7 @@ const MenuBar = () => {
     } finally {
       // Clear the local state first
       logout();
-      
+
       // Perform a full page reload to the login page to ensure all memory state is cleared
       window.location.href = "/login";
     }
@@ -120,26 +122,72 @@ const MenuBar = () => {
               <Dropdown.Toggle
                 variant="link"
                 id="dropdown-user"
-                className="user-menu p-0 border-0 shadow-none"
+                className="user-menu p-0 border-0 shadow-none d-flex align-items-center justify-content-center"
               >
-                <User size={20} className="navbar_icon" />
+                <div
+                  className="user-initial-avatar"
+                  style={{
+                    width: '32px',
+                    height: '32px',
+                    borderRadius: '50%',
+                    background: 'linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%)',
+                    color: '#4338ca',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontWeight: 'bold',
+                    fontSize: '15px',
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+                    border: '1px solid #a5b4fc',
+                    cursor: 'pointer'
+                  }}
+                >
+                  {userName ? userName.charAt(0).toUpperCase() : "U"}
+                </div>
               </Dropdown.Toggle>
               <Dropdown.Menu align="end" className="traxia-dropdown">
-                <Dropdown.Header className="text-muted small">
-                  {t("signed_in_as")}: <strong>{userName}</strong>
-                  {userRole && (
-                    <div className="text-muted" style={{ fontSize: "0.75rem" }}>
-                      {t("role")}:{" "}
-                      {userRole
-                        .replace("_", " ")
-                        .replace(/\b\w/g, (l) => l.toUpperCase())}
+                <Dropdown.Header className="pt-3 pb-3 px-3 border-bottom mb-2 bg-light">
+                  <div className="d-flex flex-column gap-3">
+
+                    {/* User Name */}
+                    <div className="d-flex align-items-center">
+                      <div className="d-flex align-items-center justify-content-center rounded me-3" style={{ width: '32px', height: '32px', backgroundColor: '#e0e7ff' }}>
+                        <User size={16} style={{ color: '#4338ca' }} />
+                      </div>
+                      <div className="d-flex flex-column">
+                        <span className="text-uppercase text-muted fw-bold" style={{ fontSize: "0.6rem", letterSpacing: "0.5px" }}>User Name</span>
+                        <span className="fw-semibold text-secondary" style={{ fontSize: "0.85rem", lineHeight: "1.2" }}>{userName}</span>
+                      </div>
                     </div>
-                  )}
-                  {companyName && (
-                    <div className="text-muted" style={{ fontSize: "0.75rem" }}>
-                      {t("company") || "Company"}: {companyName}
-                    </div>
-                  )}
+
+                    {/* Role */}
+                    {userRole && (
+                      <div className="d-flex align-items-center">
+                        <div className="d-flex align-items-center justify-content-center rounded me-3" style={{ width: '32px', height: '32px', backgroundColor: '#e0e7ff' }}>
+                          <Briefcase size={16} style={{ color: '#4338ca' }} />
+                        </div>
+                        <div className="d-flex flex-column">
+                          <span className="text-uppercase text-muted fw-bold" style={{ fontSize: "0.6rem", letterSpacing: "0.5px" }}>Role</span>
+                          <span className="fw-semibold text-secondary" style={{ fontSize: "0.85rem", lineHeight: "1.2" }}>
+                            {userRole.replace("_", " ").replace(/\b\w/g, (l) => l.toUpperCase())}
+                          </span>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Company */}
+                    {companyName && (
+                      <div className="d-flex align-items-center">
+                        <div className="d-flex align-items-center justify-content-center rounded me-3" style={{ width: '32px', height: '32px', backgroundColor: '#e0e7ff' }}>
+                          <Building size={16} style={{ color: '#4338ca' }} />
+                        </div>
+                        <div className="d-flex flex-column">
+                          <span className="text-uppercase text-muted fw-bold" style={{ fontSize: "0.6rem", letterSpacing: "0.5px" }}>Company</span>
+                          <span className="fw-semibold text-secondary" style={{ fontSize: "0.85rem", lineHeight: "1.2" }}>{companyName}</span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </Dropdown.Header>
                 <Dropdown.Divider />
 

@@ -517,11 +517,11 @@ const SubscriptionTab = ({ onToast }) => {
     (p) => p.name.toLowerCase() === currentPlanName,
   );
   const displayLimits =
-    currentPlanData?.limits || subscription.original_plan_limits || {};
+    currentPlanData?.limits || subscription?.original_plan_limits || {};
   const displayPrice =
     currentPlanData?.price ||
-    subscription.original_plan_price ||
-    subscription.plan_price ||
+    subscription?.original_plan_price ||
+    subscription?.plan_price ||
     0;
 
   const daysRemaining = getDaysRemaining(end_date);

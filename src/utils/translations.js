@@ -32,6 +32,11 @@ export const staticTranslations = {
     'Are you sure you want to proceed without collaborators? You can also continue without any participants for now—this is perfectly fine, and you can always add them later.': 'Are you sure you want to proceed without collaborators? You can also continue without any participants for now—this is perfectly fine, and you can always add them later.',
     'Kickstart to Projects': 'Kickstart to Projects',
     'Add Collaborators First': 'Add Collaborators First',
+    'login_subtitle': 'Transform your business strategy into action.',
+    'estimated_time_30_60': 'Estimated time: 30-60 seconds',
+    'maturity_details_subdimension': 'Maturity details by sub-dimension',
+    'focus_capability_gaps': 'We focus on specific capability gaps and strengths, not generic maturity scores.',
+    'ai_refinement_helper': 'Traxxia will start from your INITIAL answers, propose refined versions, and label them AI‑REFINED. You can edit or revert to INITIAL at any time.',
 
     // ===========================
     // REGISTRATION
@@ -1321,8 +1326,8 @@ export const staticTranslations = {
     'Recommended differentiation levers': 'Recommended differentiation levers',
     'What this implies': 'What this implies',
     'What this excludes': 'What this excludes',
-    'TOP 3-5 PRIORITIES': 'TOP 3-5 PRIORITIES',
-    'Exactly 3-5 priorities • Priorities = workstreams • Each implies exclusion': 'Exactly 3-5 priorities • Priorities = workstreams • Each implies exclusion',
+    'TOP 5 PRIORITIES': 'TOP 5 PRIORITIES',
+    'Exactly 5 priorities • Priorities = workstreams • Each implies exclusion': 'Exactly 5 priorities • Priorities = workstreams • Each implies exclusion',
     'Identifying strategic priorities': 'Identifying strategic priorities',
     'Confidence': 'Confidence',
     'Key strategic insights based on your onboarding': 'Key strategic insights based on your onboarding',
@@ -1491,7 +1496,7 @@ export const staticTranslations = {
     "financial_data": "Financial Data",
     "report_templates_statements": "Report templates & statements",
     "generating_suggestions": "Generating Suggestions...",
-    "generate_ai_answers": "Generate AI Answers",
+    "generate_ai_answers": "Refine INITIAL answers with AI",
     "get_started": "Get Started",
     "initial": "Initial",
     "essential": "Essential",
@@ -1753,6 +1758,14 @@ export const staticTranslations = {
 
 
 
+    "AI-inferred from your data": "AI-inferred from your data",
+    "no_access_dashboard_message": "You don't have access to this business. Please upgrade your plan or contact admin.",
+    "no_access_modal_title": "Feature Restricted",
+    "no_access_modal_msg": "Premium Access Required",
+    "no_access_modal_sub_admin": "Your current plan does not include access to this business data. Upgrade now to unlock advanced AI insights and strategic tools.",
+    "no_access_modal_sub_user": "Your current plan does not include access to this business data. Please upgrade your plan or contact your administrator."
+
+
   },
 
   es: {
@@ -1800,8 +1813,8 @@ export const staticTranslations = {
     'Recommended differentiation levers': 'Palancas de diferenciación recomendadas',
     'What this implies': 'Lo que esto implica',
     'What this excludes': 'Qué excluye esto',
-    'TOP 3-5 PRIORITIES': '3-5 PRIORIDADES PRINCIPALES',
-    'Exactly 3-5 priorities • Priorities = workstreams • Each implies exclusion': 'Exactamente 3-5 prioridades • Prioridades = flujos de trabajo • Cada una implica exclusión',
+    'TOP 5 PRIORITIES': '5 PRIORIDADES PRINCIPALES',
+    'Exactly 5 priorities • Priorities = workstreams • Each implies exclusion': 'Exactamente 5 prioridades • Prioridades = flujos de trabajo • Cada una implica exclusión',
     'Identifying strategic priorities': 'Identificación de prioridades estratégicas',
     'Loading your insights...': 'Cargando sus conocimientos...',
     'No specific insights found for your inputs. Please check your onboarding data.': 'No se encontraron conocimientos específicos para sus aportes. Por favor revise sus datos de incorporación.',
@@ -1955,6 +1968,11 @@ export const staticTranslations = {
     'Are you sure you want to proceed without collaborators? You can also continue without any participants for now—this is perfectly fine, and you can always add them later.': '¿Está seguro de que desea continuar sin colaboradores? También puede continuar sin participantes por ahora; esto está perfectamente bien y siempre puede agregarlos más tarde.',
     'Kickstart to Projects': 'Iniciar hacia proyectos',
     'Add Collaborators First': 'Agregar colaboradores primero',
+    'login_subtitle': 'Transforma la estrategia de tu negocio en acción.',
+    'estimated_time_30_60': 'Tiempo estimado: 30-60 segundos',
+    'maturity_details_subdimension': 'Detalles de madurez por subdimensión',
+    'focus_capability_gaps': 'Nos enfocamos en brechas de capacidad específicas y fortalezas, no en puntajes de madurez genéricos.',
+    'ai_refinement_helper': 'Traxxia comenzará con sus respuestas INICIALES, propondrá versiones refinadas y las etiquetará como REFINADAS POR IA. Puede editar o revertir a INICIAL en cualquier momento.',
 
     // ===========================
     // REGISTRO
@@ -3503,6 +3521,13 @@ export const staticTranslations = {
     "Are you sure you want to regenerate the S.T.R.A.T.E.G.I.C. analysis? Your existing strategic insights will be permanently overwritten. This action cannot be undone as version history is not maintained.": "¿Está seguro de que desea regenerar el análisis S.T.R.A.T.E.G.I.C.? Sus insights estratégicos existentes se sobrescribirán permanentemente. Esta acción no se puede deshacer ya que no se mantiene un historial de versiones.",
     "Are you sure you want to regenerate all insights? This will permanently overwrite all your current analysis data across all phases. This action cannot be undone as version history is not maintained.": "¿Está seguro de que desea regenerar todos los insights? Esto sobrescribirá permanentemente todos sus datos de análisis actuales en todas las fases. Esta acción no se puede deshacer ya que no se mantiene un historial de versiones."
 
+
+    "AI-inferred from your data": "AI-inferred a partir de sus datos",
+    "no_access_dashboard_message": "No tienes acceso a este negocio. Por favor, actualiza tu plan o contacta al administrador.",
+    "no_access_modal_title": "Función Restringida",
+    "no_access_modal_msg": "Acceso Premium Requerido",
+    "no_access_modal_sub_admin": "Tu plan actual no incluye acceso a los datos de este negocio. Actualiza ahora para desbloquear insights premium de IA y herramientas estratégicas.",
+    "no_access_modal_sub_user": "Tu plan actual no incluye acceso a los datos de este negocio. Por favor, actualiza tu plan o contacta a tu administrador."
   }
 };
 

@@ -108,7 +108,12 @@ const UserHistory = ({ onToast }) => {
 
       if (response.ok) {
         const data = await response.json();
-        const transformed = data.users.map(transformUser);
+        const allowedRoles = ['super_admin', 'company_admin', 'user', 'admin'];
+        const filteredRawUsers = (data.users || []).filter(u => {
+          const role = (u.role_name || u.role || '').toLowerCase();
+          return allowedRoles.includes(role);
+        });
+        const transformed = filteredRawUsers.map(transformUser);
         setUsers(transformed);
         setFilteredUsers(transformed);
       }
@@ -328,9 +333,7 @@ const UserHistory = ({ onToast }) => {
           >
             <option value="All Roles">{t("All_Roles")}</option>
             <option value="Org Admin">{t("Org_Admin")}</option>
-            <option value="Collaborator">{t("Collaborator")}</option>
             <option value="User">{t("User")}</option>
-            <option value="Viewer">{t("Viewer")}</option>
           </Form.Select>
         }
       />
@@ -1282,7 +1285,25 @@ const StatsRow = ({
                 exportType="insights"
                 unlockedFeatures={analysisData.unlockedFeatures || { analysis: true, advancedPhase: true }} // Fallback for admin view context
                 showText={true}
-                {...analysisData} // Spread analysis data props
+                swotAnalysis={analysisData.swot}
+                purchaseCriteria={analysisData.purchaseCriteria}
+                loyaltyNPS={analysisData.loyaltyNPS}
+                portersData={analysisData.porters}
+                pestelData={analysisData.pestel}
+                fullSwotData={analysisData.fullSwot}
+                competitiveAdvantage={analysisData.competitiveAdvantage}
+                strategicData={analysisData.strategic}
+                expandedCapability={analysisData.expandedCapability}
+                strategicRadar={analysisData.strategicRadar}
+                productivityData={analysisData.productivityMetrics}
+                maturityData={analysisData.maturityScore}
+                competitiveLandscape={analysisData.competitiveLandscapeData}
+                coreAdjacency={analysisData.coreAdjacencyData}
+                profitabilityData={analysisData.profitabilityData}
+                growthTrackerData={analysisData.growthTrackerData}
+                liquidityEfficiencyData={analysisData.liquidityEfficiencyData}
+                investmentPerformanceData={analysisData.investmentPerformanceData}
+                leverageRiskData={analysisData.leverageRiskData}
               />
             )}
           </div>
@@ -1496,6 +1517,7 @@ const AnalysisTab = ({
           leverageRiskData={analysisData.leverageRiskData}
           competitiveLandscapeData={analysisData.competitiveLandscapeData}
           coreAdjacencyData={analysisData.coreAdjacencyData}
+          questionsLoaded={true}
           setSwotAnalysisResult={() => { }}
           setCustomerSegmentationData={() => { }}
           setPurchaseCriteriaData={() => { }}
@@ -1672,6 +1694,9 @@ const StrategicTab = ({
           userAnswers={analysisData.userAnswers}
           businessName={analysisData.businessName}
           strategicData={analysisData.strategic}
+          portersData={analysisData.porters}
+          pestelData={analysisData.pestel}
+          selectedBusinessId={selectedBusinessId}
           phaseAnalysisArray={analysisData.phaseAnalysisArray || []}
           onRegenerate={null}
           isRegenerating={false}
@@ -1680,6 +1705,8 @@ const StrategicTab = ({
           hideDownload={true}
           hideImproveButton={true}
           hideKickstart={true}
+          isExpanded={true}
+          questionsLoaded={true}
         />
       </div>
     </div>

@@ -12,7 +12,10 @@ const Aiassistant = ({ businessId: propBusinessId, projectId, pageContext, isDis
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [messages, setMessages] = useState([
-    { role: "assistant", text: "Hi! How can I help you today? 👋" },
+    { 
+  role: "assistant", 
+  text: "Hi! 👋 I can help you using your business data, current page insights, and strategy analysis. Ask me anything about risks, strategy, or recommendations." 
+},
   ]);
   const [isLoading, setIsLoading] = useState(false);
   const [quotaStatus, setQuotaStatus] = useState({ exceeded: false, resetAt: null, usedTokens: 0, limit: 3000000 });
@@ -71,14 +74,22 @@ const Aiassistant = ({ businessId: propBusinessId, projectId, pageContext, isDis
             `${process.env.REACT_APP_BACKEND_URL}/ai-chat/history/${resolvedProjectId}`,
             { headers: { Authorization: `Bearer ${token}` } }
           );
-          if (response.data.history && response.data.history.length > 0) {
-            setMessages(response.data.history.map((msg) => ({ role: msg.role, text: msg.text })));
-          } else {
-            setMessages([{ role: "assistant", text: "Hi! How can I help you today? 👋" }]);
-          }
+          const introMessage = {
+  role: "assistant",
+  text: "Hi! 👋 I can help you using your business data, current page insights, and strategy analysis. Ask me anything about risks, strategy, or recommendations."
+};
+
+if (response.data.history && response.data.history.length > 0) {
+  setMessages([
+    introMessage,
+    ...response.data.history.map((msg) => ({ role: msg.role, text: msg.text }))
+  ]);
+} else {
+  setMessages([introMessage]);
+}
         } catch (error) {
           console.error("Error fetching AI chat history:", error);
-          setMessages([{ role: "assistant", text: "Hi! How can I help you today? 👋" }]);
+          setMessages([{ role: "assistant", text: "Hi! 👋 I can help you using your business data, current page insights, and strategy analysis. Ask me anything about risks, strategy, or recommendations." }]);
         }
       };
       fetchHistory();
