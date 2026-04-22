@@ -1561,14 +1561,6 @@ const BusinessSetupPage = () => {
                                 </>
                               )}
 
-                              <div className="dropdown-section-label mt-2">{t("Advanced")}</div>
-                              <button
-                                className={`dropdown-item ${activeTab === 'advanced' ? 'active' : ''}`}
-                                onClick={() => { handleBriefTabClick(); setActiveNavDropdown(null); }}
-                              >
-                                <HelpCircle size={14} />
-                                <span>{t("Answers/Brief")}</span>
-                              </button>
                               {(hasInsightAccess || hasStrategicAccess) && (
                                 <>
                                   <div className="dropdown-section-label mt-2">{t("Advanced")}</div>
@@ -2040,13 +2032,13 @@ const BusinessSetupPage = () => {
                     <PMFInsightsTab
                       selectedBusinessId={selectedBusinessId}
                       refreshTrigger={pmfRefreshTrigger}
-                      onStartOnboarding={() => setShowPMFOnboarding(true)}
+                      onStartOnboarding={() => openModal('pmfOnboarding')}
                     />
                   )}
                   {hasPmfAccess && activeTab === "executive" && (
                     <ExecutiveSummary
                       businessId={selectedBusinessId}
-                      onStartOnboarding={() => setShowPMFOnboarding(true)}
+                      onStartOnboarding={() => openModal('pmfOnboarding')}
                       refreshTrigger={pmfRefreshTrigger}
                     />
                   )}
@@ -2100,7 +2092,7 @@ const BusinessSetupPage = () => {
                       onSuccess={handleKickstartSuccess}
                       onStayOnPriorities={handleStayOnPriorities}
                       onToastMessage={showToastMessage}
-                      onStartOnboarding={() => setShowPMFOnboarding(true)}
+                      onStartOnboarding={() => openModal('pmfOnboarding')}
                       refreshTrigger={pmfRefreshTrigger}
                     />
                   )}
@@ -2153,13 +2145,13 @@ const BusinessSetupPage = () => {
                   <PMFInsightsTab
                     selectedBusinessId={selectedBusinessId}
                     refreshTrigger={pmfRefreshTrigger}
-                    onStartOnboarding={() => setShowPMFOnboarding(true)}
+                    onStartOnboarding={() => openModal('pmfOnboarding')}
                   />
                 )}
                 {hasPmfAccess && activeTab === "executive" && (
                   <ExecutiveSummary
                     businessId={selectedBusinessId}
-                    onStartOnboarding={() => setShowPMFOnboarding(true)}
+                    onStartOnboarding={() => openModal('pmfOnboarding')}
                     refreshTrigger={pmfRefreshTrigger}
                   />
                 )}
@@ -2218,7 +2210,7 @@ const BusinessSetupPage = () => {
                     onSuccess={handleKickstartSuccess}
                     onStayOnPriorities={handleStayOnPriorities}
                     onToastMessage={showToastMessage}
-                    onStartOnboarding={() => setShowPMFOnboarding(true)}
+                    onStartOnboarding={() => openModal('pmfOnboarding')}
                     refreshTrigger={pmfRefreshTrigger}
                   />
                 )}
