@@ -1997,11 +1997,11 @@ const BusinessSetupPage = () => {
                         })()}
                       </div>
 
-                      {canShowRegenerateButtons && hasAnalysisData && (
+                      {canShowRegenerateButtons && unlockedFeatures.analysis && hasInsightAccess && (
                         <CustomTooltip align="right" message={t("regenerate_all_tooltip") || "Re-generate all insights."}>
                           <button
-                            onClick={() => canRegenerate && handleRegeneratePhase(currentPhase)}
-                            disabled={isAnalysisRegenerating || !unlockedFeatures.analysis || !canRegenerate}
+                            onClick={() => canRegenerate && handleRegenerateAllAnalysis({ includeFinancial: hasUploadedDocument })}
+                            disabled={isAnalysisRegenerating || !unlockedFeatures.analysis || !canRegenerate || !hasInsightAccess}
                             className={`regenerate-button ${isAnalysisRegenerating ? 'disabled' : ''}`}
                           >
                             {isAnalysisRegenerating ? (
@@ -2015,6 +2015,26 @@ const BusinessSetupPage = () => {
                     </div>
                   )}
                 </div>
+                
+                {activeTab === "strategic" && unlockedFeatures.analysis && (
+                  <div className="desktop-tabs-buttons">
+                    {canShowRegenerateButtons && hasStrategicAccess && (
+                      <CustomTooltip align="right" message={t("regenerate_strategic_tooltip") || "Re-generate the S.T.R.A.T.E.G.I.C. analysis."}>
+                        <button
+                          onClick={() => canRegenerate && handleStrategicAnalysisRegenerate()}
+                          disabled={isStrategicRegenerating || isAnalysisRegenerating || !canRegenerate || !unlockedFeatures.analysis || !hasStrategicAccess}
+                          className={`regenerate-button ${isStrategicRegenerating || isAnalysisRegenerating || !unlockedFeatures.analysis ? 'disabled' : ''}`}
+                        >
+                          {isStrategicRegenerating ? (
+                            <Loader size={16} className="animate-spin" />
+                          ) : (
+                            <RefreshCw size={16} />
+                          )}
+                        </button>
+                      </CustomTooltip>
+                    )}
+                  </div>
+                )}
 
                 <div className="info-panel-content">
                   {activeTab === "advanced" && (
