@@ -730,25 +730,32 @@ const BusinessSetupPage = () => {
 
   const handleRegeneratePhase = (phaseOverride = null, alsoRegenerateStrategic = false, options = {}) => {
     const targetPhase = phaseOverride || getCurrentPhase();
+    const skipConfirmation = options?.skipConfirmation || false;
 
-    triggerConfirmation(
-      t("Regenerate Phase Analysis?"),
-      t("Are you sure you want to regenerate the insights for this phase? All existing analysis data for this phase will be permanently overwritten. This action cannot be undone as version history is not maintained."),
-      async () => {
-        // Merge uploadedFile from options into userAnswers context for the store
-        const mergedAnswers = { ...userAnswers };
-        if (options?.uploadedFile) {
-          mergedAnswers.uploadedFile = options.uploadedFile;
-        } else if (uploadedFileForAnalysis) {
-          mergedAnswers.uploadedFile = uploadedFileForAnalysis;
-        }
-
-        await regeneratePhase(targetPhase, questions, mergedAnswers, selectedBusinessId, showToastMessage);
-        if (alsoRegenerateStrategic && targetPhase !== 'advanced') {
-          await handleStrategicAnalysisRegenerate(true);
-        }
+    const action = async () => {
+      // Merge uploadedFile from options into userAnswers context for the store
+      const mergedAnswers = { ...userAnswers };
+      if (options?.uploadedFile) {
+        mergedAnswers.uploadedFile = options.uploadedFile;
+      } else if (uploadedFileForAnalysis) {
+        mergedAnswers.uploadedFile = uploadedFileForAnalysis;
       }
-    );
+
+      await regeneratePhase(targetPhase, questions, mergedAnswers, selectedBusinessId, showToastMessage);
+      if (alsoRegenerateStrategic && targetPhase !== 'advanced') {
+        await handleStrategicAnalysisRegenerate(true);
+      }
+    };
+
+    if (skipConfirmation) {
+      return action();
+    } else {
+      triggerConfirmation(
+        t("Regenerate Phase Analysis?"),
+        t("Are you sure you want to regenerate the insights for this phase? All existing analysis data for this phase will be permanently overwritten. This action cannot be undone as version history is not maintained."),
+        action
+      );
+    }
   };
 
   const setUploadedFile = (file) => {
@@ -803,7 +810,7 @@ const BusinessSetupPage = () => {
         isRegeneratingRef.current = true;
         try {
           if (options?.onlyFinancial) {
-            await handleRegeneratePhase('financial', false, options);
+            await handleRegeneratePhase('financial', false, { ...options, skipConfirmation: true });
             return;
           }
 
@@ -829,10 +836,10 @@ const BusinessSetupPage = () => {
 
           // Removed the 'targetPhase !== advanced' restriction to allow financial regeneration in all phases
           if (options?.includeFinancial) {
-            await handleRegeneratePhase('financial', false);
+            await handleRegeneratePhase('financial', false, { skipConfirmation: true });
           }
 
-          await handleRegeneratePhase(targetPhase, true);
+          await handleRegeneratePhase(targetPhase, true, { skipConfirmation: true });
         } finally {
           isRegeneratingRef.current = false;
         }
