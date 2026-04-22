@@ -69,6 +69,12 @@
   cursor: pointer;
   font-weight: 600;
   padding: 8px 12px;
+  transition: none;
+}
+
+.btn-back:hover {
+  background: none !important;
+  color: #6b7280 !important;
 }
 
 .btn-primary {
@@ -95,7 +101,7 @@
   border-radius: 24px;
   max-width: 420px;
   padding: 32px;
-  box-shadow: 0 30px 60px -15px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255,255,255,0.5) inset;
+  box-shadow: 0 30px 60px -15px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.5) inset;
   text-align: center;
 }
 
@@ -106,8 +112,15 @@
 }
 
 @keyframes float-sparkle {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-10px); }
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-10px);
+  }
 }
 
 .welcome-modal .tooltip-title {
@@ -169,7 +182,7 @@
   .tooltip-container {
     padding: 18px;
   }
-  
+
   .welcome-modal {
     padding: 24px;
     max-width: calc(100vw - 32px);
