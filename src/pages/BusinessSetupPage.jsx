@@ -357,11 +357,6 @@ const BusinessSetupPage = () => {
     
     if (!targetTab) return;
 
-    if (initialTab) {
-      // Check if user has access to the requested initial tab
-      const isPmfTab = ["executive", "priorities"].includes(initialTab);
-      const isProjectTab = initialTab === "projects";
-
     if (targetTab !== activeTab) {
       // Check access before switching
       const isPmfTab = ["executive", "priorities"].includes(targetTab);
@@ -574,6 +569,9 @@ const BusinessSetupPage = () => {
                 answerIdsMap[qIdStr] = ans._id;
               }
             });
+            
+            finalAnswers = answersMap;
+            finalCompleted = Object.keys(answersMap);
 
             if (Object.keys(answersMap).length > 0) {
               Object.entries(answersMap).forEach(([qId, ans]) => setUserAnswer(qId, ans));
@@ -581,9 +579,7 @@ const BusinessSetupPage = () => {
             }
           } else {
             useAnalysisStore.setState({ questionsLoaded: true });
-            finalAnswers = answersMap;
-            finalCompleted = Object.keys(answersMap);
-            setAnswerIds(answerIdsMap);
+            setAnswerIds({});
           }
 
           // 3. Fetch analysis results silently (don't set loaded=true inside fetchAnalysisData)
@@ -1610,8 +1606,6 @@ const BusinessSetupPage = () => {
                         {/* Execution Dropdown */}
                         {(hasPmfAccess || (showProjectsTab && hasProjectAccess)) && (
                           <div className={`nav-dropdown-wrapper ${activeNavDropdown === 'execution' ? 'open' : ''}`}>
-                            <button
-                              className={`nav-dropdown-trigger ${['priorities', 'projects'].includes(activeTab) ? 'active' : ''}`}
                             <button 
                               className={`nav-dropdown-trigger ${['priorities', 'projects', 'ranking'].includes(activeTab) ? 'active' : ''}`}
                               onClick={() => setActiveNavDropdown(activeNavDropdown === 'execution' ? null : 'execution')}
@@ -1641,9 +1635,7 @@ const BusinessSetupPage = () => {
                                 {showProjectsTab && hasProjectAccess && (
                                   <>
                                     <div className="dropdown-section-label">{t("Projects")}</div>
-                                    <button
-                                      className={`dropdown-item ${activeTab === 'projects' && useProjectStore.getState().viewMode === 'projects' ? 'active' : ''}`}
-                                  <button 
+                                    <button 
                                       className={`dropdown-item ${activeTab === 'projects' ? 'active' : ''}`} 
                                       onClick={() => {
                                         useProjectStore.getState().setViewMode('projects');
@@ -1655,9 +1647,6 @@ const BusinessSetupPage = () => {
                                       <span>{t("Projects_View")}</span>
                                     </button>
 
-                                    <button
-                                      className={`dropdown-item ${activeTab === 'projects' && useProjectStore.getState().viewMode === 'ranking' ? 'active' : ''}`}
-                                    
                                     <button 
                                       className={`dropdown-item ${activeTab === 'ranking' ? 'active' : ''}`} 
                                       onClick={() => {
@@ -1946,13 +1935,15 @@ const BusinessSetupPage = () => {
                           <span>{t("Executive Summary")}</span>
                         </button>
                       )}
-                      <button
-                        className={`desktop-tab ${activeTab === "advanced" ? "active" : ""}`}
-                        onClick={handleBriefTabClick}
-                      >
-                        <HelpCircle size={16} />
-                        <span>{t("Answers/Brief")}</span>
-                      </button>
+                      {(hasInsightAccess || hasStrategicAccess) && (
+                        <button
+                          className={`desktop-tab ${activeTab === "advanced" ? "active" : ""}`}
+                          onClick={handleBriefTabClick}
+                        >
+                          <HelpCircle size={16} />
+                          <span>{t("Answers/Brief")}</span>
+                        </button>
+                      )}
                       {hasInsightAccess && (
                         <button className={`desktop-tab ${activeTab === "insights" ? "active" : ""}`} onClick={handleAnalysisTabClick}>
                           <TrendingUp size={16} />
@@ -1980,54 +1971,6 @@ const BusinessSetupPage = () => {
                           <span>{t("Projects")}</span>
                         </button>
                       )}
-                    <div className="desktop-tabs-controls">
-                      <div className="nav-group-minimal">
-                        {hasPmfAccess && (
-                          <button
-                            className={`desktop-tab ${activeTab === "executive" ? "active" : ""}`}
-                            onClick={handleExecutiveTabClick}
-                          >
-                            <LayoutDashboard size={16} />
-                            <span>{t("Executive Summary")}</span>
-                          </button>
-                        )}
-                        {(hasInsightAccess || hasStrategicAccess) && (
-                          <button
-                            className={`desktop-tab ${activeTab === "advanced" ? "active" : ""}`}
-                            onClick={handleBriefTabClick}
-                          >
-                            <HelpCircle size={16} />
-                            <span>{t("Answers/Brief")}</span>
-                          </button>
-                        )}
-                        {hasInsightAccess && (
-                          <button className={`desktop-tab ${activeTab === "insights" ? "active" : ""}`} onClick={handleAnalysisTabClick}>
-                            <TrendingUp size={16} />
-                            <span>{t("Insights")}</span>
-                          </button>
-                        )}
-                        {hasStrategicAccess && (
-                          <button className={`desktop-tab ${activeTab === "strategic" ? "active" : ""}`} onClick={handleStrategicTabClick}>
-                            <Target size={16} />
-                            <span>{t("STRATEGIC_LABEL") || "S.T.R.A.T.E.G.I.C."}</span>
-                          </button>
-                        )}
-                        {hasPmfAccess && (
-                          <button
-                            className={`desktop-tab ${activeTab === "priorities" ? "active" : ""}`}
-                            onClick={handlePrioritiesTabClick}
-                          >
-                            <ListTodo size={16} />
-                            <span>{t("Priorities")}</span>
-                          </button>
-                        )}
-                        {showProjectsTab && hasProjectAccess && (
-                          <button className={`desktop-tab ${activeTab === "projects" ? "active" : ""}`} onClick={() => setActiveTab("projects")}>
-                            <Briefcase size={16} />
-                            <span>{t("Projects")}</span>
-                          </button>
-                        )}
-                      </div>
                     </div>
                   </div>
 
@@ -2309,6 +2252,7 @@ const BusinessSetupPage = () => {
         title={confirmConfig.title}
         message={confirmConfig.message}
         confirmVariant="primary"
+      />
 
       <PlanLimitModal
         show={isModalOpen('noFeatureAccess')}
