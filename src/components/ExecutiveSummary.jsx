@@ -182,8 +182,7 @@ const ExecutiveSummary = ({ businessId, onStartOnboarding, refreshTrigger }) => 
               </button>
             </div>
 
-            {expandedSections.ahaInsights && (
-              <div className="exc-section-body">
+            <div className={`exc-section-body ${expandedSections.ahaInsights ? 'expanded' : 'collapsed'}`} data-component="executive-aha">
                 <div className="exc-aha-vertical-tiles">
                   {topAhaInsights.map((insight, idx) => {
                     const conf = (insight.confidence || '').toLowerCase();
@@ -220,8 +219,7 @@ const ExecutiveSummary = ({ businessId, onStartOnboarding, refreshTrigger }) => 
                     );
                   })}
                 </div>
-              </div>
-            )}
+            </div>
           </div>
         )}
 
@@ -244,8 +242,7 @@ const ExecutiveSummary = ({ businessId, onStartOnboarding, refreshTrigger }) => 
             </button>
           </div>
 
-          {expandedSections.whereToCompete && (
-            <div className="exc-section-body">
+          <div className={`exc-section-body ${expandedSections.whereToCompete ? 'expanded' : 'collapsed'}`} data-component="executive-where">
               {/* Current Core */}
               <div className="exc-subsection exc-current-core">
                 <div className="exc-subsection-icon exc-blue">
@@ -332,7 +329,6 @@ const ExecutiveSummary = ({ businessId, onStartOnboarding, refreshTrigger }) => 
                 </div>
               </div>
             </div>
-          )}
         </div>
 
         {/* HOW TO COMPETE */}
@@ -354,8 +350,7 @@ const ExecutiveSummary = ({ businessId, onStartOnboarding, refreshTrigger }) => 
             </button>
           </div>
 
-          {expandedSections.howToCompete && (
-            <div className="exc-section-body">
+          <div className={`exc-section-body ${expandedSections.howToCompete ? 'expanded' : 'collapsed'}`} data-component="executive-how">
               <div className="exc-how-compete-box">
                 <p className="exc-box-title">{t("Differentiation Strategy")}:</p>
 
@@ -433,7 +428,6 @@ const ExecutiveSummary = ({ businessId, onStartOnboarding, refreshTrigger }) => 
                 )}
               </div>
             </div>
-          )}
         </div>
 
         {/* TOP PRIORITIES */}
@@ -455,8 +449,7 @@ const ExecutiveSummary = ({ businessId, onStartOnboarding, refreshTrigger }) => 
             </button>
           </div>
 
-          {expandedSections.topPriorities && (
-            <div className="exc-section-body">
+          <div className={`exc-section-body ${expandedSections.topPriorities ? 'expanded' : 'collapsed'}`} data-component="executive-priorities">
               {topPriorities?.map((item, idx) => {
                 // Determine actions list
                 const actions = item.actions || item.Actions || [];
@@ -503,7 +496,6 @@ const ExecutiveSummary = ({ businessId, onStartOnboarding, refreshTrigger }) => 
                 );
               }) || <p className="exc-content-text exc-italic">{t("Identifying strategic priorities")}...</p>}
             </div>
-          )}
         </div>
       </div>
     </div>

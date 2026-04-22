@@ -24,6 +24,10 @@ export const staticTranslations = {
     'remove_participant': 'Remove Participant',
     'reassign_ownership_notice': 'Any projects currently owned by this participant will be automatically reassigned to the business owner.',
     'revoke_access_notice': 'Administrative access (reranking/project edit) will also be revoked for this participant in this business.',
+    'confirm_regeneration_title': 'Confirm Regeneration',
+    'confirm_regeneration_message': 'Are you sure you want to re-generate the {{section}} insight? This will replace the existing data for this specific analysis.',
+    'confirm_regeneration_all_title': 'Confirm Global Regeneration',
+    'confirm_regeneration_all_message': 'Are you sure you want to re-generate ALL insights? This will start a process to refresh every analysis card in this phase.',
     'Proceed without Collaborators?': 'Proceed without Collaborators?',
     'Are you sure you want to proceed without collaborators? You can also continue without any participants for now—this is perfectly fine, and you can always add them later.': 'Are you sure you want to proceed without collaborators? You can also continue without any participants for now—this is perfectly fine, and you can always add them later.',
     'Kickstart to Projects': 'Kickstart to Projects',
@@ -173,6 +177,7 @@ export const staticTranslations = {
     "regenerate_all_tooltip": "Re-generate all insights.",
     "download_strategic_tooltip": "Export the strategic into PDF report.",
     "regenerate_strategic_tooltip": "Re-generate the S.T.R.A.T.E.G.I.C. analysis.",
+    "download_executive_tooltip": "Export the executive summary into PDF report.",
 
     "Appendix": "Appendix",
     "six_cs_overview_title": "The 6 C's Framework",
@@ -1747,6 +1752,10 @@ export const staticTranslations = {
     "strategic_access": "Strategic Access",
     "projects_access": "Projects Access",
     "mark_all_read": "Mark all as read",
+    "Are you sure you want to regenerate the insights for this phase? All existing analysis data for this phase will be permanently overwritten. This action cannot be undone as version history is not maintained.": "Are you sure you want to regenerate the insights for this phase? All existing analysis data for this phase will be permanently overwritten. This action cannot be undone as version history is not maintained.",
+    "Are you sure you want to regenerate the S.T.R.A.T.E.G.I.C. analysis? Your existing strategic insights will be permanently overwritten. This action cannot be undone as version history is not maintained.": "Are you sure you want to regenerate the S.T.R.A.T.E.G.I.C. analysis? Your existing strategic insights will be permanently overwritten. This action cannot be undone as version history is not maintained.",
+    "Are you sure you want to regenerate all insights? This will permanently overwrite all your current analysis data across all phases. This action cannot be undone as version history is not maintained.": "Are you sure you want to regenerate all insights? This will permanently overwrite all your current analysis data across all phases. This action cannot be undone as version history is not maintained."
+
 
 
     "AI-inferred from your data": "AI-inferred from your data",
@@ -1926,6 +1935,7 @@ export const staticTranslations = {
     "regenerate_all_tooltip": "Vuelva a ejecutar todo el análisis para la fase actual basado en los datos actualizados.",
     "download_strategic_tooltip": "Descargue un informe PDF completo que contiene Direction & Positioning, Execution y Sustainability.",
     "regenerate_strategic_tooltip": "Vuelva a generar el análisis S.T.R.A.T.E.G.I.C. con los últimos insights.",
+    "download_executive_tooltip": "Exportar el resumen ejecutivo a un informe PDF.",
     "AHA Insights": "Perspectivas AHA",
     "Key strategic insights based on your onboarding": "Perspectivas estratégicas clave basadas en tu incorporación",
     "Confidence": "Confianza",
@@ -1950,6 +1960,10 @@ export const staticTranslations = {
     'remove_participant': 'Eliminar Participante',
     'reassign_ownership_notice': 'Cualquier proyecto que pertenezca actualmente a este participante será reasignado automáticamente al propietario del negocio.',
     'revoke_access_notice': 'El acceso administrativo (recategorización/edición de proyectos) también será revocado para este participante en este negocio.',
+    'confirm_regeneration_title': 'Confirmar Regeneración',
+    'confirm_regeneration_message': '¿Está seguro de que desea volver a generar el insight de {{section}}? Esto reemplazará los datos existentes para este análisis específico.',
+    'confirm_regeneration_all_title': 'Confirmar Regeneración Global',
+    'confirm_regeneration_all_message': '¿Está seguro de que desea volver a generar TODOS los insights? Esto iniciará un proceso para actualizar cada tarjeta de análisis en esta fase.',
     'Proceed without Collaborators?': '¿Continuar sin colaboradores?',
     'Are you sure you want to proceed without collaborators? You can also continue without any participants for now—this is perfectly fine, and you can always add them later.': '¿Está seguro de que desea continuar sin colaboradores? También puede continuar sin participantes por ahora; esto está perfectamente bien y siempre puede agregarlos más tarde.',
     'Kickstart to Projects': 'Iniciar hacia proyectos',
@@ -3503,6 +3517,10 @@ export const staticTranslations = {
     "mark_all_read": "Marcar todo como leído",
     'incorrect_email': 'Dirección de correo electrónico incorrecta',
     'incorrect_password': 'Contraseña incorrecta',
+    "Are you sure you want to regenerate the insights for this phase? All existing analysis data for this phase will be permanently overwritten. This action cannot be undone as version history is not maintained.": "¿Está seguro de que desea regenerar los insights para esta fase? Todos los datos de análisis existentes para esta fase se sobrescribirán permanentemente. Esta acción no se puede deshacer ya que no se mantiene un historial de versiones.",
+    "Are you sure you want to regenerate the S.T.R.A.T.E.G.I.C. analysis? Your existing strategic insights will be permanently overwritten. This action cannot be undone as version history is not maintained.": "¿Está seguro de que desea regenerar el análisis S.T.R.A.T.E.G.I.C.? Sus insights estratégicos existentes se sobrescribirán permanentemente. Esta acción no se puede deshacer ya que no se mantiene un historial de versiones.",
+    "Are you sure you want to regenerate all insights? This will permanently overwrite all your current analysis data across all phases. This action cannot be undone as version history is not maintained.": "¿Está seguro de que desea regenerar todos los insights? Esto sobrescribirá permanentemente todos sus datos de análisis actuales en todas las fases. Esta acción no se puede deshacer ya que no se mantiene un historial de versiones."
+
 
     "AI-inferred from your data": "AI-inferred a partir de sus datos",
     "no_access_dashboard_message": "No tienes acceso a este negocio. Por favor, actualiza tu plan o contacta al administrador.",
