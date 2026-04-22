@@ -1968,6 +1968,35 @@ const BusinessSetupPage = () => {
 
                   {activeTab === "insights" && unlockedFeatures.analysis && (
                     <div className="desktop-tabs-buttons">
+                      <div ref={dropdownRef} className="dropdown-wrapper">
+                        <button className="dropdown-button" onClick={() => setShowDropdown(prev => !prev)}>
+                          <span>{selectedDropdownValue}</span>
+                          <ChevronDown size={16} className={`chevron ${showDropdown ? 'open' : ''}`} />
+                        </button>
+                        {showDropdown && (() => {
+                          const categoryOptions = getPhaseSpecificOptions(currentPhase);
+                          return Object.keys(categoryOptions).length > 0 && (
+                            <div className="dropdown-menu-options"> 
+                              {Object.entries(categoryOptions).map(([category, items]) =>
+                                items.length > 0 && (
+                                  <div key={category}>
+                                    <div className="dropdown-category-header">{t(category)}</div>
+                                    {items.map((item) => (
+                                      <div key={item} onClick={() => {
+                                        handleOptionClick(item);
+                                      }} className="dropdown-option dropdown-sub-option">
+                                        <span className="bullet"></span>
+                                        {t(item)}
+                                      </div>
+                                    ))}
+                                  </div>
+                                )
+                              )}
+                            </div>
+                          );
+                        })()}
+                      </div>
+
                       {canShowRegenerateButtons && hasAnalysisData && (
                         <CustomTooltip align="right" message={t("regenerate_all_tooltip") || "Re-generate all insights."}>
                           <button

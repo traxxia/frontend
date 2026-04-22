@@ -1385,7 +1385,8 @@ const EditableBriefSection = ({
             {isApplyingEnrichment ? 'Generating AI answers and regenerating insights...' :
               (isFileUploading || isFinancialRegenerating) ? 'Regenerating financial insights like profitability, growth tracker, liquidity, investment performance, leverage and risk insight...' :
                 isSaving ? 'Saving changes...' :
-                  (isEssentialPhaseGenerating || isAnalysisRegenerating || isStrategicRegenerating) ? 'Generating all Insights & STRATEGIC analysis...' : ''}
+                  (isAnalysisRegenerating || isStrategicRegenerating) ? 'Generating all Insights & STRATEGIC analysis...' :
+                    isEssentialPhaseGenerating ? 'Generating Insight...' : ''}
           </span>
         </div>
       )}

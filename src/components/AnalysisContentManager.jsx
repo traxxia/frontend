@@ -807,7 +807,7 @@ const AnalysisContentManager = (props) => {
           <span>
             {isFinancialRegenerating
               ? t("Regenerating financial insights like profitability, growth tracker, liquidity, investment performance, leverage and risk insight...")
-              : t("Generating all Insights & STRATEGIC analysis...")}
+              : (props.isAnalysisRegenerating || props.isStrategicRegenerating) ? t("Generating all Insights & STRATEGIC analysis...") : t("Generating Insight...")}
           </span>
         </div>
       )}
