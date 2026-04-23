@@ -40,6 +40,7 @@ import ExecutiveSummary from "../components/ExecutiveSummary";
 import PrioritiesProjects from "../components/PrioritiesProjects";
 import UpgradeModal from "../components/UpgradeModal";
 import PMFOnboardingModal from "../components/PMFOnboardingModal";
+import BusinessDecisionLogs from "../components/BusinessDecisionLogs";
 import { answerService } from "../services/answerService";
 import { AI_PAGE_CONTEXTS } from "../utils/aiContexts";
 import { getUserLimits } from '../utils/authUtils';
@@ -351,7 +352,7 @@ const BusinessSetupPage = () => {
     if (targetTab !== activeTab) {
       // Check access before switching
       const isPmfTab = ["executive", "priorities"].includes(targetTab);
-      const isProjectTab = targetTab === "projects" || targetTab === "ranking";
+      const isProjectTab = targetTab === "projects" || targetTab === "ranking" || targetTab === "decision-logs";
       
       if ((isPmfTab && !hasPmfAccess) || (isProjectTab && !hasProjectAccess)) {
         console.warn("Blocking access to unauthorized tab:", targetTab);
@@ -403,6 +404,7 @@ const BusinessSetupPage = () => {
     else if (activeTab === "advanced") pageContext = AI_PAGE_CONTEXTS.ADVANCED;
     else if (activeTab === "insights") pageContext = AI_PAGE_CONTEXTS.INSIGHTS;
     else if (activeTab === "strategic") pageContext = AI_PAGE_CONTEXTS.STRATEGIC;
+    else if (activeTab === "decision-logs") pageContext = AI_PAGE_CONTEXTS.PROJECTS;
     let contextPayload = { ...pageContext };
 
     if (activeTab === "advanced" && questions && questions.length > 0) {
@@ -437,7 +439,7 @@ const BusinessSetupPage = () => {
       // If we don't have the full business object OR it doesn't match the current ID, fetch it
       if (!currentBusiness || (currentBusiness._id !== selectedBusinessId && currentBusiness.id !== selectedBusinessId)) {
         // Skip fetch if we are on Priorities or Projects tab and already have basic info (optimization)
-        if ((activeTab === 'priorities' || activeTab === 'projects' || activeTab === 'ranking') && selectedBusinessName && selectedBusinessName !== "") {
+        if ((activeTab === 'priorities' || activeTab === 'projects' || activeTab === 'ranking' || activeTab === 'decision-logs') && selectedBusinessName && selectedBusinessName !== "") {
           console.log("Skipping business recovery fetch for tab:", activeTab);
           return;
         }
@@ -597,7 +599,7 @@ const BusinessSetupPage = () => {
 
   // Ensure Projects tab button appears once projects is active (only if user has project access)
   useEffect(() => {
-    if ((activeTab === 'projects' || activeTab === 'ranking') && !showProjectsTab && hasProjectAccess) {
+    if ((activeTab === 'projects' || activeTab === 'ranking' || activeTab === 'decision-logs') && !showProjectsTab && hasProjectAccess) {
       setShowProjectsTab(true);
       if (selectedBusinessId) {
         setBusinessSetting(selectedBusinessId, 'showProjectsTab', true);
@@ -608,7 +610,7 @@ const BusinessSetupPage = () => {
   // Automatically show Projects tab if this business already has projects
   // Skip this check when on the projects tab itself (handled by ProjectsSection) or if already visible
   useEffect(() => {
-    if (showProjectsTab || !selectedBusinessId || activeTab === 'projects' || activeTab === 'ranking') return;
+    if (showProjectsTab || !selectedBusinessId || activeTab === 'projects' || activeTab === 'ranking' || activeTab === 'decision-logs') return;
 
     const fetchProjectsForBusiness = async () => {
       if (!selectedBusinessId) return;
@@ -1181,7 +1183,7 @@ const BusinessSetupPage = () => {
             </div>
 
             <div className="mobile-active-tab">
-              {(['executive', 'advanced', 'insights', 'strategic', 'priorities', 'projects', 'ranking'].includes(activeTab)) ? (
+              {(['executive', 'advanced', 'insights', 'strategic', 'priorities', 'projects', 'ranking', 'decision-logs'].includes(activeTab)) ? (
                 <div className="mobile-tab-selector">
                   <div className="mobile-tab-trigger no-dropdown">
                     <span>
@@ -1191,6 +1193,7 @@ const BusinessSetupPage = () => {
                       {activeTab === "insights" && (hasPmfAccess ? t("insights") : "Insights")}
                       {activeTab === "strategic" && (hasPmfAccess ? t("strategic") : "S.T.R.A.T.E.G.I.C")}
                       {(activeTab === "projects" || activeTab === "ranking") && t("Projects")}
+                      {activeTab === "decision-logs" && (t("Decision_Logs") || "Decision Logs")}
                     </span>
                   </div>
                 </div>
@@ -1203,6 +1206,7 @@ const BusinessSetupPage = () => {
                   {activeTab === "insights" && (hasPmfAccess ? t("Insights") : "Insights")}
                   {activeTab === "strategic" && (hasPmfAccess ? t("strategic") : "S.T.R.A.T.E.G.I.C")}
                   {(activeTab === "projects" || activeTab === "ranking") && t("Projects")}
+                  {activeTab === "decision-logs" && (t("Decision_Logs") || "Decision Logs")}
                 </>
               )}
             </div>
@@ -1417,6 +1421,17 @@ const BusinessSetupPage = () => {
                           <BarChart4 size={18} />
                           <span>{t("Ranking")}</span>
                         </button>
+
+                        <button
+                          className={`mobile-menu-item ${activeTab === 'decision-logs' ? 'active' : ''}`}
+                          onClick={() => {
+                            setActiveTab('decision-logs');
+                            closeModal('mobileMenu');
+                          }}
+                        >
+                          <FileText size={18} />
+                          <span>{t("Decision_Logs") || "Decision Logs"}</span>
+                        </button>
                       </div>
                     )}
                   </div>
@@ -1519,7 +1534,7 @@ const BusinessSetupPage = () => {
                         {(hasPmfAccess || (showProjectsTab && hasProjectAccess)) && (
                           <div className={`nav-dropdown-wrapper ${activeNavDropdown === 'execution' ? 'open' : ''}`}>
                             <button 
-                              className={`nav-dropdown-trigger ${['priorities', 'projects', 'ranking'].includes(activeTab) ? 'active' : ''}`}
+                              className={`nav-dropdown-trigger ${['priorities', 'projects', 'ranking', 'decision-logs'].includes(activeTab) ? 'active' : ''}`}
                               onClick={() => setActiveNavDropdown(activeNavDropdown === 'execution' ? null : 'execution')}
                             >
                               {/* Dynamically show active tab target name or category name */}
@@ -1528,6 +1543,7 @@ const BusinessSetupPage = () => {
                                 if (activeTab === "projects" || activeTab === "ranking") {
                                   return activeTab === "ranking" ? t("Ranking") : t("Projects");
                                 }
+                                if (activeTab === "decision-logs") return t("Decision_Logs") || "Decision Logs";
                                 return t("Execution");
                               })()}
                               <ChevronDown size={14} className={`chevron-icon ${activeNavDropdown === 'execution' ? 'rotated' : ''}`} />
@@ -1569,6 +1585,17 @@ const BusinessSetupPage = () => {
                                     >
                                       <BarChart4 size={14} />
                                       <span>{t("Ranking")}</span>
+                                    </button>
+
+                                    <button 
+                                      className={`dropdown-item ${activeTab === 'decision-logs' ? 'active' : ''}`} 
+                                      onClick={() => {
+                                        setActiveTab('decision-logs');
+                                        setActiveNavDropdown(null);
+                                      }}
+                                    >
+                                      <FileText size={14} />
+                                      <span>{t("Decision_Logs") || "Decision Logs"}</span>
                                     </button>
                                   </>
                                 )}
@@ -1804,6 +1831,9 @@ const BusinessSetupPage = () => {
                           setActiveTab={setActiveTab}
                         />
                       )}
+                      {activeTab === "decision-logs" && hasProjectAccess && (
+                        <BusinessDecisionLogs businessId={selectedBusinessId} />
+                      )}
                       {hasPmfAccess && activeTab === "priorities" && (
                         <PrioritiesProjects
                           selectedBusinessId={selectedBusinessId}
@@ -1869,6 +1899,12 @@ const BusinessSetupPage = () => {
                           <button className={`desktop-tab ${activeTab === "projects" ? "active" : ""}`} onClick={() => setActiveTab("projects")}>
                             <Briefcase size={16} />
                             <span>{t("Projects")}</span>
+                          </button>
+                        )}
+                        {showProjectsTab && hasProjectAccess && (
+                          <button className={`desktop-tab ${activeTab === "decision-logs" ? "active" : ""}`} onClick={() => setActiveTab("decision-logs")}>
+                            <FileText size={16} />
+                            <span>{t("Decision_Logs") || "Decision Logs"}</span>
                           </button>
                         )}
                       </div>
@@ -1992,6 +2028,11 @@ const BusinessSetupPage = () => {
                       />
                     </div>
                   )}
+                  {activeTab === "decision-logs" && hasProjectAccess && (
+                    <div className="decision-logs-container">
+                      <BusinessDecisionLogs businessId={selectedBusinessId} />
+                    </div>
+                  )}
                   {hasPmfAccess && activeTab === "priorities" && (
                     <PrioritiesProjects
                       selectedBusinessId={selectedBusinessId}
@@ -2108,6 +2149,9 @@ const BusinessSetupPage = () => {
                     isArchived={isArchived}
                     companyAdminIds={companyAdminIds}
                   />
+                )}
+                {activeTab === "decision-logs" && hasProjectAccess && (
+                  <BusinessDecisionLogs businessId={selectedBusinessId} />
                 )}
                 {hasPmfAccess && activeTab === "priorities" && (
                   <PrioritiesProjects
