@@ -79,6 +79,7 @@ const PHASE_COMPONENTS = {
 
 const prepareForCapture = () => {
   const changes = [];
+  document.body.classList.add('pdf-export-active');
 
   // 1. Expand all collapsed categories first
   const categories = document.querySelectorAll('.category-content.collapsed');
@@ -165,6 +166,7 @@ const prepareForCapture = () => {
 
 // Fast restore function
 const restoreChanges = (changes) => {
+  document.body.classList.remove('pdf-export-active');
   changes.forEach(({ element, property, oldValue }) => {
     if (property === 'className') {
       element.className = oldValue;
@@ -223,7 +225,7 @@ const captureComponent = async (selector, name) => {
           }
 
           /* ENSURE FULL VISIBILITY */
-          .category-content, .modern-card-content {
+          .category-content, .modern-card-content, .pillar-content {
             max-height: none !important;
             height: auto !important;
             overflow: visible !important;
