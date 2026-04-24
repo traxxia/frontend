@@ -242,6 +242,14 @@
   gap: 1rem;
 }
 
+.exc-section-body.collapsed {
+  display: none;
+}
+
+.exc-section-body.expanded {
+  display: flex;
+}
+
 
 [data-theme="dark"] .exc-section-body {
   background-color: #333946 !important;

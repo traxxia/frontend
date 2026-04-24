@@ -60,6 +60,7 @@ const StrategicAnalysis = ({
     streamingManager,
     cardId,
     isExpanded = true,
+    triggerConfirmation,
     strategicData: propsStrategicData,
     pestelData: propsPestelData,
     portersData: propsPortersData,
@@ -95,6 +96,12 @@ const StrategicAnalysis = ({
   const [hasKickstarted, setHasKickstarted] = useState(false);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [showPlanLimitModal, setShowPlanLimitModal] = useState(false);
+
+  const [expandedPillar, setExpandedPillar] = useState(null);
+
+  const togglePillar = (pillar) => {
+  setExpandedPillar(prev => (prev === pillar ? null : pillar));
+};
 
   const { data: usageData } = usePlanDetails();
   const usage = usageData?.usage;
@@ -310,23 +317,35 @@ const StrategicAnalysis = ({
   };
 
   const handleRegenerate = async () => {
-    if (onRegenerate) {
-      try {
-        setCollapsedCategories(new Set(['strategy-block', 'execution-block', 'sustainability-block']));
-        setLocalStrategicData(null);
-        setIsLoading(true);
+    const executeRegenerate = async () => {
+      if (onRegenerate) {
+        try {
+          setCollapsedCategories(new Set(['strategy-block', 'execution-block', 'sustainability-block']));
+          setLocalStrategicData(null);
+          setIsLoading(true);
 
-        await new Promise(resolve => setTimeout(resolve, 50));
+          await new Promise(resolve => setTimeout(resolve, 50));
 
-        await onRegenerate();
-      } catch (error) {
-        console.error('❌ ERROR in regeneration:', error);
-        setErrorMessage(error.message || 'Failed to regenerate strategic analysis');
-      } finally {
-        setIsLoading(false);
+          await onRegenerate();
+        } catch (error) {
+          console.error('❌ ERROR in regeneration:', error);
+          setErrorMessage(error.message || 'Failed to regenerate strategic analysis');
+        } finally {
+          setIsLoading(false);
+        }
+      } else {
+        setErrorMessage('Regeneration not available');
       }
+    };
+
+    if (triggerConfirmation) {
+      triggerConfirmation(
+        t("confirm_regeneration_title", { section: 'S.T.R.A.T.E.G.I.C.' }),
+        t("confirm_regeneration_message", { section: 'S.T.R.A.T.E.G.I.C.' }),
+        executeRegenerate
+      );
     } else {
-      setErrorMessage('Regeneration not available');
+      await executeRegenerate();
     }
   };
 
@@ -581,15 +600,31 @@ const StrategicAnalysis = ({
     if (!strategy) return null;
 
     return (
-      <div className="pillar-container">
-        <div className="pillar-card strategy-card">
-          <div className="pillar-header strategy-header">
-            <Target size={22} className="strategy-icon" />
-            <h3 className="pillar-title">
-              {t("strategy_where_to_compete")}
-            </h3>
-          </div>
+  <div className="pillar-container">
+    <div className="pillar-card strategy-card">
 
+      {/* HEADER CLICKABLE */}
+      <div 
+        className="pillar-header strategy-header"
+        onClick={() => togglePillar("strategy")}
+        style={{ cursor: "pointer" }}
+      >
+        <Target size={22} className="strategy-icon" />
+        <h3 className="pillar-title">
+          {t("strategy_where_to_compete")}
+        </h3>
+
+        {/* ICON */}
+        {expandedPillar === "strategy" ? (
+          <ChevronUp size={18} />
+        ) : (
+          <ChevronDown size={18} />
+        )}
+      </div>
+
+      {/* CONTENT (ONLY SHOW WHEN EXPANDED) */}
+      {expandedPillar === "strategy" && (
+        <>
           <DiagnosticBox diagnostic={strategy.diagnostic} />
 
           {strategy.where_to_compete && strategy.where_to_compete.length > 0 &&
@@ -625,6 +660,7 @@ const StrategicAnalysis = ({
                 </div>
               </div>
             )}
+
           {strategy.how_to_compete && strategy.how_to_compete.length > 0 &&
             strategy.how_to_compete[0] !== 'N/A' && (
               <div className="subsection">
@@ -657,48 +693,84 @@ const StrategicAnalysis = ({
                   </table>
                 </div>
               </div>
-
             )}
-        </div>
-      </div>
-    );
+        </>
+      )}
+    </div>
+  </div>
+);
   };
 
   const renderTacticsPillar = (tactics) => {
     if (!tactics) return null;
     const analysisData = localStrategicData?.strategic_analysis || localStrategicData;
 
-    return (
-      <div className="pillar-container">
-        <div className="pillar-card tactics-card">
-          <div className="pillar-header tactics-header">
-            <Zap size={22} className="tactics-icon" />
-            <h3 className="pillar-title">
-              {t("execution_subtitle_1")}
-            </h3>
-          </div>
+   return (
+  <div className="pillar-container">
+    <div className="pillar-card tactics-card">
 
+      {/* HEADER CLICKABLE */}
+      <div 
+        className="pillar-header tactics-header"
+        onClick={() => togglePillar("tactics")}
+        style={{ cursor: "pointer" }}
+      >
+        <Zap size={22} className="tactics-icon" />
+        <h3 className="pillar-title">
+          {t("execution_subtitle_1")}
+        </h3>
+
+        {/* ICON */}
+        {expandedPillar === "tactics" ? (
+          <ChevronUp size={18} />
+        ) : (
+          <ChevronDown size={18} />
+        )}
+      </div>
+
+      {/* CONTENT (ONLY WHEN EXPANDED) */}
+      {expandedPillar === "tactics" && (
+        <>
           <DiagnosticBox diagnostic={tactics.diagnostic} />
           {renderStrategicLinkages(analysisData?.strategic_linkages)}<br></br>
           {renderStrategicRecommendationsFromAnalyses()}
-        </div>
-      </div>
-    );
+        </>
+      )}
+
+    </div>
+  </div>
+);
   };
 
   const renderResourcesPillar = (resources) => {
     if (!resources) return null;
 
     return (
-      <div className="pillar-container">
-        <div className="pillar-card resources-card">
-          <div className="pillar-header resources-header">
-            <DollarSign size={22} className="resources-icon" />
-            <h3 className="pillar-title">
-              {t("execution_table5_header")}
-            </h3>
-          </div>
+  <div className="pillar-container">
+    <div className="pillar-card resources-card">
 
+      {/* HEADER CLICKABLE */}
+      <div 
+        className="pillar-header resources-header"
+        onClick={() => togglePillar("resources")}
+        style={{ cursor: "pointer" }}
+      >
+        <DollarSign size={22} className="resources-icon" />
+        <h3 className="pillar-title">
+          {t("execution_table5_header")}
+        </h3>
+
+        {/* ICON */}
+        {expandedPillar === "resources" ? (
+          <ChevronUp size={18} />
+        ) : (
+          <ChevronDown size={18} />
+        )}
+      </div>
+
+      {/* CONTENT (ONLY WHEN EXPANDED) */}
+      {expandedPillar === "resources" && (
+        <>
           <DiagnosticBox diagnostic={resources.diagnostic} />
 
           {resources.capital_allocation && resources.capital_allocation !== 'N/A' && (
@@ -820,24 +892,42 @@ const StrategicAnalysis = ({
                 </div>
               </div>
             )}
-        </div>
-      </div>
-    );
+        </>
+      )}
+    </div>
+  </div>
+);
   };
 
   const renderAnalysisDataPillar = (analysisData) => {
     if (!analysisData) return null;
 
     return (
-      <div className="pillar-container">
-        <div className="pillar-card analysis-data-card">
-          <div className="pillar-header analysis-data-header">
-            <Database size={22} className="analysis-data-icon" />
-            <h3 className="pillar-title">
-              {t("execution1_table_header1")}
-            </h3>
-          </div>
+  <div className="pillar-container">
+    <div className="pillar-card analysis-data-card">
 
+      {/* HEADER CLICKABLE */}
+      <div 
+        className="pillar-header analysis-data-header"
+        onClick={() => togglePillar("analysis")}
+        style={{ cursor: "pointer" }}
+      >
+        <Database size={22} className="analysis-data-icon" />
+        <h3 className="pillar-title">
+          {t("execution1_table_header1")}
+        </h3>
+
+        {/* ICON */}
+        {expandedPillar === "analysis" ? (
+          <ChevronUp size={18} />
+        ) : (
+          <ChevronDown size={18} />
+        )}
+      </div>
+
+      {/* CONTENT (ONLY WHEN EXPANDED) */}
+      {expandedPillar === "analysis" && (
+        <>
           <DiagnosticBox diagnostic={analysisData.diagnostic} />
 
           {analysisData.recommendations && analysisData.recommendations.length > 0 &&
@@ -873,24 +963,42 @@ const StrategicAnalysis = ({
                 </div>
               </div>
             )}
-        </div>
-      </div>
-    );
+        </>
+      )}
+    </div>
+  </div>
+);
   };
 
   const renderTechnologyPillar = (tech) => {
     if (!tech) return null;
 
-    return (
-      <div className="pillar-container">
-        <div className="pillar-card technology-card">
-          <div className="pillar-header technology-header">
-            <Settings size={22} className="technology-icon" />
-            <h3 className="pillar-title">
-              {t("execution1_table1_header1")}
-            </h3>
-          </div>
+   return (
+  <div className="pillar-container">
+    <div className="pillar-card technology-card">
 
+      {/* HEADER CLICKABLE */}
+      <div 
+        className="pillar-header technology-header"
+        onClick={() => togglePillar("technology")}
+        style={{ cursor: "pointer" }}
+      >
+        <Settings size={22} className="technology-icon" />
+        <h3 className="pillar-title">
+          {t("execution1_table1_header1")}
+        </h3>
+
+        {/* ICON */}
+        {expandedPillar === "technology" ? (
+          <ChevronUp size={18} />
+        ) : (
+          <ChevronDown size={18} />
+        )}
+      </div>
+
+      {/* CONTENT (ONLY WHEN EXPANDED) */}
+      {expandedPillar === "technology" && (
+        <>
           <DiagnosticBox diagnostic={tech.diagnostic} />
 
           {tech.infrastructure_initiatives && tech.infrastructure_initiatives.length > 0 &&
@@ -971,9 +1079,11 @@ const StrategicAnalysis = ({
                 </div>
               </div>
             )}
-        </div>
-      </div>
-    );
+        </>
+      )}
+    </div>
+  </div>
+);
   };
 
   const renderExecutionPillar = (execution) => {
@@ -1150,13 +1260,19 @@ const StrategicAnalysis = ({
     return (
       <div className="pillar-container">
         <div className="pillar-card execution-card">
-          <div className="pillar-header execution-header">
+          <div 
+  className="pillar-header execution-header"
+  onClick={() => togglePillar("execution")}
+  style={{ cursor: "pointer" }}
+>
             <CheckCircle size={22} className="execution-icon" />
             <h3 className="pillar-title">
               {t("execution1_table2_header1")}
             </h3>
+            {expandedPillar === "execution" ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
           </div>
-
+{expandedPillar === "execution" && (
+<>
           <DiagnosticBox diagnostic={execution.diagnostic} />
 
           {execution.implementation_roadmap && execution.implementation_roadmap.length > 0 && (
@@ -1547,6 +1663,8 @@ const StrategicAnalysis = ({
               )}
             </div>
           )}
+          </>
+)}
         </div>
       </div>
     );
@@ -1558,13 +1676,19 @@ const StrategicAnalysis = ({
     return (
       <div className="pillar-container">
         <div className="pillar-card governance-card">
-          <div className="pillar-header governance-header">
+          <div 
+  className="pillar-header governance-header"
+  onClick={() => togglePillar("governance")}
+  style={{ cursor: "pointer" }}
+>
             <Shield size={22} className="governance-icon" />
             <h3 className="pillar-title">
               {t("sustainability_card1")}
             </h3>
+            {expandedPillar === "governance" ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
           </div>
-
+{expandedPillar === "governance" && (
+<>
           <DiagnosticBox diagnostic={governance.diagnostic} />
 
           {governance.decision_delegation && governance.decision_delegation.length > 0 &&
@@ -1684,6 +1808,9 @@ const StrategicAnalysis = ({
                 </div>
               </div>
             )}
+
+            </>
+)}
         </div>
       </div>
     );
@@ -1695,13 +1822,19 @@ const StrategicAnalysis = ({
     return (
       <div className="pillar-container">
         <div className="pillar-card innovation-card">
-          <div className="pillar-header innovation-header">
+          <div 
+  className="pillar-header innovation-header"
+  onClick={() => togglePillar("innovation")}
+  style={{ cursor: "pointer" }}
+>
             <Lightbulb size={22} className="innovation-icon" />
             <h3 className="pillar-title">
               {t("sustainability_card2")}
             </h3>
+            {expandedPillar === "innovation" ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
           </div>
-
+{expandedPillar === "innovation" && (
+<>
           <DiagnosticBox diagnostic={innovation.diagnostic} />
 
           {innovation.target_portfolio_mix && innovation.target_portfolio_mix.core !== 'N/A' && (
@@ -1797,6 +1930,9 @@ const StrategicAnalysis = ({
                 </div>
               </div>
             )}
+
+            </>
+)}
         </div>
       </div>
     );
@@ -1808,13 +1944,19 @@ const StrategicAnalysis = ({
     return (
       <div className="pillar-container">
         <div className="pillar-card culture-card">
-          <div className="pillar-header culture-header">
+          <div 
+  className="pillar-header culture-header"
+  onClick={() => togglePillar("culture")}
+  style={{ cursor: "pointer" }}
+>
             <Heart size={22} className="culture-icon" />
             <h3 className="pillar-title">
               {t("sustainability_card3")}
             </h3>
+            {expandedPillar === "culture" ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
           </div>
-
+{expandedPillar === "culture" && (
+<>
           <DiagnosticBox diagnostic={culture.diagnostic} />
 
           {culture.cultural_shifts && culture.cultural_shifts.length > 0 &&
@@ -1938,6 +2080,9 @@ const StrategicAnalysis = ({
                 </div>
               </div>
             )}
+
+            </>
+)}
         </div>
       </div>
     );

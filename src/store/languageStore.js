@@ -22,7 +22,11 @@ export const useLanguageStore = create(
 
       t: (key, params = {}) => {
         const state = get();
-        let text = state.translations[key] || key;
+        // Fallback hierarchy: state.translations[key] -> staticTranslations[lang][key] -> key
+        let text = state.translations[key] || 
+                   staticTranslations[state.currentLanguage]?.[key] || 
+                   key;
+        
         Object.keys(params).forEach(pKey => {
           text = text.replace(new RegExp('{{' + pKey + '}}', 'g'), params[pKey]);
         });

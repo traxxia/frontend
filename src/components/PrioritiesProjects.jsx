@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
-import { Card, Button, Form, Badge, Spinner, Modal } from "react-bootstrap";
+import { Card, Button, Form, Badge, Spinner, Modal, ProgressBar } from "react-bootstrap";
 import { ChevronRight, ArrowRight } from "react-bootstrap-icons";
 import { Folder, CheckCircle, Rocket, Info, AlertTriangle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -12,7 +12,7 @@ import "../styles/PrioritiesProjects.css";
 const PrioritiesProjects = ({ selectedBusinessId, onSuccess, onStayOnPriorities, onToastMessage, onStartOnboarding, refreshTrigger }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  
+
   const userRole = useAuthStore(state => state.userRole);
   const userLimits = useAuthStore(state => state.userLimits);
   const isAdmin = useAuthStore(state => state.isAdmin);
@@ -38,6 +38,18 @@ const PrioritiesProjects = ({ selectedBusinessId, onSuccess, onStayOnPriorities,
 
   const priorities = useMemo(() => kickstartData?.priorities || [], [kickstartData]);
   const hasCollaborators = kickstartData?.hasCollaborators ?? true;
+
+  const { totalActions, kickstartedActions, globalProgressPercent } = useMemo(() => {
+    let total = 0;
+    let kickstarted = 0;
+    priorities.forEach(priority => {
+      const actions = priority.actions || [];
+      total += actions.length;
+      kickstarted += actions.filter(a => a.isKickstarted || a.status === 'kickstarted').length;
+    });
+    const percent = total > 0 ? Math.round((kickstarted / total) * 100) : 0;
+    return { totalActions: total, kickstartedActions: kickstarted, globalProgressPercent: percent };
+  }, [priorities]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -67,21 +79,7 @@ const PrioritiesProjects = ({ selectedBusinessId, onSuccess, onStayOnPriorities,
     );
   }, []);
 
-  const handleKickstart = useCallback(async () => {
-    if (!hasProjectsAccess) {
-      setShowPlanLimitModal(true);
-      return;
-    }
-
-    if (selected.length === 0) return;
-
-    // Check for collaborators if admin - only if no projects have been kickstarted yet
-    const anyProjectKickstarted = priorities.some(p => p.isKickstarted || (p.actions && p.actions.some(a => a.isKickstarted)));
-    if (isAdmin && !hasCollaborators && !anyProjectKickstarted && !showNoCollaboratorsModal) {
-      setShowNoCollaboratorsModal(true);
-      return;
-    }
-
+  const confirmKickstart = useCallback(async () => {
     try {
       setKickstarting(true);
       const selectedPriorities = selected.map(idx => priorities[idx]);
@@ -117,13 +115,31 @@ const PrioritiesProjects = ({ selectedBusinessId, onSuccess, onStayOnPriorities,
     } finally {
       setKickstarting(false);
     }
-  }, [selected, hasProjectsAccess, priorities, isAdmin, hasCollaborators, showNoCollaboratorsModal, selectedBusinessId, t, onToastMessage, kickstartProject, fetchKickstartData]);
+  }, [selected, hasProjectsAccess, priorities, isAdmin, hasCollaborators, selectedBusinessId, t, onToastMessage, kickstartProject, fetchKickstartData]);
+
+  const handleKickstart = useCallback(async () => {
+    if (!hasProjectsAccess) {
+      setShowPlanLimitModal(true);
+      return;
+    }
+
+    if (selected.length === 0) return;
+
+    // Check for collaborators if admin - only if no projects have been kickstarted yet
+    const anyProjectKickstarted = priorities.some(p => p.isKickstarted || (p.actions && p.actions.some(a => a.isKickstarted)));
+    if (isAdmin && !hasCollaborators && !anyProjectKickstarted) {
+      setShowNoCollaboratorsModal(true);
+      return;
+    }
+
+    confirmKickstart();
+  }, [selected, hasProjectsAccess, isAdmin, hasCollaborators, priorities, confirmKickstart]);
 
   const handleConfirmRedirect = useCallback(() => {
     setShowSuccessModal(false);
     // Clear project-store caches so the Projects page fetches fresh data
     clearProjectCache(selectedBusinessId);
-    
+
     // Set view mode to projects to ensure we see the card view
     useProjectStore.getState().setViewMode('projects');
 
@@ -164,6 +180,53 @@ const PrioritiesProjects = ({ selectedBusinessId, onSuccess, onStayOnPriorities,
 
   return (
     <div className="container my-4 priorities-container">
+      {totalActions > 0 && (
+        <Card className="mb-4 border-0 shadow-sm" style={{ background: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)' }}>
+          <Card.Body className="d-flex justify-content-between align-items-center py-3 px-4">
+            <div>
+              <h6 className="mb-1 text-dark fw-bold">
+                {t("Overall Kickstart Progress") || "Overall Kickstart Progress"}
+              </h6>
+              <div className="text-muted small">
+                {t("Track your tactical actions moving into execution phase")}
+              </div>
+            </div>
+
+            <div className="d-flex align-items-center gap-3">
+              <div className="text-end">
+                <div className="text-muted fw-bold text-uppercase" style={{ fontSize: '0.62rem', letterSpacing: '0.5px' }}>
+                  {t("Tasks Kickstarted") || "Tasks Kickstarted"}
+                </div>
+                <div className="fw-bold text-dark" style={{ fontSize: '1rem', lineHeight: '1.2' }}>
+                  {kickstartedActions} <span className="text-muted fw-normal" style={{ fontSize: '0.8rem' }}>/ {totalActions}</span>
+                </div>
+              </div>
+              <div style={{ width: '48px', height: '48px' }}>
+                <svg viewBox="0 0 36 36" style={{ width: '100%', height: '100%' }}>
+                  <path
+                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                    fill="none"
+                    stroke="#e2e8f0"
+                    strokeWidth="3.5"
+                  />
+                  <path
+                    strokeDasharray={`${globalProgressPercent}, 100`}
+                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                    fill="none"
+                    stroke={globalProgressPercent === 100 ? "#10b981" : "#6366f1"}
+                    strokeWidth="3.5"
+                    strokeLinecap="round"
+                    style={{ transition: 'stroke-dasharray 0.5s ease 0s' }}
+                  />
+                  <text x="18" y="21" fill="#333" fontSize="9" fontWeight="bold" textAnchor="middle">
+                    {globalProgressPercent}%
+                  </text>
+                </svg>
+              </div>
+            </div>
+          </Card.Body>
+        </Card>
+      )}
 
       {isAdmin && (
         <Card className="kickstart-card mb-4">
@@ -336,14 +399,19 @@ const PrioritiesProjects = ({ selectedBusinessId, onSuccess, onStayOnPriorities,
           <div className="warning-icon-wrapper mb-3">
             <AlertTriangle size={48} className="text-warning" />
           </div>
-          <h4 className="fw-bold mb-2">{t("Proceed without Collaborators?")}</h4>
-          <p className="text-muted mb-4">
-            {t("Are you sure you want to proceed without collaborators? You can also continue without any participants for now—this is perfectly fine, and you can always add them later.")}
-          </p>
+          <h4 className="fw-bold mb-2">{t("Kickstart Projects?")}</h4>
+          <div className="text-muted mb-4">
+            <p>
+              {t("Are you sure you want to kickstart the selected priorities and create new projects? This will trigger AI generation for project details.")}
+            </p>
+            <p className="mb-0 small opacity-75">
+              {t("Note: You are proceeding without collaborators. You can also continue without any participants for now—this is perfectly fine, and you can always add them later.")}
+            </p>
+          </div>
           <div className="d-grid gap-2">
             <Button
               variant="success"
-              onClick={() => handleKickstart()}
+              onClick={confirmKickstart}
               disabled={kickstarting}
               className="d-flex align-items-center justify-content-center gap-2 py-2 fw-semibold"
             >
