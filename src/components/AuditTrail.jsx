@@ -35,12 +35,24 @@ const AuditTrail = ({ onToast }) => {
     include_analysis_data: false
   });
   const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [lastPageBeforeSearch, setLastPageBeforeSearch] = useState(1);
   const itemsPerPage = 10;
 
+  // Debounce search term
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
   // --- TanStack Query Hook ---
-  const { data, isLoading: loading } = useAuditTrailQuery(currentPage, itemsPerPage, filters);
+  const { data, isLoading: loading } = useAuditTrailQuery(currentPage, itemsPerPage, { 
+    ...filters, 
+    search_term: debouncedSearchTerm 
+  });
   const auditEntries = data?.audit_entries || [];
   const pagination = data?.pagination || {};
   const analysisStats = data?.analysis_statistics || [];
@@ -156,43 +168,9 @@ const AuditTrail = ({ onToast }) => {
     return formatMap[eventType] || (eventType ? eventType.replace('_', ' ') : '');
   };
 
-  const filteredEntries = auditEntries.filter((entry) => {
-    if (!searchTerm) return true;
-
-    // Split the search term into separate words
-    const searchTerms = searchTerm.toLowerCase().split(' ').filter(word => word.length > 0);
-
-    // Evaluate description explicitly to support searching by visible description
-    const descriptionText = formatEventData(entry.event_type, entry.event_data, entry.event_data_summary, entry).toLowerCase();
-
-    const dataString = JSON.stringify(entry.event_data || {}).toLowerCase();
-    const summaryString = JSON.stringify(entry.event_data_summary || {}).toLowerCase();
-    const infoString = JSON.stringify(entry.additional_info || {}).toLowerCase();
-
-    // Combine all relevant strings
-    const combinableString = [
-      entry.user_name || '',
-      entry.user_email || '',
-      entry.event_type || '',
-      entry.event_type ? entry.event_type.replace(/_/g, ' ') : '',
-      entry.company_name || '',
-      entry.business_name || '',
-      descriptionText,
-      dataString,
-      summaryString,
-      infoString
-    ].join(' ').toLowerCase();
-
-    // Ensure every word in the search term is found somewhere in the combined string
-    return searchTerms.every(word => combinableString.includes(word));
-  });
-
-  const totalItems = filteredEntries.length;
-  const totalPages = Math.ceil(totalItems / itemsPerPage);
-  const paginatedEntries = filteredEntries.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
+  const totalItems = pagination.total || 0;
+  const totalPages = pagination.total_pages || 1;
+  const paginatedEntries = auditEntries;
 
   const getEventStatusInfo = (eventType) => {
     if (eventType.includes('success') || eventType.includes('created') || eventType === 'analysis_generated') {
