@@ -541,8 +541,7 @@ const AIAnswerSupportBlock = ({
         color: '#5b21b6', 
         marginBottom: '12px', 
         lineHeight: '1.4', 
-        paddingLeft: '10px', 
-        borderLeft: '2px solid #8b5cf6',
+        paddingLeft: '10px',  
         opacity: 0.85
       }}>
         {t("ai_refinement_helper") || "Traxxia will start from your INITIAL answers, propose refined versions, and label them AI‑REFINED. You can edit or revert to INITIAL at any time."}
@@ -1277,7 +1276,7 @@ const EditableBriefSection = ({
 
       // Trigger auto-regeneration of Insights 6'Cs and Strategic Tab
       if (onAnalysisRegenerate) {
-        onAnalysisRegenerate({ updatedQuestionIds });
+        onAnalysisRegenerate({ updatedQuestionIds, alsoRegenerateStrategic: true });
       }
     } catch (error) {
       console.error('Apply enrichment error:', error);
@@ -1385,7 +1384,8 @@ const EditableBriefSection = ({
             {isApplyingEnrichment ? 'Generating AI answers and regenerating insights...' :
               (isFileUploading || isFinancialRegenerating) ? 'Regenerating financial insights like profitability, growth tracker, liquidity, investment performance, leverage and risk insight...' :
                 isSaving ? 'Saving changes...' :
-                  (isEssentialPhaseGenerating || isAnalysisRegenerating || isStrategicRegenerating) ? 'Generating all Insights & STRATEGIC analysis...' : ''}
+                  (isAnalysisRegenerating || isStrategicRegenerating) ? 'Generating all Insights & STRATEGIC analysis...' :
+                    isEssentialPhaseGenerating ? 'Generating Insight...' : ''}
           </span>
         </div>
       )}

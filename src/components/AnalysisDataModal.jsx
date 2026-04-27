@@ -98,7 +98,8 @@ const AnalysisDataModal = ({
       uploadedFile: null,
       // Disable all interactive features
       readOnly: true,
-      hideControls: true
+      hideControls: true,
+      questionsLoaded: true
     };
 
     switch (analysisType) {

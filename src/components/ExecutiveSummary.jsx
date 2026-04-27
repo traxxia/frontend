@@ -182,8 +182,7 @@ const ExecutiveSummary = ({ businessId, onStartOnboarding, refreshTrigger }) => 
               </button>
             </div>
 
-            {expandedSections.ahaInsights && (
-              <div className="exc-section-body">
+            <div className={`exc-section-body ${expandedSections.ahaInsights ? 'expanded' : 'collapsed'}`} data-component="executive-aha">
                 <div className="exc-aha-vertical-tiles">
                   {topAhaInsights.map((insight, idx) => {
                     const conf = (insight.confidence || '').toLowerCase();
@@ -220,8 +219,7 @@ const ExecutiveSummary = ({ businessId, onStartOnboarding, refreshTrigger }) => 
                     );
                   })}
                 </div>
-              </div>
-            )}
+            </div>
           </div>
         )}
 
@@ -244,8 +242,7 @@ const ExecutiveSummary = ({ businessId, onStartOnboarding, refreshTrigger }) => 
             </button>
           </div>
 
-          {expandedSections.whereToCompete && (
-            <div className="exc-section-body">
+          <div className={`exc-section-body ${expandedSections.whereToCompete ? 'expanded' : 'collapsed'}`} data-component="executive-where">
               {/* Current Core */}
               <div className="exc-subsection exc-current-core">
                 <div className="exc-subsection-icon exc-blue">
@@ -332,7 +329,6 @@ const ExecutiveSummary = ({ businessId, onStartOnboarding, refreshTrigger }) => 
                 </div>
               </div>
             </div>
-          )}
         </div>
 
         {/* HOW TO COMPETE */}
@@ -354,10 +350,21 @@ const ExecutiveSummary = ({ businessId, onStartOnboarding, refreshTrigger }) => 
             </button>
           </div>
 
-          {expandedSections.howToCompete && (
-            <div className="exc-section-body">
+          <div className={`exc-section-body ${expandedSections.howToCompete ? 'expanded' : 'collapsed'}`} data-component="executive-how">
               <div className="exc-how-compete-box">
-                <p className="exc-box-title">{t("This is how you should differentiate")}:</p>
+                <p className="exc-box-title">{t("Differentiation Strategy")}:</p>
+
+                {howToCompete?.current_differentiation && (
+                  <div className="exc-differentiation-inner mb-3" style={{backgroundColor: '#f8fafc', borderColor: '#e2e8f0'}}>
+                    <div className="exc-differentiation-header">
+                      <p className="exc-differentiation-label" style={{color: '#475569'}}>{t("Current differentiation")}</p>
+                      <p className="exc-differentiation-text"><strong>{howToCompete.current_differentiation.primary_lever}</strong></p>
+                    </div>
+                    {howToCompete.current_differentiation.description && (
+                      <p className="exc-alternative-reason mt-2">{howToCompete.current_differentiation.description}</p>
+                    )}
+                  </div>
+                )}
 
                 <div className="exc-differentiation-inner">
                   <div className="exc-differentiation-header">
@@ -421,7 +428,6 @@ const ExecutiveSummary = ({ businessId, onStartOnboarding, refreshTrigger }) => 
                 )}
               </div>
             </div>
-          )}
         </div>
 
         {/* TOP PRIORITIES */}
@@ -432,9 +438,9 @@ const ExecutiveSummary = ({ businessId, onStartOnboarding, refreshTrigger }) => 
                 <ListChecks size={20} />
               </div>
               <div>
-                <h3 className="exc-section-title">{t("TOP 3-5 PRIORITIES")}</h3>
+                <h3 className="exc-section-title">{t("TOP 5 PRIORITIES")}</h3>
                 <p className="exc-section-subtitle">
-                  {t("Exactly 3-5 priorities • Priorities = workstreams • Each implies exclusion")}
+                  {t("Exactly 5 priorities • Priorities = workstreams • Each implies exclusion")}
                 </p>
               </div>
             </div>
@@ -443,8 +449,7 @@ const ExecutiveSummary = ({ businessId, onStartOnboarding, refreshTrigger }) => 
             </button>
           </div>
 
-          {expandedSections.topPriorities && (
-            <div className="exc-section-body">
+          <div className={`exc-section-body ${expandedSections.topPriorities ? 'expanded' : 'collapsed'}`} data-component="executive-priorities">
               {topPriorities?.map((item, idx) => {
                 // Determine actions list
                 const actions = item.actions || item.Actions || [];
@@ -471,11 +476,26 @@ const ExecutiveSummary = ({ businessId, onStartOnboarding, refreshTrigger }) => 
                         })}
                       </div>
                     )}
+
+                    {item.what_this_excludes && Array.isArray(item.what_this_excludes) && item.what_this_excludes.length > 0 && (
+                      <div className="exc-implication-row exc-excludes mt-3 ps-4">
+                        <div className="exc-icon-label" style={{ color: '#ef4444', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.4rem' }}>
+                          <AlertCircle size={16} />
+                          <span style={{ fontSize: '0.85rem' }}>{t("What this excludes")}:</span>
+                        </div>
+                        <ul className="exc-implication-content m-0" style={{ paddingLeft: '1.25rem', listStyleType: 'disc' }}>
+                          {item.what_this_excludes.map((excludeItem, eIdx) => (
+                            <li key={eIdx} style={{ marginBottom: '0.25rem' }}>
+                              {typeof excludeItem === 'object' ? JSON.stringify(excludeItem) : excludeItem}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
                   </div>
                 );
               }) || <p className="exc-content-text exc-italic">{t("Identifying strategic priorities")}...</p>}
             </div>
-          )}
         </div>
       </div>
     </div>

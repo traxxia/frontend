@@ -172,7 +172,7 @@ const Dashboard = () => {
   const {
     isCreating: isCreatingBusiness,
     isDeleting: isDeletingBusiness,
-    error: businessError,
+    createError: businessError,
     deleteError: storeDeleteError,
     fetchBusinesses,
     createBusiness: createBusinessAction,

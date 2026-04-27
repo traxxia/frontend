@@ -79,21 +79,7 @@ const PrioritiesProjects = ({ selectedBusinessId, onSuccess, onStayOnPriorities,
     );
   }, []);
 
-  const handleKickstart = useCallback(async () => {
-    if (!hasProjectsAccess) {
-      setShowPlanLimitModal(true);
-      return;
-    }
-
-    if (selected.length === 0) return;
-
-    // Check for collaborators if admin - only if no projects have been kickstarted yet
-    const anyProjectKickstarted = priorities.some(p => p.isKickstarted || (p.actions && p.actions.some(a => a.isKickstarted)));
-    if (isAdmin && !hasCollaborators && !anyProjectKickstarted && !showNoCollaboratorsModal) {
-      setShowNoCollaboratorsModal(true);
-      return;
-    }
-
+  const confirmKickstart = useCallback(async () => {
     try {
       setKickstarting(true);
       const selectedPriorities = selected.map(idx => priorities[idx]);
@@ -129,7 +115,25 @@ const PrioritiesProjects = ({ selectedBusinessId, onSuccess, onStayOnPriorities,
     } finally {
       setKickstarting(false);
     }
-  }, [selected, hasProjectsAccess, priorities, isAdmin, hasCollaborators, showNoCollaboratorsModal, selectedBusinessId, t, onToastMessage, kickstartProject, fetchKickstartData]);
+  }, [selected, hasProjectsAccess, priorities, isAdmin, hasCollaborators, selectedBusinessId, t, onToastMessage, kickstartProject, fetchKickstartData]);
+
+  const handleKickstart = useCallback(async () => {
+    if (!hasProjectsAccess) {
+      setShowPlanLimitModal(true);
+      return;
+    }
+
+    if (selected.length === 0) return;
+
+    // Check for collaborators if admin - only if no projects have been kickstarted yet
+    const anyProjectKickstarted = priorities.some(p => p.isKickstarted || (p.actions && p.actions.some(a => a.isKickstarted)));
+    if (isAdmin && !hasCollaborators && !anyProjectKickstarted) {
+      setShowNoCollaboratorsModal(true);
+      return;
+    }
+
+    confirmKickstart();
+  }, [selected, hasProjectsAccess, isAdmin, hasCollaborators, priorities, confirmKickstart]);
 
   const handleConfirmRedirect = useCallback(() => {
     setShowSuccessModal(false);
@@ -395,14 +399,19 @@ const PrioritiesProjects = ({ selectedBusinessId, onSuccess, onStayOnPriorities,
           <div className="warning-icon-wrapper mb-3">
             <AlertTriangle size={48} className="text-warning" />
           </div>
-          <h4 className="fw-bold mb-2">{t("Proceed without Collaborators?")}</h4>
-          <p className="text-muted mb-4">
-            {t("Are you sure you want to proceed without collaborators? You can also continue without any participants for now—this is perfectly fine, and you can always add them later.")}
-          </p>
+          <h4 className="fw-bold mb-2">{t("Kickstart Projects?")}</h4>
+          <div className="text-muted mb-4">
+            <p>
+              {t("Are you sure you want to kickstart the selected priorities and create new projects? This will trigger AI generation for project details.")}
+            </p>
+            <p className="mb-0 small opacity-75">
+              {t("Note: You are proceeding without collaborators. You can also continue without any participants for now—this is perfectly fine, and you can always add them later.")}
+            </p>
+          </div>
           <div className="d-grid gap-2">
             <Button
               variant="success"
-              onClick={() => handleKickstart()}
+              onClick={confirmKickstart}
               disabled={kickstarting}
               className="d-flex align-items-center justify-content-center gap-2 py-2 fw-semibold"
             >

@@ -41,49 +41,50 @@ import { StreamingRow } from './StreamingManager';
 import { STREAMING_CONFIG } from '../hooks/streamingConfig';
 
 const StrategicAnalysis = ({
-    onRegenerate,
-    isRegenerating: propsIsRegenerating = false,
-    canRegenerate = true,
-    phaseManager,
-    phaseAnalysisArray = [],
-    saveAnalysisToBackend,
-    selectedBusinessId,
-    hideDownload = false,
-    hideImproveButton,
-    showImproveButton = true,
-    onRedirectToBrief,
-    onKickstartProjects,
-    hasProjectsTab = false,
-    onToastMessage,
-    hideKickstart = false,
-    hasStrategicAccess = true,
-    streamingManager,
-    cardId,
-    isExpanded = true,
-    strategicData: propsStrategicData,
-    pestelData: propsPestelData,
-    portersData: propsPortersData,
-    userAnswers: propsUserAnswers,
-    questionsLoaded
-  }) => {
-    const { userRole, token, userId } = useAuthStore();
-    const { setSelectedBusinessId } = useBusinessStore();
-    const { 
-      strategicData: storeStrategicData, 
-      pestelData: storePestelData, 
-      portersData: storePortersData, 
-      userAnswers: storeUserAnswers,
-      isRegenerating: isTypeRegenerating 
-    } = useAnalysisStore();
-  
-    // Prioritize props over store for multi-user/history support
-    const displayStrategicData = propsStrategicData || storeStrategicData;
-    const pestelData = propsPestelData || storePestelData;
-    const portersData = propsPortersData || storePortersData;
-    const userAnswers = propsUserAnswers || storeUserAnswers;
+  onRegenerate,
+  isRegenerating: propsIsRegenerating = false,
+  canRegenerate = true,
+  phaseManager,
+  phaseAnalysisArray = [],
+  saveAnalysisToBackend,
+  selectedBusinessId,
+  hideDownload = false,
+  hideImproveButton,
+  showImproveButton = true,
+  onRedirectToBrief,
+  onKickstartProjects,
+  hasProjectsTab = false,
+  onToastMessage,
+  hideKickstart = false,
+  hasStrategicAccess = true,
+  streamingManager,
+  cardId,
+  isExpanded = true,
+  triggerConfirmation,
+  strategicData: propsStrategicData,
+  pestelData: propsPestelData,
+  portersData: propsPortersData,
+  userAnswers: propsUserAnswers,
+  questionsLoaded
+}) => {
+  const { userRole, token, userId } = useAuthStore();
+  const { setSelectedBusinessId } = useBusinessStore();
+  const {
+    strategicData: storeStrategicData,
+    pestelData: storePestelData,
+    portersData: storePortersData,
+    userAnswers: storeUserAnswers,
+    isRegenerating: isTypeRegenerating
+  } = useAnalysisStore();
 
-    const [localStrategicData, setLocalStrategicData] = useState(displayStrategicData);
-    const isRegenerating = propsIsRegenerating || isTypeRegenerating('strategic');
+  // Prioritize props over store for multi-user/history support
+  const displayStrategicData = propsStrategicData || storeStrategicData;
+  const pestelData = propsPestelData || storePestelData;
+  const portersData = propsPortersData || storePortersData;
+  const userAnswers = propsUserAnswers || storeUserAnswers;
+
+  const [localStrategicData, setLocalStrategicData] = useState(displayStrategicData);
+  const isRegenerating = propsIsRegenerating || isTypeRegenerating('strategic');
   const t = useTranslation().t;
   const ENABLE_PMF = getUserLimits().pmf;
   const canShowKickstart = !hideKickstart && hasProjectsTab && !!localStrategicData;
@@ -99,8 +100,10 @@ const StrategicAnalysis = ({
   const [expandedPillar, setExpandedPillar] = useState(null);
 
   const togglePillar = (pillar) => {
-  setExpandedPillar(prev => (prev === pillar ? null : pillar));
-};
+    setExpandedPillar(prev => (prev === pillar ? null : pillar));
+  };
+
+  const isExportActive = () => document.body.classList.contains('pdf-export-active');
 
   const { data: usageData } = usePlanDetails();
   const usage = usageData?.usage;
@@ -316,23 +319,35 @@ const StrategicAnalysis = ({
   };
 
   const handleRegenerate = async () => {
-    if (onRegenerate) {
-      try {
-        setCollapsedCategories(new Set(['strategy-block', 'execution-block', 'sustainability-block']));
-        setLocalStrategicData(null);
-        setIsLoading(true);
+    const executeRegenerate = async () => {
+      if (onRegenerate) {
+        try {
+          setCollapsedCategories(new Set(['strategy-block', 'execution-block', 'sustainability-block']));
+          setLocalStrategicData(null);
+          setIsLoading(true);
 
-        await new Promise(resolve => setTimeout(resolve, 50));
+          await new Promise(resolve => setTimeout(resolve, 50));
 
-        await onRegenerate();
-      } catch (error) {
-        console.error('❌ ERROR in regeneration:', error);
-        setErrorMessage(error.message || 'Failed to regenerate strategic analysis');
-      } finally {
-        setIsLoading(false);
+          await onRegenerate();
+        } catch (error) {
+          console.error('❌ ERROR in regeneration:', error);
+          setErrorMessage(error.message || 'Failed to regenerate strategic analysis');
+        } finally {
+          setIsLoading(false);
+        }
+      } else {
+        setErrorMessage('Regeneration not available');
       }
+    };
+
+    if (triggerConfirmation) {
+      triggerConfirmation(
+        t("confirm_regeneration_title", { section: 'S.T.R.A.T.E.G.I.C.' }),
+        t("confirm_regeneration_message", { section: 'S.T.R.A.T.E.G.I.C.' }),
+        executeRegenerate
+      );
     } else {
-      setErrorMessage('Regeneration not available');
+      await executeRegenerate();
     }
   };
 
@@ -587,490 +602,490 @@ const StrategicAnalysis = ({
     if (!strategy) return null;
 
     return (
-  <div className="pillar-container">
-    <div className="pillar-card strategy-card">
+      <div className="pillar-container">
+        <div className="pillar-card strategy-card">
 
-      {/* HEADER CLICKABLE */}
-      <div 
-        className="pillar-header strategy-header"
-        onClick={() => togglePillar("strategy")}
-        style={{ cursor: "pointer" }}
-      >
-        <Target size={22} className="strategy-icon" />
-        <h3 className="pillar-title">
-          {t("strategy_where_to_compete")}
-        </h3>
+          {/* HEADER CLICKABLE */}
+          <div
+            className="pillar-header strategy-header"
+            onClick={() => togglePillar("strategy")}
+            style={{ cursor: "pointer" }}
+          >
+            <Target size={22} className="strategy-icon" />
+            <h3 className="pillar-title">
+              {t("strategy_where_to_compete")}
+            </h3>
 
-        {/* ICON */}
-        {expandedPillar === "strategy" ? (
-          <ChevronUp size={18} />
-        ) : (
-          <ChevronDown size={18} />
-        )}
+            {/* ICON */}
+            {expandedPillar === "strategy" ? (
+              <ChevronUp size={18} />
+            ) : (
+              <ChevronDown size={18} />
+            )}
+          </div>
+
+          {/* CONTENT (ONLY SHOW WHEN EXPANDED) */}
+          <div className={`pillar-content ${expandedPillar === "strategy" ? 'expanded' : 'collapsed'}`}>
+            <>
+              <DiagnosticBox diagnostic={strategy.diagnostic} />
+
+              {strategy.where_to_compete && strategy.where_to_compete.length > 0 &&
+                strategy.where_to_compete[0] !== 'N/A' && (
+                  <div className="subsection">
+                    <h4 className="subsection-title">
+                      <ArrowRight size={16} className="strategy-icon" />
+                      {t("strategy_subsection_1")}
+                    </h4>
+                    <div className="table-container">
+                      <table className="data-table">
+                        <tbody>
+                          {strategy.where_to_compete.map((item, idx) => {
+                            const rowIndex = idx;
+                            if (rowIndex >= visibleRows) return null;
+                            return (
+                              <StreamingRow
+                                key={idx}
+                                isVisible={true}
+                                isLast={rowIndex === visibleRows - 1}
+                                lastRowRef={lastRowRef}
+                                isStreaming={streamingManager?.shouldStream(cardId)}
+                              >
+                                <td className="subsection-list-item">
+                                  <strong>{item.position}:</strong>{' '}
+                                  {item.description}
+                                </td>
+                              </StreamingRow>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+
+              {strategy.how_to_compete && strategy.how_to_compete.length > 0 &&
+                strategy.how_to_compete[0] !== 'N/A' && (
+                  <div className="subsection">
+                    <h4 className="subsection-title">
+                      <ArrowRight size={16} className="strategy-icon" />
+                      {t("how_to_compete")}
+                    </h4>
+                    <div className="table-container">
+                      <table className="data-table">
+                        <tbody>
+                          {strategy.how_to_compete.map((item, idx) => {
+                            const rowIndex = (strategy.where_to_compete?.length || 0) + idx;
+                            if (rowIndex >= visibleRows) return null;
+                            return (
+                              <StreamingRow
+                                key={idx}
+                                isVisible={true}
+                                isLast={rowIndex === visibleRows - 1}
+                                lastRowRef={lastRowRef}
+                                isStreaming={streamingManager?.shouldStream(cardId)}
+                              >
+                                <td className="subsection-list-item">
+                                  <strong>{item.approach}:</strong>{' '}
+                                  {item.description}
+                                </td>
+                              </StreamingRow>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+            </>
+          </div>
+        </div>
       </div>
-
-      {/* CONTENT (ONLY SHOW WHEN EXPANDED) */}
-      {expandedPillar === "strategy" && (
-        <>
-          <DiagnosticBox diagnostic={strategy.diagnostic} />
-
-          {strategy.where_to_compete && strategy.where_to_compete.length > 0 &&
-            strategy.where_to_compete[0] !== 'N/A' && (
-              <div className="subsection">
-                <h4 className="subsection-title">
-                  <ArrowRight size={16} className="strategy-icon" />
-                  {t("strategy_subsection_1")}
-                </h4>
-                <div className="table-container">
-                  <table className="data-table">
-                    <tbody>
-                      {strategy.where_to_compete.map((item, idx) => {
-                        const rowIndex = idx;
-                        if (rowIndex >= visibleRows) return null;
-                        return (
-                          <StreamingRow 
-                            key={idx}
-                            isVisible={true}
-                            isLast={rowIndex === visibleRows - 1}
-                            lastRowRef={lastRowRef}
-                            isStreaming={streamingManager?.shouldStream(cardId)}
-                          >
-                            <td className="subsection-list-item">
-                              <strong>{item.position}:</strong>{' '}
-                              {item.description}
-                            </td>
-                          </StreamingRow>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            )}
-
-          {strategy.how_to_compete && strategy.how_to_compete.length > 0 &&
-            strategy.how_to_compete[0] !== 'N/A' && (
-              <div className="subsection">
-                <h4 className="subsection-title">
-                  <ArrowRight size={16} className="strategy-icon" />
-                  {t("how_to_compete")}
-                </h4>
-                <div className="table-container">
-                  <table className="data-table">
-                    <tbody>
-                      {strategy.how_to_compete.map((item, idx) => {
-                        const rowIndex = (strategy.where_to_compete?.length || 0) + idx;
-                        if (rowIndex >= visibleRows) return null;
-                        return (
-                          <StreamingRow 
-                            key={idx}
-                            isVisible={true}
-                            isLast={rowIndex === visibleRows - 1}
-                            lastRowRef={lastRowRef}
-                            isStreaming={streamingManager?.shouldStream(cardId)}
-                          >
-                            <td className="subsection-list-item">
-                              <strong>{item.approach}:</strong>{' '}
-                              {item.description}
-                            </td>
-                          </StreamingRow>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            )}
-        </>
-      )}
-    </div>
-  </div>
-);
+    );
   };
 
   const renderTacticsPillar = (tactics) => {
     if (!tactics) return null;
     const analysisData = localStrategicData?.strategic_analysis || localStrategicData;
 
-   return (
-  <div className="pillar-container">
-    <div className="pillar-card tactics-card">
+    return (
+      <div className="pillar-container">
+        <div className="pillar-card tactics-card">
 
-      {/* HEADER CLICKABLE */}
-      <div 
-        className="pillar-header tactics-header"
-        onClick={() => togglePillar("tactics")}
-        style={{ cursor: "pointer" }}
-      >
-        <Zap size={22} className="tactics-icon" />
-        <h3 className="pillar-title">
-          {t("execution_subtitle_1")}
-        </h3>
+          {/* HEADER CLICKABLE */}
+          <div
+            className="pillar-header tactics-header"
+            onClick={() => togglePillar("tactics")}
+            style={{ cursor: "pointer" }}
+          >
+            <Zap size={22} className="tactics-icon" />
+            <h3 className="pillar-title">
+              {t("execution_subtitle_1")}
+            </h3>
 
-        {/* ICON */}
-        {expandedPillar === "tactics" ? (
-          <ChevronUp size={18} />
-        ) : (
-          <ChevronDown size={18} />
-        )}
+            {/* ICON */}
+            {expandedPillar === "tactics" ? (
+              <ChevronUp size={18} />
+            ) : (
+              <ChevronDown size={18} />
+            )}
+          </div>
+
+          {/* CONTENT (ONLY WHEN EXPANDED) */}
+          <div className={`pillar-content ${expandedPillar === "tactics" ? 'expanded' : 'collapsed'}`}>
+            <>
+              <DiagnosticBox diagnostic={tactics.diagnostic} />
+              {renderStrategicLinkages(analysisData?.strategic_linkages)}<br></br>
+              {renderStrategicRecommendationsFromAnalyses()}
+            </>
+          </div>
+
+        </div>
       </div>
-
-      {/* CONTENT (ONLY WHEN EXPANDED) */}
-      {expandedPillar === "tactics" && (
-        <>
-          <DiagnosticBox diagnostic={tactics.diagnostic} />
-          {renderStrategicLinkages(analysisData?.strategic_linkages)}<br></br>
-          {renderStrategicRecommendationsFromAnalyses()}
-        </>
-      )}
-
-    </div>
-  </div>
-);
+    );
   };
 
   const renderResourcesPillar = (resources) => {
     if (!resources) return null;
 
     return (
-  <div className="pillar-container">
-    <div className="pillar-card resources-card">
+      <div className="pillar-container">
+        <div className="pillar-card resources-card">
 
-      {/* HEADER CLICKABLE */}
-      <div 
-        className="pillar-header resources-header"
-        onClick={() => togglePillar("resources")}
-        style={{ cursor: "pointer" }}
-      >
-        <DollarSign size={22} className="resources-icon" />
-        <h3 className="pillar-title">
-          {t("execution_table5_header")}
-        </h3>
+          {/* HEADER CLICKABLE */}
+          <div
+            className="pillar-header resources-header"
+            onClick={() => togglePillar("resources")}
+            style={{ cursor: "pointer" }}
+          >
+            <DollarSign size={22} className="resources-icon" />
+            <h3 className="pillar-title">
+              {t("execution_table5_header")}
+            </h3>
 
-        {/* ICON */}
-        {expandedPillar === "resources" ? (
-          <ChevronUp size={18} />
-        ) : (
-          <ChevronDown size={18} />
-        )}
+            {/* ICON */}
+            {expandedPillar === "resources" ? (
+              <ChevronUp size={18} />
+            ) : (
+              <ChevronDown size={18} />
+            )}
+          </div>
+
+          {/* CONTENT (ONLY WHEN EXPANDED) */}
+          <div className={`pillar-content ${expandedPillar === "resources" ? 'expanded' : 'collapsed'}`}>
+            <>
+              <DiagnosticBox diagnostic={resources.diagnostic} />
+
+              {resources.capital_allocation && resources.capital_allocation !== 'N/A' && (
+                <div className="info-box resources">
+                  <h4 className="info-box-title resources">
+                    <DollarSign size={14} />
+                    {t("capital_allocation")}
+                  </h4>
+                  <p className="info-box-text resources">
+                    {resources.capital_allocation}
+                  </p>
+                </div>
+              )}
+
+              {resources.capital_priorities && resources.capital_priorities.length > 0 &&
+                resources.capital_priorities[0] !== 'N/A' && (
+                  <div className="subsection">
+                    <h4 className="subsection-title">
+                      <Star size={16} className="resources-icon" />
+                      {t("execution_table5_header1")}
+                    </h4>
+                    <div className="table-container">
+                      <table className="data-table">
+                        <tbody>
+                          {resources.capital_priorities.map((priority, idx) => {
+                            const baseOffset = (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.S_strategy?.where_to_compete?.length || 0) +
+                              (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.S_strategy?.how_to_compete?.length || 0);
+                            const rowIndex = baseOffset + idx;
+                            if (rowIndex >= visibleRows && !isExportActive()) return null;
+                            return (
+                              <StreamingRow
+                                key={idx}
+                                isVisible={true}
+                                isLast={rowIndex === visibleRows - 1}
+                                lastRowRef={lastRowRef}
+                                isStreaming={streamingManager?.shouldStream(cardId)}
+                              >
+                                <td className="subsection-list-item">
+                                  {priority}
+                                </td>
+                              </StreamingRow>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+
+              {resources.talent_priorities && resources.talent_priorities.length > 0 &&
+                resources.talent_priorities[0] !== 'N/A' && (
+                  <div className="subsection">
+                    <h4 className="subsection-title">
+                      <Users size={16} className="resources-icon" />
+                      {t("execution_table5_header2")}
+                    </h4>
+                    <div className="table-container">
+                      <table className="data-table">
+                        <tbody>
+                          {resources.talent_priorities.map((talent, idx) => {
+                            const baseOffset = (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.S_strategy?.where_to_compete?.length || 0) +
+                              (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.S_strategy?.how_to_compete?.length || 0) +
+                              (resources.capital_priorities?.length || 0);
+                            const rowIndex = baseOffset + idx;
+                            if (rowIndex >= visibleRows && !isExportActive()) return null;
+                            return (
+                              <StreamingRow
+                                key={idx}
+                                isVisible={true}
+                                isLast={rowIndex === visibleRows - 1}
+                                lastRowRef={lastRowRef}
+                                isStreaming={streamingManager?.shouldStream(cardId)}
+                              >
+                                <td className="subsection-list-item">
+                                  {talent}
+                                </td>
+                              </StreamingRow>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+
+              {resources.technology_investments && resources.technology_investments.length > 0 &&
+                resources.technology_investments[0] !== 'N/A' && (
+                  <div className="subsection">
+                    <h4 className="subsection-title">
+                      <Settings size={16} className="resources-icon" />
+                      {t("execution_table5_header3")}
+                    </h4>
+                    <div className="table-container">
+                      <table className="data-table">
+                        <tbody>
+                          {resources.technology_investments.map((tech, idx) => {
+                            const baseOffset = (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.S_strategy?.where_to_compete?.length || 0) +
+                              (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.S_strategy?.how_to_compete?.length || 0) +
+                              (resources.capital_priorities?.length || 0) +
+                              (resources.talent_priorities?.length || 0);
+                            const rowIndex = baseOffset + idx;
+                            if (rowIndex >= visibleRows && !isExportActive()) return null;
+                            return (
+                              <StreamingRow
+                                key={idx}
+                                isVisible={true}
+                                isLast={rowIndex === visibleRows - 1}
+                                lastRowRef={lastRowRef}
+                                isStreaming={streamingManager?.shouldStream(cardId)}
+                              >
+                                <td className="subsection-list-item">
+                                  {tech}
+                                </td>
+                              </StreamingRow>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+            </>
+          </div>
+        </div>
       </div>
-
-      {/* CONTENT (ONLY WHEN EXPANDED) */}
-      {expandedPillar === "resources" && (
-        <>
-          <DiagnosticBox diagnostic={resources.diagnostic} />
-
-          {resources.capital_allocation && resources.capital_allocation !== 'N/A' && (
-            <div className="info-box resources">
-              <h4 className="info-box-title resources">
-                <DollarSign size={14} />
-                {t("capital_allocation")}
-              </h4>
-              <p className="info-box-text resources">
-                {resources.capital_allocation}
-              </p>
-            </div>
-          )}
-
-          {resources.capital_priorities && resources.capital_priorities.length > 0 &&
-            resources.capital_priorities[0] !== 'N/A' && (
-              <div className="subsection">
-                <h4 className="subsection-title">
-                  <Star size={16} className="resources-icon" />
-                  {t("execution_table5_header1")}
-                </h4>
-                <div className="table-container">
-                  <table className="data-table">
-                    <tbody>
-                      {resources.capital_priorities.map((priority, idx) => {
-                        const baseOffset = (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.S_strategy?.where_to_compete?.length || 0) +
-                                         (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.S_strategy?.how_to_compete?.length || 0);
-                        const rowIndex = baseOffset + idx;
-                        if (rowIndex >= visibleRows) return null;
-                        return (
-                          <StreamingRow 
-                            key={idx}
-                            isVisible={true}
-                            isLast={rowIndex === visibleRows - 1}
-                            lastRowRef={lastRowRef}
-                            isStreaming={streamingManager?.shouldStream(cardId)}
-                          >
-                            <td className="subsection-list-item">
-                              {priority}
-                            </td>
-                          </StreamingRow>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            )}
-
-          {resources.talent_priorities && resources.talent_priorities.length > 0 &&
-            resources.talent_priorities[0] !== 'N/A' && (
-              <div className="subsection">
-                <h4 className="subsection-title">
-                  <Users size={16} className="resources-icon" />
-                  {t("execution_table5_header2")}
-                </h4>
-                <div className="table-container">
-                  <table className="data-table">
-                    <tbody>
-                      {resources.talent_priorities.map((talent, idx) => {
-                        const baseOffset = (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.S_strategy?.where_to_compete?.length || 0) +
-                                         (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.S_strategy?.how_to_compete?.length || 0) +
-                                         (resources.capital_priorities?.length || 0);
-                        const rowIndex = baseOffset + idx;
-                        if (rowIndex >= visibleRows) return null;
-                        return (
-                          <StreamingRow 
-                            key={idx}
-                            isVisible={true}
-                            isLast={rowIndex === visibleRows - 1}
-                            lastRowRef={lastRowRef}
-                            isStreaming={streamingManager?.shouldStream(cardId)}
-                          >
-                            <td className="subsection-list-item">
-                              {talent}
-                            </td>
-                          </StreamingRow>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            )}
-
-          {resources.technology_investments && resources.technology_investments.length > 0 &&
-            resources.technology_investments[0] !== 'N/A' && (
-              <div className="subsection">
-                <h4 className="subsection-title">
-                  <Settings size={16} className="resources-icon" />
-                  {t("execution_table5_header3")}
-                </h4>
-                <div className="table-container">
-                  <table className="data-table">
-                    <tbody>
-                      {resources.technology_investments.map((tech, idx) => {
-                        const baseOffset = (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.S_strategy?.where_to_compete?.length || 0) +
-                                         (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.S_strategy?.how_to_compete?.length || 0) +
-                                         (resources.capital_priorities?.length || 0) +
-                                         (resources.talent_priorities?.length || 0);
-                        const rowIndex = baseOffset + idx;
-                        if (rowIndex >= visibleRows) return null;
-                        return (
-                          <StreamingRow 
-                            key={idx}
-                            isVisible={true}
-                            isLast={rowIndex === visibleRows - 1}
-                            lastRowRef={lastRowRef}
-                            isStreaming={streamingManager?.shouldStream(cardId)}
-                          >
-                            <td className="subsection-list-item">
-                              {tech}
-                            </td>
-                          </StreamingRow>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            )}
-        </>
-      )}
-    </div>
-  </div>
-);
+    );
   };
 
   const renderAnalysisDataPillar = (analysisData) => {
     if (!analysisData) return null;
 
     return (
-  <div className="pillar-container">
-    <div className="pillar-card analysis-data-card">
+      <div className="pillar-container">
+        <div className="pillar-card analysis-data-card">
 
-      {/* HEADER CLICKABLE */}
-      <div 
-        className="pillar-header analysis-data-header"
-        onClick={() => togglePillar("analysis")}
-        style={{ cursor: "pointer" }}
-      >
-        <Database size={22} className="analysis-data-icon" />
-        <h3 className="pillar-title">
-          {t("execution1_table_header1")}
-        </h3>
+          {/* HEADER CLICKABLE */}
+          <div
+            className="pillar-header analysis-data-header"
+            onClick={() => togglePillar("analysis")}
+            style={{ cursor: "pointer" }}
+          >
+            <Database size={22} className="analysis-data-icon" />
+            <h3 className="pillar-title">
+              {t("execution1_table_header1")}
+            </h3>
 
-        {/* ICON */}
-        {expandedPillar === "analysis" ? (
-          <ChevronUp size={18} />
-        ) : (
-          <ChevronDown size={18} />
-        )}
-      </div>
-
-      {/* CONTENT (ONLY WHEN EXPANDED) */}
-      {expandedPillar === "analysis" && (
-        <>
-          <DiagnosticBox diagnostic={analysisData.diagnostic} />
-
-          {analysisData.recommendations && analysisData.recommendations.length > 0 &&
-            analysisData.recommendations[0] !== 'N/A' && (
-              <div>
-                <div className="table-container">
-                  <table className="data-table">
-                    <tbody>
-                      {analysisData.recommendations.map((rec, idx) => {
-                        const baseOffset = (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.S_strategy?.where_to_compete?.length || 0) +
-                                         (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.S_strategy?.how_to_compete?.length || 0) +
-                                         (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.R_resources?.capital_priorities?.length || 0) +
-                                         (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.R_resources?.talent_priorities?.length || 0) +
-                                         (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.R_resources?.technology_investments?.length || 0);
-                        const rowIndex = baseOffset + idx;
-                        if (rowIndex >= visibleRows) return null;
-                        return (
-                          <StreamingRow 
-                            key={idx}
-                            isVisible={true}
-                            isLast={rowIndex === visibleRows - 1}
-                            lastRowRef={lastRowRef}
-                            isStreaming={streamingManager?.shouldStream(cardId)}
-                          >
-                            <td className="subsection-list-item">
-                              {rec}
-                            </td>
-                          </StreamingRow>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
+            {/* ICON */}
+            {expandedPillar === "analysis" ? (
+              <ChevronUp size={18} />
+            ) : (
+              <ChevronDown size={18} />
             )}
-        </>
-      )}
-    </div>
-  </div>
-);
+          </div>
+
+          {/* CONTENT (ONLY WHEN EXPANDED) */}
+          <div className={`pillar-content ${expandedPillar === "analysis" ? 'expanded' : 'collapsed'}`}>
+            <>
+              <DiagnosticBox diagnostic={analysisData.diagnostic} />
+
+              {analysisData.recommendations && analysisData.recommendations.length > 0 &&
+                analysisData.recommendations[0] !== 'N/A' && (
+                  <div>
+                    <div className="table-container">
+                      <table className="data-table">
+                        <tbody>
+                          {analysisData.recommendations.map((rec, idx) => {
+                            const baseOffset = (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.S_strategy?.where_to_compete?.length || 0) +
+                              (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.S_strategy?.how_to_compete?.length || 0) +
+                              (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.R_resources?.capital_priorities?.length || 0) +
+                              (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.R_resources?.talent_priorities?.length || 0) +
+                              (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.R_resources?.technology_investments?.length || 0);
+                            const rowIndex = baseOffset + idx;
+                            if (rowIndex >= visibleRows && !isExportActive()) return null;
+                            return (
+                              <StreamingRow
+                                key={idx}
+                                isVisible={true}
+                                isLast={rowIndex === visibleRows - 1}
+                                lastRowRef={lastRowRef}
+                                isStreaming={streamingManager?.shouldStream(cardId)}
+                              >
+                                <td className="subsection-list-item">
+                                  {rec}
+                                </td>
+                              </StreamingRow>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+            </>
+          </div>
+        </div>
+      </div>
+    );
   };
 
   const renderTechnologyPillar = (tech) => {
     if (!tech) return null;
 
-   return (
-  <div className="pillar-container">
-    <div className="pillar-card technology-card">
+    return (
+      <div className="pillar-container">
+        <div className="pillar-card technology-card">
 
-      {/* HEADER CLICKABLE */}
-      <div 
-        className="pillar-header technology-header"
-        onClick={() => togglePillar("technology")}
-        style={{ cursor: "pointer" }}
-      >
-        <Settings size={22} className="technology-icon" />
-        <h3 className="pillar-title">
-          {t("execution1_table1_header1")}
-        </h3>
+          {/* HEADER CLICKABLE */}
+          <div
+            className="pillar-header technology-header"
+            onClick={() => togglePillar("technology")}
+            style={{ cursor: "pointer" }}
+          >
+            <Settings size={22} className="technology-icon" />
+            <h3 className="pillar-title">
+              {t("execution1_table1_header1")}
+            </h3>
 
-        {/* ICON */}
-        {expandedPillar === "technology" ? (
-          <ChevronUp size={18} />
-        ) : (
-          <ChevronDown size={18} />
-        )}
+            {/* ICON */}
+            {expandedPillar === "technology" ? (
+              <ChevronUp size={18} />
+            ) : (
+              <ChevronDown size={18} />
+            )}
+          </div>
+
+          {/* CONTENT (ONLY WHEN EXPANDED) */}
+          <div className={`pillar-content ${expandedPillar === "technology" ? 'expanded' : 'collapsed'}`}>
+            <>
+              <DiagnosticBox diagnostic={tech.diagnostic} />
+
+              {tech.infrastructure_initiatives && tech.infrastructure_initiatives.length > 0 &&
+                tech.infrastructure_initiatives[0] !== 'N/A' && (
+                  <div className="subsection">
+                    <h4 className="subsection-title">
+                      <Activity size={16} className="technology-icon" />
+                      {t("execution1_table1_header2")}
+                    </h4>
+                    <div className="table-container">
+                      <table className="data-table">
+                        <tbody>
+                          {tech.infrastructure_initiatives.map((initiative, idx) => {
+                            const baseOffset = (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.S_strategy?.where_to_compete?.length || 0) +
+                              (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.S_strategy?.how_to_compete?.length || 0) +
+                              (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.R_resources?.capital_priorities?.length || 0) +
+                              (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.R_resources?.talent_priorities?.length || 0) +
+                              (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.R_resources?.technology_investments?.length || 0) +
+                              (localStrategicData?.strategic_analysis?.strategic_recommendations?.execution_block?.A_analysis_data?.recommendations?.length || 0);
+                            const rowIndex = baseOffset + idx;
+                            if (rowIndex >= visibleRows && !isExportActive()) return null;
+                            return (
+                              <StreamingRow
+                                key={idx}
+                                isVisible={true}
+                                isLast={rowIndex === visibleRows - 1}
+                                lastRowRef={lastRowRef}
+                                isStreaming={streamingManager?.shouldStream(cardId)}
+                              >
+                                <td className="subsection-list-item">
+                                  {initiative}
+                                </td>
+                              </StreamingRow>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+
+              {tech.platform_priorities && tech.platform_priorities.length > 0 &&
+                tech.platform_priorities[0] !== 'N/A' && (
+                  <div className="subsection">
+                    <h4 className="subsection-title">
+                      <BarChart3 size={16} className="technology-icon" />
+                      {t("execution1_table1_header3")}
+                    </h4>
+                    <div className="table-container">
+                      <table className="data-table">
+                        <tbody>
+                          {tech.platform_priorities.map((priority, idx) => {
+                            const baseOffset = (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.S_strategy?.where_to_compete?.length || 0) +
+                              (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.S_strategy?.how_to_compete?.length || 0) +
+                              (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.R_resources?.capital_priorities?.length || 0) +
+                              (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.R_resources?.talent_priorities?.length || 0) +
+                              (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.R_resources?.technology_investments?.length || 0) +
+                              (localStrategicData?.strategic_analysis?.strategic_recommendations?.execution_block?.A_analysis_data?.recommendations?.length || 0) +
+                              (tech.infrastructure_initiatives?.length || 0);
+                            const rowIndex = baseOffset + idx;
+                            if (rowIndex >= visibleRows && !isExportActive()) return null;
+                            return (
+                              <StreamingRow
+                                key={idx}
+                                isVisible={true}
+                                isLast={rowIndex === visibleRows - 1}
+                                lastRowRef={lastRowRef}
+                                isStreaming={streamingManager?.shouldStream(cardId)}
+                              >
+                                <td className="subsection-list-item">
+                                  {priority}
+                                </td>
+                              </StreamingRow>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+            </>
+          </div>
+        </div>
       </div>
-
-      {/* CONTENT (ONLY WHEN EXPANDED) */}
-      {expandedPillar === "technology" && (
-        <>
-          <DiagnosticBox diagnostic={tech.diagnostic} />
-
-          {tech.infrastructure_initiatives && tech.infrastructure_initiatives.length > 0 &&
-            tech.infrastructure_initiatives[0] !== 'N/A' && (
-              <div className="subsection">
-                <h4 className="subsection-title">
-                  <Activity size={16} className="technology-icon" />
-                  {t("execution1_table1_header2")}
-                </h4>
-                <div className="table-container">
-                  <table className="data-table">
-                    <tbody>
-                      {tech.infrastructure_initiatives.map((initiative, idx) => {
-                        const baseOffset = (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.S_strategy?.where_to_compete?.length || 0) +
-                                         (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.S_strategy?.how_to_compete?.length || 0) +
-                                         (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.R_resources?.capital_priorities?.length || 0) +
-                                         (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.R_resources?.talent_priorities?.length || 0) +
-                                         (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.R_resources?.technology_investments?.length || 0) +
-                                         (localStrategicData?.strategic_analysis?.strategic_recommendations?.execution_block?.A_analysis_data?.recommendations?.length || 0);
-                        const rowIndex = baseOffset + idx;
-                        if (rowIndex >= visibleRows) return null;
-                        return (
-                          <StreamingRow 
-                            key={idx}
-                            isVisible={true}
-                            isLast={rowIndex === visibleRows - 1}
-                            lastRowRef={lastRowRef}
-                            isStreaming={streamingManager?.shouldStream(cardId)}
-                          >
-                            <td className="subsection-list-item">
-                              {initiative}
-                            </td>
-                          </StreamingRow>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            )}
-
-          {tech.platform_priorities && tech.platform_priorities.length > 0 &&
-            tech.platform_priorities[0] !== 'N/A' && (
-              <div className="subsection">
-                <h4 className="subsection-title">
-                  <BarChart3 size={16} className="technology-icon" />
-                  {t("execution1_table1_header3")}
-                </h4>
-                <div className="table-container">
-                  <table className="data-table">
-                    <tbody>
-                      {tech.platform_priorities.map((priority, idx) => {
-                        const baseOffset = (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.S_strategy?.where_to_compete?.length || 0) +
-                                         (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.S_strategy?.how_to_compete?.length || 0) +
-                                         (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.R_resources?.capital_priorities?.length || 0) +
-                                         (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.R_resources?.talent_priorities?.length || 0) +
-                                         (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.R_resources?.technology_investments?.length || 0) +
-                                         (localStrategicData?.strategic_analysis?.strategic_recommendations?.execution_block?.A_analysis_data?.recommendations?.length || 0) +
-                                         (tech.infrastructure_initiatives?.length || 0);
-                        const rowIndex = baseOffset + idx;
-                        if (rowIndex >= visibleRows) return null;
-                        return (
-                          <StreamingRow 
-                            key={idx}
-                            isVisible={true}
-                            isLast={rowIndex === visibleRows - 1}
-                            lastRowRef={lastRowRef}
-                            isStreaming={streamingManager?.shouldStream(cardId)}
-                          >
-                            <td className="subsection-list-item">
-                              {priority}
-                            </td>
-                          </StreamingRow>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            )}
-        </>
-      )}
-    </div>
-  </div>
-);
+    );
   };
 
   const renderExecutionPillar = (execution) => {
@@ -1247,411 +1262,415 @@ const StrategicAnalysis = ({
     return (
       <div className="pillar-container">
         <div className="pillar-card execution-card">
-          <div 
-  className="pillar-header execution-header"
-  onClick={() => togglePillar("execution")}
-  style={{ cursor: "pointer" }}
->
+          <div
+            className="pillar-header execution-header"
+            onClick={() => togglePillar("execution")}
+            style={{ cursor: "pointer" }}
+          >
             <CheckCircle size={22} className="execution-icon" />
             <h3 className="pillar-title">
               {t("execution1_table2_header1")}
             </h3>
             {expandedPillar === "execution" ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
           </div>
-{expandedPillar === "execution" && (
-<>
-          <DiagnosticBox diagnostic={execution.diagnostic} />
-
-          {execution.implementation_roadmap && execution.implementation_roadmap.length > 0 && (
+          <div className={`pillar-content ${expandedPillar === "execution" ? 'expanded' : 'collapsed'}`}>
             <>
-              {renderGanttChart(execution.implementation_roadmap)}
+              <DiagnosticBox diagnostic={execution.diagnostic} />
 
-              <div className="subsection">
-                <h4 className="subsection-title">
-                  <Calendar size={18} className="execution-icon" />
-                  {t("execution1_table3_header1")}
-                </h4>
+              {execution.implementation_roadmap && execution.implementation_roadmap.length > 0 && (
+                <>
+                  {renderGanttChart(execution.implementation_roadmap)}
 
-                <div className="table-container">
-                  <table className="data-table">
-                    <thead>
-                      <tr>
-                        <th>{t("execution_table3_header1")}</th>
-                        <th>{t("execution1_table3_header2")}</th>
-                        <th>{t("execution1_table3_header3")}</th>
-                        <th>{t("execution1_table3_header4")}</th>
-                        <th>{t("execution_table2_header5")}</th>
-                        <th>{t("execution_table2_header4")}</th>
-                        <th>{t("execution1_table3_header5")}</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {execution.implementation_roadmap.map((item, idx) => {
-                        const baseOffset = (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.S_strategy?.where_to_compete?.length || 0) +
-                                         (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.S_strategy?.how_to_compete?.length || 0) +
-                                         (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.R_resources?.capital_priorities?.length || 0) +
-                                         (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.R_resources?.talent_priorities?.length || 0) +
-                                         (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.R_resources?.technology_investments?.length || 0) +
-                                         (localStrategicData?.strategic_analysis?.strategic_recommendations?.execution_block?.A_analysis_data?.recommendations?.length || 0) +
-                                         (localStrategicData?.strategic_analysis?.strategic_recommendations?.execution_block?.T_technology_digitalization?.infrastructure_initiatives?.length || 0) +
-                                         (localStrategicData?.strategic_analysis?.strategic_recommendations?.execution_block?.T_technology_digitalization?.platform_priorities?.length || 0);
-                        const rowIndex = baseOffset + idx;
-                        if (rowIndex >= visibleRows) return null;
-                        return (
-                          <StreamingRow 
-                            key={idx}
-                            isVisible={true}
-                            isLast={rowIndex === visibleRows - 1}
-                            lastRowRef={lastRowRef}
-                            isStreaming={streamingManager?.shouldStream(cardId)}
-                          >
-                            <td className="table-value">
-                              <div style={{ fontWeight: '600', fontSize: '14px' }}>
-                                {item.initiative}
-                              </div>
-                            </td>
-                            <td className="table-value">
-                              {item.milestone}
-                            </td>
-                            <td className="table-value text-center">
-                              <div className="flex-center" style={{ justifyContent: 'center' }}>
-                                <Calendar size={12} />
-                                <span style={{ fontSize: '13px', fontWeight: '500' }}>
-                                  {item.target_date}
-                                </span>
-                              </div>
-                            </td>
-                            <td className="table-value">
-                              <div className="flex-center">
-                                <Users size={12} />
-                                {item.owner}
-                              </div>
-                            </td>
-                            <td className="table-value">
-                              {item.success_metrics && item.success_metrics.length > 0 && (
-                                <ul className="table-list">
-                                  {item.success_metrics.map((metric, metricIdx) => (
-                                    <li key={metricIdx} className="flex-center" style={{
-                                      fontSize: '12px',
-                                      color: '#059669',
-                                      fontWeight: '600'
-                                    }}>
-                                      <Target size={10} />
-                                      {metric}
-                                    </li>
-                                  ))}
-                                </ul>
-                              )}
-                            </td>
-                            <td className="table-value">
-                              {item.resources_required && (
-                                <div style={{ fontSize: '12px' }}>
-                                  {item.resources_required.budget && (
-                                    <div style={{ marginBottom: '4px' }}>
-                                      <strong>Budget:</strong> {item.resources_required.budget}
+                  <div className="subsection">
+                    <h4 className="subsection-title">
+                      <Calendar size={18} className="execution-icon" />
+                      {t("execution1_table3_header1")}
+                    </h4>
+
+                    <div className="table-container">
+                      <table className="data-table">
+                        <thead>
+                          <tr>
+                            <th>{t("execution_table3_header1")}</th>
+                            <th>{t("execution1_table3_header2")}</th>
+                            <th>{t("execution1_table3_header3")}</th>
+                            <th>{t("execution1_table3_header4")}</th>
+                            <th>{t("execution_table2_header5")}</th>
+                            <th>{t("execution_table2_header4")}</th>
+                            <th>{t("execution1_table3_header5")}</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {execution.implementation_roadmap.map((item, idx) => {
+                            const baseOffset = (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.S_strategy?.where_to_compete?.length || 0) +
+                              (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.S_strategy?.how_to_compete?.length || 0) +
+                              (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.R_resources?.capital_priorities?.length || 0) +
+                              (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.R_resources?.talent_priorities?.length || 0) +
+                              (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.R_resources?.technology_investments?.length || 0) +
+                              (localStrategicData?.strategic_analysis?.strategic_recommendations?.execution_block?.A_analysis_data?.recommendations?.length || 0) +
+                              (localStrategicData?.strategic_analysis?.strategic_recommendations?.execution_block?.T_technology_digitalization?.infrastructure_initiatives?.length || 0) +
+                              (localStrategicData?.strategic_analysis?.strategic_recommendations?.execution_block?.T_technology_digitalization?.platform_priorities?.length || 0);
+                            const rowIndex = baseOffset + idx;
+                            if (rowIndex >= visibleRows && !isExportActive()) return null;
+                            return (
+                              <StreamingRow
+                                key={idx}
+                                isVisible={true}
+                                isLast={rowIndex === visibleRows - 1}
+                                lastRowRef={lastRowRef}
+                                isStreaming={streamingManager?.shouldStream(cardId)}
+                              >
+                                <td className="table-value">
+                                  <div style={{ fontWeight: '600', fontSize: '14px' }}>
+                                    {item.initiative}
+                                  </div>
+                                </td>
+                                <td className="table-value">
+                                  {item.milestone}
+                                </td>
+                                <td className="table-value text-center">
+                                  <div className="flex-center" style={{ justifyContent: 'center' }}>
+                                    <Calendar size={12} />
+                                    <span style={{ fontSize: '13px', fontWeight: '500' }}>
+                                      {item.target_date}
+                                    </span>
+                                  </div>
+                                </td>
+                                <td className="table-value">
+                                  <div className="flex-center">
+                                    <Users size={12} />
+                                    {item.owner}
+                                  </div>
+                                </td>
+                                <td className="table-value">
+                                  {item.success_metrics && item.success_metrics.length > 0 && (
+                                    <ul className="table-list">
+                                      {item.success_metrics.map((metric, metricIdx) => (
+                                        <li key={metricIdx} className="flex-center" style={{
+                                          fontSize: '12px',
+                                          color: '#059669',
+                                          fontWeight: '600'
+                                        }}>
+                                          <Target size={10} />
+                                          {metric}
+                                        </li>
+                                      ))}
+                                    </ul>
+                                  )}
+                                </td>
+                                <td className="table-value">
+                                  {item.resources_required && (
+                                    <div style={{ fontSize: '12px' }}>
+                                      {item.resources_required.budget && (
+                                        <div style={{ marginBottom: '4px' }}>
+                                          <strong>Budget:</strong> {item.resources_required.budget}
+                                        </div>
+                                      )}
+                                      {item.resources_required.headcount && (
+                                        <div style={{ marginBottom: '4px' }}>
+                                          <strong>Headcount:</strong> {item.resources_required.headcount}
+                                        </div>
+                                      )}
+                                      {item.resources_required.technology && item.resources_required.technology.length > 0 && (
+                                        <div>
+                                          <strong>Technology:</strong>
+                                          <ul style={{ margin: '4px 0 0 0', paddingLeft: '16px' }}>
+                                            {item.resources_required.technology.map((tech, techIdx) => (
+                                              <li key={techIdx}>{tech}</li>
+                                            ))}
+                                          </ul>
+                                        </div>
+                                      )}
                                     </div>
                                   )}
-                                  {item.resources_required.headcount && (
-                                    <div style={{ marginBottom: '4px' }}>
-                                      <strong>Headcount:</strong> {item.resources_required.headcount}
-                                    </div>
+                                </td>
+                                <td className="table-value">
+                                  {item.dependencies && item.dependencies.length > 0 && (
+                                    <ul className="table-list">
+                                      {item.dependencies.map((dep, depIdx) => (
+                                        <li key={depIdx} className="flex-center" style={{ fontSize: '12px' }}>
+                                          <Link2 size={10} />
+                                          {dep}
+                                        </li>
+                                      ))}
+                                    </ul>
                                   )}
-                                  {item.resources_required.technology && item.resources_required.technology.length > 0 && (
-                                    <div>
-                                      <strong>Technology:</strong>
-                                      <ul style={{ margin: '4px 0 0 0', paddingLeft: '16px' }}>
-                                        {item.resources_required.technology.map((tech, techIdx) => (
-                                          <li key={techIdx}>{tech}</li>
-                                        ))}
-                                      </ul>
+                                </td>
+                              </StreamingRow>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {execution.kpi_dashboard && (
+                <div className="subsection">
+                  <h4 className="subsection-title">
+                    <BarChart3 size={18} className="execution-icon" />
+                    {t("kpi_dashboard")}
+                  </h4>
+
+                  {execution.kpi_dashboard.review_cadence && (
+                    <div className="info-box execution">
+                      <Clock size={16} className="execution-icon" />
+                      <span className="info-box-text execution">
+                        {t("review_cadence")}: {execution.kpi_dashboard.review_cadence}
+                      </span>
+                    </div>
+                  )}
+
+                  {execution.kpi_dashboard.adoption_metrics && execution.kpi_dashboard.adoption_metrics.length > 0 && (
+                    <div className="subsection">
+                      <h5 className="subsection-title">
+                        <TrendingUp size={14} style={{ color: '#3b82f6' }} />
+                        {t("kpi_table_header")}
+                      </h5>
+                      <div className="table-container">
+                        <table className="data-table">
+                          <thead>
+                            <tr>
+                              <th>{t("kpi_table_body")}</th>
+                              <th>{t("kpi_table_body1")}</th>
+                              <th>{t("execution1_table3_header4")}</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {execution.kpi_dashboard.adoption_metrics.map((metric, idx) => {
+                              const baseOffset = (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.S_strategy?.where_to_compete?.length || 0) +
+                                (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.S_strategy?.how_to_compete?.length || 0) +
+                                (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.R_resources?.capital_priorities?.length || 0) +
+                                (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.R_resources?.talent_priorities?.length || 0) +
+                                (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.R_resources?.technology_investments?.length || 0) +
+                                (localStrategicData?.strategic_analysis?.strategic_recommendations?.execution_block?.A_analysis_data?.recommendations?.length || 0) +
+                                (localStrategicData?.strategic_analysis?.strategic_recommendations?.execution_block?.T_technology_digitalization?.infrastructure_initiatives?.length || 0) +
+                                (localStrategicData?.strategic_analysis?.strategic_recommendations?.execution_block?.T_technology_digitalization?.platform_priorities?.length || 0) +
+                                (execution.implementation_roadmap?.length || 0) +
+                                (execution.kpi_dashboard.adoption_metrics?.length || 0);
+                              const rowIndex = baseOffset + idx;
+                              if (rowIndex >= visibleRows && !isExportActive()) return null;
+                              return (
+                                <StreamingRow
+                                  key={idx}
+                                  isVisible={true}
+                                  isLast={rowIndex === visibleRows - 1}
+                                  lastRowRef={lastRowRef}
+                                  isStreaming={streamingManager?.shouldStream(cardId)}
+                                >
+                                  <td className="table-value">
+                                    {metric.metric}
+                                  </td>
+                                  <td className="table-value">
+                                    <span className="badge adoption">
+                                      {metric.target}
+                                    </span>
+                                  </td>
+                                  <td className="table-value">
+                                    <div className="flex-center">
+                                      <Users size={12} />
+                                      {metric.owner}
                                     </div>
-                                  )}
-                                </div>
-                              )}
-                            </td>
-                            <td className="table-value">
-                              {item.dependencies && item.dependencies.length > 0 && (
-                                <ul className="table-list">
-                                  {item.dependencies.map((dep, depIdx) => (
-                                    <li key={depIdx} className="flex-center" style={{ fontSize: '12px' }}>
-                                      <Link2 size={10} />
-                                      {dep}
-                                    </li>
-                                  ))}
-                                </ul>
-                              )}
-                            </td>
-                          </StreamingRow>
-                        );
-                      })}
-                    </tbody>
-                  </table>
+                                  </td>
+                                </StreamingRow>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
+
+                  {execution.kpi_dashboard.network_metrics && execution.kpi_dashboard.network_metrics.length > 0 && (
+                    <div className="subsection">
+                      <h5 className="subsection-title">
+                        <Link2 size={14} style={{ color: '#8b5cf6' }} />
+                        {t("kpi_table1_header")}
+                      </h5>
+                      <div className="table-container">
+                        <table className="data-table">
+                          <thead>
+                            <tr>
+                              <th>{t("kpi_table_body")}</th>
+                              <th>{t("kpi_table_body1")}</th>
+                              <th>{t("execution1_table3_header4")}</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {execution.kpi_dashboard.network_metrics.map((metric, idx) => {
+                              const baseOffset = (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.S_strategy?.where_to_compete?.length || 0) +
+                                (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.S_strategy?.how_to_compete?.length || 0) +
+                                (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.R_resources?.capital_priorities?.length || 0) +
+                                (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.R_resources?.talent_priorities?.length || 0) +
+                                (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.R_resources?.technology_investments?.length || 0) +
+                                (localStrategicData?.strategic_analysis?.strategic_recommendations?.execution_block?.A_analysis_data?.recommendations?.length || 0) +
+                                (localStrategicData?.strategic_analysis?.strategic_recommendations?.execution_block?.T_technology_digitalization?.infrastructure_initiatives?.length || 0) +
+                                (localStrategicData?.strategic_analysis?.strategic_recommendations?.execution_block?.T_technology_digitalization?.platform_priorities?.length || 0) +
+                                (execution.implementation_roadmap?.length || 0) +
+                                (execution.kpi_dashboard.adoption_metrics?.length || 0) +
+                                (execution.kpi_dashboard.network_metrics?.length || 0);
+                              const rowIndex = baseOffset + idx;
+                              if (rowIndex >= visibleRows && !isExportActive()) return null;
+                              return (
+                                <StreamingRow
+                                  key={idx}
+                                  isVisible={true}
+                                  isLast={rowIndex === visibleRows - 1}
+                                  lastRowRef={lastRowRef}
+                                  isStreaming={streamingManager?.shouldStream(cardId)}
+                                >
+                                  <td className="table-value">
+                                    {metric.metric}
+                                  </td>
+                                  <td className="table-value">
+                                    <span className="badge network">
+                                      {metric.target}
+                                    </span>
+                                  </td>
+                                  <td className="table-value">
+                                    <div className="flex-center">
+                                      <Users size={12} />
+                                      {metric.owner}
+                                    </div>
+                                  </td>
+                                </StreamingRow>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
+
+                  {execution.kpi_dashboard.operational_metrics && execution.kpi_dashboard.operational_metrics.length > 0 && (
+                    <div className="subsection">
+                      <h5 className="subsection-title">
+                        <Activity size={14} style={{ color: '#f59e0b' }} />
+                        {t("kpi_table2_header")}
+                      </h5>
+                      <div className="table-container">
+                        <table className="data-table">
+                          <thead>
+                            <tr>
+                              <th>{t("kpi_table_body")}</th>
+                              <th>{t("kpi_table_body1")}</th>
+                              <th>{t("execution1_table3_header4")}</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {execution.kpi_dashboard.operational_metrics.map((metric, idx) => {
+                              const baseOffset = (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.S_strategy?.where_to_compete?.length || 0) +
+                                (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.S_strategy?.how_to_compete?.length || 0) +
+                                (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.R_resources?.capital_priorities?.length || 0) +
+                                (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.R_resources?.talent_priorities?.length || 0) +
+                                (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.R_resources?.technology_investments?.length || 0) +
+                                (localStrategicData?.strategic_analysis?.strategic_recommendations?.execution_block?.A_analysis_data?.recommendations?.length || 0) +
+                                (localStrategicData?.strategic_analysis?.strategic_recommendations?.execution_block?.T_technology_digitalization?.infrastructure_initiatives?.length || 0) +
+                                (localStrategicData?.strategic_analysis?.strategic_recommendations?.execution_block?.T_technology_digitalization?.platform_priorities?.length || 0) +
+                                (execution.implementation_roadmap?.length || 0) +
+                                (execution.kpi_dashboard.adoption_metrics?.length || 0) +
+                                (execution.kpi_dashboard.network_metrics?.length || 0) +
+                                (execution.kpi_dashboard.operational_metrics?.length || 0);
+                              const rowIndex = baseOffset + idx;
+                              if (rowIndex >= visibleRows && !isExportActive()) return null;
+                              return (
+                                <StreamingRow
+                                  key={idx}
+                                  isVisible={true}
+                                  isLast={rowIndex === visibleRows - 1}
+                                  lastRowRef={lastRowRef}
+                                  isStreaming={streamingManager?.shouldStream(cardId)}
+                                >
+                                  <td className="table-value">
+                                    {metric.metric}
+                                  </td>
+                                  <td className="table-value">
+                                    <span className="badge operational">
+                                      {metric.target}
+                                    </span>
+                                  </td>
+                                  <td className="table-value">
+                                    <div className="flex-center">
+                                      <Users size={12} />
+                                      {metric.owner}
+                                    </div>
+                                  </td>
+                                </StreamingRow>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
+
+                  {execution.kpi_dashboard.financial_metrics && execution.kpi_dashboard.financial_metrics.length > 0 && (
+                    <div className="subsection">
+                      <h5 className="subsection-title">
+                        <DollarSign size={14} style={{ color: '#10b981' }} />
+                        {t("kpi_table3_header")}
+                      </h5>
+                      <div className="table-container">
+                        <table className="data-table">
+                          <thead>
+                            <tr>
+                              <th>{t("kpi_table_body")}</th>
+                              <th>{t("kpi_table_body1")}</th>
+                              <th>{t("execution1_table3_header4")}</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {execution.kpi_dashboard.financial_metrics.map((metric, idx) => {
+                              const baseOffset = (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.S_strategy?.where_to_compete?.length || 0) +
+                                (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.S_strategy?.how_to_compete?.length || 0) +
+                                (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.R_resources?.capital_priorities?.length || 0) +
+                                (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.R_resources?.talent_priorities?.length || 0) +
+                                (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.R_resources?.technology_investments?.length || 0) +
+                                (localStrategicData?.strategic_analysis?.strategic_recommendations?.execution_block?.A_analysis_data?.recommendations?.length || 0) +
+                                (localStrategicData?.strategic_analysis?.strategic_recommendations?.execution_block?.T_technology_digitalization?.infrastructure_initiatives?.length || 0) +
+                                (localStrategicData?.strategic_analysis?.strategic_recommendations?.execution_block?.T_technology_digitalization?.platform_priorities?.length || 0) +
+                                (execution.implementation_roadmap?.length || 0) +
+                                (execution.kpi_dashboard.adoption_metrics?.length || 0) +
+                                (execution.kpi_dashboard.network_metrics?.length || 0) +
+                                (execution.kpi_dashboard.operational_metrics?.length || 0) +
+                                (execution.kpi_dashboard.financial_metrics?.length || 0);
+                              const rowIndex = baseOffset + idx;
+                              if (rowIndex >= visibleRows && !isExportActive()) return null;
+                              return (
+                                <StreamingRow
+                                  key={idx}
+                                  isVisible={true}
+                                  isLast={rowIndex === visibleRows - 1}
+                                  lastRowRef={lastRowRef}
+                                  isStreaming={streamingManager?.shouldStream(cardId)}
+                                >
+                                  <td className="table-value">
+                                    {metric.metric}
+                                  </td>
+                                  <td className="table-value">
+                                    <span className="badge financial">
+                                      {metric.target}
+                                    </span>
+                                  </td>
+                                  <td className="table-value">
+                                    <div className="flex-center">
+                                      <Users size={12} />
+                                      {metric.owner}
+                                    </div>
+                                  </td>
+                                </StreamingRow>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
                 </div>
-              </div>
+              )}
             </>
-          )}
-
-          {execution.kpi_dashboard && (
-            <div className="subsection">
-              <h4 className="subsection-title">
-                <BarChart3 size={18} className="execution-icon" />
-                {t("kpi_dashboard")}
-              </h4>
-
-              {execution.kpi_dashboard.review_cadence && (
-                <div className="info-box execution">
-                  <Clock size={16} className="execution-icon" />
-                  <span className="info-box-text execution">
-                    {t("review_cadence")}: {execution.kpi_dashboard.review_cadence}
-                  </span>
-                </div>
-              )}
-
-              {execution.kpi_dashboard.adoption_metrics && execution.kpi_dashboard.adoption_metrics.length > 0 && (
-                <div className="subsection">
-                  <h5 className="subsection-title">
-                    <TrendingUp size={14} style={{ color: '#3b82f6' }} />
-                    {t("kpi_table_header")}
-                  </h5>
-                  <div className="table-container">
-                    <table className="data-table">
-                      <thead>
-                        <tr>
-                          <th>{t("kpi_table_body")}</th>
-                          <th>{t("kpi_table_body1")}</th>
-                          <th>{t("execution1_table3_header4")}</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {execution.kpi_dashboard.adoption_metrics.map((metric, idx) => {
-                          const baseOffset = (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.S_strategy?.where_to_compete?.length || 0) +
-                                           (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.S_strategy?.how_to_compete?.length || 0) +
-                                           (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.R_resources?.capital_priorities?.length || 0) +
-                                           (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.R_resources?.talent_priorities?.length || 0) +
-                                           (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.R_resources?.technology_investments?.length || 0) +
-                                           (localStrategicData?.strategic_analysis?.strategic_recommendations?.execution_block?.A_analysis_data?.recommendations?.length || 0) +
-                                           (localStrategicData?.strategic_analysis?.strategic_recommendations?.execution_block?.T_technology_digitalization?.infrastructure_initiatives?.length || 0) +
-                                           (localStrategicData?.strategic_analysis?.strategic_recommendations?.execution_block?.T_technology_digitalization?.platform_priorities?.length || 0) +
-                                           (execution.implementation_roadmap?.length || 0);
-                          const rowIndex = baseOffset + idx;
-                          if (rowIndex >= visibleRows) return null;
-                          return (
-                            <StreamingRow 
-                              key={idx}
-                              isVisible={true}
-                              isLast={rowIndex === visibleRows - 1}
-                              lastRowRef={lastRowRef}
-                              isStreaming={streamingManager?.shouldStream(cardId)}
-                            >
-                              <td className="table-value">
-                                {metric.metric}
-                              </td>
-                              <td className="table-value">
-                                <span className="badge adoption">
-                                  {metric.target}
-                                </span>
-                              </td>
-                              <td className="table-value">
-                                <div className="flex-center">
-                                  <Users size={12} />
-                                  {metric.owner}
-                                </div>
-                              </td>
-                            </StreamingRow>
-                          );
-                        })}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              )}
-
-              {execution.kpi_dashboard.network_metrics && execution.kpi_dashboard.network_metrics.length > 0 && (
-                <div className="subsection">
-                  <h5 className="subsection-title">
-                    <Link2 size={14} style={{ color: '#8b5cf6' }} />
-                    {t("kpi_table1_header")}
-                  </h5>
-                  <div className="table-container">
-                    <table className="data-table">
-                      <thead>
-                        <tr>
-                          <th>{t("kpi_table_body")}</th>
-                          <th>{t("kpi_table_body1")}</th>
-                          <th>{t("execution1_table3_header4")}</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {execution.kpi_dashboard.network_metrics.map((metric, idx) => {
-                          const baseOffset = (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.S_strategy?.where_to_compete?.length || 0) +
-                                           (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.S_strategy?.how_to_compete?.length || 0) +
-                                           (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.R_resources?.capital_priorities?.length || 0) +
-                                           (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.R_resources?.talent_priorities?.length || 0) +
-                                           (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.R_resources?.technology_investments?.length || 0) +
-                                           (localStrategicData?.strategic_analysis?.strategic_recommendations?.execution_block?.A_analysis_data?.recommendations?.length || 0) +
-                                           (localStrategicData?.strategic_analysis?.strategic_recommendations?.execution_block?.T_technology_digitalization?.infrastructure_initiatives?.length || 0) +
-                                           (localStrategicData?.strategic_analysis?.strategic_recommendations?.execution_block?.T_technology_digitalization?.platform_priorities?.length || 0) +
-                                           (execution.implementation_roadmap?.length || 0) +
-                                           (execution.kpi_dashboard.adoption_metrics?.length || 0);
-                          const rowIndex = baseOffset + idx;
-                          if (rowIndex >= visibleRows) return null;
-                          return (
-                            <StreamingRow 
-                              key={idx}
-                              isVisible={true}
-                              isLast={rowIndex === visibleRows - 1}
-                              lastRowRef={lastRowRef}
-                              isStreaming={streamingManager?.shouldStream(cardId)}
-                            >
-                              <td className="table-value">
-                                {metric.metric}
-                              </td>
-                              <td className="table-value">
-                                <span className="badge network">
-                                  {metric.target}
-                                </span>
-                              </td>
-                              <td className="table-value">
-                                <div className="flex-center">
-                                  <Users size={12} />
-                                  {metric.owner}
-                                </div>
-                              </td>
-                            </StreamingRow>
-                          );
-                        })}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              )}
-
-              {execution.kpi_dashboard.operational_metrics && execution.kpi_dashboard.operational_metrics.length > 0 && (
-                <div className="subsection">
-                  <h5 className="subsection-title">
-                    <Activity size={14} style={{ color: '#f59e0b' }} />
-                    {t("kpi_table2_header")}
-                  </h5>
-                  <div className="table-container">
-                    <table className="data-table">
-                      <thead>
-                        <tr>
-                          <th>{t("kpi_table_body")}</th>
-                          <th>{t("kpi_table_body1")}</th>
-                          <th>{t("execution1_table3_header4")}</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {execution.kpi_dashboard.operational_metrics.map((metric, idx) => {
-                          const baseOffset = (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.S_strategy?.where_to_compete?.length || 0) +
-                                           (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.S_strategy?.how_to_compete?.length || 0) +
-                                           (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.R_resources?.capital_priorities?.length || 0) +
-                                           (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.R_resources?.talent_priorities?.length || 0) +
-                                           (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.R_resources?.technology_investments?.length || 0) +
-                                           (localStrategicData?.strategic_analysis?.strategic_recommendations?.execution_block?.A_analysis_data?.recommendations?.length || 0) +
-                                           (localStrategicData?.strategic_analysis?.strategic_recommendations?.execution_block?.T_technology_digitalization?.infrastructure_initiatives?.length || 0) +
-                                           (localStrategicData?.strategic_analysis?.strategic_recommendations?.execution_block?.T_technology_digitalization?.platform_priorities?.length || 0) +
-                                           (execution.implementation_roadmap?.length || 0) +
-                                           (execution.kpi_dashboard.adoption_metrics?.length || 0) +
-                                           (execution.kpi_dashboard.network_metrics?.length || 0);
-                          const rowIndex = baseOffset + idx;
-                          if (rowIndex >= visibleRows) return null;
-                          return (
-                            <StreamingRow 
-                              key={idx}
-                              isVisible={true}
-                              isLast={rowIndex === visibleRows - 1}
-                              lastRowRef={lastRowRef}
-                              isStreaming={streamingManager?.shouldStream(cardId)}
-                            >
-                              <td className="table-value">
-                                {metric.metric}
-                              </td>
-                              <td className="table-value">
-                                <span className="badge operational">
-                                  {metric.target}
-                                </span>
-                              </td>
-                              <td className="table-value">
-                                <div className="flex-center">
-                                  <Users size={12} />
-                                  {metric.owner}
-                                </div>
-                              </td>
-                            </StreamingRow>
-                          );
-                        })}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              )}
-
-              {execution.kpi_dashboard.financial_metrics && execution.kpi_dashboard.financial_metrics.length > 0 && (
-                <div className="subsection">
-                  <h5 className="subsection-title">
-                    <DollarSign size={14} style={{ color: '#10b981' }} />
-                    {t("kpi_table3_header")}
-                  </h5>
-                  <div className="table-container">
-                    <table className="data-table">
-                      <thead>
-                        <tr>
-                          <th>{t("kpi_table_body")}</th>
-                          <th>{t("kpi_table_body1")}</th>
-                          <th>{t("execution1_table3_header4")}</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {execution.kpi_dashboard.financial_metrics.map((metric, idx) => {
-                          const baseOffset = (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.S_strategy?.where_to_compete?.length || 0) +
-                                           (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.S_strategy?.how_to_compete?.length || 0) +
-                                           (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.R_resources?.capital_priorities?.length || 0) +
-                                           (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.R_resources?.talent_priorities?.length || 0) +
-                                           (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.R_resources?.technology_investments?.length || 0) +
-                                           (localStrategicData?.strategic_analysis?.strategic_recommendations?.execution_block?.A_analysis_data?.recommendations?.length || 0) +
-                                           (localStrategicData?.strategic_analysis?.strategic_recommendations?.execution_block?.T_technology_digitalization?.infrastructure_initiatives?.length || 0) +
-                                           (localStrategicData?.strategic_analysis?.strategic_recommendations?.execution_block?.T_technology_digitalization?.platform_priorities?.length || 0) +
-                                           (execution.implementation_roadmap?.length || 0) +
-                                           (execution.kpi_dashboard.adoption_metrics?.length || 0) +
-                                           (execution.kpi_dashboard.network_metrics?.length || 0) +
-                                           (execution.kpi_dashboard.operational_metrics?.length || 0);
-                          const rowIndex = baseOffset + idx;
-                          if (rowIndex >= visibleRows) return null;
-                          return (
-                            <StreamingRow 
-                              key={idx}
-                              isVisible={true}
-                              isLast={rowIndex === visibleRows - 1}
-                              lastRowRef={lastRowRef}
-                              isStreaming={streamingManager?.shouldStream(cardId)}
-                            >
-                              <td className="table-value">
-                                {metric.metric}
-                              </td>
-                              <td className="table-value">
-                                <span className="badge financial">
-                                  {metric.target}
-                                </span>
-                              </td>
-                              <td className="table-value">
-                                <div className="flex-center">
-                                  <Users size={12} />
-                                  {metric.owner}
-                                </div>
-                              </td>
-                            </StreamingRow>
-                          );
-                        })}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-          </>
-)}
+          </div>
         </div>
       </div>
     );
@@ -1663,141 +1682,141 @@ const StrategicAnalysis = ({
     return (
       <div className="pillar-container">
         <div className="pillar-card governance-card">
-          <div 
-  className="pillar-header governance-header"
-  onClick={() => togglePillar("governance")}
-  style={{ cursor: "pointer" }}
->
+          <div
+            className="pillar-header governance-header"
+            onClick={() => togglePillar("governance")}
+            style={{ cursor: "pointer" }}
+          >
             <Shield size={22} className="governance-icon" />
             <h3 className="pillar-title">
               {t("sustainability_card1")}
             </h3>
             {expandedPillar === "governance" ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
           </div>
-{expandedPillar === "governance" && (
-<>
-          <DiagnosticBox diagnostic={governance.diagnostic} />
+          <div className={`pillar-content ${expandedPillar === "governance" ? 'expanded' : 'collapsed'}`}>
+            <>
+              <DiagnosticBox diagnostic={governance.diagnostic} />
 
-          {governance.decision_delegation && governance.decision_delegation.length > 0 &&
-            governance.decision_delegation[0].decision_type !== 'N/A' && (
-              <div className="subsection">
-                <h4 className="subsection-title">
-                  <ArrowRight size={16} className="governance-icon" />
-                  {t("sustainability_card1_header")}
-                </h4>
-                <div className="table-container">
-                  <table className="data-table">
-                    <thead>
-                      <tr>
-                        <th>{t("sustainability_card1_table1")}</th>
-                        <th>{t("sustainability_card1_table2")}</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {governance.decision_delegation.map((delegation, idx) => {
-                        // Search for sections and add their lengths.
-                        const getExecutionTotal = () => {
-                          const exec = localStrategicData?.strategic_analysis?.strategic_recommendations?.execution_block;
-                          if (!exec) return 0;
-                          return (exec.A_analysis_data?.recommendations?.length || 0) +
-                                 (exec.T_technology_digitalization?.infrastructure_initiatives?.length || 0) +
-                                 (exec.T_technology_digitalization?.platform_priorities?.length || 0) +
-                                 (exec.E_execution?.implementation_roadmap?.length || 0) +
-                                 (exec.E_execution?.kpi_dashboard?.adoption_metrics?.length || 0) +
-                                 (exec.E_execution?.kpi_dashboard?.network_metrics?.length || 0) +
-                                 (exec.E_execution?.kpi_dashboard?.operational_metrics?.length || 0) +
-                                 (exec.E_execution?.kpi_dashboard?.financial_metrics?.length || 0);
-                        };
-                        const baseOffsetVal = (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.S_strategy?.where_to_compete?.length || 0) +
-                                         (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.S_strategy?.how_to_compete?.length || 0) +
-                                         (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.R_resources?.capital_priorities?.length || 0) +
-                                         (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.R_resources?.talent_priorities?.length || 0) +
-                                         (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.R_resources?.technology_investments?.length || 0) +
-                                         getExecutionTotal();
-                        const rowIndex = baseOffsetVal + idx;
-                        if (rowIndex >= visibleRows) return null;
-                        return (
-                          <StreamingRow 
-                            key={idx}
-                            isVisible={true}
-                            isLast={rowIndex === visibleRows - 1}
-                            lastRowRef={lastRowRef}
-                            isStreaming={streamingManager?.shouldStream(cardId)}
-                          >
-                            <td className="table-value">
-                              <div style={{ fontWeight: '600' }}>
-                                {delegation.decision_type}
-                              </div>
-                            </td>
-                            <td className="table-value">
-                              <div className="flex-center">
-                                <Users size={12} />
-                                {delegation.delegate_to}
-                              </div>
-                            </td>
-                          </StreamingRow>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            )}
+              {governance.decision_delegation && governance.decision_delegation.length > 0 &&
+                governance.decision_delegation[0].decision_type !== 'N/A' && (
+                  <div className="subsection">
+                    <h4 className="subsection-title">
+                      <ArrowRight size={16} className="governance-icon" />
+                      {t("sustainability_card1_header")}
+                    </h4>
+                    <div className="table-container">
+                      <table className="data-table">
+                        <thead>
+                          <tr>
+                            <th>{t("sustainability_card1_table1")}</th>
+                            <th>{t("sustainability_card1_table2")}</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {governance.decision_delegation.map((delegation, idx) => {
+                            // Search for sections and add their lengths.
+                            const getExecutionTotal = () => {
+                              const exec = localStrategicData?.strategic_analysis?.strategic_recommendations?.execution_block;
+                              if (!exec) return 0;
+                              return (exec.A_analysis_data?.recommendations?.length || 0) +
+                                (exec.T_technology_digitalization?.infrastructure_initiatives?.length || 0) +
+                                (exec.T_technology_digitalization?.platform_priorities?.length || 0) +
+                                (exec.E_execution?.implementation_roadmap?.length || 0) +
+                                (exec.E_execution?.kpi_dashboard?.adoption_metrics?.length || 0) +
+                                (exec.E_execution?.kpi_dashboard?.network_metrics?.length || 0) +
+                                (exec.E_execution?.kpi_dashboard?.operational_metrics?.length || 0) +
+                                (exec.E_execution?.kpi_dashboard?.financial_metrics?.length || 0);
+                            };
+                            const baseOffsetVal = (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.S_strategy?.where_to_compete?.length || 0) +
+                              (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.S_strategy?.how_to_compete?.length || 0) +
+                              (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.R_resources?.capital_priorities?.length || 0) +
+                              (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.R_resources?.talent_priorities?.length || 0) +
+                              (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.R_resources?.technology_investments?.length || 0) +
+                              getExecutionTotal();
+                            const rowIndex = baseOffsetVal + idx;
+                            if (rowIndex >= visibleRows && !isExportActive()) return null;
+                            return (
+                              <StreamingRow
+                                key={idx}
+                                isVisible={true}
+                                isLast={rowIndex === visibleRows - 1}
+                                lastRowRef={lastRowRef}
+                                isStreaming={streamingManager?.shouldStream(cardId)}
+                              >
+                                <td className="table-value">
+                                  <div style={{ fontWeight: '600' }}>
+                                    {delegation.decision_type}
+                                  </div>
+                                </td>
+                                <td className="table-value">
+                                  <div className="flex-center">
+                                    <Users size={12} />
+                                    {delegation.delegate_to}
+                                  </div>
+                                </td>
+                              </StreamingRow>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
 
-          {governance.accountability_framework && governance.accountability_framework.length > 0 &&
-            governance.accountability_framework[0] !== 'N/A' && (
-              <div className="subsection">
-                <h4 className="subsection-title">
-                  <CheckCircle size={16} className="governance-icon" />
-                  {t("sustainability_card1_header1")}
-                </h4>
-                <div className="table-container">
-                  <table className="data-table">
-                    <tbody>
-                      {governance.accountability_framework.map((item, idx) => {
-                        const getExecutionTotal = () => {
-                          const exec = localStrategicData?.strategic_analysis?.strategic_recommendations?.execution_block;
-                          if (!exec) return 0;
-                          return (exec.A_analysis_data?.recommendations?.length || 0) +
-                                 (exec.T_technology_digitalization?.infrastructure_initiatives?.length || 0) +
-                                 (exec.T_technology_digitalization?.platform_priorities?.length || 0) +
-                                 (exec.E_execution?.implementation_roadmap?.length || 0) +
-                                 (exec.E_execution?.kpi_dashboard?.adoption_metrics?.length || 0) +
-                                 (exec.E_execution?.kpi_dashboard?.network_metrics?.length || 0) +
-                                 (exec.E_execution?.kpi_dashboard?.operational_metrics?.length || 0) +
-                                 (exec.E_execution?.kpi_dashboard?.financial_metrics?.length || 0);
-                        };
-                        const baseOffsetVal = (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.S_strategy?.where_to_compete?.length || 0) +
-                                         (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.S_strategy?.how_to_compete?.length || 0) +
-                                         (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.R_resources?.capital_priorities?.length || 0) +
-                                         (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.R_resources?.talent_priorities?.length || 0) +
-                                         (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.R_resources?.technology_investments?.length || 0) +
-                                         getExecutionTotal() +
-                                         (localStrategicData?.strategic_analysis?.strategic_recommendations?.sustainability_block?.G_governance?.decision_delegation?.length || 0);
-                        const rowIndex = baseOffsetVal + idx;
-                        if (rowIndex >= visibleRows) return null;
-                        return (
-                          <StreamingRow 
-                            key={idx}
-                            isVisible={true}
-                            isLast={rowIndex === visibleRows - 1}
-                            lastRowRef={lastRowRef}
-                            isStreaming={streamingManager?.shouldStream(cardId)}
-                          >
-                            <td className="subsection-list-item">
-                              {item}
-                            </td>
-                          </StreamingRow>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            )}
+              {governance.accountability_framework && governance.accountability_framework.length > 0 &&
+                governance.accountability_framework[0] !== 'N/A' && (
+                  <div className="subsection">
+                    <h4 className="subsection-title">
+                      <CheckCircle size={16} className="governance-icon" />
+                      {t("sustainability_card1_header1")}
+                    </h4>
+                    <div className="table-container">
+                      <table className="data-table">
+                        <tbody>
+                          {governance.accountability_framework.map((item, idx) => {
+                            const getExecutionTotal = () => {
+                              const exec = localStrategicData?.strategic_analysis?.strategic_recommendations?.execution_block;
+                              if (!exec) return 0;
+                              return (exec.A_analysis_data?.recommendations?.length || 0) +
+                                (exec.T_technology_digitalization?.infrastructure_initiatives?.length || 0) +
+                                (exec.T_technology_digitalization?.platform_priorities?.length || 0) +
+                                (exec.E_execution?.implementation_roadmap?.length || 0) +
+                                (exec.E_execution?.kpi_dashboard?.adoption_metrics?.length || 0) +
+                                (exec.E_execution?.kpi_dashboard?.network_metrics?.length || 0) +
+                                (exec.E_execution?.kpi_dashboard?.operational_metrics?.length || 0) +
+                                (exec.E_execution?.kpi_dashboard?.financial_metrics?.length || 0);
+                            };
+                            const baseOffsetVal = (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.S_strategy?.where_to_compete?.length || 0) +
+                              (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.S_strategy?.how_to_compete?.length || 0) +
+                              (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.R_resources?.capital_priorities?.length || 0) +
+                              (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.R_resources?.talent_priorities?.length || 0) +
+                              (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.R_resources?.technology_investments?.length || 0) +
+                              getExecutionTotal() +
+                              (localStrategicData?.strategic_analysis?.strategic_recommendations?.sustainability_block?.G_governance?.decision_delegation?.length || 0);
+                            const rowIndex = baseOffsetVal + idx;
+                            if (rowIndex >= visibleRows && !isExportActive()) return null;
+                            return (
+                              <StreamingRow
+                                key={idx}
+                                isVisible={true}
+                                isLast={rowIndex === visibleRows - 1}
+                                lastRowRef={lastRowRef}
+                                isStreaming={streamingManager?.shouldStream(cardId)}
+                              >
+                                <td className="subsection-list-item">
+                                  {item}
+                                </td>
+                              </StreamingRow>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
 
             </>
-)}
+          </div>
         </div>
       </div>
     );
@@ -1809,117 +1828,121 @@ const StrategicAnalysis = ({
     return (
       <div className="pillar-container">
         <div className="pillar-card innovation-card">
-          <div 
-  className="pillar-header innovation-header"
-  onClick={() => togglePillar("innovation")}
-  style={{ cursor: "pointer" }}
->
+          <div
+            className="pillar-header innovation-header"
+            onClick={() => togglePillar("innovation")}
+            style={{ cursor: "pointer" }}
+          >
             <Lightbulb size={22} className="innovation-icon" />
             <h3 className="pillar-title">
               {t("sustainability_card2")}
             </h3>
             {expandedPillar === "innovation" ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
           </div>
-{expandedPillar === "innovation" && (
-<>
-          <DiagnosticBox diagnostic={innovation.diagnostic} />
+          <div className={`pillar-content ${expandedPillar === "innovation" ? 'expanded' : 'collapsed'}`}>
+            <>
+              <DiagnosticBox diagnostic={innovation.diagnostic} />
 
-          {innovation.target_portfolio_mix && innovation.target_portfolio_mix.core !== 'N/A' && (
-            <div className="subsection">
-              <h4 className="subsection-title">
-                <BarChart3 size={16} className="innovation-icon" />
-                {t("sustainability_header1")}
-              </h4>
-              <div className="portfolio-mix-container">
-                {innovation.target_portfolio_mix.core && innovation.target_portfolio_mix.core !== 'N/A' && (
-                  <div className="portfolio-mix-card core">
-                    <div className="portfolio-mix-label core">
-                      Core
-                    </div>
-                    <div className="portfolio-mix-value core">
-                      {innovation.target_portfolio_mix.core}
-                    </div>
+              {innovation.target_portfolio_mix && innovation.target_portfolio_mix.core !== 'N/A' && (
+                <div className="subsection">
+                  <h4 className="subsection-title">
+                    <BarChart3 size={16} className="innovation-icon" />
+                    {t("sustainability_header1")}
+                  </h4>
+                  <div className="portfolio-mix-container">
+                    {innovation.target_portfolio_mix.core && innovation.target_portfolio_mix.core !== 'N/A' && (
+                      <div className="portfolio-mix-card core">
+                        <div className="portfolio-mix-label core">
+                          Core
+                        </div>
+                        <div className="portfolio-mix-value core">
+                          {innovation.target_portfolio_mix.core}
+                        </div>
+                      </div>
+                    )}
+                    {innovation.target_portfolio_mix.adjacent && innovation.target_portfolio_mix.adjacent !== 'N/A' && (
+                      <div className="portfolio-mix-card adjacent">
+                        <div className="portfolio-mix-label adjacent">
+                          Adjacent
+                        </div>
+                        <div className="portfolio-mix-value adjacent">
+                          {innovation.target_portfolio_mix.adjacent}
+                        </div>
+                      </div>
+                    )}
+                    {innovation.target_portfolio_mix.transformational && innovation.target_portfolio_mix.transformational !== 'N/A' && (
+                      <div className="portfolio-mix-card transformational">
+                        <div className="portfolio-mix-label transformational">
+                          Transformational
+                        </div>
+                        <div className="portfolio-mix-value transformational">
+                          {innovation.target_portfolio_mix.transformational}
+                        </div>
+                      </div>
+                    )}
                   </div>
-                )}
-                {innovation.target_portfolio_mix.adjacent && innovation.target_portfolio_mix.adjacent !== 'N/A' && (
-                  <div className="portfolio-mix-card adjacent">
-                    <div className="portfolio-mix-label adjacent">
-                      Adjacent
-                    </div>
-                    <div className="portfolio-mix-value adjacent">
-                      {innovation.target_portfolio_mix.adjacent}
-                    </div>
-                  </div>
-                )}
-                {innovation.target_portfolio_mix.transformational && innovation.target_portfolio_mix.transformational !== 'N/A' && (
-                  <div className="portfolio-mix-card transformational">
-                    <div className="portfolio-mix-label transformational">
-                      Transformational
-                    </div>
-                    <div className="portfolio-mix-value transformational">
-                      {innovation.target_portfolio_mix.transformational}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
-          {innovation.priority_innovation_bets && innovation.priority_innovation_bets.length > 0 &&
-            innovation.priority_innovation_bets[0] !== 'N/A' && (
-              <div className="subsection">
-                <h4 className="subsection-title">
-                  <Star size={16} className="innovation-icon" />
-                  {t("sustainability_header2")}
-                </h4>
-                <div className="table-container">
-                  <table className="data-table">
-                    <tbody>
-                      {innovation.priority_innovation_bets.map((bet, idx) => {
-                        const getExecutionTotal = () => {
-                          const exec = localStrategicData?.strategic_analysis?.strategic_recommendations?.execution_block;
-                          if (!exec) return 0;
-                          return (exec.A_analysis_data?.recommendations?.length || 0) +
-                                 (exec.T_technology_digitalization?.infrastructure_initiatives?.length || 0) +
-                                 (exec.T_technology_digitalization?.platform_priorities?.length || 0) +
-                                 (exec.E_execution?.implementation_roadmap?.length || 0) +
-                                 (exec.E_execution?.kpi_dashboard?.adoption_metrics?.length || 0) +
-                                 (exec.E_execution?.kpi_dashboard?.network_metrics?.length || 0) +
-                                 (exec.E_execution?.kpi_dashboard?.operational_metrics?.length || 0) +
-                                 (exec.E_execution?.kpi_dashboard?.financial_metrics?.length || 0);
-                        };
-                        const baseOffsetVal = (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.S_strategy?.where_to_compete?.length || 0) +
-                                         (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.S_strategy?.how_to_compete?.length || 0) +
-                                         (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.R_resources?.capital_priorities?.length || 0) +
-                                         (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.R_resources?.talent_priorities?.length || 0) +
-                                         (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.R_resources?.technology_investments?.length || 0) +
-                                         getExecutionTotal() +
-                                         (localStrategicData?.strategic_analysis?.strategic_recommendations?.sustainability_block?.G_governance?.decision_delegation?.length || 0) +
-                                         (localStrategicData?.strategic_analysis?.strategic_recommendations?.sustainability_block?.G_governance?.accountability_framework?.length || 0);
-                        const rowIndex = baseOffsetVal + idx;
-                        if (rowIndex >= visibleRows) return null;
-                        return (
-                          <StreamingRow 
-                            key={idx}
-                            isVisible={true}
-                            isLast={rowIndex === visibleRows - 1}
-                            lastRowRef={lastRowRef}
-                            isStreaming={streamingManager?.shouldStream(cardId)}
-                          >
-                            <td className="subsection-list-item">
-                              {bet}
-                            </td>
-                          </StreamingRow>
-                        );
-                      })}
-                    </tbody>
-                  </table>
                 </div>
-              </div>
-            )}
+              )}
+
+              {innovation.priority_innovation_bets && innovation.priority_innovation_bets.length > 0 &&
+                innovation.priority_innovation_bets[0] !== 'N/A' && (
+                  <div className="subsection">
+                    <h4 className="subsection-title">
+                      <Star size={16} className="innovation-icon" />
+                      {t("sustainability_header2")}
+                    </h4>
+                    <div className="table-container">
+                      <table className="data-table">
+                        <tbody>
+                          {innovation.priority_innovation_bets.map((bet, idx) => {
+                            const getExecutionTotal = () => {
+                              const exec = localStrategicData?.strategic_analysis?.strategic_recommendations?.execution_block;
+                              if (!exec) return 0;
+                              return (exec.A_analysis_data?.recommendations?.length || 0) +
+                                (exec.T_technology_digitalization?.infrastructure_initiatives?.length || 0) +
+                                (exec.T_technology_digitalization?.platform_priorities?.length || 0) +
+                                (exec.E_execution?.implementation_roadmap?.length || 0) +
+                                (exec.E_execution?.kpi_dashboard?.adoption_metrics?.length || 0) +
+                                (exec.E_execution?.kpi_dashboard?.network_metrics?.length || 0) +
+                                (exec.E_execution?.kpi_dashboard?.operational_metrics?.length || 0) +
+                                (exec.E_execution?.kpi_dashboard?.financial_metrics?.length || 0);
+                            };
+                            const getGovernanceInnovationTotal = () => {
+                              const recs = localStrategicData?.strategic_analysis?.strategic_recommendations;
+                              return (recs?.sustainability_block?.G_governance?.decision_delegation?.length || 0) +
+                                (recs?.sustainability_block?.G_governance?.accountability_framework?.length || 0);
+                            };
+                            const baseOffsetVal = (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.S_strategy?.where_to_compete?.length || 0) +
+                              (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.S_strategy?.how_to_compete?.length || 0) +
+                              (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.R_resources?.capital_priorities?.length || 0) +
+                              (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.R_resources?.talent_priorities?.length || 0) +
+                              (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.R_resources?.technology_investments?.length || 0) +
+                              getExecutionTotal() +
+                              getGovernanceInnovationTotal();
+                            const rowIndex = baseOffsetVal + idx;
+                            if (rowIndex >= visibleRows && !isExportActive()) return null;
+                            return (
+                              <StreamingRow
+                                key={idx}
+                                isVisible={true}
+                                isLast={rowIndex === visibleRows - 1}
+                                lastRowRef={lastRowRef}
+                                isStreaming={streamingManager?.shouldStream(cardId)}
+                              >
+                                <td className="subsection-list-item">
+                                  {bet}
+                                </td>
+                              </StreamingRow>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
 
             </>
-)}
+          </div>
         </div>
       </div>
     );
@@ -1931,145 +1954,145 @@ const StrategicAnalysis = ({
     return (
       <div className="pillar-container">
         <div className="pillar-card culture-card">
-          <div 
-  className="pillar-header culture-header"
-  onClick={() => togglePillar("culture")}
-  style={{ cursor: "pointer" }}
->
+          <div
+            className="pillar-header culture-header"
+            onClick={() => togglePillar("culture")}
+            style={{ cursor: "pointer" }}
+          >
             <Heart size={22} className="culture-icon" />
             <h3 className="pillar-title">
               {t("sustainability_card3")}
             </h3>
             {expandedPillar === "culture" ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
           </div>
-{expandedPillar === "culture" && (
-<>
-          <DiagnosticBox diagnostic={culture.diagnostic} />
+          <div className={`pillar-content ${expandedPillar === "culture" ? 'expanded' : 'collapsed'}`}>
+            <>
+              <DiagnosticBox diagnostic={culture.diagnostic} />
 
-          {culture.cultural_shifts && culture.cultural_shifts.length > 0 &&
-            culture.cultural_shifts[0].from !== 'N/A' && (
-              <div className="subsection">
-                <h4 className="subsection-title">
-                  <TrendingUp size={16} className="culture-icon" />
-                  {t("sustainability_card3_header1")}
-                </h4>
-                <div className="cultural-shifts-container">
-                  {culture.cultural_shifts.map((shift, idx) => {
-                    const getExecutionTotal = () => {
-                      const exec = localStrategicData?.strategic_analysis?.strategic_recommendations?.execution_block;
-                      if (!exec) return 0;
-                      return (exec.A_analysis_data?.recommendations?.length || 0) +
-                             (exec.T_technology_digitalization?.infrastructure_initiatives?.length || 0) +
-                             (exec.T_technology_digitalization?.platform_priorities?.length || 0) +
-                             (exec.E_execution?.implementation_roadmap?.length || 0) +
-                             (exec.E_execution?.kpi_dashboard?.adoption_metrics?.length || 0) +
-                             (exec.E_execution?.kpi_dashboard?.network_metrics?.length || 0) +
-                             (exec.E_execution?.kpi_dashboard?.operational_metrics?.length || 0) +
-                             (exec.E_execution?.kpi_dashboard?.financial_metrics?.length || 0);
-                    };
-                    const getGovernanceInnovationTotal = () => {
-                        const recs = localStrategicData?.strategic_analysis?.strategic_recommendations;
-                        return (recs?.sustainability_block?.G_governance?.decision_delegation?.length || 0) +
-                               (recs?.sustainability_block?.G_governance?.accountability_framework?.length || 0) +
-                               (recs?.sustainability_block?.I_innovation?.priority_innovation_bets?.length || 0);
-                    };
-                    const baseOffsetVal = (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.S_strategy?.where_to_compete?.length || 0) +
-                                     (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.S_strategy?.how_to_compete?.length || 0) +
-                                     (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.R_resources?.capital_priorities?.length || 0) +
-                                     (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.R_resources?.talent_priorities?.length || 0) +
-                                     (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.R_resources?.technology_investments?.length || 0) +
-                                     getExecutionTotal() +
-                                     getGovernanceInnovationTotal();
-                    const rowIndex = baseOffsetVal + idx;
-                    if (rowIndex >= visibleRows) return null;
-                    return (
-                      <StreamingRow 
-                        key={idx}
-                        isVisible={true}
-                        isLast={rowIndex === visibleRows - 1}
-                        lastRowRef={lastRowRef}
-                        isStreaming={streamingManager?.shouldStream(cardId)}
-                        className="cultural-shift-card"
-                      >
-                        <div className="cultural-shift-content">
-                          <div className="cultural-shift-from">
-                            <span className="cultural-shift-label">From: </span>
-                            <span className="cultural-shift-value">{shift.from}</span>
-                          </div>
-                          <ArrowRight size={16} className="cultural-shift-arrow" />
-                          <div className="cultural-shift-to">
-                            <span className="cultural-shift-label">To: </span>
-                            <span className="cultural-shift-value to">{shift.to}</span>
-                          </div>
-                        </div>
-                      </StreamingRow>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
-          {culture.change_approach && culture.change_approach.length > 0 &&
-            culture.change_approach[0] !== 'N/A' && (
-              <div className="subsection">
-                <h4 className="subsection-title">
-                  <CheckCircle size={16} className="culture-icon" />
-                  {t("sustainability_card3_header2")}
-                </h4>
-                <div className="table-container">
-                  <table className="data-table">
-                    <tbody>
-                      {culture.change_approach.map((approach, idx) => {
+              {culture.cultural_shifts && culture.cultural_shifts.length > 0 &&
+                culture.cultural_shifts[0].from !== 'N/A' && (
+                  <div className="subsection">
+                    <h4 className="subsection-title">
+                      <TrendingUp size={16} className="culture-icon" />
+                      {t("sustainability_card3_header1")}
+                    </h4>
+                    <div className="cultural-shifts-container">
+                      {culture.cultural_shifts.map((shift, idx) => {
                         const getExecutionTotal = () => {
                           const exec = localStrategicData?.strategic_analysis?.strategic_recommendations?.execution_block;
                           if (!exec) return 0;
                           return (exec.A_analysis_data?.recommendations?.length || 0) +
-                                 (exec.T_technology_digitalization?.infrastructure_initiatives?.length || 0) +
-                                 (exec.T_technology_digitalization?.platform_priorities?.length || 0) +
-                                 (exec.E_execution?.implementation_roadmap?.length || 0) +
-                                 (exec.E_execution?.kpi_dashboard?.adoption_metrics?.length || 0) +
-                                 (exec.E_execution?.kpi_dashboard?.network_metrics?.length || 0) +
-                                 (exec.E_execution?.kpi_dashboard?.operational_metrics?.length || 0) +
-                                 (exec.E_execution?.kpi_dashboard?.financial_metrics?.length || 0);
+                            (exec.T_technology_digitalization?.infrastructure_initiatives?.length || 0) +
+                            (exec.T_technology_digitalization?.platform_priorities?.length || 0) +
+                            (exec.E_execution?.implementation_roadmap?.length || 0) +
+                            (exec.E_execution?.kpi_dashboard?.adoption_metrics?.length || 0) +
+                            (exec.E_execution?.kpi_dashboard?.network_metrics?.length || 0) +
+                            (exec.E_execution?.kpi_dashboard?.operational_metrics?.length || 0) +
+                            (exec.E_execution?.kpi_dashboard?.financial_metrics?.length || 0);
                         };
                         const getGovernanceInnovationTotal = () => {
-                            const recs = localStrategicData?.strategic_analysis?.strategic_recommendations;
-                            return (recs?.sustainability_block?.G_governance?.decision_delegation?.length || 0) +
-                                   (recs?.sustainability_block?.G_governance?.accountability_framework?.length || 0) +
-                                   (recs?.sustainability_block?.I_innovation?.priority_innovation_bets?.length || 0);
+                          const recs = localStrategicData?.strategic_analysis?.strategic_recommendations;
+                          return (recs?.sustainability_block?.G_governance?.decision_delegation?.length || 0) +
+                            (recs?.sustainability_block?.G_governance?.accountability_framework?.length || 0) +
+                            (recs?.sustainability_block?.I_innovation?.priority_innovation_bets?.length || 0);
                         };
                         const baseOffsetVal = (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.S_strategy?.where_to_compete?.length || 0) +
-                                         (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.S_strategy?.how_to_compete?.length || 0) +
-                                         (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.R_resources?.capital_priorities?.length || 0) +
-                                         (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.R_resources?.talent_priorities?.length || 0) +
-                                         (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.R_resources?.technology_investments?.length || 0) +
-                                         getExecutionTotal() +
-                                         getGovernanceInnovationTotal() +
-                                         (culture.cultural_shifts?.length || 0);
+                          (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.S_strategy?.how_to_compete?.length || 0) +
+                          (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.R_resources?.capital_priorities?.length || 0) +
+                          (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.R_resources?.talent_priorities?.length || 0) +
+                          (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.R_resources?.technology_investments?.length || 0) +
+                          getExecutionTotal() +
+                          getGovernanceInnovationTotal();
                         const rowIndex = baseOffsetVal + idx;
-                        if (rowIndex >= visibleRows) return null;
+                        if (rowIndex >= visibleRows && !isExportActive()) return null;
                         return (
-                          <StreamingRow 
+                          <StreamingRow
                             key={idx}
                             isVisible={true}
                             isLast={rowIndex === visibleRows - 1}
                             lastRowRef={lastRowRef}
                             isStreaming={streamingManager?.shouldStream(cardId)}
+                            className="cultural-shift-card"
                           >
-                            <td className="subsection-list-item">
-                              {approach}
-                            </td>
+                            <div className="cultural-shift-content">
+                              <div className="cultural-shift-from">
+                                <span className="cultural-shift-label">From: </span>
+                                <span className="cultural-shift-value">{shift.from}</span>
+                              </div>
+                              <ArrowRight size={16} className="cultural-shift-arrow" />
+                              <div className="cultural-shift-to">
+                                <span className="cultural-shift-label">To: </span>
+                                <span className="cultural-shift-value to">{shift.to}</span>
+                              </div>
+                            </div>
                           </StreamingRow>
                         );
                       })}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            )}
+                    </div>
+                  </div>
+                )}
+
+              {culture.change_approach && culture.change_approach.length > 0 &&
+                culture.change_approach[0] !== 'N/A' && (
+                  <div className="subsection">
+                    <h4 className="subsection-title">
+                      <CheckCircle size={16} className="culture-icon" />
+                      {t("sustainability_card3_header2")}
+                    </h4>
+                    <div className="table-container">
+                      <table className="data-table">
+                        <tbody>
+                          {culture.change_approach.map((approach, idx) => {
+                            const getExecutionTotal = () => {
+                              const exec = localStrategicData?.strategic_analysis?.strategic_recommendations?.execution_block;
+                              if (!exec) return 0;
+                              return (exec.A_analysis_data?.recommendations?.length || 0) +
+                                (exec.T_technology_digitalization?.infrastructure_initiatives?.length || 0) +
+                                (exec.T_technology_digitalization?.platform_priorities?.length || 0) +
+                                (exec.E_execution?.implementation_roadmap?.length || 0) +
+                                (exec.E_execution?.kpi_dashboard?.adoption_metrics?.length || 0) +
+                                (exec.E_execution?.kpi_dashboard?.network_metrics?.length || 0) +
+                                (exec.E_execution?.kpi_dashboard?.operational_metrics?.length || 0) +
+                                (exec.E_execution?.kpi_dashboard?.financial_metrics?.length || 0);
+                            };
+                            const getGovernanceInnovationTotal = () => {
+                              const recs = localStrategicData?.strategic_analysis?.strategic_recommendations;
+                              return (recs?.sustainability_block?.G_governance?.decision_delegation?.length || 0) +
+                                (recs?.sustainability_block?.G_governance?.accountability_framework?.length || 0) +
+                                (recs?.sustainability_block?.I_innovation?.priority_innovation_bets?.length || 0);
+                            };
+                            const baseOffsetVal = (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.S_strategy?.where_to_compete?.length || 0) +
+                              (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.S_strategy?.how_to_compete?.length || 0) +
+                              (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.R_resources?.capital_priorities?.length || 0) +
+                              (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.R_resources?.talent_priorities?.length || 0) +
+                              (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.R_resources?.technology_investments?.length || 0) +
+                              getExecutionTotal() +
+                              getGovernanceInnovationTotal() +
+                              (culture.cultural_shifts?.length || 0);
+                            const rowIndex = baseOffsetVal + idx;
+                            if (rowIndex >= visibleRows && !isExportActive()) return null;
+                            return (
+                              <StreamingRow
+                                key={idx}
+                                isVisible={true}
+                                isLast={rowIndex === visibleRows - 1}
+                                lastRowRef={lastRowRef}
+                                isStreaming={streamingManager?.shouldStream(cardId)}
+                              >
+                                <td className="subsection-list-item">
+                                  {approach}
+                                </td>
+                              </StreamingRow>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
 
             </>
-)}
+          </div>
         </div>
       </div>
     );
@@ -2103,33 +2126,33 @@ const StrategicAnalysis = ({
                     const exec = localStrategicData?.strategic_analysis?.strategic_recommendations?.execution_block;
                     if (!exec) return 0;
                     return (exec.A_analysis_data?.recommendations?.length || 0) +
-                           (exec.T_technology_digitalization?.infrastructure_initiatives?.length || 0) +
-                           (exec.T_technology_digitalization?.platform_priorities?.length || 0) +
-                           (exec.E_execution?.implementation_roadmap?.length || 0) +
-                           (exec.E_execution?.kpi_dashboard?.adoption_metrics?.length || 0) +
-                           (exec.E_execution?.kpi_dashboard?.network_metrics?.length || 0) +
-                           (exec.E_execution?.kpi_dashboard?.operational_metrics?.length || 0) +
-                           (exec.E_execution?.kpi_dashboard?.financial_metrics?.length || 0);
+                      (exec.T_technology_digitalization?.infrastructure_initiatives?.length || 0) +
+                      (exec.T_technology_digitalization?.platform_priorities?.length || 0) +
+                      (exec.E_execution?.implementation_roadmap?.length || 0) +
+                      (exec.E_execution?.kpi_dashboard?.adoption_metrics?.length || 0) +
+                      (exec.E_execution?.kpi_dashboard?.network_metrics?.length || 0) +
+                      (exec.E_execution?.kpi_dashboard?.operational_metrics?.length || 0) +
+                      (exec.E_execution?.kpi_dashboard?.financial_metrics?.length || 0);
                   };
                   const getSustainabilityTotal = () => {
-                      const recs = localStrategicData?.strategic_analysis?.strategic_recommendations;
-                      return (recs?.sustainability_block?.G_governance?.decision_delegation?.length || 0) +
-                             (recs?.sustainability_block?.G_governance?.accountability_framework?.length || 0) +
-                             (recs?.sustainability_block?.I_innovation?.priority_innovation_bets?.length || 0) +
-                             (recs?.sustainability_block?.C_culture?.cultural_shifts?.length || 0) +
-                             (recs?.sustainability_block?.C_culture?.change_approach?.length || 0);
+                    const recs = localStrategicData?.strategic_analysis?.strategic_recommendations;
+                    return (recs?.sustainability_block?.G_governance?.decision_delegation?.length || 0) +
+                      (recs?.sustainability_block?.G_governance?.accountability_framework?.length || 0) +
+                      (recs?.sustainability_block?.I_innovation?.priority_innovation_bets?.length || 0) +
+                      (recs?.sustainability_block?.C_culture?.cultural_shifts?.length || 0) +
+                      (recs?.sustainability_block?.C_culture?.change_approach?.length || 0);
                   };
                   const baseOffsetVal = (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.S_strategy?.where_to_compete?.length || 0) +
-                                   (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.S_strategy?.how_to_compete?.length || 0) +
-                                   (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.R_resources?.capital_priorities?.length || 0) +
-                                   (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.R_resources?.talent_priorities?.length || 0) +
-                                   (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.R_resources?.technology_investments?.length || 0) +
-                                   getExecutionTotal() +
-                                   getSustainabilityTotal();
+                    (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.S_strategy?.how_to_compete?.length || 0) +
+                    (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.R_resources?.capital_priorities?.length || 0) +
+                    (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.R_resources?.talent_priorities?.length || 0) +
+                    (localStrategicData?.strategic_analysis?.strategic_recommendations?.strategy_block?.R_resources?.technology_investments?.length || 0) +
+                    getExecutionTotal() +
+                    getSustainabilityTotal();
                   const rowIndex = baseOffsetVal + idx;
-                  if (rowIndex >= visibleRows) return null;
+                  if (rowIndex >= visibleRows && !isExportActive()) return null;
                   return (
-                    <StreamingRow 
+                    <StreamingRow
                       key={idx}
                       isVisible={true}
                       isLast={rowIndex === visibleRows - 1}
