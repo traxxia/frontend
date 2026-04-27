@@ -1222,8 +1222,7 @@ body {
   margin-top: 0px;
 }
 
-.btn-primary {
-  background-color: rgb(26, 115, 232) !important;
+.btn-primary { 
   border: none !important
 }
 

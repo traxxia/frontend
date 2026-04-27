@@ -23,6 +23,7 @@ const PrioritiesProjects = ({ selectedBusinessId, onSuccess, onStayOnPriorities,
   const fetchKickstartData = useAnalysisStore(state => state.fetchKickstartData);
   const kickstartProject = useAnalysisStore(state => state.kickstartProject);
   const clearProjectCache = useProjectStore(state => state.clearCache);
+  const projects = useProjectStore(state => state.projects);
 
   const [selected, setSelected] = useState([]);
   const [expandedId, setExpandedId] = useState(null);
@@ -50,6 +51,11 @@ const PrioritiesProjects = ({ selectedBusinessId, onSuccess, onStayOnPriorities,
     const percent = total > 0 ? Math.round((kickstarted / total) * 100) : 0;
     return { totalActions: total, kickstartedActions: kickstarted, globalProgressPercent: percent };
   }, [priorities]);
+
+  const anyProjectKickstarted = useMemo(() => 
+    priorities.some(p => p.isKickstarted || (p.actions && p.actions.some(a => a.isKickstarted))),
+    [priorities]
+  );
 
   useEffect(() => {
     const fetchData = async () => {
@@ -124,16 +130,9 @@ const PrioritiesProjects = ({ selectedBusinessId, onSuccess, onStayOnPriorities,
     }
 
     if (selected.length === 0) return;
-
-    // Check for collaborators if admin - only if no projects have been kickstarted yet
-    const anyProjectKickstarted = priorities.some(p => p.isKickstarted || (p.actions && p.actions.some(a => a.isKickstarted)));
-    if (isAdmin && !hasCollaborators && !anyProjectKickstarted) {
-      setShowNoCollaboratorsModal(true);
-      return;
-    }
-
-    confirmKickstart();
-  }, [selected, hasProjectsAccess, isAdmin, hasCollaborators, priorities, confirmKickstart]);
+    
+    setShowNoCollaboratorsModal(true);
+  }, [selected, hasProjectsAccess]);
 
   const handleConfirmRedirect = useCallback(() => {
     setShowSuccessModal(false);
@@ -404,9 +403,11 @@ const PrioritiesProjects = ({ selectedBusinessId, onSuccess, onStayOnPriorities,
             <p>
               {t("Are you sure you want to kickstart the selected priorities and create new projects? This will trigger AI generation for project details.")}
             </p>
-            <p className="mb-0 small opacity-75">
-              {t("Note: You are proceeding without collaborators. You can also continue without any participants for now—this is perfectly fine, and you can always add them later.")}
-            </p>
+            {isAdmin && !hasCollaborators && !anyProjectKickstarted && projects.length === 0 && (
+              <p className="mb-0 small text-info">
+                {t("Note: You are proceeding without collaborators. You can also continue without any participants for now—this is perfectly fine, and you can always add them later.")}
+              </p>
+            )}
           </div>
           <div className="d-grid gap-2">
             <Button
@@ -419,13 +420,24 @@ const PrioritiesProjects = ({ selectedBusinessId, onSuccess, onStayOnPriorities,
               {kickstarting ? t("Kickstarting...") : t("Kickstart to Projects")}
             </Button>
             {!kickstarting && (
-              <Button
-                variant="outline-secondary"
-                onClick={() => navigate('/admin?tab=user_management')}
-                className="py-2"
-              >
-                {t("Add Collaborators First")}
-              </Button>
+              <>
+                {isAdmin && !hasCollaborators && !anyProjectKickstarted && projects.length === 0 && (
+                  <Button
+                    variant="outline-secondary"
+                    onClick={() => navigate('/admin?tab=user_management')}
+                    className="py-2"
+                  >
+                    {t("Add Collaborators First")}
+                  </Button>
+                )}
+                <Button
+                  variant="outline-secondary"
+                  onClick={() => setShowNoCollaboratorsModal(false)}
+                  className="py-2"
+                >
+                  {t("Cancel")}
+                </Button>
+              </>
             )}
           </div>
         </Modal.Body>

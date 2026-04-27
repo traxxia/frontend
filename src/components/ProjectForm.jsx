@@ -986,6 +986,12 @@ const ProjectForm = ({
                 const obj = eligibleOwners.find(o => o._id === val);
                 if (obj) setAccountableOwner(obj.name);
                 handleFieldEdit("accountable_owner");
+                if (showErrors) {
+                  setFieldErrors(prev => ({
+                    ...prev,
+                    accountableOwnerId: val ? null : t("Owner selection is required")
+                  }));
+                }
               }}
               open={openDropdown === "accountable_owner"}
               setOpen={() => setOpenDropdown(openDropdown === "accountable_owner" ? null : "accountable_owner")}
@@ -1069,6 +1075,12 @@ const ProjectForm = ({
                 onChange={(val) => {
                   setReviewCadence(val);
                   handleFieldEdit("review_cadence");
+                  if (showErrors) {
+                    setFieldErrors(prev => ({
+                      ...prev,
+                      reviewCadence: val ? null : t("Review cadence is required")
+                    }));
+                  }
                 }}
                 open={openDropdown === "reviewCadence"}
                 setOpen={() => setOpenDropdown(openDropdown === "reviewCadence" ? null : "reviewCadence")}
@@ -1148,7 +1160,7 @@ const ProjectForm = ({
                   if (showErrors) {
                     setFieldErrors(prev => ({
                       ...prev,
-                      status: (val && val.trim()) ? null : t("Status_is_required")
+                      status: (val && val.trim()) ? null : t("Status is required")
                     }));
                   }
                 }}
