@@ -14,7 +14,8 @@ import {
   Target,
   ListTodo,
   Briefcase,
-  BarChart4
+  BarChart4,
+  FileText
 } from "lucide-react";
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from "../hooks/useTranslation";
@@ -266,7 +267,7 @@ const BusinessSetupPage = () => {
 
     // Use location state if available (for internal navigation)
     if (window.__businessPageNavState?.initialTab) return window.__businessPageNavState.initialTab;
-    
+
     // Fallback to location state directly from the router
     if (window.history.state?.usr?.initialTab) return window.history.state.usr.initialTab;
 
@@ -275,7 +276,7 @@ const BusinessSetupPage = () => {
     if (hasPmfAccess) return "executive";
     if (hasInsightAccess || hasStrategicAccess) return "advanced";
     if (hasProjectAccess) return "projects";
-    
+
     return "advanced"; // Ultimate fallback
   });
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
@@ -355,24 +356,24 @@ const BusinessSetupPage = () => {
   useEffect(() => {
     // Prioritize explicit state passed via navigate(), fallback to URL query
     const targetTab = location.state?.initialTab || searchParams.get('tab');
-    
+
     if (!targetTab) return;
 
     if (targetTab !== activeTab) {
       // Check access before switching
       const isPmfTab = ["executive", "priorities"].includes(targetTab);
       const isProjectTab = targetTab === "projects" || targetTab === "ranking" || targetTab === "decision-logs";
-      
+
       if ((isPmfTab && !hasPmfAccess) || (isProjectTab && !hasProjectAccess)) {
         console.warn("Blocking access to unauthorized tab:", targetTab);
-        
+
         const isAdminRole = ['super_admin', 'company_admin', 'org_admin'].includes(userRole?.toLowerCase());
         const subMessageKey = isAdminRole ? "no_access_modal_sub_admin" : "no_access_modal_sub_user";
-        
+
         setAccessModalMessage(t('no_access_modal_msg'));
         setAccessModalSubMessage(t(subMessageKey));
         openModal('noFeatureAccess');
-        
+
         // Redirect to a safe tab
         const safeTab = hasPmfAccess ? "executive" : (hasInsightAccess || hasStrategicAccess ? "advanced" : "advanced");
         setActiveTab(safeTab);
@@ -383,7 +384,7 @@ const BusinessSetupPage = () => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams, location.key, location.state, hasPmfAccess, hasProjectAccess]); // location.key firmly triggers this on any navigation
-  
+
   // 2. Sync State -> URL (When user clicks UI buttons)
   useEffect(() => {
     // ONLY push activeTab to the URL if it differs from what's already there
@@ -571,7 +572,7 @@ const BusinessSetupPage = () => {
                 answerIdsMap[qIdStr] = ans._id;
               }
             });
-            
+
             finalAnswers = answersMap;
             finalCompleted = Object.keys(answersMap);
 
@@ -1086,13 +1087,13 @@ const BusinessSetupPage = () => {
     }
 
     const selectedOptions = categoryOptions[phase] || {};
-    
+
     // Filter out options that don't have data
     const filteredOptions = {};
     Object.entries(selectedOptions).forEach(([category, items]) => {
       // Keep only items that have analysis data available
       const filteredItems = items.filter(item => dataAvailabilityMap[item]);
-      
+
       // Only include the category if it has at least one item with data
       if (filteredItems.length > 0) {
         filteredOptions[category] = filteredItems;
@@ -1121,7 +1122,7 @@ const BusinessSetupPage = () => {
   // Only load stored analysis data when user visits the insights or strategic tab
   useEffect(() => {
     if (activeTab !== 'insights' && activeTab !== 'strategic') return;
-    
+
     // Check if we need to force a refresh for the strategic tab
     const forceRefresh = activeTab === 'strategic';
 
@@ -1532,530 +1533,482 @@ const BusinessSetupPage = () => {
       <div className={`main-container ${isAnalysisExpanded && !isMobile ? "analysis-expanded" : ""}`}>
 
         <div className={`info-panel ${isMobile ? (['advanced', 'insights', 'strategic', 'projects', 'ranking', 'priorities', 'aha', 'executive'].includes(activeTab) ? "active" : "") : ""} ${isAnalysisExpanded && !isMobile ? "expanded" : ""}`}>
-            {!isMobile && isAnalysisExpanded && (
-              <div className="desktop-expanded-analysis">
-                <div className="expanded-analysis-view">
-                  <div className="desktop-tabs" ref={navDropdownRef}>
-                    <div className="desktop-tabs-main">
-                      <div className="business-header-container">
-                        <button className="back-button" onClick={handleBackFromAnalysis} aria-label="Go Back">
-                          <ArrowLeft size={18} />
-                          <span className="breadcrumb-back">{t("backToDashboard_B3") || "Back to Dashboard"}</span>
-                        </button>
-                        {selectedBusinessName && (
-                          <div className="business-breadcrumb">
-                            <span className="breadcrumb-separator">/</span>
-                            <span className="business-header-name">{selectedBusinessName}</span>
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="desktop-nav-main">
-                        {/* Insights & Recommendations Dropdown */}
-                        <div className={`nav-dropdown-wrapper ${activeNavDropdown === 'insights' ? 'open' : ''}`}>
-                          <button
-                            className={`nav-dropdown-trigger ${['executive', 'advanced', 'insights', 'strategic'].includes(activeTab) ? 'active' : ''}`}
-                            onClick={() => setActiveNavDropdown(activeNavDropdown === 'insights' ? null : 'insights')}
-                          >
-                            {/* Dynamically show active tab target name or category name */}
-                            {(() => {
-                              if (activeTab === "executive") return t("Executive Summary");
-                              if (activeTab === "advanced") return t("Answers/Brief");
-                              if (activeTab === "insights") return t("Insights");
-                              if (activeTab === "strategic") return t("STRATEGIC_LABEL") || "S.T.R.A.T.E.G.I.C.";
-                              return t("Insights & Recommendations");
-                            })()}
-                            <ChevronDown size={14} className={`chevron-icon ${activeNavDropdown === 'insights' ? 'rotated' : ''}`} />
-                          </button>
-                          {activeNavDropdown === 'insights' && (
-                            <div className={`nav-dropdown-menu ${!(hasPmfAccess || (showProjectsTab && hasProjectAccess)) ? 'align-right' : ''}`}>
-                              <div className="dropdown-main-header">{t("Insights & Recommendations")}</div>
-                              {hasPmfAccess && (
-                                <>
-                                  <div className="dropdown-section-label">{t("Basic")}</div>
-                                  <button
-                                    className={`dropdown-item ${activeTab === 'executive' ? 'active' : ''}`}
-                                    onClick={() => { handleExecutiveTabClick(); setActiveNavDropdown(null); }}
-                                  >
-                                    <LayoutDashboard size={14} />
-                                    <span>{t("Executive Summary")}</span>
-                                  </button>
-                                </>
-                              )}
-
-                              {(hasInsightAccess || hasStrategicAccess) && (
-                                <>
-                                  <div className="dropdown-section-label mt-2">{t("Advanced")}</div>
-                                  <button 
-                                    className={`dropdown-item ${activeTab === 'advanced' ? 'active' : ''}`} 
-                                    onClick={() => { handleBriefTabClick(); setActiveNavDropdown(null); }}
-                                  >
-                                    <HelpCircle size={14} />
-                                    <span>{t("Answers/Brief")}</span>
-                                  </button>
-                                </>
-                              )}
-                              {hasInsightAccess && (
-                                <button
-                                  className={`dropdown-item ${activeTab === 'insights' ? 'active' : ''}`}
-                                  onClick={() => { setActiveTab('insights'); setActiveNavDropdown(null); }}
-                                >
-                                  <TrendingUp size={14} />
-                                  <span>{t("Insights")}</span>
-                                </button>
-                              )}
-                              {hasStrategicAccess && (
-                                <button
-                                  className={`dropdown-item ${activeTab === 'strategic' ? 'active' : ''}`}
-                                  onClick={() => { setActiveTab('strategic'); setActiveNavDropdown(null); }}
-                                >
-                                  <Target size={14} />
-                                  <span>{t("STRATEGIC_LABEL") || "S.T.R.A.T.E.G.I.C."}</span>
-                                </button>
-                              )}
-                            </div>
-                          )}
+          {!isMobile && isAnalysisExpanded && (
+            <div className="desktop-expanded-analysis">
+              <div className="expanded-analysis-view">
+                <div className="desktop-tabs" ref={navDropdownRef}>
+                  <div className="desktop-tabs-main">
+                    <div className="business-header-container">
+                      <button className="back-button" onClick={handleBackFromAnalysis} aria-label="Go Back">
+                        <ArrowLeft size={18} />
+                        <span className="breadcrumb-back">{t("backToDashboard_B3") || "Back to Dashboard"}</span>
+                      </button>
+                      {selectedBusinessName && (
+                        <div className="business-breadcrumb">
+                          <span className="breadcrumb-separator">/</span>
+                          <span className="business-header-name">{selectedBusinessName}</span>
                         </div>
+                      )}
+                    </div>
 
-                        {/* Execution Dropdown */}
-                        {(hasPmfAccess || (showProjectsTab && hasProjectAccess)) && (
-                          <div className={`nav-dropdown-wrapper ${activeNavDropdown === 'execution' ? 'open' : ''}`}>
-                            <button 
-                              className={`nav-dropdown-trigger ${['priorities', 'projects', 'ranking', 'decision-logs'].includes(activeTab) ? 'active' : ''}`}
-                              onClick={() => setActiveNavDropdown(activeNavDropdown === 'execution' ? null : 'execution')}
-                            >
-                              {/* Dynamically show active tab target name or category name */}
-                              {(() => {
-                                if (activeTab === "priorities") return t("Priorities");
-                                if (activeTab === "projects" || activeTab === "ranking") {
-                                  return activeTab === "ranking" ? t("Ranking") : t("Projects");
-                                }
-                                if (activeTab === "decision-logs") return t("Decision_Logs") || "Decision Logs";
-                                return t("Execution");
-                              })()}
-                              <ChevronDown size={14} className={`chevron-icon ${activeNavDropdown === 'execution' ? 'rotated' : ''}`} />
-                            </button>
-                            {activeNavDropdown === 'execution' && (
-                              <div className="nav-dropdown-menu align-right">
-                                <div className="dropdown-main-header">{t("Execution")}</div>
-                                {hasPmfAccess && (
-                                  <button
-                                    className={`dropdown-item ${activeTab === 'priorities' ? 'active' : ''}`}
-                                    onClick={() => { handlePrioritiesTabClick(); setActiveNavDropdown(null); }}
-                                  >
-                                    <ListTodo size={14} />
-                                    <span>{t("Priorities")}</span>
-                                  </button>
-                                )}
-                                {showProjectsTab && hasProjectAccess && (
-                                  <>
-                                    <div className="dropdown-section-label">{t("Projects")}</div>
-                                    <button 
-                                      className={`dropdown-item ${activeTab === 'projects' ? 'active' : ''}`} 
-                                      onClick={() => {
-                                        useProjectStore.getState().setViewMode('projects');
-                                        setActiveTab('projects');
-                                        setActiveNavDropdown(null);
-                                      }}
-                                    >
-                                      <Briefcase size={14} />
-                                      <span>{t("Projects_View")}</span>
-                                    </button>
+                    <div className="desktop-nav-main">
+                      {/* Insights & Recommendations Dropdown */}
+                      <div className={`nav-dropdown-wrapper ${activeNavDropdown === 'insights' ? 'open' : ''}`}>
+                        <button
+                          className={`nav-dropdown-trigger ${['executive', 'advanced', 'insights', 'strategic'].includes(activeTab) ? 'active' : ''}`}
+                          onClick={() => setActiveNavDropdown(activeNavDropdown === 'insights' ? null : 'insights')}
+                        >
+                          {/* Dynamically show active tab target name or category name */}
+                          {(() => {
+                            if (activeTab === "executive") return t("Executive Summary");
+                            if (activeTab === "advanced") return t("Answers/Brief");
+                            if (activeTab === "insights") return t("Insights");
+                            if (activeTab === "strategic") return t("STRATEGIC_LABEL") || "S.T.R.A.T.E.G.I.C.";
+                            return t("Insights & Recommendations");
+                          })()}
+                          <ChevronDown size={14} className={`chevron-icon ${activeNavDropdown === 'insights' ? 'rotated' : ''}`} />
+                        </button>
+                        {activeNavDropdown === 'insights' && (
+                          <div className={`nav-dropdown-menu ${!(hasPmfAccess || (showProjectsTab && hasProjectAccess)) ? 'align-right' : ''}`}>
+                            <div className="dropdown-main-header">{t("Insights & Recommendations")}</div>
+                            {hasPmfAccess && (
+                              <>
+                                <div className="dropdown-section-label">{t("Basic")}</div>
+                                <button
+                                  className={`dropdown-item ${activeTab === 'executive' ? 'active' : ''}`}
+                                  onClick={() => { handleExecutiveTabClick(); setActiveNavDropdown(null); }}
+                                >
+                                  <LayoutDashboard size={14} />
+                                  <span>{t("Executive Summary")}</span>
+                                </button>
+                              </>
+                            )}
 
-                                    <button 
-                                      className={`dropdown-item ${activeTab === 'ranking' ? 'active' : ''}`} 
-                                      onClick={() => {
-                                        useProjectStore.getState().setViewMode('ranking');
-                                        setActiveTab('ranking');
-                                        setActiveNavDropdown(null);
-                                      }}
-                                    >
-                                      <BarChart4 size={14} />
-                                      <span>{t("Ranking")}</span>
-                                    </button>
-
-                                    <button 
-                                      className={`dropdown-item ${activeTab === 'decision-logs' ? 'active' : ''}`} 
-                                      onClick={() => {
-                                        setActiveTab('decision-logs');
-                                        setActiveNavDropdown(null);
-                                      }}
-                                    >
-                                      <FileText size={14} />
-                                      <span>{t("Decision_Logs") || "Decision Logs"}</span>
-                                    </button>
-                                  </>
-                                )}
-                              </div>
+                            {(hasInsightAccess || hasStrategicAccess) && (
+                              <>
+                                <div className="dropdown-section-label mt-2">{t("Advanced")}</div>
+                                <button
+                                  className={`dropdown-item ${activeTab === 'advanced' ? 'active' : ''}`}
+                                  onClick={() => { handleBriefTabClick(); setActiveNavDropdown(null); }}
+                                >
+                                  <HelpCircle size={14} />
+                                  <span>{t("Answers/Brief")}</span>
+                                </button>
+                              </>
+                            )}
+                            {hasInsightAccess && (
+                              <button
+                                className={`dropdown-item ${activeTab === 'insights' ? 'active' : ''}`}
+                                onClick={() => { setActiveTab('insights'); setActiveNavDropdown(null); }}
+                              >
+                                <TrendingUp size={14} />
+                                <span>{t("Insights")}</span>
+                              </button>
+                            )}
+                            {hasStrategicAccess && (
+                              <button
+                                className={`dropdown-item ${activeTab === 'strategic' ? 'active' : ''}`}
+                                onClick={() => { setActiveTab('strategic'); setActiveNavDropdown(null); }}
+                              >
+                                <Target size={14} />
+                                <span>{t("STRATEGIC_LABEL") || "S.T.R.A.T.E.G.I.C."}</span>
+                              </button>
                             )}
                           </div>
                         )}
                       </div>
-                    </div>
 
-                    <div className="desktop-tabs-buttons">
-                      {activeTab === "insights" && (
-                        <>
-                          <div ref={dropdownRef} className="dropdown-wrapper">
-                            <button className="dropdown-button" onClick={() => setShowDropdown(prev => !prev)}>
-                              <span>{selectedDropdownValue}</span>
-                              <ChevronDown size={16} className={`chevron ${showDropdown ? 'open' : ''}`} />
-                            </button>
-                            {showDropdown && (() => {
-                              const categoryOptions = getPhaseSpecificOptions(currentPhase);
-                              return Object.keys(categoryOptions).length > 0 && (
-                                <div className="dropdown-menu-options"> 
-                                  {Object.entries(categoryOptions).map(([category, items]) =>
-                                    items.length > 0 && (
-                                      <div key={category}>
-                                        <div className="dropdown-category-header">{t(category)}</div>
-                                        {items.map((item) => (
-                                          <div key={item} onClick={() => {
-                                            handleOptionClick(item);
-                                          }} className="dropdown-option dropdown-sub-option">
-                                            <span className="bullet"></span>
-                                            {t(item)}
-                                          </div>
-                                        ))}
-                                      </div>
-                                    )
-                                  )}
-                                </div>
-                              );
+                      {/* Execution Dropdown */}
+                      {(hasPmfAccess || (showProjectsTab && hasProjectAccess)) && (
+                        <div className={`nav-dropdown-wrapper ${activeNavDropdown === 'execution' ? 'open' : ''}`}>
+                          <button
+                            className={`nav-dropdown-trigger ${['priorities', 'projects', 'ranking', 'decision-logs'].includes(activeTab) ? 'active' : ''}`}
+                            onClick={() => setActiveNavDropdown(activeNavDropdown === 'execution' ? null : 'execution')}
+                          >
+                            {/* Dynamically show active tab target name or category name */}
+                            {(() => {
+                              if (activeTab === "priorities") return t("Priorities");
+                              if (activeTab === "projects" || activeTab === "ranking") {
+                                return activeTab === "ranking" ? t("Ranking") : t("Projects");
+                              }
+                              if (activeTab === "decision-logs") return t("Decision_Logs") || "Decision Logs";
+                              return t("Execution");
                             })()}
-                          </div>
+                            <ChevronDown size={14} className={`chevron-icon ${activeNavDropdown === 'execution' ? 'rotated' : ''}`} />
+                          </button>
+                          {activeNavDropdown === 'execution' && (
+                            <div className="nav-dropdown-menu align-right">
+                              <div className="dropdown-main-header">{t("Execution")}</div>
+                              {hasPmfAccess && (
+                                <button
+                                  className={`dropdown-item ${activeTab === 'priorities' ? 'active' : ''}`}
+                                  onClick={() => { handlePrioritiesTabClick(); setActiveNavDropdown(null); }}
+                                >
+                                  <ListTodo size={14} />
+                                  <span>{t("Priorities")}</span>
+                                </button>
+                              )}
+                              {showProjectsTab && hasProjectAccess && (
+                                <>
+                                  <div className="dropdown-section-label">{t("Projects")}</div>
+                                  <button
+                                    className={`dropdown-item ${activeTab === 'projects' ? 'active' : ''}`}
+                                    onClick={() => {
+                                      useProjectStore.getState().setViewMode('projects');
+                                      setActiveTab('projects');
+                                      setActiveNavDropdown(null);
+                                    }}
+                                  >
+                                    <Briefcase size={14} />
+                                    <span>{t("Projects_View")}</span>
+                                  </button>
 
-                          <CustomTooltip align="right" message={t("download_insights_tooltip") || "Export the insights into PDF report."}>
-                            <PDFExportButton
-                              className="pdf-export-button"
-                              businessName={businessData.name}
-                              onToastMessage={showToastMessage}
-                              currentPhase={currentPhase}
-                              disabled={isAnalysisRegenerating}
-                              unlockedFeatures={unlockedFeatures}
-                              fullSwotData={fullSwotData}
-                              competitiveAdvantageData={competitiveAdvantageData}
-                              expandedCapabilityData={expandedCapabilityData}
-                              strategicRadarData={strategicRadarData}
-                              productivityData={productivityData}
-                              maturityData={maturityData}
-                              profitabilityData={profitabilityData}
-                              growthTrackerData={growthTrackerData}
-                              liquidityEfficiencyData={liquidityEfficiencyData}
-                              investmentPerformanceData={investmentPerformanceData}
-                              leverageRiskData={leverageRiskData}
-                            />
-                          </CustomTooltip>
+                                  <button
+                                    className={`dropdown-item ${activeTab === 'ranking' ? 'active' : ''}`}
+                                    onClick={() => {
+                                      useProjectStore.getState().setViewMode('ranking');
+                                      setActiveTab('ranking');
+                                      setActiveNavDropdown(null);
+                                    }}
+                                  >
+                                    <BarChart4 size={14} />
+                                    <span>{t("Ranking")}</span>
+                                  </button>
 
-                          {canShowRegenerateButtons && unlockedFeatures.analysis && hasInsightAccess && (
-                            <CustomTooltip align="right" message={t("regenerate_all_tooltip") || "Re-generate all insights."}>
-                              <button
-                                onClick={() => canRegenerate && handleRegenerateAllAnalysis({ includeFinancial: hasUploadedDocument })}
-                                disabled={isAnalysisRegenerating || !unlockedFeatures.analysis || !canRegenerate || !hasInsightAccess}
-                                className={`regenerate-button ${isAnalysisRegenerating ? 'disabled' : ''}`}
-                              >
-                                {isAnalysisRegenerating ? (
-                                  <Loader size={16} className="animate-spin" />
-                                ) : (
-                                  <RefreshCw size={16} />
-                                )}
-                              </button>
-                            </CustomTooltip>
+                                  <button
+                                    className={`dropdown-item ${activeTab === 'decision-logs' ? 'active' : ''}`}
+                                    onClick={() => {
+                                      setActiveTab('decision-logs');
+                                      setActiveNavDropdown(null);
+                                    }}
+                                  >
+                                    <FileText size={14} />
+                                    <span>{t("Decision_Logs") || "Decision Logs"}</span>
+                                  </button>
+                                </>
+                              )}
+                            </div>
                           )}
-                        </>
+                        </div>
                       )}
+                    </div>
+                  </div>
 
-                      {activeTab === "strategic" && (
-                        <>
-                          {unlockedFeatures.analysis && (
-                            <CustomTooltip align="right" message={t("download_strategic_tooltip") || "Export the strategic into PDF report."}>
-                              <PDFExportButton
-                                className="pdf-export-button"
-                                businessName={businessData.name}
-                                onToastMessage={showToastMessage}
-                                disabled={isAnalysisRegenerating || isStrategicRegenerating}
-                                exportType="strategic"
-                                strategicData={strategicData}
-                              />
-                            </CustomTooltip>
-                          )}
-                          {unlockedFeatures.analysis && hasStrategicAccess && (
-                            <CustomTooltip align="right" message={t("regenerate_strategic_tooltip") || "Re-generate the S.T.R.A.T.E.G.I.C. analysis."}>
-                              <button
-                                onClick={() => canRegenerate && handleStrategicAnalysisRegenerate()}
-                                disabled={isStrategicRegenerating || isAnalysisRegenerating || !canRegenerate || !unlockedFeatures.analysis || !hasStrategicAccess}
-                                className={`regenerate-button ${isStrategicRegenerating || isAnalysisRegenerating || !unlockedFeatures.analysis ? 'disabled' : ''}`}
-                              >
-                                {isStrategicRegenerating ? (
-                                  <Loader size={16} className="animate-spin" />
-                                ) : (
-                                  <RefreshCw size={16} />
+                  <div className="desktop-tabs-buttons">
+                    {activeTab === "insights" && (
+                      <>
+                        <div ref={dropdownRef} className="dropdown-wrapper">
+                          <button className="dropdown-button" onClick={() => setShowDropdown(prev => !prev)}>
+                            <span>{selectedDropdownValue}</span>
+                            <ChevronDown size={16} className={`chevron ${showDropdown ? 'open' : ''}`} />
+                          </button>
+                          {showDropdown && (() => {
+                            const categoryOptions = getPhaseSpecificOptions(currentPhase);
+                            return Object.keys(categoryOptions).length > 0 && (
+                              <div className="dropdown-menu-options">
+                                {Object.entries(categoryOptions).map(([category, items]) =>
+                                  items.length > 0 && (
+                                    <div key={category}>
+                                      <div className="dropdown-category-header">{t(category)}</div>
+                                      {items.map((item) => (
+                                        <div key={item} onClick={() => {
+                                          handleOptionClick(item);
+                                        }} className="dropdown-option dropdown-sub-option">
+                                          <span className="bullet"></span>
+                                          {t(item)}
+                                        </div>
+                                      ))}
+                                    </div>
+                                  )
                                 )}
-                              </button>
-                            </CustomTooltip>
-                          )}
-                        </>
-                      )}
+                              </div>
+                            );
+                          })()}
+                        </div>
 
-                      {activeTab === "executive" && (
-                        <CustomTooltip align="right" message={t("download_executive_tooltip") || "Export the executive summary into PDF report."}>
+                        <CustomTooltip align="right" message={t("download_insights_tooltip") || "Export the insights into PDF report."}>
                           <PDFExportButton
                             className="pdf-export-button"
                             businessName={businessData.name}
                             onToastMessage={showToastMessage}
-                            exportType="executive"
+                            currentPhase={currentPhase}
+                            disabled={isAnalysisRegenerating}
+                            unlockedFeatures={unlockedFeatures}
+                            fullSwotData={fullSwotData}
+                            competitiveAdvantageData={competitiveAdvantageData}
+                            expandedCapabilityData={expandedCapabilityData}
+                            strategicRadarData={strategicRadarData}
+                            productivityData={productivityData}
+                            maturityData={maturityData}
+                            profitabilityData={profitabilityData}
+                            growthTrackerData={growthTrackerData}
+                            liquidityEfficiencyData={liquidityEfficiencyData}
+                            investmentPerformanceData={investmentPerformanceData}
+                            leverageRiskData={leverageRiskData}
                           />
                         </CustomTooltip>
-                      )}
-                    </div>
-                  </div>
 
-                  {isArchived && <div className="archived-overlay" />}
+                        {canShowRegenerateButtons && unlockedFeatures.analysis && hasInsightAccess && (
+                          <CustomTooltip align="right" message={t("regenerate_all_tooltip") || "Re-generate all insights."}>
+                            <button
+                              onClick={() => canRegenerate && handleRegenerateAllAnalysis({ includeFinancial: hasUploadedDocument })}
+                              disabled={isAnalysisRegenerating || !unlockedFeatures.analysis || !canRegenerate || !hasInsightAccess}
+                              className={`regenerate-button ${isAnalysisRegenerating ? 'disabled' : ''}`}
+                            >
+                              {isAnalysisRegenerating ? (
+                                <Loader size={16} className="animate-spin" />
+                              ) : (
+                                <RefreshCw size={16} />
+                              )}
+                            </button>
+                          </CustomTooltip>
+                        )}
+                      </>
+                    )}
 
-                  <div className="expanded-analysis-content">
-                    <div className="expanded-analysis-main">
-                      {hasPmfAccess && activeTab === "aha" && (
-                        <PMFInsightsTab
-                          refreshTrigger={pmfRefreshTrigger}
-                          onStartOnboarding={() => openModal('pmfOnboarding')}
-                        />
-                      )}
-                      {hasPmfAccess && activeTab === "executive" && (
-                        <ExecutiveSummary
-                          businessId={selectedBusinessId}
-                          onStartOnboarding={() => openModal('pmfOnboarding')}
-                          refreshTrigger={pmfRefreshTrigger}
-                        />
-                      )}
-                      {activeTab === "advanced" && (
-                        <div className="brief-section">
-                          <EditableBriefSection
-                            selectedBusinessId={selectedBusinessId}
-                            questions={questions}
-                            userAnswers={userAnswers}
-                            businessData={businessData}
-                            isLoading={!questionsLoaded}
-                            onBusinessDataUpdate={handleBusinessDataUpdate}
-                            onAnswerUpdate={async (questionId, newAnswer) => {
-                              handleAnswerUpdate(questionId, newAnswer);
-                              window.dispatchEvent(
-                                new CustomEvent("conversationUpdated", {
-                                  detail: { questionId, businessId: selectedBusinessId },
-                                })
-                              );
-                            }}
-                            onAnalysisRegenerate={handleRegenerateAllAnalysis}
-                            onUploadedFileUpdate={setUploadedFile}
-                            isAnalysisRegenerating={isAnalysisRegenerating}
-                            isStrategicRegenerating={isStrategicRegenerating}
-                            isFinancialRegeneratingProp={isProfitabilityAnalysisRegenerating || isGrowthTrackerRegenerating || isLiquidityEfficiencyRegenerating || isInvestmentPerformanceRegenerating || isLeverageRiskRegenerating || isTypeRegenerating('financial')}
-                            isEssentialPhaseGenerating={isFullSwotRegenerating || isCompetitiveAdvantageRegenerating || isExpandedCapabilityRegenerating || isStrategicRadarRegenerating || isProductivityRegenerating || isMaturityRegenerating || isTypeRegenerating('initial') || isTypeRegenerating('essential') || isTypeRegenerating('advanced')}
-                            highlightedMissingQuestions={highlightedMissingQuestions}
-                            onClearHighlight={() => setHighlightedMissingQuestions(null)}
-                            isLaunchedStatus={isLaunchedStatus}
-                            documentInfo={documentInfo}
-                            answerIds={answerIds}
-                            setAnswerIds={setAnswerIds}
-                            hasPmfAccess={hasPmfAccess}
-                          />
-                        </div>
-                      )}
-                      {activeTab === "insights" && hasInsightAccess &&
-                        <AnalysisContentManager
-                          phaseManager={phaseManager}
-                          apiLoadingStates={storeLoadingStates}
-                          expandedCards={expandedCards}
-                          setExpandedCards={setExpandedCards}
-                          collapsedCategories={collapsedCategories}
-                          setCollapsedCategories={setCollapsedCategories}
-                          highlightedCard={highlightedCard}
-                          selectedBusinessId={selectedBusinessId}
-                          handleRedirectToBrief={handleRedirectToBrief}
-                          showToastMessage={showToastMessage}
-                          apiService={apiService}
-                          triggerConfirmation={triggerConfirmation}
-                          canRegenerate={canShowRegenerateButtons}
-                          hasInsightAccess={hasInsightAccess}
-                          swotRef={swotRef}
-                          purchaseCriteriaRef={purchaseCriteriaRef}
-                          loyaltyNpsRef={loyaltyNpsRef}
-                          portersRef={portersRef}
-                          pestelRef={pestelRef}
-                          fullSwotRef={fullSwotRef}
-                          competitiveAdvantageRef={competitiveAdvantageRef}
-                          expandedCapabilityRef={expandedCapabilityRef}
-                          strategicRadarRef={strategicRadarRef}
-                          productivityRef={productivityRef}
-                          maturityScoreRef={maturityScoreRef}
-                          profitabilityRef={profitabilityRef}
-                          growthTrackerRef={growthTrackerRef}
-                          liquidityEfficiencyRef={liquidityEfficiencyRef}
-                          investmentPerformanceRef={investmentPerformanceRef}
-                          leverageRiskRef={leverageRiskRef}
-                          competitiveLandscapeRef={competitiveLandscapeRef}
-                          coreAdjacencyRef={coreAdjacencyRef}
-                          questionsLoaded={questionsLoaded}
-                        />}
-                      {activeTab === "strategic" && hasStrategicAccess && (
-                        <div className="strategic-section">
-                          <StrategicAnalysis
-                            onRegenerate={handleStrategicAnalysisRegenerate}
-                            isRegenerating={isTypeRegenerating('strategic') || isAnalysisRegenerating}
-                            canRegenerate={canShowRegenerateButtons && strategicData && !isAnalysisRegenerating && unlockedFeatures.analysis}
-                            selectedBusinessId={selectedBusinessId}
-                            phaseManager={phaseManager}
-                            saveAnalysisToBackend={(data, type) => apiService.saveAnalysisToBackend(data, type, selectedBusinessId)}
-                            hideDownload={false}
-                            onRedirectToBrief={handleRedirectToBrief}
-                            isExpanded={true}
-                            onKickstartProjects={() => setActiveTab("projects")}
-                            hasProjectsTab={showProjectsTab}
-                            onToastMessage={showToastMessage}
-                            hasStrategicAccess={hasStrategicAccess}
-                            questionsLoaded={questionsLoaded}
-                          />
-                        </div>
-                      )}
-                      {activeTab === "projects" && hasProjectAccess && (
-                        <ProjectsSection
-                          onProjectCountChange={handleProjectCountChange}
-                          companyAdminIds={companyAdminIds}
-                          isArchived={isArchived}
-                        />
-                      )}
-                      {activeTab === "ranking" && hasProjectAccess && (
-                        <RankingSection
-                          isArchived={isArchived}
-                          companyAdminIds={companyAdminIds}
-                          setActiveTab={setActiveTab}
-                        />
-                      )}
-                      {activeTab === "decision-logs" && hasProjectAccess && (
-                        <BusinessDecisionLogs businessId={selectedBusinessId} />
-                      )}
-                      {hasPmfAccess && activeTab === "priorities" && (
-                        <PrioritiesProjects
-                          selectedBusinessId={selectedBusinessId}
-                          companyAdminIds={companyAdminIds}
-                          onSuccess={handleKickstartSuccess}
-                          onStayOnPriorities={handleStayOnPriorities}
+                    {activeTab === "strategic" && (
+                      <>
+                        {unlockedFeatures.analysis && (
+                          <CustomTooltip align="right" message={t("download_strategic_tooltip") || "Export the strategic into PDF report."}>
+                            <PDFExportButton
+                              className="pdf-export-button"
+                              businessName={businessData.name}
+                              onToastMessage={showToastMessage}
+                              disabled={isAnalysisRegenerating || isStrategicRegenerating}
+                              exportType="strategic"
+                              strategicData={strategicData}
+                            />
+                          </CustomTooltip>
+                        )}
+                        {unlockedFeatures.analysis && hasStrategicAccess && (
+                          <CustomTooltip align="right" message={t("regenerate_strategic_tooltip") || "Re-generate the S.T.R.A.T.E.G.I.C. analysis."}>
+                            <button
+                              onClick={() => canRegenerate && handleStrategicAnalysisRegenerate()}
+                              disabled={isStrategicRegenerating || isAnalysisRegenerating || !canRegenerate || !unlockedFeatures.analysis || !hasStrategicAccess}
+                              className={`regenerate-button ${isStrategicRegenerating || isAnalysisRegenerating || !unlockedFeatures.analysis ? 'disabled' : ''}`}
+                            >
+                              {isStrategicRegenerating ? (
+                                <Loader size={16} className="animate-spin" />
+                              ) : (
+                                <RefreshCw size={16} />
+                              )}
+                            </button>
+                          </CustomTooltip>
+                        )}
+                      </>
+                    )}
+
+                    {activeTab === "executive" && (
+                      <CustomTooltip align="right" message={t("download_executive_tooltip") || "Export the executive summary into PDF report."}>
+                        <PDFExportButton
+                          className="pdf-export-button"
+                          businessName={businessData.name}
                           onToastMessage={showToastMessage}
-                          onStartOnboarding={() => openModal('pmfOnboarding')}
-                          refreshTrigger={pmfRefreshTrigger}
+                          exportType="executive"
                         />
-                      )}
-                    </div>
+                      </CustomTooltip>
+                    )}
+                  </div>
+                </div>
+
+                {isArchived && <div className="archived-overlay" />}
+
+                <div className="expanded-analysis-content">
+                  <div className="expanded-analysis-main">
+                    {hasPmfAccess && activeTab === "aha" && (
+                      <PMFInsightsTab
+                        refreshTrigger={pmfRefreshTrigger}
+                        onStartOnboarding={() => openModal('pmfOnboarding')}
+                      />
+                    )}
+                    {hasPmfAccess && activeTab === "executive" && (
+                      <ExecutiveSummary
+                        businessId={selectedBusinessId}
+                        onStartOnboarding={() => openModal('pmfOnboarding')}
+                        refreshTrigger={pmfRefreshTrigger}
+                      />
+                    )}
+                    {activeTab === "advanced" && (
+                      <div className="brief-section">
+                        <EditableBriefSection
+                          selectedBusinessId={selectedBusinessId}
+                          questions={questions}
+                          userAnswers={userAnswers}
+                          businessData={businessData}
+                          isLoading={!questionsLoaded}
+                          onBusinessDataUpdate={handleBusinessDataUpdate}
+                          onAnswerUpdate={async (questionId, newAnswer) => {
+                            handleAnswerUpdate(questionId, newAnswer);
+                            window.dispatchEvent(
+                              new CustomEvent("conversationUpdated", {
+                                detail: { questionId, businessId: selectedBusinessId },
+                              })
+                            );
+                          }}
+                          onAnalysisRegenerate={handleRegenerateAllAnalysis}
+                          onUploadedFileUpdate={setUploadedFile}
+                          isAnalysisRegenerating={isAnalysisRegenerating}
+                          isStrategicRegenerating={isStrategicRegenerating}
+                          isFinancialRegeneratingProp={isProfitabilityAnalysisRegenerating || isGrowthTrackerRegenerating || isLiquidityEfficiencyRegenerating || isInvestmentPerformanceRegenerating || isLeverageRiskRegenerating || isTypeRegenerating('financial')}
+                          isEssentialPhaseGenerating={isFullSwotRegenerating || isCompetitiveAdvantageRegenerating || isExpandedCapabilityRegenerating || isStrategicRadarRegenerating || isProductivityRegenerating || isMaturityRegenerating || isTypeRegenerating('initial') || isTypeRegenerating('essential') || isTypeRegenerating('advanced')}
+                          highlightedMissingQuestions={highlightedMissingQuestions}
+                          onClearHighlight={() => setHighlightedMissingQuestions(null)}
+                          isLaunchedStatus={isLaunchedStatus}
+                          documentInfo={documentInfo}
+                          answerIds={answerIds}
+                          setAnswerIds={setAnswerIds}
+                          hasPmfAccess={hasPmfAccess}
+                        />
+                      </div>
+                    )}
+                    {activeTab === "insights" && hasInsightAccess &&
+                      <AnalysisContentManager
+                        phaseManager={phaseManager}
+                        apiLoadingStates={storeLoadingStates}
+                        expandedCards={expandedCards}
+                        setExpandedCards={setExpandedCards}
+                        collapsedCategories={collapsedCategories}
+                        setCollapsedCategories={setCollapsedCategories}
+                        highlightedCard={highlightedCard}
+                        selectedBusinessId={selectedBusinessId}
+                        handleRedirectToBrief={handleRedirectToBrief}
+                        showToastMessage={showToastMessage}
+                        apiService={apiService}
+                        triggerConfirmation={triggerConfirmation}
+                        canRegenerate={canShowRegenerateButtons}
+                        hasInsightAccess={hasInsightAccess}
+                        swotRef={swotRef}
+                        purchaseCriteriaRef={purchaseCriteriaRef}
+                        loyaltyNpsRef={loyaltyNpsRef}
+                        portersRef={portersRef}
+                        pestelRef={pestelRef}
+                        fullSwotRef={fullSwotRef}
+                        competitiveAdvantageRef={competitiveAdvantageRef}
+                        expandedCapabilityRef={expandedCapabilityRef}
+                        strategicRadarRef={strategicRadarRef}
+                        productivityRef={productivityRef}
+                        maturityScoreRef={maturityScoreRef}
+                        profitabilityRef={profitabilityRef}
+                        growthTrackerRef={growthTrackerRef}
+                        liquidityEfficiencyRef={liquidityEfficiencyRef}
+                        investmentPerformanceRef={investmentPerformanceRef}
+                        leverageRiskRef={leverageRiskRef}
+                        competitiveLandscapeRef={competitiveLandscapeRef}
+                        coreAdjacencyRef={coreAdjacencyRef}
+                        questionsLoaded={questionsLoaded}
+                      />}
+                    {activeTab === "strategic" && hasStrategicAccess && (
+                      <div className="strategic-section">
+                        <StrategicAnalysis
+                          onRegenerate={handleStrategicAnalysisRegenerate}
+                          isRegenerating={isTypeRegenerating('strategic') || isAnalysisRegenerating}
+                          canRegenerate={canShowRegenerateButtons && strategicData && !isAnalysisRegenerating && unlockedFeatures.analysis}
+                          selectedBusinessId={selectedBusinessId}
+                          phaseManager={phaseManager}
+                          saveAnalysisToBackend={(data, type) => apiService.saveAnalysisToBackend(data, type, selectedBusinessId)}
+                          hideDownload={false}
+                          onRedirectToBrief={handleRedirectToBrief}
+                          isExpanded={true}
+                          onKickstartProjects={() => setActiveTab("projects")}
+                          hasProjectsTab={showProjectsTab}
+                          onToastMessage={showToastMessage}
+                          hasStrategicAccess={hasStrategicAccess}
+                          questionsLoaded={questionsLoaded}
+                        />
+                      </div>
+                    )}
+                    {activeTab === "projects" && hasProjectAccess && (
+                      <ProjectsSection
+                        onProjectCountChange={handleProjectCountChange}
+                        companyAdminIds={companyAdminIds}
+                        isArchived={isArchived}
+                      />
+                    )}
+                    {activeTab === "ranking" && hasProjectAccess && (
+                      <RankingSection
+                        isArchived={isArchived}
+                        companyAdminIds={companyAdminIds}
+                        setActiveTab={setActiveTab}
+                      />
+                    )}
+                    {activeTab === "decision-logs" && hasProjectAccess && (
+                      <BusinessDecisionLogs businessId={selectedBusinessId} />
+                    )}
+                    {hasPmfAccess && activeTab === "priorities" && (
+                      <PrioritiesProjects
+                        selectedBusinessId={selectedBusinessId}
+                        companyAdminIds={companyAdminIds}
+                        onSuccess={handleKickstartSuccess}
+                        onStayOnPriorities={handleStayOnPriorities}
+                        onToastMessage={showToastMessage}
+                        onStartOnboarding={() => openModal('pmfOnboarding')}
+                        refreshTrigger={pmfRefreshTrigger}
+                      />
+                    )}
                   </div>
                 </div>
               </div>
-            )}
+            </div>
+          )}
 
-            {!isMobile && !isAnalysisExpanded && (
-              <>
-                <div className="desktop-tabs">
-                    <div className="desktop-tabs-controls">
-                      <div className="nav-group-minimal">
-                        {hasPmfAccess && (
-                          <button
-                            className={`desktop-tab ${activeTab === "executive" ? "active" : ""}`}
-                            onClick={handleExecutiveTabClick}
-                          >
-                            <LayoutDashboard size={16} />
-                            <span>{t("Executive Summary")}</span>
-                          </button>
-                        )}
-                        {(hasInsightAccess || hasStrategicAccess) && (
-                          <button
-                            className={`desktop-tab ${activeTab === "advanced" ? "active" : ""}`}
-                            onClick={handleBriefTabClick}
-                          >
-                            <HelpCircle size={16} />
-                            <span>{t("Answers/Brief")}</span>
-                          </button>
-                        )}
-                        {hasInsightAccess && (
-                          <button className={`desktop-tab ${activeTab === "insights" ? "active" : ""}`} onClick={handleAnalysisTabClick}>
-                            <TrendingUp size={16} />
-                            <span>{t("Insights")}</span>
-                          </button>
-                        )}
-                        {hasStrategicAccess && (
-                          <button className={`desktop-tab ${activeTab === "strategic" ? "active" : ""}`} onClick={handleStrategicTabClick}>
-                            <Target size={16} />
-                            <span>{t("STRATEGIC_LABEL") || "S.T.R.A.T.E.G.I.C."}</span>
-                          </button>
-                        )}
-                        {hasPmfAccess && (
-                          <button
-                            className={`desktop-tab ${activeTab === "priorities" ? "active" : ""}`}
-                            onClick={handlePrioritiesTabClick}
-                          >
-                            <ListTodo size={16} />
-                            <span>{t("Priorities")}</span>
-                          </button>
-                        )}
-                        {showProjectsTab && hasProjectAccess && (
-                          <button className={`desktop-tab ${activeTab === "projects" ? "active" : ""}`} onClick={() => setActiveTab("projects")}>
-                            <Briefcase size={16} />
-                            <span>{t("Projects")}</span>
-                          </button>
-                        )}
-                        {showProjectsTab && hasProjectAccess && (
-                          <button className={`desktop-tab ${activeTab === "decision-logs" ? "active" : ""}`} onClick={() => setActiveTab("decision-logs")}>
-                            <FileText size={16} />
-                            <span>{t("Decision_Logs") || "Decision Logs"}</span>
-                          </button>
-                        )}
-                      </div>
-                  <div className="desktop-tabs-controls">
-                    <div className="nav-group-minimal">
-                      {hasPmfAccess && (
-                        <button
-                          className={`desktop-tab ${activeTab === "executive" ? "active" : ""}`}
-                          onClick={handleExecutiveTabClick}
-                        >
-                          <LayoutDashboard size={16} />
-                          <span>{t("Executive Summary")}</span>
-                        </button>
-                      )}
-                      {(hasInsightAccess || hasStrategicAccess) && (
-                        <button
-                          className={`desktop-tab ${activeTab === "advanced" ? "active" : ""}`}
-                          onClick={handleBriefTabClick}
-                        >
-                          <HelpCircle size={16} />
-                          <span>{t("Answers/Brief")}</span>
-                        </button>
-                      )}
-                      {hasInsightAccess && (
-                        <button className={`desktop-tab ${activeTab === "insights" ? "active" : ""}`} onClick={handleAnalysisTabClick}>
-                          <TrendingUp size={16} />
-                          <span>{t("Insights")}</span>
-                        </button>
-                      )}
-                      {hasStrategicAccess && (
-                        <button className={`desktop-tab ${activeTab === "strategic" ? "active" : ""}`} onClick={handleStrategicTabClick}>
-                          <Target size={16} />
-                          <span>{t("STRATEGIC_LABEL") || "S.T.R.A.T.E.G.I.C."}</span>
-                        </button>
-                      )}
-                      {hasPmfAccess && (
-                        <button
-                          className={`desktop-tab ${activeTab === "priorities" ? "active" : ""}`}
-                          onClick={handlePrioritiesTabClick}
-                        >
-                          <ListTodo size={16} />
-                          <span>{t("Priorities")}</span>
-                        </button>
-                      )}
-                      {showProjectsTab && hasProjectAccess && (
-                        <button className={`desktop-tab ${activeTab === "projects" ? "active" : ""}`} onClick={() => setActiveTab("projects")}>
-                          <Briefcase size={16} />
-                          <span>{t("Projects")}</span>
-                        </button>
-                      )}
-                    </div>
+          {!isMobile && !isAnalysisExpanded && (
+            <>
+              <div className="desktop-tabs">
+                <div className="desktop-tabs-controls">
+                  <div className="nav-group-minimal">
+                    {hasPmfAccess && (
+                      <button
+                        className={`desktop-tab ${activeTab === "executive" ? "active" : ""}`}
+                        onClick={handleExecutiveTabClick}
+                      >
+                        <LayoutDashboard size={16} />
+                        <span>{t("Executive Summary")}</span>
+                      </button>
+                    )}
+                    {(hasInsightAccess || hasStrategicAccess) && (
+                      <button
+                        className={`desktop-tab ${activeTab === "advanced" ? "active" : ""}`}
+                        onClick={handleBriefTabClick}
+                      >
+                        <HelpCircle size={16} />
+                        <span>{t("Answers/Brief")}</span>
+                      </button>
+                    )}
+                    {hasInsightAccess && (
+                      <button className={`desktop-tab ${activeTab === "insights" ? "active" : ""}`} onClick={handleAnalysisTabClick}>
+                        <TrendingUp size={16} />
+                        <span>{t("Insights")}</span>
+                      </button>
+                    )}
+                    {hasStrategicAccess && (
+                      <button className={`desktop-tab ${activeTab === "strategic" ? "active" : ""}`} onClick={handleStrategicTabClick}>
+                        <Target size={16} />
+                        <span>{t("STRATEGIC_LABEL") || "S.T.R.A.T.E.G.I.C."}</span>
+                      </button>
+                    )}
+                    {hasPmfAccess && (
+                      <button
+                        className={`desktop-tab ${activeTab === "priorities" ? "active" : ""}`}
+                        onClick={handlePrioritiesTabClick}
+                      >
+                        <ListTodo size={16} />
+                        <span>{t("Priorities")}</span>
+                      </button>
+                    )}
+                    {showProjectsTab && hasProjectAccess && (
+                      <button className={`desktop-tab ${activeTab === "projects" ? "active" : ""}`} onClick={() => setActiveTab("projects")}>
+                        <Briefcase size={16} />
+                        <span>{t("Projects")}</span>
+                      </button>
+                    )}
+                    {showProjectsTab && hasProjectAccess && (
+                      <button className={`desktop-tab ${activeTab === "decision-logs" ? "active" : ""}`} onClick={() => setActiveTab("decision-logs")}>
+                        <FileText size={16} />
+                        <span>{t("Decision_Logs") || "Decision Logs"}</span>
+                      </button>
+                    )}
                   </div>
+                </div>
 
                   {activeTab === "insights" && unlockedFeatures.analysis && (
                     <div className="desktop-tabs-buttons">
@@ -2067,7 +2020,7 @@ const BusinessSetupPage = () => {
                         {showDropdown && (() => {
                           const categoryOptions = getPhaseSpecificOptions(currentPhase);
                           return Object.keys(categoryOptions).length > 0 && (
-                            <div className="dropdown-menu-options"> 
+                            <div className="dropdown-menu-options">
                               {Object.entries(categoryOptions).map(([category, items]) =>
                                 items.length > 0 && (
                                   <div key={category}>
@@ -2106,7 +2059,7 @@ const BusinessSetupPage = () => {
                     </div>
                   )}
                 </div>
-                
+
                 {activeTab === "strategic" && unlockedFeatures.analysis && (
                   <div className="desktop-tabs-buttons">
                     {canShowRegenerateButtons && hasStrategicAccess && (
@@ -2245,127 +2198,127 @@ const BusinessSetupPage = () => {
               </>
             )}
 
-            {(!isAnalysisExpanded || isMobile) && isMobile && (
-              <div className="info-panel-content">
-                {activeTab === "advanced" && (
-                  <div className="brief-section">
-                    {!unlockedFeatures.analysis && completedQuestions.size > 0 && (
-                      <div className="unlock-hint">
-                        <h4>🔒 {t("unlockBusinessAnalysis")}</h4>
-                        <p>{t("completePhaseMessage")}</p>
-                      </div>
-                    )}
-                    <EditableBriefSection
-                      selectedBusinessId={selectedBusinessId}
-                      questions={questions}
-                      userAnswers={userAnswers}
-                      businessData={businessData}
-                      isLoading={!questionsLoaded}
-                      onBusinessDataUpdate={handleBusinessDataUpdate}
-                      onAnswerUpdate={async (questionId, newAnswer) => {
-                        handleAnswerUpdate(questionId, newAnswer);
-
-                        window.dispatchEvent(
-                          new CustomEvent('conversationUpdated', {
-                            detail: { questionId, businessId: selectedBusinessId }
-                          })
-                        );
-                      }}
-
-                      onAnalysisRegenerate={handleRegenerateAllAnalysis}
-                      onUploadedFileUpdate={setUploadedFile}
-                      isAnalysisRegenerating={isAnalysisRegenerating}
-                      isStrategicRegenerating={isStrategicRegenerating}
-                      isEssentialPhaseGenerating={isFullSwotRegenerating || isCompetitiveAdvantageRegenerating || isExpandedCapabilityRegenerating || isStrategicRadarRegenerating || isProductivityRegenerating || isMaturityRegenerating}
-                      highlightedMissingQuestions={highlightedMissingQuestions}
-                      onClearHighlight={() => setHighlightedMissingQuestions(null)}
-                      isLaunchedStatus={isLaunchedStatus}
-                      documentInfo={documentInfo}
-                      answerIds={answerIds}
-                      setAnswerIds={setAnswerIds}
-                    />
-                  </div>
-                )}
-                {hasPmfAccess && activeTab === "aha" && (
-                  <PMFInsightsTab
-                    selectedBusinessId={selectedBusinessId}
-                    refreshTrigger={pmfRefreshTrigger}
-                    onStartOnboarding={() => openModal('pmfOnboarding')}
-                  />
-                )}
-                {hasPmfAccess && activeTab === "executive" && (
-                  <ExecutiveSummary
-                    businessId={selectedBusinessId}
-                    onStartOnboarding={() => openModal('pmfOnboarding')}
-                    refreshTrigger={pmfRefreshTrigger}
-                  />
-                )}
-                {activeTab === "insights" && hasInsightAccess && (
-                  <div className="analysis-section">
-                    <div className="analysis-content">
-                        <AnalysisContentManager
-                          {...analysisProps}
-                          canRegenerate={canShowRegenerateButtons}
-                          questionsLoaded={questionsLoaded} />
+          {(!isAnalysisExpanded || isMobile) && isMobile && (
+            <div className="info-panel-content">
+              {activeTab === "advanced" && (
+                <div className="brief-section">
+                  {!unlockedFeatures.analysis && completedQuestions.size > 0 && (
+                    <div className="unlock-hint">
+                      <h4>🔒 {t("unlockBusinessAnalysis")}</h4>
+                      <p>{t("completePhaseMessage")}</p>
                     </div>
-                  </div>
-                )}
-                {activeTab === "strategic" && hasStrategicAccess && (
-                  <div className="strategic-section">
-                    <StrategicAnalysis
-                      questions={questions}
-                      userAnswers={userAnswers}
-                      businessName={businessData.name}
-                      onRegenerate={handleStrategicAnalysisRegenerate}
-                      isRegenerating={isStrategicRegenerating}
-                      canRegenerate={canShowRegenerateButtons && strategicData && !isAnalysisRegenerating && unlockedFeatures.analysis}
-                      strategicData={strategicData}
-                      selectedBusinessId={selectedBusinessId}
-                      phaseManager={phaseManager}
-                      saveAnalysisToBackend={(data, type) => apiService.saveAnalysisToBackend(data, type, selectedBusinessId)}
-                      hideDownload={false}
-                      phaseAnalysisArray={phaseAnalysisArray}
-                      onRedirectToBrief={handleRedirectToBrief}
-                      streamingManager={streamingManager}
-                      triggerConfirmation={triggerConfirmation}
-                      isExpanded={true}
-                      onKickstartProjects={() => setActiveTab("projects")}
-                      hasProjectsTab={showProjectsTab}
-                      questionsLoaded={questionsLoaded}
-                    />
-                  </div>
-                )}
-                {activeTab === "projects" && hasProjectAccess && (
-                  <ProjectsSection
-                    onProjectCountChange={handleProjectCountChange}
-                    companyAdminIds={companyAdminIds}
-                    isArchived={isArchived}
-                  />
-                )}
-                {activeTab === "ranking" && hasProjectAccess && (
-                  <RankingSection
-                    isArchived={isArchived}
-                    companyAdminIds={companyAdminIds}
-                  />
-                )}
-                {activeTab === "decision-logs" && hasProjectAccess && (
-                  <BusinessDecisionLogs businessId={selectedBusinessId} />
-                )}
-                {hasPmfAccess && activeTab === "priorities" && (
-                  <PrioritiesProjects
+                  )}
+                  <EditableBriefSection
                     selectedBusinessId={selectedBusinessId}
-                    companyAdminIds={companyAdminIds}
-                    onSuccess={handleKickstartSuccess}
-                    onStayOnPriorities={handleStayOnPriorities}
-                    onToastMessage={showToastMessage}
-                    onStartOnboarding={() => openModal('pmfOnboarding')}
-                    refreshTrigger={pmfRefreshTrigger}
+                    questions={questions}
+                    userAnswers={userAnswers}
+                    businessData={businessData}
+                    isLoading={!questionsLoaded}
+                    onBusinessDataUpdate={handleBusinessDataUpdate}
+                    onAnswerUpdate={async (questionId, newAnswer) => {
+                      handleAnswerUpdate(questionId, newAnswer);
+
+                      window.dispatchEvent(
+                        new CustomEvent('conversationUpdated', {
+                          detail: { questionId, businessId: selectedBusinessId }
+                        })
+                      );
+                    }}
+
+                    onAnalysisRegenerate={handleRegenerateAllAnalysis}
+                    onUploadedFileUpdate={setUploadedFile}
+                    isAnalysisRegenerating={isAnalysisRegenerating}
+                    isStrategicRegenerating={isStrategicRegenerating}
+                    isEssentialPhaseGenerating={isFullSwotRegenerating || isCompetitiveAdvantageRegenerating || isExpandedCapabilityRegenerating || isStrategicRadarRegenerating || isProductivityRegenerating || isMaturityRegenerating}
+                    highlightedMissingQuestions={highlightedMissingQuestions}
+                    onClearHighlight={() => setHighlightedMissingQuestions(null)}
+                    isLaunchedStatus={isLaunchedStatus}
+                    documentInfo={documentInfo}
+                    answerIds={answerIds}
+                    setAnswerIds={setAnswerIds}
                   />
-                )}
-          </div>
-        )}
+                </div>
+              )}
+              {hasPmfAccess && activeTab === "aha" && (
+                <PMFInsightsTab
+                  selectedBusinessId={selectedBusinessId}
+                  refreshTrigger={pmfRefreshTrigger}
+                  onStartOnboarding={() => openModal('pmfOnboarding')}
+                />
+              )}
+              {hasPmfAccess && activeTab === "executive" && (
+                <ExecutiveSummary
+                  businessId={selectedBusinessId}
+                  onStartOnboarding={() => openModal('pmfOnboarding')}
+                  refreshTrigger={pmfRefreshTrigger}
+                />
+              )}
+              {activeTab === "insights" && hasInsightAccess && (
+                <div className="analysis-section">
+                  <div className="analysis-content">
+                    <AnalysisContentManager
+                      {...analysisProps}
+                      canRegenerate={canShowRegenerateButtons}
+                      questionsLoaded={questionsLoaded} />
+                  </div>
+                </div>
+              )}
+              {activeTab === "strategic" && hasStrategicAccess && (
+                <div className="strategic-section">
+                  <StrategicAnalysis
+                    questions={questions}
+                    userAnswers={userAnswers}
+                    businessName={businessData.name}
+                    onRegenerate={handleStrategicAnalysisRegenerate}
+                    isRegenerating={isStrategicRegenerating}
+                    canRegenerate={canShowRegenerateButtons && strategicData && !isAnalysisRegenerating && unlockedFeatures.analysis}
+                    strategicData={strategicData}
+                    selectedBusinessId={selectedBusinessId}
+                    phaseManager={phaseManager}
+                    saveAnalysisToBackend={(data, type) => apiService.saveAnalysisToBackend(data, type, selectedBusinessId)}
+                    hideDownload={false}
+                    phaseAnalysisArray={phaseAnalysisArray}
+                    onRedirectToBrief={handleRedirectToBrief}
+                    streamingManager={streamingManager}
+                    triggerConfirmation={triggerConfirmation}
+                    isExpanded={true}
+                    onKickstartProjects={() => setActiveTab("projects")}
+                    hasProjectsTab={showProjectsTab}
+                    questionsLoaded={questionsLoaded}
+                  />
+                </div>
+              )}
+              {activeTab === "projects" && hasProjectAccess && (
+                <ProjectsSection
+                  onProjectCountChange={handleProjectCountChange}
+                  companyAdminIds={companyAdminIds}
+                  isArchived={isArchived}
+                />
+              )}
+              {activeTab === "ranking" && hasProjectAccess && (
+                <RankingSection
+                  isArchived={isArchived}
+                  companyAdminIds={companyAdminIds}
+                />
+              )}
+              {activeTab === "decision-logs" && hasProjectAccess && (
+                <BusinessDecisionLogs businessId={selectedBusinessId} />
+              )}
+              {hasPmfAccess && activeTab === "priorities" && (
+                <PrioritiesProjects
+                  selectedBusinessId={selectedBusinessId}
+                  companyAdminIds={companyAdminIds}
+                  onSuccess={handleKickstartSuccess}
+                  onStayOnPriorities={handleStayOnPriorities}
+                  onToastMessage={showToastMessage}
+                  onStartOnboarding={() => openModal('pmfOnboarding')}
+                  refreshTrigger={pmfRefreshTrigger}
+                />
+              )}
+            </div>
+          )}
+        </div>
       </div>
-    </div>
       <UpgradeModal
         show={isModalOpen('upgrade')}
         onHide={() => closeModal('upgrade')}

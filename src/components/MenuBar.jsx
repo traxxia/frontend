@@ -235,16 +235,6 @@ const MenuBar = () => {
                   </Dropdown.Item>
                 )}
 
-                {/* Decision Logs — visible to all non-super-admin users */}
-                {!isSuperAdmin && (
-                  <Dropdown.Item
-                    onClick={handleDecisionLogsClick}
-                    className={`dropdown-item-traxia ${isCurrentPage('/decision-logs') ? 'active' : ''}`}
-                  >
-                    <FileText size={16} className="me-2" />
-                    {t('Decision_Log') || 'Decision Logs'}
-                  </Dropdown.Item>
-                )}
 
                 {/* Admin Link (only for regular admins, not super admin) */}
                 {isAdmin && !isSuperAdmin && (

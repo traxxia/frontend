@@ -84,38 +84,46 @@ const BusinessDecisionLogs = ({ businessId }) => {
   const { t } = useTranslation();
   const [searchParams, setSearchParams] = useSearchParams();
 
-  // Read filter state from URL search params so links are shareable
-  const getParam = (key, fallback = "") => searchParams.get(key) || fallback;
+  // Extract primitive string values to avoid reference change loops
+  const projectIdParam = searchParams.get("project_id") || "";
+  const logTypeParam = searchParams.get("log_type") || "";
+  const executionStateParam = searchParams.get("execution_state") || "";
+  const fromParam = searchParams.get("from") || "";
+  const toParam = searchParams.get("to") || "";
+  const sortOrderParam = searchParams.get("sort_order") || "desc";
+  const pageParam = searchParams.get("page") || "1";
 
   const [selectedLog, setSelectedLog] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isError, setIsError] = useState(false);
   const [data, setData] = useState(null);
 
-  const filters = {
-    project_id: getParam("project_id"),
-    log_type: getParam("log_type"),
-    execution_state: getParam("execution_state"),
-    from: getParam("from"),
-    to: getParam("to"),
-    sort_order: getParam("sort_order", "desc"),
-  };
+  const filters = useMemo(() => ({
+    project_id: projectIdParam,
+    log_type: logTypeParam,
+    execution_state: executionStateParam,
+    from: fromParam,
+    to: toParam,
+    sort_order: sortOrderParam,
+  }), [projectIdParam, logTypeParam, executionStateParam, fromParam, toParam, sortOrderParam]);
 
-  const page = parseInt(getParam("page", "1"), 10);
+  const page = parseInt(pageParam, 10);
 
   const setFilter = useCallback(
     (key, value) => {
-      const next = new URLSearchParams(searchParams);
-      if (value) {
-        next.set(key, value);
-      } else {
-        next.delete(key);
-      }
-      // Reset to page 1 when any filter changes
-      if (key !== "page") next.set("page", "1");
-      setSearchParams(next);
+      setSearchParams((prev) => {
+        const next = new URLSearchParams(prev);
+        if (value) {
+          next.set(key, value);
+        } else {
+          next.delete(key);
+        }
+        // Reset to page 1 when any filter changes
+        if (key !== "page") next.set("page", "1");
+        return next;
+      });
     },
-    [searchParams, setSearchParams]
+    [setSearchParams]
   );
 
   const setPage = useCallback(
@@ -152,7 +160,8 @@ const BusinessDecisionLogs = ({ businessId }) => {
     fetchBusinessLogs();
   }, [fetchBusinessLogs]);
 
-  const logs = data?.logs || [];
+  // Fix ESLint warning by memoizing the logs array so it doesn't change reference when empty
+  const logs = useMemo(() => data?.logs || [], [data?.logs]);
   const total = data?.total || 0;
   const totalPages = data?.total_pages || Math.ceil(total / ITEMS_PER_PAGE) || 1;
 
