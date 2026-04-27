@@ -1,13 +1,19 @@
 import React, { useState, useMemo, useEffect, useCallback } from "react";
-import { ChevronDown, ChevronUp, CheckCircle2, AlertCircle, Info, Target, FileText, ListChecks, Loader2, Zap } from "lucide-react";
+import { ChevronDown, ChevronUp, CheckCircle2, AlertCircle, Info, Target, FileText, ListChecks, Loader2, Zap, Plus, Rocket, ArrowRight, AlertTriangle } from "lucide-react";
+import { Modal, Button, Spinner } from "react-bootstrap";
+import { useNavigate } from "react-router-dom";
 import { AnalysisApiService } from "../services/analysisApiService";
 import "../styles/executiveSummary.css";
 import { useTranslation } from "../hooks/useTranslation";
 
 import { useAuthStore } from '../store/authStore';
+import { useProjectStore } from '../store/projectStore';
+import { useUIStore } from '../store/uiStore';
+import { useAnalysisStore } from "../store/analysisStore";
 
 const ExecutiveSummary = ({ businessId, onStartOnboarding, refreshTrigger }) => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [expandedSections, setExpandedSections] = useState({
@@ -18,6 +24,20 @@ const ExecutiveSummary = ({ businessId, onStartOnboarding, refreshTrigger }) => 
   });
 
   const [ahaData, setAhaData] = useState(null);
+  const [kickstartingAdjacency, setKickstartingAdjacency] = useState(null);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [selectedAdjacency, setSelectedAdjacency] = useState(null);
+  const [kickstarting, setKickstarting] = useState(false);
+
+  const addToast = useUIStore(state => state.addToast);
+  const kickstartData = useAnalysisStore(state => state.kickstartData);
+  const fetchKickstartData = useAnalysisStore(state => state.fetchKickstartData);
+  const isAdmin = useAuthStore(state => state.isAdmin);
+  const hasCollaborators = kickstartData?.hasCollaborators ?? true;
+
+  const projects = useProjectStore(state => state.projects);
+  const fetchProjects = useProjectStore(state => state.fetchProjects);
 
   // API Service setup
   const ML_API_BASE_URL = process.env.REACT_APP_ML_BACKEND_URL;
@@ -25,10 +45,10 @@ const ExecutiveSummary = ({ businessId, onStartOnboarding, refreshTrigger }) => 
   const getAuthToken = () => useAuthStore.getState().token;
   const userRole = (
     useAuthStore.getState().userRole ||
-    useAuthStore.getState().userRole ||
     ""
   ).toLowerCase();
   const isViewer = userRole === "viewer";
+  const isCompanyAdmin = useAuthStore(state => state.userRole === 'company_admin' || state.isAdmin);
   const analysisService = useMemo(() => new AnalysisApiService(ML_API_BASE_URL, API_BASE_URL, getAuthToken), [ML_API_BASE_URL, API_BASE_URL, getAuthToken]);
 
   const fetchSummary = useCallback(async () => {
@@ -54,6 +74,12 @@ const ExecutiveSummary = ({ businessId, onStartOnboarding, refreshTrigger }) => 
 
       // Handle AHA Data
       setAhaData(ahaResult);
+
+      // Fetch kickstart data for collaborator check
+      await fetchKickstartData(businessId, false);
+      
+      // Fetch projects to check for existing ones
+      await fetchProjects(businessId);
     } catch (error) {
       console.error("Error fetching data:", error);
     } finally {
@@ -86,6 +112,59 @@ const ExecutiveSummary = ({ businessId, onStartOnboarding, refreshTrigger }) => 
       }
     }
     return rawInsights.slice(0, 4); // Limit to top 3-4
+  };
+
+  const isAlreadyProject = useCallback((adj) => {
+    if (!projects || projects.length === 0) return false;
+    const adjTitle = (adj.recommendation_basis || adj.title || adj.name || "").toLowerCase().trim();
+    return projects.some(p => (p.project_name || "").toLowerCase().trim() === adjTitle);
+  }, [projects]);
+
+  const handleCreateButtonClick = (adj, index) => {
+    if (isViewer) return;
+    setSelectedAdjacency({ ...adj, index });
+    setShowConfirmModal(true);
+  };
+
+  const confirmKickstart = async () => {
+    if (!selectedAdjacency) return;
+    
+    setKickstarting(true);
+    try {
+      const priority = {
+        title: selectedAdjacency.recommendation_basis || selectedAdjacency.title || selectedAdjacency.name,
+        actions: [{
+          action: selectedAdjacency.recommendation_basis || selectedAdjacency.title || selectedAdjacency.name,
+          details: `Targeting segments: ${Array.isArray(selectedAdjacency.segments) ? selectedAdjacency.segments.join(", ") : selectedAdjacency.segments}. Products: ${Array.isArray(selectedAdjacency.products) ? selectedAdjacency.products.join(", ") : selectedAdjacency.products}. Channels: ${Array.isArray(selectedAdjacency.channels) ? selectedAdjacency.channels.join(", ") : selectedAdjacency.channels}.`
+        }]
+      };
+      
+      await analysisService.kickstartProject({
+        businessId,
+        priority
+      });
+      
+      // Clear cache so projects page is fresh
+      useProjectStore.getState().clearCache(businessId);
+      
+      // Refetch projects to update the UI button states
+      await fetchProjects(businessId);
+      
+      setShowConfirmModal(false);
+      setShowSuccessModal(true);
+    } catch (error) {
+      console.error("Error creating project:", error);
+      addToast({ message: t("Failed to create project. Please try again."), type: "error" });
+    } finally {
+      setKickstarting(false);
+    }
+  };
+
+  const handleRedirectToProjects = () => {
+    setShowSuccessModal(false);
+    // Set view mode to projects to ensure we see the card view
+    useProjectStore.getState().setViewMode('projects');
+    navigate(`/businesspage?business=${businessId}&tab=projects`);
   };
 
   if (loading) {
@@ -324,6 +403,20 @@ const ExecutiveSummary = ({ businessId, onStartOnboarding, refreshTrigger }) => 
                       {adj.rationale && (
                         <p className="exc-content-text"><strong>{t("Rationale")}:</strong> {adj.rationale}</p>
                       )}
+                      
+                      {isCompanyAdmin && (() => {
+                        const exists = isAlreadyProject(adj);
+                        return (
+                          <button 
+                            className={`exc-create-project-btn ${exists ? 'exists' : ''}`}
+                            onClick={() => !exists && handleCreateButtonClick(adj, idx)}
+                            disabled={kickstarting || exists}
+                          >
+                            {exists ? <CheckCircle2 size={14} /> : <Plus size={14} />}
+                            <span>{exists ? t("Already in Projects") : t("Create Strategic Bet/Project")}</span>
+                          </button>
+                        );
+                      })()}
                     </div>
                   )) || <p className="exc-content-text exc-italic">{t("Analyzing potential adjacencies")}...</p>}
                 </div>
@@ -498,6 +591,122 @@ const ExecutiveSummary = ({ businessId, onStartOnboarding, refreshTrigger }) => 
             </div>
         </div>
       </div>
+
+      {/* CONFIRMATION MODAL */}
+      <Modal
+        show={showConfirmModal}
+        onHide={() => !kickstarting && setShowConfirmModal(false)}
+        centered
+        className="kickstart-confirm-modal"
+      >
+        <Modal.Body className="text-center p-4">
+          <div className="warning-icon-wrapper mb-3" style={{ 
+            width: '64px', 
+            height: '64px', 
+            backgroundColor: '#fff7ed', 
+            borderRadius: '50%', 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'center', 
+            margin: '0 auto' 
+          }}>
+            <AlertTriangle size={32} style={{ color: '#f97316' }} />
+          </div>
+          <h4 className="fw-bold mb-2">{t("Kickstart Strategic Bet?")}</h4>
+          <div className="text-muted mb-4 text-start bg-light p-3 rounded-3" style={{ fontSize: '0.9rem' }}>
+            <p className="mb-2"><strong>{t("Project Title")}:</strong> {selectedAdjacency?.recommendation_basis || selectedAdjacency?.title || selectedAdjacency?.name}</p>
+            <p className="mb-2"><strong>{t("Segments")}:</strong> {Array.isArray(selectedAdjacency?.segments) ? selectedAdjacency?.segments.join(", ") : selectedAdjacency?.segments}</p>
+            <p className="mb-0"><strong>{t("Products")}:</strong> {Array.isArray(selectedAdjacency?.products) ? selectedAdjacency?.products.join(", ") : selectedAdjacency?.products}</p>
+          </div>
+          <div className="text-muted mb-4">
+            <p>
+              {t("Are you sure you want to kickstart this adjacency and create a new project? This will trigger AI generation for project details.")}
+            </p>
+            {isAdmin && !hasCollaborators && projects.length === 0 && (
+              <p className="mb-0 small text-info fw-medium">
+                <AlertCircle size={14} className="me-1" />
+                {t("Note: You are proceeding without collaborators. You can always add them later in User Management.")}
+              </p>
+            )}
+          </div>
+          <div className="d-grid gap-2">
+            <Button
+              variant="success"
+              onClick={confirmKickstart}
+              disabled={kickstarting}
+              className="d-flex align-items-center justify-content-center gap-2 py-2 fw-semibold"
+              style={{ backgroundColor: '#10b981', border: 'none' }}
+            >
+              {kickstarting ? <Spinner size="sm" /> : null}
+              {kickstarting ? t("Kickstarting...") : t("Kickstart to Projects")}
+            </Button>
+            {!kickstarting && (
+              <>
+                {isAdmin && !hasCollaborators && projects.length === 0 && (
+                  <Button
+                    variant="outline-warning"
+                    onClick={() => navigate('/admin?tab=user_management')}
+                    className="py-2"
+                  >
+                    {t("Add Collaborators First")}
+                  </Button>
+                )}
+                <Button
+                  variant="outline-secondary"
+                  onClick={() => setShowConfirmModal(false)}
+                  className="py-2"
+                >
+                  {t("Cancel")}
+                </Button>
+              </>
+            )}
+          </div>
+        </Modal.Body>
+      </Modal>
+
+      {/* SUCCESS MODAL */}
+      <Modal
+        show={showSuccessModal}
+        onHide={() => setShowSuccessModal(false)}
+        centered
+        className="kickstart-success-modal"
+      >
+        <Modal.Body className="text-center p-4">
+          <div className="success-icon-wrapper mb-3" style={{ 
+            width: '64px', 
+            height: '64px', 
+            backgroundColor: '#f0fdf4', 
+            borderRadius: '50%', 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'center', 
+            margin: '0 auto' 
+          }}>
+            <Rocket size={32} style={{ color: '#10b981' }} />
+          </div>
+          <h4 className="fw-bold mb-2">{t("Project Kickstart Successful")}!</h4>
+          <p className="text-muted mb-4">
+            {t("A new draft project has been created in your Projects tab. You can now define its scope, metrics, and start execution.")}
+          </p>
+          <div className="d-grid gap-2">
+            <Button 
+              variant="success" 
+              onClick={handleRedirectToProjects} 
+              className="d-flex align-items-center justify-content-center gap-2 py-2 fw-semibold"
+              style={{ backgroundColor: '#10b981', border: 'none' }}
+            >
+              {t("Go to Projects")} <ArrowRight size={18} />
+            </Button>
+            <Button 
+              variant="link" 
+              onClick={() => setShowSuccessModal(false)} 
+              className="text-muted text-decoration-none"
+            >
+              {t("Stay on this page")}
+            </Button>
+          </div>
+        </Modal.Body>
+      </Modal>
     </div>
   );
 };
