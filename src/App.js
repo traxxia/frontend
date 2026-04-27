@@ -120,6 +120,7 @@ const BusinessSetupPage = React.lazy(() => import('./pages/BusinessSetupPage'));
 const SuperAdminPage = React.lazy(() => import('./pages/SuperAdminPage'));
 const Register = React.lazy(() => import('./pages/Register'));
 const AcademyPage = React.lazy(() => import('./pages/AcademyPage'));
+const AllDecisionLogs = React.lazy(() => import('./components/AllDecisionLogs'));
 
 const App = () => {
   const theme = useUIStore((state) => state.theme);
@@ -195,6 +196,16 @@ const App = () => {
               element={
                 <ProtectedRoute adminOnly={true}>
                   <SuperAdminPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/decision-logs"
+              element={
+                <ProtectedRoute>
+                  <React.Suspense fallback={null}>
+                    <AllDecisionLogs />
+                  </React.Suspense>
                 </ProtectedRoute>
               }
             />

@@ -67,6 +67,7 @@ const MenuBar = () => {
 
   // Handler for audit trail navigation
   const handleAuditTrailClick = () => navigate("/audit-trail");
+  const handleDecisionLogsClick = () => navigate("/decision-logs");
 
   return (
     <Navbar className="traxia-navbar p-0" id="main-menu-bar">
@@ -234,16 +235,6 @@ const MenuBar = () => {
                   </Dropdown.Item>
                 )}
 
-                {/* Audit Trail / Saved Analyses Link */}
-                {/* <Dropdown.Item
-                  onClick={handleAuditTrailClick}
-                  className={`dropdown-item-traxia ${
-                    isCurrentPage('/audit-trail') || isCurrentPage('/saved-analyses') ? 'active' : ''
-                  }`}
-                >
-                  <Archive size={16} className="me-2" />
-                  {t('saved_analyses') || 'Saved Analyses'}
-                </Dropdown.Item> */}
 
                 {/* Admin Link (only for regular admins, not super admin) */}
                 {isAdmin && !isSuperAdmin && (
