@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useMemo } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { Row, Col, Form, Modal, Button as RBButton } from "react-bootstrap";
 import {
@@ -89,14 +89,19 @@ const AllDecisionLogs = () => {
 
   const [selectedLog, setSelectedLog] = useState(null);
 
-  const filters = {
-    project_id: getParam("project_id"),
-    log_type: getParam("log_type"),
-    execution_state: getParam("execution_state"),
-    from: getParam("from"),
-    to: getParam("to"),
-    sort_order: getParam("sort_order", "desc"),
-  };
+  const projectIdParam = getParam("project_id");
+  const logTypeParam = getParam("log_type");
+  const stateParam = getParam("state");
+  const dateParam = getParam("date");
+  const sortOrderParam = getParam("sort_order", "desc");
+
+  const filters = useMemo(() => ({
+    project_id: projectIdParam,
+    log_type: logTypeParam,
+    state: stateParam,
+    date: dateParam,
+    sort_order: sortOrderParam,
+  }), [projectIdParam, logTypeParam, stateParam, dateParam, sortOrderParam]);
 
   const page = parseInt(getParam("page", "1"), 10);
 
@@ -124,10 +129,24 @@ const AllDecisionLogs = () => {
     setSearchParams(new URLSearchParams());
   };
 
+  const apiFilters = useMemo(() => {
+    const params = {
+      project_id: filters.project_id,
+      log_type: filters.log_type,
+      execution_state: filters.state,
+      sort_order: filters.sort_order
+    };
+    if (filters.date) {
+      params.from = filters.date;
+      params.to = filters.date;
+    }
+    return params;
+  }, [filters]);
+
   const { data, isLoading, isError, refetch } = useAllDecisionLogsQuery(
     page,
     ITEMS_PER_PAGE,
-    filters
+    apiFilters
   );
 
   const logs = data?.logs || [];
@@ -137,9 +156,8 @@ const AllDecisionLogs = () => {
   const hasActiveFilters =
     filters.project_id ||
     filters.log_type ||
-    filters.execution_state ||
-    filters.from ||
-    filters.to;
+    filters.state ||
+    filters.date;
 
   return (
     <div style={{ minHeight: "100vh", backgroundColor: "var(--bg-primary, #f8fafc)" }}>
@@ -205,27 +223,14 @@ const AllDecisionLogs = () => {
             <Col xs={12} sm={6} md={3}>
               <Form.Label className="admin-metric-label" style={{ marginBottom: "4px", fontSize: "10px" }}>
                 <Calendar size={12} style={{ marginRight: "4px" }} />
-                {t("From_Date")}
+                {t("Date")}
               </Form.Label>
               <Form.Control
                 className="role-select"
                 type="date"
                 size="sm"
-                value={filters.from}
-                onChange={(e) => setFilter("from", e.target.value)}
-              />
-            </Col>
-            <Col xs={12} sm={6} md={3}>
-              <Form.Label className="admin-metric-label" style={{ marginBottom: "4px", fontSize: "10px" }}>
-                <Calendar size={12} style={{ marginRight: "4px" }} />
-                {t("To_Date")}
-              </Form.Label>
-              <Form.Control
-                className="role-select"
-                type="date"
-                size="sm"
-                value={filters.to}
-                onChange={(e) => setFilter("to", e.target.value)}
+                value={filters.date}
+                onChange={(e) => setFilter("date", e.target.value)}
               />
             </Col>
             <Col xs={12} sm={6} md={2}>
@@ -252,8 +257,8 @@ const AllDecisionLogs = () => {
               <Form.Select
                 className="role-select"
                 size="sm"
-                value={filters.execution_state}
-                onChange={(e) => setFilter("execution_state", e.target.value)}
+                value={filters.state}
+                onChange={(e) => setFilter("state", e.target.value)}
               >
                 {EXECUTION_STATES.map((o) => (
                   <option key={o.value} value={o.value}>

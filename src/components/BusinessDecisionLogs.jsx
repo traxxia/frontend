@@ -12,6 +12,8 @@ import {
 } from "lucide-react";
 import { useTranslation } from "../hooks/useTranslation";
 import { decisionLogApiService } from "../services/decisionLogApiService";
+import { getDecisionLogActorName } from "../utils/decisionLogUtils";
+import { useProjectStore } from "../store/projectStore";
 import "../styles/AdminTableStyles.css";
 
 const LOG_TYPES = [
@@ -24,16 +26,7 @@ const LOG_TYPES = [
   { value: "project_update", label: "Project Update" },
 ];
 
-const EXECUTION_STATES = [
-  { value: "", label: "All States" },
-  { value: "Draft", label: "Draft" },
-  { value: "Active", label: "Active" },
-  { value: "At Risk", label: "At Risk" },
-  { value: "Paused", label: "Paused" },
-  { value: "Killed", label: "Killed" },
-  { value: "Completed", label: "Completed" },
-  { value: "Scaled", label: "Scaled" },
-];
+
 
 const ITEMS_PER_PAGE = 20;
 
@@ -41,6 +34,24 @@ function formatDate(dateVal) {
   if (!dateVal) return "-";
   try {
     return new Date(dateVal).toLocaleString();
+  } catch {
+    return "-";
+  }
+}
+
+function formatDateOnly(dateVal) {
+  if (!dateVal) return "-";
+  try {
+    return new Date(dateVal).toLocaleDateString();
+  } catch {
+    return "-";
+  }
+}
+
+function formatTimeOnly(dateVal) {
+  if (!dateVal) return "-";
+  try {
+    return new Date(dateVal).toLocaleTimeString();
   } catch {
     return "-";
   }
@@ -77,6 +88,28 @@ function LogTypeBadge({ logType }) {
   );
 }
 
+function renderSnapshotField(key, value) {
+  if (value === null || value === undefined) return null;
+
+  // Format the key from camelCase to Title Case
+  const formattedKey = key
+    .replace(/([A-Z])/g, ' $1')
+    .replace(/^./, str => str.toUpperCase())
+    .trim();
+
+  // Format the value based on type
+  let formattedValue = value;
+  if (typeof value === 'boolean') {
+    formattedValue = value ? 'Yes' : 'No';
+  } else if (typeof value === 'object') {
+    formattedValue = JSON.stringify(value);
+  } else if (value === '') {
+    formattedValue = '(empty)';
+  }
+
+  return { key: formattedKey, value: formattedValue };
+}
+
 const BusinessDecisionLogs = ({ businessId }) => {
   const { t } = useTranslation();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -84,27 +117,35 @@ const BusinessDecisionLogs = ({ businessId }) => {
   // Extract primitive string values to avoid reference change loops
   const projectIdParam = searchParams.get("project_id") || "";
   const logTypeParam = searchParams.get("log_type") || "";
-  const executionStateParam = searchParams.get("execution_state") || "";
-  const fromParam = searchParams.get("from") || "";
-  const toParam = searchParams.get("to") || "";
+  const stateParam = searchParams.get("state") || "";
+  const dateParam = searchParams.get("date") || "";
   const sortOrderParam = searchParams.get("sort_order") || "desc";
   const pageParam = searchParams.get("page") || "1";
 
   const [selectedLog, setSelectedLog] = useState(null);
+  const [selectedJustificationLog, setSelectedJustificationLog] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isError, setIsError] = useState(false);
   const [data, setData] = useState(null);
 
+  const fetchProjects = useProjectStore((state) => state.fetchProjects);
+  const projectsFromStore = useProjectStore((state) => state.projects);
+
   const filters = useMemo(() => ({
     project_id: projectIdParam,
     log_type: logTypeParam,
-    execution_state: executionStateParam,
-    from: fromParam,
-    to: toParam,
+    state: stateParam,
+    date: dateParam,
     sort_order: sortOrderParam,
-  }), [projectIdParam, logTypeParam, executionStateParam, fromParam, toParam, sortOrderParam]);
+  }), [projectIdParam, logTypeParam, stateParam, dateParam, sortOrderParam]);
 
   const page = parseInt(pageParam, 10);
+
+  useEffect(() => {
+    if (businessId) {
+      fetchProjects(businessId, { silent: true });
+    }
+  }, [businessId, fetchProjects]);
 
   const setFilter = useCallback(
     (key, value) => {
@@ -134,16 +175,45 @@ const BusinessDecisionLogs = ({ businessId }) => {
 
   const fetchBusinessLogs = useCallback(async () => {
     if (!businessId) return;
-    
+
     setIsLoading(true);
     setIsError(false);
-    
+
     try {
-      const response = await decisionLogApiService.getBusinessLogs(businessId, {
+      const apiParams = {
         page,
         limit: ITEMS_PER_PAGE,
-        ...filters
-      });
+        sort_order: filters.sort_order
+      };
+
+      // Only add filters if they have values
+      if (filters.project_id) {
+        apiParams.project_id = filters.project_id;
+      }
+      if (filters.log_type) {
+        apiParams.log_type = filters.log_type;
+      }
+      if (filters.state) {
+        // Send status value as-is (extracted from actual logs data)
+        apiParams.execution_state = filters.state;
+      }
+
+      // Convert date string to ISO datetime range for the entire day
+      if (filters.date) {
+        const dateObj = new Date(filters.date);
+        // Set start of day (00:00:00)
+        const fromDate = new Date(dateObj);
+        fromDate.setHours(0, 0, 0, 0);
+        // Set end of day (23:59:59)
+        const toDate = new Date(dateObj);
+        toDate.setHours(23, 59, 59, 999);
+
+        apiParams.from = fromDate.toISOString();
+        apiParams.to = toDate.toISOString();
+      }
+
+      console.log('Fetching logs with params:', apiParams);
+      const response = await decisionLogApiService.getBusinessLogs(businessId, apiParams);
       setData(response);
     } catch (error) {
       console.error('Error fetching business decision logs:', error);
@@ -165,19 +235,51 @@ const BusinessDecisionLogs = ({ businessId }) => {
   const hasActiveFilters =
     filters.project_id ||
     filters.log_type ||
-    filters.execution_state ||
-    filters.from ||
-    filters.to;
+    filters.state ||
+    filters.date;
 
   // Get unique projects for filtering
   const availableProjects = useMemo(() => {
     const projects = new Map();
+    // Add all active projects from the store
+    if (projectsFromStore && projectsFromStore.length > 0) {
+      projectsFromStore.forEach(p => {
+        if (p._id || p.id) {
+          projects.set(p._id || p.id, p.project_name || p.name);
+        }
+      });
+    }
+    // Add projects from logs (this ensures deleted projects with logs are still selectable)
     logs.forEach(log => {
       if (log.project_id && log.project_name) {
-        projects.set(log.project_id, log.project_name);
+        if (!projects.has(log.project_id)) {
+          projects.set(log.project_id, log.project_name);
+        }
       }
     });
-    return Array.from(projects.entries()).map(([id, name]) => ({ id, name }));
+    return Array.from(projects.entries())
+      .map(([id, name]) => ({ id, name }))
+      .sort((a, b) => (a.name || "").localeCompare(b.name || ""));
+  }, [logs, projectsFromStore]);
+
+  // Get unique statuses from logs for filtering
+  const availableStatuses = useMemo(() => {
+    const statuses = new Set();
+    logs.forEach(log => {
+      const status = log.execution_state || log.to_status;
+      if (status) {
+        statuses.add(status);
+      }
+    });
+    // Convert to array and map to display format
+    return Array.from(statuses)
+      .map(status => ({
+        value: status,
+        label: status
+          .replace(/_/g, " ")
+          .replace(/\b\w/g, (c) => c.toUpperCase())
+      }))
+      .sort((a, b) => a.label.localeCompare(b.label));
   }, [logs]);
 
   const refetch = useCallback(() => {
@@ -185,8 +287,8 @@ const BusinessDecisionLogs = ({ businessId }) => {
   }, [fetchBusinessLogs]);
 
   return (
-    <div style={{ minHeight: "100vh", backgroundColor: "var(--bg-primary, #f8fafc)" }}>
-      <div style={{ maxWidth: "1200px", margin: "0 auto", padding: "24px 20px" }}>
+    <div className="business-decision-logs-page" style={{ minHeight: "100vh", backgroundColor: "var(--bg-primary, #f8fafc)" }}>
+      <div className="business-decision-logs-content" style={{ maxWidth: "1200px", margin: "0 auto", padding: "24px 20px" }}>
         {/* Page Header */}
         <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "24px" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
@@ -199,6 +301,7 @@ const BusinessDecisionLogs = ({ businessId }) => {
 
         {/* Filter Bar */}
         <div
+          className="business-decision-logs-filters"
           style={{
             background: "#fff",
             border: "1px solid #e8eaf0",
@@ -255,27 +358,14 @@ const BusinessDecisionLogs = ({ businessId }) => {
             <Col xs={12} sm={6} md={2}>
               <Form.Label className="admin-metric-label" style={{ marginBottom: "4px", fontSize: "10px" }}>
                 <Calendar size={12} style={{ marginRight: "4px" }} />
-                {t("From_Date")}
+                {t("Date")}
               </Form.Label>
               <Form.Control
                 className="role-select"
                 type="date"
                 size="sm"
-                value={filters.from}
-                onChange={(e) => setFilter("from", e.target.value)}
-              />
-            </Col>
-            <Col xs={12} sm={6} md={2}>
-              <Form.Label className="admin-metric-label" style={{ marginBottom: "4px", fontSize: "10px" }}>
-                <Calendar size={12} style={{ marginRight: "4px" }} />
-                {t("To_Date")}
-              </Form.Label>
-              <Form.Control
-                className="role-select"
-                type="date"
-                size="sm"
-                value={filters.to}
-                onChange={(e) => setFilter("to", e.target.value)}
+                value={filters.date}
+                onChange={(e) => setFilter("date", e.target.value)}
               />
             </Col>
             <Col xs={12} sm={6} md={2}>
@@ -302,10 +392,11 @@ const BusinessDecisionLogs = ({ businessId }) => {
               <Form.Select
                 className="role-select"
                 size="sm"
-                value={filters.execution_state}
-                onChange={(e) => setFilter("execution_state", e.target.value)}
+                value={filters.state}
+                onChange={(e) => setFilter("state", e.target.value)}
               >
-                {EXECUTION_STATES.map((o) => (
+                <option value="">{t("All_States")}</option>
+                {availableStatuses.map((o) => (
                   <option key={o.value} value={o.value}>
                     {o.label}
                   </option>
@@ -371,8 +462,8 @@ const BusinessDecisionLogs = ({ businessId }) => {
               </h3>
             </div>
           ) : (
-            <div className="admin-table-scroll">
-              <table className="admin-data-table">
+            <div className="table-responsive admin-table-scroll">
+              <table className="table admin-data-table">
                 <thead>
                   <tr>
                     <th>{t("Date")}</th>
@@ -380,7 +471,7 @@ const BusinessDecisionLogs = ({ businessId }) => {
                     <th>{t("Log_Type")}</th>
                     <th>{t("Decision")}</th>
                     <th>{t("status")}</th>
-                    <th>{t("Actor")}</th>
+                    <th>{t("Owner")}</th>
                     <th>{t("Justification")}</th>
                     <th style={{ width: "80px" }}></th>
                   </tr>
@@ -388,46 +479,62 @@ const BusinessDecisionLogs = ({ businessId }) => {
                 <tbody>
                   {logs.map((log) => (
                     <tr key={String(log._id)}>
-                      <td>
+                      <td data-label={t("Date")}>
                         <div className="td-inner">
-                          {formatDate(log.created_at || log.changed_at)}
+                          <span title={formatTimeOnly(log.created_at || log.changed_at)}>
+                            {formatDateOnly(log.created_at || log.changed_at)}
+                          </span>
                         </div>
                       </td>
-                      <td>
-                        <div className="td-inner" style={{ maxWidth: "160px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      <td data-label={t("Project")}>
+                        <div className="td-inner business-decision-logs-project">
                           <span title={log.project_name || String(log.project_id)}>
                             {log.project_name || <span style={{ color: "#9ca3af" }}>{String(log.project_id).slice(-6)}</span>}
                           </span>
                         </div>
                       </td>
-                      <td>
+                      <td data-label={t("Log_Type")}>
                         <div className="td-inner">
                           <LogTypeBadge logType={log.log_type} />
                         </div>
                       </td>
-                      <td>
-                        <div className="td-inner" style={{ maxWidth: "160px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      <td data-label={t("Decision")}>
+                        <div className="td-inner business-decision-logs-decision">
                           <span title={log.decision}>
                             {log.decision || `${log.from_status || "-"} → ${log.to_status || "-"}`}
                           </span>
                         </div>
                       </td>
-                      <td>
+                      <td data-label={t("status")}>
                         <div className="td-inner">
                           {log.execution_state || log.to_status || "-"}
                         </div>
                       </td>
-                      <td>
-                        <div className="td-inner" style={{ maxWidth: "120px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                          {log.actor_name || "-"}
+                      <td data-label={t("Actor")}>
+                        <div
+                          className="td-inner"
+                          title={getDecisionLogActorName(log)}
+                        >
+                          {getDecisionLogActorName(log)}
                         </div>
                       </td>
-                      <td>
-                        <div className="td-inner" style={{ maxWidth: "200px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                          <span title={log.justification}>{log.justification || "-"}</span>
+                      <td data-label={t("Justification")}>
+                        <div className="td-inner">
+                          {log.justification ? (
+                            <button
+                              className="admin-table-btn"
+                              style={{ padding: "4px 8px", fontSize: "11px", height: "auto", display: "inline-flex" }}
+                              onClick={() => setSelectedJustificationLog(log)}
+                            >
+                              <FileText size={12} style={{ marginRight: "4px" }} />
+                              {t("View_Justification") || "View Justification"}
+                            </button>
+                          ) : (
+                            "-"
+                          )}
                         </div>
                       </td>
-                      <td>
+                      <td data-label={t("view")}>
                         <div className="td-inner">
                           <button
                             className="admin-primary-btn"
@@ -487,113 +594,89 @@ const BusinessDecisionLogs = ({ businessId }) => {
         </Modal.Header>
         <Modal.Body style={{ fontSize: "14px" }}>
           {selectedLog && (
-            <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-              <div className="admin-toolbar-row">
-                <div>
-                  <span className="admin-metric-label">{t("Date")}:</span>
-                  <div className="admin-cell-primary">{formatDate(selectedLog.created_at || selectedLog.changed_at)}</div>
-                </div>
-                <div>
-                  <span className="admin-metric-label">{t("Project")}:</span>
-                  <div className="admin-cell-primary">{selectedLog.project_name || String(selectedLog.project_id)}</div>
-                </div>
-              </div>
-              
-              <div className="admin-toolbar-row">
-                <div>
-                  <span className="admin-metric-label">{t("Log_Type")}:</span>
-                  <div><LogTypeBadge logType={selectedLog.log_type} /></div>
-                </div>
-                <div>
-                  <span className="admin-metric-label">{t("Execution_State")}:</span>
-                  <div className="admin-cell-primary">{selectedLog.execution_state || selectedLog.to_status || "-"}</div>
-                </div>
-              </div>
-
-              <div>
-                <span className="admin-metric-label">{t("Decision")}:</span>
-                <div className="admin-cell-primary" style={{ marginTop: "4px" }}>
-                  {selectedLog.decision || `${selectedLog.from_status || "-"} → ${selectedLog.to_status || "-"}`}
-                </div>
-              </div>
-
-              {selectedLog.assumption_state && (
-                <div>
-                  <span className="admin-metric-label">{t("Assumption_State")}:</span>
-                  <div className="admin-cell-primary">{selectedLog.assumption_state}</div>
-                </div>
-              )}
-
-              <div>
-                <span className="admin-metric-label">{t("Actor")}:</span>
-                <div className="admin-cell-primary">{selectedLog.actor_name || "-"}</div>
-              </div>
-
-              <div>
-                <span className="admin-metric-label">{t("Justification")}:</span>
-                <p
-                  style={{
-                    marginTop: "6px",
-                    padding: "12px",
-                    background: "#f8f9fc",
-                    borderRadius: "10px",
-                    border: "1px solid #f0f2f5",
-                    color: "#374151",
-                    lineHeight: "1.5",
-                    fontSize: "13px",
-                  }}
-                >
-                  {selectedLog.justification || "-"}
-                </p>
-              </div>
-
+            <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
+              {/* Before Snapshot */}
               {selectedLog.before_snapshot && Object.keys(selectedLog.before_snapshot).length > 0 && (
                 <div>
-                  <span className="admin-metric-label">{t("Before")}:</span>
-                  <div 
-                    style={{ 
-                      fontSize: "11px", 
-                      color: "#6b7280", 
-                      background: "#f3f4f6", 
-                      padding: "8px", 
-                      borderRadius: "6px",
-                      marginTop: "4px",
-                      overflowX: "auto" 
-                    }}
-                  >
-                    {JSON.stringify(selectedLog.before_snapshot, null, 2)}
+                  <h5 style={{ marginBottom: "12px", fontWeight: 600, color: "#1f2937" }}>
+                    Before
+                  </h5>
+                  <div style={{ padding: "12px", backgroundColor: "#fef2f2", borderRadius: "8px", border: "1px solid #fecaca", fontFamily: "monospace", fontSize: "13px", color: "#991b1b", whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
+                    {Object.entries(selectedLog.before_snapshot)
+                      .map(([key, value]) => `${key}: ${typeof value === 'object' ? JSON.stringify(value) : value}`)
+                      .join('\n')}
                   </div>
                 </div>
               )}
 
+              {/* After Snapshot */}
               {selectedLog.after_snapshot && Object.keys(selectedLog.after_snapshot).length > 0 && (
                 <div>
-                  <span className="admin-metric-label">{t("After")}:</span>
-                  <div 
-                    style={{ 
-                      fontSize: "11px", 
-                      color: "#6b7280", 
-                      background: "#f3f4f6", 
-                      padding: "8px", 
-                      borderRadius: "6px",
-                      marginTop: "4px",
-                      overflowX: "auto" 
-                    }}
-                  >
-                    {JSON.stringify(selectedLog.after_snapshot, null, 2)}
+                  <h5 style={{ marginBottom: "12px", fontWeight: 600, color: "#1f2937" }}>
+                    After
+                  </h5>
+                  <div style={{ padding: "12px", backgroundColor: "#f0fdf4", borderRadius: "8px", border: "1px solid #bbf7d0", fontFamily: "monospace", fontSize: "13px", color: "#166534", whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
+                    {Object.entries(selectedLog.after_snapshot)
+                      .map(([key, value]) => `${key}: ${typeof value === 'object' ? JSON.stringify(value) : value}`)
+                      .join('\n')}
                   </div>
                 </div>
               )}
+
+              {/* Empty State */}
+              {(!selectedLog.before_snapshot || Object.keys(selectedLog.before_snapshot).length === 0) &&
+                (!selectedLog.after_snapshot || Object.keys(selectedLog.after_snapshot).length === 0) && (
+                  <div style={{ textAlign: "center", padding: "20px", color: "#9ca3af" }}>
+                    <p>No changes recorded</p>
+                  </div>
+                )}
             </div>
           )}
         </Modal.Body>
         <Modal.Footer>
-          <RBButton 
-            className="admin-secondary-btn" 
-            style={{ color: "#374151 !important" }} 
+          <RBButton
+            className="admin-secondary-btn"
+            style={{ color: "#374151 !important" }}
             onClick={() => setSelectedLog(null)}
           >
             {t("close")}
+          </RBButton>
+        </Modal.Footer>
+      </Modal>
+
+      {/* Justification Modal */}
+      <Modal show={!!selectedJustificationLog} onHide={() => setSelectedJustificationLog(null)} centered>
+        <Modal.Header closeButton>
+          <Modal.Title style={{ fontSize: "16px", fontWeight: 700 }}>
+            {t("Justification") || "Justification"}
+          </Modal.Title>
+        </Modal.Header>
+        <Modal.Body style={{ fontSize: "14px" }}>
+          {selectedJustificationLog && (
+            <p
+              style={{
+                marginTop: "0",
+                padding: "16px",
+                background: "#f8f9fc",
+                borderRadius: "10px",
+                border: "1px solid #e5e7eb",
+                color: "#1f2937",
+                lineHeight: "1.6",
+                fontSize: "14px",
+                whiteSpace: "pre-wrap"
+              }}
+            >
+              {selectedJustificationLog.justification || "-"}
+            </p>
+          )}
+        </Modal.Body>
+        <Modal.Footer>
+          <RBButton
+            className="admin-secondary-btn"
+            style={{ color: "#374151 !important" }}
+            onClick={() => setSelectedJustificationLog(null)}
+          >
+            {t("close") || "Close"}
           </RBButton>
         </Modal.Footer>
       </Modal>
