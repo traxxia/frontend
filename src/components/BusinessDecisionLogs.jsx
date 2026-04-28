@@ -29,7 +29,7 @@ const LOG_TYPES = [
 
 
 
-const ITEMS_PER_PAGE = 20;
+const ITEMS_PER_PAGE = 10;
 
 function formatDate(dateVal) {
   if (!dateVal) return "-";
@@ -265,15 +265,23 @@ const BusinessDecisionLogs = ({ businessId }) => {
 
   // Get unique statuses from logs for filtering
   const availableStatuses = useMemo(() => {
-    const statuses = new Set();
+    const statusesByKey = new Map();
     logs.forEach(log => {
-      const status = log.execution_state || log.to_status;
+      const rawStatus = log.execution_state || log.to_status;
+      const status = typeof rawStatus === "string" ? rawStatus.trim() : rawStatus;
       if (status) {
-        statuses.add(status);
+        const normalizedKey = String(status)
+          .toLowerCase()
+          .replace(/[_\s]+/g, " ")
+          .trim();
+
+        if (!statusesByKey.has(normalizedKey)) {
+          statusesByKey.set(normalizedKey, status);
+        }
       }
     });
     // Convert to array and map to display format
-    return Array.from(statuses)
+    return Array.from(statusesByKey.values())
       .map(status => ({
         value: status,
         label: status
@@ -471,7 +479,6 @@ const BusinessDecisionLogs = ({ businessId }) => {
                     <th>{t("Date")}</th>
                     <th>{t("Project")}</th>
                     <th>{t("Log_Type")}</th>
-                    <th>{t("Decision")}</th>
                     <th>{t("status")}</th>
                     <th>{t("Owner")}</th>
                     <th>{t("Justification")}</th>
@@ -498,13 +505,6 @@ const BusinessDecisionLogs = ({ businessId }) => {
                       <td data-label={t("Log_Type")}>
                         <div className="td-inner">
                           <LogTypeBadge logType={log.log_type} />
-                        </div>
-                      </td>
-                      <td data-label={t("Decision")}>
-                        <div className="td-inner business-decision-logs-decision">
-                          <span title={log.decision}>
-                            {log.decision || `${log.from_status || "-"} → ${log.to_status || "-"}`}
-                          </span>
                         </div>
                       </td>
                       <td data-label={t("status")}>
