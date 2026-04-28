@@ -9,6 +9,7 @@ import {
   ChevronLeft,
   ChevronRight,
   X,
+  Folder,
 } from "lucide-react";
 import { useTranslation } from "../hooks/useTranslation";
 import { decisionLogApiService } from "../services/decisionLogApiService";
@@ -339,6 +340,7 @@ const BusinessDecisionLogs = ({ businessId }) => {
           <Row className="g-2">
             <Col xs={12} sm={6} md={2}>
               <Form.Label className="admin-metric-label" style={{ marginBottom: "4px", fontSize: "10px" }}>
+                {!filters.project_id && <Folder size={12} style={{ marginRight: "4px" }} />}
                 {t("Project")}
               </Form.Label>
               <Form.Select
@@ -357,7 +359,7 @@ const BusinessDecisionLogs = ({ businessId }) => {
             </Col>
             <Col xs={12} sm={6} md={2}>
               <Form.Label className="admin-metric-label" style={{ marginBottom: "4px", fontSize: "10px" }}>
-                <Calendar size={12} style={{ marginRight: "4px" }} />
+                {!filters.date && <Calendar size={12} style={{ marginRight: "4px" }} />}
                 {t("Date")}
               </Form.Label>
               <Form.Control
