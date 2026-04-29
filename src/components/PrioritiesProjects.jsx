@@ -145,7 +145,7 @@ const PrioritiesProjects = ({ selectedBusinessId, onSuccess, onStayOnPriorities,
     if (onSuccess) {
       onSuccess();
     } else {
-      navigate(`/projects?business_id=${selectedBusinessId}`);
+      navigate(`/businesspage?business=${selectedBusinessId}&tab=bets`);
     }
   }, [onSuccess, navigate, selectedBusinessId, clearProjectCache]);
 
@@ -368,11 +368,11 @@ const PrioritiesProjects = ({ selectedBusinessId, onSuccess, onStayOnPriorities,
           </div>
           <h4 className="fw-bold mb-2">{t("Project Kickstart Successful")}!</h4>
           <p className="text-muted mb-4">
-            {lastKickstartedCount} {t("new draft projects have been created in your Projects tab. You can now define their scope, metrics, and start execution.")}
+            {lastKickstartedCount} {t("new draft projects have been created in your Bets tab. You can now define their scope, metrics, and start execution.")}
           </p>
           <div className="d-grid gap-2">
             <Button variant="success" onClick={handleConfirmRedirect} className="d-flex align-items-center justify-content-center gap-2 py-2 fw-semibold">
-              {t("Go to Projects")} <ArrowRight size={18} />
+              {t("Go to Bets")} <ArrowRight size={18} />
             </Button>
             <Button variant="link" onClick={() => {
               setShowSuccessModal(false);
@@ -401,7 +401,7 @@ const PrioritiesProjects = ({ selectedBusinessId, onSuccess, onStayOnPriorities,
           <h4 className="fw-bold mb-2">{t("Kickstart Projects?")}</h4>
           <div className="text-muted mb-4">
             <p>
-              {t("Are you sure you want to kickstart the selected priorities and create new projects? This will trigger AI generation for project details.")}
+              {t("Are you sure you want to kickstart the selected priorities and create new bets? This will trigger AI generation for project details.")}
             </p>
             {isAdmin && !hasCollaborators && !anyProjectKickstarted && projects.length === 0 && (
               <p className="mb-0 small text-info">
@@ -417,7 +417,7 @@ const PrioritiesProjects = ({ selectedBusinessId, onSuccess, onStayOnPriorities,
               className="d-flex align-items-center justify-content-center gap-2 py-2 fw-semibold"
             >
               {kickstarting ? <Spinner size="sm" /> : null}
-              {kickstarting ? t("Kickstarting...") : t("Kickstart to Projects")}
+              {kickstarting ? t("Kickstarting...") : t("Kickstart to Bets")}
             </Button>
             {!kickstarting && (
               <>

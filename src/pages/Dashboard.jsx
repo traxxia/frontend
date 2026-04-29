@@ -561,7 +561,7 @@ const Dashboard = () => {
     let initialTab = 'advanced';
     if (limits.pmf) initialTab = 'executive';
     else if (limits.insight || limits.strategic) initialTab = 'advanced';
-    else if (limits.project) initialTab = 'projects';
+    else if (limits.project) initialTab = 'bets';
 
     navigate('/businesspage', { state: { business, initialTab } });
   }, [selectBusiness, navigate, addToast, t]);
