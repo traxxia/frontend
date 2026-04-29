@@ -268,6 +268,8 @@ export const useAnalysisStore = create((set, get) => ({
         }
       });
       
+      stateSetters.setRegenerating = (type, isRegenerating) => get().setRegenerating(type, isRegenerating);
+      
       // Include uploaded file if available in the arguments or global context
       if (userAnswers && userAnswers.uploadedFile) {
         stateSetters.uploadedFile = userAnswers.uploadedFile;
