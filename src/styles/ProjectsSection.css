@@ -2287,7 +2287,8 @@
   background-color: #1a1d23 !important;
 }
 
-/* --- PREMIUM REDESIGN STYLES --.secondary-tabs-container {
+/* --- PREMIUM REDESIGN STYLES --- */
+.secondary-tabs-container {
   display: inline-flex;
   background-color: #f1f5f9;
   padding: 4px;

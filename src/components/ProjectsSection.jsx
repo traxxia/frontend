@@ -15,7 +15,7 @@ import { useProjects } from "../hooks/useQueries";
 import { useQueryClient } from "@tanstack/react-query";
 
 
-import { Users, CheckCircle, Plus, ListOrdered, Rocket, Menu, BarChart4, ChevronDown, Check } from "lucide-react";
+import { Users, CheckCircle, Plus, ListOrdered, Rocket, Menu, BarChart4, ChevronDown, Check, List } from "lucide-react";
 import RankProjectsPanel from "../components/RankProjectsPanel";
 import TeamRankingsView from "../components/TeamRankingsView";
 import ProjectsList from "../components/ProjectsList";
@@ -795,7 +795,7 @@ const ProjectsSection = ({
             className={`secondary-tab ${activeView === "list" ? "active" : ""}`}
             onClick={() => setActiveView("list")}
           >
-            <Menu size={16} /> {t("Summary")}
+            <List size={16} /> {t("Summary")}
           </button>
           <button 
             className={`secondary-tab ${activeView === "analysis" ? "active" : ""}`}

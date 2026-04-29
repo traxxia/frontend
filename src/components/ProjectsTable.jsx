@@ -51,12 +51,39 @@ const ProjectsTable = ({
       <table className="premium-table">
         <thead>
           <tr>
+            <th className="col-selection"></th>
             <th className="col-index">#</th>
             <th className="col-bets">{t("Bets")}</th>
             <th>{t("Status")}</th>
             <th>{t("Learning State")}</th>
-            <th>
-              {t("Score")} <Info size={12} className="score-info-icon" />
+            <th className="col-score-header">
+              <div className="score-header-content">
+                {t("Score")} 
+                <div className="score-info-icon-wrapper">
+                  <Info size={12} className="score-info-icon" />
+                  <div className="score-formula-tooltip">
+                    <div className="tooltip-section">
+                      <h4 className="tooltip-title">{t("PRIORITY SCORE FORMULA")}</h4>
+                      <p className="tooltip-formula">
+                        {t("Priority")} = ({t("Impact")} × 3) - ({t("Effort")} × 2) - ({t("Risk")} × 2)
+                      </p>
+                      <p className="tooltip-note">
+                        {t("where Low = 1, Medium = 2, High / Large = 3")}
+                      </p>
+                    </div>
+                    <div className="tooltip-divider"></div>
+                    <div className="tooltip-section">
+                      <h4 className="tooltip-title">{t("NORMALIZED TO 0-10")}</h4>
+                      <p className="tooltip-formula">
+                        {t("score")} = (({t("raw")} + 9) / 14) × 10
+                      </p>
+                      <p className="tooltip-description">
+                        {t("Raw range is [-9, +5]: worst case is -9 (low impact, large effort, high risk); best case is +5 (high impact, small effort, low risk).")}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </th>
             <th>{t("Impact")}</th>
             <th>{t("Effort")}</th>
@@ -74,21 +101,21 @@ const ProjectsTable = ({
 
             return (
               <tr key={project._id}>
+                <td className="col-selection">
+                  {isAdmin && !isArchived && !isTerminal && (
+                    <input
+                      type="checkbox"
+                      checked={selectedProjectIds.includes(project._id)}
+                      onChange={() => onToggleSelection(project._id)}
+                      onClick={(e) => e.stopPropagation()}
+                    />
+                  )}
+                </td>
                 <td className="col-index">
                   <div className="index-badge">{displayRank}</div>
                 </td>
                 <td className="col-bets">
-                  <div className="d-flex align-items-center gap-2">
-                    {isAdmin && !isArchived && !isTerminal && (
-                      <input
-                        type="checkbox"
-                        checked={selectedProjectIds.includes(project._id)}
-                        onChange={() => onToggleSelection(project._id)}
-                        onClick={(e) => e.stopPropagation()}
-                      />
-                    )}
-                    <span>{project.project_name}</span>
-                  </div>
+                  <span>{project.project_name}</span>
                 </td>
                 <td>
                   <span className={`table-badge ${getStatusBadgeClass(project.status)}`}>

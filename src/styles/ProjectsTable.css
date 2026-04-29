@@ -44,6 +44,13 @@
   background-color: #fcfdfe;
 }
 
+/* Selection Column */
+.col-selection {
+  width: 40px;
+  text-align: center !important;
+  padding-right: 0 !important;
+}
+
 /* Index Column */
 .col-index {
   width: 50px;
@@ -161,8 +168,109 @@
 }
 
 /* Info Icon for Score */
+.col-score-header {
+  position: relative;
+}
+
+.score-header-content {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.score-info-icon-wrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
 .score-info-icon {
-  margin-left: 4px;
-  color: #cbd5e0;
+  color: #6366f1;
   cursor: help;
+  background: #e0e7ff;
+  border-radius: 50%;
+  padding: 1px;
+}
+
+/* Tooltip Styling */
+.score-formula-tooltip {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-top: 12px;
+  width: 320px;
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  z-index: 1000;
+  visibility: hidden;
+  opacity: 0;
+  transition: all 0.2s ease;
+  border: 1px solid #f1f5f9;
+  text-transform: none; /* Reset uppercase from th */
+  letter-spacing: normal;
+}
+
+.score-info-icon-wrapper:hover .score-formula-tooltip {
+  visibility: visible;
+  opacity: 1;
+}
+
+.tooltip-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.tooltip-title {
+  font-size: 11px;
+  font-weight: 800;
+  color: #6366f1;
+  margin: 0;
+  letter-spacing: 0.05em;
+}
+
+.tooltip-formula {
+  font-size: 14px;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 4px 0;
+  font-family: 'Inter', sans-serif;
+}
+
+.tooltip-note {
+  font-size: 12px;
+  color: #64748b;
+  margin: 0;
+  font-weight: 500;
+}
+
+.tooltip-divider {
+  height: 1px;
+  background-color: #f1f5f9;
+  margin: 16px 0;
+}
+
+.tooltip-description {
+  font-size: 12px;
+  color: #64748b;
+  line-height: 1.5;
+  margin: 0;
+  font-weight: 400;
+}
+
+/* Add a small arrow to the tooltip */
+.score-formula-tooltip::before {
+  content: '';
+  position: absolute;
+  top: -6px;
+  left: 50%;
+  transform: translateX(-50%) rotate(45deg);
+  width: 12px;
+  height: 12px;
+  background: #ffffff;
+  border-left: 1px solid #f1f5f9;
+  border-top: 1px solid #f1f5f9;
 }
