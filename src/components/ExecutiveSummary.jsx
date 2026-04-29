@@ -164,7 +164,7 @@ const ExecutiveSummary = ({ businessId, onStartOnboarding, refreshTrigger }) => 
     setShowSuccessModal(false);
     // Set view mode to projects to ensure we see the card view
     useProjectStore.getState().setViewMode('projects');
-    navigate(`/businesspage?business=${businessId}&tab=projects`);
+    navigate(`/businesspage?business=${businessId}&tab=bets`);
   };
 
   if (loading) {
@@ -413,7 +413,7 @@ const ExecutiveSummary = ({ businessId, onStartOnboarding, refreshTrigger }) => 
                             disabled={kickstarting || exists}
                           >
                             {exists ? <CheckCircle2 size={14} /> : <Plus size={14} />}
-                            <span>{exists ? t("Already in Projects") : t("Create Strategic Bet/Project")}</span>
+                            <span>{exists ? t("Already in Bets") : t("Create Strategic Bet")}</span>
                           </button>
                         );
                       })()}
@@ -638,7 +638,7 @@ const ExecutiveSummary = ({ businessId, onStartOnboarding, refreshTrigger }) => 
               style={{ backgroundColor: '#10b981', border: 'none' }}
             >
               {kickstarting ? <Spinner size="sm" /> : null}
-              {kickstarting ? t("Kickstarting...") : t("Kickstart to Projects")}
+              {kickstarting ? t("Kickstarting...") : t("Kickstart to Bets")}
             </Button>
             {!kickstarting && (
               <>
@@ -695,7 +695,7 @@ const ExecutiveSummary = ({ businessId, onStartOnboarding, refreshTrigger }) => 
               className="d-flex align-items-center justify-content-center gap-2 py-2 fw-semibold"
               style={{ backgroundColor: '#10b981', border: 'none' }}
             >
-              {t("Go to Projects")} <ArrowRight size={18} />
+              {t("Go to Bets")} <ArrowRight size={18} />
             </Button>
             <Button 
               variant="link" 

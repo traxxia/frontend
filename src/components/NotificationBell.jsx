@@ -123,7 +123,7 @@ const NotificationBell = () => {
         if (!navPath.includes('/businesspage')) {
           navPath = '/businesspage';
         }
-        navOptions = { state: { initialTab: 'projects' } };
+        navOptions = { state: { initialTab: 'bets' } };
       } else if (isRankingNotif) {
         if (!navPath.includes('/businesspage')) {
           navPath = '/businesspage';
@@ -144,7 +144,7 @@ const NotificationBell = () => {
 
         // Force specialized tabs, overriding generic backend links
         if (isStaleProject) {
-          tab = 'projects';
+          tab = 'bets';
         } else if (isRankingNotif) {
           tab = 'ranking';
         }

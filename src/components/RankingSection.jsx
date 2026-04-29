@@ -251,7 +251,7 @@ const RankingSection = ({ isArchived, companyAdminIds, setActiveTab }) => {
                     // No collaborators — switch back to projects view via navigation
                     useProjectStore.getState().setViewMode("projects");
                     if (setActiveTab) {
-                      setActiveTab("projects");
+                      setActiveTab("bets");
                     }
                   } else {
                     onToggleTeamRankings();

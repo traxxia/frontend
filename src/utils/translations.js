@@ -1303,6 +1303,8 @@ export const staticTranslations = {
     'workspaces': 'Workspaces',
     'collaborators': 'Collaborators',
     'projects': 'Projects',
+    'bets': 'Bets',
+    'Bets': 'Bets',
     'professional': 'Professional',
 
     // ========================
@@ -3130,6 +3132,8 @@ export const staticTranslations = {
     'learn_more': 'Saber más',
     'workspaces': 'Espacios de trabajo',
     'projects': 'Proyectos',
+    'bets': 'Bets',
+    'Bets': 'Bets',
     'professional': 'Profesional',
     'upgrade': 'Mejorar',
     'downgrade': 'Degradar',

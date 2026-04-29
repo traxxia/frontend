@@ -273,9 +273,9 @@ const StrategicAnalysis = ({
       }
     }
     try {
-      phaseManager?.openTab?.('projects');
-      phaseManager?.goToTab?.('projects');
-      phaseManager?.setActiveTab?.('projects');
+      phaseManager?.openTab?.('bets');
+      phaseManager?.goToTab?.('bets');
+      phaseManager?.setActiveTab?.('bets');
     } catch (e) {
     }
     setHasKickstarted(true);
