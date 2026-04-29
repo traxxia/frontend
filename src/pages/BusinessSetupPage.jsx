@@ -238,7 +238,7 @@ const BusinessSetupPage = () => {
 
   // Regenerating flag aliases
   const isAnalysisRegenerating = isTypeRegenerating('swot') || isTypeRegenerating('purchaseCriteria') || isTypeRegenerating('loyaltyNPS') || isTypeRegenerating('porters') || isTypeRegenerating('pestel') || isTypeRegenerating('initial') || isTypeRegenerating('essential') || isTypeRegenerating('advanced');
-  const isStrategicRegenerating = isTypeRegenerating('strategic') || isTypeRegenerating('initial') || isTypeRegenerating('essential') || isTypeRegenerating('advanced');
+  const isStrategicRegenerating = isTypeRegenerating('strategic');
   const isFullSwotRegenerating = isTypeRegenerating('fullSwot');
   const isCompetitiveAdvantageRegenerating = isTypeRegenerating('competitiveAdvantage');
   const isExpandedCapabilityRegenerating = isTypeRegenerating('expandedCapability');
@@ -735,28 +735,33 @@ const BusinessSetupPage = () => {
     const targetPhase = phaseOverride || getCurrentPhase();
     const skipConfirmation = options?.skipConfirmation || false;
 
-    const action = async () => {
+    const performPhaseRegeneration = async () => {
+      showToastMessage(`Regenerating ${targetPhase} phase...`, 'info');
+      const state = useAnalysisStore.getState();
+      const { questions: storeQuestions, userAnswers: storeUserAnswers, regeneratePhase: storeRegeneratePhase } = state;
+
       // Merge uploadedFile from options into userAnswers context for the store
-      const mergedAnswers = { ...userAnswers };
+      const mergedAnswers = { ...storeUserAnswers };
       if (options?.uploadedFile) {
         mergedAnswers.uploadedFile = options.uploadedFile;
       } else if (uploadedFileForAnalysis) {
         mergedAnswers.uploadedFile = uploadedFileForAnalysis;
       }
 
-      await regeneratePhase(targetPhase, questions, mergedAnswers, selectedBusinessId, showToastMessage);
-      if (alsoRegenerateStrategic && targetPhase !== 'advanced') {
+      showToastMessage(`Calling API for phase: ${targetPhase}`, 'info');
+      await storeRegeneratePhase(targetPhase, storeQuestions, mergedAnswers, selectedBusinessId, showToastMessage);
+      if (alsoRegenerateStrategic) {
         await handleStrategicAnalysisRegenerate(true);
       }
     };
 
     if (skipConfirmation) {
-      return action();
+      return performPhaseRegeneration();
     } else {
       triggerConfirmation(
         t("Regenerate Phase Analysis?"),
         t("Are you sure you want to regenerate the insights for this phase? All existing analysis data for this phase will be permanently overwritten. This action cannot be undone as version history is not maintained."),
-        action
+        performPhaseRegeneration
       );
     }
   };
@@ -779,75 +784,127 @@ const BusinessSetupPage = () => {
       Object.entries(answersMap).forEach(([qId, ans]) => setUserAnswer(qId, ans));
     },
     onCompletedPhasesUpdate: () => { },
-    onAnalysisGeneration: () => handleRegeneratePhase('initial'),
-    onFullSwotGeneration: () => handleRegeneratePhase('essential'),
-    onGoodPhaseGeneration: () => handleRegeneratePhase('good'),
-    onAdvancedPhaseGeneration: () => handleRegeneratePhase('advanced'),
+    onAnalysisGeneration: () => handleRegeneratePhase('initial', true, { skipConfirmation: true }),
+    onFullSwotGeneration: () => handleRegeneratePhase('essential', true, { skipConfirmation: true }),
+    onGoodPhaseGeneration: () => handleRegeneratePhase('good', true, { skipConfirmation: true }),
+    onAdvancedPhaseGeneration: () => handleRegeneratePhase('advanced', true, { skipConfirmation: true }),
     onAnalysisDataLoad: loadExistingAnalysisData,
     API_BASE_URL, getAuthToken, apiService, stateSetters, showToastMessage
   });
 
   const handleStrategicAnalysisRegenerate = (skipConfirmation = false) => {
-    const action = async () => {
-      if (!phaseManager.canRegenerateAnalysis()) return;
-      await regenerateIndividualAnalysis('strategic', questions, userAnswers, selectedBusinessId, showToastMessage);
+    const performStrategicRegeneration = async () => {
+      console.log("--- STRATEGIC REGENERATION START ---");
+      const state = useAnalysisStore.getState();
+      const { questions: storeQuestions, userAnswers: storeUserAnswers, regenerateIndividualAnalysis: storeRegenerateIndividual } = state;
+
+      console.log("Strategic Debug: storeUserAnswers keys count:", Object.keys(storeUserAnswers || {}).length);
+      const hasAnswers = Object.values(storeUserAnswers || {}).some(answer => answer && String(answer).trim().length > 0);
+      console.log("Strategic Debug: hasAnswers check:", hasAnswers);
+
+      if (!hasAnswers) {
+        console.warn("Strategic Debug: No answers found in store, skipping strategic regeneration.");
+        return;
+      }
+
+      console.log("Strategic Debug: Triggering storeRegenerateIndividual('strategic')...");
+      await storeRegenerateIndividual('strategic', storeQuestions, storeUserAnswers, selectedBusinessId, showToastMessage);
+      console.log("--- STRATEGIC REGENERATION END ---");
     };
 
     if (skipConfirmation) {
-      action();
+      return performStrategicRegeneration();
     } else {
       triggerConfirmation(
         t("Regenerate Strategic Analysis?"),
         t("Are you sure you want to regenerate the S.T.R.A.T.E.G.I.C. analysis? Your existing strategic insights will be permanently overwritten. This action cannot be undone as version history is not maintained."),
-        action
+        performStrategicRegeneration
       );
     }
   };
 
   const handleRegenerateAllAnalysis = (options = {}) => {
-    triggerConfirmation(
-      t("Regenerate All Analysis?"),
-      t("Are you sure you want to regenerate all insights? This will permanently overwrite all your current analysis data across all phases. This action cannot be undone as version history is not maintained."),
-      async () => {
-        if (isRegeneratingRef.current) return;
-        isRegeneratingRef.current = true;
-        try {
-          if (options?.onlyFinancial) {
-            await handleRegeneratePhase('financial', false, { ...options, skipConfirmation: true });
-            return;
-          }
-
-          const findHighestAnsweredPhase = () => {
-            // If we have specific updated questions, prioritize based on them first
-            if (options?.updatedQuestionIds && options.updatedQuestionIds.length > 0) {
-              const updatedPhases = questions
-                .filter(q => options.updatedQuestionIds.includes(q._id || q.question_id))
-                .map(q => q.phase);
-
-              if (updatedPhases.includes('advanced')) return 'advanced';
-              if (updatedPhases.includes('essential')) return 'essential';
-              if (updatedPhases.includes('initial')) return 'initial';
-            }
-
-            const phases = ['advanced', 'essential', 'initial'];
-            return phases.find(phase =>
-              questions.some(q => q.phase === phase && userAnswers[q._id]?.trim())
-            ) || 'initial';
-          };
-
-          const targetPhase = findHighestAnsweredPhase();
-
-          // Removed the 'targetPhase !== advanced' restriction to allow financial regeneration in all phases
-          if (options?.includeFinancial) {
-            await handleRegeneratePhase('financial', false, { skipConfirmation: true });
-          }
-
-          await handleRegeneratePhase(targetPhase, true, { skipConfirmation: true });
-        } finally {
-          isRegeneratingRef.current = false;
-        }
+    const performFullRegeneration = async () => {
+      console.log("--- FULL REGENERATION START ---");
+      console.log("RegenerateAll Options:", options);
+      if (isRegeneratingRef.current) {
+        showToastMessage(t('regeneration_in_progress'), 'info');
+        return;
       }
-    );
+      isRegeneratingRef.current = true;
+      try {
+        if (options?.onlyFinancial) {
+          await handleRegeneratePhase('financial', false, { ...options, skipConfirmation: true });
+          return;
+        }
+
+        // Determine which phases to regenerate.
+        // If it's a bulk "Apply All" (isBulkApply is true), we find the highest unlocked phase based on answers.
+        // If not, we respect the current active phase on the Insights page.
+        const isBulkApply = !!options?.alsoRegenerateStrategic;
+        let phasesToRegenerate = [];
+
+        if (isBulkApply) {
+          // Get the current unlocked features based on the latest answers
+          const unlockedFeatures = phaseManager.getUnlockedFeatures();
+
+          // Fallback logic: Call advanced if unlocked, else essential, else initial.
+          // Since higher phases now include all lower-phase APIs (like SWOT), calling just the highest is sufficient.
+          if (unlockedFeatures.advancedPhase) {
+            phasesToRegenerate = ['advanced'];
+          } else if (unlockedFeatures.essentialPhase) {
+            phasesToRegenerate = ['essential'];
+          } else {
+            phasesToRegenerate = ['initial'];
+          }
+        } else if (options?.onlyFinancial) {
+          phasesToRegenerate = [];
+        } else {
+          phasesToRegenerate = [currentPhase];
+        }
+
+        console.log(`RegenerateAll: Target phases: ${phasesToRegenerate.join(', ')} (Bulk Apply: ${isBulkApply}, Advanced Unlocked: ${unlockedFeatures.advancedPhase})`);
+
+        const regenerationPromises = [];
+
+        for (const phase of phasesToRegenerate) {
+          console.log(`RegenerateAll: Queuing ${phase} phase regeneration...`);
+          regenerationPromises.push(handleRegeneratePhase(phase, false, { skipConfirmation: true }));
+        }
+
+        // Include financial insights ONLY if explicitly requested or if it's a financial-only update
+        if (options?.includeFinancial === true || options?.onlyFinancial === true) {
+          console.log("RegenerateAll: Queuing financial phase regeneration.");
+          regenerationPromises.push(handleRegeneratePhase('financial', false, { ...options, skipConfirmation: true }));
+        }
+
+        // Finally, regenerate strategic analysis if requested (e.g. for "Apply All")
+        if (options?.alsoRegenerateStrategic) {
+          console.log("RegenerateAll: Queuing Strategic Analysis regeneration.");
+          regenerationPromises.push(handleStrategicAnalysisRegenerate(true));
+        }
+
+        await Promise.all(regenerationPromises);
+        console.log("RegenerateAll: All queued regenerations have completed.");
+
+        showToastMessage(t('regeneration_completed'), 'success');
+      } catch (err) {
+        console.error('Error in handleRegenerateAllAnalysis:', err);
+        showToastMessage(t('failed_to_regenerate_analysis'), 'error');
+      } finally {
+        isRegeneratingRef.current = false;
+      }
+    };
+
+    if (options?.skipConfirmation) {
+      return performFullRegeneration();
+    } else {
+      triggerConfirmation(
+        t("Regenerate All Analysis?"),
+        t("Are you sure you want to regenerate all insights? This will permanently overwrite all your current analysis data across all phases. This action cannot be undone as version history is not maintained."),
+        performFullRegeneration
+      );
+    }
   };
 
 
@@ -1332,14 +1389,7 @@ const BusinessSetupPage = () => {
                   {canShowRegenerateButtons && unlockedFeatures.analysis && hasInsightAccess && (
                     <CustomTooltip align="right" message={t("regenerate_all_tooltip") || "Re-generate all insights."}>
                       <button
-                        onClick={() => {
-                          if (!canRegenerate) return;
-                          triggerConfirmation(
-                            t("confirm_regeneration_all_title"),
-                            t("confirm_regeneration_all_message"),
-                            () => handleRegenerateAllAnalysis({ includeFinancial: hasUploadedDocument })
-                          );
-                        }}
+                        onClick={() => canRegenerate && handleRegenerateAllAnalysis({ includeFinancial: hasUploadedDocument })}
                         disabled={isAnalysisRegenerating || !unlockedFeatures.analysis || !canRegenerate || !hasInsightAccess}
                         className={`regenerate-button ${isAnalysisRegenerating ? 'disabled' : ''}`}
                       >
@@ -1896,12 +1946,18 @@ const BusinessSetupPage = () => {
                         competitiveLandscapeRef={competitiveLandscapeRef}
                         coreAdjacencyRef={coreAdjacencyRef}
                         questionsLoaded={questionsLoaded}
+                        isAnalysisRegenerating={isAnalysisRegenerating}
+                        isStrategicRegenerating={isStrategicRegenerating}
                       />}
                     {activeTab === "strategic" && hasStrategicAccess && (
                       <div className="strategic-section">
                         <StrategicAnalysis
                           onRegenerate={handleStrategicAnalysisRegenerate}
-                          isRegenerating={isTypeRegenerating('strategic') || isAnalysisRegenerating}
+                          isRegenerating={(() => {
+                            const isStrReg = isTypeRegenerating('strategic');
+                            console.log("BusinessSetupPage Debug: passing isRegenerating to StrategicAnalysis:", isStrReg);
+                            return isStrReg;
+                          })()}
                           canRegenerate={canShowRegenerateButtons && strategicData && !isAnalysisRegenerating && unlockedFeatures.analysis}
                           selectedBusinessId={selectedBusinessId}
                           phaseManager={phaseManager}
@@ -1913,6 +1969,8 @@ const BusinessSetupPage = () => {
                           hasProjectsTab={showProjectsTab}
                           onToastMessage={showToastMessage}
                           hasStrategicAccess={hasStrategicAccess}
+                          isAnalysisRegenerating={isAnalysisRegenerating}
+                          isStrategicRegenerating={isStrategicRegenerating}
                           questionsLoaded={questionsLoaded}
                         />
                       </div>
@@ -2010,66 +2068,45 @@ const BusinessSetupPage = () => {
                   </div>
                 </div>
 
-                  {activeTab === "insights" && unlockedFeatures.analysis && (
-                    <div className="desktop-tabs-buttons">
-                      <div ref={dropdownRef} className="dropdown-wrapper">
-                        <button className="dropdown-button" onClick={() => setShowDropdown(prev => !prev)}>
-                          <span>{selectedDropdownValue}</span>
-                          <ChevronDown size={16} className={`chevron ${showDropdown ? 'open' : ''}`} />
-                        </button>
-                        {showDropdown && (() => {
-                          const categoryOptions = getPhaseSpecificOptions(currentPhase);
-                          return Object.keys(categoryOptions).length > 0 && (
-                            <div className="dropdown-menu-options">
-                              {Object.entries(categoryOptions).map(([category, items]) =>
-                                items.length > 0 && (
-                                  <div key={category}>
-                                    <div className="dropdown-category-header">{t(category)}</div>
-                                    {items.map((item) => (
-                                      <div key={item} onClick={() => {
-                                        handleOptionClick(item);
-                                      }} className="dropdown-option dropdown-sub-option">
-                                        <span className="bullet"></span>
-                                        {t(item)}
-                                      </div>
-                                    ))}
-                                  </div>
-                                )
-                              )}
-                            </div>
-                          );
-                        })()}
-                      </div>
-
-                      {canShowRegenerateButtons && unlockedFeatures.analysis && hasInsightAccess && (
-                        <CustomTooltip align="right" message={t("regenerate_all_tooltip") || "Re-generate all insights."}>
-                          <button
-                            onClick={() => canRegenerate && handleRegenerateAllAnalysis({ includeFinancial: hasUploadedDocument })}
-                            disabled={isAnalysisRegenerating || !unlockedFeatures.analysis || !canRegenerate || !hasInsightAccess}
-                            className={`regenerate-button ${isAnalysisRegenerating ? 'disabled' : ''}`}
-                          >
-                            {isAnalysisRegenerating ? (
-                              <Loader size={16} className="animate-spin" />
-                            ) : (
-                              <RefreshCw size={16} />
-                            )}
-                          </button>
-                        </CustomTooltip>
-                      )}
-                    </div>
-                  )}
-                </div>
-
-                {activeTab === "strategic" && unlockedFeatures.analysis && (
+                {activeTab === "insights" && unlockedFeatures.analysis && (
                   <div className="desktop-tabs-buttons">
-                    {canShowRegenerateButtons && hasStrategicAccess && (
-                      <CustomTooltip align="right" message={t("regenerate_strategic_tooltip") || "Re-generate the S.T.R.A.T.E.G.I.C. analysis."}>
+                    <div ref={dropdownRef} className="dropdown-wrapper">
+                      <button className="dropdown-button" onClick={() => setShowDropdown(prev => !prev)}>
+                        <span>{selectedDropdownValue}</span>
+                        <ChevronDown size={16} className={`chevron ${showDropdown ? 'open' : ''}`} />
+                      </button>
+                      {showDropdown && (() => {
+                        const categoryOptions = getPhaseSpecificOptions(currentPhase);
+                        return Object.keys(categoryOptions).length > 0 && (
+                          <div className="dropdown-menu-options">
+                            {Object.entries(categoryOptions).map(([category, items]) =>
+                              items.length > 0 && (
+                                <div key={category}>
+                                  <div className="dropdown-category-header">{t(category)}</div>
+                                  {items.map((item) => (
+                                    <div key={item} onClick={() => {
+                                      handleOptionClick(item);
+                                    }} className="dropdown-option dropdown-sub-option">
+                                      <span className="bullet"></span>
+                                      {t(item)}
+                                    </div>
+                                  ))}
+                                </div>
+                              )
+                            )}
+                          </div>
+                        );
+                      })()}
+                    </div>
+
+                    {canShowRegenerateButtons && unlockedFeatures.analysis && hasInsightAccess && (
+                      <CustomTooltip align="right" message={t("regenerate_all_tooltip") || "Re-generate all insights."}>
                         <button
-                          onClick={() => canRegenerate && handleStrategicAnalysisRegenerate()}
-                          disabled={isStrategicRegenerating || isAnalysisRegenerating || !canRegenerate || !unlockedFeatures.analysis || !hasStrategicAccess}
-                          className={`regenerate-button ${isStrategicRegenerating || isAnalysisRegenerating || !unlockedFeatures.analysis ? 'disabled' : ''}`}
+                          onClick={() => canRegenerate && handleRegenerateAllAnalysis({ includeFinancial: hasUploadedDocument })}
+                          disabled={isAnalysisRegenerating || !unlockedFeatures.analysis || !canRegenerate || !hasInsightAccess}
+                          className={`regenerate-button ${isAnalysisRegenerating ? 'disabled' : ''}`}
                         >
-                          {isStrategicRegenerating ? (
+                          {isAnalysisRegenerating ? (
                             <Loader size={16} className="animate-spin" />
                           ) : (
                             <RefreshCw size={16} />
@@ -2079,124 +2116,147 @@ const BusinessSetupPage = () => {
                     )}
                   </div>
                 )}
+              </div>
 
-                <div className="info-panel-content">
-                  {activeTab === "advanced" && (
-                    <div className="brief-section">
-                      {!unlockedFeatures.analysis && completedQuestions.size > 0 && (
-                        <div className="unlock-hint">
-                          <h4>🔒 {t("unlockBusinessAnalysis")}</h4>
-                          <p>{t("completePhaseMessage")}</p>
-                        </div>
-                      )}
-                      <EditableBriefSection
-                        selectedBusinessId={selectedBusinessId}
-                        questions={questions}
-                        userAnswers={userAnswers}
-                        businessData={businessData}
-                        isLoading={!questionsLoaded}
-                        onBusinessDataUpdate={handleBusinessDataUpdate}
-                        onAnswerUpdate={async (questionId, newAnswer) => {
-                          handleAnswerUpdate(questionId, newAnswer);
-                          window.dispatchEvent(
-                            new CustomEvent("conversationUpdated", {
-                              detail: { questionId, businessId: selectedBusinessId },
-                            })
-                          );
-                        }}
-
-
-
-                        onAnalysisRegenerate={handleRegenerateAllAnalysis}
-                        onUploadedFileUpdate={setUploadedFile}
-                        isAnalysisRegenerating={isAnalysisRegenerating}
-                        isStrategicRegenerating={isStrategicRegenerating}
-                        isEssentialPhaseGenerating={isFullSwotRegenerating || isCompetitiveAdvantageRegenerating || isExpandedCapabilityRegenerating || isStrategicRadarRegenerating || isProductivityRegenerating || isMaturityRegenerating}
-                        highlightedMissingQuestions={highlightedMissingQuestions}
-                        onClearHighlight={() => setHighlightedMissingQuestions(null)}
-                        isLaunchedStatus={isLaunchedStatus}
-                        documentInfo={documentInfo}
-                        answerIds={answerIds}
-                        setAnswerIds={setAnswerIds}
-                      />
-                    </div>
-                  )}
-                  {activeTab === "aha" && (
-                    <PMFInsightsTab
-                      selectedBusinessId={selectedBusinessId}
-                      refreshTrigger={pmfRefreshTrigger}
-                      onStartOnboarding={() => openModal('pmfOnboarding')}
-                    />
-                  )}
-                  {hasPmfAccess && activeTab === "executive" && (
-                    <ExecutiveSummary
-                      businessId={selectedBusinessId}
-                      onStartOnboarding={() => openModal('pmfOnboarding')}
-                      refreshTrigger={pmfRefreshTrigger}
-                    />
-                  )}
-                  {activeTab === "insights" && hasInsightAccess && (
-                    <div className="analysis-section">
-                      <div className="analysis-content">
-                        <AnalysisContentManager
-                          {...analysisProps}
-                          canRegenerate={canShowRegenerateButtons}
-                          questionsLoaded={questionsLoaded} />
-                      </div>
-                    </div>
-                  )}
-                  {activeTab === "strategic" && hasStrategicAccess && (
-                    <div className="strategic-section">
-                      <StrategicAnalysis
-                        questions={questions}
-                        userAnswers={userAnswers}
-                        businessName={businessData.name}
-                        onRegenerate={handleStrategicAnalysisRegenerate}
-                        isRegenerating={isStrategicRegenerating || isAnalysisRegenerating}
-                        canRegenerate={canShowRegenerateButtons && strategicData && !isAnalysisRegenerating && unlockedFeatures.analysis}
-                        strategicData={strategicData}
-                        selectedBusinessId={selectedBusinessId}
-                        phaseManager={phaseManager}
-                        saveAnalysisToBackend={(data, type) => apiService.saveAnalysisToBackend(data, type, selectedBusinessId)}
-                        hideDownload={false}
-                        phaseAnalysisArray={phaseAnalysisArray}
-                        onRedirectToBrief={handleRedirectToBrief}
-                        streamingManager={streamingManager}
-                        triggerConfirmation={triggerConfirmation}
-                        isExpanded={true}
-                        hasProjectsTab={showProjectsTab}
-                        questionsLoaded={questionsLoaded}
-                      />
-                    </div>
-                  )}
-                  {activeTab === "projects" && hasProjectAccess && (
-                    <div className="projects-container">
-                      <ProjectsSection
-                        onProjectCountChange={handleProjectCountChange}
-                        companyAdminIds={companyAdminIds}
-                        isArchived={isArchived}
-                      />
-                    </div>
-                  )}
-                  {activeTab === "decision-logs" && hasProjectAccess && (
-                    <div className="decision-logs-container">
-                      <BusinessDecisionLogs businessId={selectedBusinessId} />
-                    </div>
-                  )}
-                  {hasPmfAccess && activeTab === "priorities" && (
-                    <PrioritiesProjects
-                      selectedBusinessId={selectedBusinessId}
-                      companyAdminIds={companyAdminIds}
-                      onSuccess={handleKickstartSuccess}
-                      onStayOnPriorities={handleStayOnPriorities}
-                      onToastMessage={showToastMessage}
-                      onStartOnboarding={() => openModal('pmfOnboarding')}
-                      refreshTrigger={pmfRefreshTrigger}
-                    />
+              {activeTab === "strategic" && unlockedFeatures.analysis && (
+                <div className="desktop-tabs-buttons">
+                  {canShowRegenerateButtons && hasStrategicAccess && (
+                    <CustomTooltip align="right" message={t("regenerate_strategic_tooltip") || "Re-generate the S.T.R.A.T.E.G.I.C. analysis."}>
+                      <button
+                        onClick={() => canRegenerate && handleStrategicAnalysisRegenerate()}
+                        disabled={isStrategicRegenerating || isAnalysisRegenerating || !canRegenerate || !unlockedFeatures.analysis || !hasStrategicAccess}
+                        className={`regenerate-button ${isStrategicRegenerating || isAnalysisRegenerating || !unlockedFeatures.analysis ? 'disabled' : ''}`}
+                      >
+                        {isStrategicRegenerating ? (
+                          <Loader size={16} className="animate-spin" />
+                        ) : (
+                          <RefreshCw size={16} />
+                        )}
+                      </button>
+                    </CustomTooltip>
                   )}
                 </div>
-              </>
-            )}
+              )}
+
+              <div className="info-panel-content">
+                {activeTab === "advanced" && (
+                  <div className="brief-section">
+                    {!unlockedFeatures.analysis && completedQuestions.size > 0 && (
+                      <div className="unlock-hint">
+                        <h4>🔒 {t("unlockBusinessAnalysis")}</h4>
+                        <p>{t("completePhaseMessage")}</p>
+                      </div>
+                    )}
+                    <EditableBriefSection
+                      selectedBusinessId={selectedBusinessId}
+                      questions={questions}
+                      userAnswers={userAnswers}
+                      businessData={businessData}
+                      isLoading={!questionsLoaded}
+                      onBusinessDataUpdate={handleBusinessDataUpdate}
+                      onAnswerUpdate={async (questionId, newAnswer) => {
+                        handleAnswerUpdate(questionId, newAnswer);
+                        window.dispatchEvent(
+                          new CustomEvent("conversationUpdated", {
+                            detail: { questionId, businessId: selectedBusinessId },
+                          })
+                        );
+                      }}
+
+
+
+                      onAnalysisRegenerate={handleRegenerateAllAnalysis}
+                      onUploadedFileUpdate={setUploadedFile}
+                      isAnalysisRegenerating={isAnalysisRegenerating}
+                      isStrategicRegenerating={isStrategicRegenerating}
+                      isEssentialPhaseGenerating={isFullSwotRegenerating || isCompetitiveAdvantageRegenerating || isExpandedCapabilityRegenerating || isStrategicRadarRegenerating || isProductivityRegenerating || isMaturityRegenerating}
+                      highlightedMissingQuestions={highlightedMissingQuestions}
+                      onClearHighlight={() => setHighlightedMissingQuestions(null)}
+                      isLaunchedStatus={isLaunchedStatus}
+                      documentInfo={documentInfo}
+                      answerIds={answerIds}
+                      setAnswerIds={setAnswerIds}
+                    />
+                  </div>
+                )}
+                {activeTab === "aha" && (
+                  <PMFInsightsTab
+                    selectedBusinessId={selectedBusinessId}
+                    refreshTrigger={pmfRefreshTrigger}
+                    onStartOnboarding={() => openModal('pmfOnboarding')}
+                  />
+                )}
+                {hasPmfAccess && activeTab === "executive" && (
+                  <ExecutiveSummary
+                    businessId={selectedBusinessId}
+                    onStartOnboarding={() => openModal('pmfOnboarding')}
+                    refreshTrigger={pmfRefreshTrigger}
+                  />
+                )}
+                {activeTab === "insights" && hasInsightAccess && (
+                  <div className="analysis-section">
+                    <div className="analysis-content">
+                      <AnalysisContentManager
+                        {...analysisProps}
+                        canRegenerate={canShowRegenerateButtons}
+                        questionsLoaded={questionsLoaded} />
+                    </div>
+                  </div>
+                )}
+                {activeTab === "strategic" && hasStrategicAccess && (
+                  <div className="strategic-section">
+                    <StrategicAnalysis
+                      questions={questions}
+                      userAnswers={userAnswers}
+                      businessName={businessData.name}
+                      onRegenerate={handleStrategicAnalysisRegenerate}
+                      isRegenerating={isStrategicRegenerating}
+                      canRegenerate={canShowRegenerateButtons && strategicData && !isAnalysisRegenerating && unlockedFeatures.analysis}
+                      strategicData={strategicData}
+                      selectedBusinessId={selectedBusinessId}
+                      phaseManager={phaseManager}
+                      saveAnalysisToBackend={(data, type) => apiService.saveAnalysisToBackend(data, type, selectedBusinessId)}
+                      hideDownload={false}
+                      phaseAnalysisArray={phaseAnalysisArray}
+                      onRedirectToBrief={handleRedirectToBrief}
+                      streamingManager={streamingManager}
+                      triggerConfirmation={triggerConfirmation}
+                      isExpanded={true}
+                      hasProjectsTab={showProjectsTab}
+                      isAnalysisRegenerating={isAnalysisRegenerating}
+                      isStrategicRegenerating={isStrategicRegenerating}
+                      questionsLoaded={questionsLoaded}
+                    />
+                  </div>
+                )}
+                {activeTab === "projects" && hasProjectAccess && (
+                  <div className="projects-container">
+                    <ProjectsSection
+                      onProjectCountChange={handleProjectCountChange}
+                      companyAdminIds={companyAdminIds}
+                      isArchived={isArchived}
+                    />
+                  </div>
+                )}
+                {activeTab === "decision-logs" && hasProjectAccess && (
+                  <div className="decision-logs-container">
+                    <BusinessDecisionLogs businessId={selectedBusinessId} />
+                  </div>
+                )}
+                {hasPmfAccess && activeTab === "priorities" && (
+                  <PrioritiesProjects
+                    selectedBusinessId={selectedBusinessId}
+                    companyAdminIds={companyAdminIds}
+                    onSuccess={handleKickstartSuccess}
+                    onStayOnPriorities={handleStayOnPriorities}
+                    onToastMessage={showToastMessage}
+                    onStartOnboarding={() => openModal('pmfOnboarding')}
+                    refreshTrigger={pmfRefreshTrigger}
+                  />
+                )}
+              </div>
+            </>
+          )}
 
           {(!isAnalysisExpanded || isMobile) && isMobile && (
             <div className="info-panel-content">
@@ -2285,6 +2345,8 @@ const BusinessSetupPage = () => {
                     onKickstartProjects={() => setActiveTab("projects")}
                     hasProjectsTab={showProjectsTab}
                     questionsLoaded={questionsLoaded}
+                    isAnalysisRegenerating={isAnalysisRegenerating}
+                    isStrategicRegenerating={isStrategicRegenerating}
                   />
                 </div>
               )}
