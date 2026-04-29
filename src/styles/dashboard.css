@@ -147,8 +147,8 @@
     border-radius: 16px;
     border: 1px solid #e5e7eb;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-    overflow: hidden;
     margin: 0 20px 40px 20px;
+    position: relative;
   }
 
   .businesses-header {
@@ -157,6 +157,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
+    border-radius: 16px 16px 0 0;
   }
 
   .businesses-header h2 {
@@ -220,6 +221,7 @@
     display: flex;
     align-items: center;
     padding: 10px 12px;
+    gap: 12px;
     border-radius: 8px;
     cursor: pointer;
     transition: background-color 0.2s;
@@ -234,7 +236,6 @@
     height: 18px;
     border: 2px solid #d1d5db;
     border-radius: 4px;
-    margin-right: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -280,6 +281,7 @@
   .businesses-table-wrapper {
     width: 100%;
     overflow-x: auto;
+    border-radius: 0 0 16px 16px;
   }
 
   .businesses-table {
@@ -602,9 +604,7 @@
 
     /* Hide less important columns on very small screens */
     @media (max-width: 600px) {
-      .date-cell, .th-date {
-        display: none;
-      }
+
       
       .businesses-table {
         min-width: 0;
@@ -617,6 +617,11 @@
       .state-badge {
         padding: 4px 10px;
         font-size: 10px;
+      }
+
+      .status-dropdown {
+        left: 0;
+        right: auto;
       }
     }
   }

@@ -644,7 +644,7 @@ const Dashboard = () => {
                 </div>
               ) : (
                 <div className="businesses-container">
-                  <div className="businesses-header d-flex justify-content-between align-items-center">
+                  <div className="businesses-header d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-3">
                     <h2>{t('your_businesses_all_states') || "YOUR BUSINESSES — ALL STATES"}</h2>
                     
                     <div className="status-filter-wrapper">
@@ -687,7 +687,7 @@ const Dashboard = () => {
                         <tr>
                           <th>{t('business_column') || "BUSINESS"}</th>
                           <th>{t('state_column') || "STATE"}</th>
-                          <th>{t('date_of_creation_column') || "DATE OF CREATION"}</th>
+                          <th className="th-date">{t('date_of_creation_column') || "DATE OF CREATION"}</th>
                           <th>{t('active_bets_column') || "# BETS"}</th>
                           <th>{t('collaborators_column') || "# COLLABORATORS"}</th>
                           <th>{t('action_column') || "ACTION"}</th>

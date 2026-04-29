@@ -1,10 +1,12 @@
 /* ProjectsTable.css */
 
 .projects-table-container {
-  background: #ffffff;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
-  overflow: visible;
-  border: 1px solid #f0f0f0;
+  background: transparent;
+  box-shadow: none;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border: none;
+  width: 100%;
 }
 
 .premium-table {
@@ -24,6 +26,16 @@
   text-transform: uppercase;
   letter-spacing: 0.05em;
   border-bottom: 1px solid #edf2f7;
+}
+
+.premium-table th:first-child,
+.premium-table td:first-child {
+  padding-left: 32px;
+}
+
+.premium-table th:last-child,
+.premium-table td:last-child {
+  padding-right: 32px;
 }
 
 .premium-table td {
@@ -123,21 +135,21 @@
 }
 
 .badge-testing {
-  background-color: #ebf8ff;
-  color: #3182ce;
-  border: 1px solid #bee3f8;
+  background-color: #e0f2fe;
+  color: #0369a1;
+  border: 1px solid #0ea5e940;
 }
 
 .badge-invalidated {
-  background-color: #edf2f7;
-  color: #4a5568;
-  border: 1px solid #e2e8f0;
+  background-color: #e5e7eb;
+  color: #4b5563;
+  border: 1px solid #6b728033;
 }
 
 .badge-validated {
-  background-color: #f0fff4;
-  color: #38a169;
-  border: 1px solid #c6f6d5;
+  background-color: #dcfce7;
+  color: #166534;
+  border: 1px solid #10b98140;
 }
 
 /* Score Column */
@@ -298,9 +310,9 @@
 }
 
 .tooltip-title {
-  font-size: 11px;
+  font-size: 11px !important;
   font-weight: 700;
-  color: #6366f1;
+  color: #4f46e5 !important;
   margin: 0;
   letter-spacing: 0.05em;
 }
@@ -349,4 +361,69 @@
   background: #ffffff;
   border-left: 1px solid #f1f5f9;
   border-top: 1px solid #f1f5f9;
+}
+
+/* Responsive Table Styles */
+@media (max-width: 1024px) {
+  .projects-table-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    border-radius: 8px;
+    background: #ffffff;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+    margin-bottom: 20px;
+    width: 100%;
+    position: relative;
+  }
+
+  .premium-table {
+    min-width: 1100px; /* Ensure table is wide enough to be readable with scroll */
+    width: 100%;
+  }
+
+  /* Add a subtle indicator that the table is scrollable */
+  .projects-table-container::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 30px;
+    background: linear-gradient(to right, transparent, rgba(255,255,255,0.8));
+    pointer-events: none;
+    opacity: 0.5;
+  }
+}
+
+@media (max-width: 768px) {
+  .premium-table th, 
+  .premium-table td {
+    padding: 12px 10px;
+    font-size: 13px;
+  }
+
+  .col-bets {
+    min-width: 200px;
+  }
+
+  .table-badge {
+    padding: 2px 8px;
+    font-size: 10px;
+  }
+
+  .pill-attribute {
+    min-width: 55px;
+    padding: 3px 6px;
+    font-size: 9px;
+  }
+
+  .premium-table th:first-child,
+  .premium-table td:first-child {
+    padding-left: 16px;
+  }
+
+  .premium-table th:last-child,
+  .premium-table td:last-child {
+    padding-right: 16px;
+  }
 }

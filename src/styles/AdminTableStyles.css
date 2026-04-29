@@ -452,76 +452,47 @@
     }
 
     .business-decision-logs-page .admin-table-scroll {
-        overflow-x: visible;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        display: block;
+        width: 100%;
     }
 
     .business-decision-logs-page .admin-data-table {
-        min-width: 0;
-        width: 100%;
+        display: table !important; /* Force table display */
+        min-width: 900px; /* Ensure it's wide enough to scroll */
         border-spacing: 0;
     }
 
     .business-decision-logs-page .admin-data-table thead {
-        display: none;
-    }
-
-    .business-decision-logs-page .admin-data-table,
-    .business-decision-logs-page .admin-data-table tbody,
-    .business-decision-logs-page .admin-data-table tr,
-    .business-decision-logs-page .admin-data-table td {
-        display: block;
+        display: table-header-group !important;
     }
 
     .business-decision-logs-page .admin-data-table tbody {
-        padding: 0.75rem;
+        display: table-row-group !important;
     }
 
-    .business-decision-logs-page .admin-data-table tbody tr {
-        border: 1px solid #e8eaf0;
-        border-radius: 10px;
-        background: #ffffff;
-        margin-bottom: 0.75rem;
-        overflow: hidden;
-    }
-
-    .business-decision-logs-page .admin-data-table tbody tr:last-child {
+    .business-decision-logs-page .admin-data-table tr {
+        display: table-row !important;
+        border: none;
+        background: transparent;
         margin-bottom: 0;
     }
 
     .business-decision-logs-page .admin-data-table td {
-        display: grid;
-        grid-template-columns: minmax(92px, 38%) minmax(0, 1fr);
-        gap: 0.75rem;
-        padding: 0.7rem 0.85rem;
+        display: table-cell !important;
+        padding: 0.75rem 0.5rem;
         border-bottom: 1px solid #f0f2f5;
-        word-break: normal;
+        text-align: left !important;
     }
 
     .business-decision-logs-page .admin-data-table td::before {
-        content: attr(data-label);
-        color: #6b7280;
-        font-size: 0.68rem;
-        font-weight: 700;
-        letter-spacing: 0.025em;
-        line-height: 1.4;
-        text-transform: uppercase;
-    }
-
-    .business-decision-logs-page .admin-data-table td:last-child {
-        border-bottom: none;
+        display: none !important; /* Hide the data-label headers */
     }
 
     .business-decision-logs-page .admin-data-table td .td-inner {
-        justify-content: flex-end;
-        min-width: 0;
-        text-align: right;
-    }
-
-    .business-decision-logs-page .business-decision-logs-project,
-    .business-decision-logs-page .business-decision-logs-decision,
-    .business-decision-logs-page td[data-label="Actor"] .td-inner {
-        max-width: none;
-        white-space: normal;
+        justify-content: flex-start;
+        text-align: left;
     }
 
     .business-decision-logs-page .admin-table-btn,

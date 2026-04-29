@@ -148,7 +148,7 @@ const MenuBar = () => {
               </Dropdown.Toggle>
               <Dropdown.Menu align="end" className="traxia-dropdown">
                 <Dropdown.Header className="pt-3 pb-3 px-3 mb-2 bg-light">
-                  <div className="d-flex flex-column gap-3">
+                  <div className="d-flex flex-column gap-2">
 
                     {/* User Name */}
                     <div className="d-flex align-items-center">
@@ -156,8 +156,8 @@ const MenuBar = () => {
                         <User size={16} style={{ color: '#4338ca' }} />
                       </div>
                       <div className="d-flex flex-column">
-                        <span className="text-uppercase text-muted fw-bold" style={{ fontSize: "0.6rem", letterSpacing: "0.5px" }}>User Name</span>
-                        <span className="fw-semibold text-secondary" style={{ fontSize: "0.85rem", lineHeight: "1.2" }}>{userName}</span>
+                        <span className="text-uppercase text-muted fw-bold" style={{ fontSize: "10px", letterSpacing: "0.5px" }}>User Name</span>
+                        <span className="fw-semibold text-secondary" style={{ fontSize: "11px", lineHeight: "1.2" }}>{userName}</span>
                       </div>
                     </div>
 
@@ -168,8 +168,8 @@ const MenuBar = () => {
                           <Briefcase size={16} style={{ color: '#4338ca' }} />
                         </div>
                         <div className="d-flex flex-column">
-                          <span className="text-uppercase text-muted fw-bold" style={{ fontSize: "0.6rem", letterSpacing: "0.5px" }}>Role</span>
-                          <span className="fw-semibold text-secondary" style={{ fontSize: "0.85rem", lineHeight: "1.2" }}>
+                          <span className="text-uppercase text-muted fw-bold" style={{ fontSize: "10px", letterSpacing: "0.5px" }}>Role</span>
+                          <span className="fw-semibold text-secondary" style={{ fontSize: "11px", lineHeight: "1.2" }}>
                             {userRole.replace("_", " ").replace(/\b\w/g, (l) => l.toUpperCase())}
                           </span>
                         </div>
@@ -183,8 +183,8 @@ const MenuBar = () => {
                           <Building size={16} style={{ color: '#4338ca' }} />
                         </div>
                         <div className="d-flex flex-column">
-                          <span className="text-uppercase text-muted fw-bold" style={{ fontSize: "0.6rem", letterSpacing: "0.5px" }}>Company</span>
-                          <span className="fw-semibold text-secondary" style={{ fontSize: "0.85rem", lineHeight: "1.2" }}>{companyName}</span>
+                          <span className="text-uppercase text-muted fw-bold" style={{ fontSize: "10px", letterSpacing: "0.5px" }}>Company</span>
+                          <span className="fw-semibold text-secondary" style={{ fontSize: "11px", lineHeight: "1.2" }}>{companyName}</span>
                         </div>
                       </div>
                     )}
