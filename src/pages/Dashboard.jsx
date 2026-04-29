@@ -652,7 +652,7 @@ const Dashboard = () => {
                         className="status-filter-btn"
                         onClick={() => setIsFilterOpen(!isFilterOpen)}
                       >
-                        <span className="filter-label">STATUS</span>
+                        <span className="filter-label">STATE</span>
                         <span className="filter-value">
                           {statusFilter.length === 4 ? 'All' : (statusFilter.length === 1 ? statusFilter[0] : 'Multiple')} · {filteredBusinesses.length}
                         </span>
@@ -688,7 +688,7 @@ const Dashboard = () => {
                           <th>{t('business_column') || "BUSINESS"}</th>
                           <th>{t('state_column') || "STATE"}</th>
                           <th>{t('date_of_creation_column') || "DATE OF CREATION"}</th>
-                          <th>{t('active_bets_column') || "ACTIVE BETS"}</th>
+                          <th>{t('active_bets_column') || "# BETS"}</th>
                           <th>{t('collaborators_column') || "# COLLABORATORS"}</th>
                           <th>{t('action_column') || "ACTION"}</th>
                         </tr>
