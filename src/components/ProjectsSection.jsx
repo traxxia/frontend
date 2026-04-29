@@ -654,9 +654,10 @@ const ProjectsSection = ({
 
       const statusChanged = oldStatus !== newStatus;
       const learningStateChanged = oldLearningState !== newLearningState;
+      const isProjectLaunched = (currentProject.launch_status || "").toLowerCase() === "launched";
 
-      // If either status or learning state changed, show justification modal
-      if (statusChanged || learningStateChanged) {
+      // If either status or learning state changed, show justification modal (Only for Launched projects)
+      if (isProjectLaunched && (statusChanged || learningStateChanged)) {
         const changes = [];
         if (statusChanged) {
           changes.push({

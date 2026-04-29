@@ -123,15 +123,15 @@
 }
 
 .badge-completed {
-  background-color: #ebf8ff;
-  color: #4299e1;
-  border: 1px solid #bee3f8;
+  background-color: #c7dced;
+  color: #158ced;
+  border: 1px solid #50a2e6;
 }
 
 .badge-scaled {
-  background-color: #faf5ff;
-  color: #9f7aea;
-  border: 1px solid #e9d8fd;
+  background-color: #ddd0f7;
+  color: #482c82;
+  border: 1px solid #b8a7db;
 }
 
 .badge-testing {

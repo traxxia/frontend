@@ -772,6 +772,10 @@ const ProjectForm = ({
       else if (errors.keyAssumptions_0) scrollToError(keyAssumptionsRefs[0]);
       else if (errors.keyAssumptions_1) scrollToError(keyAssumptionsRefs[1]);
       else if (errors.keyAssumptions_2) scrollToError(keyAssumptionsRefs[2]);
+      else if (errors.learningState) {
+        // We don't have a direct ref for learningState SelectField but we can scroll to the status area
+        scrollToError(statusRef);
+      }
       else if (errors.reviewCadence) {
         // We don't have a ref for cadence, but let's scroll to the status area which is nearby
         scrollToError(statusRef);
@@ -1203,6 +1207,12 @@ const ProjectForm = ({
                 onChange={(val) => {
                   setLearningState(val);
                   handleFieldEdit("learning_state");
+                  if (showErrors) {
+                    setFieldErrors(prev => ({
+                      ...prev,
+                      learningState: val ? null : t("Learning state is required")
+                    }));
+                  }
                 }}
                 open={openDropdown === "learning_state"}
                 setOpen={() => setOpenDropdown(openDropdown === "learning_state" ? null : "learning_state")}
@@ -1210,6 +1220,8 @@ const ProjectForm = ({
                 fieldName="learning_state"
                 onFieldFocus={handleFieldFocus}
                 onFieldEdit={handleFieldEdit}
+                required
+                error={showErrors && fieldErrors.learningState}
               />
             </div>
 

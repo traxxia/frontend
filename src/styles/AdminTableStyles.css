@@ -251,8 +251,7 @@
     gap: 1rem;
 }
 
-.admin-primary-btn {
-    background: #6366f1;
+.admin-primary-btn { 
     color: #ffffff !important;
     border: none;
     padding: 0.55rem 1.1rem;
@@ -282,11 +281,7 @@
     gap: 0.5rem;
     transition: all 0.2s;
 }
-
-.admin-secondary-btn:hover {
-    background: #f9fafb;
-    border-color: #d1d5db;
-}
+ 
 
 .role-select {
     border-radius: 10px !important;
