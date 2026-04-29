@@ -128,8 +128,9 @@ const ProjectsTable = ({
                   </span>
                 </td>
                 <td className="col-score">
-                   {/* Fallback to 0.0 if no score is available, or use ai_score if present */}
-                  {project.ai_score ? (project.ai_score * 10).toFixed(1) : (project.score ? (project.score * 10).toFixed(1) : "0.0")}
+                   {/* Use backend-calculated score, or ai_score if present */}
+                  {project.score !== undefined ? Number(project.score).toFixed(1) : 
+                   (project.ai_score ? (Number(project.ai_score) * 10).toFixed(1) : "0.0")}
                 </td>
                 <td>
                   <span className={`pill-attribute ${getAttributePillClass("impact", project.impact)}`}>

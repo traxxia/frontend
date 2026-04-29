@@ -319,11 +319,7 @@
 /* PROJECTS LIST          */
 /* --------------------- */
 .projects-list-wrapper {
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
-  border-radius: 14px;
-  padding: 20px;
-  margin-top: 12px;
+  background: #ffffff; 
 }
 
 /* Project Menu & Header */
@@ -2336,7 +2332,7 @@
 }
 
 .bet-ledger-header {
-  padding: 24px 32px;
+  padding: 15px 32px;
   border-bottom: 1px solid #f7fafc;
 }
 
@@ -2421,7 +2417,7 @@
 .status-checkbox {
   width: 18px;
   height: 18px;
-  border-radius: 50%;
+  border-radius: 4px;
   border: 1.5px solid #cbd5e1;
   display: flex;
   align-items: center;
@@ -2482,4 +2478,4 @@
 .btn-launch-premium:hover {
   background-color: #7e22ce;
   transform: translateY(-1px);
-}
+}
