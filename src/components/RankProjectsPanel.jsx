@@ -520,7 +520,7 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, onRankSaved, isAdmi
 
   const renderStep1 = () => (
     <div className="rank-step-selection">
-      <h6 className="mb-3 text-primary">{t("Launched Projects (Mandatory Projects)")}</h6>
+      <h6 className="mb-3 text-primary">{t("Launched Bets (Mandatory Bets)")}</h6>
       <div className="selection-list mb-4">
         {activeProjects.map(p => (
           <div key={p._id} className="selection-item mandatory">
@@ -535,7 +535,7 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, onRankSaved, isAdmi
         {activeProjects.length === 0 && <p className="text-muted small">{t("No active projects found.")}</p>}
       </div>
 
-      <h6 className="mb-3 text-secondary">{t("Unlaunched/Draft Projects (Optional)")}</h6>
+      <h6 className="mb-3 text-secondary">{t("Unlaunched/Draft Bets (Optional)")}</h6>
       <div className="selection-list mb-4">
         {draftProjects.map(p => (
           <div
@@ -555,7 +555,7 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, onRankSaved, isAdmi
             />
           </div>
         ))}
-        {draftProjects.length === 0 && <p className="text-muted small">{t("No draft projects found.")}</p>}
+        {draftProjects.length === 0 && <p className="text-muted small">{t("No Draft Bets found.")}</p>}
       </div>
 
     </div>
@@ -741,7 +741,7 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, onRankSaved, isAdmi
               onClick={handleNextToRanking}
               disabled={isGeneratingAI || isArchived || !hasSelectionChanged}
             >
-              {isGeneratingAI ? t("Fetching AI Rankings...") : t("Next: Rank Projects")}
+              {isGeneratingAI ? t("Fetching AI Rankings...") : t("Next: Rank Bets")}
             </Button>
           )}
           {step === 2 && isAdmin && !initialAllRanked && (

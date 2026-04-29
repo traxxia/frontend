@@ -99,7 +99,7 @@
   .action-buttons {
     display: flex;
     gap: 16px; 
-    margin-bottom: 20px;
+    margin-bottom: 10px;
   }
 
   .btn-create-business {
@@ -152,7 +152,7 @@
   }
 
   .businesses-header {
-    padding: 24px 32px;
+    padding: 14px 32px;
     border-bottom: 1px solid #f3f4f6;
     display: flex;
     justify-content: space-between;
@@ -291,7 +291,7 @@
   .businesses-table th {
     background-color: #f9fafb;
     padding: 16px 24px;
-    text-align: center;
+    text-align: left;
     font-size: 11px;
     font-weight: 700;
     text-transform: uppercase;
@@ -302,10 +302,10 @@
   }
 
   .businesses-table td {
-    padding: 20px 24px;
+    padding: 15px 24px;
     border-bottom: 1px solid #f3f4f6;
     vertical-align: middle;
-    text-align: center;
+    text-align: left;
   }
 
   .businesses-table th:first-child,
@@ -343,7 +343,7 @@
     padding: 6px 16px;
     border-radius: 9999px;
     font-size: 11px;
-    font-weight: 800;
+    font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.05em;
   }

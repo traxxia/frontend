@@ -1,9 +1,9 @@
 /* ProjectsTable.css */
 
 .projects-table-container {
-  background: #ffffff; 
+  background: #ffffff;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
-  overflow: hidden; 
+  overflow: hidden;
   border: 1px solid #f0f0f0;
 }
 
@@ -30,7 +30,6 @@
   padding: 20px 12px;
   vertical-align: middle;
   border-bottom: 1px solid #f7fafc;
-  color: #2d3748;
   font-size: 14px;
 }
 
@@ -82,21 +81,64 @@
   padding: 4px 12px;
   border-radius: 20px;
   font-size: 11px;
-  font-weight: 800;
+  font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.02em;
 }
 
-.badge-active { background-color: #e6fffa; color: #38b2ac; border: 1px solid #b2f5ea; }
-.badge-killed { background-color: #fff5f5; color: #f56565; border: 1px solid #feb2b2; }
-.badge-paused { background-color: #fffaf0; color: #ed8936; border: 1px solid #fbd38d; }
-.badge-draft { background-color: #edf2f7; color: #718096; border: 1px solid #e2e8f0; }
-.badge-completed { background-color: #ebf8ff; color: #4299e1; border: 1px solid #bee3f8; }
-.badge-scaled { background-color: #faf5ff; color: #9f7aea; border: 1px solid #e9d8fd; }
+.badge-active {
+  background-color: #dcfce7;
+  color: #166534;
+  border: 1px solid #10b98140;
+}
 
-.badge-testing { background-color: #ebf8ff; color: #3182ce; border: 1px solid #bee3f8; }
-.badge-invalidated { background-color: #edf2f7; color: #4a5568; border: 1px solid #e2e8f0; }
-.badge-validated { background-color: #f0fff4; color: #38a169; border: 1px solid #c6f6d5; }
+.badge-killed {
+  background-color: #fff5f5;
+  color: #f56565;
+  border: 1px solid #feb2b2;
+}
+
+.badge-paused {
+  background-color: #fffaf0;
+  color: #ed8936;
+  border: 1px solid #fbd38d;
+}
+
+.badge-draft {
+  background-color: #edf2f7;
+  color: #718096;
+  border: 1px solid #e2e8f0;
+}
+
+.badge-completed {
+  background-color: #ebf8ff;
+  color: #4299e1;
+  border: 1px solid #bee3f8;
+}
+
+.badge-scaled {
+  background-color: #faf5ff;
+  color: #9f7aea;
+  border: 1px solid #e9d8fd;
+}
+
+.badge-testing {
+  background-color: #ebf8ff;
+  color: #3182ce;
+  border: 1px solid #bee3f8;
+}
+
+.badge-invalidated {
+  background-color: #edf2f7;
+  color: #4a5568;
+  border: 1px solid #e2e8f0;
+}
+
+.badge-validated {
+  background-color: #f0fff4;
+  color: #38a169;
+  border: 1px solid #c6f6d5;
+}
 
 /* Score Column */
 .col-score {
@@ -113,22 +155,54 @@
   padding: 4px 8px;
   border-radius: 4px;
   font-size: 10px;
-  font-weight: 800;
+  font-weight: 700;
   text-transform: uppercase;
   min-width: 65px;
 }
 
-.pill-impact-high { background-color: #fff5f5; color: #e53e3e; }
-.pill-impact-medium { background-color: #fffaf0; color: #dd6b20; }
-.pill-impact-low { background-color: #f0fff4; color: #38a169; }
+.pill-impact-high {
+  background-color: #fee2e2;
+  color: #dc2626;
+}
 
-.pill-effort-large { background-color: #fff5f5; color: #e53e3e; }
-.pill-effort-medium { background-color: #fffaf0; color: #dd6b20; }
-.pill-effort-small { background-color: #ebf8ff; color: #3182ce; }
+.pill-impact-medium {
+  background-color: #fef3c7;
+  color: #d97706;
+}
 
-.pill-risk-high { background-color: #fff5f5; color: #e53e3e; }
-.pill-risk-medium { background-color: #fffaf0; color: #dd6b20; }
+.pill-impact-low {
+  background-color: #dcfce7;
+  color: #16a34a;
+}
+
+.pill-effort-large {
+  background-color: #fee2e2;
+  color: #dc2626;
+}
+
+.pill-effort-medium {
+  background-color: #fef3c7;
+  color: #d97706;
+}
+
+.pill-effort-small {
+  background-color: #dcfce7;
+  color: #16a34a;
+}
+
+.pill-risk-high {
+  background-color: #fee2e2;
+  color: #dc2626;
+}
+
+.pill-risk-medium {
+  background-color: #fef3c7;
+  color: #d97706;
+}
+
 .pill-risk-low { background-color: #f0fff4; color: #38a169; }
+
+.pill-na { background-color: #f1f5f9; color: #94a3b8; border: 1px solid #e2e8f0; }
 
 /* Owner Column */
 .col-owner {
@@ -207,7 +281,8 @@
   opacity: 0;
   transition: all 0.2s ease;
   border: 1px solid #f1f5f9;
-  text-transform: none; /* Reset uppercase from th */
+  text-transform: none;
+  /* Reset uppercase from th */
   letter-spacing: normal;
 }
 
@@ -219,21 +294,24 @@
 .tooltip-section {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 3px;
 }
 
 .tooltip-title {
   font-size: 11px;
-  font-weight: 800;
+  font-weight: 700;
   color: #6366f1;
   margin: 0;
   letter-spacing: 0.05em;
 }
 
 .tooltip-formula {
-  font-size: 14px;
+  font-size: 11px;
+  padding: 7px;
   font-weight: 700;
-  color: #1e293b;
+  background-color: #f8f9fe;
+  border-radius: 5px;
+  color: #4a5568;
   margin: 4px 0;
   font-family: 'Inter', sans-serif;
 }
