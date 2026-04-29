@@ -3,7 +3,7 @@ export const staticTranslations = {
     // ===========================
     // LOGIN & AUTHENTICATION
     // ===========================
-    'welcome': 'Welcome!',
+    'welcome': 'Welcome',
     'email': 'Email',
     'login': 'Log In',
     'signing_in': 'Signing in...',
@@ -252,6 +252,14 @@ export const staticTranslations = {
     "This_action_cannot_be_undone": "This action cannot be undone!",
     "deleting": "Deleting",
     "questions_remaining": "questions remaining",
+    "dashboard_description_redesign": "Create business plans step by step with the S.T.R.A.T.E.G.I.C framework. Activate AI capabilities for analysis, prediction, and decision-making.",
+    "your_businesses_all_states": "YOUR BUSINESSES — ALL STATES",
+    "business_column": "BUSINESS",
+    "state_column": "STATE",
+    "date_of_creation_column": "DATE OF CREATION",
+    "active_bets_column": "ACTIVE BETS",
+    "collaborators_column": "# COLLABORATORS",
+    "action_column": "ACTION",
     "continue_building": "Continue Building",
     "view_details": "View Details",
     "strategic_business_planning": "Strategic Business Planning Framework",
@@ -1963,7 +1971,7 @@ export const staticTranslations = {
     "AHA Insights": "Perspectivas AHA",
     "Key strategic insights based on your onboarding": "Perspectivas estratégicas clave basadas en tu incorporación",
     "Confidence": "Confianza",
-    'welcome': '¡Bienvenido!',
+    'welcome': '¡Bienvenido',
     'email': 'Correo Electrónico',
     'login': 'Iniciar Sesión',
     'signing_in': 'Iniciando sesión...',
