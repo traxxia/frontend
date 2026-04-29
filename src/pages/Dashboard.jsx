@@ -716,7 +716,11 @@ const Dashboard = () => {
                             const collaborators = business.collaborators_count || (business.company_admin_id?.length || 1);
 
                             return (
-                              <tr key={business._id || business.id} onClick={() => handleBusinessClick(business)}>
+                              <tr 
+                                key={business._id || business.id} 
+                                onClick={!isDeleted ? () => handleBusinessClick(business) : undefined}
+                                className={isDeleted ? 'row-deleted' : ''}
+                              >
                                 <td className="business-name-cell">{business.business_name}</td>
                                 <td>
                                   <span className={`state-badge ${stateClass}`}>{state}</span>

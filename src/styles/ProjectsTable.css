@@ -3,7 +3,7 @@
 .projects-table-container {
   background: #ffffff;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
-  overflow: hidden;
+  overflow: visible;
   border: 1px solid #f0f0f0;
 }
 
@@ -93,21 +93,21 @@
 }
 
 .badge-killed {
-  background-color: #fff5f5;
-  color: #f56565;
-  border: 1px solid #feb2b2;
+  background-color: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #ef444440;
 }
 
 .badge-paused {
-  background-color: #fffaf0;
-  color: #ed8936;
-  border: 1px solid #fbd38d;
+  background-color: #fef3c7;
+  color: #b45309;
+  border: 1px solid #f59e0b40;
 }
 
 .badge-draft {
-  background-color: #edf2f7;
-  color: #718096;
-  border: 1px solid #e2e8f0;
+  background-color: #f3f4f6;
+  color: #4b5563;
+  border: 1px solid #6b728033;
 }
 
 .badge-completed {
