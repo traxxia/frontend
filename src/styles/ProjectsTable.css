@@ -1,0 +1,352 @@
+/* ProjectsTable.css */
+
+.projects-table-container {
+  background: #ffffff;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  overflow: visible;
+  border: 1px solid #f0f0f0;
+}
+
+.premium-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+.premium-table th {
+  background-color: #f8f9fc;
+  padding: 16px 12px;
+  text-align: left;
+  font-size: 11px;
+  font-weight: 700;
+  color: #a0aec0;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid #edf2f7;
+}
+
+.premium-table td {
+  padding: 20px 12px;
+  vertical-align: middle;
+  border-bottom: 1px solid #f7fafc;
+  font-size: 14px;
+}
+
+.premium-table tr:last-child td {
+  border-bottom: none;
+}
+
+.premium-table tr:hover td {
+  background-color: #fcfdfe;
+}
+
+/* Selection Column */
+.col-selection {
+  width: 40px;
+  text-align: center !important;
+  padding-right: 0 !important;
+}
+
+/* Index Column */
+.col-index {
+  width: 50px;
+  text-align: center !important;
+}
+
+.index-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background-color: #edf2f7;
+  color: #4a5568;
+  border-radius: 50%;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+/* Bets Column */
+.col-bets {
+  min-width: 250px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+/* Status & Learning State Badges */
+.table-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.badge-active {
+  background-color: #dcfce7;
+  color: #166534;
+  border: 1px solid #10b98140;
+}
+
+.badge-killed {
+  background-color: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #ef444440;
+}
+
+.badge-paused {
+  background-color: #fef3c7;
+  color: #b45309;
+  border: 1px solid #f59e0b40;
+}
+
+.badge-draft {
+  background-color: #f3f4f6;
+  color: #4b5563;
+  border: 1px solid #6b728033;
+}
+
+.badge-completed {
+  background-color: #ebf8ff;
+  color: #4299e1;
+  border: 1px solid #bee3f8;
+}
+
+.badge-scaled {
+  background-color: #faf5ff;
+  color: #9f7aea;
+  border: 1px solid #e9d8fd;
+}
+
+.badge-testing {
+  background-color: #ebf8ff;
+  color: #3182ce;
+  border: 1px solid #bee3f8;
+}
+
+.badge-invalidated {
+  background-color: #edf2f7;
+  color: #4a5568;
+  border: 1px solid #e2e8f0;
+}
+
+.badge-validated {
+  background-color: #f0fff4;
+  color: #38a169;
+  border: 1px solid #c6f6d5;
+}
+
+/* Score Column */
+.col-score {
+  font-weight: 800;
+  font-size: 16px;
+  color: #2d3748;
+}
+
+/* Impact, Effort, Risk Pills */
+.pill-attribute {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  min-width: 65px;
+}
+
+.pill-impact-high {
+  background-color: #fee2e2;
+  color: #dc2626;
+}
+
+.pill-impact-medium {
+  background-color: #fef3c7;
+  color: #d97706;
+}
+
+.pill-impact-low {
+  background-color: #dcfce7;
+  color: #16a34a;
+}
+
+.pill-effort-large {
+  background-color: #fee2e2;
+  color: #dc2626;
+}
+
+.pill-effort-medium {
+  background-color: #fef3c7;
+  color: #d97706;
+}
+
+.pill-effort-small {
+  background-color: #dcfce7;
+  color: #16a34a;
+}
+
+.pill-risk-high {
+  background-color: #fee2e2;
+  color: #dc2626;
+}
+
+.pill-risk-medium {
+  background-color: #fef3c7;
+  color: #d97706;
+}
+
+.pill-risk-low { background-color: #f0fff4; color: #38a169; }
+
+.pill-na { background-color: #f1f5f9; color: #94a3b8; border: 1px solid #e2e8f0; }
+
+/* Owner Column */
+.col-owner {
+  color: #718096;
+  font-size: 13px;
+}
+
+/* Actions Column */
+.actions-dropdown-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #4a5568;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.actions-dropdown-btn:hover {
+  background-color: #f7fafc;
+  border-color: #cbd5e0;
+}
+
+/* Checkbox alignment */
+.premium-table input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: #4f46e5;
+}
+
+/* Info Icon for Score */
+.col-score-header {
+  position: relative;
+}
+
+.score-header-content {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.score-info-icon-wrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.score-info-icon {
+  color: #6366f1;
+  cursor: help;
+  background: #e0e7ff;
+  border-radius: 50%;
+  padding: 1px;
+}
+
+/* Tooltip Styling */
+.score-formula-tooltip {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-top: 12px;
+  width: 320px;
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  z-index: 1000;
+  visibility: hidden;
+  opacity: 0;
+  transition: all 0.2s ease;
+  border: 1px solid #f1f5f9;
+  text-transform: none;
+  /* Reset uppercase from th */
+  letter-spacing: normal;
+}
+
+.score-info-icon-wrapper:hover .score-formula-tooltip {
+  visibility: visible;
+  opacity: 1;
+}
+
+.tooltip-section {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.tooltip-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: #6366f1;
+  margin: 0;
+  letter-spacing: 0.05em;
+}
+
+.tooltip-formula {
+  font-size: 11px;
+  padding: 7px;
+  font-weight: 700;
+  background-color: #f8f9fe;
+  border-radius: 5px;
+  color: #4a5568;
+  margin: 4px 0;
+  font-family: 'Inter', sans-serif;
+}
+
+.tooltip-note {
+  font-size: 12px;
+  color: #64748b;
+  margin: 0;
+  font-weight: 500;
+}
+
+.tooltip-divider {
+  height: 1px;
+  background-color: #f1f5f9;
+  margin: 16px 0;
+}
+
+.tooltip-description {
+  font-size: 12px;
+  color: #64748b;
+  line-height: 1.5;
+  margin: 0;
+  font-weight: 400;
+}
+
+/* Add a small arrow to the tooltip */
+.score-formula-tooltip::before {
+  content: '';
+  position: absolute;
+  top: -6px;
+  left: 50%;
+  transform: translateX(-50%) rotate(45deg);
+  width: 12px;
+  height: 12px;
+  background: #ffffff;
+  border-left: 1px solid #f1f5f9;
+  border-top: 1px solid #f1f5f9;
+}
