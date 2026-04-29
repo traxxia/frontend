@@ -102,7 +102,7 @@ const ProjectsTable = ({
             return (
               <tr key={project._id}>
                 <td className="col-selection">
-                  {isAdmin && !isArchived && !isTerminal && (
+                  {isAdmin && !isArchived && !isTerminal && project.launch_status !== "launched" && (
                     <input
                       type="checkbox"
                       checked={selectedProjectIds.includes(project._id)}

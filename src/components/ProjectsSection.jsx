@@ -22,8 +22,8 @@ import ProjectsList from "../components/ProjectsList";
 import ProjectForm from "../components/ProjectForm";
 import ProjectDetails from "../components/ProjectDetails";
 import ProjectReviewModal from "../components/ProjectReviewModal";
-import ToastNotifications from "../components/ToastNotifications";
 import StateChangeModal from "../components/StateChangeModal";
+import ConfirmationModal from "../components/ConfirmationModal";
 import "../styles/ProjectsSection.css";
 import "../styles/ProjectReviewModal.css";
 
@@ -154,6 +154,8 @@ const ProjectsSection = ({
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [selectedProjectIds, setSelectedProjectIds] = useState([]);
   const [isRankingBlinking] = useState(false);
+  const [showMissingRankModal, setShowMissingRankModal] = useState(false);
+
   useEffect(() => {
     let pageContext = null;
     if (activeView === "new") {
@@ -454,24 +456,10 @@ const ProjectsSection = ({
     }
   }, [lockRanking, refreshAllData]);
 
-  const handleLaunchProjects = useCallback(async () => {
-    if (selectedProjectIds.length === 0) {
-      handleShowToast(t("Please select at least one project to launch."), "error");
-      return;
-    }
 
-    // Check if all selected projects have been ranked
-    const unrankedProjects = selectedProjectIds.filter(id => {
-      const rank = rankMap[String(id)];
-      return rank === null || rank === undefined;
-    });
-
-    if (unrankedProjects.length > 0) {
-      handleShowToast(t("One or more selected projects are not ranked. All projects must be ranked before launch."), "error", 5000);
-      return;
-    }
-
+  const executeLaunchProjects = useCallback(async () => {
     try {
+      setShowMissingRankModal(false);
       setIsSubmitting(true);
       const { success, error, data } = await launchProjects(selectedProjectIds);
 
@@ -502,7 +490,27 @@ const ProjectsSection = ({
     } finally {
       setIsSubmitting(false);
     }
-  }, [selectedProjectIds, launchProjects, refreshAllData, handleShowToast]);
+  }, [selectedProjectIds, launchProjects, refreshAllData, handleShowToast, addToast, queryClient, selectedBusinessId, clearCache]);
+
+  const handleLaunchProjects = useCallback(async () => {
+    if (selectedProjectIds.length === 0) {
+      handleShowToast(t("Please select at least one project to launch."), "error");
+      return;
+    }
+
+    // Check if all selected projects have been ranked
+    const unrankedProjects = selectedProjectIds.filter(id => {
+      const rank = rankMap[String(id)];
+      return rank === null || rank === undefined;
+    });
+
+    if (unrankedProjects.length > 0) {
+      setShowMissingRankModal(true);
+      return;
+    }
+
+    await executeLaunchProjects();
+  }, [selectedProjectIds, rankMap, handleShowToast, t, executeLaunchProjects]);
 
   const toggleProjectSelection = useCallback((projectId) => {
     setSelectedProjectIds((prev) =>
@@ -910,6 +918,16 @@ const ProjectsSection = ({
   };
   return (
     <>
+      <ConfirmationModal
+        show={showMissingRankModal}
+        onHide={() => setShowMissingRankModal(false)}
+        onConfirm={executeLaunchProjects}
+        title={t("Missing Rankings")}
+        message={t("One or more selected projects are not ranked. Are you sure you want to proceed without ranking?")}
+        confirmText={t("Proceed")}
+        cancelText={t("Cancel")}
+        confirmVariant="warning"
+      />
 
       <StateChangeModal
         show={isModalOpen('stateChange')}
