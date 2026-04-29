@@ -17,15 +17,7 @@ import { getDecisionLogActorName } from "../utils/decisionLogUtils";
 import { useProjectStore } from "../store/projectStore";
 import "../styles/AdminTableStyles.css";
 
-const LOG_TYPES = [
-  { value: "", label: "All Types" },
-  { value: "status_change", label: "Status Change" },
-  { value: "cadence_review", label: "Cadence Review" },
-  { value: "no_change_review", label: "No Change Review" },
-  { value: "adhoc_update", label: "Ad-Hoc Update" },
-  { value: "manual", label: "Manual" },
-  { value: "project_update", label: "Project Update" },
-];
+// Log types will now be fetched dynamically from the API
 
 
 
@@ -128,6 +120,7 @@ const BusinessDecisionLogs = ({ businessId }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [isError, setIsError] = useState(false);
   const [data, setData] = useState(null);
+  const [filterOptions, setFilterOptions] = useState({ log_types: [], execution_states: [] });
 
   const fetchProjects = useProjectStore((state) => state.fetchProjects);
   const projectsFromStore = useProjectStore((state) => state.projects);
@@ -145,6 +138,9 @@ const BusinessDecisionLogs = ({ businessId }) => {
   useEffect(() => {
     if (businessId) {
       fetchProjects(businessId, { silent: true });
+      decisionLogApiService.getBusinessFilterOptions(businessId)
+        .then(data => setFilterOptions(data))
+        .catch(err => console.error('Failed to load filter options', err));
     }
   }, [businessId, fetchProjects]);
 
@@ -263,33 +259,21 @@ const BusinessDecisionLogs = ({ businessId }) => {
       .sort((a, b) => (a.name || "").localeCompare(b.name || ""));
   }, [logs, projectsFromStore]);
 
-  // Get unique statuses from logs for filtering
-  const availableStatuses = useMemo(() => {
-    const statusesByKey = new Map();
-    logs.forEach(log => {
-      const rawStatus = log.execution_state || log.to_status;
-      const status = typeof rawStatus === "string" ? rawStatus.trim() : rawStatus;
-      if (status) {
-        const normalizedKey = String(status)
-          .toLowerCase()
-          .replace(/[_\s]+/g, " ")
-          .trim();
+  // Get unique log types from API
+  const availableLogTypes = useMemo(() => {
+    return filterOptions.log_types.map(type => ({
+      value: type,
+      label: humanizeLogType(type)
+    })).sort((a, b) => a.label.localeCompare(b.label));
+  }, [filterOptions.log_types]);
 
-        if (!statusesByKey.has(normalizedKey)) {
-          statusesByKey.set(normalizedKey, status);
-        }
-      }
-    });
-    // Convert to array and map to display format
-    return Array.from(statusesByKey.values())
-      .map(status => ({
-        value: status,
-        label: status
-          .replace(/_/g, " ")
-          .replace(/\b\w/g, (c) => c.toUpperCase())
-      }))
-      .sort((a, b) => a.label.localeCompare(b.label));
-  }, [logs]);
+  // Get unique statuses from API
+  const availableStatuses = useMemo(() => {
+    return filterOptions.execution_states.map(state => ({
+      value: state,
+      label: state.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())
+    })).sort((a, b) => a.label.localeCompare(b.label));
+  }, [filterOptions.execution_states]);
 
   const refetch = useCallback(() => {
     fetchBusinessLogs();
@@ -388,7 +372,8 @@ const BusinessDecisionLogs = ({ businessId }) => {
                 value={filters.log_type}
                 onChange={(e) => setFilter("log_type", e.target.value)}
               >
-                {LOG_TYPES.map((o) => (
+                <option value="">{t("All_Types") || "All Types"}</option>
+                {availableLogTypes.map((o) => (
                   <option key={o.value} value={o.value}>
                     {o.label}
                   </option>
