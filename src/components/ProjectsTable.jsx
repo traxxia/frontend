@@ -42,7 +42,8 @@ const ProjectsTable = ({
   };
 
   const getAttributePillClass = (attr, value) => {
-    const v = (value || "").toLowerCase().trim();
+    let v = (value || "").toLowerCase().trim();
+    if (!v) return "pill-na";
     return `pill-${attr}-${v}`;
   };
 
@@ -94,7 +95,7 @@ const ProjectsTable = ({
         </thead>
         <tbody>
           {projects.map((project, index) => {
-            const displayRank = rankMap?.[String(project?._id)] ?? project.rank ?? project.ai_rank ?? (index + 1);
+            const displayRank = rankMap?.[String(project?._id)] ?? project.rank ?? project.ai_rank ?? 0;
             const userCanReview = canReviewProject ? canReviewProject(project, isAdmin, myUserId, isArchived) : false;
             const statusLower = project.status?.toLowerCase();
             const isTerminal = ["completed", "scaled", "killed"].includes(statusLower);
@@ -102,7 +103,7 @@ const ProjectsTable = ({
             return (
               <tr key={project._id}>
                 <td className="col-selection">
-                  {isAdmin && !isArchived && !isTerminal && (
+                  {isAdmin && !isArchived && !isTerminal && project.launch_status !== 'launched' && (
                     <input
                       type="checkbox"
                       checked={selectedProjectIds.includes(project._id)}
@@ -134,17 +135,17 @@ const ProjectsTable = ({
                 </td>
                 <td>
                   <span className={`pill-attribute ${getAttributePillClass("impact", project.impact)}`}>
-                    {project.impact ? t(project.impact) : t("Low")}
+                    {project.impact ? t(project.impact) : "N/A"}
                   </span>
                 </td>
                 <td>
                   <span className={`pill-attribute ${getAttributePillClass("effort", project.effort)}`}>
-                    {project.effort ? t(project.effort) : t("Medium")}
+                    {project.effort ? t(project.effort) : "N/A"}
                   </span>
                 </td>
                 <td>
                   <span className={`pill-attribute ${getAttributePillClass("risk", project.risk)}`}>
-                    {project.risk ? t(project.risk) : t("Low")}
+                    {project.risk ? t(project.risk) : "N/A"}
                   </span>
                 </td>
                 <td className="col-owner">
