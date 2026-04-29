@@ -15,7 +15,7 @@ import { useProjects } from "../hooks/useQueries";
 import { useQueryClient } from "@tanstack/react-query";
 
 
-import { Users, CheckCircle, Plus, ListOrdered, Rocket } from "lucide-react";
+import { Users, CheckCircle, Plus, ListOrdered, Rocket, Menu, BarChart4, ChevronDown, Check } from "lucide-react";
 import RankProjectsPanel from "../components/RankProjectsPanel";
 import TeamRankingsView from "../components/TeamRankingsView";
 import ProjectsList from "../components/ProjectsList";
@@ -768,117 +768,146 @@ const ProjectsSection = ({
     );
   };
 
+  const [isStatusDropdownOpen, setIsStatusDropdownOpen] = useState(false);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (!event.target.closest(".status-dropdown-wrapper")) {
+        setIsStatusDropdownOpen(false);
+      }
+    };
+    if (isStatusDropdownOpen) {
+      document.addEventListener("click", handleClickOutside);
+    }
+    return () => document.removeEventListener("click", handleClickOutside);
+  }, [isStatusDropdownOpen]);
+
   const renderProjectList = () => {
-    // isReadOnly is now defined at the top level of the component
+    const selectedCategoryLabel = CATEGORIES.find(c => c.id === selectedCategory)?.label || "all";
+    const totalCount = categoryCounts[selectedCategory] || 0;
+
     return (
       <>
-        {/* We are no longer checking viewMode === "ranking" as ranking has its own separate standalone component RankingSection.jsx */}
-        <div className="management-row-container mb-4" style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          gap: '20px',
-          flexWrap: 'wrap'
-        }}>
-              <div className="d-flex align-items-center gap-3 flex-wrap">
-                <div className="status-tabs-container">
-                  {CATEGORIES.map((cat) => (
-                    <button
-                      key={cat.id}
-                      className={`status-tab ${selectedCategory === cat.id ? "active" : ""}`}
-                      onClick={() => setSelectedCategory(cat.id)}
-                    >
-                      <span className="status-name">{t(cat.label)}</span>
-                      <span className="status-count">{categoryCounts[cat.id] || 0}</span>
-                    </button>
-                  ))}
+        {/* Secondary Tabs - Toggle Style */}
+        <div className="secondary-tabs-container">
+          <button 
+            className={`secondary-tab ${activeView === "list" ? "active" : ""}`}
+            onClick={() => setActiveView("list")}
+          >
+            <Menu size={16} /> {t("Summary")}
+          </button>
+          <button 
+            className={`secondary-tab ${activeView === "analysis" ? "active" : ""}`}
+            onClick={() => {}} // Disabled
+            style={{ cursor: 'not-allowed' }}
+            title={t("Executive Analysis (Coming Soon)")}
+          >
+            <BarChart4 size={16} /> {t("Executive Analysis")}
+          </button>
+        </div>
+
+        <div className="bet-ledger-container premium-card">
+          <div className="bet-ledger-header d-flex justify-content-between align-items-center flex-wrap gap-3">
+            <h2 className="bet-ledger-title">
+              {t("BET LEDGER")} — <span className="text-muted text-uppercase" style={{ fontSize: '11px', fontWeight: '800' }}>{t("ALL INITIATIVES")}</span>
+            </h2>
+
+            <div className="bet-ledger-actions d-flex align-items-center gap-3">
+              {/* Custom Status Dropdown */}
+              <div className="status-dropdown-wrapper">
+                <div 
+                  className="status-dropdown-btn"
+                  onClick={() => setIsStatusDropdownOpen(!isStatusDropdownOpen)}
+                >
+                  <div className="status-label-group">
+                    <span className="status-label-prefix">{t("STATUS")}</span>
+                    <span className="status-label-current">
+                      {t(selectedCategoryLabel)} · {totalCount}
+                    </span>
+                  </div>
+                  <ChevronDown size={14} color="#1e40af" />
                 </div>
- 
-              </div>
 
-              <div className="management-buttons d-flex gap-2">
-                {selectedProjectIds.length > 0 && !isViewer && !isArchived && getUserLimits().project && isSuperAdmin && (
-                  <button
-                    onClick={handleLaunchProjects}
-                    disabled={isSubmitting}
-                    style={{
-                      backgroundColor: '#9333ea',
-                      color: 'white',
-                      border: 'none',
-                      padding: '10px 20px',
-                      borderRadius: '10px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '8px',
-                      fontWeight: '700',
-                      fontSize: '14px',
-                      boxShadow: '0 4px 6px -1px rgba(147, 51, 234, 0.2)',
-                      transition: 'all 0.2s'
-                    }}
-                  >
-                    <Rocket size={18} />
-                    {isSubmitting ? t("Launching...") : `${t("Launch")} (${selectedProjectIds.length})`}
-                  </button>
-                )}
-
-                {!isViewer && !isArchived && getUserLimits().project && (
-                  <button
-                    onClick={handleNewProject}
-                    style={{
-                      backgroundColor: '#2563eb',
-                      color: 'white',
-                      border: 'none',
-                      padding: '10px 20px',
-                      borderRadius: '10px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '8px',
-                      fontWeight: '700',
-                      fontSize: '14px',
-                      boxShadow: '0 4px 6px -1px rgba(37, 99, 235, 0.2)',
-                      transition: 'all 0.2s'
-                    }}
-                  >
-                    <Plus size={18} />
-                    {t("New_Project")}
-                  </button>
+                {isStatusDropdownOpen && (
+                  <div className="status-dropdown-menu">
+                    {CATEGORIES.map(cat => (
+                      <div 
+                        key={cat.id} 
+                        className="status-menu-item"
+                        onClick={() => {
+                          setSelectedCategory(cat.id);
+                          setIsStatusDropdownOpen(false);
+                        }}
+                      >
+                        <div className="status-menu-left">
+                          <div className={`status-checkbox ${selectedCategory === cat.id ? "checked" : ""}`}>
+                            {selectedCategory === cat.id && <Check size={12} color="white" />}
+                          </div>
+                          <span className="status-name-text">{t(cat.label)}</span>
+                        </div>
+                        <span className="status-count-text">{categoryCounts[cat.id] || 0}</span>
+                      </div>
+                    ))}
+                  </div>
                 )}
               </div>
+
+              {!isViewer && !isArchived && getUserLimits().project && (
+                <button
+                  onClick={handleNewProject}
+                  className="btn-new-project-premium"
+                >
+                  <Plus size={18} />
+                  {t("New Project")}
+                </button>
+              )}
+
+              {selectedProjectIds.length > 0 && !isViewer && !isArchived && getUserLimits().project && isSuperAdmin && (
+                <button
+                  onClick={handleLaunchProjects}
+                  disabled={isSubmitting}
+                  className="btn-launch-premium"
+                >
+                  <Rocket size={18} />
+                  {isSubmitting ? t("Launching...") : `${t("Launch")} (${selectedProjectIds.length})`}
+                </button>
+              )}
             </div>
+          </div>
 
-            <ProjectsList
-              isLoading={isLoadingProjects}
-              sortedProjects={sortedProjects}
-
-              rankMap={rankMap}
-              finalizeCompleted={finalizeCompleted}
-              launched={launched}
-              isViewer={isViewer}
-              isAdmin={isSuperAdmin}
-              isEditor={isEditor}
-              isDraft={isDraft}
-              projectCreationLocked={projectCreationLocked}
-              isFinalizedView={isFinalizedView}
-              canEditProject={(project) =>
-                canEditProject(project, isEditor, myUserId, businessStatus, apiIsArchived, isSuperAdmin)
-              }
-              onEdit={(project) => handleEditProject(project, "edit")}
-              onView={(project) => handleEditProject(project, "view")}
-              onDelete={handleDelete}
-              onPerformReview={handlePerformReview}
-              onAdhocUpdate={handleAdhocUpdate}
-              canReviewProject={canReviewProject}
-              myUserId={myUserId}
-              selectedCategory={selectedCategory}
-              isArchived={apiIsArchived}
-              selectedProjectIds={selectedProjectIds}
-              onToggleSelection={toggleProjectSelection}
-              selectionDisabled={isGeneratingAIRankings || businessStatus !== "draft"}
-            />
+          <ProjectsList
+            isLoading={isLoadingProjects}
+            sortedProjects={sortedProjects}
+            rankMap={rankMap}
+            finalizeCompleted={finalizeCompleted}
+            launched={launched}
+            isViewer={isViewer}
+            isAdmin={isSuperAdmin}
+            isEditor={isEditor}
+            isDraft={isDraft}
+            projectCreationLocked={projectCreationLocked}
+            isFinalizedView={isFinalizedView}
+            canEditProject={(project) =>
+              canEditProject(project, isEditor, myUserId, businessStatus, apiIsArchived, isSuperAdmin)
+            }
+            onEdit={(project) => handleEditProject(project, "edit")}
+            onView={(project) => handleEditProject(project, "view")}
+            onDelete={handleDelete}
+            onPerformReview={handlePerformReview}
+            onAdhocUpdate={handleAdhocUpdate}
+            canReviewProject={canReviewProject}
+            myUserId={myUserId}
+            selectedCategory={selectedCategory}
+            isArchived={apiIsArchived}
+            selectedProjectIds={selectedProjectIds}
+            onToggleSelection={toggleProjectSelection}
+            selectionDisabled={isGeneratingAIRankings || businessStatus !== "draft"}
+          />
+        </div>
       </>
     );
   };
-
   return (
     <>
 

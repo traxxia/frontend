@@ -1,8 +1,7 @@
 import React, { useMemo, useState, useEffect } from "react";
-import { Row, Col, Spinner } from "react-bootstrap";
-import ProjectCard from "./ProjectCard";
+import { Spinner } from "react-bootstrap";
+import ProjectsTable from "./ProjectsTable";
 import { useTranslation } from '../hooks/useTranslation';
-import { getUserLimits } from '../utils/authUtils';
 import { useAuthStore } from '../store';
 
 const ProjectsList = ({
@@ -39,7 +38,7 @@ const ProjectsList = ({
   useEffect(() => {
     const handleClickOutside = (event) => {
       // If the click is inside a menu-button or menu-dropdown, ignore
-      if (event.target.closest(".menu-button") || event.target.closest(".menu-dropdown")) {
+      if (event.target.closest(".menu-button") || event.target.closest(".menu-dropdown") || event.target.closest(".actions-dropdown-btn")) {
         return;
       }
       setShowMenuId(null);
@@ -90,49 +89,30 @@ const ProjectsList = ({
     return groups;
   }, [sortedProjects]);
 
-  const renderProjectGrid = (projects) => {
+  const renderProjectTable = (projects) => {
     if (!projects || projects.length === 0) return null;
     return (
-      <Row className="g-4">
-        {projects.map((project, index) => (
-          <Col
-            xs={12}
-            sm={12}
-            md={isFinalizedView ? 12 : 6}
-            lg={4}
-            key={project._id}
-          >
-            <ProjectCard
-              project={project}
-              index={index}
-              rankMap={rankMap}
-              finalizeCompleted={finalizeCompleted}
-              launched={launched}
-              isViewer={isViewer}
-              isEditor={isEditor}
-              isDraft={isDraft}
-              projectCreationLocked={projectCreationLocked}
-              canEditProject={canEditProject}
-              onEdit={onEdit}
-              onView={onView}
-              onDelete={onDelete}
-              showMenuId={showMenuId}
-              setShowMenuId={setShowMenuId}
-              isArchived={isArchived}
-              isAdmin={isAdmin}
-              isSelected={selectedProjectIds.includes(project._id)}
-              onToggleSelection={onToggleSelection}
-              onPerformReview={onPerformReview}
-              onAdhocUpdate={onAdhocUpdate}
-              canReviewProject={canReviewProject}
-              myUserId={myUserId}
-              isCheckboxDisabled={isArchived || selectionDisabled || !getUserLimits().project || userPlan === 'essential'}
-            />
-          </Col>
-        ))}
-      </Row>
+      <ProjectsTable
+        projects={projects}
+        rankMap={rankMap}
+        onEdit={onEdit}
+        onView={onView}
+        onDelete={onDelete}
+        onPerformReview={onPerformReview}
+        onAdhocUpdate={onAdhocUpdate}
+        showMenuId={showMenuId}
+        setShowMenuId={setShowMenuId}
+        selectedProjectIds={selectedProjectIds}
+        onToggleSelection={onToggleSelection}
+        isAdmin={isAdmin}
+        isArchived={isArchived}
+        isViewer={isViewer}
+        canReviewProject={canReviewProject}
+        myUserId={myUserId}
+      />
     );
   };
+
 
   const getFilteredGroups = () => {
     if (isLoading) {
@@ -148,7 +128,7 @@ const ProjectsList = ({
 
     // Show flat rank-ordered list for "All"
     if (!selectedCategory || selectedCategory === "All") {
-      return renderProjectGrid(sortedProjects);
+      return renderProjectTable(sortedProjects);
     }
 
     // Show filtered group for specific status
@@ -160,7 +140,7 @@ const ProjectsList = ({
         </div>
       );
     }
-    return renderProjectGrid(projects);
+    return renderProjectTable(projects);
   };
 
   return (
