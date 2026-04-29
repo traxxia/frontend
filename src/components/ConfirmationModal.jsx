@@ -31,7 +31,9 @@ const ConfirmationModal = ({
     const { t } = useTranslation();
 
     const handleConfirm = () => {
-        onConfirm();
+        if (onConfirm && typeof onConfirm === 'function') {
+            onConfirm();
+        }
         onHide();
     };
 

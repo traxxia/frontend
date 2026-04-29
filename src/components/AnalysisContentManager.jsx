@@ -797,17 +797,22 @@ const AnalysisContentManager = (props) => {
   const financialAnalyses = ['profitabilityAnalysis', 'growthTracker', 'liquidityEfficiency', 'investmentPerformance', 'leverageRisk'];
   const isFinancialRegenerating = financialAnalyses.some(type => isAnalysisLoading(type)) || isTypeRegenerating('financial');
   const isMainAnalysisRegenerating = ['swot', 'purchaseCriteria', 'loyaltyNPS', 'porters', 'pestel', 'fullSwot', 'competitiveAdvantage', 'expandedCapability', 'strategicRadar', 'productivityMetrics', 'maturityScore', 'competitiveLandscape', 'coreAdjacency'].some(type => isAnalysisLoading(type)) || isTypeRegenerating('initial') || isTypeRegenerating('essential') || isTypeRegenerating('advanced');
-  const isStrategicRegLocal = isAnalysisLoading('strategic') || isTypeRegenerating('strategic');
 
   return (
     <div className="modern-analysis-container">
-      {(isFinancialRegenerating || isMainAnalysisRegenerating || isStrategicRegLocal) && (
+      {(isFinancialRegenerating || isMainAnalysisRegenerating) && (
         <div className="analysis-regenerating-banner" style={{ margin: '10px 0' }}>
           <Loader size={16} className="antigravity-rotating" />
           <span>
-            {isFinancialRegenerating
-              ? t("Regenerating financial insights like profitability, growth tracker, liquidity, investment performance, leverage and risk insight...")
-              : (props.isAnalysisRegenerating || props.isStrategicRegenerating) ? t("Generating all Insights & STRATEGIC analysis...") : t("Generating Insight...")}
+            { (isMainAnalysisRegenerating && isFinancialRegenerating)
+              ? t("Generating all Insights...")
+              : isFinancialRegenerating
+                ? t("Regenerating financial insights like profitability, growth tracker, liquidity, investment performance, leverage and risk insight...")
+                : (props.isAnalysisRegenerating && props.isStrategicRegenerating) 
+                  ? t("Generating all Insights & STRATEGIC analysis...") 
+                  : (props.isStrategicRegenerating && !props.isAnalysisRegenerating)
+                    ? t("Generating Strategic Analysis...")
+                    : t("Generating Insight...")}
           </span>
         </div>
       )}
