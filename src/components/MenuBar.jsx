@@ -147,7 +147,7 @@ const MenuBar = () => {
                 </div>
               </Dropdown.Toggle>
               <Dropdown.Menu align="end" className="traxia-dropdown">
-                <Dropdown.Header className="pt-3 pb-3 px-3 mb-2 bg-light">
+                <Dropdown.Header className="pt-3 pb-3 px-3 mb-2">
                   <div className="d-flex flex-column gap-2">
 
                     {/* User Name */}
