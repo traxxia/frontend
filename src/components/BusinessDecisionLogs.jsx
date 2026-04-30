@@ -15,6 +15,7 @@ import { useTranslation } from "../hooks/useTranslation";
 import { decisionLogApiService } from "../services/decisionLogApiService";
 import { getDecisionLogActorName } from "../utils/decisionLogUtils";
 import { useProjectStore } from "../store/projectStore";
+import { useUIStore } from "../store/uiStore";
 import "../styles/AdminTableStyles.css";
 
 
@@ -58,6 +59,8 @@ function humanizeLogType(logType) {
 }
 
 function LogTypeBadge({ logType }) {
+  const { theme } = useUIStore();
+
   const colorMap = {
     status_change: { bg: "#dbeafe", color: "#1e40af" },
     cadence_review: { bg: "#d1fae5", color: "#065f46" },
@@ -104,6 +107,7 @@ function renderSnapshotField(key, value) {
 }
 
 const BusinessDecisionLogs = ({ businessId }) => {
+  const { theme } = useUIStore();
   const { t } = useTranslation();
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -222,7 +226,7 @@ const BusinessDecisionLogs = ({ businessId }) => {
     if (!businessId) return;
     try {
       const response = await decisionLogApiService.getBusinessFilterOptions(businessId);
-      
+
       // Helper to normalize and deduplicate
       const getUniqueOptions = (items) => {
         const unique = new Map();
@@ -301,7 +305,7 @@ const BusinessDecisionLogs = ({ businessId }) => {
         <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "24px" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
             <FileText size={20} color="#4f46e5" />
-            <h1 style={{ fontSize: "20px", fontWeight: 700, margin: 0, color: "#111827" }}>
+            <h1 className="page-title-color" style={{ fontSize: "20px", fontWeight: 700, margin: 0, color: "#111827" }}>
               {t("Business_Decision_Logs")}
             </h1>
           </div>
@@ -475,7 +479,7 @@ const BusinessDecisionLogs = ({ businessId }) => {
           ) : (
             <div className="table-responsive admin-table-scroll">
               <table className="table admin-data-table">
-                <thead>
+                <thead className="table-head-color">
                   <tr>
                     <th>{t("Date")}</th>
                     <th>{t("Project")}</th>

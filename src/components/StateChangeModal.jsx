@@ -51,6 +51,12 @@ const StateChangeModal = ({ show, onHide, onConfirm, changes = [], oldState, new
             return;
         }
 
+        // Check for other invalid characters
+        if (!JUSTIFICATION_REGEX.test(text)) {
+            setError(t("Invalid characters in justification. Use only letters and standard punctuation."));
+            return;
+        }
+
         setError("");
         onConfirm(text);
         setJustification("");

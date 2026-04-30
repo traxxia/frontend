@@ -439,13 +439,14 @@
   border: none;
   min-height: 400px;
 }
+
 .tab-content-user-history {
   min-height: auto !important;
   border-radius: 0px !important;
 }
 
 [data-theme="dark"] .tab-content {
-  background: #0f0f0f !important;
+  background: transparent !important;
   /* deep navy background */
 }
 
@@ -1307,16 +1308,13 @@
 
 /* Loading States */
 
-@keyframes spin {
-}
+@keyframes spin {}
 
 /* Responsive Design */
-@media (max-width: 768px) {
-}
+@media (max-width: 768px) {}
 
 /* Responsive */
-@media (max-width: 768px) {
-}
+@media (max-width: 768px) {}
 
 /* Header Section */
 .user-history-header {
@@ -2004,7 +2002,7 @@
 }
 
 [data-theme="dark"] .history-business-card {
-    background-color: #1a1d23 !important;
+  background-color: #1a1d23 !important;
 }
 
 
@@ -2037,12 +2035,12 @@
 }
 
 [data-theme="dark"] .history-business-purpose {
-    color: #ededed !important;
+  color: #ededed !important;
 }
 
 .history-business-stats {
   display: flex;
-  gap: 24px; 
+  gap: 24px;
   padding-top: 16px;
   border-top: 1px solid #f3f4f6;
   flex-wrap: wrap;
@@ -2569,8 +2567,7 @@
 
 /* Loading Details Enhancement */
 
-@keyframes spin {
-}
+@keyframes spin {}
 
 /* User Meta Enhancement */
 .user-meta {
@@ -2606,7 +2603,7 @@
 }
 
 [data-theme="dark"] .user-header-info h3 {
-    color: #ffffff !important;
+  color: #ffffff !important;
 }
 
 

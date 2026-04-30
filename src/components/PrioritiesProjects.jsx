@@ -52,7 +52,7 @@ const PrioritiesProjects = ({ selectedBusinessId, onSuccess, onStayOnPriorities,
     return { totalActions: total, kickstartedActions: kickstarted, globalProgressPercent: percent };
   }, [priorities]);
 
-  const anyProjectKickstarted = useMemo(() => 
+  const anyProjectKickstarted = useMemo(() =>
     priorities.some(p => p.isKickstarted || (p.actions && p.actions.some(a => a.isKickstarted))),
     [priorities]
   );
@@ -130,7 +130,7 @@ const PrioritiesProjects = ({ selectedBusinessId, onSuccess, onStayOnPriorities,
     }
 
     if (selected.length === 0) return;
-    
+
     setShowNoCollaboratorsModal(true);
   }, [selected, hasProjectsAccess]);
 
@@ -180,7 +180,7 @@ const PrioritiesProjects = ({ selectedBusinessId, onSuccess, onStayOnPriorities,
   return (
     <div className="container my-4 priorities-container">
       {totalActions > 0 && (
-        <Card className="mb-4 border-0 shadow-sm" style={{ background: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)' }}>
+        <Card className="mb-4 border-0 shadow-sm granular-header" style={{ background: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)' }}>
           <Card.Body className="d-flex justify-content-between align-items-center py-3 px-4">
             <div>
               <h6 className="mb-1 text-dark fw-bold">

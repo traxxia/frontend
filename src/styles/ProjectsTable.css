@@ -2,11 +2,16 @@
 
 .projects-table-container {
   background: transparent;
-  box-shadow: none;
+  box-shadow: none; 
   overflow-x: auto;
+  overflow-y: hidden;
   -webkit-overflow-scrolling: touch;
   border: none;
   width: 100%;
+}
+
+.projects-table-container.menu-open {
+  padding-bottom: 120px;
 }
 
 .premium-table {
@@ -39,7 +44,7 @@
 }
 
 .premium-table td {
-  padding: 20px 12px;
+  padding: 12px 12px;
   vertical-align: middle;
   border-bottom: 1px solid #f7fafc;
   font-size: 14px;
@@ -114,6 +119,13 @@
   background-color: #fef3c7;
   color: #b45309;
   border: 1px solid #f59e0b40;
+}
+
+.badge-at-risk {
+    background-color: #f5bfe3;
+    color: #bf0280;
+    border: 1px solid #ed1aa7;
+    white-space: nowrap;
 }
 
 .badge-draft {
@@ -365,7 +377,7 @@
 
 /* Responsive Table Styles */
 @media (max-width: 1024px) {
-  .projects-table-container {
+  .projects-table-container { 
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
     border-radius: 8px;

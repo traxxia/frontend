@@ -1137,7 +1137,11 @@ const ProjectForm = ({
                       isDisabled = false;
                     } else if (!isLaunched) {
                       // Unlaunched: Draft and Killed are allowed. Active is handled via Launch mechanism.
-                      if (['draft', 'killed'].includes(target)) isDisabled = false;
+                      if (mode === "new") {
+                        if (['draft'].includes(target)) isDisabled = false;
+                      } else {
+                        if (['draft', 'killed'].includes(target)) isDisabled = false;
+                      }
                     } else {
                       // Launched
                       if (currentStatus === 'active' || currentStatus === 'at risk') {

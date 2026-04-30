@@ -656,8 +656,11 @@ const ProjectsSection = ({
       const learningStateChanged = oldLearningState !== newLearningState;
       const isProjectLaunched = (currentProject.launch_status || "").toLowerCase() === "launched";
 
-      // If either status or learning state changed, show justification modal (Only for Launched projects)
-      if (isProjectLaunched && (statusChanged || learningStateChanged)) {
+      const isKilled = newStatus === 'killed';
+
+      // If either status or learning state changed, show justification modal
+      // We show it for ALL launched projects, OR if the project is being "Killed" (even if not launched)
+      if ((isProjectLaunched || isKilled) && (statusChanged || learningStateChanged)) {
         const changes = [];
         if (statusChanged) {
           changes.push({
@@ -868,7 +871,7 @@ const ProjectsSection = ({
                   className="btn-new-project-premium"
                 >
                   <Plus size={18} />
-                  {t("New Project")}
+                  {t("New Bet")}
                 </button>
               )}
 
