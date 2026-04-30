@@ -40,7 +40,7 @@ export const decisionLogApiService = {
       });
       return response.data;
     } catch (error) {
-      console.error('Error fetching business decision log filter options:', error);
+      console.error('Error fetching business filter options:', error);
       throw error;
     }
   },
