@@ -108,7 +108,9 @@ const TeamRankingsView = ({
                     </div>
                   </td>
                   <td className="text-center">
-                    <Badge bg="light" text="dark" className="border">#{collab.rank}</Badge>
+                    <Badge bg="light" text="dark" className="border">
+                      {collab.rank ? `#${collab.rank}` : "-"}
+                    </Badge>
                   </td>
                   <td className="text-muted small">
                     {collab.rationale || collab.rationals || "No rationale"}

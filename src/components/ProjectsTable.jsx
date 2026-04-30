@@ -97,7 +97,7 @@ const ProjectsTable = ({
         </thead>
         <tbody>
           {projects.map((project, index) => {
-            const displayRank = rankMap?.[String(project?._id)] ?? project.rank ?? project.ai_rank ?? 0;
+            const displayRank = rankMap?.[String(project?._id)] ?? project.rank ?? project.ai_rank;
             const userCanReview = canReviewProject ? canReviewProject(project, isAdmin, myUserId, isArchived) : false;
             const isLastTwoRows = projects.length > 2 && index >= projects.length - 2;
             const statusLower = project.status?.toLowerCase();
@@ -117,7 +117,7 @@ const ProjectsTable = ({
                   )}
                 </td>
                 <td className="col-index">
-                  <div className="index-badge">{displayRank}</div>
+                  <div className="index-badge">{displayRank || "-"}</div>
                 </td>
                 <td className="col-bets">
                   <span>{project.project_name}</span>

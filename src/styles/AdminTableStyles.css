@@ -516,6 +516,7 @@
     border-radius: 999px;
     font-size: 0.72rem;
     font-weight: 600;
+    border:1px solid;
     text-transform: capitalize;
     white-space: nowrap;
 }
@@ -523,6 +524,7 @@
 .admin-status-badge.active {
     background: rgba(22, 163, 74, 0.1);
     color: #16a34a;
+    border: 1px solid #118549;
 }
 
 .admin-status-badge.inactive {

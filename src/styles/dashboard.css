@@ -495,19 +495,22 @@
     white-space: nowrap;
   }
 
-  /* .status-badge.status-active {
+  .status-badge.status-active {
     background-color: #ecfdf5 !important;
     color: #059669 !important;
-  } */
+    border:1px solid;
+  }
 
   .status-badge.status-archived {
     background-color: #fffbeb !important;
     color: #d97706 !important;
+    border:1px solid;
   }
 
   .status-badge.status-deleted {
     background-color: #fef2f2 !important;
     color: #dc2626 !important;
+    border:1px solid;
   }
 
   .business-item:hover {

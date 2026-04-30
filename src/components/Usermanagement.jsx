@@ -558,11 +558,12 @@ const UserManagement = ({ onToast }) => {
         return (
           <span style={{
             padding: "4px 8px",
-            borderRadius: "12px",
+            borderRadius: "20px",
             fontSize: "12px",
             fontWeight: 500,
             color: statusColor,
             backgroundColor: statusBg,
+            border:"1px solid",
             display: "inline-block"
           }}>
             {label}

@@ -257,6 +257,7 @@ export const staticTranslations = {
     "business_column": "BUSINESS",
     "state_column": "STATE",
     "date_of_creation_column": "DATE OF CREATION",
+    "status_column": "STATUS",
     "active_bets_column": "# BETS",
     "collaborators_column": "# COLLABORATORS",
     "action_column": "ACTION",
