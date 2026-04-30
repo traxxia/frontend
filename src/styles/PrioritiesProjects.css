@@ -117,7 +117,7 @@
   background: #ffffff;
 }
 
-.priority-card.kickstarted { 
+.priority-card.kickstarted {
   border-color: #e2e8f0;
   background-color: #ffffff !important;
 }
@@ -188,6 +188,12 @@
 [data-theme="dark"] .project-row.kickstarted {
   background-color: rgba(30, 41, 59, 0.5);
 }
+
+/* granular-header */
+[data-theme="dark"] .granular-header {
+  background: rgba(59, 130, 246, 0.1) !important;
+}
+
 
 /* Footer note */
 .footer-note {
