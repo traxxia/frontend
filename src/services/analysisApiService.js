@@ -133,6 +133,7 @@ export class AnalysisApiService {
       // Clear caches on save to ensure fresh data next time
       pmfAnalysisCache.delete(`pmf-${businessId}`);
       pmfExecutiveSummaryCache.delete(`exec-${businessId}`);
+      kickstartRequestCache.delete(`kickstart-${businessId}`);
       
       const response = await fetch(`${this.API_BASE_URL}/api/pmf-analysis/onboarding`, {
         method: 'POST',
@@ -189,6 +190,7 @@ export class AnalysisApiService {
       const token = this.getAuthToken();
       // Clear cache on save
       pmfExecutiveSummaryCache.delete(`exec-${businessId}`);
+      kickstartRequestCache.delete(`kickstart-${businessId}`);
       
       const response = await fetch(`${this.API_BASE_URL}/api/pmf-analysis/${businessId}/executive-summary`, {
         method: 'POST',
@@ -270,6 +272,10 @@ export class AnalysisApiService {
   async savePMFInsights(businessId, insights) {
     try {
       const token = this.getAuthToken();
+      // Clear caches
+      pmfAnalysisCache.delete(`pmf-${businessId}`);
+      kickstartRequestCache.delete(`kickstart-${businessId}`);
+      
       const insightsData = insights?.insights || insights;
       const response = await fetch(`${this.API_BASE_URL}/api/pmf-analysis/${businessId}/insights`, {
         method: 'POST',

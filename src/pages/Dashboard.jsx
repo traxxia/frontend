@@ -795,9 +795,9 @@ const Dashboard = () => {
                   variant="dark"
                 >
                   {[
-                    { src: "/slides/slide1.jpeg", alt: 'step_1_login_alt' },
-                    { src: "/slides/slide2.jpeg", alt: 'step_2_create_business_alt' },
-                    { src: "/slides/slide3.jpeg", alt: 'step_3_onboarding_pmf_alt' },
+                    { src: "/slides/slide1.png", alt: 'step_1_login_alt' },
+                    { src: "/slides/slide2.png", alt: 'step_2_create_business_alt' },
+                    { src: "/slides/slide3.png", alt: 'step_3_onboarding_pmf_alt' },
                     { src: "/slides/slide4.png", alt: 'step_4_new_business_alt' },
                     { src: "/slides/slide5.png", alt: 'step_5_exec_summary_alt' },
                     { src: "/slides/slide6.png", alt: 'step_6_kickstart_projects_alt' },

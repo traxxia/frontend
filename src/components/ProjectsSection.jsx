@@ -123,22 +123,6 @@ const ProjectsSection = ({
     }
   }, [projects.length, isLoadingProjects, onProjectCountChange]);
 
-  useEffect(() => {
-    if (activeView !== "list") {
-      setTimeout(() => {
-        if (containerRef.current) {
-          containerRef.current.scrollIntoView({ behavior: 'auto', block: 'start' });
-
-          const parent = containerRef.current.closest('.info-panel-content');
-          if (parent) {
-            parent.scrollTo({ top: 0, behavior: 'auto' });
-          }
-        }
-        window.scrollTo({ top: 0, behavior: 'auto' });
-      }, 0);
-    }
-  }, [activeView]);
-
   const location = useLocation();
   const navigate = useNavigate();
   const [currentProject, setCurrentProject] = useState(null);

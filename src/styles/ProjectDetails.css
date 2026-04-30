@@ -219,6 +219,7 @@
     margin-bottom: 20px;
     background: transparent;
     padding: 0;
+    scroll-margin-top: 100px;
 }
 
 .projects-breadcrumb .breadcrumb {

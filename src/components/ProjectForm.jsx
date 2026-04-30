@@ -348,6 +348,22 @@ const ProjectForm = ({
   const [fieldErrors, setFieldErrors] = useState({});
   const [showErrors, setShowErrors] = useState(false);
   const [eligibleOwners, setEligibleOwners] = useState([]);
+  const breadcrumbRef = useRef(null);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (breadcrumbRef.current) {
+        breadcrumbRef.current.scrollIntoView({ behavior: 'auto', block: 'start' });
+      }
+      window.scrollTo(0, 0);
+      const parent = document.querySelector('.info-panel-content');
+      if (parent) {
+        parent.scrollTo({ top: 0, behavior: 'auto' });
+      }
+    }, 100);
+    return () => clearTimeout(timer);
+  }, []);
+
 
   useEffect(() => {
     // Only fetch for New or Edit mode
@@ -833,7 +849,8 @@ const ProjectForm = ({
           </div>
         )}
         {/* Breadcrumb & Actions Header */}
-        <div className="projects-breadcrumb">
+        <div className="projects-breadcrumb" ref={breadcrumbRef}>
+
           <Breadcrumb style={{ margin: 0 }}>
             <Breadcrumb.Item onClick={onBack} style={{ cursor: "pointer" }}>
               {t("Projects")}
