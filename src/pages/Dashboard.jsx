@@ -561,7 +561,7 @@ const Dashboard = () => {
     let initialTab = 'advanced';
     if (limits.pmf) initialTab = 'executive';
     else if (limits.insight || limits.strategic) initialTab = 'advanced';
-    else if (limits.project) initialTab = 'projects';
+    else if (limits.project) initialTab = 'bets';
 
     navigate('/businesspage', { state: { business, initialTab } });
   }, [selectBusiness, navigate, addToast, t]);
@@ -644,7 +644,7 @@ const Dashboard = () => {
                 </div>
               ) : (
                 <div className="businesses-container">
-                  <div className="businesses-header d-flex justify-content-between align-items-center">
+                  <div className="businesses-header d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-3">
                     <h2>{t('your_businesses_all_states') || "YOUR BUSINESSES — ALL STATES"}</h2>
                     
                     <div className="status-filter-wrapper">
@@ -687,7 +687,7 @@ const Dashboard = () => {
                         <tr>
                           <th>{t('business_column') || "BUSINESS"}</th>
                           <th>{t('state_column') || "STATE"}</th>
-                          <th>{t('date_of_creation_column') || "DATE OF CREATION"}</th>
+                          <th className="th-date">{t('date_of_creation_column') || "DATE OF CREATION"}</th>
                           <th>{t('active_bets_column') || "# BETS"}</th>
                           <th>{t('collaborators_column') || "# COLLABORATORS"}</th>
                           <th>{t('action_column') || "ACTION"}</th>
@@ -716,7 +716,11 @@ const Dashboard = () => {
                             const collaborators = business.collaborators_count || (business.company_admin_id?.length || 1);
 
                             return (
-                              <tr key={business._id || business.id} onClick={() => handleBusinessClick(business)}>
+                              <tr 
+                                key={business._id || business.id} 
+                                onClick={!isDeleted ? () => handleBusinessClick(business) : undefined}
+                                className={isDeleted ? 'row-deleted' : ''}
+                              >
                                 <td className="business-name-cell">{business.business_name}</td>
                                 <td>
                                   <span className={`state-badge ${stateClass}`}>{state}</span>

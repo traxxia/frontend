@@ -654,9 +654,10 @@ const ProjectsSection = ({
 
       const statusChanged = oldStatus !== newStatus;
       const learningStateChanged = oldLearningState !== newLearningState;
+      const isProjectLaunched = (currentProject.launch_status || "").toLowerCase() === "launched";
 
-      // If either status or learning state changed, show justification modal
-      if (statusChanged || learningStateChanged) {
+      // If either status or learning state changed, show justification modal (Only for Launched projects)
+      if (isProjectLaunched && (statusChanged || learningStateChanged)) {
         const changes = [];
         if (statusChanged) {
           changes.push({
@@ -818,7 +819,7 @@ const ProjectsSection = ({
         <div className="bet-ledger-container premium-card">
           <div className="bet-ledger-header d-flex justify-content-between align-items-center flex-wrap gap-3">
             <h2 className="bet-ledger-title">
-              {t("BET LEDGER")} — <span className="text-muted text-uppercase" style={{ fontSize: '11px', fontWeight: '800' }}>{t("ALL INITIATIVES")}</span>
+              {t("BET LEDGER")} — <span className="text-muted text-uppercase" style={{ fontSize: '11px', fontWeight: '700' }}>{t("ALL INITIATIVES")}</span>
             </h2>
 
             <div className="bet-ledger-actions d-flex align-items-center gap-3">

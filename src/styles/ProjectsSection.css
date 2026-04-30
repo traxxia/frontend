@@ -367,7 +367,7 @@
   border: 1px solid #e5e7eb;
   border-radius: 8px;
   box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-  z-index: 50;
+  z-index: 100000;
   min-width: 140px;
   padding: 4px;
   overflow: hidden;
@@ -2340,7 +2340,7 @@
 .bet-ledger-title {
   margin: 0;
   font-size: 14px;
-  font-weight: 800;
+  font-weight: 700;
   color: #2d3748;
   letter-spacing: 0.05em;
 }
@@ -2479,4 +2479,61 @@
 .btn-launch-premium:hover {
   background-color: #7e22ce;
   transform: translateY(-1px);
+}
+
+@media (max-width: 768px) {
+  .bet-ledger-header {
+    padding: 12px 16px;
+    gap: 12px;
+  }
+
+  .bet-ledger-title {
+    font-size: 12px;
+    width: 100%;
+  }
+
+  .bet-ledger-actions {
+    width: 100%;
+    gap: 8px !important;
+    flex-wrap: wrap;
+  }
+
+  .status-dropdown-wrapper {
+    flex: 1;
+    min-width: 140px;
+  }
+
+  .status-dropdown-btn {
+    width: 100%;
+    min-width: 0;
+    padding: 8px 12px;
+    gap: 8px;
+  }
+
+  .status-label-group {
+    gap: 8px;
+  }
+
+  .status-label-prefix {
+    font-size: 10px;
+  }
+
+  .status-label-current {
+    font-size: 12px;
+  }
+
+  .btn-new-project-premium,
+  .btn-launch-premium {
+    flex: 1;
+    padding: 8px 12px;
+    font-size: 13px;
+    justify-content: center;
+    white-space: nowrap;
+  }
+
+  .status-dropdown-menu {
+    width: calc(100vw - 32px);
+    right: auto;
+    left: 0;
+  }
 }

@@ -59,7 +59,7 @@ const ProjectsTable = ({
             <th>{t("Learning State")}</th>
             <th className="col-score-header">
               <div className="score-header-content">
-                {t("Score")} 
+                {t("Score")}
                 <div className="score-info-icon-wrapper">
                   <Info size={12} className="score-info-icon" />
                   <div className="score-formula-tooltip">
@@ -100,6 +100,8 @@ const ProjectsTable = ({
             const statusLower = project.status?.toLowerCase();
             const isTerminal = ["completed", "scaled", "killed"].includes(statusLower);
 
+            const isLastTwoRows = index >= projects.length - 2;
+
             return (
               <tr key={project._id}>
                 <td className="col-selection">
@@ -129,9 +131,9 @@ const ProjectsTable = ({
                   </span>
                 </td>
                 <td className="col-score">
-                   {/* Use backend-calculated score, or ai_score if present */}
-                  {project.score !== undefined ? Number(project.score).toFixed(1) : 
-                   (project.ai_score ? (Number(project.ai_score) * 10).toFixed(1) : "0.0")}
+                  {/* Use backend-calculated score, or ai_score if present */}
+                  {project.score !== undefined ? Number(project.score).toFixed(1) :
+                    (project.ai_score ? (Number(project.ai_score) * 10).toFixed(1) : "0.0")}
                 </td>
                 <td>
                   <span className={`pill-attribute ${getAttributePillClass("impact", project.impact)}`}>
@@ -163,7 +165,15 @@ const ProjectsTable = ({
                       {t("Actions")} <ChevronDown size={14} />
                     </button>
                     {showMenuId === project._id && (
-                      <div className="menu-dropdown" style={{ right: 0, top: '100%' }}>
+                      <div
+                        className="menu-dropdown"
+                        style={{
+                          right: 0,
+                          top: isLastTwoRows ? 'auto' : '100%',
+                          bottom: isLastTwoRows ? '100%' : 'auto',
+                          marginBottom: isLastTwoRows ? '8px' : '0'
+                        }}
+                      >
                         {isTerminal ? (
                           <div onClick={() => onView(project)} className="menu-item"><Eye size={14} /> {t("view")}</div>
                         ) : (!isAdmin && isViewer || isArchived) ? (

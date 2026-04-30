@@ -250,6 +250,10 @@ export const useProjectForm = () => {
       newErrors.killCriteria = t("Kill criteria is required");
     }
 
+    if (isEmpty(learningState)) {
+      newErrors.learningState = t("Learning state is required");
+    }
+
     setErrors(newErrors); 
     return {
       isValid: Object.keys(newErrors).length === 0,
@@ -259,7 +263,7 @@ export const useProjectForm = () => {
   }, [
     projectName, description, importance, strategicDecision, accountableOwner,
     accountableOwnerId, successCriteria, killCriteria, dependencies,
-    highLevelReq, scope, outcome, successMetrics, keyAssumptions, t, status, reviewCadence
+    highLevelReq, scope, outcome, successMetrics, keyAssumptions, t, status, reviewCadence, learningState
   ]);
 
   return {
