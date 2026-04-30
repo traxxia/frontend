@@ -4,9 +4,14 @@
   background: transparent;
   box-shadow: none; 
   overflow-x: auto;
+  overflow-y: hidden;
   -webkit-overflow-scrolling: touch;
   border: none;
   width: 100%;
+}
+
+.projects-table-container.menu-open {
+  padding-bottom: 120px;
 }
 
 .premium-table {
@@ -39,7 +44,7 @@
 }
 
 .premium-table td {
-  padding: 20px 12px;
+  padding: 12px 12px;
   vertical-align: middle;
   border-bottom: 1px solid #f7fafc;
   font-size: 14px;

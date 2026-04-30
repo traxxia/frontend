@@ -99,12 +99,13 @@ const ProjectsTable = ({
           {projects.map((project, index) => {
             const displayRank = rankMap?.[String(project?._id)] ?? project.rank ?? project.ai_rank ?? 0;
             const userCanReview = canReviewProject ? canReviewProject(project, isAdmin, myUserId, isArchived) : false;
+            const isLastTwoRows = projects.length > 2 && index >= projects.length - 2;
             const statusLower = project.status?.toLowerCase();
             const isTerminal = ["completed", "scaled", "killed"].includes(statusLower);
 
 
             return (
-              <tr key={project._id}>
+              <tr key={project._id} className={isLastTwoRows ? "last-two-rows" : ""}>
                 <td className="col-selection">
                   {isAdmin && !isArchived && !isTerminal && project.launch_status !== 'launched' && (
                     <input

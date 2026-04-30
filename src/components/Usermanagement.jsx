@@ -390,6 +390,8 @@ const UserManagement = ({ onToast }) => {
 
       onToast(t("Access_granted_successfully"), "success");
       setShowAccessConfirmation(false);
+      queryClient.invalidateQueries({ queryKey: ["businesses"] });
+      queryClient.invalidateQueries({ queryKey: ["projects", accessBusinessId] });
       setSelectedProjectId("");
       setSelectedCollaboratorIds([]);
       setAccessBusinessId("");
@@ -422,6 +424,7 @@ const UserManagement = ({ onToast }) => {
       onToast(t("User_assigned_successfully"), "success");
       handleCloseAssignModal();
       queryClient.invalidateQueries({ queryKey: ["planDetails"] });
+      queryClient.invalidateQueries({ queryKey: ["businesses"] });
       queryClient.invalidateQueries({ queryKey: ["collaborators", assignBusinessId] });
     } catch (error) {
       console.error(error);
