@@ -337,6 +337,8 @@ const UserManagement = ({ onToast }) => {
 
       queryClient.invalidateQueries({ queryKey: ["adminUsers"] });
       queryClient.invalidateQueries({ queryKey: ["planDetails"] });
+      queryClient.invalidateQueries({ queryKey: ["accessControl"] });
+      queryClient.invalidateQueries({ queryKey: ["businesses"] });
 
     } catch (error) {
       console.error(error);

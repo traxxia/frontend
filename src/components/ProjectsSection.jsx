@@ -871,7 +871,7 @@ const ProjectsSection = ({
                   className="btn-new-project-premium"
                 >
                   <Plus size={18} />
-                  {t("New Project")}
+                  {t("New Bet")}
                 </button>
               )}
 

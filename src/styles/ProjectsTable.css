@@ -2,7 +2,7 @@
 
 .projects-table-container {
   background: transparent;
-  box-shadow: none;
+  box-shadow: none; 
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
   border: none;
@@ -120,6 +120,7 @@
     background-color: #f5bfe3;
     color: #bf0280;
     border: 1px solid #ed1aa7;
+    white-space: nowrap;
 }
 
 .badge-draft {
@@ -371,7 +372,7 @@
 
 /* Responsive Table Styles */
 @media (max-width: 1024px) {
-  .projects-table-container {
+  .projects-table-container { 
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
     border-radius: 8px;

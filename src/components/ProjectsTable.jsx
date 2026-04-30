@@ -1,4 +1,5 @@
 import React from "react";
+import { Dropdown } from "react-bootstrap";
 import { ChevronDown, Info, AlertTriangle, Clock, Eye, Edit2, Trash2, CheckCircle } from "lucide-react";
 import { useTranslation } from "../hooks/useTranslation";
 import "../styles/ProjectsTable.css";
@@ -49,7 +50,7 @@ const ProjectsTable = ({
   };
 
   return (
-    <div className="projects-table-container">
+    <div className={`projects-table-container ${showMenuId ? 'menu-open' : ''}`}>
       <table className="premium-table">
         <thead>
           <tr>
@@ -101,7 +102,6 @@ const ProjectsTable = ({
             const statusLower = project.status?.toLowerCase();
             const isTerminal = ["completed", "scaled", "killed"].includes(statusLower);
 
-            const isLastTwoRows = index >= projects.length - 2;
 
             return (
               <tr key={project._id}>
@@ -155,45 +155,33 @@ const ProjectsTable = ({
                   {project.accountable_owner || project.created_by || t("Unassigned")}
                 </td>
                 <td className="text-end">
-                  <div className="project-menu-container d-inline-block">
-                    <button
-                      className="actions-dropdown-btn"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setShowMenuId(showMenuId === project._id ? null : project._id);
-                      }}
-                    >
+                  <Dropdown align="end" className="project-menu-container d-inline-block">
+                    <Dropdown.Toggle as="button" className="actions-dropdown-btn">
                       {t("Actions")} <ChevronDown size={14} />
-                    </button>
-                    {showMenuId === project._id && (
-                      <div
-                        className="menu-dropdown"
-                        style={{
-                          right: 0,
-                          top: isLastTwoRows ? 'auto' : '100%',
-                          bottom: isLastTwoRows ? '100%' : 'auto',
-                          marginBottom: isLastTwoRows ? '8px' : '0'
-                        }}
-                      >
-                        {isTerminal ? (
-                          <div onClick={() => onView(project)} className="menu-item"><Eye size={14} /> {t("view")}</div>
-                        ) : (!isAdmin && isViewer || isArchived) ? (
-                          <div onClick={() => onView(project)} className="menu-item"><Eye size={14} /> {t("view")}</div>
-                        ) : (
-                          <div onClick={() => onEdit(project)} className="menu-item"><Edit2 size={14} /> {t("edit")}</div>
-                        )}
-                        {!isViewer && !isArchived && isAdmin && !isTerminal && (
-                          <div onClick={() => onDelete(project._id)} className="menu-item delete"><Trash2 size={14} /> {t("delete")}</div>
-                        )}
-                        {userCanReview && !isArchived && !isTerminal && (
-                          <>
-                            <div onClick={() => onPerformReview(project)} className="menu-item"><CheckCircle size={14} /> {t("Perform_Review")}</div>
-                            <div onClick={() => onAdhocUpdate(project)} className="menu-item"><Edit2 size={14} /> {t("Ad_Hoc_Update")}</div>
-                          </>
-                        )}
-                      </div>
-                    )}
-                  </div>
+                    </Dropdown.Toggle>
+
+                    <Dropdown.Menu 
+                      className="menu-dropdown"
+                      popperConfig={{ strategy: 'fixed' }}
+                    >
+                      {isTerminal ? (
+                        <Dropdown.Item onClick={() => onView(project)} className="menu-item"><Eye size={14} /> {t("view")}</Dropdown.Item>
+                      ) : (!isAdmin && isViewer || isArchived) ? (
+                        <Dropdown.Item onClick={() => onView(project)} className="menu-item"><Eye size={14} /> {t("view")}</Dropdown.Item>
+                      ) : (
+                        <Dropdown.Item onClick={() => onEdit(project)} className="menu-item"><Edit2 size={14} /> {t("edit")}</Dropdown.Item>
+                      )}
+                      {!isViewer && !isArchived && isAdmin && !isTerminal && (
+                        <Dropdown.Item onClick={() => onDelete(project._id)} className="menu-item delete"><Trash2 size={14} /> {t("delete")}</Dropdown.Item>
+                      )}
+                      {userCanReview && !isArchived && !isTerminal && (
+                        <>
+                          <Dropdown.Item onClick={() => onPerformReview(project)} className="menu-item"><CheckCircle size={14} /> {t("Perform_Review")}</Dropdown.Item>
+                          <Dropdown.Item onClick={() => onAdhocUpdate(project)} className="menu-item"><Edit2 size={14} /> {t("Ad_Hoc_Update")}</Dropdown.Item>
+                        </>
+                      )}
+                    </Dropdown.Menu>
+                  </Dropdown>
                 </td>
               </tr>
             );

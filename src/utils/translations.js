@@ -1211,7 +1211,7 @@ export const staticTranslations = {
     // PROJECT FOEM PAGE
     // ===========================
 
-    'New_Project': 'New Project',
+    'New_Project': 'New Bet',
     'View_Project': 'View Project',
     'Edit_Project': 'Edit Project',
     'Project': 'Project',
