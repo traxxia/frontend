@@ -1107,7 +1107,7 @@
   .carousel-control-next {
     width: 60px;
     height: 60px;
-    background: rgba(0, 0, 0, 0.7);
+    background: gray;
     border-radius: 50%;
     top: 50%;
     transform: translateY(-50%);
@@ -1126,7 +1126,7 @@
 
   .carousel-control-prev:hover,
   .carousel-control-next:hover {
-    background: rgba(0, 0, 0, 0.9);
+    background: gray;
     border-color: #fff;
     opacity: 1;
     transform: translateY(-50%) scale(1.1);
