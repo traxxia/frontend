@@ -30,6 +30,7 @@ const ProjectsTable = ({
     if (s === "paused") return "badge-paused";
     if (s === "completed") return "badge-completed";
     if (s === "scaled") return "badge-scaled";
+    if (s === "at risk" || s === "at_risk") return "badge-at-risk";
     return "badge-draft";
   };
 

@@ -747,8 +747,7 @@ const BusinessSetupPage = () => {
       } else if (uploadedFileForAnalysis) {
         mergedAnswers.uploadedFile = uploadedFileForAnalysis;
       }
-
-      showToastMessage(`Calling API for phase: ${targetPhase}`, 'info');
+ 
       await storeRegeneratePhase(targetPhase, storeQuestions, mergedAnswers, selectedBusinessId, showToastMessage);
       if (alsoRegenerateStrategic) {
         await handleStrategicAnalysisRegenerate(true);

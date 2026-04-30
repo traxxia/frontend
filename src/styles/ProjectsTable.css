@@ -116,6 +116,12 @@
   border: 1px solid #f59e0b40;
 }
 
+.badge-at-risk {
+    background-color: #f5bfe3;
+    color: #bf0280;
+    border: 1px solid #ed1aa7;
+}
+
 .badge-draft {
   background-color: #f3f4f6;
   color: #4b5563;
