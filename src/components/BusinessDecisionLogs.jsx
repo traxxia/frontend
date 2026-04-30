@@ -139,9 +139,6 @@ const BusinessDecisionLogs = ({ businessId }) => {
   useEffect(() => {
     if (businessId) {
       fetchProjects(businessId, { silent: true });
-      decisionLogApiService.getBusinessFilterOptions(businessId)
-        .then(data => setFilterOptions(data))
-        .catch(err => console.error('Failed to load filter options', err));
     }
   }, [businessId, fetchProjects]);
 
