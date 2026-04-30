@@ -29,6 +29,21 @@ export const decisionLogApiService = {
       throw error;
     }
   },
+  getBusinessFilterOptions: async (businessId) => {
+    if (!businessId) {
+      throw new Error('Business ID is required');
+    }
+
+    try {
+      const response = await axios.get(`${API_BASE}/business/${businessId}/filters`, {
+        headers: getAuthHeaders(),
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching business filter options:', error);
+      throw error;
+    }
+  },
   async createDecisionLog(projectId, payload) {
     const response = await axios.post(`${API_BASE}/${projectId}/logs`, payload, {
       headers: getAuthHeaders(),

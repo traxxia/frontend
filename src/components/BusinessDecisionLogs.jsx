@@ -17,15 +17,7 @@ import { getDecisionLogActorName } from "../utils/decisionLogUtils";
 import { useProjectStore } from "../store/projectStore";
 import "../styles/AdminTableStyles.css";
 
-const LOG_TYPES = [
-  { value: "", label: "All Types" },
-  { value: "status_change", label: "Status Change" },
-  { value: "cadence_review", label: "Cadence Review" },
-  { value: "no_change_review", label: "No Change Review" },
-  { value: "adhoc_update", label: "Ad-Hoc Update" },
-  { value: "manual", label: "Manual" },
-  { value: "project_update", label: "Project Update" },
-];
+
 
 
 
@@ -128,6 +120,8 @@ const BusinessDecisionLogs = ({ businessId }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [isError, setIsError] = useState(false);
   const [data, setData] = useState(null);
+  const [availableLogTypes, setAvailableLogTypes] = useState([]);
+  const [availableStatuses, setAvailableStatuses] = useState([]);
 
   const fetchProjects = useProjectStore((state) => state.fetchProjects);
   const projectsFromStore = useProjectStore((state) => state.projects);
@@ -224,9 +218,42 @@ const BusinessDecisionLogs = ({ businessId }) => {
     }
   }, [businessId, page, filters]);
 
+  const fetchFilterOptions = useCallback(async () => {
+    if (!businessId) return;
+    try {
+      const response = await decisionLogApiService.getBusinessFilterOptions(businessId);
+      
+      // Helper to normalize and deduplicate
+      const getUniqueOptions = (items) => {
+        const unique = new Map();
+        items.forEach(item => {
+          if (!item) return;
+          const normalized = String(item).trim();
+          const key = normalized.toLowerCase();
+          if (!unique.has(key)) {
+            unique.set(key, {
+              value: normalized,
+              label: normalized.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())
+            });
+          }
+        });
+        return Array.from(unique.values()).sort((a, b) => a.label.localeCompare(b.label));
+      };
+
+      setAvailableLogTypes(getUniqueOptions(response.log_types || []));
+      setAvailableStatuses(getUniqueOptions(response.execution_states || []));
+    } catch (error) {
+      console.error('Error fetching filter options:', error);
+    }
+  }, [businessId]);
+
   useEffect(() => {
     fetchBusinessLogs();
   }, [fetchBusinessLogs]);
+
+  useEffect(() => {
+    fetchFilterOptions();
+  }, [fetchFilterOptions]);
 
   // Fix ESLint warning by memoizing the logs array so it doesn't change reference when empty
   const logs = useMemo(() => data?.logs || [], [data?.logs]);
@@ -262,34 +289,6 @@ const BusinessDecisionLogs = ({ businessId }) => {
       .map(([id, name]) => ({ id, name }))
       .sort((a, b) => (a.name || "").localeCompare(b.name || ""));
   }, [logs, projectsFromStore]);
-
-  // Get unique statuses from logs for filtering
-  const availableStatuses = useMemo(() => {
-    const statusesByKey = new Map();
-    logs.forEach(log => {
-      const rawStatus = log.execution_state || log.to_status;
-      const status = typeof rawStatus === "string" ? rawStatus.trim() : rawStatus;
-      if (status) {
-        const normalizedKey = String(status)
-          .toLowerCase()
-          .replace(/[_\s]+/g, " ")
-          .trim();
-
-        if (!statusesByKey.has(normalizedKey)) {
-          statusesByKey.set(normalizedKey, status);
-        }
-      }
-    });
-    // Convert to array and map to display format
-    return Array.from(statusesByKey.values())
-      .map(status => ({
-        value: status,
-        label: status
-          .replace(/_/g, " ")
-          .replace(/\b\w/g, (c) => c.toUpperCase())
-      }))
-      .sort((a, b) => a.label.localeCompare(b.label));
-  }, [logs]);
 
   const refetch = useCallback(() => {
     fetchBusinessLogs();
@@ -375,6 +374,7 @@ const BusinessDecisionLogs = ({ businessId }) => {
                 type="date"
                 size="sm"
                 value={filters.date}
+                max={new Date().toISOString().split("T")[0]}
                 onChange={(e) => setFilter("date", e.target.value)}
               />
             </Col>
@@ -388,7 +388,8 @@ const BusinessDecisionLogs = ({ businessId }) => {
                 value={filters.log_type}
                 onChange={(e) => setFilter("log_type", e.target.value)}
               >
-                {LOG_TYPES.map((o) => (
+                <option value="">{t("All_Types")}</option>
+                {availableLogTypes.map((o) => (
                   <option key={o.value} value={o.value}>
                     {o.label}
                   </option>
