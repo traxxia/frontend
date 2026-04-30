@@ -151,7 +151,7 @@ const ProjectsSection = ({
   const [reviewType, setReviewType] = useState("review");
 
   const [apiIsArchived, setApiIsArchived] = useState(isArchived);
-  const [selectedCategory, setSelectedCategory] = useState("All");
+  const [selectedCategories, setSelectedCategories] = useState(["All"]);
   const [selectedProjectIds, setSelectedProjectIds] = useState([]);
   const [isRankingBlinking] = useState(false);
   const [showMissingRankModal, setShowMissingRankModal] = useState(false);
@@ -795,9 +795,39 @@ const ProjectsSection = ({
     return () => document.removeEventListener("click", handleClickOutside);
   }, [isStatusDropdownOpen]);
 
+  const toggleCategory = useCallback((catId) => {
+    setSelectedCategories((prev) => {
+      if (catId === "All") return ["All"];
+      
+      let next = prev.filter(id => id !== "All");
+      if (next.includes(catId)) {
+        next = next.filter(id => id !== catId);
+      } else {
+        next = [...next, catId];
+      }
+      
+      return next.length === 0 ? ["All"] : next;
+    });
+  }, []);
+
   const renderProjectList = () => {
-    const selectedCategoryLabel = CATEGORIES.find(c => c.id === selectedCategory)?.label || "all";
-    const totalCount = categoryCounts[selectedCategory] || 0;
+    const isAllSelected = selectedCategories.includes("All");
+    
+    const selectedCategoryLabel = isAllSelected 
+      ? t("all") 
+      : selectedCategories.length === 1 
+        ? t(CATEGORIES.find(c => c.id === selectedCategories[0])?.label || "all")
+        : `${selectedCategories.length} ${t("selected")}`;
+
+    const totalCount = isAllSelected 
+      ? projects.length 
+      : projects.filter(p => {
+          const statusValue = (p.status || "Draft").toLowerCase();
+          return selectedCategories.some(catId => {
+            if (catId === "At Risk" && (statusValue === "at risk" || statusValue === "at_risk")) return true;
+            return statusValue === catId.toLowerCase();
+          });
+        }).length;
 
     return (
       <>
@@ -847,14 +877,14 @@ const ProjectsSection = ({
                       <div 
                         key={cat.id} 
                         className="status-menu-item"
-                        onClick={() => {
-                          setSelectedCategory(cat.id);
-                          setIsStatusDropdownOpen(false);
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleCategory(cat.id);
                         }}
                       >
                         <div className="status-menu-left">
-                          <div className={`status-checkbox ${selectedCategory === cat.id ? "checked" : ""}`}>
-                            {selectedCategory === cat.id && <Check size={12} color="white" />}
+                          <div className={`status-checkbox ${selectedCategories.includes(cat.id) ? "checked" : ""}`}>
+                            {selectedCategories.includes(cat.id) && <Check size={12} color="white" />}
                           </div>
                           <span className="status-name-text">{t(cat.label)}</span>
                         </div>
@@ -910,7 +940,7 @@ const ProjectsSection = ({
             onAdhocUpdate={handleAdhocUpdate}
             canReviewProject={canReviewProject}
             myUserId={myUserId}
-            selectedCategory={selectedCategory}
+            selectedCategories={selectedCategories}
             isArchived={apiIsArchived}
             selectedProjectIds={selectedProjectIds}
             onToggleSelection={toggleProjectSelection}

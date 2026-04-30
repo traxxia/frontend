@@ -19,7 +19,7 @@ const ProjectsList = ({
   onEdit,
   onView,
   onDelete,
-  selectedCategory,
+  selectedCategories,
   isArchived,
   isAdmin,
   selectedProjectIds = [],
@@ -52,42 +52,6 @@ const ProjectsList = ({
     };
   }, [showMenuId]);
 
-  // Group projects by v2 Status (case-insensitive)
-  const groupedProjects = useMemo(() => {
-    const groups = {
-      "Draft": [],
-      "Active": [],
-      "At Risk": [],
-      "Paused": [],
-      "Killed": [],
-      "Completed": [],
-      "Scaled": []
-    };
-
-    sortedProjects.forEach(p => {
-      const statusValue = (p.status || "Draft").toLowerCase();
-      if (statusValue === "active") {
-        groups["Active"].push(p);
-      } else if (statusValue === "at risk" || statusValue === "at_risk") {
-        groups["At Risk"].push(p);
-      } else if (statusValue === "paused") {
-        groups["Paused"].push(p);
-      } else if (statusValue === "killed") {
-        groups["Killed"].push(p);
-      } else if (statusValue === "completed") {
-        groups["Completed"].push(p);
-      } else if (statusValue === "scaled") {
-        groups["Scaled"].push(p);
-      } else if (statusValue === "draft") {
-        groups["Draft"].push(p);
-      } else {
-        // Unknown fallback
-        groups["Draft"].push(p);
-      }
-    });
-
-    return groups;
-  }, [sortedProjects]);
 
   const renderProjectTable = (projects) => {
     if (!projects || projects.length === 0) return null;
@@ -126,21 +90,29 @@ const ProjectsList = ({
       );
     }
 
-    // Show flat rank-ordered list for "All"
-    if (!selectedCategory || selectedCategory === "All") {
+    // Show flat rank-ordered list if "All" is selected
+    if (!selectedCategories || selectedCategories.includes("All")) {
       return renderProjectTable(sortedProjects);
     }
 
-    // Show filtered group for specific status
-    const projects = groupedProjects[selectedCategory] || [];
-    if (projects.length === 0) {
+    // Show projects that match any of the selected categories
+    const filteredProjects = sortedProjects.filter(p => {
+      const statusValue = (p.status || "Draft").toLowerCase();
+      return selectedCategories.some(catId => {
+        if (catId === "At Risk" && (statusValue === "at risk" || statusValue === "at_risk")) return true;
+        return statusValue === catId.toLowerCase();
+      });
+    });
+
+    if (filteredProjects.length === 0) {
+      const labels = selectedCategories.map(id => t(id)).join(", ");
       return (
         <div className="empty-category-message text-center py-5">
-          <p className="text-muted">{t("No projects found in")} "{selectedCategory}" {t("category")}.</p>
+          <p className="text-muted">{t("No projects found in selected categories")}: {labels}.</p>
         </div>
       );
     }
-    return renderProjectTable(projects);
+    return renderProjectTable(filteredProjects);
   };
 
   return (
