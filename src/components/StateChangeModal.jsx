@@ -3,7 +3,7 @@ import { Modal, Button, Form } from "react-bootstrap";
 import { useTranslation } from "../hooks/useTranslation";
 import { AlertTriangle, Info, ArrowRight } from "lucide-react";
 
-const JUSTIFICATION_REGEX = /^[A-Za-z\s.,'-]+$/;
+const JUSTIFICATION_REGEX = /^[A-Za-z0-9\s.,'()\-!&?]+$/;
 
 /**
  * StateChangeModal - Common modal for status and/or learning state changes.
@@ -45,9 +45,9 @@ const StateChangeModal = ({ show, onHide, onConfirm, changes = [], oldState, new
             return;
         }
 
-        // Only alphabets + space + punctuation (no numbers)
+        // Only alphabets + numbers + space + punctuation
         if (!JUSTIFICATION_REGEX.test(text)) {
-            setError(t("Numbers are not allowed in justification"));
+            setError(t("Invalid characters in justification"));
             return;
         }
 
