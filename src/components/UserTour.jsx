@@ -127,9 +127,10 @@ const UserTour = () => {
       const role = userRole?.toLowerCase() || 'user';
       let tourSteps = [];
       
-      const isMobile = window.innerWidth < 768; // Bootstrap md breakpoint
-      const cardSelector = isMobile ? '.mobile-view-card' : '.desktop-view-card';
-      const accordionSelector = isMobile ? '.mobile-view-card .accordion' : '.desktop-view-card .businesses-section .accordion';
+      // New Dashboard layout selectors
+      const howItWorksSelector = '.btn-how-it-works';
+      const createBusinessSelector = '.btn-create-business';
+      const businessesTableSelector = '.businesses-table-wrapper';
 
       // "user" and "company_admin" share the same primary creation interface.
       // super_admin has a different layout and doesn't hit UserTour
@@ -156,21 +157,21 @@ const UserTour = () => {
             title: 'Your Profile'
           },
           {
-            target: `${cardSelector} .create-business-btn:last-of-type`,
+            target: howItWorksSelector,
             content: 'New here? Check out our quick visual guide to understand the complete journey of a project.',
-            placement: 'right',
+            placement: 'bottom',
             title: 'How It Works'
           },
           {
-            target: `${cardSelector} .create-business-btn:first-of-type`,
+            target: createBusinessSelector,
             content: 'Ready to start? Click here to formulate your first Business profile and kick off a project.',
-            placement: 'right',
+            placement: 'bottom',
             title: 'Create Business'
           },
           {
-            target: accordionSelector,
+            target: businessesTableSelector,
             content: 'As you create businesses or get assigned to projects, they will be organized right here!',
-            placement: 'bottom',
+            placement: 'top',
             title: 'Your Businesses'
           }
         ];
@@ -197,15 +198,15 @@ const UserTour = () => {
             title: 'Profile Settings'
           },
           {
-            target: `${cardSelector} .create-business-btn`,
+            target: howItWorksSelector,
             content: 'Check out our quick visual guide to see how projects flow in Traxxia.',
-            placement: 'right',
+            placement: 'bottom',
             title: 'Learning Center'
           },
           {
-            target: accordionSelector,
+            target: businessesTableSelector,
             content: 'When an Admin assigns you to a project, it will appear right here under \'Collaborating Businesses\'.',
-            placement: 'bottom',
+            placement: 'top',
             title: 'Your Businesses'
           }
         ];
@@ -231,14 +232,14 @@ const UserTour = () => {
             placement: 'bottom'
           },
           {
-            target: `${cardSelector} .create-business-btn`,
+            target: howItWorksSelector,
             content: 'Learn how things work by clicking here.',
-            placement: 'right'
+            placement: 'bottom'
           },
           {
-            target: accordionSelector,
+            target: businessesTableSelector,
             content: 'You can view the progress of the businesses you have access to from here.',
-            placement: 'bottom'
+            placement: 'top'
           }
         ];
       }
