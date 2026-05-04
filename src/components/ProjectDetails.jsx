@@ -126,6 +126,8 @@ const ProjectDetails = ({
 
     const isPendingReview = React.useMemo(() => {
         if (!project || !project.next_review_date) return false;
+        const statusLower = (project?.status || "").toLowerCase();
+        if (["completed", "scaled", "killed"].includes(statusLower)) return false;
         if (project.is_stale || new Date(project.next_review_date).getTime() < new Date().setHours(0, 0, 0, 0)) return false;
         const nextDate = new Date(project.next_review_date);
         nextDate.setHours(0, 0, 0, 0);
@@ -375,12 +377,12 @@ const ProjectDetails = ({
                         </div>
                         <div className="detail-value-display" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                             <span style={{
-                                color: (project.is_stale || (project.next_review_date && new Date(project.next_review_date).getTime() < new Date().setHours(0, 0, 0, 0))) ? '#ef4444' : (isPendingReview ? '#d97706' : 'inherit'),
+                                color: (!terminalStatusInfo.isTerminal && (project.is_stale || (project.next_review_date && new Date(project.next_review_date).getTime() < new Date().setHours(0, 0, 0, 0)))) ? '#ef4444' : (isPendingReview && !terminalStatusInfo.isTerminal ? '#d97706' : 'inherit'),
                                 fontWeight: '600'
                             }}>
                                 {project.next_review_date ? new Date(project.next_review_date).toLocaleDateString() : t("Not_Available")}
                             </span>
-                            {(project.is_stale || (project.next_review_date && new Date(project.next_review_date).getTime() < new Date().setHours(0, 0, 0, 0))) ? (
+                            {!terminalStatusInfo.isTerminal && ((project.is_stale || (project.next_review_date && new Date(project.next_review_date).getTime() < new Date().setHours(0, 0, 0, 0))) ? (
                                 <span className="review-badge stale">
                                     <AlertTriangle size={12} /> {t("Stale")}
                                 </span>
@@ -388,7 +390,7 @@ const ProjectDetails = ({
                                 <span className="review-badge due">
                                     <Clock size={12} /> {t("Pending_Review") || "Pending Review"}
                                 </span>
-                            )}
+                            ))}
                         </div>
                     </div>
                     <div className="field-row">

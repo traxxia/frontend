@@ -128,7 +128,7 @@ const ProjectCard = ({
           </h3>
 
           {/* Review Badges */}
-          {userCanReview && project.launch_status === 'launched' && ((project.is_stale || (project.next_review_date && (new Date(project.next_review_date).setHours(0, 0, 0, 0) < new Date().setHours(0, 0, 0, 0)))) ? (
+          {userCanReview && project.launch_status === 'launched' && !isTerminal && ((project.is_stale || (project.next_review_date && (new Date(project.next_review_date).setHours(0, 0, 0, 0) < new Date().setHours(0, 0, 0, 0)))) ? (
             <span
               className="footer-status-premium"
               style={{ background: '#fef2f2', color: '#dc2626', cursor: 'pointer', fontSize: '11px' }}
