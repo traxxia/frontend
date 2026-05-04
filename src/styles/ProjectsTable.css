@@ -6,10 +6,57 @@
   overflow-x: auto;
   overflow-y: hidden;
   -webkit-overflow-scrolling: touch;
-  border: none;
   width: 100%;
 }
 
+.score-formula-tooltip {
+  width: 320px;
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  z-index: 1000;
+  border: 1px solid #f1f5f9;
+  text-transform: none;
+  letter-spacing: normal;
+  visibility: hidden;
+  opacity: 0;
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-top: 12px;
+}
+
+/* Styles for when it's in a portal */
+.score-formula-tooltip.portal-tooltip {
+  visibility: visible;
+  opacity: 1;
+  position: relative;
+  top: auto;
+  left: auto;
+  transform: none;
+  margin-top: 10px;
+}
+
+.score-info-icon-wrapper:hover .score-formula-tooltip:not(.portal-tooltip) {
+  visibility: visible;
+  opacity: 1;
+}
+
+/* Original Arrow Styling */
+.score-formula-tooltip::before {
+  content: '';
+  position: absolute;
+  top: -6px;
+  left: 50%;
+  transform: translateX(-50%) rotate(45deg);
+  width: 12px;
+  height: 12px;
+  background: #ffffff;
+  border-left: 1px solid #f1f5f9;
+  border-top: 1px solid #f1f5f9;
+}
 .projects-table-container.menu-open {
   padding-bottom: 120px;
 }
@@ -288,33 +335,7 @@
   padding: 1px;
 }
 
-/* Tooltip Styling */
-.score-formula-tooltip {
-  position: absolute;
-  top: 100%;
-  left: 50%;
-  transform: translateX(-50%);
-  margin-top: 12px;
-  width: 320px;
-  background: #ffffff;
-  border-radius: 12px;
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
-  padding: 20px;
-  z-index: 1000;
-  visibility: hidden;
-  opacity: 0;
-  transition: all 0.2s ease;
-  border: 1px solid #f1f5f9;
-  text-transform: none;
-  /* Reset uppercase from th */
-  letter-spacing: normal;
-}
-
-.score-info-icon-wrapper:hover .score-formula-tooltip {
-  visibility: visible;
-  opacity: 1;
-}
-
+/* Tooltip Section */
 .tooltip-section {
   display: flex;
   flex-direction: column;
@@ -359,20 +380,6 @@
   line-height: 1.5;
   margin: 0;
   font-weight: 400;
-}
-
-/* Add a small arrow to the tooltip */
-.score-formula-tooltip::before {
-  content: '';
-  position: absolute;
-  top: -6px;
-  left: 50%;
-  transform: translateX(-50%) rotate(45deg);
-  width: 12px;
-  height: 12px;
-  background: #ffffff;
-  border-left: 1px solid #f1f5f9;
-  border-top: 1px solid #f1f5f9;
 }
 
 /* Responsive Table Styles */
