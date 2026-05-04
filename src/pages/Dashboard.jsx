@@ -194,8 +194,8 @@ const Dashboard = () => {
   // We can keep the effect for any side effects if needed, 
   // but TanStack Query handles the initial load automatically.
   useEffect(() => {
-    // Preload the first few slides for the "How it works" modal
-    const slidesToPreload = ["/slides/slide1.jpeg", "/slides/slide2.jpeg", "/slides/slide3.jpeg"];
+    // Preload all slides for the "How it works" modal
+    const slidesToPreload = Array.from({ length: 10 }, (_, i) => `/slides/slide${i + 1}.webp`);
     slidesToPreload.forEach(src => {
       const img = new Image();
       img.src = src;
@@ -795,16 +795,16 @@ const Dashboard = () => {
                   variant="dark"
                 >
                   {[
-                    { src: "/slides/slide1.png", alt: 'step_1_login_alt' },
-                    { src: "/slides/slide2.png", alt: 'step_2_create_business_alt' },
-                    { src: "/slides/slide3.png", alt: 'step_3_onboarding_pmf_alt' },
-                    { src: "/slides/slide4.png", alt: 'step_4_new_business_alt' },
-                    { src: "/slides/slide5.png", alt: 'step_5_exec_summary_alt' },
-                    { src: "/slides/slide6.png", alt: 'step_6_kickstart_projects_alt' },
-                    { src: "/slides/slide7.png", alt: 'step_7_project_ranking_alt' },
-                    { src: "/slides/slide8.png", alt: 'step_8_ai_answers_alt' },
-                    { src: "/slides/slide9.png", alt: 'step_9_insights_6cs_alt' },
-                    { src: "/slides/slide10.png", alt: 'step_10_strategic_alt' },
+                    { src: "/slides/slide1.webp", alt: 'step_1_login_alt' },
+                    { src: "/slides/slide2.webp", alt: 'step_2_create_business_alt' },
+                    { src: "/slides/slide3.webp", alt: 'step_3_onboarding_pmf_alt' },
+                    { src: "/slides/slide4.webp", alt: 'step_4_new_business_alt' },
+                    { src: "/slides/slide5.webp", alt: 'step_5_exec_summary_alt' },
+                    { src: "/slides/slide6.webp", alt: 'step_6_kickstart_projects_alt' },
+                    { src: "/slides/slide7.webp", alt: 'step_7_project_ranking_alt' },
+                    { src: "/slides/slide8.webp", alt: 'step_8_ai_answers_alt' },
+                    { src: "/slides/slide9.webp", alt: 'step_9_insights_6cs_alt' },
+                    { src: "/slides/slide10.webp", alt: 'step_10_strategic_alt' },
                   ].map((slide, index) => (
                     <Carousel.Item key={index}>
                       <img
