@@ -1,5 +1,5 @@
 import React from "react";
-import { Dropdown } from "react-bootstrap";
+import { Dropdown, OverlayTrigger } from "react-bootstrap";
 import { ChevronDown, Info, AlertTriangle, Clock, Eye, Edit2, Trash2, CheckCircle } from "lucide-react";
 import { useTranslation } from "../hooks/useTranslation";
 import "../styles/ProjectsTable.css";
@@ -63,28 +63,46 @@ const ProjectsTable = ({
               <div className="score-header-content">
                 {t("Score")}
                 <div className="score-info-icon-wrapper">
-                  <Info size={12} className="score-info-icon" />
-                  <div className="score-formula-tooltip">
-                    <div className="tooltip-section">
-                      <h4 className="tooltip-title">{t("PRIORITY SCORE FORMULA")}</h4>
-                      <p className="tooltip-formula">
-                        {t("Priority")} = ({t("Impact")} × 3) - ({t("Effort")} × 2) - ({t("Risk")} × 2)
-                      </p>
-                      <p className="tooltip-note">
-                        {t("where Low = 1, Medium = 2, High / Large = 3")}
-                      </p>
-                    </div>
-                    <div className="tooltip-divider"></div>
-                    <div className="tooltip-section">
-                      <h4 className="tooltip-title">{t("NORMALIZED TO 0-10")}</h4>
-                      <p className="tooltip-formula">
-                        {t("score")} = (({t("raw")} + 9) / 14) × 10
-                      </p>
-                      <p className="tooltip-description">
-                        {t("Raw range is [-9, +5]: worst case is -9 (low impact, large effort, high risk); best case is +5 (high impact, small effort, low risk).")}
-                      </p>
-                    </div>
-                  </div>
+                  <OverlayTrigger
+                    placement="bottom"
+                    animation={false}
+                    overlay={
+                      <div className="score-formula-tooltip portal-tooltip">
+                        <div className="tooltip-section">
+                          <h4 className="tooltip-title">{t("PRIORITY SCORE FORMULA")}</h4>
+                          <p className="tooltip-formula">
+                            {t("Priority")} = ({t("Impact")} × 3) - ({t("Effort")} × 2) - ({t("Risk")} × 2)
+                          </p>
+                          <p className="tooltip-note">
+                            {t("where Low = 1, Medium = 2, High / Large = 3")}
+                          </p>
+                        </div>
+                        <div className="tooltip-divider"></div>
+                        <div className="tooltip-section">
+                          <h4 className="tooltip-title">{t("NORMALIZED TO 0-10")}</h4>
+                          <p className="tooltip-formula">
+                            {t("score")} = (({t("raw")} + 9) / 14) × 10
+                          </p>
+                          <p className="tooltip-description">
+                            {t("Raw range is [-9, +5]: worst case is -9 (low impact, large effort, high risk); best case is +5 (high impact, small effort, low risk).")}
+                          </p>
+                        </div>
+                      </div>
+                    }
+                    popperConfig={{
+                      strategy: 'fixed',
+                      modifiers: [
+                        {
+                          name: 'flip',
+                          enabled: false,
+                        },
+                      ],
+                    }}
+                  >
+                    <span className="score-info-icon-trigger" style={{ display: 'inline-flex', cursor: 'help', verticalAlign: 'middle' }}>
+                      <Info size={12} className="score-info-icon" />
+                    </span>
+                  </OverlayTrigger>
                 </div>
               </div>
             </th>
