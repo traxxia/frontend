@@ -6,54 +6,55 @@ import { useAnalysisStore } from '../store';
 const PHASE_COMPONENTS = {
   initial: [
     { selector: '[data-component="swot-analysis"]', name: 'SWOT Analysis' },
-    { selector: '[data-component="purchase-criteria"]', name: 'Purchase Criteria Matrix' },
-    { selector: '[data-component="loyalty-nps"]', name: 'Loyalty & NPS Analysis' },
     { selector: '[data-component="porters-analysis"]', name: "Porter's Five Forces" },
-    { selector: '[data-component="pestel-analysis"]', name: 'PESTEL Analysis' }
+    { selector: '[data-component="pestel-analysis"]', name: 'PESTEL Analysis' },
+    { selector: '[data-component="purchase-criteria"]', name: 'Purchase Criteria Matrix' },
+    { selector: '[data-component="loyalty-nps"]', name: 'Loyalty & NPS Analysis' }
   ],
   essential: [
+    { selector: '[data-component="core-adjacency"]', name: 'Core' },
+    { selector: '[data-component="productivity"]', name: 'Productivity and Efficiency Metrics' },
     { selector: '[data-component="swot-analysis"]', name: 'SWOT Analysis' },
-    { selector: '[data-component="purchase-criteria"]', name: 'Purchase Criteria Matrix' },
-    { selector: '[data-component="loyalty-nps"]', name: 'Loyalty & NPS Analysis' },
     { selector: '[data-component="porters-analysis"]', name: "Porter's Five Forces" },
     { selector: '[data-component="pestel-analysis"]', name: 'PESTEL Analysis' },
     { selector: '[data-component="full-swot"]', name: 'Full SWOT Portfolio' },
+    { selector: '[data-component="strategic-radar"]', name: 'Strategic Positioning Radar' },
+    { selector: '[data-component="purchase-criteria"]', name: 'Purchase Criteria Matrix' },
+    { selector: '[data-component="loyalty-nps"]', name: 'Loyalty & NPS Analysis' },
     { selector: '[data-component="competitive-advantage"]', name: 'Competitive Advantage Matrix' },
     { selector: '[data-component="expanded-capability"]', name: 'Capability Heatmap' },
-    { selector: '[data-component="strategic-radar"]', name: 'Strategic Positioning Radar' },
-    { selector: '[data-component="productivity"]', name: 'Productivity and Efficiency Metrics' },
     { selector: '[data-component="maturity"]', name: 'Business Maturity Score' },
-    { selector: '[data-component="competitive-landscape"]', name: 'Competitive Landscape' },
-    { selector: '[data-component="core-adjacency"]', name: 'Core' }
+    { selector: '[data-component="competitive-landscape"]', name: 'Competitive Landscape' }
   ],
   good: [
-    { selector: '[data-component="swot-analysis"]', name: 'SWOT Analysis' },
+    { selector: '[data-component="core-adjacency"]', name: 'Core' },
     { selector: '[data-component="profitability-analysis"]', name: 'Profitability Analysis' },
     { selector: '[data-component="growth-tracker"]', name: 'Growth Tracker' },
     { selector: '[data-component="liquidity-efficiency"]', name: 'Liquidity & Efficiency' },
     { selector: '[data-component="investment-performance"]', name: 'Investment Performance' },
     { selector: '[data-component="leverage-risk"]', name: 'Leverage & Risk' },
     { selector: '[data-component="productivity"]', name: 'Productivity and Efficiency Metrics' },
-    { selector: '[data-component="full-swot"]', name: 'Full SWOT Portfolio' },
-    { selector: '[data-component="strategic-radar"]', name: 'Strategic Positioning Radar' },
+    { selector: '[data-component="swot-analysis"]', name: 'SWOT Analysis' },
     { selector: '[data-component="porters-analysis"]', name: "Porter's Five Forces" },
     { selector: '[data-component="pestel-analysis"]', name: 'PESTEL Analysis' },
-    { selector: '[data-component="competitive-advantage"]', name: 'Competitive Advantage Matrix' },
+    { selector: '[data-component="full-swot"]', name: 'Full SWOT Portfolio' },
+    { selector: '[data-component="strategic-radar"]', name: 'Strategic Positioning Radar' },
     { selector: '[data-component="purchase-criteria"]', name: 'Purchase Criteria Matrix' },
     { selector: '[data-component="loyalty-nps"]', name: 'Loyalty & NPS Analysis' },
+    { selector: '[data-component="competitive-advantage"]', name: 'Competitive Advantage Matrix' },
     { selector: '[data-component="expanded-capability"]', name: 'Capability Heatmap' },
     { selector: '[data-component="maturity"]', name: 'Business Maturity Score' },
-    { selector: '[data-component="competitive-landscape"]', name: 'Competitive Landscape' },
-    { selector: '[data-component="core-adjacency"]', name: 'Core' }
+    { selector: '[data-component="competitive-landscape"]', name: 'Competitive Landscape' }
   ],
   advanced: [
-    { selector: '[data-component="swot-analysis"]', name: 'SWOT Analysis' },
+    { selector: '[data-component="core-adjacency"]', name: 'Core' },
     { selector: '[data-component="profitability-analysis"]', name: 'Profitability Analysis' },
     { selector: '[data-component="growth-tracker"]', name: 'Growth Tracker' },
     { selector: '[data-component="liquidity-efficiency"]', name: 'Liquidity & Efficiency' },
     { selector: '[data-component="investment-performance"]', name: 'Investment Performance' },
     { selector: '[data-component="leverage-risk"]', name: 'Leverage & Risk' },
     { selector: '[data-component="productivity"]', name: 'Productivity and Efficiency Metrics' },
+    { selector: '[data-component="swot-analysis"]', name: 'SWOT Analysis' },
     { selector: '[data-component="porters-analysis"]', name: "Porter's Five Forces" },
     { selector: '[data-component="pestel-analysis"]', name: 'PESTEL Analysis' },
     { selector: '[data-component="full-swot"]', name: 'Full SWOT Portfolio' },
@@ -63,8 +64,7 @@ const PHASE_COMPONENTS = {
     { selector: '[data-component="competitive-advantage"]', name: 'Competitive Advantage Matrix' },
     { selector: '[data-component="expanded-capability"]', name: 'Capability Heatmap' },
     { selector: '[data-component="maturity"]', name: 'Business Maturity Score' },
-    { selector: '[data-component="competitive-landscape"]', name: 'Competitive Landscape' },
-    { selector: '[data-component="core-adjacency"]', name: 'Core' }
+    { selector: '[data-component="competitive-landscape"]', name: 'Competitive Landscape' }
   ],
   'advanced-brief': [
     { selector: '[data-component="advanced-brief"]', name: 'Questions & Answers' }
@@ -81,84 +81,94 @@ const prepareForCapture = () => {
   const changes = [];
   document.body.classList.add('pdf-export-active');
 
-  // 1. Expand all collapsed categories first
-  const categories = document.querySelectorAll('.category-content.collapsed');
-  categories.forEach(category => {
-    // Record original class
-    changes.push({
-      element: category,
-      property: 'className',
-      oldValue: category.className,
-      newValue: category.className.replace('collapsed', 'expanded')
-    });
-    
-    // Record original styles
-    changes.push({
-      element: category,
-      property: 'maxHeight',
-      oldValue: category.style.maxHeight
-    });
-    changes.push({
-      element: category,
-      property: 'overflow',
-      oldValue: category.style.overflow
-    });
+  // 1. Expand all collapsed categories, cards, and sections
+  const selectorsToExpand = [
+    '.category-content.collapsed',
+    '.modern-card-content.collapsed',
+    '.exc-section-body.collapsed',
+    '.pillar-content.collapsed',
+    '.subsection-body.collapsed'
+  ];
 
-    category.className = category.className.replace('collapsed', 'expanded');
-    category.style.maxHeight = 'none';
-    category.style.overflow = 'visible';
+  selectorsToExpand.forEach(selector => {
+    const elements = document.querySelectorAll(selector);
+    elements.forEach(el => {
+      changes.push({
+        element: el,
+        property: 'className',
+        oldValue: el.className,
+        newValue: el.className.replace('collapsed', 'expanded')
+      });
+
+      changes.push({
+        element: el,
+        property: 'maxHeight',
+        oldValue: el.style.maxHeight
+      });
+
+      changes.push({
+        element: el,
+        property: 'overflow',
+        oldValue: el.style.overflow
+      });
+
+      el.className = el.className.replace('collapsed', 'expanded');
+      el.style.maxHeight = 'none';
+      el.style.overflow = 'visible';
+    });
   });
 
-  // 2. Expand all cards
-  const cards = document.querySelectorAll('.modern-card-content.collapsed, .exc-section-body.collapsed');
-  cards.forEach(card => {
-    // Record original class
-    changes.push({
-      element: card,
-      property: 'className',
-      oldValue: card.className,
-      newValue: card.className.replace('collapsed', 'expanded')
-    });
-    
-    // Record original styles
-    changes.push({
-      element: card,
-      property: 'maxHeight',
-      oldValue: card.style.maxHeight
-    });
-    changes.push({
-      element: card,
-      property: 'overflow',
-      oldValue: card.style.overflow
-    });
+  // 2. Hide buttons and interactive elements
+  const interactiveSelectors = [
+    'button',
+    '.regenerate-button',
+    '.dropdown-button',
+    '.btn',
+    '.modern-expand-btn',
+    '.exc-section-toggle'
+  ];
 
-    card.className = card.className.replace('collapsed', 'expanded');
-    card.style.maxHeight = 'none';
-    card.style.overflow = 'visible';
+  interactiveSelectors.forEach(selector => {
+    const elements = document.querySelectorAll(selector);
+    elements.forEach(btn => {
+      changes.push({
+        element: btn,
+        property: 'display',
+        oldValue: btn.style.display,
+        newValue: 'none'
+      });
+      btn.style.display = 'none';
+    });
   });
 
-  // 3. Hide buttons
-  const buttons = document.querySelectorAll('button, .regenerate-button, .dropdown-button');
-  buttons.forEach(btn => {
-    changes.push({
-      element: btn,
-      property: 'display',
-      oldValue: btn.style.display,
-      newValue: 'none'
-    });
-    btn.style.display = 'none';
-  });
+  // 3. Fix overflow and scroll issues for all potential containers
+  const scrollSelectors = [
+    '.ch-heatmap-scroll',
+    '.scroll-container',
+    '.table-container',
+    '.analysis-content',
+    '.preview-content',
+    '.modern-card-content-inner'
+  ];
 
-  // 4. Fix overflow issues
-  const scrollContainers = document.querySelectorAll('.ch-heatmap-scroll, .scroll-container');
-  scrollContainers.forEach(container => {
-    changes.push({
-      element: container,
-      property: 'overflow',
-      oldValue: container.style.overflow,
-      newValue: 'visible'
+  scrollSelectors.forEach(selector => {
+    const containers = document.querySelectorAll(selector);
+    containers.forEach(container => {
+      changes.push({
+        element: container,
+        property: 'overflow',
+        oldValue: container.style.overflow,
+        newValue: 'visible'
+      });
+      changes.push({
+        element: container,
+        property: 'maxHeight',
+        oldValue: container.style.maxHeight,
+        newValue: 'none'
+      });
+      container.style.overflow = 'visible';
+      container.style.maxHeight = 'none';
     });
-    container.style.overflow = 'visible';
   });
 
   return changes;
@@ -202,16 +212,16 @@ const captureComponent = async (selector, name) => {
       allowTaint: true,
       backgroundColor: '#ffffff',
       logging: false,
-      width: rect.width || component.offsetWidth,
-      height: rect.height || component.offsetHeight,
+      width: 1200, // Fixed width for consistent capture
+      windowWidth: 1200,
       imageTimeout: 5000,
       onclone: (clonedDoc) => {
         // Find the cloned element
         const clonedComponent = clonedDoc.querySelector(selector);
         if (clonedComponent) {
-          clonedComponent.style.margin = '0 auto';
-          clonedComponent.style.padding = '20px'; 
-          clonedComponent.style.width = '1100px'; // Fixed width for consistent desktop-like layout
+          clonedComponent.style.margin = '0';
+          clonedComponent.style.padding = '0';
+          clonedComponent.style.width = '1200px';
           clonedComponent.style.backgroundColor = 'white';
         }
 
@@ -225,7 +235,7 @@ const captureComponent = async (selector, name) => {
           }
 
           /* ENSURE FULL VISIBILITY */
-          .category-content, .modern-card-content, .pillar-content {
+          .category-content, .modern-card-content, .pillar-content, .exc-section-body, .subsection-body {
             max-height: none !important;
             height: auto !important;
             overflow: visible !important;
@@ -235,20 +245,49 @@ const captureComponent = async (selector, name) => {
           }
 
           /* FIX ALIGNMENT AND REMOVE SHADOWS FOR PDF */
-          .modern-analysis-card {
+          .modern-analysis-card, .exc-section-card, .strategic-page-section {
             box-shadow: none !important;
             border: 1px solid #e2e8f0 !important;
-            margin-bottom: 20px !important;
+            margin-bottom: 30px !important;
+            background-color: white !important;
+            page-break-inside: avoid;
           }
 
+          /* TABLE AND GRID IMPROVEMENTS */
+          .table-container, .scroll-container, .analysis-content, .preview-content {
+            overflow: visible !important;
+            max-height: none !important;
+            width: 100% !important;
+            display: block !important;
+          }
+
+          table {
+            width: 100% !important;
+            border-collapse: collapse !important;
+            table-layout: auto !important;
+          }
+
+          th, td {
+            border: 1px solid #edf2f7 !important;
+            padding: 12px 8px !important;
+            word-wrap: break-word !important;
+          }
+
+          .ch-heatmap-scroll {
+            overflow: visible !important;
+            width: 100% !important;
+          }
+
+          /* COMPONENT SPECIFIC WIDTHS */
           [data-component="maturity"],
           [data-component="competitive-landscape"],
           [data-component="core-adjacency"],
+          [data-component="strategic-radar"],
           [data-component="strategic-direction"],
           [data-component="strategic-execution"],
           [data-component="strategic-sustainability"] {
             width: 100% !important;
-            max-width: 100% !important;
+            max-width: none !important;
             margin: 0 !important;
           }
         `;
@@ -257,9 +296,8 @@ const captureComponent = async (selector, name) => {
     });
 
     return {
-      canvas,
-      name,
-      imgData: canvas.toDataURL('image/png', 0.7)
+      imgData: canvas.toDataURL('image/png', 0.9),
+      canvas: canvas
     };
 
   } catch (error) {
@@ -269,50 +307,50 @@ const captureComponent = async (selector, name) => {
 };
 
 const PDFExportButton = ({
-    businessName,
-    onToastMessage,
-    currentPhase,
-    disabled = false,
-    className = "",
-    style = {},
-    exportType = "insights", // "insights" or "strategic"
-    unlockedFeatures = {},
-    showText = false,
-    // Multi-user/History support: Prioritize these props if provided
-    swotAnalysis: propsSwotAnalysis,
-    purchaseCriteria: propsPurchaseCriteria,
-    loyaltyNPS: propsLoyaltyNPS,
-    portersData: propsPortersData,
-    pestelData: propsPestelData,
-    fullSwotData: propsFullSwotData,
-    competitiveAdvantage: propsCompetitiveAdvantage,
-    strategicData: propsStrategicData,
-    expandedCapability: propsExpandedCapability,
-    strategicRadar: propsStrategicRadar,
-    productivityData: propsProductivityData,
-    maturityData: propsMaturityData,
-    competitiveLandscape: propsCompetitiveLandscape,
-    coreAdjacency: propsCoreAdjacency,
-    profitabilityData: propsProfitabilityData,
-    growthTrackerData: propsGrowthTrackerData,
-    liquidityEfficiencyData: propsLiquidityEfficiencyData,
-    investmentPerformanceData: propsInvestmentPerformanceData,
-    leverageRiskData: propsLeverageRiskData,
-  }) => {
-    const [isExportingPDF, setIsExportingPDF] = useState(false);
-    const [exportProgress, setExportProgress] = useState({ current: 0, total: 0, sectionName: '' });
-    const { t } = useTranslation();
-    
-    const {
-      swotAnalysis: storeSwotLines, // Rename slightly to avoid shadowed vars if needed
-    } = useAnalysisStore();
+  businessName,
+  onToastMessage,
+  currentPhase,
+  disabled = false,
+  className = "",
+  style = {},
+  exportType = "insights", // "insights" or "strategic"
+  unlockedFeatures = {},
+  showText = false,
+  // Multi-user/History support: Prioritize these props if provided
+  swotAnalysis: propsSwotAnalysis,
+  purchaseCriteria: propsPurchaseCriteria,
+  loyaltyNPS: propsLoyaltyNPS,
+  portersData: propsPortersData,
+  pestelData: propsPestelData,
+  fullSwotData: propsFullSwotData,
+  competitiveAdvantage: propsCompetitiveAdvantage,
+  strategicData: propsStrategicData,
+  expandedCapability: propsExpandedCapability,
+  strategicRadar: propsStrategicRadar,
+  productivityData: propsProductivityData,
+  maturityData: propsMaturityData,
+  competitiveLandscape: propsCompetitiveLandscape,
+  coreAdjacency: propsCoreAdjacency,
+  profitabilityData: propsProfitabilityData,
+  growthTrackerData: propsGrowthTrackerData,
+  liquidityEfficiencyData: propsLiquidityEfficiencyData,
+  investmentPerformanceData: propsInvestmentPerformanceData,
+  leverageRiskData: propsLeverageRiskData,
+}) => {
+  const [isExportingPDF, setIsExportingPDF] = useState(false);
+  const [exportProgress, setExportProgress] = useState({ current: 0, total: 0, sectionName: '' });
+  const { t } = useTranslation();
 
-    // Prioritize props over store for multi-user/history support
-    const displaySwot = propsSwotAnalysis || storeSwotLines;
-    const displayStrategicData = propsStrategicData || useAnalysisStore.getState().strategicData;
-    const displayPortersData = propsPortersData || useAnalysisStore.getState().portersData;
-    const displayPestelData = propsPestelData || useAnalysisStore.getState().pestelData;
-    // ... etc. But actually for Strategic Analysis, we mainly need strategicData
+  const {
+    swotAnalysis: storeSwotLines, // Rename slightly to avoid shadowed vars if needed
+  } = useAnalysisStore();
+
+  // Prioritize props over store for multi-user/history support
+  const displaySwot = propsSwotAnalysis || storeSwotLines;
+  const displayStrategicData = propsStrategicData || useAnalysisStore.getState().strategicData;
+  const displayPortersData = propsPortersData || useAnalysisStore.getState().portersData;
+  const displayPestelData = propsPestelData || useAnalysisStore.getState().pestelData;
+  // ... etc. But actually for Strategic Analysis, we mainly need strategicData
 
 
 
@@ -364,10 +402,10 @@ const PDFExportButton = ({
 
       for (let i = 0; i < strategicBlocks.length; i++) {
         const { selector, name } = strategicBlocks[i];
-        setExportProgress({ 
-          current: i + 1, 
-          total: strategicBlocks.length, 
-          sectionName: `Capturing ${name}...` 
+        setExportProgress({
+          current: i + 1,
+          total: strategicBlocks.length,
+          sectionName: `Capturing ${name}...`
         });
 
         const result = await captureComponent(selector, name);
@@ -379,7 +417,7 @@ const PDFExportButton = ({
 
         pdf.addPage();
 
-        const marginX = 20;
+        const marginX = 10;
         const marginTop = 20;
 
         pdf.setFontSize(18);
@@ -505,11 +543,11 @@ const PDFExportButton = ({
 
       for (let i = 0; i < visibleComponents.length; i++) {
         const { selector, name } = visibleComponents[i];
-        
-        setExportProgress({ 
-          current: i + 1, 
-          total: visibleComponents.length, 
-          sectionName: `Capturing ${name}...` 
+
+        setExportProgress({
+          current: i + 1,
+          total: visibleComponents.length,
+          sectionName: `Capturing ${name}...`
         });
 
         const result = await captureComponent(selector, name);
@@ -519,37 +557,87 @@ const PDFExportButton = ({
           continue;
         }
 
-        pdf.addPage();
-
-        pdf.setFontSize(16);
-        pdf.setFont('helvetica', 'bold');
-        pdf.setTextColor(59, 130, 246);
-        pdf.text(name, 20, 25);
-
         const canvas = result.canvas;
-        const availableWidth = pageWidth - 40;
-        const availableHeight = pageHeight - 50;
+        const availableWidth = pageWidth - 20; // Reduced margins to 10mm
+        const availableHeight = pageHeight - 60;
 
-        let imgWidth = availableWidth;
-        let imgHeight = (canvas.height * imgWidth) / canvas.width;
+        const imgWidth = availableWidth;
+        const fullImgHeight = (canvas.height * imgWidth) / canvas.width;
 
-        // Proportional scaling
-        if (imgHeight > availableHeight) {
-          imgHeight = availableHeight;
-          imgWidth = (canvas.width * imgHeight) / canvas.height;
+        // Multi-page support for long components
+        if (fullImgHeight > availableHeight) {
+          let remainingHeight = canvas.height;
+          let sourceY = 0;
+          let pageNum = 1;
+
+          while (remainingHeight > 0) {
+            // How much of the source canvas to take for this page
+            const sourceHeightForPage = Math.min(
+              remainingHeight,
+              (canvas.width * availableHeight) / imgWidth
+            );
+
+            const currentDrawHeight = (sourceHeightForPage * imgWidth) / canvas.width;
+
+            // Create temporary canvas for the slice
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = canvas.width;
+            tempCanvas.height = sourceHeightForPage;
+
+            const ctx = tempCanvas.getContext('2d');
+            ctx.drawImage(
+              canvas,
+              0, sourceY, canvas.width, sourceHeightForPage,
+              0, 0, canvas.width, sourceHeightForPage
+            );
+
+            // Add page for subsequent slices
+            if (pageNum > 1) {
+              pdf.addPage();
+              pdf.setFontSize(10);
+              pdf.setFont('helvetica', 'italic');
+              pdf.setTextColor(150, 150, 150);
+              pdf.text(`${name} (continued)`, 10, 15);
+            } else {
+              pdf.addPage();
+              pdf.setFontSize(16);
+              pdf.setFont('helvetica', 'bold');
+              pdf.setTextColor(59, 130, 246);
+              pdf.text(name, 10, 25);
+            }
+
+            const pageImgData = tempCanvas.toDataURL('image/png', 0.9);
+            pdf.addImage(
+              pageImgData,
+              'PNG',
+              10, // 10mm margin
+              pageNum === 1 ? 35 : 20,
+              imgWidth,
+              currentDrawHeight
+            );
+
+            remainingHeight -= sourceHeightForPage;
+            sourceY += sourceHeightForPage;
+            pageNum++;
+          }
+        } else {
+          // Fits on one page
+          pdf.addPage();
+          pdf.setFontSize(16);
+          pdf.setFont('helvetica', 'bold');
+          pdf.setTextColor(59, 130, 246);
+          pdf.text(name, 10, 25);
+
+          const xPos = 10; // 10mm margin
+          pdf.addImage(
+            result.imgData,
+            'PNG',
+            xPos,
+            35,
+            imgWidth,
+            fullImgHeight
+          );
         }
-
-        // Center horizontally
-        const xPos = 20 + (availableWidth - imgWidth) / 2;
-
-        pdf.addImage(
-          result.imgData,
-          'PNG',
-          xPos,
-          30,
-          imgWidth,
-          imgHeight
-        );
 
         capturedCount++;
 
@@ -569,14 +657,14 @@ const PDFExportButton = ({
         .replace(/[^a-z0-9]/gi, '_');
 
       const timestamp = new Date().toISOString().split('T')[0];
-      
+
       let typeLabel = "Insights";
       if (exportPhase === "executive") {
         typeLabel = "Executive_Summary";
       } else if (exportPhase === "advanced-brief") {
         typeLabel = "Questions_And_Answers";
       }
-      
+
       const filename = `${safeName}_${typeLabel}_${timestamp}.pdf`;
 
       pdf.save(filename);
@@ -593,11 +681,11 @@ const PDFExportButton = ({
       setIsExportingPDF(false);
     }
   }, [exportType, unlockedFeatures, businessName, onToastMessage,
-      propsSwotAnalysis, propsPurchaseCriteria, propsLoyaltyNPS, propsPortersData, propsPestelData,
-      propsFullSwotData, propsCompetitiveAdvantage, propsStrategicData, propsExpandedCapability,
-      propsStrategicRadar, propsProductivityData, propsMaturityData, propsCompetitiveLandscape,
-      propsCoreAdjacency, propsProfitabilityData, propsGrowthTrackerData, propsLiquidityEfficiencyData,
-      propsInvestmentPerformanceData, propsLeverageRiskData]);
+    propsSwotAnalysis, propsPurchaseCriteria, propsLoyaltyNPS, propsPortersData, propsPestelData,
+    propsFullSwotData, propsCompetitiveAdvantage, propsStrategicData, propsExpandedCapability,
+    propsStrategicRadar, propsProductivityData, propsMaturityData, propsCompetitiveLandscape,
+    propsCoreAdjacency, propsProfitabilityData, propsGrowthTrackerData, propsLiquidityEfficiencyData,
+    propsInvestmentPerformanceData, propsLeverageRiskData]);
 
   // Main strategic export function
   const handleDownload = exportType === "strategic" ? handleDownloadStrategicAnalysis : handleDownloadPhaseAnalysis;
@@ -646,17 +734,17 @@ const PDFExportButton = ({
               transformOrigin: 'center'
             }} />
             <h3 style={{ margin: '0 0 8px 0', fontSize: '16px', color: '#1f2937' }}>
-  {t("Generating PDF")}
-</h3>
+              {t("Generating PDF")}
+            </h3>
 
-<p style={{ margin: 0, fontSize: '14px', color: '#6b7280' }}>
-  {exportProgress.sectionName || t("Capturing analysis...")}
-</p>
-{exportProgress.total > 0 && (
-  <div style={{ marginTop: '12px', fontSize: '12px', color: '#3b82f6', fontWeight: 'bold' }}>
-    {exportProgress.current} / {exportProgress.total}
-  </div>
-)}
+            <p style={{ margin: 0, fontSize: '14px', color: '#6b7280' }}>
+              {exportProgress.sectionName || t("Capturing analysis...")}
+            </p>
+            {exportProgress.total > 0 && (
+              <div style={{ marginTop: '12px', fontSize: '12px', color: '#3b82f6', fontWeight: 'bold' }}>
+                {exportProgress.current} / {exportProgress.total}
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -687,7 +775,7 @@ const PDFExportButton = ({
       >
         {isExportingPDF ? (
           <>
-            <Loader size={18} style={{ 
+            <Loader size={18} style={{
               animation: 'spin-loader 1s linear infinite',
               display: 'inline-block',
               transformOrigin: 'center'

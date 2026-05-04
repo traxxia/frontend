@@ -65,6 +65,8 @@ const StrategicAnalysis = ({
   pestelData: propsPestelData,
   portersData: propsPortersData,
   userAnswers: propsUserAnswers,
+  isAnalysisRegenerating = false,
+  isStrategicRegenerating = false,
   questionsLoaded
 }) => {
   const { userRole, token, userId } = useAuthStore();
@@ -271,9 +273,9 @@ const StrategicAnalysis = ({
       }
     }
     try {
-      phaseManager?.openTab?.('projects');
-      phaseManager?.goToTab?.('projects');
-      phaseManager?.setActiveTab?.('projects');
+      phaseManager?.openTab?.('bets');
+      phaseManager?.goToTab?.('bets');
+      phaseManager?.setActiveTab?.('bets');
     } catch (e) {
     }
     setHasKickstarted(true);
@@ -2638,6 +2640,7 @@ const StrategicAnalysis = ({
   };
 
   if (isRegenerating || isLoading) {
+    console.log("Strategic Loading Debug: isRegenerating:", isRegenerating, "isLoading:", isLoading);
     return (
       <div className="strategic-analysis-container">
         <div className="loading-state">

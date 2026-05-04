@@ -189,6 +189,7 @@
   margin: 0;
   font-size: 16px;
   color: #1f2937;
+  flex: 1;
 }
 
 [data-theme="dark"] .pillar-title {

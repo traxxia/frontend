@@ -251,8 +251,7 @@
     gap: 1rem;
 }
 
-.admin-primary-btn {
-    background: #6366f1;
+.admin-primary-btn { 
     color: #ffffff !important;
     border: none;
     padding: 0.55rem 1.1rem;
@@ -282,17 +281,13 @@
     gap: 0.5rem;
     transition: all 0.2s;
 }
-
-.admin-secondary-btn:hover {
-    background: #f9fafb;
-    border-color: #d1d5db;
-}
+ 
 
 .role-select {
     border-radius: 10px !important;
     border: 1px solid #e5e7eb !important;
     font-size: 0.85rem !important;
-    padding: 0.55rem 1rem !important;
+    padding: 0.55rem 2.5rem 0.55rem 1rem !important;
     color: #374151 !important;
     background-color: #ffffff !important;
 }
@@ -381,6 +376,138 @@
     min-height: 1.5rem;
 }
 
+.business-decision-logs-page .admin-table-scroll {
+    width: 100%;
+}
+
+.business-decision-logs-page .admin-data-table {
+    min-width: 980px;
+}
+
+.business-decision-logs-page .business-decision-logs-project,
+.business-decision-logs-page .business-decision-logs-decision,
+.business-decision-logs-page td[data-label="Actor"] .td-inner {
+    max-width: 160px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.business-decision-logs-page td[data-label="Actor"] .td-inner {
+    max-width: 120px;
+}
+
+@media (max-width: 991.98px) {
+    .business-decision-logs-content {
+        max-width: 100% !important;
+        padding: 18px 14px !important;
+    }
+
+    .business-decision-logs-filters {
+        padding: 14px !important;
+    }
+
+    .business-decision-logs-page .admin-data-table {
+        min-width: 860px;
+    }
+
+    .business-decision-logs-page .admin-data-table th,
+    .business-decision-logs-page .admin-data-table td {
+        padding-left: 0.75rem;
+        padding-right: 0.75rem;
+    }
+}
+
+@media (max-width: 575.98px) {
+    .business-decision-logs-content {
+        padding: 14px 10px !important;
+    }
+
+    .business-decision-logs-page .admin-table-wrapper {
+        border-radius: 12px;
+    }
+
+    .business-decision-logs-page .admin-table-header {
+        align-items: flex-start;
+    }
+
+    .business-decision-logs-page .admin-table-title-group {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 0.4rem;
+    }
+
+    .business-decision-logs-page .admin-table-actions,
+    .business-decision-logs-page .admin-table-actions .admin-table-btn {
+        width: 100%;
+    }
+
+    .business-decision-logs-page .admin-table-actions .admin-table-btn {
+        justify-content: center;
+    }
+
+    .business-decision-logs-page .admin-table-scroll {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        display: block;
+        width: 100%;
+    }
+
+    .business-decision-logs-page .admin-data-table {
+        display: table !important; /* Force table display */
+        min-width: 900px; /* Ensure it's wide enough to scroll */
+        border-spacing: 0;
+    }
+
+    .business-decision-logs-page .admin-data-table thead {
+        display: table-header-group !important;
+    }
+
+    .business-decision-logs-page .admin-data-table tbody {
+        display: table-row-group !important;
+    }
+
+    .business-decision-logs-page .admin-data-table tr {
+        display: table-row !important;
+        border: none;
+        background: transparent;
+        margin-bottom: 0;
+    }
+
+    .business-decision-logs-page .admin-data-table td {
+        display: table-cell !important;
+        padding: 0.75rem 0.5rem;
+        border-bottom: 1px solid #f0f2f5;
+        text-align: left !important;
+    }
+
+    .business-decision-logs-page .admin-data-table td::before {
+        display: none !important; /* Hide the data-label headers */
+    }
+
+    .business-decision-logs-page .admin-data-table td .td-inner {
+        justify-content: flex-start;
+        text-align: left;
+    }
+
+    .business-decision-logs-page .admin-table-btn,
+    .business-decision-logs-page .admin-primary-btn {
+        min-height: 34px;
+    }
+
+    .business-decision-logs-page .admin-pagination {
+        align-items: stretch;
+        padding: 0.85rem;
+    }
+
+    .business-decision-logs-page .admin-pagination-info,
+    .business-decision-logs-page .admin-pagination-controls {
+        justify-content: center;
+        width: 100%;
+        text-align: center;
+    }
+}
+
 /* ---- Status Badges ---- */
 .admin-status-badge {
     display: inline-flex;
@@ -389,6 +516,7 @@
     border-radius: 999px;
     font-size: 0.72rem;
     font-weight: 600;
+    border:1px solid;
     text-transform: capitalize;
     white-space: nowrap;
 }
@@ -396,6 +524,7 @@
 .admin-status-badge.active {
     background: rgba(22, 163, 74, 0.1);
     color: #16a34a;
+    border: 1px solid #118549;
 }
 
 .admin-status-badge.inactive {

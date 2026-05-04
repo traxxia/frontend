@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Breadcrumb } from "react-bootstrap";
 import { useTranslation } from "../hooks/useTranslation";
 import {
@@ -108,6 +108,21 @@ const ProjectDetails = ({
     canReview = false
 }) => {
     const { t } = useTranslation();
+    const breadcrumbRef = React.useRef(null);
+
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            if (breadcrumbRef.current) {
+                breadcrumbRef.current.scrollIntoView({ behavior: 'auto', block: 'start' });
+            }
+            window.scrollTo(0, 0);
+            const parent = document.querySelector('.info-panel-content');
+            if (parent) {
+                parent.scrollTo({ top: 0, behavior: 'auto' });
+            }
+        }, 100);
+        return () => clearTimeout(timer);
+    }, []);
 
     const isPendingReview = React.useMemo(() => {
         if (!project || !project.next_review_date) return false;
@@ -153,7 +168,8 @@ const ProjectDetails = ({
     return (
         <div className="project-details-container">
             {/* Breadcrumb */}
-            <div className="projects-breadcrumb">
+            <div className="projects-breadcrumb" ref={breadcrumbRef}>
+
                 <Breadcrumb>
                     <Breadcrumb.Item onClick={onBack} style={{ cursor: "pointer" }}>
                         {t("Projects")}
@@ -542,36 +558,6 @@ const ProjectDetails = ({
                 </div>
             </div>
 
-            {/* Decision Log */}
-            {/* {project.decision_log && project.decision_log.length > 0 && (
-                <div className="details-card mt-4">
-                    <h3 className="card-title">📜 {t("Decision_Log") || "Decision Log"}</h3>
-                    <div className="table-responsive">
-                        <table className="table">
-                            <thead>
-                                <tr>
-                                    <th>{t("Date") || "Date"}</th>
-                                    <th>{t("Transition") || "Transition"}</th>
-                                    <th>{t("Justification") || "Justification"}</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {project.decision_log.map((log, index) => (
-                                    <tr key={index}>
-                                        <td>{new Date(log.changed_at).toLocaleDateString()}</td>
-                                        <td>
-                                            <span className="badge bg-secondary">{log.from_status}</span>
-                                            {" ➔ "}
-                                            <span className="badge bg-primary">{log.to_status}</span>
-                                        </td>
-                                        <td>{log.justification}</td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            )} */}
         </div>
     );
 };

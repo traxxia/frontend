@@ -348,6 +348,22 @@ const ProjectForm = ({
   const [fieldErrors, setFieldErrors] = useState({});
   const [showErrors, setShowErrors] = useState(false);
   const [eligibleOwners, setEligibleOwners] = useState([]);
+  const breadcrumbRef = useRef(null);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (breadcrumbRef.current) {
+        breadcrumbRef.current.scrollIntoView({ behavior: 'auto', block: 'start' });
+      }
+      window.scrollTo(0, 0);
+      const parent = document.querySelector('.info-panel-content');
+      if (parent) {
+        parent.scrollTo({ top: 0, behavior: 'auto' });
+      }
+    }, 100);
+    return () => clearTimeout(timer);
+  }, []);
+
 
   useEffect(() => {
     // Only fetch for New or Edit mode
@@ -772,6 +788,10 @@ const ProjectForm = ({
       else if (errors.keyAssumptions_0) scrollToError(keyAssumptionsRefs[0]);
       else if (errors.keyAssumptions_1) scrollToError(keyAssumptionsRefs[1]);
       else if (errors.keyAssumptions_2) scrollToError(keyAssumptionsRefs[2]);
+      else if (errors.learningState) {
+        // We don't have a direct ref for learningState SelectField but we can scroll to the status area
+        scrollToError(statusRef);
+      }
       else if (errors.reviewCadence) {
         // We don't have a ref for cadence, but let's scroll to the status area which is nearby
         scrollToError(statusRef);
@@ -829,7 +849,8 @@ const ProjectForm = ({
           </div>
         )}
         {/* Breadcrumb & Actions Header */}
-        <div className="projects-breadcrumb">
+        <div className="projects-breadcrumb" ref={breadcrumbRef}>
+
           <Breadcrumb style={{ margin: 0 }}>
             <Breadcrumb.Item onClick={onBack} style={{ cursor: "pointer" }}>
               {t("Projects")}
@@ -986,6 +1007,12 @@ const ProjectForm = ({
                 const obj = eligibleOwners.find(o => o._id === val);
                 if (obj) setAccountableOwner(obj.name);
                 handleFieldEdit("accountable_owner");
+                if (showErrors) {
+                  setFieldErrors(prev => ({
+                    ...prev,
+                    accountableOwnerId: val ? null : t("Owner selection is required")
+                  }));
+                }
               }}
               open={openDropdown === "accountable_owner"}
               setOpen={() => setOpenDropdown(openDropdown === "accountable_owner" ? null : "accountable_owner")}
@@ -1069,6 +1096,12 @@ const ProjectForm = ({
                 onChange={(val) => {
                   setReviewCadence(val);
                   handleFieldEdit("review_cadence");
+                  if (showErrors) {
+                    setFieldErrors(prev => ({
+                      ...prev,
+                      reviewCadence: val ? null : t("Review cadence is required")
+                    }));
+                  }
                 }}
                 open={openDropdown === "reviewCadence"}
                 setOpen={() => setOpenDropdown(openDropdown === "reviewCadence" ? null : "reviewCadence")}
@@ -1121,7 +1154,11 @@ const ProjectForm = ({
                       isDisabled = false;
                     } else if (!isLaunched) {
                       // Unlaunched: Draft and Killed are allowed. Active is handled via Launch mechanism.
-                      if (['draft', 'killed'].includes(target)) isDisabled = false;
+                      if (mode === "new") {
+                        if (['draft'].includes(target)) isDisabled = false;
+                      } else {
+                        if (['draft', 'killed'].includes(target)) isDisabled = false;
+                      }
                     } else {
                       // Launched
                       if (currentStatus === 'active' || currentStatus === 'at risk') {
@@ -1148,7 +1185,7 @@ const ProjectForm = ({
                   if (showErrors) {
                     setFieldErrors(prev => ({
                       ...prev,
-                      status: (val && val.trim()) ? null : t("Status_is_required")
+                      status: (val && val.trim()) ? null : t("Status is required")
                     }));
                   }
                 }}
@@ -1191,6 +1228,12 @@ const ProjectForm = ({
                 onChange={(val) => {
                   setLearningState(val);
                   handleFieldEdit("learning_state");
+                  if (showErrors) {
+                    setFieldErrors(prev => ({
+                      ...prev,
+                      learningState: val ? null : t("Learning state is required")
+                    }));
+                  }
                 }}
                 open={openDropdown === "learning_state"}
                 setOpen={() => setOpenDropdown(openDropdown === "learning_state" ? null : "learning_state")}
@@ -1198,6 +1241,8 @@ const ProjectForm = ({
                 fieldName="learning_state"
                 onFieldFocus={handleFieldFocus}
                 onFieldEdit={handleFieldEdit}
+                required
+                error={showErrors && fieldErrors.learningState}
               />
             </div>
 

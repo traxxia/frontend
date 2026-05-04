@@ -17,6 +17,7 @@ const ProjectReviewModal = ({
     const [noChanges, setNoChanges] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [showConfirmation, setShowConfirmation] = useState(false);
+    const [popupError, setPopupError] = useState("");
 
     useEffect(() => {
         if (project) {
@@ -25,6 +26,7 @@ const ProjectReviewModal = ({
             setJustification("");
             setNoChanges(false);
             setShowConfirmation(false);
+            setPopupError("");
         }
     }, [project, isOpen]);
 
@@ -35,18 +37,18 @@ const ProjectReviewModal = ({
         const trimmedJustification = justification.trim();
 
         if (!trimmedJustification) {
-            alert(t("Justification_is_required"));
+            setPopupError(t("Justification_is_required") || "Justification is required.");
             return;
         }
 
-        const words = trimmedJustification.split(/\s+/);
+        const words = trimmedJustification.split(/\s+/).filter(w => w.length > 0);
         if (words.length < 3) {
-            alert(t("Justification_minimum_words") || "Justification must be at least 3 words.");
+            setPopupError(t("Justification_minimum_words") || "Justification must be at least 3 words.");
             return;
         }
 
         if (!/^[a-zA-Z]/.test(trimmedJustification)) {
-            alert(t("Justification_starts_with_letter") || "Justification must start with a letter.");
+            setPopupError(t("Justification_starts_with_letter") || "Justification must start with a letter.");
             return;
         }
 
@@ -87,16 +89,26 @@ const ProjectReviewModal = ({
                 </div>
 
                 <form onSubmit={handleSubmit} className="review-modal-body">
+                    {popupError && (
+                        <div className="error-popup-overlay">
+                            <div className="error-popup-card">
+                                <AlertTriangle size={32} color="#ef4444" />
+                                <h3>{t("Alert") || "Alert"}</h3>
+                                <p>{popupError}</p>
+                                <button type="button" onClick={() => setPopupError("")}>OK</button>
+                            </div>
+                        </div>
+                    )}
                     {showConfirmation ? (
                         <div className="confirmation-view" style={{ padding: '20px 0', textAlign: 'center' }}>
                             <AlertTriangle size={48} color="#d97706" style={{ margin: '0 auto 16px' }} />
                             <h3 style={{ fontSize: '18px', marginBottom: '12px', color: '#1f2937' }}>{t("Confirm_Submission") || "Confirm Submission"}</h3>
                             <p style={{ color: '#4b5563', marginBottom: '24px', lineHeight: '1.5' }}>
-                                {type === "review" 
+                                {type === "review"
                                     ? t("Confirm_Review_Message") || "You are about to log this Strategic Review. This action will be permanently recorded in the project's Decision Log. Are you sure you want to proceed?"
                                     : t("Confirm_AdHoc_Message") || "You are about to log an Ad-Hoc Update. This will be recorded in the project's Decision Log. Are you sure you want to proceed?"}
                             </p>
-                            
+
                             <div className="review-modal-footer" style={{ justifyContent: 'center', marginTop: '20px' }}>
                                 <button type="button" className="btn-cancel" onClick={() => setShowConfirmation(false)} disabled={isSubmitting}>
                                     {t("Back") || "Back"}
@@ -114,94 +126,97 @@ const ProjectReviewModal = ({
                     ) : (
                         <>
                             <div className="review-info-section">
-                        <div className="info-card">
-                            <Info size={16} color="#4b5563" />
-                            <div>
-                                <div className="info-label">{t("Review_Cadence")}</div>
-                                <div className="info-value">{project.review_cadence ? t(project.review_cadence) : t("Not_Available")}</div>
-                            </div>
-                        </div>
-                        <div className="info-card">
-                            <Clock size={16} color="#d97706" />
-                            <div>
-                                <div className="info-label">{t("Last_Reviewed")}</div>
-                                <div className="info-value">{project.last_reviewed ? new Date(project.last_reviewed).toLocaleDateString() : t("Never")}</div>
-                            </div>
-                        </div>
-                        <div className="info-card">
-                            <AlertTriangle size={16} color={project.is_stale ? "#ef4444" : "#059669"} />
-                            <div>
-                                <div className="info-label">{t("Next_Review_Date")}</div>
-                                <div className="info-value" style={{ color: project.is_stale ? "#ef4444" : "inherit", fontWeight: project.is_stale ? "700" : "600" }}>
-                                    {project.next_review_date ? new Date(project.next_review_date).toLocaleDateString() : t("Not_Available")}
+                                <div className="info-card">
+                                    <Info size={16} color="#4b5563" />
+                                    <div>
+                                        <div className="info-label">{t("Review_Cadence")}</div>
+                                        <div className="info-value">{project.review_cadence ? t(project.review_cadence) : t("Not_Available")}</div>
+                                    </div>
+                                </div>
+                                <div className="info-card">
+                                    <Clock size={16} color="#d97706" />
+                                    <div>
+                                        <div className="info-label">{t("Last_Reviewed")}</div>
+                                        <div className="info-value">{project.last_reviewed ? new Date(project.last_reviewed).toLocaleDateString() : t("Never")}</div>
+                                    </div>
+                                </div>
+                                <div className="info-card">
+                                    <AlertTriangle size={16} color={project.is_stale ? "#ef4444" : "#059669"} />
+                                    <div>
+                                        <div className="info-label">{t("Next_Review_Date")}</div>
+                                        <div className="info-value" style={{ color: project.is_stale ? "#ef4444" : "inherit", fontWeight: project.is_stale ? "700" : "600" }}>
+                                            {project.next_review_date ? new Date(project.next_review_date).toLocaleDateString() : t("Not_Available")}
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    </div>
 
-                    {type === "review" && (
-                        <div className="form-group checkbox-group">
-                            <label className="checkbox-container">
-                                <input
-                                    type="checkbox"
-                                    checked={noChanges}
-                                    onChange={(e) => setNoChanges(e.target.checked)}
+                            {type === "review" && (
+                                <div className="form-group checkbox-group">
+                                    <label className="checkbox-container">
+                                        <input
+                                            type="checkbox"
+                                            checked={noChanges}
+                                            onChange={(e) => setNoChanges(e.target.checked)}
+                                        />
+                                        <span className="checkmark"></span>
+                                        {t("Confirm_No_Changes")}
+                                    </label>
+                                </div>
+                            )}
+
+                            <div className={`form-section ${noChanges ? 'disabled' : ''}`}>
+                                <div className="grid-2">
+                                    <div className="form-group">
+                                        <label>{t("Status")}</label>
+                                        <select
+                                            value={status}
+                                            onChange={(e) => setStatus(e.target.value)}
+                                            disabled={noChanges}
+                                        >
+                                            {statusOptions.map(opt => (
+                                                <option key={opt} value={opt}>{t(opt)}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                    <div className="form-group">
+                                        <label>{t("Learning_State")}</label>
+                                        <select
+                                            value={learningState}
+                                            onChange={(e) => setLearningState(e.target.value)}
+                                            disabled={noChanges}
+                                        >
+                                            {learningOptions.map(opt => (
+                                                <option key={opt} value={opt}>{t(opt)}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="form-group">
+                                <label>
+                                    <MessageSquare size={14} style={{ marginRight: '6px' }} />
+                                    {t("Justification")} *
+                                </label>
+                                <textarea
+                                    value={justification}
+                                    onChange={(e) => {
+                                        setJustification(e.target.value);
+                                        if (popupError) setPopupError("");
+                                    }}
+                                    placeholder={t("Justification_placeholder") || "Why is this change/review being made?"}
+                                    required
+                                    rows={4}
                                 />
-                                <span className="checkmark"></span>
-                                {t("Confirm_No_Changes")}
-                            </label>
-                        </div>
-                    )}
-
-                    <div className={`form-section ${noChanges ? 'disabled' : ''}`}>
-                        <div className="grid-2">
-                            <div className="form-group">
-                                <label>{t("Status")}</label>
-                                <select
-                                    value={status}
-                                    onChange={(e) => setStatus(e.target.value)}
-                                    disabled={noChanges}
-                                >
-                                    {statusOptions.map(opt => (
-                                        <option key={opt} value={opt}>{t(opt)}</option>
-                                    ))}
-                                </select>
                             </div>
-                            <div className="form-group">
-                                <label>{t("Learning_State")}</label>
-                                <select
-                                    value={learningState}
-                                    onChange={(e) => setLearningState(e.target.value)}
-                                    disabled={noChanges}
-                                >
-                                    {learningOptions.map(opt => (
-                                        <option key={opt} value={opt}>{t(opt)}</option>
-                                    ))}
-                                </select>
+
+                            <div className="review-modal-footer">
+                                <button type="button" className="btn-cancel" onClick={onClose}>{t("Cancel")}</button>
+                                <button type="submit" className="btn-submit" disabled={isSubmitting}>
+                                    {t("Next") || "Next"}
+                                </button>
                             </div>
-                        </div>
-                    </div>
-
-                    <div className="form-group">
-                        <label>
-                            <MessageSquare size={14} style={{ marginRight: '6px' }} />
-                            {t("Justification")} *
-                        </label>
-                        <textarea
-                            value={justification}
-                            onChange={(e) => setJustification(e.target.value)}
-                            placeholder={t("Justification_placeholder") || "Why is this change/review being made?"}
-                            required
-                            rows={4}
-                        />
-                    </div>
-
-                    <div className="review-modal-footer">
-                        <button type="button" className="btn-cancel" onClick={onClose}>{t("Cancel")}</button>
-                        <button type="submit" className="btn-submit" disabled={isSubmitting}>
-                            {t("Next") || "Next"}
-                        </button>
-                    </div>
                         </>
                     )}
                 </form>

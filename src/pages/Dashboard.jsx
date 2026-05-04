@@ -14,14 +14,12 @@ import {
   Carousel
 } from "react-bootstrap";
 import {
-  Info, X, Trash2, AlertTriangle, Check
+  Info, X, Trash2, AlertTriangle, Check, ChevronDown
 } from "lucide-react";
 import MenuBar from "../components/MenuBar";
 import PMFOnboardingModal from "../components/PMFOnboardingModal";
 import PMFInsights from "../components/PMFInsights";
 import "../styles/dashboard.css";
-import { CircularProgressbar, buildStyles } from 'react-circular-progressbar/dist/index.js';
-import 'react-circular-progressbar/dist/styles.css';
 import { useTranslation } from '../hooks/useTranslation';
 
 import PlanLimitModal from '../components/PlanLimitModal';
@@ -52,118 +50,6 @@ const getStepKeys = (index) => {
     description: `${keys[index]}_description`
   };
 };
-
-const DeleteButtonAlternatives = memo(({ business, viewType, canDelete = true, isViewer, t, onShowDeleteModal, setHoveredItem, onBusinessClick }) => {
-  const stats = business.question_statistics || {};
-  const progress = stats.progress_percentage || 0;
-  const completedQuestions = stats.completed_questions || 0;
-  const totalQuestions = stats.total_questions || 0;
-  const remainingQuestions = stats.pending_questions || 0;
-
-  const getStatusInfo = () => {
-    if (business.status === 'deleted') return { label: t('deleted'), className: 'status-deleted' };
-    if (business.access_mode === 'archived' || business.access_mode === 'hidden') return { label: t('archived'), className: 'status-archived' };
-    return { label: t('active'), className: 'status-active' };
-  };
-
-  const statusInfo = getStatusInfo();
-
-  return (
-    <div
-      className="business-item d-flex align-items-center p-3 border-bottom position-relative"
-      onMouseEnter={() => setHoveredItem(business._id)}
-      onMouseLeave={() => setHoveredItem(null)}
-    >
-      <div
-        style={{ width: 60, height: 60, cursor: "pointer" }}
-        className="progress-circle me-3 progress-wrapper"
-        onClick={() => onBusinessClick(business)}
-      >
-        <CircularProgressbar
-          value={progress}
-          text={`${Math.round(progress)}%`}
-          styles={buildStyles({
-            pathColor: progress === 100 ? "#28a745" : progress > 50 ? "#ffc107" : "#17a2b8",
-            textColor: "#000",
-            trailColor: "#e9ecef",
-            textSize: "28px",
-            pathTransitionDuration: 0.5,
-          })}
-        />
-      </div>
-
-      <div
-        className="flex-grow-1"
-        onClick={() => onBusinessClick(business)}
-        style={{ cursor: "pointer" }}
-      >
-        <h6 className="mb-1">{business.business_name}</h6>
-        <small className="text-muted">
-          {completedQuestions}/{totalQuestions} {t('questions_completed')}
-          {remainingQuestions > 0 && (
-            <span className="text-warning ms-2 text-grey-custom">
-              • {remainingQuestions} {t('questions_remaining')}
-            </span>
-          )}
-        </small>
-      </div>
-      <div className="right-side d-flex flex-column flex-md-row align-items-end align-items-md-center gap-1">
-        <span className={`status-badge ${statusInfo.className}`}>
-          {statusInfo.label}
-        </span>
-        {canDelete && !isViewer && (
-          <div className="delete-btn-wrapper">
-            <button
-              className="btn btn-outline-danger btn-sm delete-btn-simple"
-              onClick={(e) => {
-                e.stopPropagation();
-                onShowDeleteModal(business);
-              }}
-              title={t('delete_business')}
-            >
-              <Trash2 size={16} />
-            </button>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-});
-
-const BusinessList = memo(({ businesses, viewType, canDelete = true, isLoading, t, isViewer, onShowDeleteModal, setHoveredItem, onBusinessClick }) => (
-  <div className={`business-list ${viewType}`}>
-    {isLoading && (
-      <div className="d-flex justify-content-center align-items-center py-5">
-        <Spinner animation="border" role="status" variant="primary" />
-        <span className="ms-2 text-muted">{t('loading_businesses')}</span>
-      </div>
-    )}
-    {!isLoading && businesses.length === 0 && (
-      <div className="text-center text-muted py-5">
-        <p className="mb-2">{t('no_businesses_yet')}</p>
-        <small>{t('get_started_by_creating')}</small>
-      </div>
-    )}
-    {!isLoading && businesses.length > 0 && businesses.map((business, index) => {
-      const isDeleted = business.status === 'deleted';
-      const isArchived = business.access_mode === 'archived' || business.access_mode === 'hidden';
-      return (
-        <div key={business._id || index} className={isDeleted ? 'opacity-50' : ''} style={isDeleted ? { pointerEvents: isDeleted ? 'none' : 'auto' } : {}}>
-          <DeleteButtonAlternatives
-            business={business}
-            viewType={viewType}
-            canDelete={canDelete && !isDeleted && !isArchived}
-            isViewer={isViewer}
-            t={t}
-            onShowDeleteModal={onShowDeleteModal}
-            setHoveredItem={setHoveredItem}
-            onBusinessClick={onBusinessClick}
-          />
-        </div>
-      );
-    })}
-  </div>
-));
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -219,6 +105,49 @@ const Dashboard = () => {
     city: '',
     country: ''
   });
+  const [statusFilter, setStatusFilter] = useState(['ALL', 'EXECUTION', 'CREATED', 'DELETED']);
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+
+  const allBusinesses = useMemo(() => {
+    return [...ownedBusinesses, ...collaboratingBusinesses, ...deletedBusinesses];
+  }, [ownedBusinesses, collaboratingBusinesses, deletedBusinesses]);
+
+  const filteredBusinesses = useMemo(() => {
+    return allBusinesses.filter(business => {
+      const state = business.status === 'deleted' ? 'DELETED' : (business.has_projects ? 'EXECUTION' : 'CREATED');
+      return statusFilter.includes(state);
+    });
+  }, [allBusinesses, statusFilter]);
+
+  const statusCounts = useMemo(() => {
+    const counts = { ALL: allBusinesses.length, EXECUTION: 0, CREATED: 0, DELETED: 0 };
+    allBusinesses.forEach(business => {
+      const state = business.status === 'deleted' ? 'DELETED' : (business.has_projects ? 'EXECUTION' : 'CREATED');
+      counts[state]++;
+    });
+    return counts;
+  }, [allBusinesses]);
+
+  const toggleStatusFilter = (status) => {
+    if (status === 'ALL') {
+      if (statusFilter.length === 4) setStatusFilter([]);
+      else setStatusFilter(['ALL', 'EXECUTION', 'CREATED', 'DELETED']);
+      return;
+    }
+
+    setStatusFilter(prev => {
+      let newFilter;
+      if (prev.includes(status)) {
+        newFilter = prev.filter(s => s !== status && s !== 'ALL');
+      } else {
+        newFilter = [...prev, status];
+        if (newFilter.length === 3) {
+          newFilter = ['ALL', 'EXECUTION', 'CREATED', 'DELETED'];
+        }
+      }
+      return newFilter;
+    });
+  };
   // businessError is now from store
   const [formErrors, setFormErrors] = useState({});
   const userRole = useAuthStore(state => state.userRole);
@@ -632,7 +561,7 @@ const Dashboard = () => {
     let initialTab = 'advanced';
     if (limits.pmf) initialTab = 'executive';
     else if (limits.insight || limits.strategic) initialTab = 'advanced';
-    else if (limits.project) initialTab = 'projects';
+    else if (limits.project) initialTab = 'bets';
 
     navigate('/businesspage', { state: { business, initialTab } });
   }, [selectBusiness, navigate, addToast, t]);
@@ -677,354 +606,168 @@ const Dashboard = () => {
         <>
           <MenuBar />
           <Container fluid className="p-0 main-content">
-            <div className="responsive-view-container">
-              <Row className="h-100 justify-content-center">
-                <Col xs={12} className="p-0">
-                  {/* Mobile View */}
-                  <Card className="mobile-view-card d-md-none">
-                    <Card.Body className="p-0">
-                      <div className="p-4">
-                        <div className="d-flex justify-content-between align-items-center mb-3">
-                          <h5 className="mb-0">{t('welcome_dashboard')} <span className="text-primary">{userName}</span></h5>
-                        </div>
-                        <p className="text-muted small mb-4">{t('create_business_plans')}</p>
+            <div className="dashboard-content">
+              {/* Welcome Section */}
+              <div className="welcome-section">
+                <h1 className="welcome-title">
+                  {t('welcome')} <span>{userName} !</span>
+                </h1>
+                <p className="welcome-description">
+                  {t('dashboard_description_redesign') || "Create business plans step by step with the S.T.R.A.T.E.G.I.C framework. Activate AI capabilities for analysis, prediction, and decision-making."}
+                </p>
+                
+                <div className="action-buttons">
+                  {!isCollaborator && !isViewer && (
+                    <button 
+                      className="btn-create-business"
+                      onClick={handleShowCreateModal}
+                      disabled={isLoadingBusinesses}
+                    >
+                      <span style={{ fontSize: '20px', lineHeight: '1' }}>+</span>
+                      {t('create_business')}
+                    </button>
+                  )}
+                  <button 
+                    className="btn-how-it-works"
+                    onClick={() => openModal('howItWorks')}
+                  >
+                    <Info size={18} />
+                    {t('how_it_works')}
+                  </button>
+                </div>
+              </div>
 
-                      </div>
-                      {isLoadingBusinesses ? (
-                        <div className="d-flex flex-column align-items-center justify-content-center py-5">
-                          <Spinner animation="border" variant="primary" />
-                          <span className="mt-3 text-muted">{t('loading_businesses')}</span>
-                        </div>
-                      ) : (
-                        <Accordion className="px-4 mb-4">
-                          {/* My Businesses */}
-                          {!isCollaborator && !isViewer && (
-                            <Accordion.Item eventKey="0">
-                              <Accordion.Header>
-                                <div className="accordion-header-content">
-                                  <span className="accordion-title-text">
-                                    {t("my_businesses")}
-                                  </span>
-                                  <span className="accordion-count-pill">
-                                    {myBusinesses.length}
-                                  </span>
-                                </div>
-                              </Accordion.Header>
+              {/* Businesses Table Section */}
+              {isLoadingBusinesses ? (
+                <div className="d-flex justify-content-center py-5">
+                  <Spinner animation="border" variant="primary" />
+                </div>
+              ) : (
+                <div className="businesses-container">
+                  <div className="businesses-header d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-3">
+                    <h2>{t('your_businesses_all_states') || "YOUR BUSINESSES — ALL STATES"}</h2>
+                    
+                    <div className="status-filter-wrapper">
+                      <button 
+                        className="status-filter-btn"
+                        onClick={() => setIsFilterOpen(!isFilterOpen)}
+                      >
+                        <span className="filter-label">STATE</span>
+                        <span className="filter-value">
+                          {statusFilter.length === 4 ? 'All' : (statusFilter.length === 1 ? statusFilter[0] : 'Multiple')} · {filteredBusinesses.length}
+                        </span>
+                        <ChevronDown size={14} className={`ms-2 transition-transform ${isFilterOpen ? 'rotate-180' : ''}`} />
+                      </button>
 
-                              <Accordion.Body>
-                                <BusinessList
-                                  businesses={myBusinesses}
-                                  viewType="mobile"
-                                  isLoading={false} // Global loader handles initial load
-                                  t={t}
-                                  isViewer={isViewer}
-                                  onShowDeleteModal={handleShowDeleteModal}
-                                  setHoveredItem={setHoveredItem}
-                                  onBusinessClick={handleBusinessClick}
-                                />
-                              </Accordion.Body>
-                            </Accordion.Item>
-                          )}
-
-                          {/* Project Phase */}
-                          {!isCollaborator && !isViewer && projectPhaseBusinesses.length > 0 && (
-                            <Accordion.Item eventKey="1">
-                              <Accordion.Header>
-                                <div className="accordion-header-content">
-                                  <span className="accordion-title-text">
-                                    {t("Project Phase")}
-                                  </span>
-                                  <span className="accordion-count-pill">
-                                    {projectPhaseBusinesses.length}
-                                  </span>
-                                </div>
-                              </Accordion.Header>
-
-                              <Accordion.Body>
-                                <BusinessList
-                                  businesses={projectPhaseBusinesses}
-                                  viewType="mobile"
-                                  canDelete={false}
-                                  isLoading={false}
-                                  t={t}
-                                  isViewer={isViewer}
-                                  onShowDeleteModal={handleShowDeleteModal}
-                                  setHoveredItem={setHoveredItem}
-                                  onBusinessClick={handleBusinessClick}
-                                />
-                              </Accordion.Body>
-                            </Accordion.Item>
-                          )}
-
-                          {/* Collaborating Businesses */}
-                          {(isCollaborator || isViewer || collaboratingBusinesses.length > 0) && (
-                            <Accordion.Item eventKey="2">
-                              <Accordion.Header>
-                                <div className="accordion-header-content">
-                                  <span className="accordion-title-text">
-                                    Collaborating Businesses
-                                  </span>
-                                  <span className="accordion-count-pill">
-                                    {collaboratingBusinesses.length}
-                                  </span>
-                                </div>
-                              </Accordion.Header>
-
-                              <Accordion.Body>
-                                <BusinessList
-                                  businesses={collaboratingBusinesses}
-                                  viewType="mobile"
-                                  canDelete={false}
-                                  isLoading={false}
-                                  t={t}
-                                  isViewer={isViewer}
-                                  onShowDeleteModal={handleShowDeleteModal}
-                                  setHoveredItem={setHoveredItem}
-                                  onBusinessClick={handleBusinessClick}
-                                />
-                              </Accordion.Body>
-                            </Accordion.Item>
-                          )}
-
-                          {/* Deleted Businesses */}
-                          {!isCollaborator && !isViewer && deletedBusinesses.length > 0 && (
-                            <Accordion.Item eventKey="3">
-                              <Accordion.Header>
-                                <div className="accordion-header-content">
-                                  <span className="accordion-title-text">
-                                    Deleted Business
-                                  </span>
-                                  <span className="accordion-count-pill">
-                                    {deletedBusinesses.length}
-                                  </span>
-                                </div>
-                              </Accordion.Header>
-
-                              <Accordion.Body>
-                                <BusinessList
-                                  businesses={deletedBusinesses}
-                                  viewType="mobile"
-                                  canDelete={false}
-                                  isLoading={false}
-                                  t={t}
-                                  isViewer={isViewer}
-                                  onShowDeleteModal={handleShowDeleteModal}
-                                  setHoveredItem={setHoveredItem}
-                                  onBusinessClick={handleBusinessClick}
-                                />
-                              </Accordion.Body>
-                            </Accordion.Item>
-                          )}
-                        </Accordion>
-                      )}
-
-                      <div className="px-4 pb-4 d-flex flex-wrap gap-2">
-                        {!isCollaborator && !isViewer && (
-                          <Button
-                            variant="primary"
-                            className="flex-grow-1 create-business-btn"
-                            onClick={handleShowCreateModal}
-                            disabled={isLoadingBusinesses}
-                          >
-                            {isLoadingBusinesses ? (
-                              <>
-                                <Spinner size="sm" className="me-2" />
-                              </>
-                            ) : (
-                              t('create_business')
-                            )}
-                          </Button>
-                        )}
-                        <Button
-                          variant="primary"
-                          className="flex-grow-1 create-business-btn"
-                          onClick={() => openModal('howItWorks')}
-                        >
-                          <Info size={18} className="me-2" />
-                          {t('how_it_works')}
-                        </Button>
-                      </div>
-                    </Card.Body>
-                  </Card>
-
-                  {/* Desktop View */}
-                  <Card className="desktop-view-card d-none d-md-block">
-                    <Card.Body className="p-0 h-100">
-                      <Row className="h-100 px-4">
-                        <Col md={6} className="welcome-section">
-                          <div>
-                            <div className="d-flex justify-content-between align-items-start mb-4">
-                              <div>
-                                <h5 className="mb-2">{t('welcome_dashboard')} <span className="text-primary">{userName}</span></h5>
+                      {isFilterOpen && (
+                        <>
+                          <div className="status-filter-overlay" onClick={() => setIsFilterOpen(false)} />
+                          <div className="status-dropdown">
+                          {['ALL', 'EXECUTION', 'CREATED', 'DELETED'].map(status => (
+                            <div 
+                              key={status} 
+                              className="dropdown-item"
+                              onClick={() => toggleStatusFilter(status)}
+                            >
+                              <div className={`custom-checkbox ${statusFilter.includes(status) ? 'checked' : ''}`}>
+                                {statusFilter.includes(status) && <Check size={12} color="white" />}
                               </div>
+                              <span className="status-name">{status === 'ALL' ? 'All' : status}</span>
+                              <span className="status-count">{statusCounts[status]}</span>
                             </div>
-                            <p className="text-muted mb-4">{t('create_business_plans')}</p>
-
-                            <div className="d-flex flex-wrap gap-2">
-                              {!isCollaborator && !isViewer && (
-                                <Button
-                                  variant="primary"
-                                  className="create-business-btn"
-                                  onClick={handleShowCreateModal}
-                                  disabled={isLoadingBusinesses}
-                                >
-                                  {isLoadingBusinesses ? (
-                                    <>
-                                      <Spinner size="sm" className="me-2" />
-                                      {t('create_business')}
-                                    </>
-                                  ) : (
-                                    t('create_business')
-                                  )}
-                                </Button>
-                              )}
-
-                              <Button
-                                variant="primary"
-                                className="create-business-btn"
-                                onClick={() => openModal('howItWorks')}
-                              >
-                                <Info size={18} className="me-2" />
-                                {t('how_it_works')}
-                              </Button>
-                            </div>
+                          ))}
                           </div>
-                        </Col>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                  <div className="businesses-table-wrapper">
+                    <table className="businesses-table">
+                      <thead>
+                        <tr>
+                          <th>{t('business_column') || "BUSINESS"}</th>
+                          <th>{t('state_column') || "STATE"}</th>
+                          <th className="th-date">{t('date_of_creation_column') || "DATE OF CREATION"}</th>
+                          <th>{t('status_column') || "STATUS"}</th>
+                          <th>{t('active_bets_column') || "# BETS"}</th>
+                          <th>{t('collaborators_column') || "# COLLABORATORS"}</th>
+                          {(!isCollaborator && !isViewer) && <th>{t('action_column') || "ACTION"}</th>}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {filteredBusinesses.length === 0 ? (
+                          <tr>
+                            <td colSpan={(!isCollaborator && !isViewer) ? "7" : "6"} className="text-center py-5 text-muted">
+                              {t('no_businesses_yet')}
+                            </td>
+                          </tr>
+                        ) : (
+                          filteredBusinesses.map((business) => {
+                            const isDeleted = business.status === 'deleted';
+                            const state = isDeleted ? 'DELETED' : (business.has_projects ? 'EXECUTION' : 'CREATED');
+                            const stateClass = `state-${state.toLowerCase()}`;
+                            const date = business.created_at ? new Date(business.created_at).toLocaleDateString('en-US', { 
+                              month: 'short', 
+                              day: '2-digit', 
+                              year: 'numeric' 
+                            }) : 'N/A';
+                            
+                            // Derive stats
+                            const activeBets = business.project_count || business.question_statistics?.total_projects || 0;
+                            const collaborators = business.collaborators_count ?? (business.company_admin_id?.length || 1);
 
-                        {/* RIGHT SIDE - Business List */}
-                        <Col md={6} className="businesses-section">
-                          {isLoadingBusinesses ? (
-                            <div className="d-flex flex-row align-items-center justify-content-center h-100 py-5 w-100">
-                              <div className="text-center">
-                                <Spinner animation="border" variant="primary" />
-                                <p className="mt-3 text-muted">{t('loading_businesses')}</p>
-                              </div>
-                            </div>
-                          ) : (
-                            <Accordion>
-                              {/* My Businesses */}
-                              {!isCollaborator && !isViewer && (
-                                <Accordion.Item eventKey="0">
-                                  <Accordion.Header>
-                                    <div className="accordion-header-content">
-                                      <span className="accordion-title-text">
-                                        {t("my_businesses")}
-                                      </span>
-                                      <span className="accordion-count-pill">
-                                        {myBusinesses.length}
-                                      </span>
-                                    </div>
-                                  </Accordion.Header>
-                                  <Accordion.Body>
-                                    <BusinessList
-                                      businesses={myBusinesses}
-                                      viewType="desktop"
-                                      isLoading={false}
-                                      t={t}
-                                      isViewer={isViewer}
-                                      onShowDeleteModal={handleShowDeleteModal}
-                                      setHoveredItem={setHoveredItem}
-                                      onBusinessClick={handleBusinessClick}
-                                    />
-                                  </Accordion.Body>
-                                </Accordion.Item>
-                              )}
+                            // Derive display status
+                            const statusLower = (business.status || '').toLowerCase();
+                            const accessLower = (business.access_mode || '').toLowerCase();
+                            const isActuallyArchived = statusLower === 'archived' || accessLower === 'archived';
+                            const isActuallyDeleted = statusLower === 'deleted';
+                            
+                            const displayStatus = isActuallyDeleted ? 'Deleted' : (isActuallyArchived ? 'Archived' : 'Active');
+                            const statusBadgeClass = isActuallyDeleted ? 'status-deleted' : (isActuallyArchived ? 'status-archived' : 'status-active');
 
-                              {/* Project Phase */}
-                              {!isCollaborator && !isViewer && projectPhaseBusinesses.length > 0 && (
-                                <Accordion.Item eventKey="1">
-                                  <Accordion.Header>
-                                    <div className="accordion-header-content">
-                                      <span className="accordion-title-text">
-                                        {t("Project Phase")}
-                                      </span>
-                                      <span className="accordion-count-pill">
-                                        {projectPhaseBusinesses.length}
-                                      </span>
-                                    </div>
-                                  </Accordion.Header>
-                                  <Accordion.Body>
-                                    <BusinessList
-                                      businesses={projectPhaseBusinesses}
-                                      viewType="desktop"
-                                      canDelete={false}
-                                      isLoading={false}
-                                      t={t}
-                                      isViewer={isViewer}
-                                      onShowDeleteModal={handleShowDeleteModal}
-                                      setHoveredItem={setHoveredItem}
-                                      onBusinessClick={handleBusinessClick}
-                                    />
-                                  </Accordion.Body>
-                                </Accordion.Item>
-                              )}
-
-                              {/* Collaborating Businesses */}
-                              {(isCollaborator || isViewer || collaboratingBusinesses.length > 0) && (
-                                <Accordion.Item eventKey="2">
-                                  <Accordion.Header>
-                                    <div className="accordion-header-content">
-                                      <span className="accordion-title-text">
-                                        Collaborating Businesses
-                                      </span>
-                                      <span className="accordion-count-pill">
-                                        {collaboratingBusinesses.length}
-                                      </span>
-                                    </div>
-                                  </Accordion.Header>
-                                  <Accordion.Body>
-                                    <BusinessList
-                                      businesses={collaboratingBusinesses}
-                                      viewType="desktop"
-                                      canDelete={false}
-                                      isLoading={false}
-                                      t={t}
-                                      isViewer={isViewer}
-                                      onShowDeleteModal={handleShowDeleteModal}
-                                      setHoveredItem={setHoveredItem}
-                                      onBusinessClick={handleBusinessClick}
-                                    />
-                                  </Accordion.Body>
-                                </Accordion.Item>
-                              )}
-
-                              {/* Deleted Businesses */}
-                              {!isCollaborator && !isViewer && deletedBusinesses.length > 0 && (
-                                <Accordion.Item eventKey="3">
-                                  <Accordion.Header>
-                                    <div className="accordion-header-content">
-                                      <span className="accordion-title-text">
-                                        Deleted Business
-                                      </span>
-                                      <span className="accordion-count-pill">
-                                        {deletedBusinesses.length}
-                                      </span>
-                                    </div>
-                                  </Accordion.Header>
-                                  <Accordion.Body>
-                                    <BusinessList
-                                      businesses={deletedBusinesses}
-                                      viewType="desktop"
-                                      canDelete={false}
-                                      isLoading={false}
-                                      t={t}
-                                      isViewer={isViewer}
-                                      onShowDeleteModal={handleShowDeleteModal}
-                                      setHoveredItem={setHoveredItem}
-                                      onBusinessClick={handleBusinessClick}
-                                    />
-                                  </Accordion.Body>
-                                </Accordion.Item>
-                              )}
-                            </Accordion>
-                          )}
-                        </Col>
-
-                      </Row>
-                    </Card.Body>
-                  </Card>
-                </Col>
-              </Row>
+                            return (
+                              <tr 
+                                key={business._id || business.id} 
+                                onClick={!isDeleted ? () => handleBusinessClick(business) : undefined}
+                                className={isDeleted ? 'row-deleted' : ''}
+                              >
+                                <td className="business-name-cell">{business.business_name}</td>
+                                <td>
+                                  <span className={`state-badge ${stateClass}`}>{state}</span>
+                                </td>
+                                <td className="date-cell">{date}</td>
+                                <td className="status-response-cell">
+                                  <span className={`status-badge ${statusBadgeClass}`}>
+                                    {displayStatus}
+                                  </span>
+                                </td>
+                                <td className="stats-cell">{activeBets}</td>
+                                <td className="stats-cell">{collaborators}</td>
+                                {(!isCollaborator && !isViewer) && (
+                                  <td className="stats-cell">
+                                    {!isDeleted && (
+                                      <button
+                                        className="btn-delete-business"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handleShowDeleteModal(business);
+                                        }}
+                                        title={t('delete_business')}
+                                      >
+                                        <Trash2 size={16} />
+                                      </button>
+                                    )}
+                                  </td>
+                                )}
+                              </tr>
+                            );
+                          })
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
             </div>
           </Container>
 
@@ -1052,9 +795,9 @@ const Dashboard = () => {
                   variant="dark"
                 >
                   {[
-                    { src: "/slides/slide1.jpeg", alt: 'step_1_login_alt' },
-                    { src: "/slides/slide2.jpeg", alt: 'step_2_create_business_alt' },
-                    { src: "/slides/slide3.jpeg", alt: 'step_3_onboarding_pmf_alt' },
+                    { src: "/slides/slide1.png", alt: 'step_1_login_alt' },
+                    { src: "/slides/slide2.png", alt: 'step_2_create_business_alt' },
+                    { src: "/slides/slide3.png", alt: 'step_3_onboarding_pmf_alt' },
                     { src: "/slides/slide4.png", alt: 'step_4_new_business_alt' },
                     { src: "/slides/slide5.png", alt: 'step_5_exec_summary_alt' },
                     { src: "/slides/slide6.png", alt: 'step_6_kickstart_projects_alt' },

@@ -337,6 +337,8 @@ const UserManagement = ({ onToast }) => {
 
       queryClient.invalidateQueries({ queryKey: ["adminUsers"] });
       queryClient.invalidateQueries({ queryKey: ["planDetails"] });
+      queryClient.invalidateQueries({ queryKey: ["accessControl"] });
+      queryClient.invalidateQueries({ queryKey: ["businesses"] });
 
     } catch (error) {
       console.error(error);
@@ -388,6 +390,8 @@ const UserManagement = ({ onToast }) => {
 
       onToast(t("Access_granted_successfully"), "success");
       setShowAccessConfirmation(false);
+      queryClient.invalidateQueries({ queryKey: ["businesses"] });
+      queryClient.invalidateQueries({ queryKey: ["projects", accessBusinessId] });
       setSelectedProjectId("");
       setSelectedCollaboratorIds([]);
       setAccessBusinessId("");
@@ -420,6 +424,7 @@ const UserManagement = ({ onToast }) => {
       onToast(t("User_assigned_successfully"), "success");
       handleCloseAssignModal();
       queryClient.invalidateQueries({ queryKey: ["planDetails"] });
+      queryClient.invalidateQueries({ queryKey: ["businesses"] });
       queryClient.invalidateQueries({ queryKey: ["collaborators", assignBusinessId] });
     } catch (error) {
       console.error(error);
@@ -553,11 +558,12 @@ const UserManagement = ({ onToast }) => {
         return (
           <span style={{
             padding: "4px 8px",
-            borderRadius: "12px",
+            borderRadius: "20px",
             fontSize: "12px",
             fontWeight: 500,
             color: statusColor,
             backgroundColor: statusBg,
+            border:"1px solid",
             display: "inline-block"
           }}>
             {label}

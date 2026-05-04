@@ -1164,7 +1164,7 @@ const EditableBriefSection = ({
 
       if (onAnalysisRegenerate) {
         setIsFinancialRegenerating(true);
-        onAnalysisRegenerate({ onlyFinancial: true, uploadedFile: file });
+        onAnalysisRegenerate({ onlyFinancial: true, uploadedFile: file, skipConfirmation: true });
       }
     } catch (error) {
       console.error('File upload/validation error:', error);
@@ -1276,7 +1276,7 @@ const EditableBriefSection = ({
 
       // Trigger auto-regeneration of Insights 6'Cs and Strategic Tab
       if (onAnalysisRegenerate) {
-        onAnalysisRegenerate({ updatedQuestionIds, alsoRegenerateStrategic: true });
+        onAnalysisRegenerate({ updatedQuestionIds, alsoRegenerateStrategic: true, skipConfirmation: true });
       }
     } catch (error) {
       console.error('Apply enrichment error:', error);

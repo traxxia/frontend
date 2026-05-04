@@ -6,8 +6,7 @@ export const PHASE_API_CONFIG = {
     'purchaseCriteria',
     'loyaltyNPS',
     'porters',
-    'pestel',
-    'strategic'
+    'pestel'
   ],
 
   essential: [
@@ -22,8 +21,7 @@ export const PHASE_API_CONFIG = {
     'productivityMetrics',
     'maturityScore',
     'competitiveLandscape',
-    'coreAdjacency',
-    'strategic'  // Add this line
+    'coreAdjacency'
   ],
 
   advanced: [
@@ -38,8 +36,7 @@ export const PHASE_API_CONFIG = {
     'productivityMetrics',
     'maturityScore',
     'competitiveLandscape',
-    'coreAdjacency',
-    'strategic' // Add strategic to advanced phase
+    'coreAdjacency'
   ],
   financial: [
     'profitabilityAnalysis',
@@ -128,25 +125,6 @@ export class AnalysisApiService {
     return fetchPromise;
   }
 
-  async getFreshAnswersData(businessId) {
-    try {
-      const token = this.getAuthToken();
-      if (!token) return { freshAnswers: {} };
-      
-      const response = await fetch(`${this.API_BASE_URL}/api/conversations/business/${businessId}/answers`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      
-      if (!response.ok) return { freshAnswers: {} };
-      const data = await response.json();
-      return { freshAnswers: data.answers || {} };
-    } catch (error) {
-      console.error('Error fetching fresh answers:', error);
-      return { freshAnswers: {} };
-    }
-  }
 
   // PMF Analysis Methods
   async savePMFOnboardingData(businessId, onboardingData) {
@@ -155,6 +133,7 @@ export class AnalysisApiService {
       // Clear caches on save to ensure fresh data next time
       pmfAnalysisCache.delete(`pmf-${businessId}`);
       pmfExecutiveSummaryCache.delete(`exec-${businessId}`);
+      kickstartRequestCache.delete(`kickstart-${businessId}`);
       
       const response = await fetch(`${this.API_BASE_URL}/api/pmf-analysis/onboarding`, {
         method: 'POST',
@@ -211,6 +190,7 @@ export class AnalysisApiService {
       const token = this.getAuthToken();
       // Clear cache on save
       pmfExecutiveSummaryCache.delete(`exec-${businessId}`);
+      kickstartRequestCache.delete(`kickstart-${businessId}`);
       
       const response = await fetch(`${this.API_BASE_URL}/api/pmf-analysis/${businessId}/executive-summary`, {
         method: 'POST',
@@ -292,6 +272,10 @@ export class AnalysisApiService {
   async savePMFInsights(businessId, insights) {
     try {
       const token = this.getAuthToken();
+      // Clear caches
+      pmfAnalysisCache.delete(`pmf-${businessId}`);
+      kickstartRequestCache.delete(`kickstart-${businessId}`);
+      
       const insightsData = insights?.insights || insights;
       const response = await fetch(`${this.API_BASE_URL}/api/pmf-analysis/${businessId}/insights`, {
         method: 'POST',
@@ -660,7 +644,7 @@ export class AnalysisApiService {
           url += `?${params.toString()}`;
         }
 
-        response = await fetch(url, {
+        response = await fetch(url+'s', {
           method: 'POST',
           headers: {
             'accept': 'application/json',
@@ -791,6 +775,7 @@ export class AnalysisApiService {
           .then((res) => {
             successes++;
             completed++;
+            stateSetters.setRegenerating?.(analysisType, false);
             showToastMessage(
               `${completed}/${total}  analyses — "${displayName}" completed successfully`,
               "info",
@@ -801,6 +786,7 @@ export class AnalysisApiService {
           })
           .catch((err) => {
             completed++;
+            stateSetters.setRegenerating?.(analysisType, false);
 
             console.error(`Error with ${analysisType} analysis:`, err);
             showToastMessage(
@@ -839,6 +825,7 @@ export class AnalysisApiService {
             .callAnalysisAPIWithSave(analysisType, payload, stateSetters, selectedBusinessId)
             .then((res) => {
               successes++;
+              stateSetters.setRegenerating?.(analysisType, false);
               // Stay in progress mode until all retries finish
               showToastMessage(
                 `${successes}/${total} analyses — "${displayName}" completed successfully (after retry)`,
@@ -848,6 +835,7 @@ export class AnalysisApiService {
               return { status: "fulfilled", analysisType, value: res };
             })
             .catch((err) => {
+              stateSetters.setRegenerating?.(analysisType, false);
               console.error(`Second attempt failed for ${analysisType}:`, err);
               // Leave as it is, empty state will be shown
               return { status: "rejected", analysisType, reason: err };
@@ -1149,10 +1137,13 @@ export class AnalysisApiService {
   // ============================================================================
 
   async callAnalysisEndpointWithStreaming(analysisType, payload, onStreamChunk = null) {
+    console.log(`--- API CALL START: ${analysisType} ---`);
     const endpoint = API_ENDPOINTS[analysisType];
     if (!endpoint) {
+      console.error(`Unknown analysis type: ${analysisType}`);
       throw new Error(`Unknown analysis type: ${analysisType}`);
     }
+    console.log(`Endpoint identified: ${endpoint}`);
     // For excel-analysis types, call with specific metric_type
     if (this.isExcelAnalysisType(analysisType)) {
       const { questionsArray, answersArray } = this.prepareQuestionsAndAnswers(
@@ -1195,6 +1186,7 @@ export class AnalysisApiService {
       onStreamChunk  // ✅ Pass streaming callback for Porter's
     );
 
+    console.log(`--- API CALL SUCCESS: ${analysisType} ---`);
     return { data: result };
   }
 

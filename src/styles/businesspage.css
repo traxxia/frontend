@@ -227,7 +227,7 @@ body {
 }
 
 [data-theme="dark"] .desktop-tabs {
-  background-color: #333946  !important;
+  background-color: #333946 !important;
 }
 
 [data-theme="dark"] .desktop-tab {
@@ -238,6 +238,7 @@ body {
   background-color: var(--color-bg-primary);
   /* Dark mode text color */
 }
+
 
 [data-theme="dark"] .item-label {
   color: var(--color-text-dark);
@@ -383,7 +384,7 @@ body {
 
 .business-breadcrumb {
   display: flex;
-  align-items: center;  
+  align-items: center;
   height: 24px;
 }
 
@@ -452,7 +453,7 @@ body {
   flex-direction: column;
   gap: 4px;
   animation: dropdownFade 0.2s ease-out;
-  margin:10px;
+  margin: 10px;
 }
 
 .nav-dropdown-menu.align-right {
@@ -461,7 +462,10 @@ body {
 }
 
 @keyframes dropdownFade {
-  from { opacity: 0; transform: translateY(-10px); }
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
 }
 
 .dropdown-main-header {
@@ -480,10 +484,22 @@ body {
 }
 
 [data-theme="dark"] .dropdown-main-header {
-  color: #f1f5f9;
   border-bottom-color: #334155;
-  background: rgba(59, 130, 246, 0.1);
+  background: rgba(59, 130, 246, 0.1) !important;
 }
+
+[data-theme="dark"] .business-decision-logs-page {
+  background: transparent !important;
+}
+
+[data-theme="dark"] .business-decision-logs-filters {
+  background: transparent !important;
+}
+
+[data-theme="dark"] .page-title-color {
+  color: var(--color-text-dark) !important;
+}
+
 
 .dropdown-section-label {
   font-size: 0.7rem;
@@ -497,13 +513,13 @@ body {
 .dropdown-item {
   background: none;
   border: none;
-  padding: 10px 0.75rem;
+  padding: 5px 0.5rem;
   border-radius: 6px;
   display: flex;
   align-items: center;
   gap: 12px;
   color: #4b5563;
-  font-size: 0.875rem;
+  font-size: 13px;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s;
@@ -1011,7 +1027,7 @@ body {
 }
 
 [data-theme="dark"] .edit-container {
-    background-color: #1a1d23 !important;
+  background-color: #1a1d23 !important;
 }
 
 
@@ -2103,8 +2119,7 @@ body {
   }
 }
 
-@keyframes spin {
-}
+@keyframes spin {}
 
 /* Enhanced Coming Soon Section Styles */
 .coming-soon-section {
@@ -2752,7 +2767,7 @@ body {
 }
 
 [data-theme="dark"] .strategic-page-section {
-    background-color: #272d3e !important;
+  background-color: #272d3e !important;
 }
 
 
@@ -3536,15 +3551,19 @@ body {
 
 /* Hide utility buttons (PDF, Regenerate, Section Dropdown) in archived state */
 .is-archived .desktop-tabs-buttons {
-    display: none !important;
+  display: none !important;
 }
 
 /* Hide all content inside expanded-analysis-content ONLY for archived workspaces */
 .is-archived .expanded-analysis-content {
-    opacity: 0.3; /* Show content but faded (70% obscured) */
-    pointer-events: none; /* Prevent any interaction */
-    user-select: none; /* Prevent text selection */
-    filter: blur(1px); /* Add a very light blur directly to content */
+  opacity: 0.3;
+  /* Show content but faded (70% obscured) */
+  pointer-events: none;
+  /* Prevent any interaction */
+  user-select: none;
+  /* Prevent text selection */
+  filter: blur(1px);
+  /* Add a very light blur directly to content */
 }
 
 .archived-overlay {
@@ -3568,20 +3587,20 @@ body {
 
 /* Archived / Hidden State Overlays */
 .is-archived .info-panel-content {
-    position: relative;
-    pointer-events: none !important;
+  position: relative;
+  pointer-events: none !important;
 }
 
 .is-archived .info-panel-content::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(255, 255, 255, 0.4);
-    z-index: 10;
-    pointer-events: none;
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.4);
+  z-index: 10;
+  pointer-events: none;
 }
 
 /* Hide all utility and action buttons in archived state */
@@ -3592,7 +3611,7 @@ body {
 .is-archived .ai-action-btn,
 .is-archived .edit-action-btn,
 .is-archived .new-project-btn {
-    display: none !important;
+  display: none !important;
 }
 
 /* Specific indicator for menu labels */
@@ -3600,11 +3619,11 @@ body {
 .dropdown-item .read-only-indicator,
 .mobile-menu-item .read-only-indicator,
 .status-tab .read-only-indicator {
-    font-size: 0.85em;
-    opacity: 0.7;
-    font-style: italic;
-    font-weight: normal;
-    margin-left: 4px;
+  font-size: 0.85em;
+  opacity: 0.7;
+  font-style: italic;
+  font-weight: normal;
+  margin-left: 4px;
 }
 
 [data-theme="dark"] .archived-overlay {
@@ -3738,6 +3757,3 @@ body {
 [data-theme="dark"] .tooltip-arrow::after {
   display: none;
 }
-
-
-

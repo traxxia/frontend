@@ -6,7 +6,7 @@
 .ai-fab {
   position: fixed !important;
   bottom: 20px !important;
-  right: 80px !important;
+  right: 15px !important;
   z-index: 99999 !important;
   width: 56px !important;
   height: 56px !important;
@@ -47,7 +47,7 @@
 .ai-panel {
   position: fixed;
   bottom: 0;
-  right: 80px;
+  right: 15px;
   z-index: 99998;
   width: 360px;
   height: 560px;

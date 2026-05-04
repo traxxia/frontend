@@ -93,12 +93,11 @@
 
 /* Status badge base */
 .status-badge {
-  padding: 5px 10px;
+  padding: 2px 10px;
   border-radius: 16px;
-  font-size: 13px;
-  font-weight: 700;
+  font-size: 13px; 
   display: inline-block;
-  color: #000 ;
+  color: #000;
 }
 
 .status-active {
@@ -251,9 +250,11 @@
 [data-theme="dark"] h5,
 [data-theme="dark"] p,
 [data-theme="dark"] label,
-[data-theme="dark"] small,
-[data-theme="dark"] span {
-  color: #e5e7eb !important;
+[data-theme="dark"] small
+
+/* [data-theme="dark"] span { */
+  {
+  color: #989899 !important;
 }
 
 [data-theme="dark"] .container,
@@ -263,9 +264,9 @@
   background-color: #1a1d23 !important;
 }
 
-[data-theme="dark"] span {
+/* [data-theme="dark"] span {
   color: #ffffff !important;
-}
+} */
 
 [data-theme="dark"] .property-badge {
   color: #1a1d23 !important;

@@ -15,15 +15,15 @@ import { useProjects } from "../hooks/useQueries";
 import { useQueryClient } from "@tanstack/react-query";
 
 
-import { Users, CheckCircle, Plus, ListOrdered, Rocket } from "lucide-react";
+import { Users, CheckCircle, Plus, ListOrdered, Rocket, Menu, BarChart4, ChevronDown, Check, List } from "lucide-react";
 import RankProjectsPanel from "../components/RankProjectsPanel";
 import TeamRankingsView from "../components/TeamRankingsView";
 import ProjectsList from "../components/ProjectsList";
 import ProjectForm from "../components/ProjectForm";
 import ProjectDetails from "../components/ProjectDetails";
 import ProjectReviewModal from "../components/ProjectReviewModal";
-import ToastNotifications from "../components/ToastNotifications";
 import StateChangeModal from "../components/StateChangeModal";
+import ConfirmationModal from "../components/ConfirmationModal";
 import "../styles/ProjectsSection.css";
 import "../styles/ProjectReviewModal.css";
 
@@ -123,22 +123,6 @@ const ProjectsSection = ({
     }
   }, [projects.length, isLoadingProjects, onProjectCountChange]);
 
-  useEffect(() => {
-    if (activeView !== "list") {
-      setTimeout(() => {
-        if (containerRef.current) {
-          containerRef.current.scrollIntoView({ behavior: 'auto', block: 'start' });
-
-          const parent = containerRef.current.closest('.info-panel-content');
-          if (parent) {
-            parent.scrollTo({ top: 0, behavior: 'auto' });
-          }
-        }
-        window.scrollTo({ top: 0, behavior: 'auto' });
-      }, 0);
-    }
-  }, [activeView]);
-
   const location = useLocation();
   const navigate = useNavigate();
   const [currentProject, setCurrentProject] = useState(null);
@@ -151,9 +135,11 @@ const ProjectsSection = ({
   const [reviewType, setReviewType] = useState("review");
 
   const [apiIsArchived, setApiIsArchived] = useState(isArchived);
-  const [selectedCategory, setSelectedCategory] = useState("All");
+  const [selectedCategories, setSelectedCategories] = useState(["All"]);
   const [selectedProjectIds, setSelectedProjectIds] = useState([]);
   const [isRankingBlinking] = useState(false);
+  const [showMissingRankModal, setShowMissingRankModal] = useState(false);
+
   useEffect(() => {
     let pageContext = null;
     if (activeView === "new") {
@@ -454,24 +440,10 @@ const ProjectsSection = ({
     }
   }, [lockRanking, refreshAllData]);
 
-  const handleLaunchProjects = useCallback(async () => {
-    if (selectedProjectIds.length === 0) {
-      handleShowToast(t("Please select at least one project to launch."), "error");
-      return;
-    }
 
-    // Check if all selected projects have been ranked
-    const unrankedProjects = selectedProjectIds.filter(id => {
-      const rank = rankMap[String(id)];
-      return rank === null || rank === undefined;
-    });
-
-    if (unrankedProjects.length > 0) {
-      handleShowToast(t("One or more selected projects are not ranked. All projects must be ranked before launch."), "error", 5000);
-      return;
-    }
-
+  const executeLaunchProjects = useCallback(async () => {
     try {
+      setShowMissingRankModal(false);
       setIsSubmitting(true);
       const { success, error, data } = await launchProjects(selectedProjectIds);
 
@@ -502,7 +474,27 @@ const ProjectsSection = ({
     } finally {
       setIsSubmitting(false);
     }
-  }, [selectedProjectIds, launchProjects, refreshAllData, handleShowToast]);
+  }, [selectedProjectIds, launchProjects, refreshAllData, handleShowToast, addToast, queryClient, selectedBusinessId, clearCache]);
+
+  const handleLaunchProjects = useCallback(async () => {
+    if (selectedProjectIds.length === 0) {
+      handleShowToast(t("Please select at least one project to launch."), "error");
+      return;
+    }
+
+    // Check if all selected projects have been ranked
+    const unrankedProjects = selectedProjectIds.filter(id => {
+      const rank = rankMap[String(id)];
+      return rank === null || rank === undefined;
+    });
+
+    if (unrankedProjects.length > 0) {
+      setShowMissingRankModal(true);
+      return;
+    }
+
+    await executeLaunchProjects();
+  }, [selectedProjectIds, rankMap, handleShowToast, t, executeLaunchProjects]);
 
   const toggleProjectSelection = useCallback((projectId) => {
     setSelectedProjectIds((prev) =>
@@ -646,9 +638,13 @@ const ProjectsSection = ({
 
       const statusChanged = oldStatus !== newStatus;
       const learningStateChanged = oldLearningState !== newLearningState;
+      const isProjectLaunched = (currentProject.launch_status || "").toLowerCase() === "launched";
+
+      const isKilled = newStatus === 'killed';
 
       // If either status or learning state changed, show justification modal
-      if (statusChanged || learningStateChanged) {
+      // We show it for ALL launched projects, OR if the project is being "Killed" (even if not launched)
+      if ((isProjectLaunched || isKilled) && (statusChanged || learningStateChanged)) {
         const changes = [];
         if (statusChanged) {
           changes.push({
@@ -768,119 +764,188 @@ const ProjectsSection = ({
     );
   };
 
+  const [isStatusDropdownOpen, setIsStatusDropdownOpen] = useState(false);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (!event.target.closest(".status-dropdown-wrapper")) {
+        setIsStatusDropdownOpen(false);
+      }
+    };
+    if (isStatusDropdownOpen) {
+      document.addEventListener("click", handleClickOutside);
+    }
+    return () => document.removeEventListener("click", handleClickOutside);
+  }, [isStatusDropdownOpen]);
+
+  const toggleCategory = useCallback((catId) => {
+    setSelectedCategories((prev) => {
+      if (catId === "All") return ["All"];
+      
+      let next = prev.filter(id => id !== "All");
+      if (next.includes(catId)) {
+        next = next.filter(id => id !== catId);
+      } else {
+        next = [...next, catId];
+      }
+      
+      return next.length === 0 ? ["All"] : next;
+    });
+  }, []);
+
   const renderProjectList = () => {
-    // isReadOnly is now defined at the top level of the component
+    const isAllSelected = selectedCategories.includes("All");
+    
+    const selectedCategoryLabel = isAllSelected 
+      ? t("all") 
+      : selectedCategories.length === 1 
+        ? t(CATEGORIES.find(c => c.id === selectedCategories[0])?.label || "all")
+        : `${selectedCategories.length} ${t("selected")}`;
+
+    const totalCount = isAllSelected 
+      ? projects.length 
+      : projects.filter(p => {
+          const statusValue = (p.status || "Draft").toLowerCase();
+          return selectedCategories.some(catId => {
+            if (catId === "At Risk" && (statusValue === "at risk" || statusValue === "at_risk")) return true;
+            return statusValue === catId.toLowerCase();
+          });
+        }).length;
+
     return (
       <>
-        {/* We are no longer checking viewMode === "ranking" as ranking has its own separate standalone component RankingSection.jsx */}
-        <div className="management-row-container mb-4" style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          gap: '20px',
-          flexWrap: 'wrap'
-        }}>
-              <div className="d-flex align-items-center gap-3 flex-wrap">
-                <div className="status-tabs-container">
-                  {CATEGORIES.map((cat) => (
-                    <button
-                      key={cat.id}
-                      className={`status-tab ${selectedCategory === cat.id ? "active" : ""}`}
-                      onClick={() => setSelectedCategory(cat.id)}
-                    >
-                      <span className="status-name">{t(cat.label)}</span>
-                      <span className="status-count">{categoryCounts[cat.id] || 0}</span>
-                    </button>
-                  ))}
+        {/* Secondary Tabs - Toggle Style */}
+        <div className="secondary-tabs-container">
+          <button 
+            className={`secondary-tab ${activeView === "list" ? "active" : ""}`}
+            onClick={() => setActiveView("list")}
+          >
+            <List size={16} /> {t("Summary")}
+          </button>
+          <button 
+            className={`secondary-tab ${activeView === "analysis" ? "active" : ""}`}
+            onClick={() => {}} // Disabled
+            style={{ cursor: 'not-allowed' }}
+            title={t("Executive Analysis (Coming Soon)")}
+          >
+            <BarChart4 size={16} /> {t("Executive Analysis")}
+          </button>
+        </div>
+
+        <div className="bet-ledger-container premium-card">
+          <div className="bet-ledger-header d-flex justify-content-between align-items-center flex-wrap gap-3">
+            <h2 className="bet-ledger-title">
+              {t("BET LEDGER")} — <span className="text-muted text-uppercase" style={{ fontSize: '11px', fontWeight: '700' }}>{t("ALL INITIATIVES")}</span>
+            </h2>
+
+            <div className="bet-ledger-actions d-flex align-items-center gap-3">
+              {/* Custom Status Dropdown */}
+              <div className="status-dropdown-wrapper">
+                <div 
+                  className="status-dropdown-btn"
+                  onClick={() => setIsStatusDropdownOpen(!isStatusDropdownOpen)}
+                >
+                  <div className="status-label-group">
+                    <span className="status-label-prefix">{t("STATUS")}</span>
+                    <span className="status-label-current">
+                      {t(selectedCategoryLabel)} · {totalCount}
+                    </span>
+                  </div>
+                  <ChevronDown size={14} color="#1e40af" />
                 </div>
- 
-              </div>
 
-              <div className="management-buttons d-flex gap-2">
-                {selectedProjectIds.length > 0 && !isViewer && !isArchived && getUserLimits().project && isSuperAdmin && (
-                  <button
-                    onClick={handleLaunchProjects}
-                    disabled={isSubmitting}
-                    style={{
-                      backgroundColor: '#9333ea',
-                      color: 'white',
-                      border: 'none',
-                      padding: '10px 20px',
-                      borderRadius: '10px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '8px',
-                      fontWeight: '700',
-                      fontSize: '14px',
-                      boxShadow: '0 4px 6px -1px rgba(147, 51, 234, 0.2)',
-                      transition: 'all 0.2s'
-                    }}
-                  >
-                    <Rocket size={18} />
-                    {isSubmitting ? t("Launching...") : `${t("Launch")} (${selectedProjectIds.length})`}
-                  </button>
-                )}
-
-                {!isViewer && !isArchived && getUserLimits().project && (
-                  <button
-                    onClick={handleNewProject}
-                    style={{
-                      backgroundColor: '#2563eb',
-                      color: 'white',
-                      border: 'none',
-                      padding: '10px 20px',
-                      borderRadius: '10px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '8px',
-                      fontWeight: '700',
-                      fontSize: '14px',
-                      boxShadow: '0 4px 6px -1px rgba(37, 99, 235, 0.2)',
-                      transition: 'all 0.2s'
-                    }}
-                  >
-                    <Plus size={18} />
-                    {t("New_Project")}
-                  </button>
+                {isStatusDropdownOpen && (
+                  <div className="status-dropdown-menu">
+                    {CATEGORIES.map(cat => (
+                      <div 
+                        key={cat.id} 
+                        className="status-menu-item"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleCategory(cat.id);
+                        }}
+                      >
+                        <div className="status-menu-left">
+                          <div className={`status-checkbox ${selectedCategories.includes(cat.id) ? "checked" : ""}`}>
+                            {selectedCategories.includes(cat.id) && <Check size={12} color="white" />}
+                          </div>
+                          <span className="status-name-text">{t(cat.label)}</span>
+                        </div>
+                        <span className="status-count-text">{categoryCounts[cat.id] || 0}</span>
+                      </div>
+                    ))}
+                  </div>
                 )}
               </div>
+
+              {!isViewer && !isArchived && getUserLimits().project && (
+                <button
+                  onClick={handleNewProject}
+                  className="btn-new-project-premium"
+                >
+                  <Plus size={18} />
+                  {t("New Bet")}
+                </button>
+              )}
+
+              {selectedProjectIds.length > 0 && !isViewer && !isArchived && getUserLimits().project && isSuperAdmin && (
+                <button
+                  onClick={handleLaunchProjects}
+                  disabled={isSubmitting}
+                  className="btn-launch-premium"
+                >
+                  <Rocket size={18} />
+                  {isSubmitting ? t("Launching...") : `${t("Launch")} (${selectedProjectIds.length})`}
+                </button>
+              )}
             </div>
+          </div>
 
-            <ProjectsList
-              isLoading={isLoadingProjects}
-              sortedProjects={sortedProjects}
-
-              rankMap={rankMap}
-              finalizeCompleted={finalizeCompleted}
-              launched={launched}
-              isViewer={isViewer}
-              isAdmin={isSuperAdmin}
-              isEditor={isEditor}
-              isDraft={isDraft}
-              projectCreationLocked={projectCreationLocked}
-              isFinalizedView={isFinalizedView}
-              canEditProject={(project) =>
-                canEditProject(project, isEditor, myUserId, businessStatus, apiIsArchived, isSuperAdmin)
-              }
-              onEdit={(project) => handleEditProject(project, "edit")}
-              onView={(project) => handleEditProject(project, "view")}
-              onDelete={handleDelete}
-              onPerformReview={handlePerformReview}
-              onAdhocUpdate={handleAdhocUpdate}
-              canReviewProject={canReviewProject}
-              myUserId={myUserId}
-              selectedCategory={selectedCategory}
-              isArchived={apiIsArchived}
-              selectedProjectIds={selectedProjectIds}
-              onToggleSelection={toggleProjectSelection}
-              selectionDisabled={isGeneratingAIRankings || businessStatus !== "draft"}
-            />
+          <ProjectsList
+            isLoading={isLoadingProjects}
+            sortedProjects={sortedProjects}
+            rankMap={rankMap}
+            finalizeCompleted={finalizeCompleted}
+            launched={launched}
+            isViewer={isViewer}
+            isAdmin={isSuperAdmin}
+            isEditor={isEditor}
+            isDraft={isDraft}
+            projectCreationLocked={projectCreationLocked}
+            isFinalizedView={isFinalizedView}
+            canEditProject={(project) =>
+              canEditProject(project, isEditor, myUserId, businessStatus, apiIsArchived, isSuperAdmin)
+            }
+            onEdit={(project) => handleEditProject(project, "edit")}
+            onView={(project) => handleEditProject(project, "view")}
+            onDelete={handleDelete}
+            onPerformReview={handlePerformReview}
+            onAdhocUpdate={handleAdhocUpdate}
+            canReviewProject={canReviewProject}
+            myUserId={myUserId}
+            selectedCategories={selectedCategories}
+            isArchived={apiIsArchived}
+            selectedProjectIds={selectedProjectIds}
+            onToggleSelection={toggleProjectSelection}
+            selectionDisabled={isGeneratingAIRankings || businessStatus !== "draft"}
+          />
+        </div>
       </>
     );
   };
-
   return (
     <>
+      <ConfirmationModal
+        show={showMissingRankModal}
+        onHide={() => setShowMissingRankModal(false)}
+        onConfirm={executeLaunchProjects}
+        title={t("Missing Rankings")}
+        message={t("One or more selected projects are not ranked. Are you sure you want to proceed without ranking?")}
+        confirmText={t("Proceed")}
+        cancelText={t("Cancel")}
+        confirmVariant="warning"
+      />
 
       <StateChangeModal
         show={isModalOpen('stateChange')}
