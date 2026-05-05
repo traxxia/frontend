@@ -23,7 +23,7 @@ const CompetitiveAdvantageMatrix = ({
 }) => {
     const { t } = useTranslation();
     const token = useAuthStore(state => state.token);
-    
+
     const {
         competitiveAdvantageData: storeCompetitiveAdvantageData,
         isRegenerating: isTypeRegenerating,
@@ -219,87 +219,89 @@ const CompetitiveAdvantageMatrix = ({
         return 'low-intensity';
     };
 
-    const renderScatterPlot = (differentiators) => {
-        if (!differentiators || differentiators.length === 0) return null;
-        const maxValue = 10;
-        const plotSize = 400;
-        const padding = 50;
-        const plotArea = plotSize - (padding * 2);
-        return (
-            <div className="scatter-plot-container">
-                <h4>{t('Competitive Advantage vs Customer Value Matrix')}</h4>
-                <div className="plot-wrapper">
-                    <svg width={plotSize} height={plotSize} className="scatter-plot">
-                        {[0, 2, 4, 6, 8, 10].map(value => {
-                            const pos = padding + (value / maxValue) * plotArea;
-                            return (
-                                <g key={value}>
-                                    <line x1={padding} y1={pos} x2={plotSize - padding} y2={pos} className="grid-line" />
-                                    <line x1={pos} y1={padding} x2={pos} y2={plotSize - padding} className="grid-line" />
-                                </g>
-                            );
-                        })}
-                        <line x1={padding} y1={plotSize - padding} x2={plotSize - padding} y2={plotSize - padding} className="axis-line" />
-                        <line x1={padding} y1={padding} x2={padding} y2={plotSize - padding} className="axis-line" />
-                        <rect x={padding + plotArea * 0.5} y={padding} width={plotArea * 0.5} height={plotArea * 0.5} className="quadrant sweet-spot" />
-                        {differentiators.map((diff, index) => {
-                            const x = padding + (diff.uniqueness / maxValue) * plotArea;
-                            const y = plotSize - padding - (diff.customerValue / maxValue) * plotArea;
-                            return (
-                                <g key={index}>
-                                    <circle cx={x} cy={y} r={8 + (diff.sustainability || 5) / 2} className={`data-point ${diff.uniqueness >= 7 && diff.customerValue >= 7 ? 'sweet-spot' : diff.uniqueness >= 7 ? 'niche' : diff.customerValue >= 7 ? 'high-value' : 'improve'}`} />
-                                    <text x={x} y={y - 15} className="data-label">{diff.type}</text>
-                                </g>
-                            );
-                        })}
-                        <text x={plotSize / 2} y={plotSize - 10} className="axis-label">Competitive Uniqueness →</text>
-                        <text x={15} y={plotSize / 2} className="axis-label vertical" transform={`rotate(-90, 15, ${plotSize / 2})`}>Customer Value →</text>
-                    </svg>
-                    <div className="plot-legend">
-                        <div className="legend-item"><div className="legend-dot sweet-spot"></div><span className="legend-text">Sweet Spot (High Value + High Uniqueness)</span></div>
-                        <div className="legend-item"><div className="legend-dot niche"></div><span className="legend-text">Niche Advantage</span></div>
-                        <div className="legend-item"><div className="legend-dot high-value"></div><span className="legend-text">High Value</span></div>
-                        <div className="legend-item"><div className="legend-dot improve"></div><span className="legend-text">Needs Improvement</span></div>
-                    </div>
-                </div>
-            </div>
-        );
-    };
-
-    const renderSpiderChart = (differentiators) => {
-        if (!differentiators || differentiators.length === 0) return null;
-        const size = 300;
-        const center = size / 2;
-        const radius = size / 2 - 40;
-        const numSides = differentiators.length;
-        const getPoint = (index, value, maxValue = 10) => {
-            const angle = (index * 2 * Math.PI / numSides) - Math.PI / 2;
-            const distance = (value / maxValue) * radius;
-            return { x: center + distance * Math.cos(angle), y: center + distance * Math.sin(angle) };
-        };
-        return (
-            <div className="spider-chart-container">
-                <h4> {t('Differentiators Radar Chart')} </h4>
-                <div className="chart-wrapper">
-                    <svg width={size} height={size} className="spider-chart">
-                        {[2, 4, 6, 8, 10].map(value => (
-                            <polygon key={value} points={differentiators.map((_, index) => { const point = getPoint(index, value); return `${point.x},${point.y}`; }).join(' ')} className="web-line" />
-                        ))}
-                        {differentiators.map((_, index) => { const point = getPoint(index, 10); return <line key={index} x1={center} y1={center} x2={point.x} y2={point.y} className="radial-line" />; })}
-                        <polygon points={differentiators.map((diff, index) => { const point = getPoint(index, diff.customerValue); return `${point.x},${point.y}`; }).join(' ')} className="performance-polygon" />
-                        {differentiators.map((diff, index) => {
-                            const point = getPoint(index, diff.customerValue);
-                            return <circle key={index} cx={point.x} cy={point.y} r="4" className="radar-point" />;
-                        })}
-                        {differentiators.map((diff, index) => {
-                            const labelPoint = getPoint(index, 11);
-                            return <text key={index} x={labelPoint.x} y={labelPoint.y} className="radar-label" textAnchor="middle">{diff.type}</text>;
-                        })}
-                    </svg>
-                </div>
-            </div>
-        );
-    };
+    /*
+222:     const renderScatterPlot = (differentiators) => {
+223:         if (!differentiators || differentiators.length === 0) return null;
+224:         const maxValue = 10;
+225:         const plotSize = 400;
+226:         const padding = 50;
+227:         const plotArea = plotSize - (padding * 2);
+228:         return (
+229:             <div className="scatter-plot-container">
+230:                 <h4>{t('Competitive Advantage vs Customer Value Matrix')}</h4>
+231:                 <div className="plot-wrapper">
+232:                     <svg width={plotSize} height={plotSize} className="scatter-plot">
+233:                         {[0, 2, 4, 6, 8, 10].map(value => {
+234:                             const pos = padding + (value / maxValue) * plotArea;
+235:                             return (
+236:                                 <g key={value}>
+237:                                     <line x1={padding} y1={pos} x2={plotSize - padding} y2={pos} className="grid-line" />
+238:                                     <line x1={pos} y1={padding} x2={pos} y2={plotSize - padding} className="grid-line" />
+239:                                 </g>
+240:                             );
+241:                         })}
+242:                         <line x1={padding} y1={plotSize - padding} x2={plotSize - padding} y2={plotSize - padding} className="axis-line" />
+243:                         <line x1={padding} y1={padding} x2={padding} y2={plotSize - padding} className="axis-line" />
+244:                         <rect x={padding + plotArea * 0.5} y={padding} width={plotArea * 0.5} height={plotArea * 0.5} className="quadrant sweet-spot" />
+245:                         {differentiators.map((diff, index) => {
+246:                             const x = padding + (diff.uniqueness / maxValue) * plotArea;
+247:                             const y = plotSize - padding - (diff.customerValue / maxValue) * plotArea;
+248:                             return (
+249:                                 <g key={index}>
+250:                                     <circle cx={x} cy={y} r={8 + (diff.sustainability || 5) / 2} className={`data-point ${diff.uniqueness >= 7 && diff.customerValue >= 7 ? 'sweet-spot' : diff.uniqueness >= 7 ? 'niche' : diff.customerValue >= 7 ? 'high-value' : 'improve'}`} />
+251:                                     <text x={x} y={y - 15} className="data-label">{diff.type}</text>
+252:                                 </g>
+253:                             );
+254:                         })}
+255:                         <text x={plotSize / 2} y={plotSize - 10} className="axis-label">Competitive Uniqueness →</text>
+256:                         <text x={15} y={plotSize / 2} className="axis-label vertical" transform={`rotate(-90, 15, ${plotSize / 2})`}>Customer Value →</text>
+257:                     </svg>
+258:                     <div className="plot-legend">
+259:                         <div className="legend-item"><div className="legend-dot sweet-spot"></div><span className="legend-text">Sweet Spot (High Value + High Uniqueness)</span></div>
+260:                         <div className="legend-item"><div className="legend-dot niche"></div><span className="legend-text">Niche Advantage</span></div>
+261:                         <div className="legend-item"><div className="legend-dot high-value"></div><span className="legend-text">High Value</span></div>
+262:                         <div className="legend-item"><div className="legend-dot improve"></div><span className="legend-text">Needs Improvement</span></div>
+263:                     </div>
+264:                 </div>
+265:             </div>
+266:         );
+267:     };
+268: 
+269:     const renderSpiderChart = (differentiators) => {
+270:         if (!differentiators || differentiators.length === 0) return null;
+271:         const size = 300;
+272:         const center = size / 2;
+273:         const radius = size / 2 - 40;
+274:         const numSides = differentiators.length;
+275:         const getPoint = (index, value, maxValue = 10) => {
+276:             const angle = (index * 2 * Math.PI / numSides) - Math.PI / 2;
+277:             const distance = (value / maxValue) * radius;
+278:             return { x: center + distance * Math.cos(angle), y: center + distance * Math.sin(angle) };
+279:         };
+280:         return (
+281:             <div className="spider-chart-container">
+282:                 <h4> {t('Differentiators Radar Chart')} </h4>
+283:                 <div className="chart-wrapper">
+284:                     <svg width={size} height={size} className="spider-chart">
+285:                         {[2, 4, 6, 8, 10].map(value => (
+286:                             <polygon key={value} points={differentiators.map((_, index) => { const point = getPoint(index, value); return `${point.x},${point.y}`; }).join(' ')} className="web-line" />
+287:                         ))}
+288:                         {differentiators.map((_, index) => { const point = getPoint(index, 10); return <line key={index} x1={center} y1={center} x2={point.x} y2={point.y} className="radial-line" />; })}
+289:                         <polygon points={differentiators.map((diff, index) => { const point = getPoint(index, diff.customerValue); return `${point.x},${point.y}`; }).join(' ')} className="performance-polygon" />
+290:                         {differentiators.map((diff, index) => {
+291:                             const point = getPoint(index, diff.customerValue);
+292:                             return <circle key={index} cx={point.x} cy={point.y} r="4" className="radar-point" />;
+293:                         })}
+294:                         {differentiators.map((diff, index) => {
+295:                             const labelPoint = getPoint(index, 11);
+296:                             return <text key={index} x={labelPoint.x} y={labelPoint.y} className="radar-label" textAnchor="middle">{diff.type}</text>;
+297:                         })}
+298:                     </svg>
+299:                 </div>
+300:             </div>
+301:         );
+302:     };
+303:     */
 
     if (isRegenerating) {
         return (
@@ -360,9 +362,11 @@ const CompetitiveAdvantageMatrix = ({
             <div className="competitive-advantage-tabs">
                 {[
                     { id: 'overview', label: t('Overview'), icon: Target },
+                    /*
                     { id: 'matrix', label: t('Scatter Plot'), icon: BarChart3 },
                     { id: 'radar', label: t('Spider Chart'), icon: Activity },
                     { id: 'details', label: t('details'), icon: Award },
+                    */
                 ].map(tab => {
                     const IconComponent = tab.icon;
                     return (
@@ -413,75 +417,77 @@ const CompetitiveAdvantageMatrix = ({
                     </div>
                 )}
 
-                {activeTab === 'matrix' && (
-                    <div className="matrix-content">
-                        {advantage.differentiators && renderScatterPlot(advantage.differentiators)}
-                    </div>
-                )}
-
-                {activeTab === 'radar' && (
-                    <div className="radar-content">
-                        {advantage.differentiators && renderSpiderChart(advantage.differentiators)}
-                    </div>
-                )}
-
-                {activeTab === 'details' && (
-                    <div className="details-content">
-                        {advantage.differentiators && (
-                            <div className="section-container">
-                                <div className="section-header" onClick={() => toggleSection('differentiators')}>
-                                    <h3>{t('Key Differentiators')}</h3>
-                                    {expandedSections.differentiators ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
-                                </div>
-                                {expandedSections.differentiators && (
-                                    <div className="table-container">
-                                        <table className="data-table">
-                                            <thead>
-                                                <tr>
-                                                    <th>{t('Differentiator')}</th>
-                                                    <th>{t('description')}</th>
-                                                    <th>{t('Uniqueness')}</th>
-                                                    <th>{t('Customer Value')}</th>
-                                                    <th>{t('Sustainability')}</th>
-                                                    <th>{t('Proof Points')}</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {advantage.differentiators.map((diff, index) => {
-                                                    const rowIndex = diffIndices[index];
-                                                    const isVisible = rowIndex < visibleRows;
-                                                    const isLast = rowIndex === visibleRows - 1;
-                                                    return (
-                                                        <StreamingRow key={index} isVisible={isVisible} isLast={isLast && isStreaming} lastRowRef={lastRowRef} isStreaming={isStreaming}>
-                                                            <td><div className="force-name">{hasStreamed ? diff.type : (typingTexts[`${rowIndex}-type`] || diff.type)}</div></td>
-                                                            <td>{hasStreamed ? diff.description : (typingTexts[`${rowIndex}-description`] || diff.description)}</td>
-                                                            <td style={{ opacity: isVisible ? 1 : 0, transition: !isStreaming ? 'none' : 'opacity 0.3s 0.4s' }}>
-                                                                <span className={`score-badge ${getIntensityColor(diff.uniqueness)}`}>{hasStreamed ? `${diff.uniqueness}/10` : (typingTexts[`${rowIndex}-uniqueness`] || `${diff.uniqueness}/10`)}</span>
-                                                            </td>
-                                                            <td style={{ opacity: isVisible ? 1 : 0, transition: !isStreaming ? 'none' : 'opacity 0.3s 0.5s' }}>
-                                                                <span className={`score-badge ${getIntensityColor(diff.customerValue)}`}>{hasStreamed ? `${diff.customerValue}/10` : (typingTexts[`${rowIndex}-customerValue`] || `${diff.customerValue}/10`)}</span>
-                                                            </td>
-                                                            <td style={{ opacity: isVisible ? 1 : 0, transition: !isStreaming ? 'none' : 'opacity 0.3s 0.6s' }}>
-                                                                <span className={`score-badge ${getIntensityColor(diff.sustainability)}`}>{hasStreamed ? `${diff.sustainability}/10` : (typingTexts[`${rowIndex}-sustainability`] || `${diff.sustainability}/10`)}</span>
-                                                            </td>
-                                                            <td style={{ opacity: isVisible ? 1 : 0, transition: !isStreaming ? 'none' : 'opacity 0.3s 0.7s' }}>
-                                                                {diff.proofPoints && diff.proofPoints.length > 0 && (
-                                                                    <ul className="list-items">
-                                                                        {diff.proofPoints.map((point, idx) => (<li key={idx}>{point}</li>))}
-                                                                    </ul>
-                                                                )}
-                                                            </td>
-                                                        </StreamingRow>
-                                                    );
-                                                })}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                )}
-                            </div>
-                        )}
-                    </div>
-                )}
+                {/* /*
+416:                 {activeTab === 'matrix' && (
+417:                     <div className="matrix-content">
+418:                         {advantage.differentiators && renderScatterPlot(advantage.differentiators)}
+419:                     </div>
+420:                 )}
+421: 
+422:                 {activeTab === 'radar' && (
+423:                     <div className="radar-content">
+424:                         {advantage.differentiators && renderSpiderChart(advantage.differentiators)}
+425:                     </div>
+426:                 )}
+427: 
+428:                 {activeTab === 'details' && (
+429:                     <div className="details-content">
+430:                         {advantage.differentiators && (
+431:                             <div className="section-container">
+432:                                 <div className="section-header" onClick={() => toggleSection('differentiators')}>
+433:                                     <h3>{t('Key Differentiators')}</h3>
+434:                                     {expandedSections.differentiators ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
+435:                                 </div>
+436:                                 {expandedSections.differentiators && (
+437:                                     <div className="table-container">
+438:                                         <table className="data-table">
+439:                                             <thead>
+440:                                                 <tr>
+441:                                                     <th>{t('Differentiator')}</th>
+442:                                                     <th>{t('description')}</th>
+443:                                                     <th>{t('Uniqueness')}</th>
+444:                                                     <th>{t('Customer Value')}</th>
+445:                                                     <th>{t('Sustainability')}</th>
+446:                                                     <th>{t('Proof Points')}</th>
+447:                                                 </tr>
+448:                                             </thead>
+449:                                             <tbody>
+450:                                                 {advantage.differentiators.map((diff, index) => {
+451:                                                     const rowIndex = diffIndices[index];
+452:                                                     const isVisible = rowIndex < visibleRows;
+453:                                                     const isLast = rowIndex === visibleRows - 1;
+454:                                                     return (
+455:                                                         <StreamingRow key={index} isVisible={isVisible} isLast={isLast && isStreaming} lastRowRef={lastRowRef} isStreaming={isStreaming}>
+456:                                                             <td><div className="force-name">{hasStreamed ? diff.type : (typingTexts[`${rowIndex}-type`] || diff.type)}</div></td>
+457:                                                             <td>{hasStreamed ? diff.description : (typingTexts[`${rowIndex}-description`] || diff.description)}</td>
+458:                                                             <td style={{ opacity: isVisible ? 1 : 0, transition: !isStreaming ? 'none' : 'opacity 0.3s 0.4s' }}>
+459:                                                                 <span className={`score-badge ${getIntensityColor(diff.uniqueness)}`}>{hasStreamed ? `${diff.uniqueness}/10` : (typingTexts[`${rowIndex}-uniqueness`] || `${diff.uniqueness}/10`)}</span>
+460:                                                             </td>
+461:                                                             <td style={{ opacity: isVisible ? 1 : 0, transition: !isStreaming ? 'none' : 'opacity 0.3s 0.5s' }}>
+462:                                                                 <span className={`score-badge ${getIntensityColor(diff.customerValue)}`}>{hasStreamed ? `${diff.customerValue}/10` : (typingTexts[`${rowIndex}-customerValue`] || `${diff.customerValue}/10`)}</span>
+463:                                                             </td>
+464:                                                             <td style={{ opacity: isVisible ? 1 : 0, transition: !isStreaming ? 'none' : 'opacity 0.3s 0.6s' }}>
+465:                                                                 <span className={`score-badge ${getIntensityColor(diff.sustainability)}`}>{hasStreamed ? `${diff.sustainability}/10` : (typingTexts[`${rowIndex}-sustainability`] || `${diff.sustainability}/10`)}</span>
+466:                                                             </td>
+467:                                                             <td style={{ opacity: isVisible ? 1 : 0, transition: !isStreaming ? 'none' : 'opacity 0.3s 0.7s' }}>
+468:                                                                 {diff.proofPoints && diff.proofPoints.length > 0 && (
+469:                                                                     <ul className="list-items">
+470:                                                                         {diff.proofPoints.map((point, idx) => (<li key={idx}>{point}</li>))}
+471:                                                                     </ul>
+472:                                                                 )}
+473:                                                             </td>
+474:                                                         </StreamingRow>
+475:                                                     );
+476:                                                 })}
+477:                                             </tbody>
+478:                                         </table>
+479:                                     </div>
+480:                                 )}
+481:                             </div>
+482:                         )}
+483:                     </div>
+484:                 )}
+485:                 */}
             </div>
         </div>
     );
