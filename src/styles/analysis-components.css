@@ -2324,3 +2324,29 @@ body {
 img, svg {
     vertical-align: sub;
 }
+/* Subdivision Collapsing for PDF Export */
+.section-container.collapsed {
+  display: none;
+}
+
+.section-container.expanded {
+  display: block;
+}
+
+/* Radar specific subdivisions */
+.radar-section-content.collapsed {
+  display: none;
+}
+
+.radar-section-content.expanded {
+  display: block;
+}
+
+/* Matrix specific subdivisions */
+.matrix-section-content.collapsed {
+  display: none;
+}
+
+.matrix-section-content.expanded {
+  display: block;
+}

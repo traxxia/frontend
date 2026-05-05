@@ -38,12 +38,12 @@ const PortersFiveForces = ({
 
   const [error, setError] = useState(null);
   const [expandedSections, setExpandedSections] = useState({
-    executive: true,
-    forces: true,
-    competitors: true,
-    recommendations: true,
-    monitoring: true,
-    improvements: true
+    executive: false,
+    forces: false,
+    competitors: false,
+    recommendations: false,
+    monitoring: false,
+    improvements: false
   });
 
   const [visibleRows, setVisibleRows] = useState(0);
@@ -318,10 +318,10 @@ const PortersFiveForces = ({
       {parsedData?.executive_summary && (
         <div className="section-container">
           <div className="section-header" onClick={() => toggleSection('executive')}>
-            <h3>{t("porter_card1")}</h3>
+            <h5>{t("porter_card1")}</h5>
             {expandedSections.executive ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
           </div>
-          {expandedSections.executive !== false && (
+          <div className={`section-container ${expandedSections.executive === true ? 'expanded' : 'collapsed'}`}>
             <div className="table-container">
               <table className="data-table">
                 <thead>
@@ -379,17 +379,17 @@ const PortersFiveForces = ({
                 </tbody>
               </table>
             </div>
-          )}
+          </div>
         </div>
       )}
 
       {parsedData?.five_forces_analysis && (
         <div className="section-container">
           <div className="section-header" onClick={() => toggleSection('forces')}>
-            <h3>{t("porter_card2")}</h3>
+            <h5>{t("porter_card2")}</h5>
             {expandedSections.forces ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
           </div>
-          {expandedSections.forces !== false && (
+          <div className={`section-container ${expandedSections.forces === true ? 'expanded' : 'collapsed'}`}>
             <div className="table-container">
               <table className="data-table forces-table">
                 <thead>
@@ -452,17 +452,17 @@ const PortersFiveForces = ({
                 </tbody>
               </table>
             </div>
-          )}
+          </div>
         </div>
       )}
 
       {parsedData?.key_improvements && Array.isArray(parsedData.key_improvements) && parsedData.key_improvements.length > 0 && (
         <div className="section-container">
           <div className="section-header" onClick={() => toggleSection('improvements')}>
-            <h3>{t("porter_card3")}</h3>
+            <h5>{t("porter_card3")}</h5>
             {expandedSections.improvements ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
           </div>
-          {expandedSections.improvements && (
+          <div className={`section-container ${expandedSections.improvements === true ? 'expanded' : 'collapsed'}`}>
             <div className="table-container">
               <table className="data-table">
                 <tbody>
@@ -484,11 +484,11 @@ const PortersFiveForces = ({
                 </tbody>
               </table>
             </div>
-          )}
+          </div>
         </div>
       )}
     </div>
   );
 };
 
-export default PortersFiveForces;
+export default PortersFiveForces;

@@ -204,7 +204,7 @@ const CompetitiveLandscape = ({
         if (data) {
             const competitors = Object.keys(data);
             const initialExpandedState = {};
-            competitors.forEach(competitor => { initialExpandedState[competitor] = true; });
+            competitors.forEach(competitor => { initialExpandedState[competitor] = false; });
             setExpandedSections(prev => ({ ...initialExpandedState, ...prev }));
         }
     }, [data]);
@@ -287,7 +287,7 @@ const CompetitiveLandscape = ({
                             <h5>{competitor}</h5>
                             {expandedSections[competitor] ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
                         </div>
-                        {expandedSections[competitor] && (
+                        <div className={`section-container ${expandedSections[competitor] === true ? 'expanded' : 'collapsed'}`}>
                             <div className="table-container">
                                 <table className="data-table">
                                     <thead>
@@ -329,7 +329,7 @@ const CompetitiveLandscape = ({
                                     </tbody>
                                 </table>
                             </div>
-                        )}
+                        </div>
                     </div>
                 );
             })}

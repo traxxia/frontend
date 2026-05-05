@@ -87,7 +87,10 @@ const prepareForCapture = () => {
     '.modern-card-content.collapsed',
     '.exc-section-body.collapsed',
     '.pillar-content.collapsed',
-    '.subsection-body.collapsed'
+    '.subsection-body.collapsed',
+    '.section-container.collapsed',
+    '.radar-section-content.collapsed',
+    '.matrix-section-content.collapsed'
   ];
 
   selectorsToExpand.forEach(selector => {
@@ -235,7 +238,7 @@ const captureComponent = async (selector, name) => {
           }
 
           /* ENSURE FULL VISIBILITY */
-          .category-content, .modern-card-content, .pillar-content, .exc-section-body, .subsection-body {
+          .category-content, .modern-card-content, .pillar-content, .exc-section-body, .subsection-body, .section-container, .radar-section-content, .matrix-section-content {
             max-height: none !important;
             height: auto !important;
             overflow: visible !important;

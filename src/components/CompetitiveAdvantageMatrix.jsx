@@ -35,9 +35,9 @@ const CompetitiveAdvantageMatrix = ({
 
     const [activeTab, setActiveTab] = useState('overview');
     const [expandedSections, setExpandedSections] = useState({
-        position: true,
-        choice: true,
-        differentiators: true
+        position: false,
+        choice: false,
+        differentiators: false
     });
 
     const [visibleRows, setVisibleRows] = useState(0);
@@ -381,9 +381,9 @@ const CompetitiveAdvantageMatrix = ({
                             <div className="section-container">
                                 <div className="section-header" onClick={() => toggleSection('position')}>
                                     <h3>{t('Market Position')}</h3>
-                                    {expandedSections.position ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
+                                    {expandedSections.position === true ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
                                 </div>
-                                {expandedSections.position && (
+                                <div className={`matrix-section-content ${expandedSections.position === true ? 'expanded' : 'collapsed'}`}>
                                     <div className="table-container">
                                         <table className="data-table">
                                             <thead><tr><th>{t('Metric')}</th><th>{t('Value')}</th></tr></thead>
@@ -407,7 +407,7 @@ const CompetitiveAdvantageMatrix = ({
                                             </tbody>
                                         </table>
                                     </div>
-                                )}
+                                </div>
                             </div>
                         )}
                     </div>
@@ -431,9 +431,9 @@ const CompetitiveAdvantageMatrix = ({
                             <div className="section-container">
                                 <div className="section-header" onClick={() => toggleSection('differentiators')}>
                                     <h3>{t('Key Differentiators')}</h3>
-                                    {expandedSections.differentiators ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
+                                    {expandedSections.differentiators === true ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
                                 </div>
-                                {expandedSections.differentiators && (
+                                <div className={`matrix-section-content ${expandedSections.differentiators === true ? 'expanded' : 'collapsed'}`}>
                                     <div className="table-container">
                                         <table className="data-table">
                                             <thead>
@@ -477,7 +477,7 @@ const CompetitiveAdvantageMatrix = ({
                                             </tbody>
                                         </table>
                                     </div>
-                                )}
+                                </div>
                             </div>
                         )}
                     </div>
@@ -487,4 +487,4 @@ const CompetitiveAdvantageMatrix = ({
     );
 };
 
-export default CompetitiveAdvantageMatrix;     
+export default CompetitiveAdvantageMatrix;

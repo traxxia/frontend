@@ -37,12 +37,12 @@ const OrganizationalCultureProfile = ({
 
   const [error, setError] = useState(null);
   const [expandedSections, setExpandedSections] = useState({
-    wordcloud: true,
-    culturemap: true,
-    overview: true,
-    workstyle: true,
-    metrics: true,
-    fit: true
+    wordcloud: false,
+    culturemap: false,
+    overview: false,
+    workstyle: false,
+    metrics: false,
+    fit: false
   });
 
   const handleRedirectToBrief = useCallback((missingQuestionsData = null) => {
@@ -226,11 +226,11 @@ const OrganizationalCultureProfile = ({
               <h3><BarChart3 size={20} />Key Cultural Values & Behaviors</h3>
               {expandedSections.wordcloud ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
             </div>
-            {expandedSections.wordcloud && (
+            <div className={`section-container ${expandedSections.wordcloud === true ? 'expanded' : 'collapsed'}`}>
               <div className="table-container">
                 <WordCloud values={cultureProfile.values || []} behaviors={cultureProfile.behaviors || []} />
               </div>
-            )}
+            </div>
           </div>
         )}
 
@@ -241,11 +241,11 @@ const OrganizationalCultureProfile = ({
               <h3><Target size={20} />Culture Map: Current Position & Fit Assessment</h3>
               {expandedSections.culturemap ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
             </div>
-            {expandedSections.culturemap && (
+            <div className={`section-container ${expandedSections.culturemap === true ? 'expanded' : 'collapsed'}`}>
               <div className="table-container">
                 <CultureMap cultureType={cultureProfile.cultureType} cultureFit={cultureProfile.cultureFit || {}} />
               </div>
-            )}
+            </div>
           </div>
         )}
 
@@ -255,7 +255,7 @@ const OrganizationalCultureProfile = ({
             <h3>Culture Overview</h3>
             {expandedSections.overview ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
           </div>
-          {expandedSections.overview && (
+          <div className={`section-container ${expandedSections.overview === true ? 'expanded' : 'collapsed'}`}>
             <div className="table-container">
               <table className="data-table">
                 <thead>
@@ -277,7 +277,7 @@ const OrganizationalCultureProfile = ({
                 </tbody>
               </table>
             </div>
-          )}
+          </div>
         </div>
 
         {/* Work Style Analysis Table */}
@@ -287,7 +287,7 @@ const OrganizationalCultureProfile = ({
               <h3><TrendingUp size={20} />Work Style Analysis</h3>
               {expandedSections.workstyle ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
             </div>
-            {expandedSections.workstyle && (
+            <div className={`section-container ${expandedSections.workstyle === true ? 'expanded' : 'collapsed'}`}>
               <div className="table-container">
                 <table className="data-table">
                   <thead><tr><th>Work Style Attribute</th><th>Current Approach</th><th>Impact Level</th></tr></thead>
@@ -302,7 +302,7 @@ const OrganizationalCultureProfile = ({
                   </tbody>
                 </table>
               </div>
-            )}
+            </div>
           </div>
         )}
 
@@ -313,7 +313,7 @@ const OrganizationalCultureProfile = ({
               <h3><Target size={20} />Employee Metrics & Performance</h3>
               {expandedSections.metrics ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
             </div>
-            {expandedSections.metrics && (
+            <div className={`section-container ${expandedSections.metrics === true ? 'expanded' : 'collapsed'}`}>
               <div className="table-container">
                 <table className="data-table">
                   <thead><tr><th>Metric</th><th>Value</th><th>Performance</th></tr></thead>
@@ -328,7 +328,7 @@ const OrganizationalCultureProfile = ({
                   </tbody>
                 </table>
               </div>
-            )}
+            </div>
           </div>
         )}
       </div>

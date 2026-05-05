@@ -42,10 +42,10 @@ const CustomerSegmentation = ({
   }, [propCustomerSegmentationData, storeCustomerSegmentationData]);
 
   const [expandedSections, setExpandedSections] = useState({
-    summary: true,
-    distribution: true,
-    segments: true,
-    criteria: true
+    summary: false,
+    distribution: false,
+    segments: false,
+    criteria: false
   });
   const [error, setError] = useState(null);
 
@@ -220,7 +220,7 @@ const CustomerSegmentation = ({
             {expandedSections.summary ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
           </div>
 
-          {expandedSections.summary && (
+          <div className={`section-container ${expandedSections.summary === true ? 'expanded' : 'collapsed'}`}>
             <div className="table-container">
               <table className="data-table">
                 <thead>
@@ -266,7 +266,7 @@ const CustomerSegmentation = ({
                 </tbody>
               </table>
             </div>
-          )}
+          </div>
         </div>
 
         {/* Distribution chart */}
@@ -276,7 +276,7 @@ const CustomerSegmentation = ({
             {expandedSections.distribution ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
           </div>
 
-          {expandedSections.distribution && (
+          <div className={`section-container ${expandedSections.distribution === true ? 'expanded' : 'collapsed'}`}>
             <div className="cs-chart-container">
               <div className="pie-chart-wrapper enhanced">
                 <div className="pie-chart-section">
@@ -337,7 +337,7 @@ const CustomerSegmentation = ({
                 </div>
               </div>
             </div>
-          )}
+          </div>
         </div>
 
         {/* Segment Details */}
@@ -347,7 +347,7 @@ const CustomerSegmentation = ({
             {expandedSections.segments ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
           </div>
 
-          {expandedSections.segments && (
+          <div className={`section-container ${expandedSections.segments === true ? 'expanded' : 'collapsed'}`}>
             <div className="table-container">
               <table className="data-table">
                 <thead>
@@ -382,7 +382,7 @@ const CustomerSegmentation = ({
                 </tbody>
               </table>
             </div>
-          )}
+          </div>
         </div>
 
         {/* Criteria section */}
@@ -393,7 +393,7 @@ const CustomerSegmentation = ({
               {expandedSections.criteria ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
             </div>
 
-            {expandedSections.criteria && (
+            <div className={`section-container ${expandedSections.criteria === true ? 'expanded' : 'collapsed'}`}>
               <div className="table-container">
                 <table className="data-table">
                   <thead>
@@ -436,7 +436,7 @@ const CustomerSegmentation = ({
                   </tbody>
                 </table>
               </div>
-            )}
+            </div>
           </div>
         )}
       </>

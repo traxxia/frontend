@@ -36,11 +36,11 @@ const PestelAnalysis = ({
   const isRegenerating = propIsRegenerating || isTypeRegenerating('pestel');
 
   const [expandedSections, setExpandedSections] = useState({
-    executive: true,
-    factors: true,
-    actions: true,
-    monitoring: true,
-    improvements: true
+    executive: false,
+    factors: false,
+    actions: false,
+    monitoring: false,
+    improvements: false
   });
 
   const [visibleRows, setVisibleRows] = useState(0);
@@ -253,10 +253,10 @@ const PestelAnalysis = ({
       {analysis.factor_summary && (
         <div className="section-container">
           <div className="section-header" onClick={() => toggleSection('factors')}>
-            <h3>{t("pestel_card1")}</h3>
+            <h5>{t("pestel_card1")}</h5>
             {expandedSections.factors ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
           </div>
-          {expandedSections.factors && (
+          <div className={`section-container ${expandedSections.factors === true ? 'expanded' : 'collapsed'}`}>
             <div className="table-container">
               <table className="data-table">
                 <thead>
@@ -298,17 +298,17 @@ const PestelAnalysis = ({
                 </tbody>
               </table>
             </div>
-          )}
+          </div>
         </div>
       )}
 
       {analysis.key_improvements && Array.isArray(analysis.key_improvements) && analysis.key_improvements.length > 0 && (
         <div className="section-container">
           <div className="section-header" onClick={() => toggleSection('improvements')}>
-            <h3>{t("porter_card3")}</h3>
+            <h5>{t("porter_card3")}</h5>
             {expandedSections.improvements ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
           </div>
-          {expandedSections.improvements && (
+          <div className={`section-container ${expandedSections.improvements === true ? 'expanded' : 'collapsed'}`}>
             <div className="table-container">
               <table className="data-table">
                 <tbody>
@@ -330,11 +330,11 @@ const PestelAnalysis = ({
                 </tbody>
               </table>
             </div>
-          )}
+          </div>
         </div>
       )}
     </div>
   );
 };
 
-export default PestelAnalysis;
+export default PestelAnalysis;

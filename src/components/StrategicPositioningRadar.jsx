@@ -399,7 +399,7 @@ const StrategicPositioningRadar = ({
                                     <h3>{t("strategic_card1")}</h3>
                                     {expandedSections.executive ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
                                 </div>
-                                {expandedSections.executive !== false && (
+                                <div className={`radar-section-content ${expandedSections.executive === true ? 'expanded' : 'collapsed'}`}>
                                     <div className="table-container">
                                         <table className="data-table">
                                             <thead><tr><th>{t("strategic_card1_head1")}</th><th>{t("strategic_card1_head2")}</th><th>{t("strategic_card1_head3")}</th></tr></thead>
@@ -438,7 +438,7 @@ const StrategicPositioningRadar = ({
                                             <div className="subsection"><h4>{t("strategic_card1_head5")}</h4><div className="forces-tags">{overallPosition.improvementAreas.map((area, index) => (<span key={index} className="force-tag">{area}</span>))}</div></div>
                                         )}
                                     </div>
-                                )}
+                                </div>
                             </div>
                         )}
                         {dimensions && (
@@ -447,7 +447,7 @@ const StrategicPositioningRadar = ({
                                     <h3>{t("strategic_card2")}</h3>
                                     {expandedSections.dimensions ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
                                 </div>
-                                {expandedSections.dimensions !== false && (
+                                <div className={`radar-section-content ${expandedSections.dimensions === true ? 'expanded' : 'collapsed'}`}>
                                     <div className="table-container">
                                         <table className="data-table">
                                             <thead><tr><th>{t("strategic_card2_head1")}</th><th>{t("strategic_card2_head2")}</th><th>{t("strategic_card2_head3")}</th><th>{t("strategic_card2_head4")}</th></tr></thead>
@@ -467,7 +467,7 @@ const StrategicPositioningRadar = ({
                                             </tbody>
                                         </table>
                                     </div>
-                                )}
+                                </div>
                             </div>
                         )}
                     </div>

@@ -631,7 +631,7 @@ const Dashboard = () => {
                     className="btn-how-it-works"
                     onClick={() => openModal('howItWorks')}
                   >
-                    <Info size={18} />
+                    <Info size={17} />
                     {t('how_it_works')}
                   </button>
                 </div>

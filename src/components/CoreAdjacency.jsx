@@ -35,11 +35,11 @@ const CoreAdjacency = ({
     const isRegenerating = propIsRegenerating || isTypeRegenerating('coreAdjacency');
 
     const [expandedSections, setExpandedSections] = useState({
-        coreBusinessDefinition: true,
-        growthOpportunities: true,
-        growthVectorCategorization: true,
-        missingInformation: true,
-        recommendedNextSteps: true
+        coreBusinessDefinition: false,
+        growthOpportunities: false,
+        growthVectorCategorization: false,
+        missingInformation: false,
+        recommendedNextSteps: false
     });
 
     const [visibleRows, setVisibleRows] = useState(0);
@@ -401,7 +401,7 @@ const CoreAdjacency = ({
                         <h5><Shield size={20} style={{ marginRight: '8px' }} />{t('Core_Business_Definition')}</h5>
                         {expandedSections.coreBusinessDefinition ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
                     </div>
-                    {expandedSections.coreBusinessDefinition && (
+                    <div className={`section-container ${expandedSections.coreBusinessDefinition === true ? 'expanded' : 'collapsed'}`}>
                         <div className="table-container">
                             {data.coreBusinessDefinition.description && (
                                 <div className="coreBusinessDefinition" style={{ padding: '1rem', background: '#f8f9fa', borderRadius: '8px', marginBottom: '1rem' }}>
@@ -436,7 +436,7 @@ const CoreAdjacency = ({
                                 </tbody>
                             </table>
                         </div>
-                    )}
+                    </div>
                 </div>
             )}
 
@@ -446,7 +446,7 @@ const CoreAdjacency = ({
                         <h5><TrendingUp size={20} style={{ marginRight: '8px' }} />{t('Growth_Opportunities')}</h5>
                         {expandedSections.growthOpportunities ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
                     </div>
-                    {expandedSections.growthOpportunities && (
+                    <div className={`section-container ${expandedSections.growthOpportunities === true ? 'expanded' : 'collapsed'}`}>
                         <div className="table-container">
                             {[
                                 { key: 'withinCore', label: 'Within_Core' },
@@ -484,7 +484,7 @@ const CoreAdjacency = ({
                                 )
                             ))}
                         </div>
-                    )}
+                    </div>
                 </div>
             )}
 
@@ -494,7 +494,7 @@ const CoreAdjacency = ({
                         <h5><Target size={20} style={{ marginRight: '8px' }} />{t('Growth_Vector_Categorization')}</h5>
                         {expandedSections.growthVectorCategorization ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
                     </div>
-                    {expandedSections.growthVectorCategorization && (
+                    <div className={`section-container ${expandedSections.growthVectorCategorization === true ? 'expanded' : 'collapsed'}`}>
                         <div className="table-container">
                             <table className="data-table">
                                 <tbody>
@@ -528,7 +528,7 @@ const CoreAdjacency = ({
                                 </tbody>
                             </table>
                         </div>
-                    )}
+                    </div>
                 </div>
             )}
 
@@ -542,7 +542,7 @@ const CoreAdjacency = ({
                             <h5><conf.icon size={20} style={{ marginRight: '8px' }} />{t(conf.label)}</h5>
                             {expandedSections[conf.key] ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
                         </div>
-                        {expandedSections[conf.key] && (
+                        <div className={`section-container ${expandedSections[conf.key] === true ? 'expanded' : 'collapsed'}`}>
                             <div className="table-container">
                                 <table className="data-table">
                                     <tbody>
@@ -578,7 +578,7 @@ const CoreAdjacency = ({
                                     </tbody>
                                 </table>
                             </div>
-                        )}
+                        </div>
                     </div>
                 )
             ))}
