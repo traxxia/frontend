@@ -1188,12 +1188,28 @@ const BusinessSetupPage = () => {
     coreAdjacency || profitabilityData || growthTrackerData);
 
   const analysisProps = {
+    phaseManager,
+    apiLoadingStates: storeLoadingStates,
+    selectedBusinessId,
+    handleRedirectToBrief,
+    showToastMessage,
+    apiService,
     triggerConfirmation,
+    hasInsightAccess,
     isAnalysisRegenerating, isStrategicRegenerating,
     isFullSwotRegenerating, isCompetitiveAdvantageRegenerating,
     isExpandedCapabilityRegenerating, isStrategicRadarRegenerating,
     isProductivityRegenerating, isMaturityRegenerating,
     highlightedMissingQuestions, setHighlightedMissingQuestions,
+    expandedCards, setExpandedCards,
+    collapsedCategories, setCollapsedCategories,
+    highlightedCard,
+    uploadedFileForAnalysis,
+    swotRef, purchaseCriteriaRef, loyaltyNpsRef, portersRef, pestelRef,
+    fullSwotRef, competitiveAdvantageRef, expandedCapabilityRef, strategicRadarRef,
+    productivityRef, maturityScoreRef, profitabilityRef, growthTrackerRef,
+    liquidityEfficiencyRef, investmentPerformanceRef, leverageRiskRef,
+    competitiveLandscapeRef, coreAdjacencyRef
   };
 
   const handleProjectCountChange = useCallback((count) => {
@@ -1873,41 +1889,9 @@ const BusinessSetupPage = () => {
                     )}
                     {activeTab === "insights" && hasInsightAccess &&
                       <AnalysisContentManager
-                        phaseManager={phaseManager}
-                        apiLoadingStates={storeLoadingStates}
-                        expandedCards={expandedCards}
-                        setExpandedCards={setExpandedCards}
-                        collapsedCategories={collapsedCategories}
-                        setCollapsedCategories={setCollapsedCategories}
-                        highlightedCard={highlightedCard}
-                        selectedBusinessId={selectedBusinessId}
-                        handleRedirectToBrief={handleRedirectToBrief}
-                        showToastMessage={showToastMessage}
-                        apiService={apiService}
-                        triggerConfirmation={triggerConfirmation}
+                        {...analysisProps}
                         canRegenerate={canShowRegenerateButtons}
-                        hasInsightAccess={hasInsightAccess}
-                        swotRef={swotRef}
-                        purchaseCriteriaRef={purchaseCriteriaRef}
-                        loyaltyNpsRef={loyaltyNpsRef}
-                        portersRef={portersRef}
-                        pestelRef={pestelRef}
-                        fullSwotRef={fullSwotRef}
-                        competitiveAdvantageRef={competitiveAdvantageRef}
-                        expandedCapabilityRef={expandedCapabilityRef}
-                        strategicRadarRef={strategicRadarRef}
-                        productivityRef={productivityRef}
-                        maturityScoreRef={maturityScoreRef}
-                        profitabilityRef={profitabilityRef}
-                        growthTrackerRef={growthTrackerRef}
-                        liquidityEfficiencyRef={liquidityEfficiencyRef}
-                        investmentPerformanceRef={investmentPerformanceRef}
-                        leverageRiskRef={leverageRiskRef}
-                        competitiveLandscapeRef={competitiveLandscapeRef}
-                        coreAdjacencyRef={coreAdjacencyRef}
                         questionsLoaded={questionsLoaded}
-                        isAnalysisRegenerating={isAnalysisRegenerating}
-                        isStrategicRegenerating={isStrategicRegenerating}
                       />}
                     {activeTab === "strategic" && hasStrategicAccess && (
                       <div className="strategic-section">
