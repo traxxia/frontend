@@ -219,20 +219,19 @@ const ProfitabilityAnalysis = ({
       return () => window.removeEventListener('resize', updateWidth);
     }, []);
 
-    if (chartData.length === 0) {
-      return null;
-    }
-
-    const maxValue = Math.max(
-      ...chartData.map(d => Math.max(d.actualValue, d.benchmarkValue)),
-      10
-    );
+    const maxValue = chartData.length > 0 
+      ? Math.max(...chartData.map(d => Math.max(d.actualValue, d.benchmarkValue)), 10)
+      : 10;
     const chartHeight = chartData.length * 100 + 20;
     const chartWidth = containerWidth;
     const leftMargin = 140;
     const rightMargin = 60;
     const barHeight = 22;
     const groupSpacing = 100;
+
+    if (chartData.length === 0) {
+      return null;
+    }
 
     return (
       <div
@@ -299,12 +298,10 @@ const ProfitabilityAnalysis = ({
                     x={leftMargin - 12}
                     y={y + 13}
                     textAnchor="end"
-                    style={{
-                      fontSize: '12px',
-                      fontWeight: '500',
-                      fill: '#374151',
-                      fontFamily: 'Inter, system-ui, sans-serif'
-                    }}
+                    fontSize="12"
+                    fontWeight="500"
+                    fill="#374151"
+                    fontFamily="Inter, system-ui, sans-serif"
                   >
                     {data.metric}
                   </text>
@@ -316,7 +313,7 @@ const ProfitabilityAnalysis = ({
                     height={barHeight}
                     fill={data.color}
                     rx="3"
-                    opacity={0.9}
+                    opacity="0.9"
                   />
 
                   <rect
@@ -326,17 +323,15 @@ const ProfitabilityAnalysis = ({
                     height={barHeight}
                     fill="#94a3b8"
                     rx="3"
-                    opacity={0.35}
+                    opacity="0.35"
                   />
 
                   <text
                     x={leftMargin + actualBarLength + 6}
                     y={y + 15}
-                    style={{
-                      fontSize: '11px',
-                      fontWeight: '600',
-                      fill: data.color
-                    }}
+                    fontSize="11"
+                    fontWeight="600"
+                    fill={data.color}
                   >
                     {data.actualValue.toFixed(1)}%
                   </text>
@@ -344,11 +339,9 @@ const ProfitabilityAnalysis = ({
                   <text
                     x={leftMargin + benchmarkBarLength + 6}
                     y={y + barHeight + 19}
-                    style={{
-                      fontSize: '11px',
-                      fontWeight: '500',
-                      fill: '#6b7280'
-                    }}
+                    fontSize="11"
+                    fontWeight="500"
+                    fill="#6b7280"
                   >
                     {data.benchmarkValue.toFixed(1)}%
                   </text>
@@ -361,7 +354,7 @@ const ProfitabilityAnalysis = ({
 
                   {index < chartData.length - 1 && (
                     <line
-                      x1={0}
+                      x1="0"
                       y1={y + barHeight * 2 + 32}
                       x2={chartWidth}
                       y2={y + barHeight * 2 + 32}

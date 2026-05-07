@@ -2639,8 +2639,7 @@ const StrategicAnalysis = ({
     );
   };
 
-  if (isRegenerating || isLoading) {
-    console.log("Strategic Loading Debug: isRegenerating:", isRegenerating, "isLoading:", isLoading);
+  if (isRegenerating || isLoading) { 
     return (
       <div className="strategic-analysis-container">
         <div className="loading-state">

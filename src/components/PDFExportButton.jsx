@@ -88,16 +88,17 @@ const getExportPhase = (unlockedFeatures = {}) => {
 // --- OPTIMIZED CAPTURE LOGIC ---
 const captureComponent = async (selector, name, html2canvas) => {
   const component = document.querySelector(selector);
-  if (!component) return null;
+  if (!component) {
+    return null;
+  }
 
-  // Small delay to ensure any dynamic content or charts are fully rendered
-  await new Promise(resolve => setTimeout(resolve, 1000));
+  // Delay to ensure dynamic content or charts are fully rendered
+  await new Promise(resolve => setTimeout(resolve, 2000));
 
   try {
     const canvas = await html2canvas(component, {
-      scale: 1.5, // Reduced slightly for memory stability
+      scale: 2, 
       useCORS: true,
-      allowTaint: true,
       backgroundColor: '#ffffff',
       logging: false,
       imageTimeout: 60000,
@@ -121,8 +122,8 @@ const captureComponent = async (selector, name, html2canvas) => {
             overflow: visible !important;
           }
           
-          /* Force Recharts to have fixed size in clone so they don't disappear */
-          .recharts-responsive-container {
+          /* Force Recharts and custom chart containers to have fixed size in clone */
+          .recharts-responsive-container, .ch-chart-wrapper, .ch-chart-section {
             width: 900px !important;
             height: 400px !important;
             min-width: 900px !important;
@@ -131,44 +132,12 @@ const captureComponent = async (selector, name, html2canvas) => {
             display: block !important;
           }
           
-          /* Force SVGs to be visible */
+          /* Force SVGs to be visible and remove problematic filters */
           svg {
             overflow: visible !important;
             visibility: visible !important;
-          }
-
-          /* Target large chart SVGs specifically */
-          .recharts-surface, .radar-chart, .gauge-svg, .data-table svg:not(.lucide) {
-            min-width: 300px !important;
-            min-height: 200px !important;
-          }
-
-          /* Ensure icons (Lucide and others) stay at their correct size */
-          svg.lucide, 
-          .lucide,
-          svg[width="16"], svg[height="16"],
-          svg[width="20"], svg[height="20"],
-          svg[width="24"], svg[height="24"] {
-            width: 24px !important; 
-            height: 24px !important;
-            min-width: unset !important;
-            min-height: unset !important;
-            max-width: 24px !important;
-            max-height: 24px !important;
-          }
-
-          /* PairedBarChart and other chart specific fix - target the chart SVG only, not icons inside the card */
-          [data-component="profitability-analysis"] svg:not(.lucide),
-          [data-component="growth-tracker"] svg:not(.lucide),
-          [data-component="leverage-risk"] svg:not(.lucide),
-          [data-component="investment-performance"] svg:not(.lucide),
-          [data-component="liquidity-efficiency"] svg:not(.lucide),
-          [data-component="productivity"] svg:not(.lucide),
-          .ch-chart-wrapper svg:not(.lucide),
-          .table-container svg:not(.lucide) {
-            width: 900px !important;
-            height: auto !important;
-            min-height: 300px !important;
+            filter: none !important;
+            transform: none !important;
           }
 
           /* Ensure all table rows are visible */
@@ -196,49 +165,59 @@ const captureComponent = async (selector, name, html2canvas) => {
             parent = parent.parentElement;
           }
 
-          // 3. Remove UI junk and problematic SVG links
+          // 3. Force explicit dimensions on all SVGs and disable animations
+          const allSVGs = clonedEl.querySelectorAll('svg');
+          allSVGs.forEach((svg) => {
+            if (svg.classList.contains('lucide')) return;
+
+            // Force visible and remove any filters/transforms
+            svg.style.display = 'block';
+            svg.style.visibility = 'visible';
+            svg.style.opacity = '1';
+            svg.style.filter = 'none';
+            svg.style.transition = 'none';
+            svg.style.animation = 'none';
+
+            // If it's a Recharts container parent, force it to show
+            const parent = svg.closest('.recharts-responsive-container, .ch-chart-wrapper');
+            if (parent) {
+              parent.style.display = 'block';
+              parent.style.visibility = 'visible';
+              parent.style.height = '400px';
+              parent.style.width = '900px';
+            }
+          });
+
+          // 4. Remove UI junk
           const uiJunk = clonedEl.querySelectorAll('button, .regenerate-button, .dropdown-button, .help-icon, .tooltip, .modern-expand-btn');
           uiJunk.forEach(el => el.style.display = 'none');
           
-          // 3a. Remove <a> tags inside SVGs as they can break html2canvas rendering
-          const svgLinks = clonedEl.querySelectorAll('svg a');
-          svgLinks.forEach(link => {
-            const parent = link.parentNode;
-            while (link.firstChild) {
-              parent.insertBefore(link.firstChild, link);
-            }
-            parent.removeChild(link);
-          });
-
-          // 4. Force explicit dimensions on all SVGs in the clone
-          const allSVGs = clonedEl.querySelectorAll('svg');
-          allSVGs.forEach(svg => {
-            if (!svg.classList.contains('lucide')) {
-              const bbox = svg.getBBox ? svg.getBBox() : { width: 900, height: 400 };
-              svg.setAttribute('width', svg.getAttribute('width') || bbox.width || 900);
-              svg.setAttribute('height', svg.getAttribute('height') || bbox.height || 400);
-            }
-          });
-
           // 5. Final layout fixes for the target
           clonedEl.style.display = 'block';
           clonedEl.style.visibility = 'visible';
           clonedEl.style.maxHeight = 'none';
           clonedEl.style.height = 'auto';
-          clonedEl.style.padding = '30px';
+          clonedEl.style.padding = '40px'; 
           clonedEl.style.backgroundColor = '#ffffff';
           clonedEl.style.width = '1000px'; 
+          clonedEl.style.overflow = 'visible';
+          
+          // Force all text to be visible
+          const allText = clonedEl.querySelectorAll('text, span, p, h1, h2, h3, h4');
+          allText.forEach(t => {
+            t.style.opacity = '1';
+            t.style.visibility = 'visible';
+          });
         }
       }
     });
 
     return {
-      imgData: canvas.toDataURL('image/jpeg', 0.85),
       canvas: canvas,
       name: name
     };
   } catch (error) {
-    console.error(`Failed to capture ${name}:`, error);
+    console.error(`[PDF Export] Failed to capture ${name}:`, error);
     return null;
   }
 };
@@ -257,17 +236,17 @@ const PDFExportButton = ({
   const [exportProgress, setExportProgress] = useState({ current: 0, total: 0, sectionName: '' });
   const { t } = useTranslation();
 
-  const handleDownload = useCallback(async () => {
+  const handleDownload = useCallback(async () => { 
     try {
       setIsExportingPDF(true);
       setExportProgress({ current: 0, total: 0, sectionName: 'Preparing document...' });
 
-      // 1. Add global class to force expand everything in REAL DOM during capture
       document.body.classList.add('generating-pdf');
       
-      // Inject a temporary style to ensure everything is visible for the browser to render
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
       const forceStyle = document.createElement('style');
-      forceStyle.id = 'pdf-export-force-style';
+      forceStyle.id = 'force-pdf-styles';
       forceStyle.innerHTML = `
         body.generating-pdf .collapsed,
         body.generating-pdf .modern-card-content.collapsed,
@@ -299,6 +278,7 @@ const PDFExportButton = ({
 
       // 3. Determine components to capture
       const exportPhase = (exportType === "advanced-brief" || exportType === "executive") ? exportType : getExportPhase(unlockedFeatures);
+      
       let rawComponents = (exportType === "strategic") 
         ? [
             { selector: '[data-component="strategic-direction"]', name: 'Direction & Positioning' },
@@ -310,11 +290,11 @@ const PDFExportButton = ({
       // 3a. Filter components based on what is actually present in the DOM
       const components = rawComponents.filter(comp => {
         const el = document.querySelector(comp.selector);
-        // Also check if the component has data (optional, but querySelector is the main check)
         return el !== null;
       });
 
       if (components.length === 0) {
+        console.warn("[PDF Export] No components found to export!");
         onToastMessage?.('No content available for export', 'warning');
         document.body.classList.remove('generating-pdf');
         forceStyle.remove();
@@ -376,16 +356,17 @@ const PDFExportButton = ({
         let remainingImgHeight = fullImgHeight;
         let isFirstSlice = true;
 
-        while (remainingImgHeight > 0) {
-          const spaceLeftOnPage = pageHeight - yOffset - 15;
-          const sliceHeightOnPage = Math.min(remainingImgHeight, spaceLeftOnPage);
+         while (remainingImgHeight > 0.1) {
+          let spaceLeftOnPage = pageHeight - yOffset - 15;
           
-          if (sliceHeightOnPage <= 5 && !isFirstSlice) {
+          // If we are at the bottom of the page, move to next page immediately
+          if (spaceLeftOnPage < 20) {
             pdf.addPage();
             yOffset = 20;
-            continue;
+            spaceLeftOnPage = pageHeight - yOffset - 15;
           }
 
+          const sliceHeightOnPage = Math.min(remainingImgHeight, spaceLeftOnPage);
           const sourceSliceHeight = (sliceHeightOnPage * canvas.width) / imgWidth;
 
           if (isFirstSlice) {
@@ -393,29 +374,33 @@ const PDFExportButton = ({
             pdf.setFont('helvetica', 'bold');
             pdf.setTextColor(26, 115, 232);
             pdf.text(name, margin, yOffset);
-            yOffset += 5;
+            yOffset += 7;
           } else {
             pdf.setFontSize(10);
             pdf.setFont('helvetica', 'italic');
             pdf.setTextColor(150, 150, 150);
             pdf.text(`${name} (continued)`, margin, yOffset);
-            yOffset += 5;
+            yOffset += 7;
           }
 
-          const tempCanvas = document.createElement('canvas');
-          tempCanvas.width = canvas.width;
-          tempCanvas.height = sourceSliceHeight;
-          const ctx = tempCanvas.getContext('2d');
-          ctx.drawImage(canvas, 0, sY, canvas.width, sourceSliceHeight, 0, 0, canvas.width, sourceSliceHeight);
-          
-          const sliceData = tempCanvas.toDataURL('image/jpeg', 0.9);
-          pdf.addImage(sliceData, 'JPEG', margin, yOffset, imgWidth, sliceHeightOnPage, undefined, 'FAST');
+          try {
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = canvas.width;
+            tempCanvas.height = Math.max(1, sourceSliceHeight);
+            const ctx = tempCanvas.getContext('2d');
+            ctx.drawImage(canvas, 0, sY, canvas.width, sourceSliceHeight, 0, 0, canvas.width, sourceSliceHeight);
+            
+            const sliceData = tempCanvas.toDataURL('image/jpeg', 0.85);
+            pdf.addImage(sliceData, 'JPEG', margin, yOffset, imgWidth, sliceHeightOnPage, undefined, 'FAST');
+          } catch (err) {
+            console.error(`[PDF Export] Slice error for ${name}:`, err);
+          }
 
           remainingImgHeight -= sliceHeightOnPage;
           sY += sourceSliceHeight;
           isFirstSlice = false;
 
-          if (remainingImgHeight > 1) { // Threshold to avoid tiny slivers
+          if (remainingImgHeight > 0.1) {
             pdf.addPage();
             yOffset = 20; 
           } else {
@@ -435,7 +420,7 @@ const PDFExportButton = ({
     } finally {
       // Cleanup
       document.body.classList.remove('generating-pdf');
-      const forceStyle = document.getElementById('pdf-export-force-style');
+      const forceStyle = document.getElementById('force-pdf-styles');
       if (forceStyle) forceStyle.remove();
       
       setIsExportingPDF(false);

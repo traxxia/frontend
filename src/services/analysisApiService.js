@@ -596,24 +596,14 @@ export class AnalysisApiService {
 
         // Try backend-saved financial document if not uploaded
         if (!fileToUpload && selectedBusinessId) {
-          console.log(`No uploaded file provided in state, fetching saved document for business: ${selectedBusinessId}`);
           documentInfo = await this.fetchFinancialDocument(selectedBusinessId);
           if (documentInfo) {
-            console.log(`Found document metadata: ${documentInfo.filename}, downloading...`);
             const documentBlob = await this.downloadFinancialDocument(selectedBusinessId);
             if (documentBlob) {
               fileToUpload = await this.createFileFromDocument(documentBlob, documentInfo);
-              if (fileToUpload) {
-                console.log(`Successfully prepared file for analysis payload: ${fileToUpload.name} (${fileToUpload.size} bytes)`);
-              }
-            } else {
-              console.warn('Failed to download document blob from backend');
-            }
-          } else {
-            console.info('No financial document found on backend for this business');
-          }
+            }  
+          }  
         } else if (fileToUpload) {
-          console.log(`Using provided uploaded file for analysis: ${fileToUpload.name} (${fileToUpload.size} bytes)`);
           // Ensure we have document metadata for the source header if it's missing
           if (!documentInfo && selectedBusinessId) {
              documentInfo = await this.fetchFinancialDocument(selectedBusinessId);
@@ -803,48 +793,6 @@ export class AnalysisApiService {
 
       const results = await Promise.allSettled(wrappedPromises);
 
-      // --- Second Level Call for Failed APIs ---
-      const failedTypes = results
-        .filter(r => r.status === 'rejected')
-        .map(r => r.reason.analysisType);
-
-      if (failedTypes.length > 0) {
-        showToastMessage(
-          `Retrying ${failedTypes.length} failed analyses...`,
-          "info",
-          { duration: 3000 }
-        );
-
-        const retryPromises = failedTypes.map((analysisType) => {
-          const displayName =
-            typeof this.getDisplayName === "function"
-              ? this.getDisplayName(analysisType)
-              : analysisType;
-
-          return this
-            .callAnalysisAPIWithSave(analysisType, payload, stateSetters, selectedBusinessId)
-            .then((res) => {
-              successes++;
-              stateSetters.setRegenerating?.(analysisType, false);
-              // Stay in progress mode until all retries finish
-              showToastMessage(
-                `${successes}/${total} analyses — "${displayName}" completed successfully (after retry)`,
-                "info",
-                { duration: 5000 }
-              );
-              return { status: "fulfilled", analysisType, value: res };
-            })
-            .catch((err) => {
-              stateSetters.setRegenerating?.(analysisType, false);
-              console.error(`Second attempt failed for ${analysisType}:`, err);
-              // Leave as it is, empty state will be shown
-              return { status: "rejected", analysisType, reason: err };
-            });
-        });
-
-        await Promise.allSettled(retryPromises);
-      }
-
       return { success: true, phase };
     } catch (error) {
       console.error(`Error generating ${phase} phase analysis:`, error);
@@ -1027,24 +975,6 @@ export class AnalysisApiService {
       // Clear analysis cache for this business after upsert
       analysisDataCache.delete(`analysis-${selectedBusinessId}`);
 
-      /*
-      console.log("--- VERIFICATION START: Calling other Analysis APIs ---");
-      try {
-        const allAnalysis = await AnalysisService.getAnalysis(this.API_BASE_URL, token, selectedBusinessId);
-        console.log("VERIFICATION: Get All Analysis result:", allAnalysis);
-
-        const phaseAnalysis = await AnalysisService.getAnalysisByPhase(this.API_BASE_URL, token, selectedBusinessId, phase);
-        console.log(`VERIFICATION: Get Analysis by Phase (${phase}) result:`, phaseAnalysis);
-
-        const filterAnalysis = await AnalysisService.getAnalysisByFilter(this.API_BASE_URL, token, selectedBusinessId, { type: analysisType });
-        console.log(`VERIFICATION: Get Analysis by Filter (type=${analysisType}) result:`, filterAnalysis);
-
-      } catch (verErr) {
-        console.warn("VERIFICATION ERROR:", verErr);
-      }
-      console.log("--- VERIFICATION END ---");
-      */
-
       return true;
     } catch (error) {
       console.error(`Error saving ${analysisType} analysis:`, error);
@@ -1137,57 +1067,69 @@ export class AnalysisApiService {
   // ============================================================================
 
   async callAnalysisEndpointWithStreaming(analysisType, payload, onStreamChunk = null) {
-    console.log(`--- API CALL START: ${analysisType} ---`);
-    const endpoint = API_ENDPOINTS[analysisType];
-    if (!endpoint) {
-      console.error(`Unknown analysis type: ${analysisType}`);
-      throw new Error(`Unknown analysis type: ${analysisType}`);
-    }
-    console.log(`Endpoint identified: ${endpoint}`);
-    // For excel-analysis types, call with specific metric_type
-    if (this.isExcelAnalysisType(analysisType)) {
-      const { questionsArray, answersArray } = this.prepareQuestionsAndAnswers(
-        payload.questions,
-        payload.userAnswers
-      );
+    const performCall = async (isRetry = false) => {
+      try {
+        const endpoint = API_ENDPOINTS[analysisType];
+        if (!endpoint) {
+          console.error(`Unknown analysis type: ${analysisType}`);
+          throw new Error(`Unknown analysis type: ${analysisType}`);
+        }
 
-      const metricType = EXCEL_ANALYSIS_METRIC_TYPES[analysisType];
-      const loadingKey = `excel-analysis-${metricType?.replace('_trends', '')}`;
+        // For excel-analysis types, call with specific metric_type
+        if (this.isExcelAnalysisType(analysisType)) {
+          const { questionsArray, answersArray } = this.prepareQuestionsAndAnswers(
+            payload.questions,
+            payload.userAnswers
+          );
 
-      const result = await this.makeAPICall(
-        'excel-analysis',
-        questionsArray,
-        answersArray,
-        payload.selectedBusinessId,
-        payload.stateSetters?.uploadedFile || null,
-        metricType,
-        onStreamChunk,  // ✅ Pass streaming callback
-        null,           // companyName
-        null,           // rawPayload
-        loadingKey      // ✅ Pass specific loading key
-      );
+          const metricType = EXCEL_ANALYSIS_METRIC_TYPES[analysisType];
+          const loadingKey = `excel-analysis-${metricType?.replace('_trends', '')}`;
 
-      return { data: result };
-    }
+          const result = await this.makeAPICall(
+            'excel-analysis',
+            questionsArray,
+            answersArray,
+            payload.selectedBusinessId,
+            payload.stateSetters?.uploadedFile || null,
+            metricType,
+            onStreamChunk,
+            null,
+            null,
+            loadingKey
+          );
 
-    // For other analyses (including Porter's with streaming)
-    const { questionsArray, answersArray } = this.prepareQuestionsAndAnswers(
-      payload.questions,
-      payload.userAnswers
-    );
+          return { data: result };
+        }
 
-    const result = await this.makeAPICall(
-      endpoint,
-      questionsArray,
-      answersArray,
-      payload.selectedBusinessId,
-      null,
-      null,
-      onStreamChunk  // ✅ Pass streaming callback for Porter's
-    );
+        // For other analyses
+        const { questionsArray, answersArray } = this.prepareQuestionsAndAnswers(
+          payload.questions,
+          payload.userAnswers
+        );
 
-    console.log(`--- API CALL SUCCESS: ${analysisType} ---`);
-    return { data: result };
+        const result = await this.makeAPICall(
+          endpoint,
+          questionsArray,
+          answersArray,
+          payload.selectedBusinessId,
+          null,
+          null,
+          onStreamChunk
+        );
+
+        return { data: result };
+      } catch (error) {
+        if (!isRetry) {
+          console.warn(`Analysis ${analysisType} failed, retrying once...`, error);
+          // Wait briefly before retrying
+          await new Promise(resolve => setTimeout(resolve, 1500));
+          return await performCall(true);
+        }
+        throw error;
+      }
+    };
+
+    return await performCall();
   }
 
   // Strategic Analysis (kept for compatibility)
