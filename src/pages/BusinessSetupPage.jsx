@@ -120,8 +120,7 @@ const BusinessSetupPage = () => {
 
   // Handle explicit business context switch from navigation state (e.g., via Notifications)
   useEffect(() => {
-    if (location.state?.businessId && location.state.businessId !== selectedBusinessId) {
-      console.log("Navigation-driven business context switch to:", location.state.businessId);
+    if (location.state?.businessId && location.state.businessId !== selectedBusinessId) { 
       resetAnalysis(); // Clear old business data immediately
       setSelectedBusinessId(location.state.businessId);
     }
@@ -450,18 +449,15 @@ const BusinessSetupPage = () => {
       if (!currentBusiness || (currentBusiness._id !== selectedBusinessId && currentBusiness.id !== selectedBusinessId)) {
         // Skip fetch if we are on Priorities or Projects tab and already have basic info (optimization)
         if ((activeTab === 'priorities' || activeTab === 'bets' || activeTab === 'ranking' || activeTab === 'decision-logs') && selectedBusinessName && selectedBusinessName !== "") {
-          console.log("Skipping business recovery fetch for tab:", activeTab);
           return;
         }
 
-        if (isBusinessFetching.current) {
-          console.log("Business fetch already in progress for:", selectedBusinessId);
+        if (isBusinessFetching.current) { 
           return;
         }
 
         try {
-          isBusinessFetching.current = true;
-          console.log("Recovering business data for:", selectedBusinessId);
+          isBusinessFetching.current = true; 
           await fetchBusiness(selectedBusinessId);
         } catch (error) {
           console.error("Failed to recover business context:", error);
@@ -614,7 +610,9 @@ const BusinessSetupPage = () => {
   }, [selectedBusinessId, API_BASE_URL, activeTab, token, setQuestions, setUserAnswer, setAnswerIds]);
 
   useEffect(() => {
-    setHasUploadedDocument(!!uploadedFileForAnalysis);
+    if (uploadedFileForAnalysis) {
+      setHasUploadedDocument(true);
+    }
   }, [uploadedFileForAnalysis]);
 
 
@@ -736,7 +734,7 @@ const BusinessSetupPage = () => {
     const skipConfirmation = options?.skipConfirmation || false;
 
     const performPhaseRegeneration = async () => {
-      showToastMessage(`Regenerating ${targetPhase} phase...`, 'info');
+      //showToastMessage(`Regenerating ${targetPhase} phase...`, 'info');
       const state = useAnalysisStore.getState();
       const { questions: storeQuestions, userAnswers: storeUserAnswers, regeneratePhase: storeRegeneratePhase } = state;
 
@@ -792,23 +790,18 @@ const BusinessSetupPage = () => {
   });
 
   const handleStrategicAnalysisRegenerate = (skipConfirmation = false) => {
-    const performStrategicRegeneration = async () => {
-      console.log("--- STRATEGIC REGENERATION START ---");
+    const performStrategicRegeneration = async () => { 
       const state = useAnalysisStore.getState();
       const { questions: storeQuestions, userAnswers: storeUserAnswers, regenerateIndividualAnalysis: storeRegenerateIndividual } = state;
 
-      console.log("Strategic Debug: storeUserAnswers keys count:", Object.keys(storeUserAnswers || {}).length);
       const hasAnswers = Object.values(storeUserAnswers || {}).some(answer => answer && String(answer).trim().length > 0);
-      console.log("Strategic Debug: hasAnswers check:", hasAnswers);
 
       if (!hasAnswers) {
         console.warn("Strategic Debug: No answers found in store, skipping strategic regeneration.");
         return;
       }
 
-      console.log("Strategic Debug: Triggering storeRegenerateIndividual('strategic')...");
       await storeRegenerateIndividual('strategic', storeQuestions, storeUserAnswers, selectedBusinessId, showToastMessage);
-      console.log("--- STRATEGIC REGENERATION END ---");
     };
 
     if (skipConfirmation) {
@@ -824,8 +817,6 @@ const BusinessSetupPage = () => {
 
   const handleRegenerateAllAnalysis = (options = {}) => {
     const performFullRegeneration = async () => {
-      console.log("--- FULL REGENERATION START ---");
-      console.log("RegenerateAll Options:", options);
       if (isRegeneratingRef.current) {
         showToastMessage(t('regeneration_in_progress'), 'info');
         return;
@@ -861,32 +852,35 @@ const BusinessSetupPage = () => {
         } else {
           phasesToRegenerate = [currentPhase];
         }
-
-        console.log(`RegenerateAll: Target phases: ${phasesToRegenerate.join(', ')} (Bulk Apply: ${isBulkApply}, Advanced Unlocked: ${unlockedFeatures.advancedPhase})`);
-
-        const regenerationPromises = [];
-
-        for (const phase of phasesToRegenerate) {
-          console.log(`RegenerateAll: Queuing ${phase} phase regeneration...`);
-          regenerationPromises.push(handleRegeneratePhase(phase, false, { skipConfirmation: true }));
+ 
+        // 1. Regenerate unlocked phases sequentially
+        for (const phase of phasesToRegenerate) { 
+          await handleRegeneratePhase(phase, false, { skipConfirmation: true });
         }
-
-        // Include financial insights ONLY if explicitly requested or if it's a financial-only update
-        if (options?.includeFinancial === true || options?.onlyFinancial === true) {
-          console.log("RegenerateAll: Queuing financial phase regeneration.");
-          regenerationPromises.push(handleRegeneratePhase('financial', false, { ...options, skipConfirmation: true }));
+ 
+        // 2. Include financial insights if explicitly requested, or if a document exists, or if we have existing financial data
+        // Skip if explicitly requested via options (e.g. during AI answer application)
+        const shouldIncludeFinancial = 
+          !options?.skipFinancial && (
+            options?.includeFinancial === true || 
+            options?.onlyFinancial === true || 
+            hasUploadedDocument || 
+            !!profitabilityData || 
+            !!growthTrackerData ||
+            !!liquidityEfficiencyData ||
+            !!investmentPerformanceData ||
+            !!leverageRiskData
+          );
+ 
+        if (shouldIncludeFinancial) { 
+          await handleRegeneratePhase('financial', false, { ...options, skipConfirmation: true });
         }
-
-        // Finally, regenerate strategic analysis if requested (e.g. for "Apply All")
-        if (options?.alsoRegenerateStrategic) {
-          console.log("RegenerateAll: Queuing Strategic Analysis regeneration.");
-          regenerationPromises.push(handleStrategicAnalysisRegenerate(true));
+ 
+        // 3. Finally, regenerate strategic analysis if requested (e.g. for "Apply All")
+        if (options?.alsoRegenerateStrategic) { 
+          await handleStrategicAnalysisRegenerate(true);
         }
-
-        await Promise.all(regenerationPromises);
-        console.log("RegenerateAll: All queued regenerations have completed.");
-
-        showToastMessage(t('regeneration_completed'), 'success');
+        //showToastMessage(t('regeneration_completed'), 'success');
       } catch (err) {
         console.error('Error in handleRegenerateAllAnalysis:', err);
         showToastMessage(t('failed_to_regenerate_analysis'), 'error');
@@ -1081,27 +1075,6 @@ const BusinessSetupPage = () => {
   const getPhaseSpecificOptions = (phase) => {
     const unlockedFeatures = phaseManager.getUnlockedFeatures();
 
-    // Label to Data Availability mapping
-    const dataAvailabilityMap = {
-      "swot_analysis": !!swotAnalysis,
-      "Porters_Five_Forces": !!portersData,
-      "PESTEL_Analysis": !!pestelData,
-      "Purchase_Criteria": !!purchaseCriteria,
-      "Loyalty_&_NPS": !!loyaltyNPS,
-      "Full_SWOT_Portfolio": !!fullSwotData,
-      "Strategic_Positioning_Radar": !!strategicRadar,
-      "Competitive_Advantage_Matrix": !!competitiveAdvantage,
-      "Capability_Heatmap": !!expandedCapability,
-      "Maturity_Score": !!maturityData,
-      "Competitive_Landscape": !!competitiveLandscape,
-      "Core": !!coreAdjacency,
-      "Productivity_Metrics": !!productivityData,
-      "Profitability_Analysis": !!profitabilityData,
-      "Growth_Tracker": !!growthTrackerData,
-      "Liquidity_Efficiency": !!liquidityEfficiencyData,
-      "Investment_Performance": !!investmentPerformanceData,
-      "Leverage_Risk": !!leverageRiskData
-    };
 
     const categoryOptions = {
       initial: {
@@ -1144,19 +1117,8 @@ const BusinessSetupPage = () => {
 
     const selectedOptions = categoryOptions[phase] || {};
 
-    // Filter out options that don't have data
-    const filteredOptions = {};
-    Object.entries(selectedOptions).forEach(([category, items]) => {
-      // Keep only items that have analysis data available
-      const filteredItems = items.filter(item => dataAvailabilityMap[item]);
-
-      // Only include the category if it has at least one item with data
-      if (filteredItems.length > 0) {
-        filteredOptions[category] = filteredItems;
-      }
-    });
-
-    return filteredOptions;
+    // Return all options for the phase without filtering by data availability
+    return selectedOptions;
   };
 
   useEffect(() => {
@@ -1226,12 +1188,28 @@ const BusinessSetupPage = () => {
     coreAdjacency || profitabilityData || growthTrackerData);
 
   const analysisProps = {
+    phaseManager,
+    apiLoadingStates: storeLoadingStates,
+    selectedBusinessId,
+    handleRedirectToBrief,
+    showToastMessage,
+    apiService,
     triggerConfirmation,
+    hasInsightAccess,
     isAnalysisRegenerating, isStrategicRegenerating,
     isFullSwotRegenerating, isCompetitiveAdvantageRegenerating,
     isExpandedCapabilityRegenerating, isStrategicRadarRegenerating,
     isProductivityRegenerating, isMaturityRegenerating,
     highlightedMissingQuestions, setHighlightedMissingQuestions,
+    expandedCards, setExpandedCards,
+    collapsedCategories, setCollapsedCategories,
+    highlightedCard,
+    uploadedFileForAnalysis,
+    swotRef, purchaseCriteriaRef, loyaltyNpsRef, portersRef, pestelRef,
+    fullSwotRef, competitiveAdvantageRef, expandedCapabilityRef, strategicRadarRef,
+    productivityRef, maturityScoreRef, profitabilityRef, growthTrackerRef,
+    liquidityEfficiencyRef, investmentPerformanceRef, leverageRiskRef,
+    competitiveLandscapeRef, coreAdjacencyRef
   };
 
   const handleProjectCountChange = useCallback((count) => {
@@ -1911,41 +1889,9 @@ const BusinessSetupPage = () => {
                     )}
                     {activeTab === "insights" && hasInsightAccess &&
                       <AnalysisContentManager
-                        phaseManager={phaseManager}
-                        apiLoadingStates={storeLoadingStates}
-                        expandedCards={expandedCards}
-                        setExpandedCards={setExpandedCards}
-                        collapsedCategories={collapsedCategories}
-                        setCollapsedCategories={setCollapsedCategories}
-                        highlightedCard={highlightedCard}
-                        selectedBusinessId={selectedBusinessId}
-                        handleRedirectToBrief={handleRedirectToBrief}
-                        showToastMessage={showToastMessage}
-                        apiService={apiService}
-                        triggerConfirmation={triggerConfirmation}
+                        {...analysisProps}
                         canRegenerate={canShowRegenerateButtons}
-                        hasInsightAccess={hasInsightAccess}
-                        swotRef={swotRef}
-                        purchaseCriteriaRef={purchaseCriteriaRef}
-                        loyaltyNpsRef={loyaltyNpsRef}
-                        portersRef={portersRef}
-                        pestelRef={pestelRef}
-                        fullSwotRef={fullSwotRef}
-                        competitiveAdvantageRef={competitiveAdvantageRef}
-                        expandedCapabilityRef={expandedCapabilityRef}
-                        strategicRadarRef={strategicRadarRef}
-                        productivityRef={productivityRef}
-                        maturityScoreRef={maturityScoreRef}
-                        profitabilityRef={profitabilityRef}
-                        growthTrackerRef={growthTrackerRef}
-                        liquidityEfficiencyRef={liquidityEfficiencyRef}
-                        investmentPerformanceRef={investmentPerformanceRef}
-                        leverageRiskRef={leverageRiskRef}
-                        competitiveLandscapeRef={competitiveLandscapeRef}
-                        coreAdjacencyRef={coreAdjacencyRef}
                         questionsLoaded={questionsLoaded}
-                        isAnalysisRegenerating={isAnalysisRegenerating}
-                        isStrategicRegenerating={isStrategicRegenerating}
                       />}
                     {activeTab === "strategic" && hasStrategicAccess && (
                       <div className="strategic-section">
@@ -1953,7 +1899,6 @@ const BusinessSetupPage = () => {
                           onRegenerate={handleStrategicAnalysisRegenerate}
                           isRegenerating={(() => {
                             const isStrReg = isTypeRegenerating('strategic');
-                            console.log("BusinessSetupPage Debug: passing isRegenerating to StrategicAnalysis:", isStrReg);
                             return isStrReg;
                           })()}
                           canRegenerate={canShowRegenerateButtons && strategicData && !isAnalysisRegenerating && unlockedFeatures.analysis}
@@ -2174,6 +2119,7 @@ const BusinessSetupPage = () => {
                       documentInfo={documentInfo}
                       answerIds={answerIds}
                       setAnswerIds={setAnswerIds}
+                      hasPmfAccess={hasPmfAccess}
                     />
                   </div>
                 )}
@@ -2294,6 +2240,7 @@ const BusinessSetupPage = () => {
                     documentInfo={documentInfo}
                     answerIds={answerIds}
                     setAnswerIds={setAnswerIds}
+                    hasPmfAccess={hasPmfAccess}
                   />
                 </div>
               )}

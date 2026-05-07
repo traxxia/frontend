@@ -46,7 +46,19 @@ const CompetitiveLandscape = ({
     // Parse the data based on the new structure
     const competitorSwot = useMemo(() => {
         if (!rawData) return null;
-        return rawData.competitor_swot || rawData.competitiveLandscape || rawData.competitive_landscape || null;
+        
+        // If the data has a specific key, use it
+        const swot = rawData.competitor_swot || rawData.competitiveLandscape || rawData.competitive_landscape;
+        if (swot) return swot;
+
+        // Otherwise, check if rawData itself looks like a competitor map
+        // (has keys that aren't the standard ones we expect like 'our_differentiators')
+        const keys = Object.keys(rawData);
+        if (keys.length > 0 && !rawData.our_differentiators) {
+            return rawData;
+        }
+
+        return null;
     }, [rawData]);
 
     const ourDifferentiators = useMemo(() => {
@@ -85,17 +97,23 @@ const CompetitiveLandscape = ({
 
     const isDataIncomplete = useCallback((data) => {
         if (!data || typeof data !== 'object') return true;
+        
+        // Handle case where data is a string error message
+        if (data.error) return true;
+
         const swot = data.competitor_swot || data.competitiveLandscape || data.competitive_landscape;
         const diffs = data.our_differentiators;
         
-        if (!swot && (!diffs || diffs.length === 0)) return true;
-
-        if (swot) {
-            const competitors = Object.keys(swot);
-            if (competitors.length > 0) return false;
+        // If we found specific keys, check them
+        if (swot || (diffs && diffs.length > 0)) {
+            if (swot && Object.keys(swot).length > 0) return false;
+            if (diffs && diffs.length > 0) return false;
+            return true;
         }
-        
-        if (diffs && diffs.length > 0) return false;
+
+        // If no specific keys, check if the object itself is the swot map
+        const keys = Object.keys(data);
+        if (keys.length > 0) return false;
 
         return true;
     }, []);
@@ -444,4 +462,4 @@ const CompetitiveLandscape = ({
     );
 };
 
-export default CompetitiveLandscape;
+export default CompetitiveLandscape;

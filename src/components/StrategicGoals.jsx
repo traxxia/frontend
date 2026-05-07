@@ -52,10 +52,10 @@ const StrategicGoals = ({
   }, [propStrategicGoalsData, storeStrategicGoalsData]);
 
   const [expandedSections, setExpandedSections] = useState({
-    overview: true,
-    objectives: true,
-    keyresults: true,
-    gantt: true,
+    overview: false,
+    objectives: false,
+    keyresults: false,
+    gantt: false,
   });
   const [error, setError] = useState(null);
 
@@ -245,7 +245,7 @@ const StrategicGoals = ({
           )}
         </div>
 
-        {expandedSections.gantt && (
+        <div className={`section-container ${expandedSections.gantt === true ? 'expanded' : 'collapsed'}`}>
           <div className="table-container">
             <div className="gantt-chart">
               <div className="timeline-header">
@@ -326,7 +326,7 @@ const StrategicGoals = ({
               ))}
             </div>
           </div>
-        )}
+        </div>
       </div>
     );
   };
@@ -346,7 +346,7 @@ const StrategicGoals = ({
           )}
         </div>
 
-        {expandedSections.overview && (
+        <div className={`section-container ${expandedSections.overview === true ? 'expanded' : 'collapsed'}`}>
           <div className="table-container">
             <table className="data-table">
               <thead>
@@ -409,7 +409,7 @@ const StrategicGoals = ({
               </div>
             )}
           </div>
-        )}
+        </div>
       </div>
     );
   };
@@ -429,7 +429,7 @@ const StrategicGoals = ({
           )}
         </div>
 
-        {expandedSections.objectives && (
+        <div className={`section-container ${expandedSections.objectives === true ? 'expanded' : 'collapsed'}`}>
           <div className="table-container">
             <table className="data-table">
               <thead>
@@ -503,7 +503,7 @@ const StrategicGoals = ({
               </tbody>
             </table>
           </div>
-        )}
+        </div>
       </div>
     );
   };
@@ -534,7 +534,7 @@ const StrategicGoals = ({
           )}
         </div>
 
-        {expandedSections.keyresults && (
+        <div className={`section-container ${expandedSections.keyresults === true ? 'expanded' : 'collapsed'}`}>
           <div className="table-container">
             <table className="data-table">
               <thead>
@@ -610,7 +610,7 @@ const StrategicGoals = ({
               </tbody>
             </table>
           </div>
-        )}
+        </div>
       </div>
     );
   };

@@ -72,6 +72,7 @@ const ProjectsList = ({
         isArchived={isArchived}
         isViewer={isViewer}
         canReviewProject={canReviewProject}
+        canEditProject={canEditProject}
         myUserId={myUserId}
       />
     );

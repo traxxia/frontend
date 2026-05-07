@@ -223,12 +223,12 @@ const ProductivityMetrics = ({
     const chartData = convertObjectToChartData(obj);
 
     return (
-      <div className="section-container" key={sectionKey} style={{ backgroundColor: 'white', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)', padding: '20px', marginBottom: '20px' }}>
-        <div className="section-header" onClick={() => toggleSection(sectionKey)} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', marginBottom: '10px' }}>
-          <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '600' }}>{sectionTitle}</h3>
+      <div className="section-container" key={sectionKey} style={{ backgroundColor: 'white', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)', marginBottom: '15px' }}>
+        <div className="section-header" onClick={() => toggleSection(sectionKey)} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }}>
+          <h5>{sectionTitle}</h5>
           {expandedSections[sectionKey] ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
         </div>
-        {expandedSections[sectionKey] !== false && (
+        <div className={`section-container ${expandedSections[sectionKey] === true ? 'expanded' : 'collapsed'}`}>
           <div style={{ width: '100%' }}>
             <ResponsiveContainer width="100%" height={350}>
               <BarChart data={chartData} margin={{ top: 10, right: 20, left: 10, bottom: 25 }}>
@@ -240,7 +240,7 @@ const ProductivityMetrics = ({
               </BarChart>
             </ResponsiveContainer>
           </div>
-        )}
+        </div>
       </div>
     );
   };
@@ -251,12 +251,12 @@ const ProductivityMetrics = ({
     const hasStreamed = streamingManager?.hasStreamed(cardId);
 
     return (
-      <div className="section-container" key={sectionKey} style={{ backgroundColor: 'white', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)', padding: '20px', marginBottom: '20px' }}>
-        <div className="section-header" onClick={() => toggleSection(sectionKey)} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', marginBottom: '10px' }}>
-          <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '600' }}>{sectionTitle}</h3>
+      <div className="section-container" key={sectionKey} style={{ backgroundColor: 'white', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)',marginBottom: '15px' }}>
+        <div className="section-header" onClick={() => toggleSection(sectionKey)} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }}>
+          <h5>{sectionTitle}</h5>
           {expandedSections[sectionKey] ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
         </div>
-        {expandedSections[sectionKey] !== false && (
+        <div className={`section-container ${expandedSections[sectionKey] === true ? 'expanded' : 'collapsed'}`}>
           <div className="table-container" style={{ overflowX: 'auto' }}>
             <table className="data-table" style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px' }}>
               <thead>
@@ -291,7 +291,7 @@ const ProductivityMetrics = ({
               </tbody>
             </table>
           </div>
-        )}
+        </div>
       </div>
     );
   };

@@ -27,8 +27,7 @@ const NotificationBell = () => {
     fetchNotifications();
   }, [fetchNotifications]);
 
-  const handleNotificationClick = async (notif) => {
-    console.log("Notification clicked:", notif);
+  const handleNotificationClick = async (notif) => { 
 
     // 1. Mark as read in the background asynchronously, don't block navigation
     if (!notif.is_read) {
@@ -66,14 +65,12 @@ const NotificationBell = () => {
       }
 
       const hasTargetBusinessId = !!targetBusinessId;
-      if (hasTargetBusinessId) {
-        console.log("Target business identified for navigation:", targetBusinessId);
+      if (hasTargetBusinessId) { 
       } else if (isStaleProject && notif.message) {
         // Attempt to extract the business name from the message to aid the user
         const nameMatch = notif.message.match(/under\s+"([^"]+)"/i) || notif.message.match(/project.*under\s+([^ ]+)/i);
         if (nameMatch && nameMatch[1]) {
-          const businessName = nameMatch[1].trim();
-          console.log("Extracted business name from message:", businessName);
+          const businessName = nameMatch[1].trim(); 
           try {
             // We must map this name to a business ID because the backend payload lacks it
             const token = useAuthStore.getState().token;
@@ -88,8 +85,7 @@ const NotificationBell = () => {
 
               const found = allBusinesses.find(b => b.business_name === businessName);
               if (found) {
-                const foundId = found._id || found.id;
-                console.log("Matched business name to ID:", foundId);
+                const foundId = found._id || found.id; 
                 targetBusinessId = foundId;
               } else {
                 console.log("Could not find a business matching the name:", businessName);
@@ -106,8 +102,7 @@ const NotificationBell = () => {
         try {
           const url = new URL(notif.action_link, window.location.origin);
           const bId = url.searchParams.get('business_id') || url.searchParams.get('businessId');
-          if (bId) {
-            console.log("Reinforcing target business from URL:", bId);
+          if (bId) { 
             targetBusinessId = bId;
           }
         } catch (e) {
@@ -178,8 +173,7 @@ const NotificationBell = () => {
         queryClient.invalidateQueries({ queryKey: ["teamRankings", targetBusinessId] });
         queryClient.invalidateQueries({ queryKey: ["rankingsSummary", targetBusinessId] });
       }
-
-      console.log("Navigating to:", navPath, navOptions);
+ 
       navigate(navPath, navOptions);
     } catch (routeErr) {
       console.error("Routing error:", routeErr);

@@ -219,6 +219,7 @@ const PurchaseCriteria = ({
 
   return (
     <div className="purchase-criteria"
+      data-component="purchase-criteria"
       data-analysis-type="purchase-criteria"
       data-analysis-name="Purchase Criteria Matrix"
       data-analysis-order="2">

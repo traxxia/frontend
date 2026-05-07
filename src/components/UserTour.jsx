@@ -10,16 +10,14 @@ const CustomTooltip = ({ index, step, backProps, primaryProps, skipProps, toolti
   const handlePrimaryClick = (e) => {
     if (primaryProps.onClick) primaryProps.onClick(e);
     // Force completion if this is the last step
-    if (isLastStep) {
-      console.log('[UserTour] Explicit "Finish" click detected');
+    if (isLastStep) { 
       window.dispatchEvent(new CustomEvent('force-tour-complete', { detail: 'finished' }));
     }
   };
 
   const handleSkipClick = (e) => {
     if (skipProps.onClick) skipProps.onClick(e);
-    // Force completion on skip
-    console.log('[UserTour] Explicit "Skip" click detected');
+    // Force completion on skip 
     window.dispatchEvent(new CustomEvent('force-tour-complete', { detail: 'skipped' }));
   };
 
@@ -79,8 +77,7 @@ const UserTour = () => {
   // Set up custom event listener to completely bypass react-joyride bugs
   useEffect(() => {
     const handleForceComplete = (e) => {
-      const explicitStatus = e.detail;
-      console.log(`[UserTour] Caught force-tour-complete event: ${explicitStatus}`);
+      const explicitStatus = e.detail; 
       setCompletedStatus(explicitStatus);
     };
 
@@ -93,8 +90,7 @@ const UserTour = () => {
   useEffect(() => {
     const performCompletion = async () => {
       if (!completedStatus) return;
-
-      console.log(`[UserTour] Completion API effect running. Requesting /api/complete-tour`);
+ 
       useAuthStore.getState().updateUser({ tourCompleted: true });
 
       try {
@@ -104,8 +100,7 @@ const UserTour = () => {
         if (token) {
           const res = await axios.post(finalUrl, {}, {
             headers: { Authorization: `Bearer ${token}` }
-          });
-          console.log("[UserTour] Backend update SUCCESS:", res.data);
+          }); 
         } else {
           console.warn("[UserTour] No token in sessionStorage available.");
         }
@@ -254,15 +249,11 @@ const UserTour = () => {
 
   const handleJoyrideCallback = (data) => {
     const { status, type } = data;
-    
-    // Log the full data object for deep diagnostics
-    console.log('[UserTour] Joyride Callback:', data);
 
     const isFinished = status === 'finished' || status === 'completed' || status === STATUS.FINISHED;
     const isSkipped = status === 'skipped' || status === STATUS.SKIPPED;
 
-    if (isFinished || isSkipped) {
-      console.log(`[UserTour] Termination detected (${status}). Setting completion status...`);
+    if (isFinished || isSkipped) { 
       setCompletedStatus(status);
     } else if (status === 'error') {
        console.error(`[UserTour] Joyride Error Event:`, data);

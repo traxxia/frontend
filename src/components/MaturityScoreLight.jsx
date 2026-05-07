@@ -44,7 +44,12 @@ const MaturityScore = ({
   const rawMaturityData = propMaturityData || storeMaturityData;
   const isRegenerating = propIsRegenerating || isTypeRegenerating('maturityScore');
 
-  const [expandedSections, setExpandedSections] = useState({});
+  const [expandedSections, setExpandedSections] = useState({
+    overview: false,
+    areas: false,
+    crossScoring: false,
+    progression: false
+  });
   const [visibleRows, setVisibleRows] = useState(0);
   const [typingTexts, setTypingTexts] = useState({});
   const streamingIntervalRef = useRef(null);
@@ -418,7 +423,7 @@ const MaturityScore = ({
           <h3>{t('Maturity_Overview')}</h3>
           {expandedSections.overview ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
         </div>
-        {expandedSections.overview !== false && (
+        <div className={`section-container ${expandedSections.overview === true ? 'expanded' : 'collapsed'}`}>
           <div className="table-container">
             <table className="data-table">
               <thead>
@@ -447,7 +452,7 @@ const MaturityScore = ({
               </tbody>
             </table>
           </div>
-        )}
+        </div>
       </div>
     );
   };
@@ -476,7 +481,7 @@ const MaturityScore = ({
           <h3>{t('maturity_details_subdimension') || 'Maturity details by sub-dimension'}</h3>
           {expandedSections.areas ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
         </div>
-        {expandedSections.areas !== false && (
+        <div className={`section-container ${expandedSections.areas === true ? 'expanded' : 'collapsed'}`}>
           <div className="table-container pt-3">
             <p className="text-muted fw-semibold mb-3 px-3">
               {t("focus_capability_gaps") || "We focus on specific capability gaps and strengths, not generic maturity scores."}
@@ -507,7 +512,7 @@ const MaturityScore = ({
               </div>
             )}
           </div>
-        )}
+        </div>
       </div>
     );
   };
@@ -533,7 +538,7 @@ const MaturityScore = ({
           <h3>{t('Cross-Area_Impact_Analysis')}</h3>
           {expandedSections.crossScoring ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
         </div>
-        {expandedSections.crossScoring !== false && (
+        <div className={`section-container ${expandedSections.crossScoring === true ? 'expanded' : 'collapsed'}`}>
           <div className="table-container">
             {correlations.length > 0 && (
               <div className="subsection">
@@ -583,7 +588,7 @@ const MaturityScore = ({
               </div>
             )}
           </div>
-        )}
+        </div>
       </div>
     );
   };
@@ -610,7 +615,7 @@ const MaturityScore = ({
           <h3>{t('Progression_to_Next_Level')}</h3>
           {expandedSections.progression ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
         </div>
-        {expandedSections.progression !== false && (
+        <div className={`section-container ${expandedSections.progression === true ? 'expanded' : 'collapsed'}`}>
           <div className="table-container">
             <table className="data-table">
               <thead>
@@ -663,7 +668,7 @@ const MaturityScore = ({
               </div>
             )}
           </div>
-        )}
+        </div>
       </div>
     );
   };
@@ -676,11 +681,11 @@ const MaturityScore = ({
       data-analysis-order="8"
     >
       <div className="dashboard-content">
-        {/* {renderGaugeChart(transformedData)} */}
-        {/* {renderMaturityOverview(transformedData)} */}
+        {renderGaugeChart(transformedData)}
+        {renderMaturityOverview(transformedData)}
         {renderBusinessAreas(transformedData)}
-        {/* {renderCrossScoring(transformedData)} */}
-        {/* {renderProgressionPath(transformedData)} */}
+        {renderCrossScoring(transformedData)}
+        {renderProgressionPath(transformedData)}
       </div>
     </div>
   );

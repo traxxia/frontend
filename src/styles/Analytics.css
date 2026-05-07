@@ -25,9 +25,8 @@
    background: white;
    border-radius: 16px;
    box-shadow: none;
-   padding: 10px 20px 10px 10px;
-   transition: none;
-   overflow-x: hidden;
+   padding: 0px;
+   transition: none; 
  }
 
  .modern-card-content-inner {
@@ -3122,11 +3121,6 @@
      font-size: 6.5px;
    }
  }
-
- .pestel-container {
-   background-color: #f8fafc;
- }
-
  .pestel-loading,
  .pestel-error,
  .pestel-empty {
@@ -6005,7 +5999,7 @@
    font-size: 20px;
    font-weight: 700;
    color: #1e293b;
-   margin: 0;
+   margin-bottom: 10px;
  }
 
  .section-icon {
@@ -7239,7 +7233,7 @@
  }
 
  .section-header h3 {
-   margin: 0;
+   margin-bottom: 10px;
    font-size: 1.4rem;
    font-weight: 600;
    color: #333;
@@ -7562,9 +7556,6 @@
 
  /* Responsive Design */
  @media (max-width: 1200px) {
-   .porters-container {
-     padding: 15px;
-   }
 
    .porters-header {
      flex-direction: column;
