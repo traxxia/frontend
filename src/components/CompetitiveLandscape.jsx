@@ -241,13 +241,7 @@ const CompetitiveLandscape = ({
         setExpandedSections(prev => ({ ...prev, [sectionKey]: !prev[sectionKey] }));
     };
 
-    useEffect(() => {
-        if (competitorSwot) {
-            const initialExpandedState = { differentiators: true };
-            Object.keys(competitorSwot).forEach(competitor => { initialExpandedState[competitor] = true; });
-            setExpandedSections(prev => ({ ...initialExpandedState, ...prev }));
-        }
-    }, [competitorSwot]);
+
 
     const getCategoryColor = (category) => {
         const categoryLower = category.toLowerCase();
