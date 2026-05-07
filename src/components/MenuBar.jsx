@@ -27,6 +27,7 @@ const MenuBar = () => {
   // Zustand auth store selectors
   const isAdmin = useAuthStore((state) => state.isAdmin);
   const isSuperAdmin = useAuthStore((state) => state.isSuperAdmin());
+  const isObservatory = useAuthStore((state) => state.isObservatory);
   const userName = useAuthStore((state) => state.userName || "User");
   const userRole = useAuthStore((state) => state.userRole || "");
   const companyLogo = useAuthStore((state) => state.companyLogo);
@@ -63,6 +64,7 @@ const MenuBar = () => {
   const handleAdminClick = () => navigate("/admin");
   const handleDashboardClick = () => navigate("/dashboard");
   const handleSuperAdminClick = () => navigate("/super-admin");
+  const handleObservatoryClick = () => navigate("/super-admin/observatory");
   const handleAcademyClick = () => navigate("/academy");
 
   // Handler for audit trail navigation
@@ -116,7 +118,30 @@ const MenuBar = () => {
           </div>
 
           {/* Right side - User Menu */}
-          <div className="navbar-right d-flex align-items-center">
+          <div className="navbar-right d-flex align-items-center" style={{ gap: '15px' }}>
+            {/* Observatory Link directly in menubar */}
+            {isObservatory && (
+              <div
+                onClick={handleObservatoryClick}
+                style={{
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  background: isCurrentPage("/super-admin/observatory") ? "#1e1b4b" : "transparent",
+                  color: isCurrentPage("/super-admin/observatory") ? "#a5b4fc" : "#495057",
+                  padding: "6px 12px",
+                  borderRadius: "6px",
+                  fontWeight: "500",
+                  fontSize: "14px",
+                  transition: "all 0.2s"
+                }}
+              >
+                <span style={{ fontSize: 16 }}>🔭</span>
+                AI Observatory
+              </div>
+            )}
+
             {!isSuperAdmin && <NotificationBell />}
 
             <Dropdown>
@@ -234,6 +259,7 @@ const MenuBar = () => {
                     {t("super_admin_panel")}
                   </Dropdown.Item>
                 )}
+
 
 
                 {/* Admin Link (only for regular admins, not super admin) */}

@@ -21,6 +21,7 @@ import {
   CreditCard,
   ClipboardList,
   MessageSquareText,
+  Telescope,
 } from "lucide-react";
 import CompanyManagement from "./CompanyManagement";
 import QuestionManagement from "./QuestionManagement";
