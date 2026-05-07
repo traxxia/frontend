@@ -853,13 +853,12 @@ const BusinessSetupPage = () => {
           phasesToRegenerate = [currentPhase];
         }
  
-        const regenerationPromises = [];
-
+        // 1. Regenerate unlocked phases sequentially
         for (const phase of phasesToRegenerate) { 
-          regenerationPromises.push(handleRegeneratePhase(phase, false, { skipConfirmation: true }));
+          await handleRegeneratePhase(phase, false, { skipConfirmation: true });
         }
-
-        // Include financial insights if explicitly requested, or if a document exists, or if we have existing financial data
+ 
+        // 2. Include financial insights if explicitly requested, or if a document exists, or if we have existing financial data
         // Skip if explicitly requested via options (e.g. during AI answer application)
         const shouldIncludeFinancial = 
           !options?.skipFinancial && (
@@ -872,18 +871,15 @@ const BusinessSetupPage = () => {
             !!investmentPerformanceData ||
             !!leverageRiskData
           );
-
+ 
         if (shouldIncludeFinancial) { 
-          regenerationPromises.push(handleRegeneratePhase('financial', false, { ...options, skipConfirmation: true }));
+          await handleRegeneratePhase('financial', false, { ...options, skipConfirmation: true });
         }
-
-        // Finally, regenerate strategic analysis if requested (e.g. for "Apply All")
+ 
+        // 3. Finally, regenerate strategic analysis if requested (e.g. for "Apply All")
         if (options?.alsoRegenerateStrategic) { 
-          regenerationPromises.push(handleStrategicAnalysisRegenerate(true));
+          await handleStrategicAnalysisRegenerate(true);
         }
-
-        await Promise.all(regenerationPromises); 
-
         //showToastMessage(t('regeneration_completed'), 'success');
       } catch (err) {
         console.error('Error in handleRegenerateAllAnalysis:', err);

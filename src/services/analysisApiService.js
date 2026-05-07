@@ -753,47 +753,53 @@ export class AnalysisApiService {
       let completed = 0;
       const total = analysisTypes.length;
       let successes = 0;
+      const results = [];
 
-      const wrappedPromises = analysisTypes.map((analysisType) => {
-        const displayName =
-          typeof this.getDisplayName === "function"
-            ? this.getDisplayName(analysisType)
-            : analysisType;
+      // Process analysis types in batches of 2 to avoid overwhelming the ML backend
+      const batchSize = 2;
+      for (let i = 0; i < analysisTypes.length; i += batchSize) {
+        const batch = analysisTypes.slice(i, i + batchSize);
+        
+        const batchPromises = batch.map((analysisType) => {
+          const displayName =
+            typeof this.getDisplayName === "function"
+              ? this.getDisplayName(analysisType)
+              : analysisType;
 
-        return this
-          .callAnalysisAPIWithSave(analysisType, payload, stateSetters, selectedBusinessId)
-          .then((res) => {
-            successes++;
-            completed++;
-            stateSetters.setRegenerating?.(analysisType, false);
-            showToastMessage(
-              `${completed}/${total}  analyses — "${displayName}" completed successfully`,
-              "info",
-              { duration: 5000 }
-            );
+          return this
+            .callAnalysisAPIWithSave(analysisType, payload, stateSetters, selectedBusinessId)
+            .then((res) => {
+              successes++;
+              completed++;
+              stateSetters.setRegenerating?.(analysisType, false);
+              showToastMessage(
+                `${completed}/${total} analyses — "${displayName}" completed successfully`,
+                "info",
+                { duration: 5000 }
+              );
 
-            return { status: "fulfilled", analysisType, value: res };
-          })
-          .catch((err) => {
-            completed++;
-            stateSetters.setRegenerating?.(analysisType, false);
+              return { status: "fulfilled", analysisType, value: res };
+            })
+            .catch((err) => {
+              completed++;
+              stateSetters.setRegenerating?.(analysisType, false);
 
-            console.error(`Error with ${analysisType} analysis:`, err);
-            showToastMessage(
-              `${completed}/${total} ${phase} phase analyses — "${displayName}" failed`,
-              "warning",
-              { duration: 5000 }
-            );
+              console.error(`Error with ${analysisType} analysis:`, err);
+              showToastMessage(
+                `${completed}/${total} ${phase} phase analyses — "${displayName}" failed`,
+                "warning",
+                { duration: 5000 }
+              );
 
-            const error = new Error(`Analysis failed for ${analysisType}`);
-            Object.assign(error, { status: "rejected", analysisType, reason: err });
-            throw error;
-          });
-      });
+              return { status: "rejected", analysisType, reason: err };
+            });
+        });
 
-      const results = await Promise.allSettled(wrappedPromises);
+        const batchResults = await Promise.all(batchPromises);
+        results.push(...batchResults);
+      }
 
-      return { success: true, phase };
+      return { success: true, phase, results };
     } catch (error) {
       console.error(`Error generating ${phase} phase analysis:`, error);
 
