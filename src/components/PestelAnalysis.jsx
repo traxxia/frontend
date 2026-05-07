@@ -246,6 +246,7 @@ const PestelAnalysis = ({
   return (
     <div
       className="porters-container pestel-container"
+      data-component="pestel-analysis"
       data-analysis-type="pestel"
       data-analysis-name="PESTEL Analysis"
       data-analysis-order="7"

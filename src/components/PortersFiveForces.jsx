@@ -311,6 +311,7 @@ const PortersFiveForces = ({
   return (
     <div
       className="porters-container"
+      data-component="porters-analysis"
       data-analysis-type="porters"
       data-analysis-name="Porter's Five Forces"
       data-analysis-order="6"

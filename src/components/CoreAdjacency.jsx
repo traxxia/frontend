@@ -394,7 +394,7 @@ const CoreAdjacency = ({
     };
 
     return (
-        <div className="porters-container full-swot-container" data-analysis-type="coreAdjacency" data-analysis-name="Core vs. Adjacency" data-analysis-order="10">
+        <div className="porters-container full-swot-container" data-component="core-adjacency" data-analysis-type="coreAdjacency" data-analysis-name="Core vs. Adjacency" data-analysis-order="10">
             {data.coreBusinessDefinition && (
                 <div className="section-container">
                     <div className="section-header" onClick={() => toggleSection('coreBusinessDefinition')}>

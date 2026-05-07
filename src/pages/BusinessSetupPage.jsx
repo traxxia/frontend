@@ -1081,27 +1081,6 @@ const BusinessSetupPage = () => {
   const getPhaseSpecificOptions = (phase) => {
     const unlockedFeatures = phaseManager.getUnlockedFeatures();
 
-    // Label to Data Availability mapping
-    const dataAvailabilityMap = {
-      "swot_analysis": !!swotAnalysis,
-      "Porters_Five_Forces": !!portersData,
-      "PESTEL_Analysis": !!pestelData,
-      "Purchase_Criteria": !!purchaseCriteria,
-      "Loyalty_&_NPS": !!loyaltyNPS,
-      "Full_SWOT_Portfolio": !!fullSwotData,
-      "Strategic_Positioning_Radar": !!strategicRadar,
-      "Competitive_Advantage_Matrix": !!competitiveAdvantage,
-      "Capability_Heatmap": !!expandedCapability,
-      "Maturity_Score": !!maturityData,
-      "Competitive_Landscape": !!competitiveLandscape,
-      "Core": !!coreAdjacency,
-      "Productivity_Metrics": !!productivityData,
-      "Profitability_Analysis": !!profitabilityData,
-      "Growth_Tracker": !!growthTrackerData,
-      "Liquidity_Efficiency": !!liquidityEfficiencyData,
-      "Investment_Performance": !!investmentPerformanceData,
-      "Leverage_Risk": !!leverageRiskData
-    };
 
     const categoryOptions = {
       initial: {
@@ -1144,19 +1123,8 @@ const BusinessSetupPage = () => {
 
     const selectedOptions = categoryOptions[phase] || {};
 
-    // Filter out options that don't have data
-    const filteredOptions = {};
-    Object.entries(selectedOptions).forEach(([category, items]) => {
-      // Keep only items that have analysis data available
-      const filteredItems = items.filter(item => dataAvailabilityMap[item]);
-
-      // Only include the category if it has at least one item with data
-      if (filteredItems.length > 0) {
-        filteredOptions[category] = filteredItems;
-      }
-    });
-
-    return filteredOptions;
+    // Return all options for the phase without filtering by data availability
+    return selectedOptions;
   };
 
   useEffect(() => {

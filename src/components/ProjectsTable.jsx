@@ -20,6 +20,7 @@ const ProjectsTable = ({
   isArchived,
   isViewer,
   canReviewProject,
+  canEditProject,
   myUserId,
 }) => {
   const { t } = useTranslation();
@@ -185,10 +186,10 @@ const ProjectsTable = ({
                     >
                       {isTerminal ? (
                         <Dropdown.Item onClick={() => onView(project)} className="menu-item"><Eye size={14} /> {t("view")}</Dropdown.Item>
-                      ) : (!isAdmin && isViewer || isArchived) ? (
-                        <Dropdown.Item onClick={() => onView(project)} className="menu-item"><Eye size={14} /> {t("view")}</Dropdown.Item>
-                      ) : (
+                      ) : (canEditProject && canEditProject(project)) ? (
                         <Dropdown.Item onClick={() => onEdit(project)} className="menu-item"><Edit2 size={14} /> {t("edit")}</Dropdown.Item>
+                      ) : (
+                        <Dropdown.Item onClick={() => onView(project)} className="menu-item"><Eye size={14} /> {t("view")}</Dropdown.Item>
                       )}
                       {!isViewer && !isArchived && isAdmin && !isTerminal && (
                         <Dropdown.Item onClick={() => onDelete(project._id)} className="menu-item delete"><Trash2 size={14} /> {t("delete")}</Dropdown.Item>
