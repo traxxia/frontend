@@ -140,7 +140,7 @@ const ProjectDetails = ({
     const terminalStatusInfo = React.useMemo(() => {
         const statusLower = (project?.status || "").toLowerCase();
         const isTerminal = statusLower === "completed" || statusLower === "scaled" || statusLower === "killed";
-        if (!isTerminal) return null;
+        if (!isTerminal) return { isTerminal: false };
 
         let message = "Project reached a final state cannot be edited further.";
         if (statusLower === "completed") message = "Project reached Completed state cannot be edited further.";
@@ -180,7 +180,7 @@ const ProjectDetails = ({
                 </Breadcrumb>
             </div>
 
-            {terminalStatusInfo && (
+            {terminalStatusInfo?.isTerminal && (
                 <div className="terminal-status-banner" style={{
                     backgroundColor: "#eff6ff",
                     border: "1px solid #dbeafe",
