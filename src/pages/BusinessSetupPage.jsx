@@ -734,7 +734,7 @@ const BusinessSetupPage = () => {
     const skipConfirmation = options?.skipConfirmation || false;
 
     const performPhaseRegeneration = async () => {
-      showToastMessage(`Regenerating ${targetPhase} phase...`, 'info');
+      //showToastMessage(`Regenerating ${targetPhase} phase...`, 'info');
       const state = useAnalysisStore.getState();
       const { questions: storeQuestions, userAnswers: storeUserAnswers, regeneratePhase: storeRegeneratePhase } = state;
 
