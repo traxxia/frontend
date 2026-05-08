@@ -62,12 +62,12 @@ function LogTypeBadge({ logType }) {
   const { theme } = useUIStore();
 
   const colorMap = {
-    status_change: { bg: "#dbeafe", color: "#1e40af" },
-    cadence_review: { bg: "#d1fae5", color: "#065f46" },
-    no_change_review: { bg: "#f3f4f6", color: "#374151" },
-    adhoc_update: { bg: "#fef3c7", color: "#92400e" },
-    manual: { bg: "#ede9fe", color: "#5b21b6" },
-    project_update: { bg: "#fee2e2", color: "#991b1b" },
+    status_change: { bg: "var(--color-status-completed-bg, #dbeafe)", color: "var(--color-status-completed-text, #1e40af)" },
+    cadence_review: { bg: "var(--color-status-active-bg, #d1fae5)", color: "var(--color-status-active-text, #065f46)" },
+    no_change_review: { bg: "var(--color-bg-light, #f3f4f6)", color: "var(--color-text-secondary, #374151)" },
+    adhoc_update: { bg: "var(--color-status-paused-bg, #fef3c7)", color: "var(--color-status-paused-text, #92400e)" },
+    manual: { bg: "var(--color-status-scaled-bg, #ede9fe)", color: "var(--color-status-scaled-text, #5b21b6)" },
+    project_update: { bg: "var(--color-status-killed-bg, #fee2e2)", color: "var(--color-status-killed-text, #991b1b)" },
   };
   const style = colorMap[logType] || { bg: "#f3f4f6", color: "#374151" };
   return (
@@ -298,13 +298,13 @@ const BusinessDecisionLogs = ({ businessId }) => {
   }, [fetchBusinessLogs]);
 
   return (
-    <div className="business-decision-logs-page" style={{ minHeight: "100vh", backgroundColor: "var(--bg-primary, #f8fafc)" }}>
+    <div className="business-decision-logs-page" style={{ minHeight: "100vh", backgroundColor: "var(--color-bg-primary, #f8fafc)" }}>
       <div className="business-decision-logs-content" style={{ maxWidth: "1200px", margin: "0 auto", padding: "24px 20px" }}>
         {/* Page Header */}
         <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "24px" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-            <FileText size={20} color="#4f46e5" />
-            <h1 className="page-title-color" style={{ fontSize: "20px", fontWeight: 700, margin: 0, color: "#111827" }}>
+            <FileText size={20} color="var(--color-primary, #4f46e5)" />
+            <h1 className="page-title-color" style={{ fontSize: "20px", fontWeight: 700, margin: 0, color: "var(--color-text-primary, #111827)" }}>
               {t("Business_Decision_Logs")}
             </h1>
           </div>
@@ -314,17 +314,17 @@ const BusinessDecisionLogs = ({ businessId }) => {
         <div
           className="business-decision-logs-filters"
           style={{
-            background: "#fff",
-            border: "1px solid #e8eaf0",
+            background: "var(--color-bg-card, #fff)",
+            border: "1px solid var(--color-border-light, #e8eaf0)",
             borderRadius: "16px",
             padding: "16px 20px",
             marginBottom: "20px",
-            boxShadow: "0 2px 8px rgba(0, 0, 0, 0.04)",
+            boxShadow: "var(--shadow-sm, 0 2px 8px rgba(0, 0, 0, 0.04))",
           }}
         >
           <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "12px" }}>
-            <Filter size={15} color="#6b7280" />
-            <span style={{ fontSize: "13px", fontWeight: 600, color: "#374151" }}>
+            <Filter size={15} color="var(--color-text-muted, #6b7280)" />
+            <span style={{ fontSize: "13px", fontWeight: 600, color: "var(--color-text-secondary, #374151)" }}>
               {t("Filters")}
             </span>
             {hasActiveFilters && (
@@ -339,7 +339,7 @@ const BusinessDecisionLogs = ({ businessId }) => {
                   alignItems: "center",
                   gap: "4px",
                   fontSize: "12px",
-                  color: "#ef4444",
+                  color: "var(--color-danger, #ef4444)",
                 }}
               >
                 <X size={13} /> {t("clear_all")}
@@ -464,7 +464,7 @@ const BusinessDecisionLogs = ({ businessId }) => {
             </div>
           ) : isError ? (
             <div className="admin-table-empty">
-              <p style={{ color: "#ef4444" }}>{t("Failed_to_load_decision_logs")}</p>
+              <p style={{ color: "var(--color-danger, #ef4444)" }}>{t("Failed_to_load_decision_logs")}</p>
             </div>
           ) : logs.length === 0 ? (
             <div className="admin-table-empty">
@@ -607,7 +607,7 @@ const BusinessDecisionLogs = ({ businessId }) => {
                   <h5 style={{ marginBottom: "12px", fontWeight: 600, color: "#1f2937" }}>
                     Before
                   </h5>
-                  <div style={{ padding: "12px", backgroundColor: "#fef2f2", borderRadius: "8px", border: "1px solid #fecaca", fontFamily: "monospace", fontSize: "13px", color: "#991b1b", whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
+                  <div style={{ padding: "12px", backgroundColor: "var(--color-status-killed-bg, #fef2f2)", borderRadius: "8px", border: "1px solid var(--color-status-killed-border, #fecaca)", fontFamily: "monospace", fontSize: "13px", color: "var(--color-status-killed-text, #991b1b)", whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
                     {Object.entries(selectedLog.before_snapshot)
                       .map(([key, value]) => `${key}: ${typeof value === 'object' ? JSON.stringify(value) : value}`)
                       .join('\n')}
@@ -621,7 +621,7 @@ const BusinessDecisionLogs = ({ businessId }) => {
                   <h5 style={{ marginBottom: "12px", fontWeight: 600, color: "#1f2937" }}>
                     After
                   </h5>
-                  <div style={{ padding: "12px", backgroundColor: "#f0fdf4", borderRadius: "8px", border: "1px solid #bbf7d0", fontFamily: "monospace", fontSize: "13px", color: "#166534", whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
+                  <div style={{ padding: "12px", backgroundColor: "var(--color-status-active-bg, #f0fdf4)", borderRadius: "8px", border: "1px solid var(--color-status-active-border, #bbf7d0)", fontFamily: "monospace", fontSize: "13px", color: "var(--color-status-active-text, #166534)", whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
                     {Object.entries(selectedLog.after_snapshot)
                       .map(([key, value]) => `${key}: ${typeof value === 'object' ? JSON.stringify(value) : value}`)
                       .join('\n')}
@@ -663,10 +663,10 @@ const BusinessDecisionLogs = ({ businessId }) => {
               style={{
                 marginTop: "0",
                 padding: "16px",
-                background: "#f8f9fc",
+                background: "var(--color-bg-light, #f8f9fc)",
                 borderRadius: "10px",
-                border: "1px solid #e5e7eb",
-                color: "#1f2937",
+                border: "1px solid var(--color-border-light, #e5e7eb)",
+                color: "var(--color-text-primary, #1f2937)",
                 lineHeight: "1.6",
                 fontSize: "14px",
                 whiteSpace: "pre-wrap"

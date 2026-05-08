@@ -66,7 +66,7 @@ export const useUIStore = create(
     }),
     {
       name: 'ui-storage',
-      storage: createJSONStorage(() => localStorage),
+      storage: createJSONStorage(() => sessionStorage),
       partialize: (state) => ({ 
         theme: state.theme,
         businessSettings: state.businessSettings 

@@ -208,9 +208,9 @@ const RankingSection = ({ isArchived, companyAdminIds, setActiveTab }) => {
           <div
             className="collaborator-progress-compact d-flex align-items-center gap-2 px-3 py-2"
             style={{
-              backgroundColor: "#f8fafc",
+              backgroundColor: "var(--color-bg-light, #f8fafc)",
               borderRadius: "10px",
-              border: "1px solid #e2e8f0",
+              border: "1px solid var(--color-border-light, #e2e8f0)",
               fontSize: "13px",
               whiteSpace: "nowrap",
             }}

@@ -291,8 +291,7 @@ const FinancialUploadBlock = ({
   const styles = {
     container: {
       flex: 1,
-      padding: '16px 20px',
-      background: 'linear-gradient(135deg, #f0fdf4 0%, #e1faf1 100%)',
+      padding: '16px 20px', 
       borderRadius: '16px',
       border: '1px solid #bbf7d0',
       boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)',
@@ -461,8 +460,7 @@ const AIAnswerSupportBlock = ({
   const styles = {
     container: {
       flex: 1,
-      padding: '16px 20px',
-      background: 'linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%)',
+      padding: '16px 20px', 
       borderRadius: '16px',
       border: '1px solid #ddd6fe',
       boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)',

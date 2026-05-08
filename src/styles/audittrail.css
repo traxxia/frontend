@@ -1053,7 +1053,7 @@
 [data-theme="dark"] .section-container,
 [data-theme="dark"] .table-container {
   background: #1a1d27 !important;
-  border: 1px solid #232a3a !important;
+  border: none !important;
 }
 
 [data-theme="dark"] .cs-header,
@@ -1106,7 +1106,7 @@
 [data-theme="dark"] .maturity-container,
 [data-theme="dark"] .productivity-metrics,
 [data-theme="dark"] .maturity-score-analysis {
-  background: #1a1d27 !important;
+  background: transparent !important;
   /* or #181c24 for even darker look */
   color: #e5e7eb !important;
 }

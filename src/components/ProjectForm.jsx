@@ -28,8 +28,8 @@ const effortOptions = [
     label: "Medium - 3–6 months",
     icon: (
       <div style={{ display: "flex", gap: "2px" }}>
-        <Diamond size={14} fill="black" color="black" />
-        <Diamond size={14} fill="black" color="black" />
+        <Diamond size={14} fill="var(--color-text-primary, black)" color="var(--color-text-primary, black)" />
+        <Diamond size={14} fill="var(--color-text-primary, black)" color="var(--color-text-primary, black)" />
       </div>
     ),
   },
@@ -38,9 +38,9 @@ const effortOptions = [
     label: "Large - 6+ months",
     icon: (
       <div style={{ display: "flex", gap: "2px" }}>
-        <Diamond size={14} fill="black" color="black" />
-        <Diamond size={14} fill="black" color="black" />
-        <Diamond size={14} fill="black" color="black" />
+        <Diamond size={14} fill="var(--color-text-primary, black)" color="var(--color-text-primary, black)" />
+        <Diamond size={14} fill="var(--color-text-primary, black)" color="var(--color-text-primary, black)" />
+        <Diamond size={14} fill="var(--color-text-primary, black)" color="var(--color-text-primary, black)" />
       </div>
     ),
   },
@@ -149,7 +149,7 @@ const SelectField = forwardRef(({
           style={{
             cursor: disabled ? "not-allowed" : "pointer",
             opacity: disabled ? 0.6 : 1,
-            backgroundColor: disabled ? "#f5f5f5" : "#fff"
+            backgroundColor: disabled ? "var(--color-bg-light, #f5f5f5)" : "var(--color-bg-card, #fff)"
           }}
         >
           <span style={{ display: "flex", alignItems: "center", gap: "8px" }}>
@@ -207,7 +207,7 @@ const InputField = forwardRef(({
       <div className="field-label-row">
         <label className="field-label">
           {label} {required && <span className="required">*</span>}
-          {subLabel && <small className="field-sub-label" style={{ display: 'block', fontWeight: 'normal', fontSize: '12px', color: '#64748b', marginTop: '2px' }}>{subLabel}</small>}
+          {subLabel && <small className="field-sub-label" style={{ display: 'block', fontWeight: 'normal', fontSize: '12px', color: 'var(--color-text-secondary, #64748b)', marginTop: '2px' }}>{subLabel}</small>}
         </label>
         {maxLength && (
           <small className="text-muted" style={{ marginLeft: 'auto', fontSize: '10px' }}>
@@ -251,7 +251,7 @@ const TextAreaField = forwardRef(({
       <div className="field-label-row">
         <label className="field-label">
           {label} {required && <span className="required">*</span>}
-          {subLabel && <small className="field-sub-label" style={{ display: 'block', fontWeight: 'normal', fontSize: '12px', color: '#64748b', marginTop: '2px' }}>{subLabel}</small>}
+          {subLabel && <small className="field-sub-label" style={{ display: 'block', fontWeight: 'normal', fontSize: '12px', color: 'var(--color-text-secondary, #64748b)', marginTop: '2px' }}>{subLabel}</small>}
         </label>
         {maxLength && (
           <small className="text-muted" style={{ marginLeft: 'auto', fontSize: '10px' }}>

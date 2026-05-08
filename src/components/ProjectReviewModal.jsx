@@ -101,9 +101,9 @@ const ProjectReviewModal = ({
                     )}
                     {showConfirmation ? (
                         <div className="confirmation-view" style={{ padding: '20px 0', textAlign: 'center' }}>
-                            <AlertTriangle size={48} color="#d97706" style={{ margin: '0 auto 16px' }} />
-                            <h3 style={{ fontSize: '18px', marginBottom: '12px', color: '#1f2937' }}>{t("Confirm_Submission") || "Confirm Submission"}</h3>
-                            <p style={{ color: '#4b5563', marginBottom: '24px', lineHeight: '1.5' }}>
+                            <AlertTriangle size={48} color="var(--color-warning, #d97706)" style={{ margin: '0 auto 16px' }} />
+                            <h3 style={{ fontSize: '18px', marginBottom: '12px', color: 'var(--color-text-primary, #1f2937)' }}>{t("Confirm_Submission") || "Confirm Submission"}</h3>
+                            <p style={{ color: 'var(--color-text-secondary, #4b5563)', marginBottom: '24px', lineHeight: '1.5' }}>
                                 {type === "review"
                                     ? t("Confirm_Review_Message") || "You are about to log this Strategic Review. This action will be permanently recorded in the project's Decision Log. Are you sure you want to proceed?"
                                     : t("Confirm_AdHoc_Message") || "You are about to log an Ad-Hoc Update. This will be recorded in the project's Decision Log. Are you sure you want to proceed?"}
@@ -127,24 +127,24 @@ const ProjectReviewModal = ({
                         <>
                             <div className="review-info-section">
                                 <div className="info-card">
-                                    <Info size={16} color="#4b5563" />
+                                    <Info size={16} color="var(--color-text-secondary, #4b5563)" />
                                     <div>
                                         <div className="info-label">{t("Review_Cadence")}</div>
                                         <div className="info-value">{project.review_cadence ? t(project.review_cadence) : t("Not_Available")}</div>
                                     </div>
                                 </div>
                                 <div className="info-card">
-                                    <Clock size={16} color="#d97706" />
+                                    <Clock size={16} color="var(--color-warning, #d97706)" />
                                     <div>
                                         <div className="info-label">{t("Last_Reviewed")}</div>
                                         <div className="info-value">{project.last_reviewed ? new Date(project.last_reviewed).toLocaleDateString() : t("Never")}</div>
                                     </div>
                                 </div>
                                 <div className="info-card">
-                                    <AlertTriangle size={16} color={project.is_stale ? "#ef4444" : "#059669"} />
+                                    <AlertTriangle size={16} color={project.is_stale ? "var(--color-danger, #ef4444)" : "var(--color-success, #059669)"} />
                                     <div>
                                         <div className="info-label">{t("Next_Review_Date")}</div>
-                                        <div className="info-value" style={{ color: project.is_stale ? "#ef4444" : "inherit", fontWeight: project.is_stale ? "700" : "600" }}>
+                                        <div className="info-value" style={{ color: project.is_stale ? "var(--color-danger, #ef4444)" : "inherit", fontWeight: project.is_stale ? "700" : "600" }}>
                                             {project.next_review_date ? new Date(project.next_review_date).toLocaleDateString() : t("Not_Available")}
                                         </div>
                                     </div>

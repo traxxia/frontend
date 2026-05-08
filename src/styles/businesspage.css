@@ -283,12 +283,12 @@ body {
 }
 
 [data-theme="dark"] .back-button {
-  background-color: var(--color-bg-secondary) !important;
+  background-color: transparent !important;
   color: var(--color-text-dark) !important;
 }
 
 [data-theme="dark"] .business-header-container {
-  background-color: var(--color-bg-secondary);
+  background-color:transparent;
 }
 
 [data-theme="dark"] .breadcrumb-separator {
@@ -427,6 +427,14 @@ body {
 .nav-dropdown-trigger.active {
   color: #2563eb;
   border-bottom-color: #2563eb;
+}
+[data-theme="dark"] .nav-dropdown-trigger {
+  color: #e0e5ec;
+}
+
+[data-theme="dark"] .nav-dropdown-trigger.active  {
+  color: #fff;
+  border-bottom-color: #fff;
 }
 
 .chevron-icon {

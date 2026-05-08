@@ -12,14 +12,14 @@
 }
 
 .admin-metric-card {
-    background: #ffffff;
-    border: 1px solid #e8eaf0;
+    background: var(--color-bg-card, #ffffff);
+    border: 1px solid var(--color-border-light, #e8eaf0);
     border-radius: 16px;
     padding: 1.25rem 1.5rem;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    box-shadow: var(--shadow-sm, 0 2px 8px rgba(0, 0, 0, 0.04));
     transition: box-shadow 0.2s ease, transform 0.2s ease;
 }
 
@@ -37,7 +37,7 @@
 .admin-metric-label {
     font-size: 0.8rem;
     font-weight: 500;
-    color: #6b7280;
+    color: var(--color-text-secondary, #6b7280);
     text-transform: uppercase;
     letter-spacing: 0.04em;
 }
@@ -45,7 +45,7 @@
 .admin-metric-value {
     font-size: 1.9rem;
     font-weight: 700;
-    color: #111827;
+    color: var(--color-text-primary, #111827);
     line-height: 1.1;
 }
 
@@ -72,7 +72,7 @@
 
 .admin-metric-trend-label {
     font-weight: 400;
-    color: #4b5563;
+    color: var(--color-text-muted, #4b5563);
 }
 
 .admin-metric-icon-wrap {
@@ -117,10 +117,10 @@
 
 /* ---- Admin Table Container ---- */
 .admin-table-wrapper {
-    background: #ffffff;
-    border: 1px solid #e8eaf0;
+    background: var(--color-bg-card, #ffffff);
+    border: 1px solid var(--color-border-light, #e8eaf0);
     border-radius: 16px;
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+    box-shadow: var(--shadow-sm, 0 2px 12px rgba(0, 0, 0, 0.05));
     overflow: hidden;
 }
 
@@ -139,8 +139,8 @@
     align-items: center;
     justify-content: space-between;
     padding: 0.85rem 1rem;
-    border-bottom: 1px solid #f0f2f5;
-    background: #ffffff;
+    border-bottom: 1px solid var(--color-border-light, #f0f2f5);
+    background: var(--color-bg-card, #ffffff);
     flex-wrap: wrap;
     gap: 0.75rem;
 }
@@ -159,7 +159,7 @@
 .admin-table-title {
     font-size: 1.1rem;
     font-weight: 700;
-    color: #111827;
+    color: var(--color-text-primary, #111827);
     margin: 0;
 }
 
@@ -196,12 +196,12 @@
 
 .admin-search-input {
     padding: 0.55rem 0.75rem 0.55rem 2.25rem;
-    border: 1px solid #e5e7eb;
+    border: 1px solid var(--color-border-light, #e5e7eb);
     border-radius: 10px;
     font-size: 0.875rem;
     line-height: 1.25rem;
-    color: #374151;
-    background: #f9fafb;
+    color: var(--color-text-primary, #374151);
+    background: var(--color-bg-light, #f9fafb);
     outline: none;
     width: 300px;
     transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
@@ -226,10 +226,10 @@
     align-items: center;
     gap: 0.4rem;
     padding: 0.5rem 0.9rem;
-    border: 1px solid #e5e7eb;
+    border: 1px solid var(--color-border-light, #e5e7eb);
     border-radius: 10px;
-    background: #ffffff;
-    color: #374151;
+    background: var(--color-bg-card, #ffffff);
+    color: var(--color-text-primary, #374151);
     font-size: 0.8rem;
     font-weight: 500;
     cursor: pointer;
@@ -285,11 +285,11 @@
 
 .role-select {
     border-radius: 10px !important;
-    border: 1px solid #e5e7eb !important;
+    border: 1px solid var(--color-border-light, #e5e7eb) !important;
     font-size: 0.85rem !important;
     padding: 0.55rem 2.5rem 0.55rem 1rem !important;
-    color: #374151 !important;
-    background-color: #ffffff !important;
+    color: var(--color-text-primary, #374151) !important;
+    background-color: var(--color-bg-card, #ffffff) !important;
 }
 
 /* ---- Table Itself ---- */
@@ -319,7 +319,7 @@
 }
 
 .admin-data-table thead tr {
-    background: #f8f9fc;
+    background: var(--color-bg-light, #f8f9fc);
     /* border-bottom: 1px solid #e8eaf0; - Removed as per instruction */
 }
 
@@ -327,10 +327,10 @@
     padding: 0.85rem 1rem;
     font-size: 0.75rem;
     font-weight: 600;
-    color: #4b5563;
+    color: var(--color-text-secondary, #4b5563);
     text-transform: uppercase;
     letter-spacing: 0.025em;
-    border-bottom: 2px solid #f0f2f5;
+    border-bottom: 2px solid var(--color-border-light, #f0f2f5);
     /* Thicker line for header separation */
     white-space: nowrap;
 }
@@ -351,22 +351,21 @@
 }
 
 .admin-data-table tr:hover td {
-    background: #f9fafb;
+    background: var(--color-bg-hover, #f9fafb);
 }
 
 .admin-data-table td {
     padding: 5px 1rem;
     /* Increased vertical padding */
-    color: #111827;
+    color: var(--color-text-primary, #111827);
     vertical-align: middle;
     word-wrap: break-word;
     word-break: break-word;
-    border-bottom: 1px solid #f9fafb;
+    border-bottom: 1px solid var(--color-border-light, #f0f2f5);
     /* Very light border instead of heavy gray */
-    background: #ffffff;
+    background: var(--color-bg-card, #ffffff);
     /* Ensure white background for rows if container has gray bg */
     font-size: 0.85rem;
-    border-bottom: 1px solid #f0f2f5;
 }
 
 .admin-data-table td .td-inner {
@@ -715,10 +714,10 @@
     align-items: center;
     gap: 0.3rem;
     padding: 0.45rem 0.9rem;
-    border: 1px solid #e5e7eb;
+    border: 1px solid var(--color-border-light, #e5e7eb);
     border-radius: 10px;
-    background: #ffffff;
-    color: #374151;
+    background: var(--color-bg-card, #ffffff);
+    color: var(--color-text-primary, #374151);
     font-size: 0.8rem;
     font-weight: 500;
     cursor: pointer;
@@ -1005,23 +1004,24 @@
 /* ---- Dark mode support ---- */
 [data-theme="dark"] .admin-table-wrapper,
 [data-theme="dark"] .admin-metric-card {
-    background: var(--color-card, #1e2535);
-    border-color: rgba(255, 255, 255, 0.08);
+    background: var(--color-bg-card, #1e2535);
+    border-color: var(--color-border-light, rgba(255, 255, 255, 0.08));
 }
 
-[data-theme="dark"] .admin-data-table thead tr {
-    background: rgba(255, 255, 255, 0.04);
+[data-theme="dark"] .admin-data-table thead tr,
+[data-theme="dark"] .admin-data-table thead th {
+    background-color: var(--color-bg-light, rgba(255, 255, 255, 0.04)) !important;
 }
 
 [data-theme="dark"] .admin-data-table thead th,
 [data-theme="dark"] .admin-table-title,
 [data-theme="dark"] .admin-metric-value {
-    color: #f3f4f6;
+    color: var(--color-text-primary, #f3f4f6) !important;
 }
 
 [data-theme="dark"] .admin-data-table td,
 [data-theme="dark"] .admin-metric-label {
-    color: #9ca3af;
+    color: var(--color-text-secondary, #9ca3af) !important;
 }
 
 [data-theme="dark"] .admin-data-table tbody tr:hover {

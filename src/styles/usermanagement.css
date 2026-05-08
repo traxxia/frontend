@@ -314,9 +314,9 @@
 }
 
 
-[data-theme="dark"] .dropdown-item:hover {
+/* [data-theme="dark"] .dropdown-item:hover {
   background-color: #2a2f38 !important;
-}
+} */
 
 /* Modal */
 [data-theme="dark"] .modal-content {

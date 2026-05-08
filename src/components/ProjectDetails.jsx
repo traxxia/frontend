@@ -29,13 +29,13 @@ const getImpactIcon = (impact) => {
     const normalizedImpact = !impact ? "" : impact.charAt(0).toUpperCase() + impact.slice(1).toLowerCase();
     switch (normalizedImpact) {
         case "High":
-            return <Circle size={14} color="green" fill="green" />;
+            return <Circle size={14} color="var(--color-success, green)" fill="var(--color-success, green)" />;
         case "Medium":
-            return <Circle size={14} color="gold" fill="gold" />;
+            return <Circle size={14} color="var(--color-warning, gold)" fill="var(--color-warning, gold)" />;
         case "Low":
-            return <Circle size={14} color="gray" fill="gray" />;
+            return <Circle size={14} color="var(--color-text-muted, gray)" fill="var(--color-text-muted, gray)" />;
         default:
-            return <Circle size={14} color="gray" />;
+            return <Circle size={14} color="var(--color-text-muted, gray)" />;
     }
 };
 
@@ -43,20 +43,20 @@ const getEffortIcon = (effort) => {
     const normalizedEffort = !effort ? "" : effort.charAt(0).toUpperCase() + effort.slice(1).toLowerCase();
     switch (normalizedEffort) {
         case "Small":
-            return <Diamond size={14} fill="black" color="black" />;
+            return <Diamond size={14} fill="var(--color-text-primary, black)" color="var(--color-text-primary, black)" />;
         case "Medium":
             return (
                 <div style={{ display: "flex", gap: "2px" }}>
-                    <Diamond size={14} fill="black" color="black" />
-                    <Diamond size={14} fill="black" color="black" />
+                    <Diamond size={14} fill="var(--color-text-primary, black)" color="var(--color-text-primary, black)" />
+                    <Diamond size={14} fill="var(--color-text-primary, black)" color="var(--color-text-primary, black)" />
                 </div>
             );
         case "Large":
             return (
                 <div style={{ display: "flex", gap: "2px" }}>
-                    <Diamond size={14} fill="black" color="black" />
-                    <Diamond size={14} fill="black" color="black" />
-                    <Diamond size={14} fill="black" color="black" />
+                    <Diamond size={14} fill="var(--color-text-primary, black)" color="var(--color-text-primary, black)" />
+                    <Diamond size={14} fill="var(--color-text-primary, black)" color="var(--color-text-primary, black)" />
+                    <Diamond size={14} fill="var(--color-text-primary, black)" color="var(--color-text-primary, black)" />
                 </div>
             );
         default:
@@ -68,30 +68,30 @@ const getRiskIcon = (risk) => {
     const normalizedRisk = !risk ? "" : risk.charAt(0).toUpperCase() + risk.slice(1).toLowerCase();
     switch (normalizedRisk) {
         case "Low":
-            return <Circle size={14} color="green" fill="green" />;
+            return <Circle size={14} color="var(--color-success, green)" fill="var(--color-success, green)" />;
         case "Medium":
-            return <Circle size={14} color="gold" fill="gold" />;
+            return <Circle size={14} color="var(--color-warning, gold)" fill="var(--color-warning, gold)" />;
         case "High":
-            return <Circle size={14} color="red" fill="red" />;
+            return <Circle size={14} color="var(--color-danger, red)" fill="var(--color-danger, red)" />;
         default:
-            return <Circle size={14} color="gray" />;
+            return <Circle size={14} color="var(--color-text-muted, gray)" />;
     }
 };
 
 const getThemeIcon = (theme) => {
     switch (theme) {
         case "Growth":
-            return <Rocket size={16} color="#e11d48" />;
+            return <Rocket size={16} color="var(--color-danger, #e11d48)" />;
         case "Efficiency":
-            return <Bolt size={16} color="#f59e0b" />;
+            return <Bolt size={16} color="var(--color-warning, #f59e0b)" />;
         case "Innovation":
-            return <Lightbulb size={16} color="#facc15" />;
+            return <Lightbulb size={16} color="var(--color-star, #facc15)" />;
         case "CustomerExperience":
-            return <Heart size={16} color="#dc2626" fill="#dc2626" />;
+            return <Heart size={16} color="var(--color-danger, #dc2626)" fill="var(--color-danger, #dc2626)" />;
         case "RiskMitigation":
-            return <Shield size={16} color="#3b82f6" />;
+            return <Shield size={16} color="var(--color-primary, #3b82f6)" />;
         case "Platform":
-            return <Boxes size={16} color="#fb923c" />;
+            return <Boxes size={16} color="var(--color-accent, #fb923c)" />;
         default:
             return null;
     }
@@ -182,23 +182,23 @@ const ProjectDetails = ({
 
             {terminalStatusInfo?.isTerminal && (
                 <div className="terminal-status-banner" style={{
-                    backgroundColor: "#eff6ff",
-                    border: "1px solid #dbeafe",
+                    backgroundColor: "var(--color-bg-light, #eff6ff)",
+                    border: "1px solid var(--color-border-light, #dbeafe)",
                     borderRadius: "8px",
                     padding: "10px 16px",
                     marginBottom: "20px",
                     display: "flex",
                     alignItems: "center",
                     gap: "10px",
-                    color: "#1e40af"
+                    color: "var(--color-text-primary, #1e40af)"
                 }}>
-                    <Info size={18} color="#2563eb" style={{ flexShrink: 0 }} />
+                    <Info size={18} color="var(--color-primary, #2563eb)" style={{ flexShrink: 0 }} />
                     <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap", fontSize: "14px" }}>
                         <span style={{ fontWeight: "600" }}>{terminalStatusInfo.message}</span>
                         {terminalStatusInfo.justification && (
                             <>
-                                <span style={{ color: "#3b82f6", opacity: 0.8 }}>•</span>
-                                <span style={{ fontStyle: "italic", color: "#1d4ed8" }}>
+                                <span style={{ color: "var(--color-primary, #3b82f6)", opacity: 0.8 }}>•</span>
+                                <span style={{ fontStyle: "italic", color: "var(--color-primary-dark, #1d4ed8)" }}>
                                     "{terminalStatusInfo.justification || t("No_justification_provided")}"
                                 </span>
                             </>
@@ -275,7 +275,7 @@ const ProjectDetails = ({
                     {project.key_assumptions && project.key_assumptions.length > 0 ? (
                         <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
                             {project.key_assumptions.filter(a => a).map((assumption, idx) => (
-                                <div key={idx} className="detail-value-display" style={{ padding: '8px 12px', background: '#f8fafc', borderRadius: '6px', border: '1px solid #e2e8f0' }}>
+                                <div key={idx} className="detail-value-display" style={{ padding: '8px 12px', background: 'var(--color-bg-light, #f8fafc)', borderRadius: '6px', border: '1px solid var(--color-border-light, #e2e8f0)' }}>
                                     {assumption}
                                 </div>
                             ))}
@@ -377,7 +377,7 @@ const ProjectDetails = ({
                         </div>
                         <div className="detail-value-display" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                             <span style={{
-                                color: (!terminalStatusInfo.isTerminal && (project.is_stale || (project.next_review_date && new Date(project.next_review_date).getTime() < new Date().setHours(0, 0, 0, 0)))) ? '#ef4444' : (isPendingReview && !terminalStatusInfo.isTerminal ? '#d97706' : 'inherit'),
+                                color: (!terminalStatusInfo.isTerminal && (project.is_stale || (project.next_review_date && new Date(project.next_review_date).getTime() < new Date().setHours(0, 0, 0, 0)))) ? 'var(--color-error, #ef4444)' : (isPendingReview && !terminalStatusInfo.isTerminal ? 'var(--color-warning, #d97706)' : 'inherit'),
                                 fontWeight: '600'
                             }}>
                                 {project.next_review_date ? new Date(project.next_review_date).toLocaleDateString() : t("Not_Available")}
@@ -414,10 +414,10 @@ const ProjectDetails = ({
                     )}
                     {canReview && !["completed", "scaled", "killed"].includes(project.status?.toLowerCase()) && (
                         <>
-                            <button className="btn-review" onClick={() => onPerformReview(project)} style={{ background: '#059669', color: 'white', border: 'none', padding: '8px 16px', borderRadius: '4px', fontSize: '13px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <button className="btn-review" onClick={() => onPerformReview(project)} style={{ background: 'var(--color-success, #059669)', color: 'var(--color-text-white, white)', border: 'none', padding: '8px 16px', borderRadius: '4px', fontSize: '13px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}>
                                 <CheckCircle size={14} /> {t("Perform_Review")}
                             </button>
-                            <button className="btn-adhoc" onClick={() => onAdhocUpdate(project)} style={{ background: '#4b5563', color: 'white', border: 'none', padding: '8px 16px', borderRadius: '4px', fontSize: '13px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <button className="btn-adhoc" onClick={() => onAdhocUpdate(project)} style={{ background: 'var(--color-text-secondary, #4b5563)', color: 'var(--color-text-white, white)', border: 'none', padding: '8px 16px', borderRadius: '4px', fontSize: '13px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}>
                                 <Edit3 size={14} /> {t("Ad_Hoc_Update")}
                             </button>
                         </>

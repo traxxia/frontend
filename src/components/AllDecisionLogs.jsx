@@ -160,7 +160,7 @@ const AllDecisionLogs = () => {
     filters.date;
 
   return (
-    <div style={{ minHeight: "100vh", backgroundColor: "var(--bg-primary, #f8fafc)" }}>
+    <div className="all-decision-logs-page" style={{ minHeight: "100vh", backgroundColor: "var(--color-bg-primary, #f8fafc)" }}>
       <MenuBar />
 
       <div style={{ maxWidth: "1200px", margin: "0 auto", padding: "24px 20px" }}>
@@ -174,10 +174,10 @@ const AllDecisionLogs = () => {
             <ArrowLeft size={16} />
             {t("dashboard")}
           </button>
-          <span style={{ color: "#d1d5db" }}>/</span>
+          <span style={{ color: "var(--color-text-light, #d1d5db)" }}>/</span>
           <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
             <FileText size={20} color="#4f46e5" />
-            <h1 style={{ fontSize: "20px", fontWeight: 700, margin: 0, color: "#111827" }}>
+            <h1 style={{ fontSize: "20px", fontWeight: 700, margin: 0, color: "var(--color-text-primary, #111827)" }}>
               {t("Decision_Log")}
             </h1>
           </div>
@@ -186,17 +186,17 @@ const AllDecisionLogs = () => {
         {/* Filter Bar */}
         <div
           style={{
-            background: "#fff",
-            border: "1px solid #e8eaf0",
+            background: "var(--color-bg-card, #fff)",
+            border: "1px solid var(--color-border-light, #e8eaf0)",
             borderRadius: "16px",
             padding: "16px 20px",
             marginBottom: "20px",
-            boxShadow: "0 2px 8px rgba(0, 0, 0, 0.04)",
+            boxShadow: "var(--shadow-sm, 0 2px 8px rgba(0, 0, 0, 0.04))",
           }}
         >
           <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "12px" }}>
             <Filter size={15} color="#6b7280" />
-            <span style={{ fontSize: "13px", fontWeight: 600, color: "#374151" }}>
+            <span style={{ fontSize: "13px", fontWeight: 600, color: "var(--color-text-primary, #374151)" }}>
               {t("Filters")}
             </span>
             {hasActiveFilters && (
@@ -490,10 +490,10 @@ const AllDecisionLogs = () => {
                   style={{
                     marginTop: "6px",
                     padding: "12px",
-                    background: "#f8f9fc",
+                    background: "var(--color-bg-light, #f8f9fc)",
                     borderRadius: "10px",
-                    border: "1px solid #f0f2f5",
-                    color: "#374151",
+                    border: "1px solid var(--color-border-light, #f0f2f5)",
+                    color: "var(--color-text-primary, #374151)",
                     lineHeight: "1.5",
                     fontSize: "13px",
                   }}
@@ -508,8 +508,8 @@ const AllDecisionLogs = () => {
                   <div 
                     style={{ 
                       fontSize: "11px", 
-                      color: "#6b7280", 
-                      background: "#f3f4f6", 
+                      color: "var(--color-text-secondary, #6b7280)", 
+                      background: "var(--color-bg-light, #f3f4f6)", 
                       padding: "8px", 
                       borderRadius: "6px",
                       marginTop: "4px",
@@ -527,8 +527,8 @@ const AllDecisionLogs = () => {
                   <div 
                     style={{ 
                       fontSize: "11px", 
-                      color: "#6b7280", 
-                      background: "#f3f4f6", 
+                      color: "var(--color-text-secondary, #6b7280)", 
+                      background: "var(--color-bg-light, #f3f4f6)", 
                       padding: "8px", 
                       borderRadius: "6px",
                       marginTop: "4px",

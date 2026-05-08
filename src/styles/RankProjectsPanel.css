@@ -1,11 +1,11 @@
 /* Outer Container */
 .rank-panel-container {
   margin-top: 10px;
-  background: white;
-  border: 1px solid #e5e7eb;
+  background: var(--color-bg-card, white);
+  border: 1px solid var(--color-border-light, #e5e7eb);
   border-radius: 12px;
   padding: 10px 20px;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  box-shadow: var(--shadow-sm, 0 4px 6px -1px rgba(0, 0, 0, 0.05));
 }
 
 /* Header */
@@ -19,7 +19,7 @@
 .rank-title {
   margin: 0;
   font-weight: 700;
-  color: #1f2937;
+  color: var(--color-text-primary, #1f2937);
 }
 
 .rank-header-buttons {
@@ -31,17 +31,17 @@
 /* Description */
 .rank-description {
   font-size: 14px;
-  color: #6b7280;
+  color: var(--color-text-secondary, #6b7280);
   margin-top: 0;
   margin-bottom: 16px;
 }
 
 /* Project Cards */
 .rank-project-card {
-  background: white;
+  background: var(--color-bg-card, white);
   padding: 16px;
   border-radius: 8px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--color-border-light, #e5e7eb);
   padding: 12px !important;
   margin-bottom: 8px !important;
   transition: all 0.2s;
@@ -76,11 +76,12 @@
 .rank-project-title {
   margin: 0;
   font-weight: 600;
+  color: var(--color-text-primary);
 }
 
 .rank-project-desc {
   margin: 0;
-  color: #555;
+  color: var(--color-text-secondary, #555);
   font-size: 13px;
 }
 
@@ -137,7 +138,9 @@
   margin-top: 12px;
   padding: 12px;
   border-radius: 8px;
-  border: 1px solid #ddd;
+  border: 1px solid var(--color-border-light, #ddd);
+  background: var(--color-bg-card, white);
+  color: var(--color-text-primary);
   font-size: 14px;
 }
 
@@ -226,7 +229,7 @@
 }
 
 [data-theme="dark"] .rank-project-card .card-body {
-    background-color: #333946 ;
+    background-color: var(--color-bg-card, #333946) ;
 }
 
 
@@ -369,8 +372,8 @@
 }
 
 [data-theme="dark"] .rank-project-card:hover {
-  border-color: rgb(26, 115, 232) !important;
-  box-shadow: 0 0 6px rgb(200, 225, 255) !important;
+  border-color: var(--color-primary-light, rgb(26, 115, 232)) !important;
+  box-shadow: 0 0 6px var(--color-primary-subtle, rgb(200, 225, 255)) !important;
 }
 
 /* Add these styles to your existing RankProjectsPanel.css */
@@ -445,10 +448,10 @@
 .selection-list {
   max-height: 300px;
   overflow-y: auto;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--color-border-light, #e5e7eb);
   border-radius: 8px;
   padding: 12px;
-  background: #f9fafb;
+  background: var(--color-bg-light, #f9fafb);
 }
 
 .selection-item {
