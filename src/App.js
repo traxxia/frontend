@@ -53,6 +53,7 @@ import 'styles/pmf-onboarding.css';
 import 'styles/question-management.css';
 import 'styles/streaming.css';
 import 'styles/superadmin.css';
+import 'styles/observatory.css';
 import 'styles/usermanagement.css';
 
 /* Core Logic */
@@ -65,7 +66,7 @@ import { useUIStore } from './store/uiStore';
 import { useLanguageStore } from './store/languageStore';
 
 // Pages where the AI assistant should NOT appear
-const AI_EXCLUDED_EXACT_PATHS = ['/', '/login', '/register', '/dashboard', '/admin', '/super-admin'];
+const AI_EXCLUDED_EXACT_PATHS = ['/', '/login', '/register', '/dashboard', '/admin', '/super-admin', '/super-admin/observatory'];
 const AI_EXCLUDED_PREFIX_PATHS = ['/academy'];
 
 const GlobalAiAssistant = () => {
@@ -121,6 +122,7 @@ const SuperAdminPage = React.lazy(() => import('./pages/SuperAdminPage'));
 const Register = React.lazy(() => import('./pages/Register'));
 const AcademyPage = React.lazy(() => import('./pages/AcademyPage'));
 const AllDecisionLogs = React.lazy(() => import('./components/AllDecisionLogs'));
+const ObservatoryPage = React.lazy(() => import('./pages/ObservatoryPage'));
 
 const App = () => {
   const theme = useUIStore((state) => state.theme);
@@ -205,6 +207,16 @@ const App = () => {
                 <ProtectedRoute>
                   <React.Suspense fallback={null}>
                     <AllDecisionLogs />
+                  </React.Suspense>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/super-admin/observatory"
+              element={
+                <ProtectedRoute observatoryOnly={true}>
+                  <React.Suspense fallback={null}>
+                    <ObservatoryPage />
                   </React.Suspense>
                 </ProtectedRoute>
               }

@@ -104,12 +104,12 @@ export class AnalysisApiService {
 
   async fetchAnalysisDataThroughBackend(businessId, forceRefresh = false) {
     if (!businessId) return [];
-    
+
     const cacheKey = `analysis-${businessId}`;
     if (!forceRefresh && analysisDataCache.has(cacheKey)) {
       return await analysisDataCache.get(cacheKey);
     }
-    
+
     const fetchPromise = (async () => {
       try {
         const token = this.getAuthToken();
@@ -120,7 +120,7 @@ export class AnalysisApiService {
         throw error;
       }
     })();
-    
+
     analysisDataCache.set(cacheKey, fetchPromise);
     return fetchPromise;
   }
@@ -134,7 +134,7 @@ export class AnalysisApiService {
       pmfAnalysisCache.delete(`pmf-${businessId}`);
       pmfExecutiveSummaryCache.delete(`exec-${businessId}`);
       kickstartRequestCache.delete(`kickstart-${businessId}`);
-      
+
       const response = await fetch(`${this.API_BASE_URL}/api/pmf-analysis/onboarding`, {
         method: 'POST',
         headers: {
@@ -158,12 +158,12 @@ export class AnalysisApiService {
 
   async getPMFAnalysis(businessId) {
     if (!businessId) return null;
-    
+
     const cacheKey = `pmf-${businessId}`;
     if (pmfAnalysisCache.has(cacheKey)) {
       return await pmfAnalysisCache.get(cacheKey);
     }
-    
+
     const fetchPromise = (async () => {
       try {
         const token = this.getAuthToken();
@@ -180,7 +180,7 @@ export class AnalysisApiService {
         throw error;
       }
     })();
-    
+
     pmfAnalysisCache.set(cacheKey, fetchPromise);
     return fetchPromise;
   }
@@ -191,7 +191,7 @@ export class AnalysisApiService {
       // Clear cache on save
       pmfExecutiveSummaryCache.delete(`exec-${businessId}`);
       kickstartRequestCache.delete(`kickstart-${businessId}`);
-      
+
       const response = await fetch(`${this.API_BASE_URL}/api/pmf-analysis/${businessId}/executive-summary`, {
         method: 'POST',
         headers: {
@@ -209,12 +209,12 @@ export class AnalysisApiService {
 
   async getPMFExecutiveSummary(businessId) {
     if (!businessId) return null;
-    
+
     const cacheKey = `exec-${businessId}`;
     if (pmfExecutiveSummaryCache.has(cacheKey)) {
       return await pmfExecutiveSummaryCache.get(cacheKey);
     }
-    
+
     const fetchPromise = (async () => {
       try {
         const token = this.getAuthToken();
@@ -231,30 +231,30 @@ export class AnalysisApiService {
         throw error;
       }
     })();
-    
+
     pmfExecutiveSummaryCache.set(cacheKey, fetchPromise);
     return fetchPromise;
   }
-  
+
   async getProjects(businessId) {
     if (!businessId) return [];
-    
+
     const cacheKey = `projects-${businessId}`;
     if (projectsCache.has(cacheKey)) {
       return await projectsCache.get(cacheKey);
     }
-    
+
     const fetchPromise = (async () => {
       try {
         const token = this.getAuthToken();
         if (!token) return [];
-        
+
         const response = await fetch(`${this.API_BASE_URL}/api/projects?business_id=${businessId}`, {
           headers: {
             'Authorization': `Bearer ${token}`
           }
         });
-        
+
         if (!response.ok) return [];
         const data = await response.json();
         return data.projects || [];
@@ -264,7 +264,7 @@ export class AnalysisApiService {
         return [];
       }
     })();
-    
+
     projectsCache.set(cacheKey, fetchPromise);
     return fetchPromise;
   }
@@ -275,7 +275,7 @@ export class AnalysisApiService {
       // Clear caches
       pmfAnalysisCache.delete(`pmf-${businessId}`);
       kickstartRequestCache.delete(`kickstart-${businessId}`);
-      
+
       const insightsData = insights?.insights || insights;
       const response = await fetch(`${this.API_BASE_URL}/api/pmf-analysis/${businessId}/insights`, {
         method: 'POST',
@@ -296,7 +296,7 @@ export class AnalysisApiService {
     if (!businessId) return null;
 
     const cacheKey = `kickstart-${businessId}`;
-    
+
     // If not forcing refresh and we have data, return it
     if (!forceRefresh && kickstartRequestCache.has(cacheKey)) {
       return await kickstartRequestCache.get(cacheKey);
@@ -601,12 +601,12 @@ export class AnalysisApiService {
             const documentBlob = await this.downloadFinancialDocument(selectedBusinessId);
             if (documentBlob) {
               fileToUpload = await this.createFileFromDocument(documentBlob, documentInfo);
-            }  
-          }  
+            }
+          }
         } else if (fileToUpload) {
           // Ensure we have document metadata for the source header if it's missing
           if (!documentInfo && selectedBusinessId) {
-             documentInfo = await this.fetchFinancialDocument(selectedBusinessId);
+            documentInfo = await this.fetchFinancialDocument(selectedBusinessId);
           }
         }
 
@@ -634,7 +634,7 @@ export class AnalysisApiService {
           url += `?${params.toString()}`;
         }
 
-        response = await fetch(url+'s', {
+        response = await fetch(url + 's', {
           method: 'POST',
           headers: {
             'accept': 'application/json',
@@ -652,6 +652,17 @@ export class AnalysisApiService {
         if (this.requiresDeepSearch(endpoint)) {
           headers['deep_search'] = 'true';
         }
+
+        try {
+          const authState = JSON.parse(
+            sessionStorage.getItem('auth-storage') || localStorage.getItem('auth-storage') || '{}'
+          );
+          const isObservatory = authState?.state?.isObservatory === true;
+          headers['x-is-observatory'] = isObservatory ? 'true' : 'false';
+          if (selectedBusinessId) {
+            headers['x-business-id'] = selectedBusinessId;
+          }
+        } catch (_) { /* silent */ }
 
         // Use rawPayload if provided, otherwise construct the default payload
         const payload = rawPayload || {
@@ -759,7 +770,7 @@ export class AnalysisApiService {
       const batchSize = 2;
       for (let i = 0; i < analysisTypes.length; i += batchSize) {
         const batch = analysisTypes.slice(i, i + batchSize);
-        
+
         const batchPromises = batch.map((analysisType) => {
           const displayName =
             typeof this.getDisplayName === "function"
@@ -977,7 +988,7 @@ export class AnalysisApiService {
       }
 
       await AnalysisService.upsertAnalysis(this.API_BASE_URL, token, analysisPayload);
-      
+
       // Clear analysis cache for this business after upsert
       analysisDataCache.delete(`analysis-${selectedBusinessId}`);
 
