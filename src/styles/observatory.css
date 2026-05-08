@@ -556,6 +556,15 @@
   font-size: 10px;
 }
 
+.obs-badge--cost {
+  background: rgba(16, 185, 129, 0.08);
+  color: var(--obs-green);
+  border-color: rgba(16, 185, 129, 0.15);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: -0.2px;
+}
+
 /* ── Token Display ── */
 .obs-tokens {
   display: flex;

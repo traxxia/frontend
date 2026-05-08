@@ -41,6 +41,54 @@ function fmtTime(ts) {
   });
 }
 
+// ── Cost Estimation ─────────────────────────────────────────────────────
+// Cost per 1M tokens in USD (Input, Output)
+const COST_RATES = {
+  'gpt-4o-mini': { input: 0.150, output: 0.600 },
+  'gpt-4o': { input: 5.00, output: 15.00 },
+  'gpt-3.5-turbo': { input: 0.50, output: 1.50 },
+  'claude-3-5-sonnet-20240620': { input: 3.00, output: 15.00 },
+  'llama-3.1-8b-instant': { input: 0.05, output: 0.08 },
+  'llama-3.1-70b-versatile': { input: 0.59, output: 0.79 },
+  'llama-3.3-70b-versatile': { input: 0.59, output: 0.79 },
+  'llama3-70b-8192': { input: 0.59, output: 0.79 },
+  'mixtral-8x7b-32768': { input: 0.24, output: 0.24 },
+  'gemma2-9b-it': { input: 0.20, output: 0.20 },
+  'sonar-pro': { input: 3.00, output: 15.00 },
+  'sonar': { input: 1.00, output: 1.00 },
+  'openai/gpt-oss-120b': { input: 0.60, output: 0.60 } // Groq OSS estimate
+};
+
+function calculateCost(modelId, promptTokens, completionTokens) {
+  if (!modelId) return null;
+  const model = modelId.toLowerCase().trim();
+  
+  // Exact match first
+  if (COST_RATES[model]) {
+    const r = COST_RATES[model];
+    return ((promptTokens / 1000000) * r.input) + ((completionTokens / 1000000) * r.output);
+  }
+
+  // Prefix/Inclusion match (e.g. "openai/gpt-oss-120b" includes "gpt-oss-120b")
+  const entry = Object.entries(COST_RATES).find(([k]) => model.includes(k) || k.includes(model));
+  if (entry) {
+    const r = entry[1];
+    return ((promptTokens / 1000000) * r.input) + ((completionTokens / 1000000) * r.output);
+  }
+  
+  return null;
+}
+
+function CostBadge({ model, usage }) {
+  const cost = calculateCost(model, usage?.prompt_tokens || 0, usage?.completion_tokens || 0);
+  if (cost === null) return null;
+  return (
+    <span className="obs-badge obs-badge--cost">
+      ${cost < 0.01 ? cost.toFixed(5) : cost.toFixed(4)}
+    </span>
+  );
+}
+
 function ProviderBadge({ provider }) {
   const cls = `obs-badge obs-badge--provider-${(provider || 'unknown').toLowerCase()}`;
   return <span className={cls}>{provider || '—'}</span>;
@@ -114,7 +162,10 @@ function PromptInspector({ entry, onClose }) {
           {entry.latency_ms && <span><Zap size={12} /> {entry.latency_ms.toLocaleString()}ms</span>}
           {entry.model && <span><Cpu size={12} /> {entry.model}</span>}
         </div>
-        <TokenDisplay usage={entry.token_usage} />
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
+          <TokenDisplay usage={entry.token_usage} />
+          <CostBadge model={entry.model || entry.stage} usage={entry.token_usage} />
+        </div>
 
         <PromptBlock label="🔧 System Prompt" content={entry.system_prompt} variant="system" />
         <PromptBlock label="💬 User Input" content={entry.user_prompt || entry.user_input} variant="user" />
@@ -194,7 +245,7 @@ function SessionCard({ session, onSelectEntry, selectedEntry }) {
               <div className="obs-timeline-item__info">
                 <div className="obs-timeline-item__stage">{e.stage}</div>
                 <div className="obs-timeline-item__meta">
-                  <ProviderBadge provider={e.llm_provider} /> · {(e.token_usage?.total_tokens || 0).toLocaleString()} tokens
+                  <ProviderBadge provider={e.llm_provider} /> · {(e.token_usage?.total_tokens || 0).toLocaleString()} tokens · <CostBadge model={e.model || e.stage} usage={e.token_usage} />
                 </div>
               </div>
               <div className="obs-timeline-item__time">{relativeTime(e.timestamp)}</div>
@@ -254,6 +305,8 @@ function ChatLogCard({ log, selected, onSelect }) {
             <span style={{ color: 'var(--obs-text-dim)', fontStyle: 'italic' }}>{relativeTime(log.timestamp)}</span>
             <span>·</span>
             <span>{(log.token_usage?.total_tokens || 0).toLocaleString()} tokens</span>
+            <span>·</span>
+            <CostBadge model={log.model} usage={log.token_usage} />
             {log.latency_ms && <><span>·</span><span>{log.latency_ms}ms</span></>}
           </div>
           <div style={{ marginTop: 4, fontSize: 12, color: 'var(--obs-text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
@@ -334,30 +387,7 @@ function ChatTab() {
   );
 }
 
-// ── Cost Estimation ─────────────────────────────────────────────────────
-// Cost per 1M tokens in USD (Input, Output)
-const COST_RATES = {
-  'gpt-4o-mini': { input: 0.150, output: 0.600 },
-  'gpt-4o': { input: 5.00, output: 15.00 },
-  'gpt-3.5-turbo': { input: 0.50, output: 1.50 },
-  'claude-3-5-sonnet-20240620': { input: 3.00, output: 15.00 },
-  'llama-3.1-8b-instant': { input: 0.05, output: 0.08 },
-  'llama3-70b-8192': { input: 0.59, output: 0.79 },
-  'llama-3.3-70b-versatile': { input: 0.59, output: 0.79 },
-  'mixtral-8x7b-32768': { input: 0.24, output: 0.24 },
-  'gemma2-9b-it': { input: 0.20, output: 0.20 },
-  'sonar-pro': { input: 3.00, output: 15.00 }
-};
-
-function calculateCost(modelId, promptTokens, completionTokens) {
-  if (!modelId) return null;
-  const rates = COST_RATES[modelId] || COST_RATES[modelId.toLowerCase()];
-  if (!rates) return null;
-  
-  const inCost = (promptTokens / 1000000) * rates.input;
-  const outCost = (completionTokens / 1000000) * rates.output;
-  return inCost + outCost;
-}
+// Removed old cost estimation location
 
 // ── Stats Tab ─────────────────────────────────────────────────────────
 function StatsTab() {
