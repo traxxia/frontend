@@ -210,8 +210,7 @@ const BusinessDecisionLogs = ({ businessId }) => {
         apiParams.from = fromDate.toISOString();
         apiParams.to = toDate.toISOString();
       }
-
-      console.log('Fetching logs with params:', apiParams);
+ 
       const response = await decisionLogApiService.getBusinessLogs(businessId, apiParams);
       setData(response);
     } catch (error) {

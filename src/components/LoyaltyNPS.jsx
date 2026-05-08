@@ -295,7 +295,9 @@ const LoyaltyNPS = ({
   const trendIndicator = getTrendIndicator(loyaltyData.trend);
 
   return (
-    <div className="loyalty-nps" data-analysis-type="loyalty-nps"
+    <div className="loyalty-nps" 
+      data-component="loyalty-nps"
+      data-analysis-type="loyalty-nps"
       data-analysis-name="Loyalty & NPS Analysis"
       data-analysis-order="4">
 

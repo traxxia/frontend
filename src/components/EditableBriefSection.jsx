@@ -268,7 +268,7 @@ const EditableField = ({
           onClick={() => canEdit && !(isSaving || isEssentialPhaseGenerating || isEnriching || isApplyingEnrichment) && handleEdit(field)}
           style={{
             cursor: (!canEdit || isSaving || isEssentialPhaseGenerating || isEnriching || isApplyingEnrichment) ? 'default' : 'pointer',
-            color: !field.value ? '#9ca3af' : 'inherit',
+            color: !field.value ? '#9ca3af' : '#302d2d',
             fontStyle: !field.value ? 'italic' : 'normal'
           }}
         >
@@ -834,12 +834,10 @@ const EditableBriefSection = ({
 
       let response;
       if (existingAnswerId) {
-        // Update existing answer
-        console.log(`Updating existing answer ${existingAnswerId} for question ${questionId}`);
+        // Update existing answer 
         response = await answerService.updateAnswer(existingAnswerId, newAnswer);
       } else {
-        // Create new answer
-        console.log(`Creating new answer for question ${questionId}`);
+        // Create new answer 
         response = await answerService.createAnswer(selectedBusinessId, questionId, newAnswer);
         if (response && response.data && response.data._id) {
           if (setAnswerIds) {
@@ -1220,8 +1218,7 @@ const EditableBriefSection = ({
 
       // Handle bulk create for new answers
       if (toCreate.length > 0) {
-        try {
-          console.log(`[AI] Bulk creating ${toCreate.length} new answers`);
+        try { 
           const bulkRes = await answerService.bulkCreateAnswers(selectedBusinessId, toCreate.map(item => ({
             question_id: item.question_id,
             answer: item.answer_text
@@ -1243,8 +1240,7 @@ const EditableBriefSection = ({
 
       // Handle bulk updates for existing answers
       if (toUpdate.length > 0) {
-        try {
-          console.log(`[AI] Bulk updating ${toUpdate.length} existing answers`);
+        try { 
           await answerService.bulkUpdateAnswers(selectedBusinessId, toUpdate.map(item => ({
             answer_id: item.id,
             answer: item.answer_text
@@ -1276,7 +1272,12 @@ const EditableBriefSection = ({
 
       // Trigger auto-regeneration of Insights 6'Cs and Strategic Tab
       if (onAnalysisRegenerate) {
-        onAnalysisRegenerate({ updatedQuestionIds, alsoRegenerateStrategic: true, skipConfirmation: true });
+        onAnalysisRegenerate({ 
+          updatedQuestionIds, 
+          alsoRegenerateStrategic: true, 
+          skipConfirmation: true,
+          skipFinancial: true 
+        });
       }
     } catch (error) {
       console.error('Apply enrichment error:', error);

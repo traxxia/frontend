@@ -35,6 +35,12 @@ export const useAccessControl = (selectedBusinessId) => {
       const status = project.status?.toLowerCase();
       if (['completed', 'scaled', 'killed'].includes(status)) return false;
 
+      // Primary source of truth: Specific project access from API
+      const pid = String(project._id || project.id || "");
+      if (pid && accessControl.projectsEditAccess && Object.prototype.hasOwnProperty.call(accessControl.projectsEditAccess, pid)) {
+        return accessControl.projectsEditAccess[pid] === true;
+      }
+
       const isProjectLaunched = 
         project.launch_status?.toLowerCase() === 'launched' || 
         project.launch_status?.toLowerCase() === 'pending_launch' || 
@@ -43,7 +49,8 @@ export const useAccessControl = (selectedBusinessId) => {
       const isProjectActive = project.status?.toLowerCase() === 'active';
 
       if (businessStatus === "launched" || isProjectLaunched || isProjectActive) {
-        return accessControl.projectsEditAccess[project._id] === true;
+        // If not found in the map above, default to no access for launched/active projects
+        return false;
       }
 
       const isProjectDraft = !project.status || project.status.toLowerCase() === 'draft';
@@ -58,7 +65,7 @@ export const useAccessControl = (selectedBusinessId) => {
 
       return false;
     },
-    [accessControl.projectsEditAccess]
+    [accessControl.projectsEditAccess, userLimits]
   );
 
   const isReadOnlyMode = useCallback((isArchived) => {

@@ -97,13 +97,9 @@ const FullSWOTPortfolio = ({
     const isRegenerating = propIsRegenerating || isTypeRegenerating('fullSwot');
 
     const [expandedSections, setExpandedSections] = useState({
-        strengths: true,
-        weaknesses: true,
-        opportunities: true,
-        threats: true,
-        strategicOptions: true,
-        riskAssessment: true,
-        competitivePositioning: true
+        fullSwot: false,
+        strategicOptions: false,
+        riskAssessment: false
     });
 
     const [visibleRows, setVisibleRows] = useState(0);
@@ -424,174 +420,158 @@ const FullSWOTPortfolio = ({
             )}
 
             <div className="section-container">
-                <div className="section-header" onClick={() => toggleSection('threats')}>
+                <div className="section-header" onClick={() => toggleSection('fullSwot')}>
                     <h5>{t("fullswot_card1")}</h5>
-                    {expandedSections.threats ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
+                    {expandedSections.fullSwot ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
                 </div>
-                <div className='table-container'>
-                    {portfolio.strengths && portfolio.strengths.length > 0 && (
-                        <>
-                            {expandedSections.strengths && (
-                                <table className="data-table">
-                                    <thead>
-                                        <tr>
-                                            <th>{t("fullswot_card1_head1")}</th>
-                                            <th>{t("fullswot_card1_head2")}</th>
-                                            <th>{t("fullswot_card1_head3")}</th>
-                                            <th>{t("fullswot_card1_head4")}</th>
-                                            <th>{t("fullswot_card1_head5")}</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {portfolio.strengths.map((item, index) => {
-                                            const rowIndex = strengthsIndices[index];
-                                            const isVisible = rowIndex < visibleRows;
-                                            const isLast = rowIndex === visibleRows - 1;
-                                            return (
-                                                <StreamingRow key={index} isVisible={isVisible} isLast={isLast && isStreaming} lastRowRef={lastRowRef} isStreaming={isStreaming}>
-                                                    <td>{hasStreamed ? item.item : (typingTexts[`${rowIndex}-item`] || item.item)}</td>
-                                                    <td style={{ opacity: isVisible ? 1 : 0, transition: !isStreaming ? 'none' : 'opacity 0.3s 0.1s' }}>
-                                                        {item.score && (<span className={`status-badge ${getScoreColor(item.score)}`}>{item.score}</span>)}
-                                                    </td>
-                                                    <td style={{ opacity: isVisible ? 1 : 0, transition: !isStreaming ? 'none' : 'opacity 0.3s 0.2s' }}>
-                                                        <span className="force-tag">{hasStreamed ? (item.category?.replace(/_/g, ' ') || 'N/A') : (typingTexts[`${rowIndex}-category`]?.replace(/_/g, ' ') || item.category?.replace(/_/g, ' ') || 'N/A')}</span>
-                                                    </td>
-                                                    <td style={{ opacity: isVisible ? 1 : 0, transition: !isStreaming ? 'none' : 'opacity 0.3s 0.3s' }}>
-                                                        <span className={`status-badge ${item.competitiveAdvantage ? 'high-intensity' : 'low-intensity'}`}>{item.competitiveAdvantage ? 'Yes' : 'No'}</span>
-                                                    </td>
-                                                    <td style={{ opacity: isVisible ? 1 : 0, transition: !isStreaming ? 'none' : 'opacity 0.3s 0.4s' }}>
-                                                        <span className={`status-badge ${item.customerValidated ? 'high-intensity' : 'low-intensity'}`}>{item.customerValidated ? 'Yes' : 'No'}</span>
-                                                    </td>
-                                                </StreamingRow>
-                                            );
-                                        })}
-                                    </tbody>
-                                </table>
-                            )}
-                        </>
-                    )}
+                <div className={`section-container table-container container1 ${expandedSections.fullSwot === true ? 'expanded' : 'collapsed'}`}>
+                        {portfolio.strengths && portfolio.strengths.length > 0 && (
+                            <table className="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>{t("fullswot_card1_head1")}</th>
+                                        <th>{t("fullswot_card1_head2")}</th>
+                                        <th>{t("fullswot_card1_head3")}</th>
+                                        <th>{t("fullswot_card1_head4")}</th>
+                                        <th>{t("fullswot_card1_head5")}</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {portfolio.strengths.map((item, index) => {
+                                        const rowIndex = strengthsIndices[index];
+                                        const isVisible = rowIndex < visibleRows;
+                                        const isLast = rowIndex === visibleRows - 1;
+                                        return (
+                                            <StreamingRow key={index} isVisible={isVisible} isLast={isLast && isStreaming} lastRowRef={lastRowRef} isStreaming={isStreaming}>
+                                                <td>{hasStreamed ? item.item : (typingTexts[`${rowIndex}-item`] || item.item)}</td>
+                                                <td style={{ opacity: isVisible ? 1 : 0, transition: !isStreaming ? 'none' : 'opacity 0.3s 0.1s' }}>
+                                                    {item.score && (<span className={`status-badge ${getScoreColor(item.score)}`}>{item.score}</span>)}
+                                                </td>
+                                                <td style={{ opacity: isVisible ? 1 : 0, transition: !isStreaming ? 'none' : 'opacity 0.3s 0.2s' }}>
+                                                    <span className="force-tag">{hasStreamed ? (item.category?.replace(/_/g, ' ') || 'N/A') : (typingTexts[`${rowIndex}-category`]?.replace(/_/g, ' ') || item.category?.replace(/_/g, ' ') || 'N/A')}</span>
+                                                </td>
+                                                <td style={{ opacity: isVisible ? 1 : 0, transition: !isStreaming ? 'none' : 'opacity 0.3s 0.3s' }}>
+                                                    <span className={`status-badge ${item.competitiveAdvantage ? 'high-intensity' : 'low-intensity'}`}>{item.competitiveAdvantage ? 'Yes' : 'No'}</span>
+                                                </td>
+                                                <td style={{ opacity: isVisible ? 1 : 0, transition: !isStreaming ? 'none' : 'opacity 0.3s 0.4s' }}>
+                                                    <span className={`status-badge ${item.customerValidated ? 'high-intensity' : 'low-intensity'}`}>{item.customerValidated ? 'Yes' : 'No'}</span>
+                                                </td>
+                                            </StreamingRow>
+                                        );
+                                    })}
+                                </tbody>
+                            </table>
+                        )}
 
-                    {portfolio.weaknesses && portfolio.weaknesses.length > 0 && (
-                        <>
-                            {expandedSections.weaknesses && (
-                                <table className="data-table">
-                                    <thead>
-                                        <tr>
-                                            <th>{t("fullswot_card1_head6")}</th>
-                                            <th>{t("fullswot_card1_head2")}</th>
-                                            <th>{t("fullswot_card1_head3")}</th>
-                                            <th>{t("fullswot_card1_head7")}</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {portfolio.weaknesses.map((item, index) => {
-                                            const rowIndex = weaknessesIndices[index];
-                                            const isVisible = rowIndex < visibleRows;
-                                            const isLast = rowIndex === visibleRows - 1;
-                                            return (
-                                                <StreamingRow key={index} isVisible={isVisible} isLast={isLast && isStreaming} lastRowRef={lastRowRef} isStreaming={isStreaming}>
-                                                    <td>{hasStreamed ? item.item : (typingTexts[`${rowIndex}-item`] || item.item)}</td>
-                                                    <td style={{ opacity: isVisible ? 1 : 0, transition: !isStreaming ? 'none' : 'opacity 0.3s 0.1s' }}>
-                                                        {item.score && (<span className={`status-badge ${getScoreColor(item.score)}`}>{item.score}</span>)}
-                                                    </td>
-                                                    <td style={{ opacity: isVisible ? 1 : 0, transition: !isStreaming ? 'none' : 'opacity 0.3s 0.2s' }}>
-                                                        <span className="force-tag">{hasStreamed ? (item.category?.replace(/_/g, ' ') || 'N/A') : (typingTexts[`${rowIndex}-category`]?.replace(/_/g, ' ') || item.category?.replace(/_/g, ' ') || 'N/A')}</span>
-                                                    </td>
-                                                    <td style={{ opacity: isVisible ? 1 : 0, transition: !isStreaming ? 'none' : 'opacity 0.3s 0.3s' }}>
-                                                        {item.improvementPriority && (<span className={`status-badge ${getPriorityColor(item.improvementPriority)}`}>{item.improvementPriority}</span>)}
-                                                    </td>
-                                                </StreamingRow>
-                                            );
-                                        })}
-                                    </tbody>
-                                </table>
-                            )}
-                        </>
-                    )}
+                        {portfolio.weaknesses && portfolio.weaknesses.length > 0 && (
+                            <table className="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>{t("fullswot_card1_head6")}</th>
+                                        <th>{t("fullswot_card1_head2")}</th>
+                                        <th>{t("fullswot_card1_head3")}</th>
+                                        <th>{t("fullswot_card1_head7")}</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {portfolio.weaknesses.map((item, index) => {
+                                        const rowIndex = weaknessesIndices[index];
+                                        const isVisible = rowIndex < visibleRows;
+                                        const isLast = rowIndex === visibleRows - 1;
+                                        return (
+                                            <StreamingRow key={index} isVisible={isVisible} isLast={isLast && isStreaming} lastRowRef={lastRowRef} isStreaming={isStreaming}>
+                                                <td>{hasStreamed ? item.item : (typingTexts[`${rowIndex}-item`] || item.item)}</td>
+                                                <td style={{ opacity: isVisible ? 1 : 0, transition: !isStreaming ? 'none' : 'opacity 0.3s 0.1s' }}>
+                                                    {item.score && (<span className={`status-badge ${getScoreColor(item.score)}`}>{item.score}</span>)}
+                                                </td>
+                                                <td style={{ opacity: isVisible ? 1 : 0, transition: !isStreaming ? 'none' : 'opacity 0.3s 0.2s' }}>
+                                                    <span className="force-tag">{hasStreamed ? (item.category?.replace(/_/g, ' ') || 'N/A') : (typingTexts[`${rowIndex}-category`]?.replace(/_/g, ' ') || item.category?.replace(/_/g, ' ') || 'N/A')}</span>
+                                                </td>
+                                                <td style={{ opacity: isVisible ? 1 : 0, transition: !isStreaming ? 'none' : 'opacity 0.3s 0.3s' }}>
+                                                    {item.improvementPriority && (<span className={`status-badge ${getPriorityColor(item.improvementPriority)}`}>{item.improvementPriority}</span>)}
+                                                </td>
+                                            </StreamingRow>
+                                        );
+                                    })}
+                                </tbody>
+                            </table>
+                        )}
 
-                    {portfolio.opportunities && portfolio.opportunities.length > 0 && (
-                        <>
-                            {expandedSections.opportunities && (
-                                <table className="data-table">
-                                    <thead>
-                                        <tr>
-                                            <th>{t("fullswot_card1_head8")}</th>
-                                            <th>{t("fullswot_card1_head2")}</th>
-                                            <th>{t("fullswot_card1_head3")}</th>
-                                            <th>{t("fullswot_card1_head9")}</th>
-                                            <th>{t("fullswot_card1_head10")}</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {portfolio.opportunities.map((item, index) => {
-                                            const rowIndex = opportunitiesIndices[index];
-                                            const isVisible = rowIndex < visibleRows;
-                                            const isLast = rowIndex === visibleRows - 1;
-                                            return (
-                                                <StreamingRow key={index} isVisible={isVisible} isLast={isLast && isStreaming} lastRowRef={lastRowRef} isStreaming={isStreaming}>
-                                                    <td>{hasStreamed ? item.item : (typingTexts[`${rowIndex}-item`] || item.item)}</td>
-                                                    <td style={{ opacity: isVisible ? 1 : 0, transition: !isStreaming ? 'none' : 'opacity 0.3s 0.1s' }}>
-                                                        {item.score && (<span className={`status-badge ${getScoreColor(item.score)}`}>{item.score}</span>)}
-                                                    </td>
-                                                    <td style={{ opacity: isVisible ? 1 : 0, transition: !isStreaming ? 'none' : 'opacity 0.3s 0.2s' }}>
-                                                        <span className="force-tag">{hasStreamed ? (item.category?.replace(/_/g, ' ') || 'N/A') : (typingTexts[`${rowIndex}-category`]?.replace(/_/g, ' ') || item.category?.replace(/_/g, ' ') || 'N/A')}</span>
-                                                    </td>
-                                                    <td style={{ opacity: isVisible ? 1 : 0, transition: !isStreaming ? 'none' : 'opacity 0.3s 0.3s' }}>
-                                                        <span className={`status-badge ${item.marketTrend ? 'high-intensity' : 'low-intensity'}`}>{item.marketTrend ? 'Yes' : 'No'}</span>
-                                                    </td>
-                                                    <td style={{ opacity: isVisible ? 1 : 0, transition: !isStreaming ? 'none' : 'opacity 0.3s 0.4s' }}>
-                                                        {item.timeframe && (<span className="timeline-badge">{hasStreamed ? item.timeframe : (typingTexts[`${rowIndex}-timeframe`] || item.timeframe)}</span>)}
-                                                    </td>
-                                                </StreamingRow>
-                                            );
-                                        })}
-                                    </tbody>
-                                </table>
-                            )}
-                        </>
-                    )}
+                        {portfolio.opportunities && portfolio.opportunities.length > 0 && (
+                            <table className="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>{t("fullswot_card1_head8")}</th>
+                                        <th>{t("fullswot_card1_head2")}</th>
+                                        <th>{t("fullswot_card1_head3")}</th>
+                                        <th>{t("fullswot_card1_head9")}</th>
+                                        <th>{t("fullswot_card1_head10")}</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {portfolio.opportunities.map((item, index) => {
+                                        const rowIndex = opportunitiesIndices[index];
+                                        const isVisible = rowIndex < visibleRows;
+                                        const isLast = rowIndex === visibleRows - 1;
+                                        return (
+                                            <StreamingRow key={index} isVisible={isVisible} isLast={isLast && isStreaming} lastRowRef={lastRowRef} isStreaming={isStreaming}>
+                                                <td>{hasStreamed ? item.item : (typingTexts[`${rowIndex}-item`] || item.item)}</td>
+                                                <td style={{ opacity: isVisible ? 1 : 0, transition: !isStreaming ? 'none' : 'opacity 0.3s 0.1s' }}>
+                                                    {item.score && (<span className={`status-badge ${getScoreColor(item.score)}`}>{item.score}</span>)}
+                                                </td>
+                                                <td style={{ opacity: isVisible ? 1 : 0, transition: !isStreaming ? 'none' : 'opacity 0.3s 0.2s' }}>
+                                                    <span className="force-tag">{hasStreamed ? (item.category?.replace(/_/g, ' ') || 'N/A') : (typingTexts[`${rowIndex}-category`]?.replace(/_/g, ' ') || item.category?.replace(/_/g, ' ') || 'N/A')}</span>
+                                                </td>
+                                                <td style={{ opacity: isVisible ? 1 : 0, transition: !isStreaming ? 'none' : 'opacity 0.3s 0.3s' }}>
+                                                    <span className={`status-badge ${item.marketTrend ? 'high-intensity' : 'low-intensity'}`}>{item.marketTrend ? 'Yes' : 'No'}</span>
+                                                </td>
+                                                <td style={{ opacity: isVisible ? 1 : 0, transition: !isStreaming ? 'none' : 'opacity 0.3s 0.4s' }}>
+                                                    {item.timeframe && (<span className="timeline-badge">{hasStreamed ? item.timeframe : (typingTexts[`${rowIndex}-timeframe`] || item.timeframe)}</span>)}
+                                                </td>
+                                            </StreamingRow>
+                                        );
+                                    })}
+                                </tbody>
+                            </table>
+                        )}
 
-                    {portfolio.threats && portfolio.threats.length > 0 && (
-                        <>
-                            {expandedSections.threats && (
-                                <table className="data-table">
-                                    <thead>
-                                        <tr>
-                                            <th>{t("fullswot_card1_head11")}</th>
-                                            <th>{t("fullswot_card1_head2")}</th>
-                                            <th>{t("fullswot_card1_head3")}</th>
-                                            <th>{t("fullswot_card1_head12")}</th>
-                                            <th>{t("fullswot_card1_head13")}</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {portfolio.threats.map((item, index) => {
-                                            const rowIndex = threatsIndices[index];
-                                            const isVisible = rowIndex < visibleRows;
-                                            const isLast = rowIndex === visibleRows - 1;
-                                            return (
-                                                <StreamingRow key={index} isVisible={isVisible} isLast={isLast && isStreaming} lastRowRef={lastRowRef} isStreaming={isStreaming}>
-                                                    <td>{hasStreamed ? item.item : (typingTexts[`${rowIndex}-item`] || item.item)}</td>
-                                                    <td style={{ opacity: isVisible ? 1 : 0, transition: !isStreaming ? 'none' : 'opacity 0.3s 0.1s' }}>
-                                                        {item.score && (<span className={`status-badge ${getScoreColor(item.score)}`}>{item.score}</span>)}
-                                                    </td>
-                                                    <td style={{ opacity: isVisible ? 1 : 0, transition: !isStreaming ? 'none' : 'opacity 0.3s 0.2s' }}>
-                                                        <span className="force-tag">{hasStreamed ? (item.category?.replace(/_/g, ' ') || 'N/A') : (typingTexts[`${rowIndex}-category`]?.replace(/_/g, ' ') || item.category?.replace(/_/g, ' ') || 'N/A')}</span>
-                                                    </td>
-                                                    <td style={{ opacity: isVisible ? 1 : 0, transition: !isStreaming ? 'none' : 'opacity 0.3s 0.3s' }}>
-                                                        {item.likelihood && (<span className={`status-badge ${getPriorityColor(item.likelihood)}`}>{item.likelihood}</span>)}
-                                                    </td>
-                                                    <td style={{ opacity: isVisible ? 1 : 0, transition: !isStreaming ? 'none' : 'opacity 0.3s 0.4s' }}>
-                                                        {item.impact && (<span className={`status-badge ${getPriorityColor(item.impact)}`}>{item.impact}</span>)}
-                                                    </td>
-                                                </StreamingRow>
-                                            );
-                                        })}
-                                    </tbody>
-                                </table>
-                            )}
-                        </>
-                    )}
+                        {portfolio.threats && portfolio.threats.length > 0 && (
+                            <table className="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>{t("fullswot_card1_head11")}</th>
+                                        <th>{t("fullswot_card1_head2")}</th>
+                                        <th>{t("fullswot_card1_head3")}</th>
+                                        <th>{t("fullswot_card1_head12")}</th>
+                                        <th>{t("fullswot_card1_head13")}</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {portfolio.threats.map((item, index) => {
+                                        const rowIndex = threatsIndices[index];
+                                        const isVisible = rowIndex < visibleRows;
+                                        const isLast = rowIndex === visibleRows - 1;
+                                        return (
+                                            <StreamingRow key={index} isVisible={isVisible} isLast={isLast && isStreaming} lastRowRef={lastRowRef} isStreaming={isStreaming}>
+                                                <td>{hasStreamed ? item.item : (typingTexts[`${rowIndex}-item`] || item.item)}</td>
+                                                <td style={{ opacity: isVisible ? 1 : 0, transition: !isStreaming ? 'none' : 'opacity 0.3s 0.1s' }}>
+                                                    {item.score && (<span className={`status-badge ${getScoreColor(item.score)}`}>{item.score}</span>)}
+                                                </td>
+                                                <td style={{ opacity: isVisible ? 1 : 0, transition: !isStreaming ? 'none' : 'opacity 0.3s 0.2s' }}>
+                                                    <span className="force-tag">{hasStreamed ? (item.category?.replace(/_/g, ' ') || 'N/A') : (typingTexts[`${rowIndex}-category`]?.replace(/_/g, ' ') || item.category?.replace(/_/g, ' ') || 'N/A')}</span>
+                                                </td>
+                                                <td style={{ opacity: isVisible ? 1 : 0, transition: !isStreaming ? 'none' : 'opacity 0.3s 0.3s' }}>
+                                                    {item.likelihood && (<span className={`status-badge ${getPriorityColor(item.likelihood)}`}>{item.likelihood}</span>)}
+                                                </td>
+                                                <td style={{ opacity: isVisible ? 1 : 0, transition: !isStreaming ? 'none' : 'opacity 0.3s 0.4s' }}>
+                                                    {item.impact && (<span className={`status-badge ${getPriorityColor(item.impact)}`}>{item.impact}</span>)}
+                                                </td>
+                                            </StreamingRow>
+                                        );
+                                    })}
+                                </tbody>
+                            </table>
+                        )}
                 </div>
             </div>
 
@@ -601,8 +581,7 @@ const FullSWOTPortfolio = ({
                         <h5>{t("fullswot_card2")}</h5>
                         {expandedSections.strategicOptions ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
                     </div>
-                    {expandedSections.strategicOptions && (
-                        <div className="table-container">
+                    <div className={`section-container table-container ${expandedSections.strategicOptions === true ? 'expanded' : 'collapsed'}`}>
                             <table className="data-table">
                                 <thead>
                                     <tr>
@@ -658,7 +637,6 @@ const FullSWOTPortfolio = ({
                                 </tbody>
                             </table>
                         </div>
-                    )}
                 </div>
             )}
 
@@ -668,8 +646,7 @@ const FullSWOTPortfolio = ({
                         <h3>Risk Assessment</h3>
                         {expandedSections.riskAssessment ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
                     </div>
-                    {expandedSections.riskAssessment && (
-                        <div className="table-container">
+                    <div className={`section-container table-container ${expandedSections.riskAssessment === true ? 'expanded' : 'collapsed'}`}>
                             <table className="data-table">
                                 <thead>
                                     <tr>
@@ -724,11 +701,10 @@ const FullSWOTPortfolio = ({
                                 </tbody>
                             </table>
                         </div>
-                    )}
                 </div>
             )}
         </div>
     );
 };
 
-export default FullSWOTPortfolio;
+export default FullSWOTPortfolio;

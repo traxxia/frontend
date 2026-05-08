@@ -36,7 +36,6 @@ const StrategicPositioningRadar = ({
     const rawRadarData = propStrategicRadarData || storeStrategicRadarData;
     const isRegenerating = propIsRegenerating || isTypeRegenerating('strategicRadar');
 
-    const [activeTab, setActiveTab] = useState('overview');
     const [expandedSections, setExpandedSections] = useState({});
     const [visibleRows, setVisibleRows] = useState(0);
     const [typingTexts, setTypingTexts] = useState({});
@@ -230,103 +229,7 @@ const StrategicPositioningRadar = ({
         return 'low-intensity';
     };
 
-    const RadarChart = ({ dimensions }) => {
-        const size = 320;
-        const center = size / 2;
-        const maxRadius = 130;
-        const levels = 5;
-        const angleStep = (2 * Math.PI) / dimensions.length;
 
-        const getCoordinates = (score, angle) => {
-            const radius = (score / 10) * maxRadius;
-            const x = center + radius * Math.cos(angle - Math.PI / 2);
-            const y = center + radius * Math.sin(angle - Math.PI / 2);
-            return { x, y };
-        };
-
-        const gridCircles = Array.from({ length: levels }, (_, i) => {
-            const radius = ((i + 1) / levels) * maxRadius;
-            return <circle key={i} cx={center} cy={center} r={radius} fill="none" stroke="#e2e8f0" strokeWidth="1" />;
-        });
-
-        const axes = dimensions.map((dimension, i) => {
-            const angle = i * angleStep;
-            const endX = center + maxRadius * Math.cos(angle - Math.PI / 2);
-            const endY = center + maxRadius * Math.sin(angle - Math.PI / 2);
-            const labelX = center + (maxRadius + 25) * Math.cos(angle - Math.PI / 2);
-            const labelY = center + (maxRadius + 25) * Math.sin(angle - Math.PI / 2);
-            return (
-                <g key={i}>
-                    <line x1={center} y1={center} x2={endX} y2={endY} stroke="#cbd5e1" strokeWidth="1" />
-                    <text x={labelX} y={labelY} textAnchor="middle" dominantBaseline="middle" fontSize="12" fontWeight="500" fill="#374151">{dimension.name}</text>
-                </g>
-            );
-        });
-
-        const currentPoints = dimensions.map((dimension, i) => getCoordinates(dimension.currentScore, i * angleStep));
-        const targetPoints = dimensions.map((dimension, i) => getCoordinates(dimension.targetScore, i * angleStep));
-        const currentPath = `M ${currentPoints.map(p => `${p.x},${p.y}`).join(' L ')} Z`;
-        const targetPath = `M ${targetPoints.map(p => `${p.x},${p.y}`).join(' L ')} Z`;
-
-        return (
-            <div className="radar-chart-container">
-                <svg width={size} height={size} style={{ overflow: 'visible' }}>
-                    {gridCircles}
-                    {axes}
-                    {Array.from({ length: levels }, (_, i) => (
-                        <text key={i} x={center + 8} y={center - ((i + 1) / levels) * maxRadius + 4} fontSize="10" fill="#9ca3af">{((i + 1) * 10) / levels}</text>
-                    ))}
-                    <path d={targetPath} fill="rgba(59, 130, 246, 0.1)" stroke="#3b82f6" strokeWidth="2" strokeDasharray="5,5" />
-                    <path d={currentPath} fill="rgba(16, 185, 129, 0.2)" stroke="#10b981" strokeWidth="2" />
-                    {currentPoints.map((point, i) => <circle key={`current-${i}`} cx={point.x} cy={point.y} r="4" fill="#10b981" />)}
-                    {targetPoints.map((point, i) => <circle key={`target-${i}`} cx={point.x} cy={point.y} r="3" fill="#3b82f6" />)}
-                </svg>
-                <div className="radar-legend">
-                    <div className="legend-item"><span className="legend-color current"></span><span className="legend-text">Current Score</span></div>
-                    <div className="legend-item"><span className="legend-color target"></span><span className="legend-text">Target Score</span></div>
-                </div>
-            </div>
-        );
-    };
-
-    const PositioningMap = ({ dimensions }) => {
-        const mapSize = 320;
-        const padding = 40;
-        const plotSize = mapSize - (padding * 2);
-        const xDimension = dimensions[0];
-        const yDimension = dimensions[1];
-        const getPosition = (xScore, yScore) => ({ x: padding + (xScore / 10) * plotSize, y: padding + plotSize - (yScore / 10) * plotSize });
-        const currentPos = getPosition(xDimension.currentScore, yDimension.currentScore);
-        const targetPos = getPosition(xDimension.targetScore, yDimension.targetScore);
-        const industryPos = getPosition(xDimension.industryAverage, yDimension.industryAverage);
-
-        return (
-            <div className="positioning-map-container">
-                <svg width={mapSize} height={mapSize}>
-                    <defs><pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse"><path d="M 20 0 L 0 0 0 20" fill="none" stroke="#f1f5f9" strokeWidth="1" /></pattern></defs>
-                    <rect width={mapSize} height={mapSize} fill="url(#grid)" />
-                    <line x1={mapSize / 2} y1={padding} x2={mapSize / 2} y2={mapSize - padding} stroke="#d1d5db" strokeWidth="2" strokeDasharray="5,5" />
-                    <line x1={padding} y1={mapSize / 2} x2={mapSize - padding} y2={mapSize / 2} stroke="#d1d5db" strokeWidth="2" strokeDasharray="5,5" />
-                    <line x1={padding} y1={mapSize - padding} x2={mapSize - padding} y2={mapSize - padding} stroke="#374151" strokeWidth="2" />
-                    <line x1={padding} y1={padding} x2={padding} y2={mapSize - padding} stroke="#374151" strokeWidth="2" />
-                    <text x={mapSize / 2} y={mapSize - 10} textAnchor="middle" fontSize="12" fontWeight="500" fill="#374151">{xDimension.name}</text>
-                    <text x={15} y={mapSize / 2} textAnchor="middle" fontSize="12" fontWeight="500" fill="#374151" transform={`rotate(-90, 15, ${mapSize / 2})`}>{yDimension.name}</text>
-                    {[0, 2, 4, 6, 8, 10].map(v => <text key={v} x={padding + (v / 10) * plotSize} y={mapSize - 25} textAnchor="middle" fontSize="10" fill="#6b7280">{v}</text>)}
-                    {[0, 2, 4, 6, 8, 10].map(v => <text key={v} x={25} y={padding + plotSize - (v / 10) * plotSize + 4} textAnchor="middle" fontSize="10" fill="#6b7280">{v}</text>)}
-                    <circle cx={industryPos.x} cy={industryPos.y} r="6" fill="#9ca3af" stroke="#fff" strokeWidth="2" />
-                    <circle cx={currentPos.x} cy={currentPos.y} r="8" fill="#10b981" stroke="#fff" strokeWidth="2" />
-                    <circle cx={targetPos.x} cy={targetPos.y} r="6" fill="#3b82f6" stroke="#fff" strokeWidth="2" strokeDasharray="3,3" />
-                    <line x1={currentPos.x} y1={currentPos.y} x2={targetPos.x} y2={targetPos.y} stroke="#6b7280" strokeWidth="2" markerEnd="url(#arrowhead)" />
-                    <defs><marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#6b7280" /></marker></defs>
-                </svg>
-                <div className="positioning-legend">
-                    <div className="legend-item"><span className="legend-dot current"></span><span className='legend-text'>Current Position</span></div>
-                    <div className="legend-item"><span className="legend-dot target"></span><span className='legend-text'>Target Position</span></div>
-                    <div className="legend-item"><span className="legend-dot industry"></span><span className='legend-text'>Industry Average</span></div>
-                </div>
-            </div>
-        );
-    };
 
     if (isRegenerating) {
         return (
@@ -375,23 +278,7 @@ const StrategicPositioningRadar = ({
 
     return (
         <div className="strategic-radar-container">
-            <div className="competitive-advantage-tabs">
-                {[
-                    { id: 'overview', label: t("overview"), icon: Target },
-                    { id: 'radar', label: t("radar_view"), icon: Activity },
-                    { id: 'positioning', label: t("positioning_map"), icon: BarChart3 },
-                ].map(tab => {
-                    const IconComponent = tab.icon;
-                    return (
-                        <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`tab ${activeTab === tab.id ? 'active' : ''}`}>
-                            <IconComponent size={16} />{tab.label}
-                        </button>
-                    );
-                })}
-            </div>
-
             <div className="competitive-advantage-content">
-                {activeTab === 'overview' && (
                     <div className="overview-content">
                         {overallPosition && (
                             <div className="section-container">
@@ -399,7 +286,7 @@ const StrategicPositioningRadar = ({
                                     <h3>{t("strategic_card1")}</h3>
                                     {expandedSections.executive ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
                                 </div>
-                                {expandedSections.executive !== false && (
+                                <div className={`radar-section-content ${expandedSections.executive === true ? 'expanded' : 'collapsed'}`}>
                                     <div className="table-container">
                                         <table className="data-table">
                                             <thead><tr><th>{t("strategic_card1_head1")}</th><th>{t("strategic_card1_head2")}</th><th>{t("strategic_card1_head3")}</th></tr></thead>
@@ -438,7 +325,7 @@ const StrategicPositioningRadar = ({
                                             <div className="subsection"><h4>{t("strategic_card1_head5")}</h4><div className="forces-tags">{overallPosition.improvementAreas.map((area, index) => (<span key={index} className="force-tag">{area}</span>))}</div></div>
                                         )}
                                     </div>
-                                )}
+                                </div>
                             </div>
                         )}
                         {dimensions && (
@@ -447,7 +334,7 @@ const StrategicPositioningRadar = ({
                                     <h3>{t("strategic_card2")}</h3>
                                     {expandedSections.dimensions ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
                                 </div>
-                                {expandedSections.dimensions !== false && (
+                                <div className={`radar-section-content ${expandedSections.dimensions === true ? 'expanded' : 'collapsed'}`}>
                                     <div className="table-container">
                                         <table className="data-table">
                                             <thead><tr><th>{t("strategic_card2_head1")}</th><th>{t("strategic_card2_head2")}</th><th>{t("strategic_card2_head3")}</th><th>{t("strategic_card2_head4")}</th></tr></thead>
@@ -467,13 +354,10 @@ const StrategicPositioningRadar = ({
                                             </tbody>
                                         </table>
                                     </div>
-                                )}
+                                </div>
                             </div>
                         )}
                     </div>
-                )}
-                {activeTab === 'radar' && <div className="radar-content"><RadarChart dimensions={dimensions} /></div>}
-                {activeTab === 'positioning' && <div className="positioning-content"><PositioningMap dimensions={dimensions} /></div>}
             </div>
         </div>
     );

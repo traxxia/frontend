@@ -77,116 +77,6 @@ const PHASE_COMPONENTS = {
   ]
 };
 
-const prepareForCapture = () => {
-  const changes = [];
-  document.body.classList.add('pdf-export-active');
-
-  // 1. Expand all collapsed categories, cards, and sections
-  const selectorsToExpand = [
-    '.category-content.collapsed',
-    '.modern-card-content.collapsed',
-    '.exc-section-body.collapsed',
-    '.pillar-content.collapsed',
-    '.subsection-body.collapsed'
-  ];
-
-  selectorsToExpand.forEach(selector => {
-    const elements = document.querySelectorAll(selector);
-    elements.forEach(el => {
-      changes.push({
-        element: el,
-        property: 'className',
-        oldValue: el.className,
-        newValue: el.className.replace('collapsed', 'expanded')
-      });
-
-      changes.push({
-        element: el,
-        property: 'maxHeight',
-        oldValue: el.style.maxHeight
-      });
-
-      changes.push({
-        element: el,
-        property: 'overflow',
-        oldValue: el.style.overflow
-      });
-
-      el.className = el.className.replace('collapsed', 'expanded');
-      el.style.maxHeight = 'none';
-      el.style.overflow = 'visible';
-    });
-  });
-
-  // 2. Hide buttons and interactive elements
-  const interactiveSelectors = [
-    'button',
-    '.regenerate-button',
-    '.dropdown-button',
-    '.btn',
-    '.modern-expand-btn',
-    '.exc-section-toggle'
-  ];
-
-  interactiveSelectors.forEach(selector => {
-    const elements = document.querySelectorAll(selector);
-    elements.forEach(btn => {
-      changes.push({
-        element: btn,
-        property: 'display',
-        oldValue: btn.style.display,
-        newValue: 'none'
-      });
-      btn.style.display = 'none';
-    });
-  });
-
-  // 3. Fix overflow and scroll issues for all potential containers
-  const scrollSelectors = [
-    '.ch-heatmap-scroll',
-    '.scroll-container',
-    '.table-container',
-    '.analysis-content',
-    '.preview-content',
-    '.modern-card-content-inner'
-  ];
-
-  scrollSelectors.forEach(selector => {
-    const containers = document.querySelectorAll(selector);
-    containers.forEach(container => {
-      changes.push({
-        element: container,
-        property: 'overflow',
-        oldValue: container.style.overflow,
-        newValue: 'visible'
-      });
-      changes.push({
-        element: container,
-        property: 'maxHeight',
-        oldValue: container.style.maxHeight,
-        newValue: 'none'
-      });
-      container.style.overflow = 'visible';
-      container.style.maxHeight = 'none';
-    });
-  });
-
-  return changes;
-};
-
-// Fast restore function
-const restoreChanges = (changes) => {
-  document.body.classList.remove('pdf-export-active');
-  changes.forEach(({ element, property, oldValue }) => {
-    if (property === 'className') {
-      element.className = oldValue;
-    } else {
-      element.style[property] = oldValue;
-    }
-  });
-};
-
-// Function to determine actual export phase based on unlocked features
 const getExportPhase = (unlockedFeatures = {}) => {
   if (unlockedFeatures.advancedPhase) return 'advanced';
   if (unlockedFeatures.goodPhase || unlockedFeatures.hasDocument) return 'good';
@@ -195,113 +85,139 @@ const getExportPhase = (unlockedFeatures = {}) => {
   return 'initial';
 };
 
-// Optimized single-page capture for each component
-const captureComponent = async (selector, name) => {
+// --- OPTIMIZED CAPTURE LOGIC ---
+const captureComponent = async (selector, name, html2canvas) => {
   const component = document.querySelector(selector);
-  if (!component || component.offsetHeight === 0) {
+  if (!component) {
     return null;
   }
 
-  try {
-    const html2canvas = (await import('html2canvas')).default;
-    const rect = component.getBoundingClientRect();
+  // Delay to ensure dynamic content or charts are fully rendered
+  await new Promise(resolve => setTimeout(resolve, 2000));
 
+  try {
     const canvas = await html2canvas(component, {
-      scale: 2,
+      scale: 2, 
       useCORS: true,
-      allowTaint: true,
       backgroundColor: '#ffffff',
       logging: false,
-      width: 1200, // Fixed width for consistent capture
-      windowWidth: 1200,
-      imageTimeout: 5000,
+      imageTimeout: 60000,
       onclone: (clonedDoc) => {
-        // Find the cloned element
-        const clonedComponent = clonedDoc.querySelector(selector);
-        if (clonedComponent) {
-          clonedComponent.style.margin = '0';
-          clonedComponent.style.padding = '0';
-          clonedComponent.style.width = '1200px';
-          clonedComponent.style.backgroundColor = 'white';
-        }
-
+        // 1. Inject global override styles into the clone
         const style = clonedDoc.createElement('style');
-        style.textContent = `
-          * { 
-            animation: none !important; 
-            transition: none !important; 
-            opacity: 1 !important;
-            text-shadow: none !important;
-          }
-
-          /* ENSURE FULL VISIBILITY */
-          .category-content, .modern-card-content, .pillar-content, .exc-section-body, .subsection-body {
+        style.innerHTML = `
+          /* Force all containers to be visible and expanded */
+          .collapsed, .modern-card-content.collapsed, .modern-phase-content.collapsed, .section-container.collapsed {
             max-height: none !important;
             height: auto !important;
-            overflow: visible !important;
+            visibility: visible !important;
             display: block !important;
+            opacity: 1 !important;
+            overflow: visible !important;
+          }
+          .modern-card-content, .modern-phase-content, .section-container {
+            max-height: none !important;
+            height: auto !important;
+            display: block !important;
+            overflow: visible !important;
+          }
+          
+          /* Force Recharts and custom chart containers to have fixed size in clone */
+          .recharts-responsive-container, .ch-chart-wrapper, .ch-chart-section {
+            width: 900px !important;
+            height: 400px !important;
+            min-width: 900px !important;
+            min-height: 400px !important;
+            visibility: visible !important;
+            display: block !important;
+          }
+          
+          /* Force SVGs to be visible and remove problematic filters */
+          svg {
+            overflow: visible !important;
+            visibility: visible !important;
+            filter: none !important;
+            transform: none !important;
+          }
+
+          /* Ensure all table rows are visible */
+          tr {
+            opacity: 1 !important;
+            visibility: visible !important;
+            display: table-row !important;
+          }
+          td, th {
             opacity: 1 !important;
             visibility: visible !important;
           }
-
-          /* FIX ALIGNMENT AND REMOVE SHADOWS FOR PDF */
-          .modern-analysis-card, .exc-section-card, .strategic-page-section {
-            box-shadow: none !important;
-            border: 1px solid #e2e8f0 !important;
-            margin-bottom: 30px !important;
-            background-color: white !important;
-            page-break-inside: avoid;
-          }
-
-          /* TABLE AND GRID IMPROVEMENTS */
-          .table-container, .scroll-container, .analysis-content, .preview-content {
-            overflow: visible !important;
-            max-height: none !important;
-            width: 100% !important;
-            display: block !important;
-          }
-
-          table {
-            width: 100% !important;
-            border-collapse: collapse !important;
-            table-layout: auto !important;
-          }
-
-          th, td {
-            border: 1px solid #edf2f7 !important;
-            padding: 12px 8px !important;
-            word-wrap: break-word !important;
-          }
-
-          .ch-heatmap-scroll {
-            overflow: visible !important;
-            width: 100% !important;
-          }
-
-          /* COMPONENT SPECIFIC WIDTHS */
-          [data-component="maturity"],
-          [data-component="competitive-landscape"],
-          [data-component="core-adjacency"],
-          [data-component="strategic-radar"],
-          [data-component="strategic-direction"],
-          [data-component="strategic-execution"],
-          [data-component="strategic-sustainability"] {
-            width: 100% !important;
-            max-width: none !important;
-            margin: 0 !important;
-          }
         `;
         clonedDoc.head.appendChild(style);
+
+        const clonedEl = clonedDoc.querySelector(selector);
+        if (clonedEl) {
+          // 2. Force all parents to be visible
+          let parent = clonedEl.parentElement;
+          while (parent) {
+            parent.style.maxHeight = 'none';
+            parent.style.height = 'auto';
+            parent.style.overflow = 'visible';
+            parent.style.display = 'block';
+            parent = parent.parentElement;
+          }
+
+          // 3. Force explicit dimensions on all SVGs and disable animations
+          const allSVGs = clonedEl.querySelectorAll('svg');
+          allSVGs.forEach((svg) => {
+            if (svg.classList.contains('lucide')) return;
+
+            // Force visible and remove any filters/transforms
+            svg.style.display = 'block';
+            svg.style.visibility = 'visible';
+            svg.style.opacity = '1';
+            svg.style.filter = 'none';
+            svg.style.transition = 'none';
+            svg.style.animation = 'none';
+
+            // If it's a Recharts container parent, force it to show
+            const parent = svg.closest('.recharts-responsive-container, .ch-chart-wrapper');
+            if (parent) {
+              parent.style.display = 'block';
+              parent.style.visibility = 'visible';
+              parent.style.height = '400px';
+              parent.style.width = '900px';
+            }
+          });
+
+          // 4. Remove UI junk
+          const uiJunk = clonedEl.querySelectorAll('button, .regenerate-button, .dropdown-button, .help-icon, .tooltip, .modern-expand-btn');
+          uiJunk.forEach(el => el.style.display = 'none');
+          
+          // 5. Final layout fixes for the target
+          clonedEl.style.display = 'block';
+          clonedEl.style.visibility = 'visible';
+          clonedEl.style.maxHeight = 'none';
+          clonedEl.style.height = 'auto';
+          clonedEl.style.padding = '40px'; 
+          clonedEl.style.backgroundColor = '#ffffff';
+          clonedEl.style.width = '1000px'; 
+          clonedEl.style.overflow = 'visible';
+          
+          // Force all text to be visible
+          const allText = clonedEl.querySelectorAll('text, span, p, h1, h2, h3, h4');
+          allText.forEach(t => {
+            t.style.opacity = '1';
+            t.style.visibility = 'visible';
+          });
+        }
       }
     });
 
     return {
-      imgData: canvas.toDataURL('image/png', 0.9),
-      canvas: canvas
+      canvas: canvas,
+      name: name
     };
-
   } catch (error) {
-    console.error(`Failed to capture ${name}:`, error);
+    console.error(`[PDF Export] Failed to capture ${name}:`, error);
     return null;
   }
 };
@@ -309,439 +225,226 @@ const captureComponent = async (selector, name) => {
 const PDFExportButton = ({
   businessName,
   onToastMessage,
-  currentPhase,
   disabled = false,
   className = "",
   style = {},
-  exportType = "insights", // "insights" or "strategic"
+  exportType = "insights", 
   unlockedFeatures = {},
   showText = false,
-  // Multi-user/History support: Prioritize these props if provided
-  swotAnalysis: propsSwotAnalysis,
-  purchaseCriteria: propsPurchaseCriteria,
-  loyaltyNPS: propsLoyaltyNPS,
-  portersData: propsPortersData,
-  pestelData: propsPestelData,
-  fullSwotData: propsFullSwotData,
-  competitiveAdvantage: propsCompetitiveAdvantage,
-  strategicData: propsStrategicData,
-  expandedCapability: propsExpandedCapability,
-  strategicRadar: propsStrategicRadar,
-  productivityData: propsProductivityData,
-  maturityData: propsMaturityData,
-  competitiveLandscape: propsCompetitiveLandscape,
-  coreAdjacency: propsCoreAdjacency,
-  profitabilityData: propsProfitabilityData,
-  growthTrackerData: propsGrowthTrackerData,
-  liquidityEfficiencyData: propsLiquidityEfficiencyData,
-  investmentPerformanceData: propsInvestmentPerformanceData,
-  leverageRiskData: propsLeverageRiskData,
 }) => {
   const [isExportingPDF, setIsExportingPDF] = useState(false);
   const [exportProgress, setExportProgress] = useState({ current: 0, total: 0, sectionName: '' });
   const { t } = useTranslation();
 
-  const {
-    swotAnalysis: storeSwotLines, // Rename slightly to avoid shadowed vars if needed
-  } = useAnalysisStore();
-
-  // Prioritize props over store for multi-user/history support
-  const displaySwot = propsSwotAnalysis || storeSwotLines;
-  const displayStrategicData = propsStrategicData || useAnalysisStore.getState().strategicData;
-  const displayPortersData = propsPortersData || useAnalysisStore.getState().portersData;
-  const displayPestelData = propsPestelData || useAnalysisStore.getState().pestelData;
-  // ... etc. But actually for Strategic Analysis, we mainly need strategicData
-
-
-
-
-  // Main strategic export function
-  const handleDownloadStrategicAnalysis = useCallback(async () => {
-    // Re-fetch store data if needed or use display variable
-    const exportStrategicData = propsStrategicData || useAnalysisStore.getState().strategicData;
-
-    if (!exportStrategicData) {
-      onToastMessage?.('No strategic analysis data available to export. Generate strategic analysis first.', 'warning');
-      return;
-    }
-
-    let currentChanges = [];
-
+  const handleDownload = useCallback(async () => { 
     try {
       setIsExportingPDF(true);
-      setExportProgress({ current: 0, total: 3, sectionName: 'Preparing...' });
-      currentChanges = prepareForCapture();
-      await new Promise(resolve => setTimeout(resolve, 300));
+      setExportProgress({ current: 0, total: 0, sectionName: 'Preparing document...' });
 
-      const jsPDF = (await import('jspdf')).default;
+      document.body.classList.add('generating-pdf');
+      
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      const forceStyle = document.createElement('style');
+      forceStyle.id = 'force-pdf-styles';
+      forceStyle.innerHTML = `
+        body.generating-pdf .collapsed,
+        body.generating-pdf .modern-card-content.collapsed,
+        body.generating-pdf .modern-phase-content.collapsed,
+        body.generating-pdf .category-content.collapsed {
+          max-height: none !important;
+          height: auto !important;
+          visibility: visible !important;
+          display: block !important;
+          opacity: 1 !important;
+          overflow: visible !important;
+        }
+        body.generating-pdf .modern-analysis-card {
+          margin-bottom: 40px !important;
+        }
+      `;
+      document.head.appendChild(forceStyle);
+
+      // Give browser time to reflow and render all previously collapsed sections
+      await new Promise(resolve => setTimeout(resolve, 1500));
+
+      // 2. Dynamic imports
+      const [jsPDFModule, html2canvasModule] = await Promise.all([
+        import('jspdf'),
+        import('html2canvas')
+      ]);
+      const jsPDF = jsPDFModule.default;
+      const html2canvas = html2canvasModule.default;
+
+      // 3. Determine components to capture
+      const exportPhase = (exportType === "advanced-brief" || exportType === "executive") ? exportType : getExportPhase(unlockedFeatures);
+      
+      let rawComponents = (exportType === "strategic") 
+        ? [
+            { selector: '[data-component="strategic-direction"]', name: 'Direction & Positioning' },
+            { selector: '[data-component="strategic-execution"]', name: 'Execution & Monitoring' },
+            { selector: '[data-component="strategic-sustainability"]', name: 'Sustainability & Reinforcement' }
+          ]
+        : (PHASE_COMPONENTS[exportPhase] || []);
+
+      // 3a. Filter components based on what is actually present in the DOM
+      const components = rawComponents.filter(comp => {
+        const el = document.querySelector(comp.selector);
+        return el !== null;
+      });
+
+      if (components.length === 0) {
+        console.warn("[PDF Export] No components found to export!");
+        onToastMessage?.('No content available for export', 'warning');
+        document.body.classList.remove('generating-pdf');
+        forceStyle.remove();
+        setIsExportingPDF(false);
+        return;
+      }
+
+      // 4. Setup PDF
       const pdf = new jsPDF('p', 'mm', 'a4');
       const pageWidth = pdf.internal.pageSize.getWidth();
       const pageHeight = pdf.internal.pageSize.getHeight();
-
+      
       // Title Page
       pdf.setFontSize(24);
       pdf.setFont('helvetica', 'bold');
-      pdf.setTextColor(59, 130, 246);
-      pdf.text('Strategic Analysis Report', pageWidth / 2, 30, { align: 'center' });
-
+      pdf.setTextColor(26, 115, 232);
+      pdf.text(exportType === 'strategic' ? 'Strategic Analysis' : 'Insight Analysis Report', pageWidth / 2, 40, { align: 'center' });
+      
       pdf.setFontSize(16);
-      pdf.setTextColor(0, 0, 0);
-      pdf.text(businessName, pageWidth / 2, 45, { align: 'center' });
-
+      pdf.setTextColor(60, 60, 60);
+      pdf.text(businessName, pageWidth / 2, 55, { align: 'center' });
+      
       pdf.setFontSize(12);
-      pdf.setTextColor(128, 128, 128);
-      pdf.text(`Generated on ${new Date().toLocaleDateString()}`, pageWidth / 2, 55, { align: 'center' });
+      pdf.setTextColor(130, 130, 130);
+      pdf.text(`Generated on ${new Date().toLocaleDateString()}`, pageWidth / 2, 65, { align: 'center' });
 
-      const strategicBlocks = [
-        { selector: '[data-component="strategic-direction"]', name: 'Direction & Positioning' },
-        { selector: '[data-component="strategic-execution"]', name: 'Execution & Monitoring' },
-        { selector: '[data-component="strategic-sustainability"]', name: 'Sustainability & Long-Term Reinforcement' },
-      ];
+      // 5. Sequential Capture (Filtered list)
+      let capturedResults = [];
+      setExportProgress({ current: 0, total: components.length, sectionName: 'Starting capture...' });
 
-      let capturedCount = 0;
-
-      for (let i = 0; i < strategicBlocks.length; i++) {
-        const { selector, name } = strategicBlocks[i];
-        setExportProgress({
-          current: i + 1,
-          total: strategicBlocks.length,
-          sectionName: `Capturing ${name}...`
-        });
-
-        const result = await captureComponent(selector, name);
-
-        if (!result?.imgData || !result?.canvas) {
-          console.warn("Skipping invalid capture:", name);
-          continue;
+      for (let i = 0; i < components.length; i++) {
+        const comp = components[i];
+        setExportProgress({ current: i + 1, total: components.length, sectionName: `Capturing ${comp.name}...` });
+        
+        // Scroll into view to ensure browser prioritizes rendering
+        const element = document.querySelector(comp.selector);
+        if (element) {
+          element.scrollIntoView({ block: 'center' });
+          await new Promise(resolve => setTimeout(resolve, 1000)); // Wait for scroll and potential re-render
         }
 
-        pdf.addPage();
-
-        const marginX = 10;
-        const marginTop = 20;
-
-        pdf.setFontSize(18);
-        pdf.setFont('helvetica', 'bold');
-        pdf.setTextColor(59, 130, 246);
-        pdf.text(name, marginX, marginTop);
-
-        const canvas = result.canvas;
-        const availableWidth = pageWidth - marginX * 2;
-        const availableHeight = pageHeight - marginTop - 30; // Leave space for title and margins
-
-        let imgWidth = availableWidth;
-        let imgHeight = (canvas.height * imgWidth) / canvas.width;
-
-        // Proportional scaling if height exceeds page
-        if (imgHeight > availableHeight) {
-          imgHeight = availableHeight;
-          imgWidth = (canvas.width * imgHeight) / canvas.height;
-        }
-
-        // Center horizontally if scaled down
-        const xPos = marginX + (availableWidth - imgWidth) / 2;
-
-        pdf.addImage(
-          result.imgData,
-          'PNG',
-          xPos,
-          marginTop + 10,
-          imgWidth,
-          imgHeight
-        );
-
-        capturedCount++;
+        const result = await captureComponent(comp.selector, comp.name, html2canvas);
+        if (result) capturedResults.push(result);
       }
 
-      if (capturedCount === 0) {
-        onToastMessage?.('No strategic blocks could be captured.', 'error');
-        return;
-      }
+      // 6. Build PDF (Continuous Flow with Multi-Page Splitting)
+      let yOffset = 75; 
 
-      const safeName = (businessName || "report")
-        .toString()
-        .trim()
-        .replace(/[^a-z0-9]/gi, '_');
+      for (let i = 0; i < capturedResults.length; i++) {
+        const { name, canvas, imgData } = capturedResults[i];
+        setExportProgress({ current: i + 1, total: capturedResults.length, sectionName: `Adding ${name} to PDF...` });
 
-      const timestamp = new Date().toISOString().split('T')[0];
-      const filename = `${safeName}_Strategic_Analysis_${timestamp}.pdf`;
-
-      pdf.save(filename);
-
-      onToastMessage?.(`Strategic Analysis PDF exported successfully! ${capturedCount} sections included.`, 'success');
-
-    } catch (error) {
-      console.error('Strategic PDF export error:', error);
-      onToastMessage?.('Failed to generate strategic PDF. Please try again.', 'error');
-    } finally {
-      if (currentChanges.length > 0) restoreChanges(currentChanges);
-      setIsExportingPDF(false);
-    }
-  }, [businessName, onToastMessage, propsStrategicData]);
-
-
-  // Main analysis export function (enhanced with phase-by-phase content)
-  const handleDownloadPhaseAnalysis = useCallback(async () => {
-    const exportPhase = (exportType === "advanced-brief" || exportType === "executive") ? exportType : getExportPhase(unlockedFeatures);
-
-    if (!exportPhase) {
-      onToastMessage?.('Unable to determine export phase', 'error');
-      return;
-    }
-
-    let currentChanges = [];
-
-    try {
-      setIsExportingPDF(true);
-      setExportProgress({ current: 0, total: 0, sectionName: 'Preparing analysis...' });
-      currentChanges = prepareForCapture();
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      const jsPDF = (await import('jspdf')).default;
-      const pdf = new jsPDF('p', 'mm', 'a4');
-      const pageWidth = pdf.internal.pageSize.getWidth();
-      const pageHeight = pdf.internal.pageSize.getHeight();
-
-      // Title page
-      pdf.setFontSize(24);
-      pdf.setFont('helvetica', 'bold');
-      pdf.setTextColor(59, 130, 246);
-      const phaseTitle = exportPhase.charAt(0).toUpperCase() + exportPhase.slice(1) + ' Phase Analysis';
-      pdf.text(phaseTitle, pageWidth / 2, 30, { align: 'center' });
-
-      pdf.setFontSize(16);
-      pdf.setTextColor(0, 0, 0);
-      pdf.text(businessName, pageWidth / 2, 45, { align: 'center' });
-
-      pdf.setFontSize(12);
-      pdf.setTextColor(128, 128, 128);
-      pdf.text(`Generated on ${new Date().toLocaleDateString()}`, pageWidth / 2, 55, { align: 'center' });
-
-      const components = PHASE_COMPONENTS[exportPhase] || [];
-
-      if (components.length === 0) {
-        onToastMessage?.('No components available for export', 'warning');
-        return;
-      }
-
-      const visibleComponents = components.filter(({ selector }) => {
-        const element = document.querySelector(selector);
-        return element &&
-          element.offsetHeight > 80 &&
-          element.offsetWidth > 80 &&
-          window.getComputedStyle(element).display !== 'none' &&
-          !element.closest('.collapsed');
-      });
-
-      if (visibleComponents.length === 0) {
-        onToastMessage?.('No content available to export', 'warning');
-        return;
-      }
-
-      let capturedCount = 0;
-      setExportProgress({ current: 0, total: visibleComponents.length, sectionName: 'Pre-processing components...' });
-
-      for (let i = 0; i < visibleComponents.length; i++) {
-        const { selector, name } = visibleComponents[i];
-
-        setExportProgress({
-          current: i + 1,
-          total: visibleComponents.length,
-          sectionName: `Capturing ${name}...`
-        });
-
-        const result = await captureComponent(selector, name);
-
-        if (!result?.imgData || !result?.canvas) {
-          console.warn("Skipping invalid capture:", name);
-          continue;
-        }
-
-        const canvas = result.canvas;
-        const availableWidth = pageWidth - 20; // Reduced margins to 10mm
-        const availableHeight = pageHeight - 60;
-
+        const margin = 15;
+        const availableWidth = pageWidth - (margin * 2);
         const imgWidth = availableWidth;
         const fullImgHeight = (canvas.height * imgWidth) / canvas.width;
+        
+        let sY = 0; 
+        let remainingImgHeight = fullImgHeight;
+        let isFirstSlice = true;
 
-        // Multi-page support for long components
-        if (fullImgHeight > availableHeight) {
-          let remainingHeight = canvas.height;
-          let sourceY = 0;
-          let pageNum = 1;
+         while (remainingImgHeight > 0.1) {
+          let spaceLeftOnPage = pageHeight - yOffset - 15;
+          
+          // If we are at the bottom of the page, move to next page immediately
+          if (spaceLeftOnPage < 20) {
+            pdf.addPage();
+            yOffset = 20;
+            spaceLeftOnPage = pageHeight - yOffset - 15;
+          }
 
-          while (remainingHeight > 0) {
-            // How much of the source canvas to take for this page
-            const sourceHeightForPage = Math.min(
-              remainingHeight,
-              (canvas.width * availableHeight) / imgWidth
-            );
+          const sliceHeightOnPage = Math.min(remainingImgHeight, spaceLeftOnPage);
+          const sourceSliceHeight = (sliceHeightOnPage * canvas.width) / imgWidth;
 
-            const currentDrawHeight = (sourceHeightForPage * imgWidth) / canvas.width;
+          if (isFirstSlice) {
+            pdf.setFontSize(14);
+            pdf.setFont('helvetica', 'bold');
+            pdf.setTextColor(26, 115, 232);
+            pdf.text(name, margin, yOffset);
+            yOffset += 7;
+          } else {
+            pdf.setFontSize(10);
+            pdf.setFont('helvetica', 'italic');
+            pdf.setTextColor(150, 150, 150);
+            pdf.text(`${name} (continued)`, margin, yOffset);
+            yOffset += 7;
+          }
 
-            // Create temporary canvas for the slice
+          try {
             const tempCanvas = document.createElement('canvas');
             tempCanvas.width = canvas.width;
-            tempCanvas.height = sourceHeightForPage;
-
+            tempCanvas.height = Math.max(1, sourceSliceHeight);
             const ctx = tempCanvas.getContext('2d');
-            ctx.drawImage(
-              canvas,
-              0, sourceY, canvas.width, sourceHeightForPage,
-              0, 0, canvas.width, sourceHeightForPage
-            );
-
-            // Add page for subsequent slices
-            if (pageNum > 1) {
-              pdf.addPage();
-              pdf.setFontSize(10);
-              pdf.setFont('helvetica', 'italic');
-              pdf.setTextColor(150, 150, 150);
-              pdf.text(`${name} (continued)`, 10, 15);
-            } else {
-              pdf.addPage();
-              pdf.setFontSize(16);
-              pdf.setFont('helvetica', 'bold');
-              pdf.setTextColor(59, 130, 246);
-              pdf.text(name, 10, 25);
-            }
-
-            const pageImgData = tempCanvas.toDataURL('image/png', 0.9);
-            pdf.addImage(
-              pageImgData,
-              'PNG',
-              10, // 10mm margin
-              pageNum === 1 ? 35 : 20,
-              imgWidth,
-              currentDrawHeight
-            );
-
-            remainingHeight -= sourceHeightForPage;
-            sourceY += sourceHeightForPage;
-            pageNum++;
+            ctx.drawImage(canvas, 0, sY, canvas.width, sourceSliceHeight, 0, 0, canvas.width, sourceSliceHeight);
+            
+            const sliceData = tempCanvas.toDataURL('image/jpeg', 0.85);
+            pdf.addImage(sliceData, 'JPEG', margin, yOffset, imgWidth, sliceHeightOnPage, undefined, 'FAST');
+          } catch (err) {
+            console.error(`[PDF Export] Slice error for ${name}:`, err);
           }
-        } else {
-          // Fits on one page
-          pdf.addPage();
-          pdf.setFontSize(16);
-          pdf.setFont('helvetica', 'bold');
-          pdf.setTextColor(59, 130, 246);
-          pdf.text(name, 10, 25);
 
-          const xPos = 10; // 10mm margin
-          pdf.addImage(
-            result.imgData,
-            'PNG',
-            xPos,
-            35,
-            imgWidth,
-            fullImgHeight
-          );
-        }
+          remainingImgHeight -= sliceHeightOnPage;
+          sY += sourceSliceHeight;
+          isFirstSlice = false;
 
-        capturedCount++;
-
-        if (visibleComponents.length > 3) {
-          await new Promise(resolve => setTimeout(resolve, 100));
+          if (remainingImgHeight > 0.1) {
+            pdf.addPage();
+            yOffset = 20; 
+          } else {
+            yOffset += sliceHeightOnPage + 15; 
+          }
         }
       }
 
-      if (capturedCount === 0) {
-        onToastMessage?.('No components could be captured', 'error');
-        return;
-      }
-
-      const safeName = (businessName || "report")
-        .toString()
-        .trim()
-        .replace(/[^a-z0-9]/gi, '_');
-
-      const timestamp = new Date().toISOString().split('T')[0];
-
-      let typeLabel = "Insights";
-      if (exportPhase === "executive") {
-        typeLabel = "Executive_Summary";
-      } else if (exportPhase === "advanced-brief") {
-        typeLabel = "Questions_And_Answers";
-      }
-
-      const filename = `${safeName}_${typeLabel}_${timestamp}.pdf`;
-
+      // 7. Save
+      const filename = `${businessName.replace(/\s+/g, '_')}_Report_${new Date().toISOString().split('T')[0]}.pdf`;
       pdf.save(filename);
-
-      onToastMessage?.(`PDF exported successfully! ${capturedCount} sections included.`, 'success');
+      onToastMessage?.('PDF downloaded successfully', 'success');
 
     } catch (error) {
-      console.error('PDF export error:', error);
-      onToastMessage?.('Failed to generate PDF. Please try again.', 'error');
+      console.error('Export Error:', error);
+      onToastMessage?.('Failed to export PDF', 'error');
     } finally {
-      if (currentChanges.length > 0) {
-        restoreChanges(currentChanges);
-      }
+      // Cleanup
+      document.body.classList.remove('generating-pdf');
+      const forceStyle = document.getElementById('force-pdf-styles');
+      if (forceStyle) forceStyle.remove();
+      
       setIsExportingPDF(false);
+      setExportProgress({ current: 0, total: 0, sectionName: '' });
     }
-  }, [exportType, unlockedFeatures, businessName, onToastMessage,
-    propsSwotAnalysis, propsPurchaseCriteria, propsLoyaltyNPS, propsPortersData, propsPestelData,
-    propsFullSwotData, propsCompetitiveAdvantage, propsStrategicData, propsExpandedCapability,
-    propsStrategicRadar, propsProductivityData, propsMaturityData, propsCompetitiveLandscape,
-    propsCoreAdjacency, propsProfitabilityData, propsGrowthTrackerData, propsLiquidityEfficiencyData,
-    propsInvestmentPerformanceData, propsLeverageRiskData]);
-
-  // Main strategic export function
-  const handleDownload = exportType === "strategic" ? handleDownloadStrategicAnalysis : handleDownloadPhaseAnalysis;
-
-  // Get the actual export phase for display (only for analysis type)
-  const exportPhase = useMemo(() => exportType === "insights" ? getExportPhase(unlockedFeatures) : null, [exportType, unlockedFeatures]);
-  const phaseLabel = useMemo(() => exportType === "strategic" ? "Strategic" :
-    exportPhase === 'initial' ? 'Initial' :
-      exportPhase === 'essential' ? 'Essential' :
-        exportPhase === 'good' ? 'Good' :
-          exportPhase === 'advanced-brief' ? 'Questions' : 'Advanced', [exportType, exportPhase]);
+  }, [businessName, exportType, unlockedFeatures, onToastMessage]);
 
   return (
     <>
-      {/* Simplified loading overlay */}
       {isExportingPDF && (
         <div style={{
-          position: 'fixed',
-          top: 0, left: 0, right: 0, bottom: 0,
-          backgroundColor: 'rgba(0, 0, 0, 0.75)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 10000
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.75)', display: 'flex',
+          alignItems: 'center', justifyContent: 'center', zIndex: 10000
         }}>
-          <style>{`
-            @keyframes spin-loader {
-              from { transform: rotate(0deg); }
-              to { transform: rotate(360deg); }
-            }
-          `}</style>
           <div style={{
-            backgroundColor: 'white',
-            borderRadius: '12px',
-            padding: '24px',
-            textShadow: 'none',
-            textAlign: 'center',
-            boxShadow: '0 10px 30px rgba(0, 0, 0, 0.3)',
-            minWidth: '280px'
+            backgroundColor: 'white', borderRadius: '12px', padding: '30px',
+            textAlign: 'center', boxShadow: '0 10px 40px rgba(0,0,0,0.5)', minWidth: '320px'
           }}>
-            <Loader size={32} style={{
-              color: '#1a73e8',
-              animation: 'spin-loader 1s linear infinite',
-              marginBottom: '12px',
-              display: 'inline-block',
-              transformOrigin: 'center'
-            }} />
-            <h3 style={{ margin: '0 0 8px 0', fontSize: '16px', color: '#1f2937' }}>
-              {t("Generating PDF")}
-            </h3>
-
-            <p style={{ margin: 0, fontSize: '14px', color: '#6b7280' }}>
-              {exportProgress.sectionName || t("Capturing analysis...")}
-            </p>
+            <Loader size={40} style={{ color: '#1a73e8', animation: 'spin 1.5s linear infinite', marginBottom: '15px' }} />
+            <h3 style={{ margin: '0 0 10px 0', fontSize: '18px', fontWeight: '600' }}>{t("Generating PDF")}</h3>
+            <p style={{ margin: 0, fontSize: '14px', color: '#666' }}>{exportProgress.sectionName}</p>
             {exportProgress.total > 0 && (
-              <div style={{ marginTop: '12px', fontSize: '12px', color: '#3b82f6', fontWeight: 'bold' }}>
+              <div style={{ marginTop: '15px', fontSize: '16px', color: '#1a73e8', fontWeight: 'bold' }}>
                 {exportProgress.current} / {exportProgress.total}
               </div>
             )}
@@ -754,41 +457,21 @@ const PDFExportButton = ({
         disabled={disabled || isExportingPDF}
         className={className}
         style={{
-          backgroundColor: "#1a73e8",
-          color: "#fff",
-          border: "none",
-          borderRadius: "10px",
-          padding: showText ? "10px 18px" : "10px",
-          width: showText ? "auto" : "40px",
-          height: "40px",
-          fontSize: "14px",
-          fontWeight: 600,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          gap: showText ? "8px" : "0",
+          backgroundColor: "#1a73e8", color: "#fff", border: "none", borderRadius: "10px",
+          padding: showText ? "10px 18px" : "10px", width: showText ? "auto" : "40px",
+          height: "40px", fontSize: "14px", fontWeight: 600, display: "flex",
+          alignItems: "center", justifyContent: "center", gap: "8px",
           cursor: disabled || isExportingPDF ? "not-allowed" : "pointer",
-          transition: "all 0.2s ease",
-          boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)",
-          ...style
+          boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)", ...style
         }}
       >
-        {isExportingPDF ? (
-          <>
-            <Loader size={18} style={{
-              animation: 'spin-loader 1s linear infinite',
-              display: 'inline-block',
-              transformOrigin: 'center'
-            }} />
-            {showText && <span style={{ marginLeft: '8px' }}>Generating...</span>}
-          </>
-        ) : (
-          <>
-            <FileDown size={18} />
-            {showText && <span style={{ marginLeft: '8px' }}>{t("Export_PDF")}</span>}
-          </>
-        )}
+        <FileDown size={18} />
+        {showText && <span>{t("Export_PDF")}</span>}
       </button>
+
+      <style>{`
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+      `}</style>
     </>
   );
 };

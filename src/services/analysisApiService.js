@@ -104,12 +104,12 @@ export class AnalysisApiService {
 
   async fetchAnalysisDataThroughBackend(businessId, forceRefresh = false) {
     if (!businessId) return [];
-    
+
     const cacheKey = `analysis-${businessId}`;
     if (!forceRefresh && analysisDataCache.has(cacheKey)) {
       return await analysisDataCache.get(cacheKey);
     }
-    
+
     const fetchPromise = (async () => {
       try {
         const token = this.getAuthToken();
@@ -120,7 +120,7 @@ export class AnalysisApiService {
         throw error;
       }
     })();
-    
+
     analysisDataCache.set(cacheKey, fetchPromise);
     return fetchPromise;
   }
@@ -134,7 +134,7 @@ export class AnalysisApiService {
       pmfAnalysisCache.delete(`pmf-${businessId}`);
       pmfExecutiveSummaryCache.delete(`exec-${businessId}`);
       kickstartRequestCache.delete(`kickstart-${businessId}`);
-      
+
       const response = await fetch(`${this.API_BASE_URL}/api/pmf-analysis/onboarding`, {
         method: 'POST',
         headers: {
@@ -158,12 +158,12 @@ export class AnalysisApiService {
 
   async getPMFAnalysis(businessId) {
     if (!businessId) return null;
-    
+
     const cacheKey = `pmf-${businessId}`;
     if (pmfAnalysisCache.has(cacheKey)) {
       return await pmfAnalysisCache.get(cacheKey);
     }
-    
+
     const fetchPromise = (async () => {
       try {
         const token = this.getAuthToken();
@@ -180,7 +180,7 @@ export class AnalysisApiService {
         throw error;
       }
     })();
-    
+
     pmfAnalysisCache.set(cacheKey, fetchPromise);
     return fetchPromise;
   }
@@ -191,7 +191,7 @@ export class AnalysisApiService {
       // Clear cache on save
       pmfExecutiveSummaryCache.delete(`exec-${businessId}`);
       kickstartRequestCache.delete(`kickstart-${businessId}`);
-      
+
       const response = await fetch(`${this.API_BASE_URL}/api/pmf-analysis/${businessId}/executive-summary`, {
         method: 'POST',
         headers: {
@@ -209,12 +209,12 @@ export class AnalysisApiService {
 
   async getPMFExecutiveSummary(businessId) {
     if (!businessId) return null;
-    
+
     const cacheKey = `exec-${businessId}`;
     if (pmfExecutiveSummaryCache.has(cacheKey)) {
       return await pmfExecutiveSummaryCache.get(cacheKey);
     }
-    
+
     const fetchPromise = (async () => {
       try {
         const token = this.getAuthToken();
@@ -231,30 +231,30 @@ export class AnalysisApiService {
         throw error;
       }
     })();
-    
+
     pmfExecutiveSummaryCache.set(cacheKey, fetchPromise);
     return fetchPromise;
   }
-  
+
   async getProjects(businessId) {
     if (!businessId) return [];
-    
+
     const cacheKey = `projects-${businessId}`;
     if (projectsCache.has(cacheKey)) {
       return await projectsCache.get(cacheKey);
     }
-    
+
     const fetchPromise = (async () => {
       try {
         const token = this.getAuthToken();
         if (!token) return [];
-        
+
         const response = await fetch(`${this.API_BASE_URL}/api/projects?business_id=${businessId}`, {
           headers: {
             'Authorization': `Bearer ${token}`
           }
         });
-        
+
         if (!response.ok) return [];
         const data = await response.json();
         return data.projects || [];
@@ -264,7 +264,7 @@ export class AnalysisApiService {
         return [];
       }
     })();
-    
+
     projectsCache.set(cacheKey, fetchPromise);
     return fetchPromise;
   }
@@ -275,7 +275,7 @@ export class AnalysisApiService {
       // Clear caches
       pmfAnalysisCache.delete(`pmf-${businessId}`);
       kickstartRequestCache.delete(`kickstart-${businessId}`);
-      
+
       const insightsData = insights?.insights || insights;
       const response = await fetch(`${this.API_BASE_URL}/api/pmf-analysis/${businessId}/insights`, {
         method: 'POST',
@@ -296,7 +296,7 @@ export class AnalysisApiService {
     if (!businessId) return null;
 
     const cacheKey = `kickstart-${businessId}`;
-    
+
     // If not forcing refresh and we have data, return it
     if (!forceRefresh && kickstartRequestCache.has(cacheKey)) {
       return await kickstartRequestCache.get(cacheKey);
@@ -596,27 +596,17 @@ export class AnalysisApiService {
 
         // Try backend-saved financial document if not uploaded
         if (!fileToUpload && selectedBusinessId) {
-          console.log(`No uploaded file provided in state, fetching saved document for business: ${selectedBusinessId}`);
           documentInfo = await this.fetchFinancialDocument(selectedBusinessId);
           if (documentInfo) {
-            console.log(`Found document metadata: ${documentInfo.filename}, downloading...`);
             const documentBlob = await this.downloadFinancialDocument(selectedBusinessId);
             if (documentBlob) {
               fileToUpload = await this.createFileFromDocument(documentBlob, documentInfo);
-              if (fileToUpload) {
-                console.log(`Successfully prepared file for analysis payload: ${fileToUpload.name} (${fileToUpload.size} bytes)`);
-              }
-            } else {
-              console.warn('Failed to download document blob from backend');
             }
-          } else {
-            console.info('No financial document found on backend for this business');
           }
         } else if (fileToUpload) {
-          console.log(`Using provided uploaded file for analysis: ${fileToUpload.name} (${fileToUpload.size} bytes)`);
           // Ensure we have document metadata for the source header if it's missing
           if (!documentInfo && selectedBusinessId) {
-             documentInfo = await this.fetchFinancialDocument(selectedBusinessId);
+            documentInfo = await this.fetchFinancialDocument(selectedBusinessId);
           }
         }
 
@@ -644,7 +634,7 @@ export class AnalysisApiService {
           url += `?${params.toString()}`;
         }
 
-        response = await fetch(url+'s', {
+        response = await fetch(url + 's', {
           method: 'POST',
           headers: {
             'accept': 'application/json',
@@ -662,6 +652,17 @@ export class AnalysisApiService {
         if (this.requiresDeepSearch(endpoint)) {
           headers['deep_search'] = 'true';
         }
+
+        try {
+          const authState = JSON.parse(
+            sessionStorage.getItem('auth-storage') || localStorage.getItem('auth-storage') || '{}'
+          );
+          const isObservatory = authState?.state?.isObservatory === true;
+          headers['x-is-observatory'] = isObservatory ? 'true' : 'false';
+          if (selectedBusinessId) {
+            headers['x-business-id'] = selectedBusinessId;
+          }
+        } catch (_) { /* silent */ }
 
         // Use rawPayload if provided, otherwise construct the default payload
         const payload = rawPayload || {
@@ -763,59 +764,14 @@ export class AnalysisApiService {
       let completed = 0;
       const total = analysisTypes.length;
       let successes = 0;
+      const results = [];
 
-      const wrappedPromises = analysisTypes.map((analysisType) => {
-        const displayName =
-          typeof this.getDisplayName === "function"
-            ? this.getDisplayName(analysisType)
-            : analysisType;
+      // Process analysis types in batches of 2 to avoid overwhelming the ML backend
+      const batchSize = 2;
+      for (let i = 0; i < analysisTypes.length; i += batchSize) {
+        const batch = analysisTypes.slice(i, i + batchSize);
 
-        return this
-          .callAnalysisAPIWithSave(analysisType, payload, stateSetters, selectedBusinessId)
-          .then((res) => {
-            successes++;
-            completed++;
-            stateSetters.setRegenerating?.(analysisType, false);
-            showToastMessage(
-              `${completed}/${total}  analyses — "${displayName}" completed successfully`,
-              "info",
-              { duration: 5000 }
-            );
-
-            return { status: "fulfilled", analysisType, value: res };
-          })
-          .catch((err) => {
-            completed++;
-            stateSetters.setRegenerating?.(analysisType, false);
-
-            console.error(`Error with ${analysisType} analysis:`, err);
-            showToastMessage(
-              `${completed}/${total} ${phase} phase analyses — "${displayName}" failed`,
-              "warning",
-              { duration: 5000 }
-            );
-
-            const error = new Error(`Analysis failed for ${analysisType}`);
-            Object.assign(error, { status: "rejected", analysisType, reason: err });
-            throw error;
-          });
-      });
-
-      const results = await Promise.allSettled(wrappedPromises);
-
-      // --- Second Level Call for Failed APIs ---
-      const failedTypes = results
-        .filter(r => r.status === 'rejected')
-        .map(r => r.reason.analysisType);
-
-      if (failedTypes.length > 0) {
-        showToastMessage(
-          `Retrying ${failedTypes.length} failed analyses...`,
-          "info",
-          { duration: 3000 }
-        );
-
-        const retryPromises = failedTypes.map((analysisType) => {
+        const batchPromises = batch.map((analysisType) => {
           const displayName =
             typeof this.getDisplayName === "function"
               ? this.getDisplayName(analysisType)
@@ -825,27 +781,36 @@ export class AnalysisApiService {
             .callAnalysisAPIWithSave(analysisType, payload, stateSetters, selectedBusinessId)
             .then((res) => {
               successes++;
+              completed++;
               stateSetters.setRegenerating?.(analysisType, false);
-              // Stay in progress mode until all retries finish
               showToastMessage(
-                `${successes}/${total} analyses — "${displayName}" completed successfully (after retry)`,
+                `${completed}/${total} analyses — "${displayName}" completed successfully`,
                 "info",
                 { duration: 5000 }
               );
+
               return { status: "fulfilled", analysisType, value: res };
             })
             .catch((err) => {
+              completed++;
               stateSetters.setRegenerating?.(analysisType, false);
-              console.error(`Second attempt failed for ${analysisType}:`, err);
-              // Leave as it is, empty state will be shown
+
+              console.error(`Error with ${analysisType} analysis:`, err);
+              showToastMessage(
+                `${completed}/${total} ${phase} phase analyses — "${displayName}" failed`,
+                "warning",
+                { duration: 5000 }
+              );
+
               return { status: "rejected", analysisType, reason: err };
             });
         });
 
-        await Promise.allSettled(retryPromises);
+        const batchResults = await Promise.all(batchPromises);
+        results.push(...batchResults);
       }
 
-      return { success: true, phase };
+      return { success: true, phase, results };
     } catch (error) {
       console.error(`Error generating ${phase} phase analysis:`, error);
 
@@ -1023,27 +988,9 @@ export class AnalysisApiService {
       }
 
       await AnalysisService.upsertAnalysis(this.API_BASE_URL, token, analysisPayload);
-      
+
       // Clear analysis cache for this business after upsert
       analysisDataCache.delete(`analysis-${selectedBusinessId}`);
-
-      /*
-      console.log("--- VERIFICATION START: Calling other Analysis APIs ---");
-      try {
-        const allAnalysis = await AnalysisService.getAnalysis(this.API_BASE_URL, token, selectedBusinessId);
-        console.log("VERIFICATION: Get All Analysis result:", allAnalysis);
-
-        const phaseAnalysis = await AnalysisService.getAnalysisByPhase(this.API_BASE_URL, token, selectedBusinessId, phase);
-        console.log(`VERIFICATION: Get Analysis by Phase (${phase}) result:`, phaseAnalysis);
-
-        const filterAnalysis = await AnalysisService.getAnalysisByFilter(this.API_BASE_URL, token, selectedBusinessId, { type: analysisType });
-        console.log(`VERIFICATION: Get Analysis by Filter (type=${analysisType}) result:`, filterAnalysis);
-
-      } catch (verErr) {
-        console.warn("VERIFICATION ERROR:", verErr);
-      }
-      console.log("--- VERIFICATION END ---");
-      */
 
       return true;
     } catch (error) {
@@ -1137,57 +1084,69 @@ export class AnalysisApiService {
   // ============================================================================
 
   async callAnalysisEndpointWithStreaming(analysisType, payload, onStreamChunk = null) {
-    console.log(`--- API CALL START: ${analysisType} ---`);
-    const endpoint = API_ENDPOINTS[analysisType];
-    if (!endpoint) {
-      console.error(`Unknown analysis type: ${analysisType}`);
-      throw new Error(`Unknown analysis type: ${analysisType}`);
-    }
-    console.log(`Endpoint identified: ${endpoint}`);
-    // For excel-analysis types, call with specific metric_type
-    if (this.isExcelAnalysisType(analysisType)) {
-      const { questionsArray, answersArray } = this.prepareQuestionsAndAnswers(
-        payload.questions,
-        payload.userAnswers
-      );
+    const performCall = async (isRetry = false) => {
+      try {
+        const endpoint = API_ENDPOINTS[analysisType];
+        if (!endpoint) {
+          console.error(`Unknown analysis type: ${analysisType}`);
+          throw new Error(`Unknown analysis type: ${analysisType}`);
+        }
 
-      const metricType = EXCEL_ANALYSIS_METRIC_TYPES[analysisType];
-      const loadingKey = `excel-analysis-${metricType?.replace('_trends', '')}`;
+        // For excel-analysis types, call with specific metric_type
+        if (this.isExcelAnalysisType(analysisType)) {
+          const { questionsArray, answersArray } = this.prepareQuestionsAndAnswers(
+            payload.questions,
+            payload.userAnswers
+          );
 
-      const result = await this.makeAPICall(
-        'excel-analysis',
-        questionsArray,
-        answersArray,
-        payload.selectedBusinessId,
-        payload.stateSetters?.uploadedFile || null,
-        metricType,
-        onStreamChunk,  // ✅ Pass streaming callback
-        null,           // companyName
-        null,           // rawPayload
-        loadingKey      // ✅ Pass specific loading key
-      );
+          const metricType = EXCEL_ANALYSIS_METRIC_TYPES[analysisType];
+          const loadingKey = `excel-analysis-${metricType?.replace('_trends', '')}`;
 
-      return { data: result };
-    }
+          const result = await this.makeAPICall(
+            'excel-analysis',
+            questionsArray,
+            answersArray,
+            payload.selectedBusinessId,
+            payload.stateSetters?.uploadedFile || null,
+            metricType,
+            onStreamChunk,
+            null,
+            null,
+            loadingKey
+          );
 
-    // For other analyses (including Porter's with streaming)
-    const { questionsArray, answersArray } = this.prepareQuestionsAndAnswers(
-      payload.questions,
-      payload.userAnswers
-    );
+          return { data: result };
+        }
 
-    const result = await this.makeAPICall(
-      endpoint,
-      questionsArray,
-      answersArray,
-      payload.selectedBusinessId,
-      null,
-      null,
-      onStreamChunk  // ✅ Pass streaming callback for Porter's
-    );
+        // For other analyses
+        const { questionsArray, answersArray } = this.prepareQuestionsAndAnswers(
+          payload.questions,
+          payload.userAnswers
+        );
 
-    console.log(`--- API CALL SUCCESS: ${analysisType} ---`);
-    return { data: result };
+        const result = await this.makeAPICall(
+          endpoint,
+          questionsArray,
+          answersArray,
+          payload.selectedBusinessId,
+          null,
+          null,
+          onStreamChunk
+        );
+
+        return { data: result };
+      } catch (error) {
+        if (!isRetry) {
+          console.warn(`Analysis ${analysisType} failed, retrying once...`, error);
+          // Wait briefly before retrying
+          await new Promise(resolve => setTimeout(resolve, 1500));
+          return await performCall(true);
+        }
+        throw error;
+      }
+    };
+
+    return await performCall();
   }
 
   // Strategic Analysis (kept for compatibility)

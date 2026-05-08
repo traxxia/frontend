@@ -165,9 +165,7 @@ const ProjectsSection = ({
     if (!selectedBusinessId) return;
     
     // Update signature to prevent immediate redundant automated refresh
-    lastRefreshRef.current = `${selectedBusinessId}-${activeView}`;
-    
-    console.log("ProjectsSection: Refreshing all data");
+    lastRefreshRef.current = `${selectedBusinessId}-${activeView}`; 
     
     // 1. Clear custom store caches
     useProjectStore.getState().clearCache(selectedBusinessId);
@@ -219,8 +217,7 @@ const ProjectsSection = ({
 
     // After mount: only refresh if view transitions (e.g. navigating back to list from edit)
     const signature = `${selectedBusinessId}-${activeView}`;
-    if (lastRefreshRef.current === signature) {
-      // console.log("ProjectsSection: Skipping redundant refresh for signature:", signature);
+    if (lastRefreshRef.current === signature) { 
       return;
     }
 

@@ -695,7 +695,7 @@ const AnalysisContentManager = (props) => {
   ]);
 
   // Get unlocked features and determine current analyses
-  const unlockedFeatures = phaseManager.getUnlockedFeatures();
+  const unlockedFeatures = phaseManager?.getUnlockedFeatures?.() || {};
 
   const currentAnalyses = useMemo(() => {
     const sets = {

@@ -206,12 +206,10 @@ const PairedBarChart = React.memo(({ metrics, thresholds, citations, t, activeBu
                   x={leftMargin - 15}
                   y={y + 15}
                   textAnchor="end"
-                  style={{
-                    fontSize: '13px',
-                    fontWeight: '500',
-                    fill: '#374151',
-                    fontFamily: 'Inter, system-ui, sans-serif'
-                  }}
+                  fontSize="13"
+                  fontWeight="500"
+                  fill="#374151"
+                  fontFamily="Inter, system-ui, sans-serif"
                 >
                   {data.metric}
                 </text>
@@ -223,7 +221,7 @@ const PairedBarChart = React.memo(({ metrics, thresholds, citations, t, activeBu
                   height={barHeight}
                   fill={data.color}
                   rx="4"
-                  opacity={0.9}
+                  fillOpacity="0.9"
                 />
 
                 <rect
@@ -233,17 +231,16 @@ const PairedBarChart = React.memo(({ metrics, thresholds, citations, t, activeBu
                   height={barHeight}
                   fill="#94a3b8"
                   rx="4"
-                  opacity={0.4}
+                  fillOpacity="0.4"
                 />
 
                 <text
                   x={leftMargin + actualBarLength + 8}
                   y={y + 17}
-                  style={{
-                    fontSize: '12px',
-                    fontWeight: '600',
-                    fill: data.color
-                  }}
+                  fontSize="12"
+                  fontWeight="600"
+                  fill={data.color}
+                  fontFamily="Inter, system-ui, sans-serif"
                 >
                   {formatDisplayValue(data.actualValue, data.type)}
                 </text>
@@ -251,11 +248,10 @@ const PairedBarChart = React.memo(({ metrics, thresholds, citations, t, activeBu
                 <text
                   x={leftMargin + benchmarkBarLength + 8}
                   y={y + barHeight + 23}
-                  style={{
-                    fontSize: '12px',
-                    fontWeight: '500',
-                    fill: '#6b7280'
-                  }}
+                  fontSize="12"
+                  fontWeight="500"
+                  fill="#6b7280"
+                  fontFamily="Inter, system-ui, sans-serif"
                 >
                   {formatDisplayValue(data.benchmarkValue, data.type)}
                 </text>

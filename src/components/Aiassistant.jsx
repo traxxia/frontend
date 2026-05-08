@@ -173,6 +173,8 @@ if (response.data.history && response.data.history.length > 0) {
     let assistantText = "";
     const businessId = getBusinessId();
     const token = getToken();
+    const startTime = Date.now(); // ← track latency for Observatory logging
+    let responseData = null; // hoisted so finally block can read model/token usage
 
     try {
       // 1. Pre-check: Verify AI token status before calling AI Assistant API
@@ -225,6 +227,7 @@ if (response.data.history && response.data.history.length > 0) {
       });
 
       const data = await response.json();
+      responseData = data; // make available in finally
 
       if (!response.ok) {
         // Handle rate limit or other API errors gracefully
@@ -275,6 +278,29 @@ if (response.data.history && response.data.history.length > 0) {
       if (assistantText) {
         setMessages((prev) => [...prev, { role: "assistant", text: assistantText }]);
         await saveMessageToHistory("assistant", assistantText);
+
+        // Observatory: fire-and-forget log-turn (server gates it for non-observatory users)
+        axios.post(
+          `${process.env.REACT_APP_BACKEND_URL}/ai-chat/log-turn`,
+          {
+            user_input: userText,
+            system_prompt: responseData?.systemPrompt || null, 
+            assistant_response: assistantText,
+            business_id: businessId,
+            project_id: projectId || null,
+            page_context: pageContext || null,
+            token_usage: {
+              prompt_tokens: responseData?.usage?.promptTokens || responseData?.usage?.prompt_tokens || 0,
+              completion_tokens: responseData?.usage?.completionTokens || responseData?.usage?.completion_tokens || 0,
+              total_tokens: responseData?.usage?.totalTokens || responseData?.usage?.total_tokens || 0
+            },
+            model: responseData?.model || 'gpt-4o-mini', // or whatever Mastra uses by default
+            status: assistantText.startsWith('\u26a0\ufe0f') ? 'quota_exceeded' : 'success',
+            latency_ms: Date.now() - startTime,
+            timestamp: new Date().toISOString()
+          },
+          { headers: { Authorization: `Bearer ${token}`, 'x-business-id': businessId } }
+        ).catch(() => {}); // never throw — observatory logging must never affect UX
       }
       setIsLoading(false);
     }
