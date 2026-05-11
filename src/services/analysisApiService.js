@@ -575,9 +575,10 @@ export class AnalysisApiService {
     onStreamChunk = null, // ✅ Added live streaming callback
     companyName = null, // Add company name for specific analyses like aha-insight
     rawPayload = null,   // ✅ Added raw payload support
-    loadingKey = null   // ✅ NEW: Added loading key support
+    loadingKey = null,   // ✅ NEW: Added loading key support
+    analysisType = null  // ✅ NEW: Added analysis type for logging
   ) {
-    if (!rawPayload && questionsArray.length === 0 && endpoint !== 'excel-analysis') {
+    if (!rawPayload && (!questionsArray || questionsArray.length === 0) && endpoint !== 'excel-analysis') {
       throw new Error(`No questions available for ${endpoint} analysis`);
     }
 
@@ -587,6 +588,31 @@ export class AnalysisApiService {
       }
 
       const isExcelAnalysis = endpoint === 'excel-analysis';
+
+      // Determine the stage name for Observatory logging
+      const stage = analysisType || (isExcelAnalysis ? metricType : endpoint);
+
+      // Setup Observatory Headers
+      const obsHeaders = {};
+      try {
+        const authState = JSON.parse(
+          sessionStorage.getItem('auth-storage') || localStorage.getItem('auth-storage') || '{}'
+        );
+        const isObservatory = authState?.state?.isObservatory === true;
+        obsHeaders['x-is-observatory'] = isObservatory ? 'true' : 'false';
+
+        if (selectedBusinessId) {
+          obsHeaders['x-business-id'] = selectedBusinessId;
+        }
+
+        if (isObservatory) {
+          if (stage) {
+            obsHeaders['x-stage'] = stage;
+          }
+          obsHeaders['x-request-timestamp'] = new Date().toISOString();
+        }
+      } catch (_) { /* silent */ }
+
       let response;
 
       // ✅ Handle Excel-based endpoints with file upload
@@ -636,11 +662,12 @@ export class AnalysisApiService {
           url += `?${params.toString()}`;
         }
 
-        response = await fetch(url + 's', {
+        response = await fetch(url, {
           method: 'POST',
           headers: {
             'accept': 'application/json',
-            'source': documentInfo?.template_type || 'simple'
+            'source': documentInfo?.template_type || 'simple',
+            ...obsHeaders
           },
           body: formData
         });
@@ -648,23 +675,15 @@ export class AnalysisApiService {
       else {
         const headers = {
           'Accept': 'application/json',
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          ...obsHeaders
         };
 
         if (this.requiresDeepSearch(endpoint)) {
           headers['deep_search'] = 'true';
         }
 
-        try {
-          const authState = JSON.parse(
-            sessionStorage.getItem('auth-storage') || localStorage.getItem('auth-storage') || '{}'
-          );
-          const isObservatory = authState?.state?.isObservatory === true;
-          headers['x-is-observatory'] = isObservatory ? 'true' : 'false';
-          if (selectedBusinessId) {
-            headers['x-business-id'] = selectedBusinessId;
-          }
-        } catch (_) { /* silent */ }
+
 
         // Use rawPayload if provided, otherwise construct the default payload
         const payload = rawPayload || {
@@ -727,10 +746,6 @@ export class AnalysisApiService {
     }
   }
 
-
-  async callAnalysisEndpoint(analysisType, payload) {
-    return await this.callAnalysisEndpointWithStreaming(analysisType, payload);
-  }
 
 
   async handlePhaseCompletion(
@@ -1188,7 +1203,8 @@ export class AnalysisApiService {
             onStreamChunk,
             null,
             null,
-            loadingKey
+            loadingKey,
+            analysisType
           );
 
           return { data: result };
@@ -1207,7 +1223,11 @@ export class AnalysisApiService {
           payload.selectedBusinessId,
           null,
           null,
-          onStreamChunk
+          onStreamChunk,
+          null,
+          null,
+          null, // loadingKey
+          analysisType
         );
 
         return { data: result };
@@ -1235,7 +1255,7 @@ export class AnalysisApiService {
         const combinedAnswers = { ...answers, ...freshAnswers };
 
         const { questionsArray, answersArray } = this.prepareQuestionsAndAnswers(questions, combinedAnswers);
-        const result = await this.makeAPICall('strategic-analysis', questionsArray, answersArray);
+        const result = await this.makeAPICall('strategic-analysis', questionsArray, answersArray, selectedBusinessId, null, null, null, null, null, null, 'strategic');
         const strategicContent = result.strategic_analysis || result.strategic || result;
         await this.saveAnalysisToBackend(strategicContent, 'strategic', selectedBusinessId);
         return strategicContent;
@@ -1255,7 +1275,7 @@ export class AnalysisApiService {
   async generateCompetitiveLandscape(questions, answers, selectedBusinessId) {
     try {
       const { questionsArray, answersArray } = this.prepareQuestionsAndAnswers(questions, answers);
-      const result = await this.makeAPICall('simple-swot-portfolio', questionsArray, answersArray);
+      const result = await this.makeAPICall('simple-swot-portfolio', questionsArray, answersArray, selectedBusinessId, null, null, null, null, null, null, 'competitiveLandscape');
       await this.saveAnalysisToBackend(result, 'competitiveLandscape', selectedBusinessId);
       return result;
     } catch (error) {
@@ -1268,7 +1288,7 @@ export class AnalysisApiService {
   async generateSWOTAnalysis(questions, answers, selectedBusinessId) {
     try {
       const { questionsArray, answersArray } = this.prepareQuestionsAndAnswers(questions, answers);
-      const result = await this.makeAPICall('find', questionsArray, answersArray);
+      const result = await this.makeAPICall('find', questionsArray, answersArray, selectedBusinessId, null, null, null, null, null, null, 'swot');
       const analysisContent = typeof result === 'string' ? result : JSON.stringify(result);
       await this.saveAnalysisToBackend(analysisContent, 'swot', selectedBusinessId);
       return analysisContent;
@@ -1367,7 +1387,7 @@ export class AnalysisApiService {
   async generatePurchaseCriteria(questions, answers, selectedBusinessId) {
     try {
       const { questionsArray, answersArray } = this.prepareQuestionsAndAnswers(questions, answers);
-      const result = await this.makeAPICall('purchase-criteria', questionsArray, answersArray);
+      const result = await this.makeAPICall('purchase-criteria', questionsArray, answersArray, selectedBusinessId, null, null, null, null, null, null, 'purchaseCriteria');
       const criteriaData = result.purchase_criteria || result.purchaseCriteria || result;
       await this.saveAnalysisToBackend(criteriaData, 'purchaseCriteria', selectedBusinessId);
       return criteriaData;
@@ -1380,7 +1400,7 @@ export class AnalysisApiService {
   async generateLoyaltyNPS(questions, answers, selectedBusinessId) {
     try {
       const { questionsArray, answersArray } = this.prepareQuestionsAndAnswers(questions, answers);
-      const result = await this.makeAPICall('loyalty-metrics', questionsArray, answersArray);
+      const result = await this.makeAPICall('loyalty-metrics', questionsArray, answersArray, selectedBusinessId, null, null, null, null, null, null, 'loyaltyNPS');
       const loyaltyData = result.loyalty_nps || result.loyaltyNPS || result;
       await this.saveAnalysisToBackend(loyaltyData, 'loyaltyNPS', selectedBusinessId);
       return loyaltyData;
@@ -1393,7 +1413,7 @@ export class AnalysisApiService {
   async generatePortersAnalysis(questions, answers, selectedBusinessId) {
     try {
       const { questionsArray, answersArray } = this.prepareQuestionsAndAnswers(questions, answers);
-      const result = await this.makeAPICall('porter-analysis', questionsArray, answersArray);
+      const result = await this.makeAPICall('porter-analysis', questionsArray, answersArray, selectedBusinessId, null, null, null, null, null, null, 'porters');
       const portersContent = result.porters_analysis || result.porters || result;
       await this.saveAnalysisToBackend(portersContent, 'porters', selectedBusinessId);
       return portersContent;
@@ -1406,7 +1426,7 @@ export class AnalysisApiService {
   async generatePestelAnalysis(questions, answers, selectedBusinessId) {
     try {
       const { questionsArray, answersArray } = this.prepareQuestionsAndAnswers(questions, answers);
-      const result = await this.makeAPICall('pestel-analysis', questionsArray, answersArray);
+      const result = await this.makeAPICall('pestel-analysis', questionsArray, answersArray, selectedBusinessId, null, null, null, null, null, null, 'pestel');
       await this.saveAnalysisToBackend(result, 'pestel', selectedBusinessId);
       return result;
     } catch (error) {
@@ -1422,7 +1442,7 @@ export class AnalysisApiService {
         answers,
         (q, ans) => ans[q._id] && ans[q._id].trim() !== ''
       );
-      const result = await this.makeAPICall('full-swot-portfolio', questionsArray, answersArray);
+      const result = await this.makeAPICall('full-swot-portfolio', questionsArray, answersArray, selectedBusinessId, null, null, null, null, null, null, 'fullSwot');
       await this.saveAnalysisToBackend(result, 'fullSwot', selectedBusinessId);
       return result;
     } catch (error) {
@@ -1434,7 +1454,7 @@ export class AnalysisApiService {
   async generateCompetitiveAdvantage(questions, answers, selectedBusinessId) {
     try {
       const { questionsArray, answersArray } = this.prepareQuestionsAndAnswers(questions, answers);
-      const result = await this.makeAPICall('competitive-advantage', questionsArray, answersArray);
+      const result = await this.makeAPICall('competitive-advantage', questionsArray, answersArray, selectedBusinessId, null, null, null, null, null, null, 'competitiveAdvantage');
       await this.saveAnalysisToBackend(result, 'competitiveAdvantage', selectedBusinessId);
       return result;
     } catch (error) {
@@ -1446,7 +1466,7 @@ export class AnalysisApiService {
   async generateExpandedCapability(questions, answers, selectedBusinessId) {
     try {
       const { questionsArray, answersArray } = this.prepareQuestionsAndAnswers(questions, answers);
-      const result = await this.makeAPICall('expanded-capability-heatmap', questionsArray, answersArray);
+      const result = await this.makeAPICall('expanded-capability-heatmap', questionsArray, answersArray, selectedBusinessId, null, null, null, null, null, null, 'expandedCapability');
 
       let expandedCapabilityContent = null;
       if (result.expandedCapabilityHeatmap) {
@@ -1468,7 +1488,7 @@ export class AnalysisApiService {
   async generateStrategicRadar(questions, answers, selectedBusinessId) {
     try {
       const { questionsArray, answersArray } = this.prepareQuestionsAndAnswers(questions, answers);
-      const result = await this.makeAPICall('strategic-positioning-radar', questionsArray, answersArray);
+      const result = await this.makeAPICall('strategic-positioning-radar', questionsArray, answersArray, selectedBusinessId, null, null, null, null, null, null, 'strategicRadar');
 
       let strategicRadarContent = null;
       if (result.strategicRadar) {
@@ -1490,7 +1510,7 @@ export class AnalysisApiService {
   async generateProductivityMetrics(questions, answers, selectedBusinessId) {
     try {
       const { questionsArray, answersArray } = this.prepareQuestionsAndAnswers(questions, answers);
-      const result = await this.makeAPICall('productivity-metrics', questionsArray, answersArray);
+      const result = await this.makeAPICall('productivity-metrics', questionsArray, answersArray, selectedBusinessId, null, null, null, null, null, null, 'productivityMetrics');
 
       let productivityContent = null;
       if (result.productivityMetrics) {
@@ -1517,10 +1537,28 @@ export class AnalysisApiService {
 
       const { questionsArray, answersArray } = this.prepareQuestionsAndAnswers(questions, answers);
 
+      // Setup Observatory Headers
+      const obsHeaders = {};
+      try {
+        const authState = JSON.parse(
+          sessionStorage.getItem('auth-storage') || localStorage.getItem('auth-storage') || '{}'
+        );
+        const isObservatory = authState?.state?.isObservatory === true;
+        obsHeaders['x-is-observatory'] = isObservatory ? 'true' : 'false';
+        if (selectedBusinessId) {
+          obsHeaders['x-business-id'] = selectedBusinessId;
+        }
+        if (isObservatory) {
+          obsHeaders['x-stage'] = 'coreAdjacency';
+          obsHeaders['x-request-timestamp'] = new Date().toISOString();
+        }
+      } catch (_) { /* silent */ }
+
       const response = await fetch(`${this.ML_API_BASE_URL}/core-adjacency-matrix`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...obsHeaders
         },
         body: JSON.stringify({
           questions: questionsArray,
@@ -1551,7 +1589,7 @@ export class AnalysisApiService {
   async generateMaturityScore(questions, answers, selectedBusinessId) {
     try {
       const { questionsArray, answersArray } = this.prepareQuestionsAndAnswers(questions, answers);
-      const result = await this.makeAPICall('maturity-scoring', questionsArray, answersArray);
+      const result = await this.makeAPICall('maturity-scoring', questionsArray, answersArray, selectedBusinessId, null, null, null, null, null, null, 'maturityScore');
 
       let maturityContent = null;
       if (result.maturityScore || result.maturity_score) {
@@ -1574,7 +1612,7 @@ export class AnalysisApiService {
   async generateProfitabilityAnalysis(questions, answers, selectedBusinessId, uploadedFile = null) {
     try {
       const { questionsArray, answersArray } = this.prepareQuestionsAndAnswers(questions, answers);
-      const result = await this.makeAPICall('excel-analysis', questionsArray, answersArray, selectedBusinessId, uploadedFile, 'profitability');
+      const result = await this.makeAPICall('excel-analysis', questionsArray, answersArray, selectedBusinessId, uploadedFile, 'profitability', null, null, null, null, 'profitabilityAnalysis');
 
       await this.saveAnalysisToBackend(result, 'profitabilityAnalysis', selectedBusinessId);
       return result;
@@ -1587,7 +1625,7 @@ export class AnalysisApiService {
   async generateGrowthTracker(questions, answers, selectedBusinessId, uploadedFile = null) {
     try {
       const { questionsArray, answersArray } = this.prepareQuestionsAndAnswers(questions, answers);
-      const result = await this.makeAPICall('excel-analysis', questionsArray, answersArray, selectedBusinessId, uploadedFile, 'growth_trends');
+      const result = await this.makeAPICall('excel-analysis', questionsArray, answersArray, selectedBusinessId, uploadedFile, 'growth_trends', null, null, null, null, 'growthTracker');
 
       await this.saveAnalysisToBackend(result, 'growthTracker', selectedBusinessId);
       return result;
@@ -1600,7 +1638,7 @@ export class AnalysisApiService {
   async generateLiquidityEfficiency(questions, answers, selectedBusinessId, uploadedFile = null) {
     try {
       const { questionsArray, answersArray } = this.prepareQuestionsAndAnswers(questions, answers);
-      const result = await this.makeAPICall('excel-analysis', questionsArray, answersArray, selectedBusinessId, uploadedFile, 'liquidity');
+      const result = await this.makeAPICall('excel-analysis', questionsArray, answersArray, selectedBusinessId, uploadedFile, 'liquidity', null, null, null, null, 'liquidityEfficiency');
 
       await this.saveAnalysisToBackend(result, 'liquidityEfficiency', selectedBusinessId);
       return result;
@@ -1613,7 +1651,7 @@ export class AnalysisApiService {
   async generateInvestmentPerformance(questions, answers, selectedBusinessId, uploadedFile = null) {
     try {
       const { questionsArray, answersArray } = this.prepareQuestionsAndAnswers(questions, answers);
-      const result = await this.makeAPICall('excel-analysis', questionsArray, answersArray, selectedBusinessId, uploadedFile, 'investment');
+      const result = await this.makeAPICall('excel-analysis', questionsArray, answersArray, selectedBusinessId, uploadedFile, 'investment', null, null, null, null, 'investmentPerformance');
 
       await this.saveAnalysisToBackend(result, 'investmentPerformance', selectedBusinessId);
       return result;
@@ -1626,7 +1664,7 @@ export class AnalysisApiService {
   async generateLeverageRisk(questions, answers, selectedBusinessId, uploadedFile = null) {
     try {
       const { questionsArray, answersArray } = this.prepareQuestionsAndAnswers(questions, answers);
-      const result = await this.makeAPICall('excel-analysis', questionsArray, answersArray, selectedBusinessId, uploadedFile, 'leverage');
+      const result = await this.makeAPICall('excel-analysis', questionsArray, answersArray, selectedBusinessId, uploadedFile, 'leverage', null, null, null, null, 'leverageRisk');
 
       await this.saveAnalysisToBackend(result, 'leverageRisk', selectedBusinessId);
       return result;
