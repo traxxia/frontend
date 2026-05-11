@@ -551,13 +551,15 @@ export class AnalysisApiService {
 
     questions
       .filter(q => {
+        const qId = q._id || q.id || q.question_id;
         if (filterFn) return filterFn(q, answers);
-        return answers[q._id] && answers[q._id].trim();
+        return answers[qId] && answers[qId].trim();
       })
       .sort((a, b) => (a.order || 0) - (b.order || 0))
       .forEach(question => {
+        const qId = question._id || question.id || question.question_id;
         questionsArray.push(question.question_text);
-        answersArray.push(answers[question._id]);
+        answersArray.push(answers[qId]);
       });
 
     return { questionsArray, answersArray };
@@ -1078,10 +1080,84 @@ export class AnalysisApiService {
     };
   }
 
-  // ============================================================================
-  // NEW METHOD: callAnalysisEndpointWithStreaming
-  // Add this method right after callAnalysisEndpoint (around line 420)
-  // ============================================================================
+  async callAnalysisEndpoint(analysisType, payload) {
+    const performCall = async (isRetry = false) => {
+      try {
+        const endpoint = API_ENDPOINTS[analysisType];
+        if (!endpoint) {
+          console.error(`Unknown analysis type: ${analysisType}`);
+          throw new Error(`Unknown analysis type: ${analysisType}`);
+        }
+
+        // Use specialized generation methods if they exist to ensure consistent normalization
+        const methodNameMap = {
+          swot: 'generateSWOTAnalysis',
+          purchaseCriteria: 'generatePurchaseCriteria',
+          loyaltyNPS: 'generateLoyaltyNPS',
+          porters: 'generatePortersAnalysis',
+          pestel: 'generatePestelAnalysis',
+          fullSwot: 'generateFullSwotPortfolio',
+          competitiveAdvantage: 'generateCompetitiveAdvantage',
+          expandedCapability: 'generateExpandedCapability',
+          strategicRadar: 'generateStrategicRadar',
+          productivityMetrics: 'generateProductivityMetrics',
+          maturityScore: 'generateMaturityScore',
+          competitiveLandscape: 'generateCompetitiveLandscape',
+          coreAdjacency: 'generateCoreAdjacency',
+          profitabilityAnalysis: 'generateProfitabilityAnalysis',
+          growthTracker: 'generateGrowthTracker',
+          liquidityEfficiency: 'generateLiquidityEfficiency',
+          investmentPerformance: 'generateInvestmentPerformance',
+          leverageRisk: 'generateLeverageRisk',
+          strategic: 'generateStrategicAnalysis'
+        };
+
+        const methodName = methodNameMap[analysisType];
+        if (methodName && typeof this[methodName] === 'function') {
+          let result;
+          if (this.isExcelAnalysisType(analysisType)) {
+            result = await this[methodName](
+              payload.questions,
+              payload.userAnswers,
+              payload.selectedBusinessId,
+              payload.stateSetters?.uploadedFile || null
+            );
+          } else {
+            result = await this[methodName](
+              payload.questions,
+              payload.userAnswers,
+              payload.selectedBusinessId
+            );
+          }
+          return { data: result };
+        }
+
+        // Fallback for types without specialized methods
+        const { questionsArray, answersArray } = this.prepareQuestionsAndAnswers(
+          payload.questions,
+          payload.userAnswers
+        );
+
+        const result = await this.makeAPICall(
+          endpoint,
+          questionsArray,
+          answersArray,
+          payload.selectedBusinessId
+        );
+
+        return { data: result };
+      } catch (error) {
+        if (!isRetry) {
+          console.warn(`Analysis ${analysisType} failed, retrying once...`, error);
+          await new Promise(resolve => setTimeout(resolve, 1500));
+          return await performCall(true);
+        }
+        throw error;
+      }
+    };
+
+    return await performCall();
+  }
 
   async callAnalysisEndpointWithStreaming(analysisType, payload, onStreamChunk = null) {
     const performCall = async (isRetry = false) => {
