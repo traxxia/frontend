@@ -565,43 +565,6 @@ export class AnalysisApiService {
     return { questionsArray, answersArray };
   }
 
-  async getObservatoryHeaders(selectedBusinessId, stage) {
-    const headers = {};
-    try {
-      const authState = JSON.parse(
-        sessionStorage.getItem('auth-storage') || localStorage.getItem('auth-storage') || '{}'
-      );
-      const isObservatory = authState?.state?.isObservatory === true;
-      headers['x-is-observatory'] = isObservatory ? 'true' : 'false';
-
-      if (selectedBusinessId) {
-        headers['x-business-id'] = selectedBusinessId;
-      }
-
-      // ONLY add observatory-specific grouping headers if the user is in observatory mode
-      if (isObservatory) {
-        // Manage a stable session ID for Observatory interactions to group them correctly
-        let sessionId = sessionStorage.getItem('obs_session_id');
-        if (!sessionId) {
-          sessionId = `obs_${Math.random().toString(36).substring(2, 15)}_${Date.now()}`;
-          sessionStorage.setItem('obs_session_id', sessionId);
-        }
-        headers['x-session-id'] = sessionId;
-
-        if (stage) {
-          headers['x-stage'] = stage;
-        }
-        
-        // Add a unique request timestamp to help backend distinguish rapid parallel calls
-        headers['x-request-timestamp'] = new Date().toISOString();
- 
-      }
-    } catch (error) {
-      console.error('[Observatory] Error generating headers:', error);
-    }
-    return headers;
-  }
-
   async makeAPICall(
     endpoint,
     questionsArray,
@@ -614,7 +577,7 @@ export class AnalysisApiService {
     rawPayload = null,   // ✅ Added raw payload support
     loadingKey = null,   // ✅ NEW: Added loading key support
     analysisType = null  // ✅ NEW: Added analysis type for logging
-  ) { 
+  ) {
     if (!rawPayload && (!questionsArray || questionsArray.length === 0) && endpoint !== 'excel-analysis') {
       throw new Error(`No questions available for ${endpoint} analysis`);
     }
@@ -625,13 +588,32 @@ export class AnalysisApiService {
       }
 
       const isExcelAnalysis = endpoint === 'excel-analysis';
-      let response;
 
       // Determine the stage name for Observatory logging
       const stage = analysisType || (isExcelAnalysis ? metricType : endpoint);
 
-      // Prepare Observatory headers with unique stage name
-      const obsHeaders = await this.getObservatoryHeaders(selectedBusinessId, stage);
+      // Setup Observatory Headers
+      const obsHeaders = {};
+      try {
+        const authState = JSON.parse(
+          sessionStorage.getItem('auth-storage') || localStorage.getItem('auth-storage') || '{}'
+        );
+        const isObservatory = authState?.state?.isObservatory === true;
+        obsHeaders['x-is-observatory'] = isObservatory ? 'true' : 'false';
+
+        if (selectedBusinessId) {
+          obsHeaders['x-business-id'] = selectedBusinessId;
+        }
+
+        if (isObservatory) {
+          if (stage) {
+            obsHeaders['x-stage'] = stage;
+          }
+          obsHeaders['x-request-timestamp'] = new Date().toISOString();
+        }
+      } catch (_) { /* silent */ }
+
+      let response;
 
       // ✅ Handle Excel-based endpoints with file upload
       if (isExcelAnalysis) {
@@ -707,7 +689,6 @@ export class AnalysisApiService {
         const payload = rawPayload || {
           questions: questionsArray,
           answers: answersArray,
-          business_id: selectedBusinessId
         };
 
         response = await fetch(`${this.ML_API_BASE_URL}/${endpoint}?stream=true`, {
@@ -1556,8 +1537,23 @@ export class AnalysisApiService {
 
       const { questionsArray, answersArray } = this.prepareQuestionsAndAnswers(questions, answers);
 
-      const obsHeaders = await this.getObservatoryHeaders(selectedBusinessId, 'core-adjacency');
-      
+      // Setup Observatory Headers
+      const obsHeaders = {};
+      try {
+        const authState = JSON.parse(
+          sessionStorage.getItem('auth-storage') || localStorage.getItem('auth-storage') || '{}'
+        );
+        const isObservatory = authState?.state?.isObservatory === true;
+        obsHeaders['x-is-observatory'] = isObservatory ? 'true' : 'false';
+        if (selectedBusinessId) {
+          obsHeaders['x-business-id'] = selectedBusinessId;
+        }
+        if (isObservatory) {
+          obsHeaders['x-stage'] = 'coreAdjacency';
+          obsHeaders['x-request-timestamp'] = new Date().toISOString();
+        }
+      } catch (_) { /* silent */ }
+
       const response = await fetch(`${this.ML_API_BASE_URL}/core-adjacency-matrix`, {
         method: 'POST',
         headers: {
