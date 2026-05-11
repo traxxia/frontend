@@ -25,7 +25,7 @@ import { useShallow } from 'zustand/shallow';
 import MenuBar from "../components/MenuBar";
 import EditableBriefSection from "../components/EditableBriefSection";
 import StrategicAnalysis from "../components/StrategicAnalysis";
-import PhaseManager from "../components/PhaseManager";
+import PhaseManager, { getUnlockedFeatures } from "../components/PhaseManager";
 import PhaseUnlockToast from "../components/PhaseUnlockToast";
 import AnalysisContentManager from "../components/AnalysisContentManager";
 import { extractBusinessName } from '../utils/businessHelpers';
@@ -584,7 +584,7 @@ const BusinessSetupPage = () => {
           // 3. Fetch analysis results silently (don't set loaded=true inside fetchAnalysisData)
           let analysisUpdates = {};
           if (Object.keys(finalAnswers).length > 0) {
-            analysisUpdates = await fetchAnalysisData(selectedBusinessId, true);
+            analysisUpdates = await fetchAnalysisData(selectedBusinessId, true, false, true); // skipReset = true
           }
 
           // 4. ATOMIC INITIALIZATION
@@ -770,7 +770,9 @@ const BusinessSetupPage = () => {
   const loadExistingAnalysisData = useCallback((phaseAnalysisArray) => {
     setPhaseAnalysisArray(phaseAnalysisArray);
     // Data mapping is now handled inside fetchAnalysisData in the store
-  }, []);
+    // But we trigger it here to ensure the store is updated with the latest data
+    fetchAnalysisData(selectedBusinessId, true, false, true); // skipReset = true
+  }, [selectedBusinessId, fetchAnalysisData]);
 
   const phaseManager = PhaseManager({
     questions, questionsLoaded, completedQuestions, userAnswers, selectedBusinessId,
@@ -835,11 +837,17 @@ const BusinessSetupPage = () => {
         let phasesToRegenerate = [];
 
         if (isBulkApply) {
-          // Get the current unlocked features based on the latest answers
-          const unlockedFeatures = phaseManager.getUnlockedFeatures();
+          // Get the current unlocked features based on the latest answers from the store
+          // instead of relying on the stale phaseManager instance
+          const latestStoreState = useAnalysisStore.getState();
+          const unlockedFeatures = getUnlockedFeatures(
+            latestStoreState.questions, 
+            latestStoreState.userAnswers, 
+            latestStoreState.completedQuestions, 
+            hasUploadedDocument
+          );
 
           // Fallback logic: Call advanced if unlocked, else essential, else initial.
-          // Since higher phases now include all lower-phase APIs (like SWOT), calling just the highest is sufficient.
           if (unlockedFeatures.advancedPhase) {
             phasesToRegenerate = ['advanced'];
           } else if (unlockedFeatures.essentialPhase) {
@@ -880,6 +888,10 @@ const BusinessSetupPage = () => {
         if (options?.alsoRegenerateStrategic) { 
           await handleStrategicAnalysisRegenerate(true);
         }
+        
+        // Final sync to ensure UI is perfectly updated with all regenerated results
+        await fetchAnalysisData(selectedBusinessId, true, true, true);
+        
         //showToastMessage(t('regeneration_completed'), 'success');
       } catch (err) {
         console.error('Error in handleRegenerateAllAnalysis:', err);

@@ -327,11 +327,11 @@ const CompetitiveLandscape = ({
             
             {/* Our Differentiators Section */}
             {ourDifferentiators.length > 0 && (
-                <div className="section-container" style={{ marginBottom: '2rem' }}>
+                <div className="section-container">
                     <div className="section-header" onClick={() => toggleSection('differentiators')} style={{ background: 'linear-gradient(90deg, #f0f9ff 0%, #e0f2fe 100%)' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                            <Shield size={20} color="#0ea5e9" />
-                            <h5 style={{ margin: 0, color: '#0369a1' }}>Our Differentiators vs Competitors</h5>
+                            <Shield size={20} color="#6366f1" />
+                            <h5 style={{ margin: 0 }}>Our Differentiators vs Competitors</h5>
                         </div>
                         {expandedSections['differentiators'] ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
                     </div>
