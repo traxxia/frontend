@@ -413,7 +413,9 @@ const BusinessSetupPage = () => {
     else if (activeTab === "advanced") pageContext = AI_PAGE_CONTEXTS.ADVANCED;
     else if (activeTab === "insights") pageContext = AI_PAGE_CONTEXTS.INSIGHTS;
     else if (activeTab === "strategic") pageContext = AI_PAGE_CONTEXTS.STRATEGIC;
-    else if (activeTab === "decision-logs") pageContext = AI_PAGE_CONTEXTS.PROJECTS;
+    else if (activeTab === "decision-logs" || activeTab === "bets") pageContext = AI_PAGE_CONTEXTS.PROJECTS;
+    else if (activeTab === "ranking") pageContext = AI_PAGE_CONTEXTS.RANKING;
+
     let contextPayload = { ...pageContext };
 
     if (activeTab === "advanced" && questions && questions.length > 0) {
