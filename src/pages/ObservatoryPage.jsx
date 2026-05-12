@@ -56,7 +56,20 @@ const COST_RATES = {
   'gemma2-9b-it': { input: 0.20, output: 0.20 },
   'sonar-pro': { input: 3.00, output: 15.00 },
   'sonar': { input: 1.00, output: 1.00 },
-  'openai/gpt-oss-120b': { input: 0.60, output: 0.60 } // Groq OSS estimate
+  'openai/gpt-oss-120b': { input: 0.60, output: 0.60 }, // Groq OSS estimate
+  // ── GPT-5 Family (Official OpenAI Pricing, per 1M tokens) ──
+  'gpt-5-nano': { input: 0.05, output: 0.40 },
+  'openai/gpt-5-nano': { input: 0.05, output: 0.40 },
+  'gpt-5-mini': { input: 0.25, output: 2.00 },
+  'openai/gpt-5-mini': { input: 0.25, output: 2.00 },
+  'gpt-5': { input: 1.25, output: 10.00 },
+  'openai/gpt-5': { input: 1.25, output: 10.00 },
+  'gpt-5.1': { input: 1.25, output: 10.00 },
+  'openai/gpt-5.1': { input: 1.25, output: 10.00 },
+  'gpt-5.2': { input: 1.75, output: 14.00 },
+  'openai/gpt-5.2': { input: 1.75, output: 14.00 },
+  'gpt-5.2-pro': { input: 21.00, output: 168.00 },
+  'openai/gpt-5.2-pro': { input: 21.00, output: 168.00 },
 };
 
 function calculateCost(modelId, promptTokens, completionTokens) {

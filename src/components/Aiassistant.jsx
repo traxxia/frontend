@@ -12,10 +12,10 @@ const Aiassistant = ({ businessId: propBusinessId, projectId, pageContext, isDis
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [messages, setMessages] = useState([
-    { 
-  role: "assistant", 
-  text: "Hi! 👋 I can help you using your business data, current page insights, and strategy analysis. Ask me anything about risks, strategy, or recommendations." 
-},
+    {
+      role: "assistant",
+      text: "Hi! 👋 I can help you using your business data, current page insights, and strategy analysis. Ask me anything about risks, strategy, or recommendations."
+    },
   ]);
   const [isLoading, setIsLoading] = useState(false);
   const [quotaStatus, setQuotaStatus] = useState({ exceeded: false, resetAt: null, usedTokens: 0, limit: 3000000 });
@@ -75,18 +75,18 @@ const Aiassistant = ({ businessId: propBusinessId, projectId, pageContext, isDis
             { headers: { Authorization: `Bearer ${token}` } }
           );
           const introMessage = {
-  role: "assistant",
-  text: "Hi! 👋 I can help you using your business data, current page insights, and strategy analysis. Ask me anything about risks, strategy, or recommendations."
-};
+            role: "assistant",
+            text: "Hi! 👋 I can help you using your business data, current page insights, and strategy analysis. Ask me anything about risks, strategy, or recommendations."
+          };
 
-if (response.data.history && response.data.history.length > 0) {
-  setMessages([
-    introMessage,
-    ...response.data.history.map((msg) => ({ role: msg.role, text: msg.text }))
-  ]);
-} else {
-  setMessages([introMessage]);
-}
+          if (response.data.history && response.data.history.length > 0) {
+            setMessages([
+              introMessage,
+              ...response.data.history.map((msg) => ({ role: msg.role, text: msg.text }))
+            ]);
+          } else {
+            setMessages([introMessage]);
+          }
         } catch (error) {
           console.error("Error fetching AI chat history:", error);
           setMessages([{ role: "assistant", text: "Hi! 👋 I can help you using your business data, current page insights, and strategy analysis. Ask me anything about risks, strategy, or recommendations." }]);
@@ -284,7 +284,7 @@ if (response.data.history && response.data.history.length > 0) {
           `${process.env.REACT_APP_BACKEND_URL}/ai-chat/log-turn`,
           {
             user_input: userText,
-            system_prompt: responseData?.systemPrompt || null, 
+            system_prompt: responseData?.systemPrompt || null,
             assistant_response: assistantText,
             business_id: businessId,
             project_id: projectId || null,
@@ -294,13 +294,13 @@ if (response.data.history && response.data.history.length > 0) {
               completion_tokens: responseData?.usage?.completionTokens || responseData?.usage?.completion_tokens || 0,
               total_tokens: responseData?.usage?.totalTokens || responseData?.usage?.total_tokens || 0
             },
-            model: responseData?.model || 'gpt-4o-mini', // or whatever Mastra uses by default
+            model: responseData?.model, // or whatever Mastra uses by default
             status: assistantText.startsWith('\u26a0\ufe0f') ? 'quota_exceeded' : 'success',
             latency_ms: Date.now() - startTime,
             timestamp: new Date().toISOString()
           },
           { headers: { Authorization: `Bearer ${token}`, 'x-business-id': businessId } }
-        ).catch(() => {}); // never throw — observatory logging must never affect UX
+        ).catch(() => { }); // never throw — observatory logging must never affect UX
       }
       setIsLoading(false);
     }
