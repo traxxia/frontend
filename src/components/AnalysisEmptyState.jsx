@@ -1,5 +1,5 @@
-import React, { useRef, useState } from 'react';
-import { Upload, X, Loader, MessageSquareQuote, Sparkles } from 'lucide-react';
+import React from 'react';
+import { Loader, Sparkles } from 'lucide-react';
 import { useTranslation } from "../hooks/useTranslation";
 import '../styles/AnalysisEmptyState.css';
 
@@ -39,7 +39,6 @@ const AnalysisEmptyState = ({
   marginTop = '0px'
 }) => {
   const { t } = useTranslation();
-  const fileInputRef = useRef(null);
 
   const userRole = useAuthStore(state => state.userRole);
   const isViewer = userRole === "viewer";
@@ -50,7 +49,6 @@ const AnalysisEmptyState = ({
   // Override visibility flags if user is a viewer
   const effectiveShowImproveButton = isViewer ? false : showImproveButton;
   const effectiveShowRegenerateButton = isViewer ? false : showRegenerateButton;
-  const effectiveShowFileUpload = isViewer ? false : showFileUpload;
 
   // Determine what message and buttons to show
   const getMessage = () => {

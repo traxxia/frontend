@@ -1,25 +1,18 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import AnalysisDataModal from './AnalysisDataModal';
 import AdminTable from './AdminTable';
-import MetricCard from './MetricCard';
-import { Form, Row, Col, Modal, Button as RBButton } from 'react-bootstrap';
+import { Modal, Button as RBButton } from 'react-bootstrap';
 import {
-  Activity,
-  Clock,
   Shield,
   LogIn,
   BarChart3,
   Eye,
   Settings,
-  Search,
-  Filter,
   RefreshCw,
-  LogIn as LogInIcon,
   LogOut,
   Edit,
   Plus,
-  X,
-  Info
+  X
 } from 'lucide-react';
 import "../styles/audittrail.css";
 import { useTranslation } from '@/hooks/useTranslation';
@@ -28,7 +21,7 @@ import { useAuthStore } from '../store/authStore';
 import { useAuditTrailQuery } from '../hooks/useQueries';
 
 const AuditTrail = ({ onToast }) => {
-  const [filters, setFilters] = useState({
+  const [filters] = useState({
     event_type: '',
     start_date: '',
     end_date: '',
@@ -55,10 +48,7 @@ const AuditTrail = ({ onToast }) => {
   });
   const auditEntries = data?.audit_entries || [];
   const pagination = data?.pagination || {};
-  const analysisStats = data?.analysis_statistics || [];
-  const [expandedAnalysis, setExpandedAnalysis] = useState({});
   const [loadingAnalysisData, setLoadingAnalysisData] = useState({});
-  const [currentUserRole, setCurrentUserRole] = useState('user'); // Track current user role
   const { t } = useTranslation();
 
   // Modal state
@@ -76,18 +66,7 @@ const AuditTrail = ({ onToast }) => {
   const REACT_APP_BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
 
-  // Get current user role from store/token
-  useEffect(() => {
-    const token = useAuthStore.getState().token;
-    if (token) {
-      try {
-        const payload = JSON.parse(atob(token.split('.')[1]));
-        setCurrentUserRole(payload.role || 'user');
-      } catch (error) {
-        console.error('Error parsing token:', error);
-      }
-    }
-  }, []);
+
 
   // Legacy fetch functions removed, now handled by hook
 
@@ -102,13 +81,7 @@ const AuditTrail = ({ onToast }) => {
     });
   };
 
-  const handleFilterChange = (key, value) => {
-    setFilters(prev => ({
-      ...prev,
-      [key]: value,
-    }));
-    setCurrentPage(1);
-  };
+
 
   const handleSearch = (value) => {
     if (searchTerm === "" && value !== "") setLastPageBeforeSearch(currentPage);
@@ -247,18 +220,7 @@ const AuditTrail = ({ onToast }) => {
       });
   };
 
-  const downloadAnalysisData = (auditId, analysisType, analysisResult) => {
-    const dataStr = JSON.stringify(analysisResult, null, 2);
-    const blob = new Blob([dataStr], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `${analysisType}_analysis_${auditId}.json`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-  };
+
 
   const openAnalysisModal = async (entry) => {
     const eventData = entry.event_data_summary || entry.event_data || {};

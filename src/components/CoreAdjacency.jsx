@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import {
     Loader, TrendingUp, Target, Lightbulb, AlertTriangle,
-    ChevronDown, ChevronRight, Shield, Activity
+    ChevronDown, ChevronRight, Shield
 } from 'lucide-react';
 import { useAuthStore, useAnalysisStore } from "../store";
 import '../styles/EssentialPhase.css';

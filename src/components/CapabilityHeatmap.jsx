@@ -146,13 +146,13 @@ const CapabilityHeatmap = ({
         onDataGenerated(extractedData);
       }
     }
-  }, [capabilityHeatmapData]);
+  }, [capabilityHeatmapData, capabilityData, onDataGenerated]);
 
   useEffect(() => {
     if (capabilityData && onDataGenerated) {
       onDataGenerated(capabilityData);
     }
-  }, [capabilityData]);
+  }, [capabilityData, onDataGenerated]);
 
   useEffect(() => {
     if (hasInitialized.current) return;

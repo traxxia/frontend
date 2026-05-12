@@ -9,6 +9,7 @@ import LoyaltyNPS from "./LoyaltyNPS";
 import PortersFiveForces from "./PortersFiveForces";
 import PestelAnalysis from "./PestelAnalysis";
 import FullSWOTPortfolio from "./FullSWOTPortfolio";
+import { useBusinessSetupContext } from "../context/BusinessSetupContext";
 import CompetitiveAdvantageMatrix from "./CompetitiveAdvantageMatrix";
 import ExpandedCapabilityHeatmap from "./ExpandedCapabilityHeatmap";
 import StrategicPositioningRadar from "./StrategicPositioningRadar";
@@ -173,8 +174,9 @@ const CategorySection = React.memo(
 
 CategorySection.displayName = 'CategorySection';
 
-const AnalysisContentManager = (props) => {
+const AnalysisContentManager = () => {
   const { t } = useTranslation();
+  const context = useBusinessSetupContext();
 
   const CATEGORIES = useMemo(() => [
     {
@@ -429,13 +431,14 @@ const AnalysisContentManager = (props) => {
     highlightedCard,
     hideRegenerateButtons = false,
     hasInsightAccess = true,
+    isAnalysisRegenerating,
+    isStrategicRegenerating,
     selectedBusinessId,
     handleRedirectToBrief,
     triggerConfirmation,
     questions: propsQuestions,
     userAnswers: propsUserAnswers,
     businessData: propsBusinessData,
-    // Multi-user/History support: Prioritize these props if provided
     swotAnalysisResult,
     purchaseCriteriaData,
     loyaltyNPSData,
@@ -455,8 +458,40 @@ const AnalysisContentManager = (props) => {
     investmentPerformanceData: propsInvestmentPerformanceData,
     leverageRiskData: propsLeverageRiskData,
     strategicData: propsStrategicData,
-    questionsLoaded
-  } = props;
+    questionsLoaded,
+    canRegenerate,
+    hideImproveButton,
+    showImproveButton,
+    readOnly,
+    apiService,
+    setPurchaseCriteriaData,
+    setLoyaltyNPSData,
+    uploadedFileForAnalysis,
+    onRedirectToChat,
+    isMobile,
+    setActiveTab,
+    hasUploadedDocument,
+    documentInfo,
+    showToastMessage,
+    swotRef,
+    purchaseCriteriaRef,
+    loyaltyNpsRef,
+    portersRef,
+    pestelRef,
+    fullSwotRef,
+    competitiveAdvantageRef,
+    expandedCapabilityRef,
+    strategicRadarRef,
+    productivityRef,
+    maturityScoreRef,
+    profitabilityRef,
+    growthTrackerRef,
+    liquidityEfficiencyRef,
+    investmentPerformanceRef,
+    leverageRiskRef,
+    competitiveLandscapeRef,
+    coreAdjacencyRef
+  } = context;
 
   const {
     swotAnalysis, purchaseCriteria, loyaltyNPS, portersData, pestelData,
@@ -533,7 +568,7 @@ const AnalysisContentManager = (props) => {
 
     const onConfirm = () => {
       streamingManager.startStreaming(cardId);
-      regenerateIndividualAnalysis(analysisKey, questions, userAnswers, selectedBusinessId, props.showToastMessage, props.uploadedFileForAnalysis);
+      regenerateIndividualAnalysis(analysisKey, questions, userAnswers, selectedBusinessId, showToastMessage, uploadedFileForAnalysis);
     };
 
     if (triggerConfirmation) {
@@ -545,7 +580,7 @@ const AnalysisContentManager = (props) => {
     } else {
       onConfirm();
     }
-  }, [triggerConfirmation, ANALYSIS_CONFIG, t, streamingManager, regenerateIndividualAnalysis, questions, userAnswers, selectedBusinessId, props.showToastMessage, props.uploadedFileForAnalysis]);
+  }, [triggerConfirmation, ANALYSIS_CONFIG, t, streamingManager, regenerateIndividualAnalysis, questions, userAnswers, selectedBusinessId, showToastMessage, uploadedFileForAnalysis]);
 
   const renderAnalysisCard = useCallback((analysisKey, config) => {
     const dataMap = {
@@ -572,7 +607,16 @@ const AnalysisContentManager = (props) => {
 
     const data = dataMap[analysisKey];
     const Component = config.component;
-    const ref = props[config.refKey];
+    
+    const refsMap = {
+      swotRef, purchaseCriteriaRef, loyaltyNpsRef, portersRef, pestelRef,
+      fullSwotRef, competitiveAdvantageRef, expandedCapabilityRef, strategicRadarRef,
+      productivityRef, maturityScoreRef, profitabilityRef, growthTrackerRef,
+      liquidityEfficiencyRef, investmentPerformanceRef, leverageRiskRef,
+      competitiveLandscapeRef, coreAdjacencyRef
+    };
+    const ref = refsMap[config.refKey];
+
     const pdfComponent = config.pdfComponent;
     const isRegenerating = isTypeRegenerating(analysisKey);
     const cardId = config.slug || analysisKey.replace(/([A-Z])/g, '-$1').toLowerCase();
@@ -592,7 +636,7 @@ const AnalysisContentManager = (props) => {
         onToggleCard={toggleCard}
         streamingManager={streamingManager}
         hideRegenerateButtons={hideRegenerateButtons}
-        canRegenerate={props.canRegenerate && (!!data || (config.category !== 'costs-financial' || analysisKey === 'productivityMetrics'))}
+        canRegenerate={canRegenerate && (!!data || (config.category !== 'costs-financial' || analysisKey === 'productivityMetrics'))}
         hasInsightAccess={hasInsightAccess}
       >
         <div ref={ref} data-component={pdfComponent}>
@@ -602,34 +646,34 @@ const AnalysisContentManager = (props) => {
             businessName={businessName}
             onRegenerate={createSimpleRegenerationHandler(analysisKey)}
             isRegenerating={isRegenerating || isAnalysisLoading(analysisKey)}
-            canRegenerate={props.canRegenerate && !!data}
+            canRegenerate={canRegenerate && !!data}
             {...{ [config.dataKey]: data }}
             selectedBusinessId={selectedBusinessId}
             onRedirectToBrief={handleRedirectToBrief}
             isExpanded={expandedCards.has(cardId)}
             streamingManager={streamingManager}
             cardId={cardId}
-            hideImproveButton={props.hideImproveButton}
-            showImproveButton={props.showImproveButton}
-            readOnly={props.readOnly}
+            hideImproveButton={hideImproveButton}
+            showImproveButton={showImproveButton}
+            readOnly={readOnly}
             {...(analysisKey === 'swot' && {
               analysisResult: data,
-              saveAnalysisToBackend: (d, type) => props.apiService.saveAnalysisToBackend(d, type, selectedBusinessId)
+              saveAnalysisToBackend: (d, type) => apiService.saveAnalysisToBackend(d, type, selectedBusinessId)
             })}
             {...(analysisKey === 'purchaseCriteria' && {
-              onDataGenerated: props.setPurchaseCriteriaData
+              onDataGenerated: setPurchaseCriteriaData
             })}
             {...(analysisKey === 'loyaltyNPS' && {
-              onDataGenerated: props.setLoyaltyNPSData
+              onDataGenerated: setLoyaltyNPSData
             })}
             {...(config.category === 'costs-financial' && {
-              uploadedFile: props.uploadedFileForAnalysis,
-              onRedirectToChat: props.onRedirectToChat,
-              isMobile: props.isMobile,
-              setActiveTab: props.setActiveTab,
-              hasUploadedDocument: props.hasUploadedDocument,
-              readOnly: props.readOnly,
-              documentInfo: props.documentInfo
+              uploadedFile: uploadedFileForAnalysis,
+              onRedirectToChat: onRedirectToChat,
+              isMobile: isMobile,
+              setActiveTab: setActiveTab,
+              hasUploadedDocument: hasUploadedDocument,
+              readOnly: readOnly,
+              documentInfo: documentInfo
             })}
           />
         </div>
@@ -643,59 +687,28 @@ const AnalysisContentManager = (props) => {
     coreAdjacency, profitabilityData, growthTrackerData, liquidityEfficiencyData,
     investmentPerformanceData, leverageRiskData,
     isTypeRegenerating, isAnalysisLoading, expandedCards, highlightedCard,
-    toggleCard, streamingManager, hideRegenerateButtons, props.canRegenerate,
+    toggleCard, streamingManager, hideRegenerateButtons, canRegenerate,
     hasInsightAccess, handleRedirectToBrief, createSimpleRegenerationHandler,
-    props.hideImproveButton, props.showImproveButton, props.readOnly,
-    props.apiService, props.uploadedFileForAnalysis, props.onRedirectToChat,
-    props.isMobile, props.setActiveTab, props.hasUploadedDocument, props.documentInfo,
-    props.isMaturityRegenerating,
-    props.isProfitabilityRegenerating,
-    props.isGrowthTrackerRegenerating,
-    props.isLiquidityEfficiencyRegenerating,
-    props.isInvestmentPerformanceRegenerating,
-    props.isLeverageRiskRegenerating,
-    props.isCompetitiveLandscapeRegenerating,
-    props.isCoreAdjacencyRegenerating,
-    props.uploadedFileForAnalysis,
-    props.hasUploadedDocument,
-    props.documentInfo,
-    props.hideImproveButton,
-    props.showImproveButton,
-    props.readOnly,
-    props.handleRedirectToBrief,
-    props.onRedirectToChat,
-    props.isMobile,
-    props.setActiveTab,
-    props.apiService,
-    props.swotRef,
-    props.purchaseCriteriaRef,
-    props.loyaltyNpsRef,
-    props.portersRef,
-    props.pestelRef,
-    props.fullSwotRef,
-    props.competitiveAdvantageRef,
-    props.expandedCapabilityRef,
-    props.strategicRadarRef,
-    props.productivityRef,
-    props.maturityScoreRef,
-    props.profitabilityRef,
-    props.growthTrackerRef,
-    props.liquidityEfficiencyRef,
-    props.investmentPerformanceRef,
-    props.leverageRiskRef,
-    props.competitiveLandscapeRef,
-    props.coreAdjacencyRef,
-    expandedCards,
-    highlightedCard,
-    hideRegenerateButtons,
-    streamingManager,
-    toggleCard,
-    createSimpleRegenerationHandler,
-    isAnalysisLoading
+    hideImproveButton, showImproveButton, readOnly,
+    apiService, uploadedFileForAnalysis, onRedirectToChat,
+    isMobile, setActiveTab, hasUploadedDocument, documentInfo,
+    swotRef, purchaseCriteriaRef, loyaltyNpsRef, portersRef,
+    pestelRef, fullSwotRef, competitiveAdvantageRef,
+    expandedCapabilityRef, strategicRadarRef, productivityRef,
+    maturityScoreRef, profitabilityRef, growthTrackerRef,
+    liquidityEfficiencyRef, investmentPerformanceRef, leverageRiskRef,
+    competitiveLandscapeRef, coreAdjacencyRef,
+    swotAnalysisResult, purchaseCriteriaData, loyaltyNPSData, propsPortersData,
+    propsPestelData, propsFullSwotData, competitiveAdvantageData,
+    expandedCapabilityData, strategicRadarData, propsProductivityData,
+    propsMaturityData, competitiveLandscapeData, coreAdjacencyData,
+    propsProfitabilityData, propsGrowthTrackerData, propsLiquidityEfficiencyData,
+    propsInvestmentPerformanceData, propsLeverageRiskData, propsStrategicData,
+    setPurchaseCriteriaData, setLoyaltyNPSData
   ]);
 
   // Get unlocked features and determine current analyses
-  const unlockedFeatures = phaseManager?.getUnlockedFeatures?.() || {};
+  const unlockedFeatures = useMemo(() => phaseManager?.getUnlockedFeatures?.() || {}, [phaseManager]);
 
   const currentAnalyses = useMemo(() => {
     const sets = {
@@ -808,11 +821,11 @@ const AnalysisContentManager = (props) => {
               ? t("Generating all Insights...")
               : isFinancialRegenerating
                 ? t("Regenerating financial insights like profitability, growth tracker, liquidity, investment performance, leverage and risk insight...")
-                : (props.isAnalysisRegenerating && props.isStrategicRegenerating) 
-                  ? t("Generating all Insights & STRATEGIC analysis...") 
-                  : (props.isStrategicRegenerating && !props.isAnalysisRegenerating)
-                    ? t("Generating Strategic Analysis...")
-                    : t("Generating Insight...")}
+                : (isAnalysisRegenerating && isStrategicRegenerating) 
+                  ? t("Generating all Insights...") 
+                : (isStrategicRegenerating && !isAnalysisRegenerating)
+                  ? t("Generating Strategic Analysis...")
+                  : t("Generating Insight...")}
           </span>
         </div>
       )}

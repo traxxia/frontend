@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { Users, Loader, ChevronDown, ChevronRight } from 'lucide-react';
 import '../styles/Analytics.css';
 import { useTranslation } from "../hooks/useTranslation";

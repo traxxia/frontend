@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, Download } from 'lucide-react';
+import { X } from 'lucide-react';
 import '../styles/AnalysisEmptyState.css';
 
 
@@ -28,7 +28,7 @@ import InvestmentPerformance from './InvestmentPerformance';
 import LeverageRisk from './LeverageRisk';
 import CoreAdjacency from './CoreAdjacency';
 import CompetitiveLandscape from './CompetitiveLandscape';
-import MissingMetricsDisplay from './MissingMetricsDisplay'; // Added import for MissingMetricsDisplay
+
 
 const AnalysisDataModal = ({
   isOpen,
@@ -43,18 +43,7 @@ const AnalysisDataModal = ({
 }) => {
   if (!isOpen) return null;
 
-  const downloadAnalysisData = () => {
-    const dataStr = JSON.stringify(analysisData, null, 2);
-    const blob = new Blob([dataStr], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `${analysisType}_analysis_${auditId}.json`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-  };
+
 
   // Determine if this is a financial analysis type
   const financialAnalysisTypes = [

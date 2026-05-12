@@ -10,9 +10,17 @@ import { useAuthStore } from '../store/authStore';
 import { useProjectStore } from '../store/projectStore';
 import { useUIStore } from '../store/uiStore';
 import { useAnalysisStore } from "../store/analysisStore";
-const ExecutiveSummary = ({ businessId, onStartOnboarding, refreshTrigger }) => {
-  const { theme } = useUIStore();
-  const { t } = useTranslation();
+import { useBusinessSetupContext } from "../context/BusinessSetupContext";
+
+const ExecutiveSummary = () => {
+  const { 
+    selectedBusinessId: businessId, 
+    openModal, 
+    pmfRefreshTrigger: refreshTrigger,
+    t,
+    apiService: analysisService,
+    setActiveTab
+  } = useBusinessSetupContext();
   const navigate = useNavigate();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -24,7 +32,7 @@ const ExecutiveSummary = ({ businessId, onStartOnboarding, refreshTrigger }) => 
   });
 
   const [ahaData, setAhaData] = useState(null);
-  const [kickstartingAdjacency, setKickstartingAdjacency] = useState(null);
+
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [selectedAdjacency, setSelectedAdjacency] = useState(null);
@@ -38,18 +46,9 @@ const ExecutiveSummary = ({ businessId, onStartOnboarding, refreshTrigger }) => 
 
   const projects = useProjectStore(state => state.projects);
   const fetchProjects = useProjectStore(state => state.fetchProjects);
-
-  // API Service setup
-  const ML_API_BASE_URL = process.env.REACT_APP_ML_BACKEND_URL;
-  const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
-  const getAuthToken = () => useAuthStore.getState().token;
-  const userRole = (
-    useAuthStore.getState().userRole ||
-    ""
-  ).toLowerCase();
-  const isViewer = userRole === "viewer";
+  const isViewer = useAuthStore(state => (state.userRole || "").toLowerCase() === "viewer");
   const isCompanyAdmin = useAuthStore(state => state.userRole === 'company_admin' || state.isAdmin);
-  const analysisService = useMemo(() => new AnalysisApiService(ML_API_BASE_URL, API_BASE_URL, getAuthToken), [ML_API_BASE_URL, API_BASE_URL, getAuthToken]);
+  const theme = useUIStore(state => state.theme);
 
   const fetchSummary = useCallback(async () => {
     setLoading(true);
@@ -164,7 +163,7 @@ const ExecutiveSummary = ({ businessId, onStartOnboarding, refreshTrigger }) => 
     setShowSuccessModal(false);
     // Set view mode to projects to ensure we see the card view
     useProjectStore.getState().setViewMode('projects');
-    navigate(`/businesspage?business=${businessId}&tab=bets`);
+    setActiveTab('bets');
   };
 
   if (loading) {
@@ -193,10 +192,10 @@ const ExecutiveSummary = ({ businessId, onStartOnboarding, refreshTrigger }) => 
         <div className="container" style={{ maxWidth: '600px' }}>
           <h3 className="fw-bold mb-3">{t("noInsightsAvailable") || "No executive summary available yet."}</h3>
           <p className="text-muted mb-4">{t("completeOnboardingPrompt") || "Please complete the PMF Onboarding to generate this summary."}</p>
-          {onStartOnboarding && !isViewer && (
+          {openModal && !isViewer && (
             <button
               className="btn btn-primary rounded-pill px-5 py-2 fw-semibold"
-              onClick={onStartOnboarding}
+              onClick={() => openModal('pmfOnboarding')}
             >
               {t("startPMFOnboarding") || "Start PMF Onboarding"}
             </button>

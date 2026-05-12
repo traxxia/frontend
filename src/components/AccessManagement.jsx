@@ -1,16 +1,14 @@
-import React, { useState, useEffect, useRef } from "react";
-import { Table, Badge, Spinner, Form, Button, Modal } from "react-bootstrap";
-import { Shield, Lock, Pencil, Users, AlertCircle, Trash2, Activity, Key, ListOrdered, FileEdit, ShieldOff, FolderX, UserMinus } from "lucide-react";
-import axios from "axios";
+import React, { useState, useEffect } from "react";
+import { Form, Button, Modal } from "react-bootstrap";
+import { ListOrdered, FileEdit, ShieldOff, FolderX, UserMinus } from "lucide-react";
 import { useTranslation } from "../hooks/useTranslation";
 import AdminTable from "./AdminTable";
-import MetricCard from "./MetricCard";
 import "../styles/AdminTableStyles.css";
 import "../styles/accessmanagement.css";
 
 import { useBusinesses, useAccessControlQuery } from '../hooks/useQueries';
 import { useQueryClient } from '@tanstack/react-query';
-import { useAuthStore, useProjectStore } from "../store";
+import { useProjectStore } from "../store";
 
 const AccessManagement = ({ onToast }) => {
     const { t } = useTranslation();
@@ -42,7 +40,6 @@ const AccessManagement = ({ onToast }) => {
     const [showRevokeModal, setShowRevokeModal] = useState(false);
     const [revokeDetails, setRevokeDetails] = useState(null);
     const [revoking, setRevoking] = useState(false);
-    const token = useAuthStore(state => state.token);
 
     const isLoading = fetchingBusinesses || loadingAccess;
 
@@ -182,9 +179,6 @@ const AccessManagement = ({ onToast }) => {
             )
         }
     ];
-
-    const rerankCount = accessData?.access_list?.filter(u => u.has_rerank_access).length || 0;
-    const editCount = accessData?.access_list?.filter(u => u.has_project_edit_access).length || 0;
 
     return (
         <div>

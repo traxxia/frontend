@@ -1,0 +1,268 @@
+import React from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { FaUser, FaBuilding, FaSpinner, FaChevronUp, FaChevronDown, FaSearch, FaAngleLeft, FaAngleRight } from 'react-icons/fa';
+import PricingPlanCard from './PricingPlanCard';
+
+const CompanyStep = ({
+  form,
+  handleChange,
+  isNewCompany,
+  setIsNewCompany,
+  errors,
+  loadingCompanies,
+  isCompanyDropdownOpen,
+  setIsCompanyDropdownOpen,
+  companySearch,
+  setCompanySearch,
+  filteredCompanies,
+  companies,
+  companyDropdownRef,
+  isRoleDropdownOpen,
+  setIsRoleDropdownOpen,
+  roleDropdownRef,
+  plans,
+  selectedPlanId,
+  setSelectedPlanId,
+  onNext,
+  onBack,
+  setShowTermsModal,
+  setShowPrivacyModal,
+  companyErrorRef,
+  plansErrorRef,
+  termsErrorRef,
+  t
+}) => {
+  return (
+    <motion.div
+      key="company"
+      initial={{ opacity: 0, x: 20 }}
+      animate={{ opacity: 1, x: 0 }}
+      exit={{ opacity: 0, x: -20 }}
+      className="tab-content"
+    >
+      <form className="register-form" onSubmit={(e) => { e.preventDefault(); onNext(); }}>
+        <div className="register-form-grid fade-blur-in">
+          <div className="form-group-custom full-width-field">
+            <div className="selection-header">
+              <label>{t("action_type")} <span className="required">*</span></label>
+              <div className="action-selection-group">
+                <div
+                  className={`selection-pill-option ${!isNewCompany ? 'active' : ''}`}
+                  onClick={() => {
+                    setIsNewCompany(false);
+                  }}
+                >
+                  {!isNewCompany && (
+                    <motion.div
+                      layoutId="active-pill"
+                      className="active-pill-bg"
+                      transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                    />
+                  )}
+                  <span className="pill-text"><FaUser /> {t("join_existing")}</span>
+                </div>
+                <div
+                  className={`selection-pill-option ${isNewCompany ? 'active' : ''}`}
+                  onClick={() => {
+                    setIsNewCompany(true);
+                  }}
+                >
+                  {isNewCompany && (
+                    <motion.div
+                      layoutId="active-pill"
+                      className="active-pill-bg"
+                      transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                    />
+                  )}
+                  <span className="pill-text"><FaBuilding /> {t("create_new")}</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="selection-content">
+              <AnimatePresence mode="wait" initial={false}>
+                {isNewCompany ? (
+                  <motion.div
+                    key="create-new"
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -20 }}
+                    transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                    layout
+                    className="form-group-custom"
+                  >
+                    <label>{t("companyName")}  <span className="required">*</span></label>
+                    <input type="text" name="company_name" placeholder={t("brandNamePlaceholder")} value={form.company_name} onChange={handleChange} className={errors.company_name ? 'error' : ''} required />
+                  </motion.div>
+                ) : (
+                  <motion.div
+                    key="join-existing"
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: 20 }}
+                    transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                    layout
+                    className="form-group-custom"
+                  >
+                    <label>{t("select_company")} <span className="required">*</span></label>
+                    <div className="custom-select-container" ref={companyDropdownRef}>
+                      {loadingCompanies ? (
+                        <div className="loading-select"><FaSpinner className="spinner" /> Loading...</div>
+                      ) : (
+                        <>
+                          <div
+                            className={`custom-select-header ${isCompanyDropdownOpen ? 'open' : ''} ${errors.company_id ? 'error' : ''}`}
+                            onClick={() => setIsCompanyDropdownOpen(!isCompanyDropdownOpen)}
+                          >
+                            <span>
+                              {form.company_id
+                                ? companies.find(c => c._id === form.company_id)?.company_name || t('select_a_company')
+                                : t('select_a_company')}
+                            </span>
+                            {isCompanyDropdownOpen ? <FaChevronUp /> : <FaChevronDown />}
+                          </div>
+
+                          {isCompanyDropdownOpen && (
+                            <div className="custom-select-dropdown">
+                              <div className="search-box-wrapper">
+                                <input
+                                  type="text"
+                                  placeholder={t('type_a_company') || 'Type a company'}
+                                  value={companySearch}
+                                  onChange={(e) => setCompanySearch(e.target.value)}
+                                  onClick={(e) => e.stopPropagation()}
+                                  autoFocus
+                                />
+                                <FaSearch className="search-icon" />
+                              </div>
+
+                              <div className="options-list">
+                                {filteredCompanies.length > 0 ? (
+                                  filteredCompanies.map((c) => (
+                                    <div
+                                      key={c._id}
+                                      className={`option-item ${form.company_id === c._id ? 'selected' : ''}`}
+                                      onClick={() => {
+                                        handleChange({ target: { name: 'company_id', value: c._id } });
+                                        setIsCompanyDropdownOpen(false);
+                                        setCompanySearch('');
+                                      }}
+                                    >
+                                      {c.company_name}
+                                    </div>
+                                  ))
+                                ) : (
+                                  <div className="no-options">{t('no_companies_found') || 'No companies found'}</div>
+                                )}
+                              </div>
+                            </div>
+                          )}
+                        </>
+                      )}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+            <div ref={companyErrorRef}>
+              {(errors.company_name || errors.company_id) && <div className="error-message">{errors.company_name || errors.company_id}</div>}
+            </div>
+
+            {!isNewCompany && (
+              <div className="form-group-custom full-width-field mt-3">
+                <label>{t("role")} <span className="required">*</span></label>
+                <div className="custom-select-container" ref={roleDropdownRef}>
+                  <div
+                    className={`custom-select-header ${isRoleDropdownOpen ? 'open' : ''}`}
+                    onClick={() => setIsRoleDropdownOpen(!isRoleDropdownOpen)}
+                  >
+                    <span>
+                      {form.role ? t(form.role === 'company_admin' ? 'Org_Admin' : form.role.charAt(0).toUpperCase() + form.role.slice(1)) : t('Select_Role')}
+                    </span>
+                    {isRoleDropdownOpen ? <FaChevronUp /> : <FaChevronDown />}
+                  </div>
+
+                  {isRoleDropdownOpen && (
+                    <div className="custom-select-dropdown">
+                      <div className="options-list">
+                        {[
+                          { id: 'collaborator', name: t('Collaborator') },
+                          { id: 'user', name: t('User') },
+                          { id: 'viewer', name: t('Viewer') }
+                        ].map((r) => (
+                          <div
+                            key={r.id}
+                            className={`option-item ${form.role === r.id ? 'selected' : ''}`}
+                            onClick={() => {
+                              handleChange({ target: { name: 'role', value: r.id } });
+                              setIsRoleDropdownOpen(false);
+                            }}
+                          >
+                            {r.name}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+
+          <AnimatePresence>
+            {isNewCompany && (
+              <motion.div
+                key="pricing-plans"
+                initial={{ opacity: 0, height: 0, overflow: 'hidden' }}
+                animate={{ opacity: 1, height: 'auto', overflow: 'visible' }}
+                exit={{ opacity: 0, height: 0, overflow: 'hidden' }}
+                transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                className="pricing-section full-width-field"
+              >
+                <label className="section-label">{t("chooseStrategyPlan")} <span className="required">*</span></label>
+                <div className="plans-grid">
+                  {plans.map((p) => (
+                    <PricingPlanCard key={p._id} plan={p} isSelected={selectedPlanId === p._id} onSelect={setSelectedPlanId} />
+                  ))}
+                </div>
+                <div ref={plansErrorRef}>
+                  {errors.selectedPlanId && <div className="error-message">{errors.selectedPlanId}</div>}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          <div className="checkbox-group full-width-field">
+            <div className="checkbox-wrapper">
+              <input type="checkbox" id="terms-checkbox" name="terms" checked={form.terms} onChange={handleChange} required />
+              <label htmlFor="terms-checkbox" className="checkbox-label-text">
+                {t("i_agree_to_the")}{" "}
+                <a href="#terms" onClick={(e) => { e.preventDefault(); setShowTermsModal(true); }}>
+                  {t("terms")}
+                </a>{" "}
+                {t("and")}{" "}
+                <a href="#privacy" onClick={(e) => { e.preventDefault(); setShowPrivacyModal(true); }}>
+                  {t("privacy")}
+                </a>
+              </label>
+            </div>
+            <div ref={termsErrorRef}>
+              {errors.terms && <div className="error-message">{errors.terms}</div>}
+            </div>
+          </div>
+        </div>
+
+        <div className="form-actions mt-4">
+          <button type="button" className="btn-secondary" onClick={onBack}>
+            <FaAngleLeft /> {t('Previous')}
+          </button>
+          <button type="submit" className="btn-primary">
+             {isNewCompany ? <>{t('next_step')} <FaAngleRight /></> : t('register_title')}
+          </button>
+        </div>
+      </form>
+    </motion.div>
+  );
+};
+
+export default CompanyStep;

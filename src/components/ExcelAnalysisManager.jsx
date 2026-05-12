@@ -37,6 +37,7 @@ const ExcelAnalysisManager = ({
   const hasInitialized = useRef(false);
   const fileInputRef = useRef(null);
   const { t } = useTranslation();
+  const userRole = useAuthStore(state => state.userRole);
 
   const ML_API_BASE_URL = process.env.REACT_APP_ML_BACKEND_URL || 'http://127.0.0.1:8000';
   const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
@@ -281,7 +282,7 @@ const ExcelAnalysisManager = ({
           <div className="error-icon">⚠️</div>
           <h3>Analysis Error</h3>
           <p>{error}</p>
-          {useAuthStore(state => state.userRole) !== "viewer" && (
+          {userRole !== "viewer" && (
             <button onClick={() => {
               setError(null);
               generateExcelAnalysis();

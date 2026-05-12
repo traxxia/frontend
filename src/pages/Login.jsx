@@ -1,6 +1,6 @@
-import React, { useState, useContext } from "react";
+import React, { useState } from "react";
 import axios from "axios";
-import { useNavigate, useLocation, Link } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import "../styles/Login.css";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faEye, faEyeSlash } from "@fortawesome/free-solid-svg-icons";
@@ -54,9 +54,6 @@ const Login = () => {
       const setAuth = useAuthStore.getState().setAuth;
       setAuth(res.data);
 
-      const currentLang = window.getCurrentLanguage
-        ? window.getCurrentLanguage()
-        : "en";
 
       if (res.data.user.role === "super_admin") {
         navigate("/super-admin");

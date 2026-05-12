@@ -52,6 +52,30 @@ const Aiassistant = ({ businessId: propBusinessId, projectId, pageContext, isDis
     }
   }, [open]);
 
+
+  const checkQuota = React.useCallback(async () => {
+    const businessId = propBusinessId || selectedBusinessId;
+    const token = getToken();
+    if (!token || !businessId) return;
+
+    try {
+      const response = await axios.get(
+        `${process.env.REACT_APP_BACKEND_URL}/api/companies/ai-usage/${businessId}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      if (response.data) {
+        setQuotaStatus({
+          exceeded: response.data.quotaExceed,
+          resetAt: response.data.quotaResetAt,
+          usedTokens: response.data.ai_token_usage || 0,
+          limit: response.data.ai_limit || 3000000
+        });
+      }
+    } catch (error) {
+      console.error("Error checking AI quota:", error);
+    }
+  }, [propBusinessId, selectedBusinessId]);
+
   // Check quota status and fetch history when panel is opened (lazy — not on mount)
   useEffect(() => {
     if (!open) {
@@ -96,30 +120,7 @@ const Aiassistant = ({ businessId: propBusinessId, projectId, pageContext, isDis
     }
 
     checkQuota();
-  }, [open, projectId]);
-
-  const checkQuota = async () => {
-    const businessId = getBusinessId();
-    const token = getToken();
-    if (!token || !businessId) return;
-
-    try {
-      const response = await axios.get(
-        `${process.env.REACT_APP_BACKEND_URL}/api/companies/ai-usage/${businessId}`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      if (response.data) {
-        setQuotaStatus({
-          exceeded: response.data.quotaExceed,
-          resetAt: response.data.quotaResetAt,
-          usedTokens: response.data.ai_token_usage || 0,
-          limit: response.data.ai_limit || 3000000
-        });
-      }
-    } catch (error) {
-      console.error("Error checking AI quota:", error);
-    }
-  };
+  }, [open, projectId, checkQuota]);
 
   const saveMessageToHistory = async (role, text) => {
     const token = getToken();

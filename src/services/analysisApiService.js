@@ -778,52 +778,46 @@ export class AnalysisApiService {
 
       this.excelAnalysisCache = null;
 
-      let completed = 0;
+      const status = { completed: 0 };
       const total = analysisTypes.length;
-      let successes = 0;
       const results = [];
+
+      const processItem = (analysisType) => {
+        const displayName = this.getDisplayName(analysisType);
+
+        return this
+          .callAnalysisAPIWithSave(analysisType, payload, stateSetters, selectedBusinessId)
+          .then((res) => {
+            status.completed++;
+            stateSetters.setRegenerating?.(analysisType, false);
+            showToastMessage(
+              `${status.completed}/${total} analyses — "${displayName}" completed successfully`,
+              "info",
+              { duration: 5000 }
+            );
+
+            return { status: "fulfilled", analysisType, value: res };
+          })
+          .catch((err) => {
+            status.completed++;
+            stateSetters.setRegenerating?.(analysisType, false);
+
+            console.error(`Error with ${analysisType} analysis:`, err);
+            showToastMessage(
+              `${status.completed}/${total} ${phase} phase analyses — "${displayName}" failed`,
+              "warning",
+              { duration: 5000 }
+            );
+
+            return { status: "rejected", analysisType, reason: err };
+          });
+      };
 
       // Process analysis types in batches of 2 to avoid overwhelming the ML backend
       const batchSize = 2;
       for (let i = 0; i < analysisTypes.length; i += batchSize) {
         const batch = analysisTypes.slice(i, i + batchSize);
-
-        const batchPromises = batch.map((analysisType) => {
-          const displayName =
-            typeof this.getDisplayName === "function"
-              ? this.getDisplayName(analysisType)
-              : analysisType;
-
-          return this
-            .callAnalysisAPIWithSave(analysisType, payload, stateSetters, selectedBusinessId)
-            .then((res) => {
-              successes++;
-              completed++;
-              stateSetters.setRegenerating?.(analysisType, false);
-              showToastMessage(
-                `${completed}/${total} analyses — "${displayName}" completed successfully`,
-                "info",
-                { duration: 5000 }
-              );
-
-              return { status: "fulfilled", analysisType, value: res };
-            })
-            .catch((err) => {
-              completed++;
-              stateSetters.setRegenerating?.(analysisType, false);
-
-              console.error(`Error with ${analysisType} analysis:`, err);
-              showToastMessage(
-                `${completed}/${total} ${phase} phase analyses — "${displayName}" failed`,
-                "warning",
-                { duration: 5000 }
-              );
-
-              return { status: "rejected", analysisType, reason: err };
-            });
-        });
-
-        const batchResults = await Promise.all(batchPromises);
+        const batchResults = await Promise.all(batch.map(processItem));
         results.push(...batchResults);
       }
 

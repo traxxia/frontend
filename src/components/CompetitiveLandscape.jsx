@@ -1,8 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import {
-    Loader, TrendingUp, TrendingDown, Target, AlertTriangle,
-    ChevronDown, ChevronRight, Users, Activity, Shield, 
-    Zap, Star, Award, BarChart
+    Loader, ChevronDown, ChevronRight, Users, Shield, Zap
 } from 'lucide-react';
 import { useAuthStore, useAnalysisStore } from "../store";
 import '../styles/EssentialPhase.css';

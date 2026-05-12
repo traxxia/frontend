@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef } from "react";
-import { Search, Users, Building2, Activity, TrendingUp, X, Trash2, AlertCircle } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { Search, Users, X, Trash2, AlertCircle } from "lucide-react";
 import axios from "axios";
 import { useTranslation } from "../hooks/useTranslation";
 import AdminTable from "./AdminTable";
@@ -36,9 +36,7 @@ const BusinessOverview = ({ onToast }) => {
 
     const token = useAuthStore(state => state.token);
 
-    const fetchBusinesses = () => {
-        // Handled by hook
-    };
+
 
     const handleSearch = (value) => {
         if (value && !searchTerm) setPageBeforeSearch(currentPage);

@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { Menu } from 'lucide-react';
 import AcademyNavigation from '../components/AcademyNavigation';
 import MarkdownRenderer from '../components/MarkdownRenderer';
 import AcademyFeedback from '../components/AcademyFeedback';

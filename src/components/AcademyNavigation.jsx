@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
-import { academyStructure, findCategoryById } from '../utils/academyIndex';
+import { academyStructure } from '../utils/academyIndex';
 import * as LucideIcons from 'lucide-react';
 import '../styles/academy.css';
 

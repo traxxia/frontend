@@ -1,107 +1,17 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import axios from 'axios';
-import { FaUser, FaEnvelope, FaLock, FaCheck, FaBuilding, FaRocket, FaGlobe, FaChevronRight, FaChevronLeft, FaSave, FaSpinner, FaEye, FaEyeSlash, FaSearch, FaChevronDown, FaChevronUp, FaTimes, FaAngleLeft, FaAngleRight, FaTimesCircle } from 'react-icons/fa';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { FaCheck, FaTimes, FaTimesCircle } from 'react-icons/fa';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Modal, Button } from 'react-bootstrap';
+import { useNavigate } from 'react-router-dom';
+
 import '../styles/Register.css';
 import logo from '../assets/01a2750def81a5872ec67b2b5ec01ff5e9d69d0e.png';
 
-import { useNavigate } from 'react-router-dom';
-import { useTranslation } from '../hooks/useTranslation';
-import PricingPlanCard from '../components/PricingPlanCard';
-import { usePlans, useCompanies } from '../hooks/useQueries';
+import { useRegister } from '../hooks/useRegister';
+import UserStep from '../components/UserStep';
+import CompanyStep from '../components/CompanyStep';
+import PaymentStep from '../components/PaymentStep';
 
-// Stripe imports removed from top-level for lazy loading
-import PaymentForm from '../components/PaymentForm';
-
-
-const PaymentStep = ({ onBack, onSubmit, isSubmitting, error, selectedPlanPrice, stripeComponents, stripe, elements }) => {
-  const { t } = useTranslation();
-  const { CardNumberElement } = stripeComponents;
-  const [localError, setLocalError] = useState(null);
-  const [cardHolderName, setCardHolderName] = useState('');
-
-  const handlePayClick = async (e) => {
-    e.preventDefault();
-    if (!stripe || !elements) return;
-
-    if (!cardHolderName.trim()) {
-      setLocalError("Please enter card holder name.");
-      return;
-    }
-
-    const nameRegex = /^[a-zA-Z\s]+$/;
-    if (!nameRegex.test(cardHolderName.trim())) {
-      setLocalError(t('card_holder_name_invalid') || "Card holder name can only contain letters.");
-      return;
-    }
-
-    const cardElement = elements.getElement(CardNumberElement);
-    if (!cardElement) {
-      setLocalError("Please complete the card details.");
-      return;
-    }
-
-    try {
-      const { error: stripeError, paymentMethod } = await stripe.createPaymentMethod({
-        type: 'card',
-        card: cardElement,
-        billing_details: {
-          name: cardHolderName,
-        }
-      });
-
-      if (stripeError) {
-        setLocalError(stripeError.message);
-        return;
-      }
-
-      setLocalError(null);
-      onSubmit(paymentMethod.id, true);
-
-    } catch (err) {
-      setLocalError("An unexpected error occurred.");
-      console.error(err);
-    }
-  };
-
-  return (
-    <motion.div
-      key="tab3"
-      className="register-form-grid fade-blur-in"
-      initial={{ opacity: 0, x: 20 }}
-      animate={{ opacity: 1, x: 0 }}
-      exit={{ opacity: 0, x: -20 }}
-    >
-      <div className="full-width-field">
-        <PaymentForm
-          error={localError || error}
-          isSubmitting={isSubmitting}
-          cardHolderName={cardHolderName}
-          onCardHolderNameChange={(name) => {
-            setCardHolderName(name);
-            if (localError) setLocalError(null);
-          }}
-          onCardChange={() => {
-            if (localError) setLocalError(null);
-          }}
-          stripe={stripe}
-          elements={elements}
-          stripeComponents={stripeComponents}
-        />
-      </div>
-
-      <div className="tab-navigation full-width-field">
-        <button type="button" onClick={onBack} disabled={isSubmitting} className="btn-vibrant btn-secondary-vibrant">
-          <FaAngleLeft />{t("Previous")}
-        </button>
-        <button type="button" onClick={handlePayClick} disabled={isSubmitting} className="btn-vibrant btn-primary-vibrant create-account-btn">
-          {isSubmitting ? <><FaSpinner className="spinner" /> {t("Processing...")}</> : <><FaCheck /> {t("Pay & Register")}</>}
-        </button>
-      </div>
-    </motion.div>
-  );
-};
 const StripeHookWrapper = (props) => {
   const { stripeComponents } = props;
   const stripe = stripeComponents.useStripe();
@@ -111,79 +21,46 @@ const StripeHookWrapper = (props) => {
 
 const Register = () => {
   const navigate = useNavigate();
-  const { t } = useTranslation();
-  const companyErrorRef = React.useRef(null);
-  const plansErrorRef = React.useRef(null);
-  const termsErrorRef = React.useRef(null);
+  const {
+    activeTab, setActiveTab,
+    form, setForm,
+    isNewCompany, setIsNewCompany,
+    selectedPlanId, setSelectedPlanId,
+    errors, setErrors,
+    isSubmitting,
+    showPassword, setShowPassword,
+    showConfirmPassword, setShowConfirmPassword,
+    showSuccessModal, setShowSuccessModal,
+    modalMessage,
+    isError,
+    isCheckingEmail,
+    companySearch, setCompanySearch,
+    submitError, setSubmitError,
+    isCompanyDropdownOpen, setIsCompanyDropdownOpen,
+    isRoleDropdownOpen, setIsRoleDropdownOpen,
+    plans, loadingPlans,
+    companies, loadingCompanies,
+    filteredCompanies,
+    handleChange,
+    handleNext,
+    handleBack,
+    handleSubmit,
+    t
+  } = useRegister();
 
-  const [activeTab, setActiveTab] = useState(1);
-  const [form, setForm] = useState({
-    name: '',
-    email: '',
-    password: '',
-    confirmPassword: '',
-    company_id: '',
-    company_name: '',
-    job_title: '',
-    role: 'user',
-    terms: false,
-  });
-  const [isNewCompany, setIsNewCompany] = useState(false);
-  // const [plans, setPlans] = useState([]);
-  const [selectedPlanId, setSelectedPlanId] = useState('');
-  // const [loadingPlans, setLoadingPlans] = useState(true);
-
-  const [errors, setErrors] = useState({});
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [showSuccessModal, setShowSuccessModal] = useState(false);
-  const [modalMessage, setModalMessage] = useState('');
-  const [isError, setIsError] = useState(false);
-  // const [companies, setCompanies] = useState([]);
-  // const [loadingCompanies, setLoadingCompanies] = useState(true);
-  const [isCheckingEmail, setIsCheckingEmail] = useState(false);
-
-  // TanStack Query hooks
-  const { data: plans = [], isLoading: loadingPlans } = usePlans();
-  const { data: companies = [], isLoading: loadingCompanies } = useCompanies();
-
-  const [isCompanyDropdownOpen, setIsCompanyDropdownOpen] = useState(false);
-  const [isRoleDropdownOpen, setIsRoleDropdownOpen] = useState(false);
-  const [companySearch, setCompanySearch] = useState('');
-  const [submitError, setSubmitError] = useState(null);
-  const companyDropdownRef = React.useRef(null);
-  const roleDropdownRef = React.useRef(null);
-  const errorBoxRef = React.useRef(null);
-
-  const filteredCompanies = useMemo(() => {
-    return companies.filter(c =>
-      c.company_name.toLowerCase().includes(companySearch.toLowerCase())
-    );
-  }, [companies, companySearch]);
-
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (companyDropdownRef.current && !companyDropdownRef.current.contains(event.target)) {
-        setIsCompanyDropdownOpen(false);
-      }
-      if (roleDropdownRef.current && !roleDropdownRef.current.contains(event.target)) {
-        setIsRoleDropdownOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+  const companyErrorRef = useRef(null);
+  const plansErrorRef = useRef(null);
+  const termsErrorRef = useRef(null);
+  const companyDropdownRef = useRef(null);
+  const roleDropdownRef = useRef(null);
+  const errorBoxRef = useRef(null);
 
   const [showTermsModal, setShowTermsModal] = useState(false);
   const [showPrivacyModal, setShowPrivacyModal] = useState(false);
-
-  const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
-
   const [stripeComponents, setStripeComponents] = useState(null);
 
-  // Lazy load Stripe and its React components only when needed for the payment step
-  const stripePromise = React.useMemo(async () => {
+  // Lazy load Stripe
+  const stripePromise = useMemo(async () => {
     if (activeTab === 3 && isNewCompany) {
       const [stripeJs, reactStripeJs] = await Promise.all([
         import('@stripe/stripe-js'),
@@ -196,190 +73,30 @@ const Register = () => {
   }, [activeTab, isNewCompany]);
 
   useEffect(() => {
-    if (plans.length > 0 && !selectedPlanId) {
-      const sorted = [...plans].sort((a, b) => a.price - b.price);
-      setSelectedPlanId(sorted[0]._id);
-    }
-  }, [plans, selectedPlanId]);
-
-  const handleChange = (e) => {
-    let { name, value, type, checked } = e.target;
-
-    setForm({ ...form, [name]: type === 'checkbox' ? checked : value });
-    if (errors[name]) setErrors({ ...errors, [name]: '' });
-  };
-
-  const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
-  const isDark = currentTheme === 'dark';
-
-  const validateTab1 = () => {
-    const newErrors = {};
-    if (!form.name.trim()) {
-      newErrors.name = t('first_name_required') || 'Name is required';
-    } else {
-      const name = form.name.trim();
-      const hasLetter = /[a-zA-Z\u00C0-\u017F]/.test(name);
-      if (name.length < 2) {
-        newErrors.name = t('Name_must_be_at_least_2_characters_long') || 'Name must be at least 2 characters long';
-      } else if (!hasLetter) {
-        newErrors.name = t('Name_must_contain_at_least_one_letter') || 'Name must contain at least one letter';
+    const handleClickOutside = (event) => {
+      if (companyDropdownRef.current && !companyDropdownRef.current.contains(event.target)) {
+        setIsCompanyDropdownOpen(false);
       }
-    }
-
-    if (!form.email.trim()) newErrors.email = t('email_required') || 'Email is required';
-    else if (!/\S+@\S+\.\S+/.test(form.email)) newErrors.email = t('email_invalid') || 'Invalid email';
-
-    if (!form.password) {
-      newErrors.password = t('password_required') || 'Password is required';
-    } else if (form.password.length < 8) {
-      newErrors.password = t('password_min_length_8') || 'Min 8 characters';
-    } else if (!/(?=.*[a-z])/.test(form.password)) {
-      newErrors.password = t("Password_must_contain_lowercase_letter") || "Password must contain lowercase letter";
-    } else if (!/(?=.*[A-Z])/.test(form.password)) {
-      newErrors.password = t("Password_must_contain_uppercase_letter") || "Password must contain uppercase letter";
-    } else if (!/(?=.*\d)/.test(form.password)) {
-      newErrors.password = t("Password_must_contain_number") || "Password must contain number";
-    } else if (!/(?=.*[^A-Za-z0-9])/.test(form.password)) {
-      newErrors.password = t("Password_must_contain_special_character") || "Password must contain special character";
-    }
-
-    if (!form.confirmPassword) {
-      newErrors.confirmPassword = t('confirm_password_required') || 'Please confirm your password';
-    } else if (form.password !== form.confirmPassword) {
-      newErrors.confirmPassword = t('passwords_do_not_match') || 'Passwords do not match';
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const validateTab2 = () => {
-    const newErrors = {};
-    if (isNewCompany) {
-      if (!form.company_name.trim()) {
-        newErrors.company_name = t('company_name_required') || 'Company name is required';
-      } else {
-        const name = form.company_name.trim();
-        const hasLetter = /[a-zA-Z]/.test(name);
-        const continuousSpecial = /[^a-zA-Z0-9\s]{2,}/.test(name);
-        const continuousNumbers = /\d{4,}/.test(name);
-        const validChars = /^[a-zA-Z0-9\s!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]+$/.test(name);
-
-        if (!validChars) {
-          newErrors.company_name = t('company_name_invalid_chars') || 'Company name contains invalid characters';
-        } else if (!hasLetter) {
-          newErrors.company_name = t('company_name_needs_letter') || 'Company name must contain at least one letter';
-        } else if (continuousSpecial) {
-          newErrors.company_name = t('company_name_continuous_special') || 'Company name cannot have continuous special characters';
-        } else if (continuousNumbers) {
-          newErrors.company_name = t('company_name_continuous_numbers') || 'Company name cannot have continuous numbers (max 3)';
-        }
+      if (roleDropdownRef.current && !roleDropdownRef.current.contains(event.target)) {
+        setIsRoleDropdownOpen(false);
       }
-      if (!selectedPlanId) newErrors.selectedPlanId = t('plan_selection_required') || 'Please select a pricing plan';
-    } else if (!form.company_id) {
-      newErrors.company_id = t('Company_selection_is_required') || 'Company selection is required';
-    }
-    if (!form.terms) newErrors.terms = t('You_must_agree_to_the_Terms_&_Conditions_and_Privacy_Policy_to_proceed') || 'You must agree to the Terms & Conditions and Privacy Policy to proceed';
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [setIsCompanyDropdownOpen, setIsRoleDropdownOpen]);
 
-    setErrors(newErrors);
-    return newErrors;
-  };
-
-  const handleNext = async () => {
-    if (activeTab === 1) {
-      if (validateTab1()) {
-        try {
-          setIsCheckingEmail(true);
-          await axios.post(`${API_BASE_URL}/api/check-email`, { email: form.email.trim() });
-          setActiveTab(2);
-        } catch (err) {
-          setErrors(prev => ({
-            ...prev,
-            email: err.response?.data?.error || err.response?.data?.message || t('email_already_exists') || 'Email is already in use'
-          }));
-        } finally {
-          setIsCheckingEmail(false);
-        }
-      }
-    } else if (activeTab === 2) {
-      const tab2Errors = validateTab2();
-      if (Object.keys(tab2Errors).length === 0) {
-        if (isNewCompany) {
-          setActiveTab(3);
-        } else {
-          handleSubmit(null, null);
-        }
-      } else {
-        // Scroll to the first error found
-        setTimeout(() => {
-          if (tab2Errors.company_name || tab2Errors.company_id) {
-            companyErrorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          } else if (tab2Errors.selectedPlanId) {
-            plansErrorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          } else if (tab2Errors.terms) {
-            termsErrorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          }
-        }, 100);
-      }
-    }
-  };
-
-  const handleBack = () => {
-    setActiveTab(prev => prev - 1);
-  };
-
-  const handleSubmit = async (paymentMethodId, saveCard) => {
-    setIsSubmitting(true);
-    setErrors({});
-
-    try {
-      const userData = {
-        name: form.name.trim(),
-        email: form.email.trim(),
-        password: form.password,
-        terms_accepted: form.terms,
-        job_title: form.job_title.trim() || undefined
-      };
-
-      if (isNewCompany) {
-        userData.company_name = form.company_name.trim();
-        userData.plan_id = selectedPlanId;
-        if (paymentMethodId) {
-          userData.paymentMethodId = paymentMethodId;
-          userData.saveCard = saveCard;
-        }
-      } else {
-        userData.company_id = form.company_id;
-        userData.role = form.role;
-      }
-
-      const response = await axios.post(`${API_BASE_URL}/api/register`, userData);
-      setModalMessage(response.data.message || 'Success!');
-      setIsError(false);
-      setShowSuccessModal(true);
-
+  const handleNextWithScroll = async () => {
+    const tab2Errors = await handleNext();
+    if (tab2Errors && Object.keys(tab2Errors).length > 0) {
       setTimeout(() => {
-        setShowSuccessModal(false);
-        navigate('/login');
-      }, 2000);
-
-    } catch (err) {
-      setIsSubmitting(false);
-      const errorMessage = err.response?.data?.error || 'Registration failed.';
-      setSubmitError(errorMessage);
-      
-      // Still show the modal for critical failures but the inline alert is the primary focus
-      setIsError(true);
-      setModalMessage(errorMessage);
-      
-      if (errorMessage && errorMessage.includes('limit')) {
-        // Specific scroll for limit errors to the dropdown area
-        errorBoxRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }
-      
-      if (err.response?.data?.error && err.response.data.error.includes('Payment')) {
-        setErrors({ payment: err.response.data.error });
-      }
+        if (tab2Errors.company_name || tab2Errors.company_id) {
+          companyErrorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        } else if (tab2Errors.selectedPlanId) {
+          plansErrorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        } else if (tab2Errors.terms) {
+          termsErrorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 100);
     }
   };
 
@@ -466,367 +183,51 @@ const Register = () => {
 
               <AnimatePresence mode="wait">
                 {activeTab === 1 && (
-                  <motion.div
-                    key="user"
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: 20 }}
-                    className="tab-content"
-                  >
-                    <form onSubmit={(e) => { e.preventDefault(); handleNext(); }} className="register-form">
-                      <div className="form-grid">
-                        <div className="form-group">
-                          <label>
-                            {t('full_name')} <span className="required">*</span>
-                          </label>
-                          <div className="input-with-icon">
-                            <input
-                              type="text"
-                              name="name"
-                              placeholder={t('full_name_placeholder')}
-                              value={form.name}
-                              onChange={handleChange}
-                              className={errors.name ? 'input-error' : ''}
-                            />
-                          </div>
-                          {errors.name && <span className="error-message">{errors.name}</span>}
-                        </div>
-
-                        <div className="form-group">
-                          <label>
-                            {t('email_address')} <span className="required">*</span>
-                          </label>
-                          <div className="input-with-icon">
-                            <input
-                              type="email"
-                              name="email"
-                              placeholder={t('email_placeholder')}
-                              value={form.email}
-                              onChange={handleChange}
-                              className={errors.email ? 'input-error' : ''}
-                            />
-                          </div>
-                          {errors.email && <span className="error-message">{errors.email}</span>}
-                        </div>
-
-                        <div className="form-group">
-                          <label>
-                            {t('password')} <span className="required">*</span>
-                          </label>
-                          <div className="input-with-icon">
-                            <input
-                              type={showPassword ? "text" : "password"}
-                              name="password"
-                              placeholder={t('create_password')}
-                              value={form.password}
-                              onChange={handleChange}
-                              className={errors.password ? 'input-error' : ''}
-                            />
-                            <button
-                              type="button"
-                              className="password-toggle"
-                              onClick={() => setShowPassword(!showPassword)}
-                            >
-                              {showPassword ? <FaEye /> : <FaEyeSlash />}
-                            </button>
-                          </div>
-                          {errors.password && <span className="error-message">{errors.password}</span>}
-                        </div>
-
-                        <div className="form-group">
-                          <label>
-                            {t('confirm_password')} <span className="required">*</span>
-                          </label>
-                          <div className="input-with-icon">
-                            <input
-                              type={showConfirmPassword ? "text" : "password"}
-                              name="confirmPassword"
-                              placeholder={t('confirm_password_placeholder')}
-                              value={form.confirmPassword}
-                              onChange={handleChange}
-                              className={errors.confirmPassword ? 'input-error' : ''}
-                            />
-                            <button
-                              type="button"
-                              className="password-toggle"
-                              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                            >
-                              {showConfirmPassword ? <FaEye /> : <FaEyeSlash />}
-                            </button>
-                          </div>
-                          {errors.confirmPassword && <span className="error-message">{errors.confirmPassword}</span>}
-                        </div>
-                      </div>
-
-                      <div className="form-actions">
-                        <button type="button" className="btn-secondary" onClick={() => navigate('/login')}>
-                          <FaAngleLeft /> {t('back_to_home')}
-                        </button>
-                        <button type="submit" className="btn-primary" disabled={isCheckingEmail}>
-                          {isCheckingEmail ? <><FaSpinner className="spinner" /> {t('checking') || 'Checking...'}</> : <>{t('next_step')} <FaAngleRight /></>}
-                        </button>
-                      </div>
-                    </form>
-                  </motion.div>
+                  <UserStep
+                    form={form}
+                    handleChange={handleChange}
+                    errors={errors}
+                    isCheckingEmail={isCheckingEmail}
+                    showPassword={showPassword}
+                    setShowPassword={setShowPassword}
+                    showConfirmPassword={showConfirmPassword}
+                    setShowConfirmPassword={setShowConfirmPassword}
+                    handleNext={handleNext}
+                    onBackToLogin={() => navigate('/login')}
+                    t={t}
+                  />
                 )}
 
                 {activeTab === 2 && (
-                  <motion.div
-                    key="company"
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -20 }}
-                    className="tab-content"
-                  >
-                    <form className="register-form">
-                      <AnimatePresence mode="wait">
-                        <motion.div
-                          key="tab2-content"
-                          className="register-form-grid fade-blur-in"
-                          initial={{ opacity: 0, x: 20 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          exit={{ opacity: 0, x: -20 }}
-                        >
-                          <div className="form-group-custom full-width-field">
-                            <div className="selection-header">
-                              <label>{t("action_type")} <span className="required">*</span></label>
-                              <div className="action-selection-group">
-                                <div
-                                  className={`selection-pill-option ${!isNewCompany ? 'active' : ''}`}
-                                  onClick={() => {
-                                    setIsNewCompany(false);
-                                    setForm(prev => ({ ...prev, terms: false }));
-                                    setErrors(prev => {
-                                      const { terms, company_id, company_name, selectedPlanId, ...rest } = prev;
-                                      return rest;
-                                    });
-                                  }}
-                                >
-                                  {!isNewCompany && (
-                                    <motion.div
-                                      layoutId="active-pill"
-                                      className="active-pill-bg"
-                                      transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                                    />
-                                  )}
-                                  <span className="pill-text"><FaUser /> {t("join_existing")}</span>
-                                </div>
-                                <div
-                                  className={`selection-pill-option ${isNewCompany ? 'active' : ''}`}
-                                  onClick={() => {
-                                    setIsNewCompany(true);
-                                    setForm(prev => ({ ...prev, terms: false }));
-                                    setErrors(prev => {
-                                      const { terms, company_id, company_name, selectedPlanId, ...rest } = prev;
-                                      return rest;
-                                    });
-                                  }}
-                                >
-                                  {isNewCompany && (
-                                    <motion.div
-                                      layoutId="active-pill"
-                                      className="active-pill-bg"
-                                      transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                                    />
-                                  )}
-                                  <span className="pill-text"><FaBuilding /> {t("create_new")}</span>
-                                </div>
-                              </div>
-                            </div>
-
-                            <div className="selection-content">
-                              <AnimatePresence mode="wait" initial={false}>
-                                {isNewCompany ? (
-                                  <motion.div
-                                    key="create-new"
-                                    initial={{ opacity: 0, x: 20 }}
-                                    animate={{ opacity: 1, x: 0 }}
-                                    exit={{ opacity: 0, x: -20 }}
-                                    transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                                    layout
-                                    className="form-group-custom"
-                                  >
-                                    <label>{t("companyName")}  <span className="required">*</span></label>
-                                    <input type="text" name="company_name" placeholder={t("brandNamePlaceholder")} value={form.company_name} onChange={handleChange} className={errors.company_name ? 'error' : ''} required />
-                                  </motion.div>
-                                ) : (
-                                  <motion.div
-                                    key="join-existing"
-                                    initial={{ opacity: 0, x: -20 }}
-                                    animate={{ opacity: 1, x: 0 }}
-                                    exit={{ opacity: 0, x: 20 }}
-                                    transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                                    layout
-                                    className="form-group-custom"
-                                  >
-                                    <label>{t("select_company")} <span className="required">*</span></label>
-                                    <div className="custom-select-container" ref={companyDropdownRef}>
-                                      {loadingCompanies ? (
-                                        <div className="loading-select"><FaSpinner className="spinner" /> Loading...</div>
-                                      ) : (
-                                        <>
-                                          <div
-                                            className={`custom-select-header ${isCompanyDropdownOpen ? 'open' : ''} ${errors.company_id ? 'error' : ''}`}
-                                            onClick={() => setIsCompanyDropdownOpen(!isCompanyDropdownOpen)}
-                                          >
-                                            <span>
-                                              {form.company_id
-                                                ? companies.find(c => c._id === form.company_id)?.company_name || t('select_a_company')
-                                                : t('select_a_company')}
-                                            </span>
-                                            {isCompanyDropdownOpen ? <FaChevronUp /> : <FaChevronDown />}
-                                          </div>
-
-                                          {isCompanyDropdownOpen && (
-                                            <div className="custom-select-dropdown">
-                                              <div className="search-box-wrapper">
-                                                <input
-                                                  type="text"
-                                                  placeholder={t('type_a_company') || 'Type a company'}
-                                                  value={companySearch}
-                                                  onChange={(e) => setCompanySearch(e.target.value)}
-                                                  onClick={(e) => e.stopPropagation()}
-                                                  autoFocus
-                                                />
-                                                <FaSearch className="search-icon" />
-                                              </div>
-
-                                              <div className="options-list">
-                                                {filteredCompanies.length > 0 ? (
-                                                  filteredCompanies.map((c) => (
-                                                    <div
-                                                      key={c._id}
-                                                      className={`option-item ${form.company_id === c._id ? 'selected' : ''}`}
-                                                      onClick={() => {
-                                                        setForm({ ...form, company_id: c._id });
-                                                        setIsCompanyDropdownOpen(false);
-                                                        setCompanySearch('');
-                                                        if (errors.company_id) setErrors({ ...errors, company_id: '' });
-                                                      }}
-                                                    >
-                                                      {c.company_name}
-                                                    </div>
-                                                  ))
-                                                ) : (
-                                                  <div className="no-options">{t('no_companies_found') || 'No companies found'}</div>
-                                                )}
-                                              </div>
-                                            </div>
-                                          )}
-                                        </>
-                                      )}
-                                    </div>
-                                  </motion.div>
-                                )}
-                              </AnimatePresence>
-                            </div>
-                            <div ref={companyErrorRef}>
-                              {(errors.company_name || errors.company_id) && <div className="error-message">{errors.company_name || errors.company_id}</div>}
-                            </div>
-
-                            {!isNewCompany && (
-                              <div className="form-group-custom full-width-field mt-3">
-                                <label>{t("role")} <span className="required">*</span></label>
-                                <div className="custom-select-container" ref={roleDropdownRef}>
-                                  <div
-                                    className={`custom-select-header ${isRoleDropdownOpen ? 'open' : ''}`}
-                                    onClick={() => setIsRoleDropdownOpen(!isRoleDropdownOpen)}
-                                  >
-                                    <span>
-                                      {form.role ? t(form.role === 'company_admin' ? 'Org_Admin' : form.role.charAt(0).toUpperCase() + form.role.slice(1)) : t('Select_Role')}
-                                    </span>
-                                    {isRoleDropdownOpen ? <FaChevronUp /> : <FaChevronDown />}
-                                  </div>
-
-                                  {isRoleDropdownOpen && (
-                                    <div className="custom-select-dropdown">
-                                      <div className="options-list">
-                                        {[
-                                          { id: 'collaborator', name: t('Collaborator') },
-                                          { id: 'user', name: t('User') },
-                                          { id: 'viewer', name: t('Viewer') }
-                                        ].map((r) => (
-                                          <div
-                                            key={r.id}
-                                            className={`option-item ${form.role === r.id ? 'selected' : ''}`}
-                                            onClick={() => {
-                                              setForm({ ...form, role: r.id });
-                                              setIsRoleDropdownOpen(false);
-                                            }}
-                                          >
-                                            {r.name}
-                                          </div>
-                                        ))}
-                                      </div>
-                                    </div>
-                                  )}
-                                </div>
-                              </div>
-                            )}
-                          </div>
-
-                          <AnimatePresence>
-                            {isNewCompany && (
-                              <motion.div
-                                key="pricing-plans"
-                                initial={{ opacity: 0, height: 0, overflow: 'hidden' }}
-                                animate={{ opacity: 1, height: 'auto', overflow: 'visible' }}
-                                exit={{ opacity: 0, height: 0, overflow: 'hidden' }}
-                                transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                                className="pricing-section full-width-field"
-                              >
-                                <label className="section-label">{t("chooseStrategyPlan")} <span className="required">*</span></label>
-                                <div className="plans-grid">
-                                  {plans.map((p) => (
-                                    <PricingPlanCard key={p._id} plan={p} isSelected={selectedPlanId === p._id} onSelect={setSelectedPlanId} />
-                                  ))}
-                                </div>
-                                <div ref={plansErrorRef}>
-                                  {errors.selectedPlanId && <div className="error-message">{errors.selectedPlanId}</div>}
-                                </div>
-                              </motion.div>
-                            )}
-                          </AnimatePresence>
-
-                          <div className="checkbox-group full-width-field">
-                            <div className="checkbox-wrapper">
-                              <input type="checkbox" id="terms-checkbox" name="terms" checked={form.terms} onChange={handleChange} required />
-                              <label htmlFor="terms-checkbox" className="checkbox-label-text">
-                                {t("i_agree_to_the")}{" "}
-                                <a href="#terms" onClick={(e) => { e.preventDefault(); setShowTermsModal(true); }}>
-                                  {t("terms")}
-                                </a>{" "}
-                                {t("and")}{" "}
-                                <a href="#privacy" onClick={(e) => { e.preventDefault(); setShowPrivacyModal(true); }}>
-                                  {t("privacy_policy")}
-                                </a>
-                              </label>
-                              <span className="required">*</span>
-                            </div>
-                            <div ref={termsErrorRef}>
-                              {errors.terms && <div className="error-message centered-error">{errors.terms}</div>}
-                            </div>
-                          </div>
-
-                          <div className="tab-navigation full-width-field">
-                            <button type="button" onClick={handleBack} disabled={isSubmitting} className="btn-vibrant btn-secondary-vibrant">
-                              <FaAngleLeft /> {t("Previous")}
-                            </button>
-
-                            {isNewCompany ? (
-                              <button type="button" onClick={handleNext} className="btn-vibrant btn-primary-vibrant">
-                                {t("Proceed to Payment")} <FaAngleRight />
-                              </button>
-                            ) : (
-                              <button type="button" onClick={() => handleNext()} disabled={isSubmitting} className="btn-vibrant btn-primary-vibrant create-account-btn">
-                                {isSubmitting ? <><FaSpinner className="spinner" />{t("saving")}</> : <><FaSave />{t("join_company")}</>}
-                              </button>
-                            )}
-                          </div>
-                        </motion.div>
-                      </AnimatePresence>
-                    </form>
-                  </motion.div>
+                  <CompanyStep
+                    form={form}
+                    handleChange={handleChange}
+                    isNewCompany={isNewCompany}
+                    setIsNewCompany={setIsNewCompany}
+                    errors={errors}
+                    loadingCompanies={loadingCompanies}
+                    isCompanyDropdownOpen={isCompanyDropdownOpen}
+                    setIsCompanyDropdownOpen={setIsCompanyDropdownOpen}
+                    companySearch={companySearch}
+                    setCompanySearch={setCompanySearch}
+                    filteredCompanies={filteredCompanies}
+                    companies={companies}
+                    companyDropdownRef={companyDropdownRef}
+                    isRoleDropdownOpen={isRoleDropdownOpen}
+                    setIsRoleDropdownOpen={setIsRoleDropdownOpen}
+                    roleDropdownRef={roleDropdownRef}
+                    plans={plans}
+                    selectedPlanId={selectedPlanId}
+                    setSelectedPlanId={setSelectedPlanId}
+                    onNext={handleNextWithScroll}
+                    onBack={handleBack}
+                    setShowTermsModal={setShowTermsModal}
+                    setShowPrivacyModal={setShowPrivacyModal}
+                    companyErrorRef={companyErrorRef}
+                    plansErrorRef={plansErrorRef}
+                    termsErrorRef={termsErrorRef}
+                    t={t}
+                  />
                 )}
 
                 {activeTab === 3 && isNewCompany && stripeComponents && (
@@ -836,7 +237,7 @@ const Register = () => {
                       onSubmit={handleSubmit}
                       isSubmitting={isSubmitting}
                       error={errors.payment}
-                      showSaveCheckbox={false}
+                      selectedPlanPrice={plans.find(p => p._id === selectedPlanId)?.price}
                       stripeComponents={stripeComponents}
                     />
                   </stripeComponents.Elements>
@@ -847,43 +248,38 @@ const Register = () => {
         </div>
       </div>
 
-      <Modal show={showSuccessModal} onHide={() => setShowSuccessModal(false)} centered dialogClassName="compact-success-modal">
-        <Modal.Body className="text-center">
-          <div className={`registration-icon-container mb-3 ${isError ? 'text-danger' : 'text-success'}`}>
-            {isError ? <FaTimes size={32} /> : <FaCheck size={32} />}
+      {/* Success Modal */}
+      <Modal show={showSuccessModal} onHide={() => setShowSuccessModal(false)} centered className="success-modal">
+        <Modal.Body>
+          <div className={`modal-status-icon ${isError ? 'error' : 'success'}`}>
+            {isError ? <FaTimesCircle /> : <FaCheck />}
           </div>
-          <h5 className="registration-status-title mb-2">
-            {isError ? t('oops') : t('success')}
-          </h5>
-          <p className="mb-0 registration-success-message">{modalMessage}</p>
+          <h3>{isError ? t('error') : t('success')}</h3>
+          <p>{modalMessage}</p>
+          <Button variant="primary" onClick={() => setShowSuccessModal(false)}>
+            {t('close')}
+          </Button>
         </Modal.Body>
-        {isError && (
-          <Modal.Footer className="justify-content-center">
-            <Button
-              variant="primary"
-              onClick={() => setShowSuccessModal(false)}
-            >
-              {t('close')}
-            </Button>
-          </Modal.Footer>
-        )}
       </Modal>
 
-      <AnimatePresence>
-        {(showTermsModal || showPrivacyModal) && (
-          <div className="modal-overlay">
-            <motion.div className="terms-modal" initial={{ y: 50, opacity: 0 }} animate={{ y: 0, opacity: 1 }}>
-              <div className="modal-header">
-                <h3>{showTermsModal ? t('terms') : t('privacy_policy')}</h3>
-                <button className="modal-close-button" onClick={() => { setShowTermsModal(false); setShowPrivacyModal(false); }}><FaTimes /></button>
-              </div>
-              <div className="modal-content-data">
-                <p className="modal-text-break">{showTermsModal ? t('terms_content') : t('privacy_content')}</p>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
+      {/* Terms & Privacy Modals */}
+      <Modal show={showTermsModal} onHide={() => setShowTermsModal(false)} size="lg" centered className="terms-modal">
+        <Modal.Header closeButton>
+          <Modal.Title>{t('terms_and_conditions')}</Modal.Title>
+        </Modal.Header>
+        <Modal.Body className="terms-content">
+          <p>This is where your Terms and Conditions text would go...</p>
+        </Modal.Body>
+      </Modal>
+
+      <Modal show={showPrivacyModal} onHide={() => setShowPrivacyModal(false)} size="lg" centered className="terms-modal">
+        <Modal.Header closeButton>
+          <Modal.Title>{t('privacy_policy')}</Modal.Title>
+        </Modal.Header>
+        <Modal.Body className="terms-content">
+          <p>This is where your Privacy Policy text would go...</p>
+        </Modal.Body>
+      </Modal>
     </>
   );
 };

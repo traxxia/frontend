@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { useTranslation } from '../hooks/useTranslation';
 import AdminTable from './AdminTable';
 import { ThumbsUp, ThumbsDown, MessageSquareMore, Eye } from 'lucide-react';
 import { formatDate } from '../utils/dateUtils';
@@ -8,7 +7,6 @@ import { Modal, Button } from 'react-bootstrap';
 import { useAuthStore } from '../store/authStore';
 
 const AcademyFeedbackAdmin = ({ onToast }) => {
-    const { t } = useTranslation();
     const [feedbackData, setFeedbackData] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
@@ -34,13 +32,7 @@ const AcademyFeedbackAdmin = ({ onToast }) => {
 
     const initializedRef = useRef(false);
 
-    useEffect(() => {
-        if (initializedRef.current) return;
-        initializedRef.current = true;
-        loadFeedback();
-    }, []);
-
-    const loadFeedback = async () => {
+    const loadFeedback = React.useCallback(async () => {
         try {
             setIsLoading(true);
             const token = getAuthToken();
@@ -72,7 +64,13 @@ const AcademyFeedbackAdmin = ({ onToast }) => {
         } finally {
             setIsLoading(false);
         }
-    };
+    }, [onToast, API_BASE_URL]);
+
+    useEffect(() => {
+        if (initializedRef.current) return;
+        initializedRef.current = true;
+        loadFeedback();
+    }, [loadFeedback]);
 
     const filteredFeedback = useMemo(() => {
         return feedbackData.filter(item => {
@@ -108,12 +106,12 @@ const AcademyFeedbackAdmin = ({ onToast }) => {
             setCurrentPage(lastPageBeforeSearch);
             setLastPageBeforeSearch(null);
         }
-    }, [searchTerm]);
+    }, [searchTerm, currentPage, lastPageBeforeSearch]);
     useEffect(() => {
         if (currentPage > totalPages && totalPages > 0) {
             setCurrentPage(1);
         }
-    }, [totalPages]);
+    }, [totalPages, currentPage]);
 
     const paginatedData = useMemo(() => {
         const start = (currentPage - 1) * itemsPerPage;

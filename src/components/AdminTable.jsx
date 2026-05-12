@@ -1,7 +1,6 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Search, SlidersHorizontal, ArrowUpDown, ArrowLeft, ArrowRight, Building2, HelpCircle } from 'lucide-react';
 import { OverlayTrigger, Popover } from "react-bootstrap";
-import { Tooltip } from "react-bootstrap";
 import '../styles/AdminTableStyles.css';
 import { useTranslation } from "../hooks/useTranslation";
 

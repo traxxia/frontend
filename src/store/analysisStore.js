@@ -1,5 +1,4 @@
 import { create } from 'zustand';
-import axios from 'axios';
 import { useAuthStore } from './authStore';
 import { AnalysisApiService, PHASE_API_CONFIG } from '../services/analysisApiService';
 import { useUIStore } from './uiStore';

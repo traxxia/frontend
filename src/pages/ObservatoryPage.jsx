@@ -5,7 +5,7 @@ import '../styles/observatory.css';
 import {
   Telescope, BarChart3, MessageSquare, Globe, TrendingUp,
   ChevronDown, ChevronRight, Clock, Cpu, Zap, ExternalLink,
-  RefreshCw, Download, Search, Filter, X
+  Search, X
 } from 'lucide-react';
 
 const API = process.env.REACT_APP_BACKEND_URL;

@@ -39,6 +39,7 @@ const ChatComponent = ({
   const [showFileUpload, setShowFileUpload] = useState(false);
   const [showTemplatesPopup, setShowTemplatesPopup] = useState(false);
   const [showToast, setShowToast] = useState({ show: false, message: '', type: 'success' });
+  const [hasUploadedDocument, setHasUploadedDocument] = useState(false);
    const { t } = useTranslation();
 
   const queryClient = useQueryClient();
@@ -110,11 +111,11 @@ const ChatComponent = ({
   });
   const uploadedFileCardRef = useRef(null);
   const [userRole, setUserRole] = useState("");
+  const storeUserRole = useAuthStore(state => state.userRole);
 
   useEffect(() => {
-    const role = useAuthStore(state => state.userRole);
-    setUserRole(role);
-  }, []);
+    setUserRole(storeUserRole);
+  }, [storeUserRole]);
 
   const isViewer = userRole === "viewer";
 

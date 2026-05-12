@@ -24,14 +24,7 @@ import "../styles/AdminTableStyles.css";
 
 const ITEMS_PER_PAGE = 10;
 
-function formatDate(dateVal) {
-  if (!dateVal) return "-";
-  try {
-    return new Date(dateVal).toLocaleString();
-  } catch {
-    return "-";
-  }
-}
+
 
 function formatDateOnly(dateVal) {
   if (!dateVal) return "-";
@@ -59,7 +52,6 @@ function humanizeLogType(logType) {
 }
 
 function LogTypeBadge({ logType }) {
-  const { theme } = useUIStore();
 
   const colorMap = {
     status_change: { bg: "#dbeafe", color: "#1e40af" },
@@ -84,30 +76,9 @@ function LogTypeBadge({ logType }) {
   );
 }
 
-function renderSnapshotField(key, value) {
-  if (value === null || value === undefined) return null;
 
-  // Format the key from camelCase to Title Case
-  const formattedKey = key
-    .replace(/([A-Z])/g, ' $1')
-    .replace(/^./, str => str.toUpperCase())
-    .trim();
-
-  // Format the value based on type
-  let formattedValue = value;
-  if (typeof value === 'boolean') {
-    formattedValue = value ? 'Yes' : 'No';
-  } else if (typeof value === 'object') {
-    formattedValue = JSON.stringify(value);
-  } else if (value === '') {
-    formattedValue = '(empty)';
-  }
-
-  return { key: formattedKey, value: formattedValue };
-}
 
 const BusinessDecisionLogs = ({ businessId }) => {
-  const { theme } = useUIStore();
   const { t } = useTranslation();
   const [searchParams, setSearchParams] = useSearchParams();
 
