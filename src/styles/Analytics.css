@@ -6704,11 +6704,9 @@
  .regenerate-button {
    display: flex;
    align-items: center;
-   gap: 8px;
-   background: rgba(255, 255, 255, 0.15);
+   gap: 8px; 
    border: 1px solid rgba(255, 255, 255, 0.3);
-   color: white;
-   padding: 10px 16px;
+   color: white; 
    border-radius: 8px;
    font-weight: 500;
    cursor: pointer;
