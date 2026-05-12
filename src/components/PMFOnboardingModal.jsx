@@ -585,7 +585,7 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId, onToastMessage
           </Tooltip>
         }
       >
-        <span className="pmf-tooltip-icon ms-2">
+        <span className="pmf-tooltip-icon ms-1">
           <HelpCircle size={16} />
         </span>
       </OverlayTrigger>
@@ -598,9 +598,11 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId, onToastMessage
         return (
           <div className="pmf-step-content">
             <Form.Group className="mb-4">
-              <Form.Label className="pmf-form-label d-flex align-items-center">
-                <span>{t('Company client name') || 'Company / Client Name'}<span className="text-danger">*</span></span>
-                {renderTooltip('companyName')}
+              <Form.Label className="pmf-form-label d-flex align-items-start">
+                <span>
+                  {t('Company client name') || 'Company / Client Name'}<span className="text-danger">*</span>
+                  {renderTooltip('companyName')}
+                </span>
               </Form.Label>
               <Form.Control
                 type="text"
@@ -620,7 +622,7 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId, onToastMessage
             </Form.Group>
 
             <Form.Group className="mb-4">
-              <Form.Label className="pmf-form-label d-flex align-items-center">
+              <Form.Label className="pmf-form-label d-flex align-items-start">
                 <span>{t('website') || 'Website'} ({t('optional') || 'optional'})</span>
                 {renderTooltip('website')}
               </Form.Label>
@@ -644,15 +646,19 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId, onToastMessage
       case 2:
         return (
           <div className="pmf-step-content">
-            <h5 className="pmf-step-question mb-4 d-flex align-items-center">
-              <span>{t('where_is_business_based') || 'Where is this business primarily based?'}</span>
-              {renderTooltip('city')}
+            <h5 className="pmf-step-question mb-4 d-flex align-items-start">
+              <span>
+                {t('where_is_business_based') || 'Where is this business primarily based?'}
+                {renderTooltip('city')}
+              </span>
             </h5>
 
             <Form.Group className="mb-4">
-              <Form.Label className="pmf-form-label d-flex align-items-center">
-                <span>{t('country') || 'Country'}<span className="text-danger">*</span></span>
-                {renderTooltip('country')}
+              <Form.Label className="pmf-form-label d-flex align-items-start">
+                <span>
+                  {t('country') || 'Country'}<span className="text-danger">*</span>
+                  {renderTooltip('country')}
+                </span>
               </Form.Label>
               <Select
                 classNamePrefix="pmf-select"
@@ -728,7 +734,7 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId, onToastMessage
             </Form.Group>
 
             <Form.Group className="mb-4">
-              <Form.Label className="pmf-form-label d-flex align-items-center">
+              <Form.Label className="pmf-form-label d-flex align-items-start">
                 <span>{t('city') || 'City'} ({t('optional') || 'optional'})</span>
                 {renderTooltip('city')}
               </Form.Label>
@@ -753,9 +759,11 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId, onToastMessage
         return (
           <div className="pmf-step-content">
             <Form.Group className="mb-4">
-              <Form.Label className="pmf-form-label d-flex align-items-center">
-                <span>{t('primary industry') || 'Primary Industry'}<span className="text-danger">*</span></span>
-                {renderTooltip('primaryIndustry')}
+              <Form.Label className="pmf-form-label d-flex align-items-start">
+                <span>
+                  {t('primary industry') || 'Primary Industry'}<span className="text-danger">*</span>
+                  {renderTooltip('primaryIndustry')}
+                </span>
               </Form.Label>
               <Select
                 classNamePrefix="pmf-select"
@@ -860,9 +868,11 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId, onToastMessage
       case 4:
         return (
           <div className="pmf-step-content">
-            <h5 className="pmf-step-question mb-3 d-flex align-items-center">
-              <span>{t('which geographies strategic answers') || 'Which geographies do you want strategic answers for?'}<span className="text-danger">*</span></span>
-              {renderTooltip('geographies')}
+            <h5 className="pmf-step-question mb-2 d-flex align-items-start">
+              <span>
+                {t('which geographies strategic answers') || 'Which geographies do you want strategic answers for?'}<span className="text-danger">*</span>
+                {renderTooltip('geographies')}
+              </span>
             </h5>
             <p className="text-muted mb-4" style={{ fontSize: '14px' }}>
               {t('enter up to 3 geographies') || "Enter up to 3 specific geographies (e.g., 'United States', 'LATAM', 'Southeast Asia')"}
@@ -923,18 +933,22 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId, onToastMessage
       case 5:
         return (
           <div className="pmf-step-content">
-            <h5 className="pmf-step-question mb-2 d-flex align-items-center">
-              <span>{t('where does profit come from') || 'Where does most of your profit come from today?'}</span>
-              {renderTooltip('customerSegments')}
+            <h5 className="pmf-step-question mb-2 d-flex align-items-start">
+              <span>
+                {t('where does profit come from') || 'Where does most of your profit come from today?'}
+                {renderTooltip('customerSegments')}
+              </span>
             </h5>
             <p className="text-muted mb-4" style={{ fontSize: '14px' }}>
               {t('your best estimate enough') || 'Your best estimate is enough.'}
             </p>
 
             <div className="mb-4">
-              <Form.Label className="pmf-form-label mb-2 d-flex align-items-center">
-                <span>{t('customer segments max 3') || 'Customer segments (max 3)'}</span>
-                {renderTooltip('customerSegments')}
+              <Form.Label className="pmf-form-label mb-2 d-flex align-items-start">
+                <span>
+                  {t('customer segments max 3') || 'Customer segments (max 3)'}
+                  {renderTooltip('customerSegments')}
+                </span>
               </Form.Label>
               <p className="text-muted mb-3" style={{ fontSize: '13px', marginTop: '-4px' }}>
                 {t('customer segments example') || 'e.g., young adults, SMEs, enterprise'}
@@ -993,9 +1007,11 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId, onToastMessage
             </div>
 
             <div className="mb-4">
-              <Form.Label className="pmf-form-label mb-2 d-flex align-items-center">
-                <span>{t('products services max 3') || 'Products / services (max 3)'}</span>
-                {renderTooltip('productServices')}
+              <Form.Label className="pmf-form-label mb-2 d-flex align-items-start">
+                <span>
+                  {t('products services max 3') || 'Products / services (max 3)'}
+                  {renderTooltip('productServices')}
+                </span>
               </Form.Label>
               <p className="text-muted mb-3" style={{ fontSize: '13px', marginTop: '-4px' }}>
                 {t('products services example') || 'e.g., ice cream, M&A advisory'}
@@ -1054,7 +1070,7 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId, onToastMessage
             </div>
 
             <div className="mb-4">
-              <Form.Label className="pmf-form-label mb-2 d-flex align-items-center">
+              <Form.Label className="pmf-form-label mb-2 d-flex align-items-start">
                 <span>{t('channels max 3') || 'Channels (max 3)'}</span>
                 {renderTooltip('channels')}
               </Form.Label>
@@ -1119,9 +1135,11 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId, onToastMessage
       case 6:
         return (
           <div className="pmf-step-content">
-            <h5 className="pmf-step-question mb-4 d-flex align-items-center">
-              <span>{t('strategic objective') || 'Strategic Objective'}</span>
-              {renderTooltip('strategicObjective')}
+            <h5 className="pmf-step-question mb-4 d-flex align-items-start">
+              <span>
+                {t('strategic objective') || 'Strategic Objective'}
+                {renderTooltip('strategicObjective')}
+              </span>
             </h5>
 
             {STRATEGIC_OBJECTIVES.map((option) => (
@@ -1179,9 +1197,11 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId, onToastMessage
       case 7:
         return (
           <div className="pmf-step-content">
-            <h5 className="pmf-step-question mb-4 d-flex align-items-center">
-              <span>{t("Key challenges / constraints")}</span>
-              {renderTooltip('keyChallenges')}
+            <h5 className="pmf-step-question mb-4 d-flex align-items-start">
+              <span>
+                {t("Key challenges / constraints")}
+                {renderTooltip('keyChallenges')}
+              </span>
             </h5>
 
             {KEY_CHALLENGES.map(option => (
@@ -1238,9 +1258,11 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId, onToastMessage
       case 8:
         return (
           <div className="pmf-step-content">
-            <h5 className="pmf-step-question mb-2 d-flex align-items-center">
-              <span>{t("Today, you primarily differentiate through")}:</span>
-              {renderTooltip('differentiation')}
+            <h5 className="pmf-step-question mb-2 d-flex align-items-start">
+              <span>
+                {t("Today, you primarily differentiate through")}:
+                {renderTooltip('differentiation')}
+              </span>
             </h5>
 
             <p className="text-muted mb-4" style={{ fontSize: '14px' }}>
@@ -1298,9 +1320,11 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId, onToastMessage
       case 9:
         return (
           <div className="pmf-step-content">
-            <h5 className="pmf-step-question mb-4 d-flex align-items-center">
-              <span>{t("Usage Context")}</span>
-              {renderTooltip('usageContext')}
+            <h5 className="pmf-step-question mb-4 d-flex align-items-start">
+              <span>
+                {t("Usage Context")}
+                {renderTooltip('usageContext')}
+              </span>
             </h5>
 
             {USAGE_CONTEXT_OPTIONS.map(option => (
@@ -1440,8 +1464,8 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId, onToastMessage
           disabled={isSubmitting}
         >
           {isSubmitting ? (
-            <div className="d-flex flex-column align-items-center" style={{ minWidth: "160px" }}>
-              <div className="d-flex align-items-center mb-1 text-center">
+            <div className="d-flex flex-column align-items-start" style={{ minWidth: "160px" }}>
+              <div className="d-flex align-items-start mb-1 text-center">
                 <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
                 <span style={{ fontSize: "14px" }}>
                   {submissionStep === 1 && (t("Saving data...") || "Saving data...")}

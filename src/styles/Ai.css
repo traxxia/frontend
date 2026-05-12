@@ -313,6 +313,7 @@
 
 /* Typing dots */
 .ai-msg__bubble--typing {
+  background: #918e8e !important;
   display: flex;
   align-items: center;
   gap: 4px;
