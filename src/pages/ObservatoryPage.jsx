@@ -48,6 +48,9 @@ const COST_RATES = {
   'gpt-4o': { input: 5.00, output: 15.00 },
   'gpt-3.5-turbo': { input: 0.50, output: 1.50 },
   'claude-3-5-sonnet-20240620': { input: 3.00, output: 15.00 },
+  'claude-3-5-sonnet': { input: 3.00, output: 15.00 },
+  'claude-3-opus': { input: 15.00, output: 75.00 },
+  'claude-3-haiku': { input: 0.25, output: 1.25 },
   'llama-3.1-8b-instant': { input: 0.05, output: 0.08 },
   'llama-3.1-70b-versatile': { input: 0.59, output: 0.79 },
   'llama-3.3-70b-versatile': { input: 0.59, output: 0.79 },
@@ -56,32 +59,66 @@ const COST_RATES = {
   'gemma2-9b-it': { input: 0.20, output: 0.20 },
   'sonar-pro': { input: 3.00, output: 15.00 },
   'sonar': { input: 1.00, output: 1.00 },
-  'openai/gpt-oss-120b': { input: 0.60, output: 0.60 } // Groq OSS estimate
+  'openai/gpt-oss-120b': { input: 0.60, output: 0.60 },
+  // ── Gemini Family (Google) ──
+  'gemini-1.5-flash': { input: 0.075, output: 0.30 },
+  'gemini-1.5-pro': { input: 3.50, output: 10.50 },
+  'gemini-2.0-flash': { input: 0.075, output: 0.30 },
+  'gemini-2.0-pro': { input: 3.50, output: 10.50 },
+  'gemini-3.0-flash': { input: 0.05, output: 0.20 },
+  'gemini-3-flash': { input: 0.05, output: 0.20 },
+  'gemini-3.0-pro': { input: 2.50, output: 7.50 },
+  'gemini': { input: 0.075, output: 0.30 }, // Catch-all fallback for Gemini
+  // ── DeepSeek ──
+  'deepseek-chat': { input: 0.14, output: 0.28 },
+  'deepseek-coder': { input: 0.14, output: 0.28 },
+  // ── GPT-5 Family ──
+  'gpt-5-nano': { input: 0.05, output: 0.40 },
+  'gpt-5-mini': { input: 0.25, output: 2.00 },
+  'gpt-5': { input: 1.25, output: 10.00 },
+  'gpt-5.1': { input: 1.25, output: 10.00 },
+  'gpt-5.2': { input: 1.75, output: 14.00 },
+  'gpt-5.2-pro': { input: 21.00, output: 168.00 },
 };
 
-function calculateCost(modelId, promptTokens, completionTokens) {
-  if (!modelId) return null;
+function calculateCost(modelId, usage) {
+  if (!modelId || !usage) return null;
   const model = modelId.toLowerCase().trim();
   
-  // Exact match first
-  if (COST_RATES[model]) {
-    const r = COST_RATES[model];
-    return ((promptTokens / 1000000) * r.input) + ((completionTokens / 1000000) * r.output);
+  const promptTokens = usage.prompt_tokens || 0;
+  const completionTokens = usage.completion_tokens || 0;
+  const totalTokens = usage.total_tokens || (promptTokens + completionTokens);
+
+  // Find rate entry
+  let r = COST_RATES[model];
+  if (!r) {
+    const entry = Object.entries(COST_RATES).find(([k]) => model.includes(k) || k.includes(model));
+    if (entry) r = entry[1];
   }
 
-  // Prefix/Inclusion match (e.g. "openai/gpt-oss-120b" includes "gpt-oss-120b")
-  const entry = Object.entries(COST_RATES).find(([k]) => model.includes(k) || k.includes(model));
-  if (entry) {
-    const r = entry[1];
-    return ((promptTokens / 1000000) * r.input) + ((completionTokens / 1000000) * r.output);
+  if (!r) {
+    console.warn(`[Observatory] No cost rate found for model: "${model}"`);
+    return null;
+  }
+
+  // Fallback: If both are 0 but we have total_tokens, use the input rate as an estimate
+  if (promptTokens === 0 && completionTokens === 0 && totalTokens > 0) {
+    return (totalTokens / 1000000) * r.input;
   }
   
-  return null;
+  return ((promptTokens / 1000000) * r.input) + ((completionTokens / 1000000) * r.output);
 }
 
 function CostBadge({ model, usage }) {
-  const cost = calculateCost(model, usage?.prompt_tokens || 0, usage?.completion_tokens || 0);
-  if (cost === null) return null;
+  const cost = calculateCost(model, usage);
+  if (cost === null) {
+    console.log(`[Observatory] Cost calculation returned null for model: ${model}`);
+    return null;
+  }
+  
+  if (cost === 0 && (usage?.prompt_tokens > 0 || usage?.completion_tokens > 0)) {
+    console.warn(`[Observatory] Cost is 0 but tokens are present! Model: ${model}, Usage:`, usage);
+  }
   return (
     <span className="obs-badge obs-badge--cost">
       ${cost < 0.01 ? cost.toFixed(5) : cost.toFixed(4)}
@@ -476,7 +513,7 @@ function StatsTab() {
                 )}
                 {modelStats.map((r, i) => {
                   const pct = Math.max((r.total_tokens / maxModelTokens) * 100, 2);
-                  const cost = calculateCost(r._id?.model, r.prompt_tokens || 0, r.completion_tokens || 0);
+                  const cost = calculateCost(r._id?.model, r);
                   
                   return (
                     <tr key={i} style={{ borderBottom: '1px solid var(--obs-border)', transition: 'background 0.2s' }} className="obs-tr-hover">
