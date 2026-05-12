@@ -2,7 +2,7 @@
 
 .projects-table-container {
   background: transparent;
-  box-shadow: none; 
+  box-shadow: none;
   overflow-x: auto;
   overflow-y: hidden;
   -webkit-overflow-scrolling: touch;
@@ -182,10 +182,10 @@
 }
 
 .badge-at-risk {
-    background-color: var(--color-status-risk-bg, #f5bfe3);
-    color: var(--color-status-risk-text, #bf0280);
-    border: 1px solid var(--color-border-danger, #ed1aa7);
-    white-space: nowrap;
+  background-color: var(--color-status-risk-bg, #f5bfe3);
+  color: var(--color-status-risk-text, #bf0280);
+  border: 1px solid var(--color-border-danger, #ed1aa7);
+  white-space: nowrap;
 }
 
 .badge-draft {
@@ -284,15 +284,15 @@
   color: var(--color-status-paused-text, #d97706);
 }
 
-.pill-risk-low { 
-    background-color: var(--color-status-active-bg, #f0fff4); 
-    color: var(--color-status-active-text, #38a169); 
+.pill-risk-low {
+  background-color: var(--color-status-active-bg, #f0fff4);
+  color: var(--color-status-active-text, #38a169);
 }
 
-.pill-na { 
-    background-color: var(--color-bg-light, #f1f5f9); 
-    color: var(--color-text-muted, #94a3b8); 
-    border: 1px solid var(--color-border-light, #e2e8f0); 
+.pill-na {
+  background-color: var(--color-bg-light, #f1f5f9);
+  color: var(--color-text-muted, #94a3b8);
+  border: 1px solid var(--color-border-light, #e2e8f0);
 }
 
 /* Owner Column */
@@ -398,51 +398,51 @@
 
 /* Dark Mode Overrides */
 [data-theme="dark"] .premium-table th {
-    background-color: var(--color-bg-light, #1e293b);
-    color: var(--color-text-muted, #94a3b8);
-    border-bottom-color: var(--color-border-light, #334155);
+  background-color: var(--color-bg-light, #1e293b);
+  color: var(--color-text-muted, #94a3b8);
+  border-bottom-color: var(--color-border-light, #334155);
 }
 
 [data-theme="dark"] .premium-table td {
-    border-bottom-color: var(--color-border-light, #1e293b);
-    color: var(--color-text-primary, #f1f5f9);
+  border-bottom-color: var(--color-border-light, #1e293b);
+  color: var(--color-text-primary, #f1f5f9);
 }
 
 [data-theme="dark"] .premium-table tr:hover td {
-    background-color: var(--color-bg-hover, #1e293b);
+  background-color: var(--color-bg-hover, #1e293b);
 }
 
 [data-theme="dark"] .index-badge {
-    background-color: var(--color-bg-light, #334155);
-    color: var(--color-text-secondary, #cbd5e1);
+  background-color: var(--color-bg-light, #334155);
+  color: var(--color-text-secondary, #cbd5e1);
 }
 
 [data-theme="dark"] .col-score {
-    color: var(--color-text-primary, #f1f5f9);
+  color: var(--color-text-primary, #f1f5f9);
 }
 
 [data-theme="dark"] .actions-dropdown-btn {
-    background-color: var(--color-bg-card, #1e293b);
-    border-color: var(--color-border-light, #334155);
-    color: var(--color-text-secondary, #cbd5e1);
+  background-color: var(--color-bg-card, #1e293b);
+  border-color: var(--color-border-light, #334155);
+  color: var(--color-text-secondary, #cbd5e1);
 }
 
 [data-theme="dark"] .actions-dropdown-btn:hover {
-    background-color: var(--color-bg-hover, #334155);
+  background-color: var(--color-bg-hover, #334155);
 }
 
 [data-theme="dark"] .col-owner {
-    color: var(--color-text-muted, #94a3b8);
+  color: var(--color-text-muted, #94a3b8);
 }
 
 [data-theme="dark"] .tooltip-formula {
-    background-color: var(--color-bg-card, #0f172a);
-    color: var(--color-text-primary, #f1f5f9);
+  background-color: var(--color-bg-card, #0f172a);
+  color: var(--color-text-primary, #f1f5f9);
 }
 
 /* Responsive Table Styles */
 @media (max-width: 1024px) {
-  .projects-table-container { 
+  .projects-table-container {
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
     border-radius: 8px;
@@ -454,13 +454,15 @@
   }
 
   .premium-table {
-    min-width: 1100px; /* Ensure table is wide enough to be readable with scroll */
+    min-width: 1100px;
+    /* Ensure table is wide enough to be readable with scroll */
     width: 100%;
   }
 }
 
 @media (max-width: 768px) {
-  .premium-table th, 
+
+  .premium-table th,
   .premium-table td {
     padding: 12px 10px;
     font-size: 13px;
@@ -490,4 +492,4 @@
   .premium-table td:last-child {
     padding-right: 16px;
   }
-}
+}

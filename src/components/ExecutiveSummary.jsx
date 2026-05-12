@@ -169,7 +169,7 @@ const ExecutiveSummary = ({ businessId, onStartOnboarding, refreshTrigger }) => 
 
   if (loading) {
     return (
-      <div className="d-flex justify-content-center align-items-center py-5">
+      <div className="exc-loading-container d-flex justify-content-center align-items-center py-5">
         <Loader2 className="text-primary animate-spin" />
         <span className="ms-2 text-muted">Loading executive summary...</span>
       </div>
@@ -189,7 +189,7 @@ const ExecutiveSummary = ({ businessId, onStartOnboarding, refreshTrigger }) => 
 
   if (!data || !hasActualContent) {
     return (
-      <div className="bg-light py-5 text-center rounded-4 m-3 shadow-sm border">
+      <div className="exc-no-data-container bg-light py-5 text-center rounded-4 m-3 shadow-sm border">
         <div className="container" style={{ maxWidth: '600px' }}>
           <h3 className="fw-bold mb-3">{t("noInsightsAvailable") || "No executive summary available yet."}</h3>
           <p className="text-muted mb-4">{t("completeOnboardingPrompt") || "Please complete the PMF Onboarding to generate this summary."}</p>

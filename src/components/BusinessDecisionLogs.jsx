@@ -60,16 +60,37 @@ function humanizeLogType(logType) {
 
 function LogTypeBadge({ logType }) {
   const { theme } = useUIStore();
+  const isDark = theme === "dark";
 
   const colorMap = {
-    status_change: { bg: "var(--color-status-completed-bg, #dbeafe)", color: "var(--color-status-completed-text, #1e40af)" },
-    cadence_review: { bg: "var(--color-status-active-bg, #d1fae5)", color: "var(--color-status-active-text, #065f46)" },
-    no_change_review: { bg: "var(--color-bg-light, #f3f4f6)", color: "var(--color-text-secondary, #374151)" },
-    adhoc_update: { bg: "var(--color-status-paused-bg, #fef3c7)", color: "var(--color-status-paused-text, #92400e)" },
-    manual: { bg: "var(--color-status-scaled-bg, #ede9fe)", color: "var(--color-status-scaled-text, #5b21b6)" },
-    project_update: { bg: "var(--color-status-killed-bg, #fee2e2)", color: "var(--color-status-killed-text, #991b1b)" },
+    status_change: {
+      bg: isDark ? "#1e3a8a" : "var(--color-status-completed-bg, #dbeafe)",
+      color: isDark ? "#bfdbfe" : "var(--color-status-completed-text, #1e40af)"
+    },
+    cadence_review: {
+      bg: isDark ? "#064e3b" : "var(--color-status-active-bg, #d1fae5)",
+      color: isDark ? "#d1fae5" : "var(--color-status-active-text, #065f46)"
+    },
+    no_change_review: {
+      bg: isDark ? "#374151" : "var(--color-bg-light, #f3f4f6)",
+      color: isDark ? "#f3f4f6" : "var(--color-text-secondary, #374151)"
+    },
+    adhoc_update: {
+      bg: isDark ? "#78350f" : "var(--color-status-paused-bg, #fef3c7)",
+      color: isDark ? "#fef3c7" : "var(--color-status-paused-text, #92400e)"
+    },
+    manual: {
+      bg: isDark ? "#4c1d95" : "var(--color-status-scaled-bg, #ede9fe)",
+      color: isDark ? "#ede9fe" : "var(--color-status-scaled-text, #5b21b6)"
+    },
+    project_update: {
+      bg: isDark ? "#7f1d1d" : "var(--color-status-killed-bg, #fee2e2)",
+      color: isDark ? "#fee2e2" : "var(--color-status-killed-text, #991b1b)"
+    },
   };
-  const style = colorMap[logType] || { bg: "#f3f4f6", color: "#374151" };
+
+  const style = colorMap[logType] || (isDark ? { bg: "#374151", color: "#f3f4f6" } : { bg: "#f3f4f6", color: "#374151" });
+
   return (
     <span
       className="admin-status-badge"
@@ -77,6 +98,7 @@ function LogTypeBadge({ logType }) {
         backgroundColor: style.bg,
         color: style.color,
         fontSize: "11px",
+        border: isDark ? "1px solid rgba(255, 255, 255, 0.1)" : "1px solid transparent"
       }}
     >
       {humanizeLogType(logType)}
@@ -210,7 +232,7 @@ const BusinessDecisionLogs = ({ businessId }) => {
         apiParams.from = fromDate.toISOString();
         apiParams.to = toDate.toISOString();
       }
- 
+
       const response = await decisionLogApiService.getBusinessLogs(businessId, apiParams);
       setData(response);
     } catch (error) {

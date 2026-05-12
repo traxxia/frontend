@@ -2691,21 +2691,10 @@ const StrategicAnalysis = ({
   if (!questionsLoaded) {
     return (
       <div className="strategic-analysis-container">
-        <div className="modern-locked-state" style={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: '60px 20px',
-          textAlign: 'center',
-          background: 'rgba(255, 255, 255, 0.5)',
-          borderRadius: '16px',
-          border: '1px dashed #cbd5e1',
-          margin: '20px'
-        }}>
-          <Loader size={60} className="modern-locked-icon antigravity-rotating" style={{ color: '#94a3b8', marginBottom: '20px' }} />
-          <h3 style={{ fontSize: '20px', fontWeight: '700', color: '#334155', marginBottom: '12px' }}>{t("Preparing Strategic Analysis...")}</h3>
-          <p style={{ maxWidth: '400px', color: '#64748b', lineHeight: '1.6' }}>
+        <div className="modern-locked-state">
+          <Loader size={60} className="modern-locked-icon antigravity-rotating" />
+          <h3>{t("Preparing Strategic Analysis...")}</h3>
+          <p>
             {t("We're gathering the latest data to build your strategic insights.")}
           </p>
         </div>
@@ -2717,21 +2706,10 @@ const StrategicAnalysis = ({
   if (!unlockedFeatures.analysis) {
     return (
       <div className="strategic-analysis-container">
-        <div className="modern-locked-state" style={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: '60px 20px',
-          textAlign: 'center',
-          background: 'rgba(255, 255, 255, 0.5)',
-          borderRadius: '16px',
-          border: '1px dashed #cbd5e1',
-          margin: '20px'
-        }}>
-          <Lock size={60} style={{ color: '#94a3b8', marginBottom: '20px' }} />
-          <h3 style={{ fontSize: '20px', fontWeight: '700', color: '#334155', marginBottom: '12px' }}>Strategic Analysis Locked</h3>
-          <p style={{ maxWidth: '400px', color: '#64748b', lineHeight: '1.6' }}>
+        <div className="modern-locked-state locked">
+          <Lock size={60} className="modern-locked-icon" />
+          <h3>Strategic Analysis Locked</h3>
+          <p>
             Start answering questions in the business brief to unlock your professional strategic roadmap and execution frameworks.
           </p>
         </div>

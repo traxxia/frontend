@@ -401,6 +401,56 @@ const StyleSheet = () => (
 .pmf-overwrite-modal .modal-body p {
   margin-bottom: 0;
 }
+
+    [data-theme="dark"] .bg-light {
+      background-color: var(--color-bg-primary) !important;
+    }
+    
+    [data-theme="dark"] .card {
+      background-color: var(--color-bg-card) !important;
+      color: var(--color-text-primary) !important;
+    }
+    
+    [data-theme="dark"] h2, [data-theme="dark"] h3, [data-theme="dark"] h6 {
+      color: var(--color-text-primary) !important;
+    }
+    
+    [data-theme="dark"] p, [data-theme="dark"] .text-muted {
+      color: var(--color-text-secondary) !important;
+    }
+    
+    [data-theme="dark"] .insight-list {
+      color: var(--color-text-secondary);
+    }
+    
+    [data-theme="dark"] .icon-box {
+      background-color: rgba(37, 99, 235, 0.2) !important;
+    }
+    
+    [data-theme="dark"] .pmf-overwrite-modal .modal-content {
+      background-color: var(--color-bg-card) !important;
+      color: var(--color-text-primary) !important;
+    }
+    
+    [data-theme="dark"] .bg-success-subtle {
+      background-color: var(--color-status-active-bg) !important;
+      color: var(--color-status-active-text) !important;
+    }
+    
+    [data-theme="dark"] .bg-warning-subtle {
+      background-color: var(--color-status-pending-bg) !important;
+      color: var(--color-status-pending-text) !important;
+    }
+    
+    [data-theme="dark"] .bg-danger-subtle {
+      background-color: var(--color-status-killed-bg) !important;
+      color: var(--color-status-killed-text) !important;
+    }
+    
+    [data-theme="dark"] .bg-primary-subtle {
+      background-color: rgba(37, 99, 235, 0.2) !important;
+      color: #6366f1 !important;
+    }
   `}</style>
 );
 

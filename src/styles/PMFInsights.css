@@ -133,3 +133,53 @@
 .continue-btn:hover {
   background: #1e4fd8;
 }
+
+/* Dark Mode Overrides */
+[data-theme="dark"] .pmf-insights-wrapper {
+  background: var(--color-bg-primary);
+}
+
+[data-theme="dark"] .pmf-insights-header h2 {
+  color: var(--color-text-primary);
+}
+
+[data-theme="dark"] .pmf-insights-header p {
+  color: var(--color-text-muted);
+}
+
+[data-theme="dark"] .insight-card {
+  background: var(--color-bg-card);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="dark"] .insight-card h4 {
+  color: var(--color-text-primary);
+}
+
+[data-theme="dark"] .insight-card ul,
+[data-theme="dark"] .insight-list {
+  color: var(--color-text-secondary);
+}
+
+[data-theme="dark"] .icon-box {
+  background: rgba(37, 99, 235, 0.2);
+}
+
+[data-theme="dark"] .icon-box svg {
+  stroke: #4f46e5 !important;
+}
+
+[data-theme="dark"] .confidence.high {
+  background: var(--color-status-active-bg);
+  color: var(--color-status-active-text);
+}
+
+[data-theme="dark"] .confidence.medium {
+  background: var(--color-status-pending-bg);
+  color: var(--color-status-pending-text);
+}
+
+[data-theme="dark"] .pmf-insights-header .badge {
+  background: rgba(37, 99, 235, 0.2);
+  color: #6366f1;
+}

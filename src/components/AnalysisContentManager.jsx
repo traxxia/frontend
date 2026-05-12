@@ -776,10 +776,12 @@ const AnalysisContentManager = (props) => {
 
   if (!questionsLoaded) {
     return (
-      <div className="modern-locked-state">
-        <Loader size={60} className="modern-locked-icon antigravity-rotating" />
-        <h3>{t("Preparing Analysis...")}</h3>
-        <p>{t("We're gathering the latest data to build your insights.")}</p>
+      <div className="modern-analysis-container">
+        <div className="modern-locked-state">
+          <Loader size={60} className="modern-locked-icon antigravity-rotating" />
+          <h3>{t("Preparing Analysis...")}</h3>
+          <p>{t("We're gathering the latest data to build your insights.")}</p>
+        </div>
       </div>
     );
   }

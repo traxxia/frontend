@@ -505,3 +505,139 @@
 .pmf-tooltip.bs-tooltip-end .tooltip-arrow {
   display: none !important;
 }
+
+/* Dark Mode Overrides */
+[data-theme="dark"] .pmf-onboarding-modal .modal-content {
+  background-color: var(--color-bg-card);
+  color: var(--color-text-primary);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+}
+
+[data-theme="dark"] .pmf-modal-header {
+  border-bottom-color: var(--color-border-light);
+}
+
+[data-theme="dark"] .pmf-modal-title {
+  color: var(--color-text-primary);
+}
+
+[data-theme="dark"] .pmf-close-button {
+  color: var(--color-text-muted);
+}
+
+[data-theme="dark"] .pmf-close-button:hover {
+  background-color: var(--color-bg-light);
+  color: var(--color-text-primary);
+}
+
+[data-theme="dark"] .pmf-progress-title-simple,
+[data-theme="dark"] .pmf-progress-percent-simple {
+  color: var(--color-text-primary);
+}
+
+[data-theme="dark"] .pmf-progress-bar-simple {
+  background-color: var(--color-bg-light);
+}
+
+[data-theme="dark"] .pmf-step-question {
+  color: var(--color-text-primary);
+}
+
+[data-theme="dark"] .pmf-form-label {
+  color: var(--color-text-secondary);
+}
+
+[data-theme="dark"] .pmf-form-control {
+  background-color: var(--color-bg-secondary);
+  border-color: var(--color-border-light);
+  color: var(--color-text-primary);
+}
+
+[data-theme="dark"] .pmf-form-control:focus {
+  border-color: var(--color-primary);
+  background-color: var(--color-bg-secondary);
+}
+
+[data-theme="dark"] .pmf-form-control select {
+  background-color: var(--color-bg-secondary);
+  color: var(--color-text-primary);
+  border-color: var(--color-border-light);
+}
+
+[data-theme="dark"] .pmf-form-control optgroup {
+  background-color: var(--color-bg-light);
+  color: var(--color-text-primary);
+}
+
+[data-theme="dark"] .pmf-modal-footer {
+  border-top-color: var(--color-border-light);
+}
+
+[data-theme="dark"] .pmf-back-button {
+  background-color: var(--color-bg-secondary);
+  color: var(--color-text-primary);
+  border-color: var(--color-border-light);
+}
+
+[data-theme="dark"] .pmf-back-button:hover:not(:disabled) {
+  background-color: var(--color-bg-light);
+  border-color: var(--color-border-medium);
+}
+
+[data-theme="dark"] .pmf-radio-card,
+[data-theme="dark"] .pmf-checkbox-card {
+  background-color: var(--color-bg-secondary);
+  border-color: var(--color-border-light);
+  color: var(--color-text-primary);
+}
+
+[data-theme="dark"] .pmf-radio-card:hover,
+[data-theme="dark"] .pmf-checkbox-card:hover {
+  border-color: var(--color-primary);
+}
+
+[data-theme="dark"] .pmf-radio-card.selected,
+[data-theme="dark"] .pmf-checkbox-card.selected {
+  background-color: rgba(99, 102, 241, 0.1);
+  border-color: var(--color-primary);
+}
+
+[data-theme="dark"] .pmf-modal-overlay-minimal {
+  background: rgba(15, 23, 42, 0.85);
+}
+
+[data-theme="dark"] .pmf-loader-text {
+  color: var(--color-text-primary);
+}
+
+[data-theme="dark"] .pmf-tooltip.tooltip .tooltip-inner {
+  color: var(--color-text-secondary) !important;
+}
+
+[data-theme="dark"] .pmf-select__control {
+  background-color: var(--color-bg-secondary);
+  border-color: var(--color-border-light);
+}
+
+[data-theme="dark"] .pmf-select__single-value {
+  color: var(--color-text-primary);
+}
+
+[data-theme="dark"] .pmf-select__menu {
+  background-color: var(--color-bg-card);
+  border-color: var(--color-border-light);
+}
+
+[data-theme="dark"] .pmf-select__option {
+  background-color: transparent;
+  color: var(--color-text-primary);
+}
+
+[data-theme="dark"] .pmf-select__option--is-focused {
+  background-color: var(--color-bg-light);
+}
+
+[data-theme="dark"] .pmf-select__option--is-selected {
+  background-color: var(--color-primary);
+  color: #fff;
+}

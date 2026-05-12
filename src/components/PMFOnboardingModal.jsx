@@ -692,17 +692,29 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId, onToastMessage
                     fontSize: "14px",
                     lineHeight: "18px",
                     backgroundColor: state.isSelected
-                      ? "#217aff"
+                      ? "var(--color-primary)"
                       : state.isFocused
-                        ? "#eef4ff"
-                        : "#fff",
-                    color: state.isSelected ? "#fff" : "#111",
+                        ? "var(--color-bg-light)"
+                        : "transparent",
+                    color: state.isSelected ? "#fff" : "var(--color-text-primary)",
                     cursor: "pointer"
                   }),
                   control: base => ({
                     ...base,
                     minHeight: 44,
-                    borderRadius: 6
+                    borderRadius: 6,
+                    backgroundColor: "var(--color-bg-secondary)",
+                    borderColor: "var(--color-border-light)",
+                    color: "var(--color-text-primary)"
+                  }),
+                  singleValue: base => ({
+                    ...base,
+                    color: "var(--color-text-primary)"
+                  }),
+                  menu: base => ({
+                    ...base,
+                    backgroundColor: "var(--color-bg-card)",
+                    borderColor: "var(--color-border-light)"
                   })
                 }}
 
@@ -797,7 +809,19 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId, onToastMessage
                   control: base => ({
                     ...base,
                     minHeight: 44,
-                    borderRadius: 6
+                    borderRadius: 6,
+                    backgroundColor: "var(--color-bg-secondary)",
+                    borderColor: "var(--color-border-light)",
+                    color: "var(--color-text-primary)"
+                  }),
+                  singleValue: base => ({
+                    ...base,
+                    color: "var(--color-text-primary)"
+                  }),
+                  menu: base => ({
+                    ...base,
+                    backgroundColor: "var(--color-bg-card)",
+                    borderColor: "var(--color-border-light)"
                   })
                 }}
               />

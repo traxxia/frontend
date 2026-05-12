@@ -4,6 +4,10 @@
   padding: 10px;
 }
 
+[data-theme="dark"] .modern-analysis-container {
+  background: #0f172a;
+}
+
 .modern-analysis-content {
   max-width: 99%;
   margin: 10px auto;
@@ -711,58 +715,29 @@
 }
 
 /* Dark Mode Support */
-@media (prefers-color-scheme: dark) {
-  .modern-analysis-container {
-    background: #fff;
-  }
-
-  .modern-phase-section {
+[data-theme="dark"] .modern-analysis-card {
     background: #1e293b;
-    border-color: #334155;
-  }
+}
 
-  .modern-analysis-card {
-    background: #1e293b;
-    /* border-color: #334155; */
-  }
+[data-theme="dark"] .modern-locked-state {
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+    border: 1px solid #334155;
+}
 
-  .modern-phase-header,
-  .modern-card-header {
-
-    background-color: white;
-  }
-
-  .modern-phase-header:hover,
-  .modern-card-header:hover {
-    background: rgba(255, 255, 255, 0.993);
-  }
-
-  .modern-phase-info h2,
-  .modern-card-text h3 {
-    color: #000000;
-  }
-
-  .modern-phase-info p,
-  .modern-card-text p,
-  .modern-progress-text {
-    color: #494949;
-  }
-
-  .modern-locked-state {
-    background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
-  }
-
-  .modern-locked-state h3 {
+[data-theme="dark"] .modern-locked-state h3 {
     color: #f1f5f9;
-  }
+}
 
-  .modern-locked-state p {
+[data-theme="dark"] .modern-locked-state p {
     color: #94a3b8;
-  }
+}
 
-  .modern-progress-bar {
+[data-theme="dark"] .modern-locked-icon {
+    color: #3b82f6;
+}
+
+[data-theme="dark"] .modern-progress-bar {
     background: #334155;
-  }
 }
 
 .categorized-analysis {
@@ -1173,4 +1148,8 @@ tbody{
     border-style: solid;
     border-width: 0;
     background-color: white !important;
+}
+
+[data-theme="dark"] tbody {
+    background-color: transparent !important;
 }

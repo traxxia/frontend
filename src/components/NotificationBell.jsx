@@ -27,7 +27,7 @@ const NotificationBell = () => {
     fetchNotifications();
   }, [fetchNotifications]);
 
-  const handleNotificationClick = async (notif) => { 
+  const handleNotificationClick = async (notif) => {
 
     // 1. Mark as read in the background asynchronously, don't block navigation
     if (!notif.is_read) {
@@ -65,12 +65,12 @@ const NotificationBell = () => {
       }
 
       const hasTargetBusinessId = !!targetBusinessId;
-      if (hasTargetBusinessId) { 
+      if (hasTargetBusinessId) {
       } else if (isStaleProject && notif.message) {
         // Attempt to extract the business name from the message to aid the user
         const nameMatch = notif.message.match(/under\s+"([^"]+)"/i) || notif.message.match(/project.*under\s+([^ ]+)/i);
         if (nameMatch && nameMatch[1]) {
-          const businessName = nameMatch[1].trim(); 
+          const businessName = nameMatch[1].trim();
           try {
             // We must map this name to a business ID because the backend payload lacks it
             const token = useAuthStore.getState().token;
@@ -85,7 +85,7 @@ const NotificationBell = () => {
 
               const found = allBusinesses.find(b => b.business_name === businessName);
               if (found) {
-                const foundId = found._id || found.id; 
+                const foundId = found._id || found.id;
                 targetBusinessId = foundId;
               } else {
                 console.log("Could not find a business matching the name:", businessName);
@@ -102,7 +102,7 @@ const NotificationBell = () => {
         try {
           const url = new URL(notif.action_link, window.location.origin);
           const bId = url.searchParams.get('business_id') || url.searchParams.get('businessId');
-          if (bId) { 
+          if (bId) {
             targetBusinessId = bId;
           }
         } catch (e) {
@@ -167,13 +167,13 @@ const NotificationBell = () => {
       if (targetBusinessId) {
         // Clear zustand internal module caches so they don't instantly return stale promises
         useProjectStore.getState().clearCache(targetBusinessId);
-        
+
         // Invalidate queries so TanStack query refetches data immediately
         queryClient.invalidateQueries({ queryKey: ["projects", targetBusinessId] });
         queryClient.invalidateQueries({ queryKey: ["teamRankings", targetBusinessId] });
         queryClient.invalidateQueries({ queryKey: ["rankingsSummary", targetBusinessId] });
       }
- 
+
       navigate(navPath, navOptions);
     } catch (routeErr) {
       console.error("Routing error:", routeErr);
@@ -208,7 +208,7 @@ const NotificationBell = () => {
       </Dropdown.Toggle>
       <Dropdown.Menu align="end" className="traxia-dropdown shadow" style={{ width: '320px' }}>
         <Dropdown.Header className="d-flex justify-content-between align-items-center">
-          <span className="fw-bold text-dark">{t('notifications') || 'Notifications'}</span>
+          <span className="fw-bold notif-dropdown-title">{t('notifications') || 'Notifications'}</span>
           {unreadCount > 0 && (
             <span
               className="text-primary small"
@@ -225,12 +225,12 @@ const NotificationBell = () => {
             notifications.map((notif) => (
               <Dropdown.Item
                 key={notif._id}
-                className={`d-flex flex-column align-items-start py-2 px-3 border-bottom text-wrap ${!notif.is_read ? 'bg-white' : 'bg-light'}`}
+                className={`d-flex flex-column align-items-start py-2 px-3 border-bottom text-wrap notification-item ${!notif.is_read ? 'unread' : 'read'}`}
                 style={{ transition: 'all 0.2s ease', opacity: notif.is_read ? 0.85 : 1 }}
                 onClick={() => handleNotificationClick(notif)}
               >
                 <div className="d-flex justify-content-between align-items-start w-100 mb-1">
-                  <strong style={{ fontSize: '0.85rem', paddingRight: '20px', fontWeight: !notif.is_read ? '700' : '500', color: !notif.is_read ? '#212529' : '#6c757d' }}>{notif.title}</strong>
+                  <strong className="notification-title">{notif.title}</strong>
                   <div className="d-flex align-items-center">
                     {!notif.is_read && <span className="badge bg-primary rounded-pill me-2 px-2 py-1" style={{ fontSize: '0.65rem' }}>New</span>}
                     <div
@@ -244,14 +244,14 @@ const NotificationBell = () => {
                     </div>
                   </div>
                 </div>
-                <small className={!notif.is_read ? "text-dark" : "text-muted"} style={{ fontSize: '0.75rem', lineHeight: '1.2', whiteSpace: 'normal', paddingRight: '15px' }}>{notif.message}</small>
+                <small className="notification-msg" style={{ fontSize: '0.75rem', lineHeight: '1.2', whiteSpace: 'normal', paddingRight: '15px' }}>{notif.message}</small>
                 <small className="text-muted mt-1" style={{ fontSize: '0.65rem' }}>{new Date(notif.created_at).toLocaleDateString()}</small>
               </Dropdown.Item>
             ))
           ) : (
             <div className="p-4 d-flex flex-column align-items-center justify-content-center text-muted">
-              <div className="notification-empty-bell mb-2 p-3 bg-light rounded-circle d-flex align-items-center justify-content-center" style={{ width: '60px', height: '60px' }}>
-                <BellOff size={28} className="text-secondary opacity-75" />
+              <div className="notification-empty-bell mb-2 p-3 rounded-circle d-flex align-items-center justify-content-center" style={{ width: '60px', height: '60px' }}>
+                <BellOff size={28} className="notification-empty-icon" />
               </div>
             </div>
           )}

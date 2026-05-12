@@ -431,20 +431,13 @@ const PDFExportButton = ({
   return (
     <>
       {isExportingPDF && (
-        <div style={{
-          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-          backgroundColor: 'rgba(0, 0, 0, 0.75)', display: 'flex',
-          alignItems: 'center', justifyContent: 'center', zIndex: 10000
-        }}>
-          <div style={{
-            backgroundColor: 'white', borderRadius: '12px', padding: '30px',
-            textAlign: 'center', boxShadow: '0 10px 40px rgba(0,0,0,0.5)', minWidth: '320px'
-          }}>
-            <Loader size={40} style={{ color: '#1a73e8', animation: 'spin 1.5s linear infinite', marginBottom: '15px' }} />
-            <h3 style={{ margin: '0 0 10px 0', fontSize: '18px', fontWeight: '600' }}>{t("Generating PDF")}</h3>
-            <p style={{ margin: 0, fontSize: '14px', color: '#666' }}>{exportProgress.sectionName}</p>
+        <div className="pdf-export-overlay">
+          <div className="pdf-export-loader">
+            <Loader size={40} className="pdf-loader-spinner" />
+            <h3>{t("Generating PDF")}</h3>
+            <p className="section-name">{exportProgress.sectionName}</p>
             {exportProgress.total > 0 && (
-              <div style={{ marginTop: '15px', fontSize: '16px', color: '#1a73e8', fontWeight: 'bold' }}>
+              <div className="progress-counter">
                 {exportProgress.current} / {exportProgress.total}
               </div>
             )}
