@@ -72,7 +72,7 @@ const DesktopHeader = () => {
         </div>
 
         <div className="desktop-nav-main">
-          {/* Insights & Recommendations Dropdown */}
+          {}
           <div className={`nav-dropdown-wrapper ${activeNavDropdown === 'insights' ? 'open' : ''}`}>
             <button
               className={`nav-dropdown-trigger ${['executive', 'advanced', 'insights', 'strategic'].includes(activeTab) ? 'active' : ''}`}
@@ -137,7 +137,7 @@ const DesktopHeader = () => {
             )}
           </div>
 
-          {/* Execution Dropdown */}
+          {}
           {(hasPmfAccess || hasProjectAccess) && (
             <div className={`nav-dropdown-wrapper ${activeNavDropdown === 'execution' ? 'open' : ''}`}>
               <button

@@ -5,7 +5,7 @@ const BusinessSetupContext = createContext(null);
 
 export const BusinessSetupProvider = ({ children }) => {
   const setup = useBusinessSetup();
-  
+
   return (
     <BusinessSetupContext.Provider value={setup}>
       {children}

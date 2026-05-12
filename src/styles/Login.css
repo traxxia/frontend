@@ -1,14 +1,11 @@
-/* src/styles/Login.css */
 @import url('./variables.css');
 
-/* Theme toggle button */
 .theme-icon-toggle {
   position: absolute;
   top: var(--spacing-xl);
   right: var(--spacing-xl);
   z-index: 10;
 }
-
 
 .theme-toggle-button {
   background: none;
@@ -26,8 +23,6 @@
   color: var(--color-text-primary) !important;
 }
 
-
-/* Login container */
 .login-container {
   display: flex;
   height: 100vh;
@@ -39,7 +34,6 @@
   background-color: var(--color-bg-primary);
 }
 
-/* Left Section - Branding */
 .login-left-section {
   flex: 1;
   background: url('../assets/71d46d88977b8f5269d03ea65a25e6dff7c73d30.png');
@@ -57,7 +51,6 @@
   background-size: cover;
 }
 
-/* Company branding */
 .company-branding {
   position: relative;
   z-index: 2;
@@ -101,7 +94,6 @@
   margin-bottom: var(--spacing-lg);
 }
 
-/* Decorative elements */
 .decoration-shapes {
   position: absolute;
   top: 0;
@@ -142,7 +134,6 @@
   transform: rotate(45deg);
 }
 
-/* Right Section - Login Form */
 .login-right-section {
   flex: 1;
   display: flex;
@@ -233,7 +224,7 @@
   width: 100%;
   padding: 0.9rem 1rem;
   padding-right: 3rem;
-  /* Add space for the eye icon */
+
   border-radius: var(--border-radius-lg);
   border: 1px solid var(--color-email-border);
   font-size: var(--font-size-base);
@@ -242,7 +233,7 @@
   font-weight: var(--font-weight-medium);
   box-sizing: border-box;
   margin: 10px 0px;
-  /* Ensure padding doesn't affect width */
+
 }
 
 .form-group input[type="email"],
@@ -256,7 +247,7 @@
   outline: none;
   border-color: var(--color-primary);
   box-shadow: 0 0 0 2px rgba(72, 100, 161, 0.5);
-  /* Adjusted for --color-primary */
+
 }
 
 [data-theme="dark"] .form-group input {
@@ -277,7 +268,6 @@
   color: var(--color-text-secondary);
   font-weight: var(--font-weight-normal);
 }
-
 
 .form-group input.error {
   border-color: var(--color-danger) !important;
@@ -335,7 +325,7 @@
 .login-button.loading {
   background-color: var(--color-primary-dark);
   cursor: not-allowed;
-  color: transparent; /* Hide text while loading so only spinner shows */
+  color: transparent;
 }
 
 .login-button.loading::after {
@@ -467,7 +457,6 @@
   filter: brightness(1.2);
 }
 
-/* Terms Checkbox */
 .terms-group {
   display: flex;
   align-items: center;
@@ -503,7 +492,6 @@
   font-size: var(--font-size-base);
 }
 
-/* Terms Modal */
 .terms-modal-overlay {
   position: fixed;
   top: 0;
@@ -574,7 +562,6 @@
   margin-left: var(--spacing-xs);
 }
 
-/* Password toggle */
 .toggle-password {
   position: absolute;
   right: var(--spacing-md);
@@ -616,7 +603,6 @@
   color: var(--color-text-primary);
 }
 
-/* Responsive Design */
 @media (max-width: 1024px) {
   .login-container {
     max-width: var(--container-md);
@@ -641,7 +627,7 @@
   .login-left-section {
     flex: 0 0 auto;
     padding: var(--spacing-2xl);
-    /* border-radius: var(--border-radius-card) var(--border-radius-card) 0 0; */
+
     max-height: 240px;
   }
 
@@ -720,7 +706,7 @@
 
   .company-branding {
     padding-top: 40px;
-    /* space for language dropdown */
+
   }
 
   .logo {
@@ -744,7 +730,6 @@
   }
 }
 
-/* Remove Safari's native interaction buttons without hiding the container */
 .form-group input[type="password"]::-webkit-credentials-auto-fill-button,
 .form-group input[type="password"]::-webkit-contacts-auto-fill-button,
 .form-group input[type="password"]::-webkit-caps-lock-indicator {
@@ -753,17 +738,15 @@
   pointer-events: none;
 }
 
-/* Additional Safari-specific fixes */
 .form-group input[type="password"] {
   -webkit-appearance: none;
   appearance: none;
 }
 
-/* Ensure toggle button stays visible and positioned correctly */
 .input-container {
   position: relative;
   isolation: isolate;
-  /* Creates a new stacking context */
+
 }
 
 .toggle-password {
@@ -779,5 +762,5 @@
   align-items: center;
   justify-content: center;
   z-index: 10;
-  /* Ensure it's above Safari's buttons */
+
 }

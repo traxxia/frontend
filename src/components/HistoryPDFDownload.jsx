@@ -2,9 +2,9 @@ import React, { useState } from 'react';
 import { Download, Loader } from 'lucide-react';
 import { useTranslation } from '../hooks/useTranslation';
 
-const HistoryPDFDownload = ({ 
-  analysisData, 
-  currentPhase, 
+const HistoryPDFDownload = ({
+  analysisData,
+  currentPhase,
   businessName,
   userDetails,
   className = "",
@@ -12,37 +12,33 @@ const HistoryPDFDownload = ({
 }) => {
   const [isExporting, setIsExporting] = useState(false);
   const { t } = useTranslation();
-
-  // Function to determine actual export phase based on available analysis data
   const getExportPhase = () => {
     if (!analysisData) return 'initial';
-    
+
     const hasGoodPhaseData = !!(
-      analysisData.costEfficiency || 
-      analysisData.financialPerformance || 
-      analysisData.financialBalance || 
+      analysisData.costEfficiency ||
+      analysisData.financialPerformance ||
+      analysisData.financialBalance ||
       analysisData.operationalEfficiency
     );
     if (hasGoodPhaseData) return 'good';
-    
+
     const hasEssentialPhaseData = !!(
-      analysisData.fullSwot || 
-      analysisData.customerSegmentation || 
-      analysisData.competitiveAdvantage || 
-      analysisData.channelEffectiveness || 
-      analysisData.expandedCapability || 
-      analysisData.strategicGoals || 
-      analysisData.strategicRadar || 
-      analysisData.cultureProfile || 
-      analysisData.productivityMetrics || 
+      analysisData.fullSwot ||
+      analysisData.customerSegmentation ||
+      analysisData.competitiveAdvantage ||
+      analysisData.channelEffectiveness ||
+      analysisData.expandedCapability ||
+      analysisData.strategicGoals ||
+      analysisData.strategicRadar ||
+      analysisData.cultureProfile ||
+      analysisData.productivityMetrics ||
       analysisData.maturityScore
     );
     if (hasEssentialPhaseData) return 'essential';
-    
+
     return 'initial';
   };
-
-  // Complete component list - same as original
   const phaseComponents = {
     initial: [
       { selector: '[data-component="swot-analysis"]', name: 'SWOT Analysis' },
@@ -92,12 +88,8 @@ const HistoryPDFDownload = ({
       { selector: '[data-component="operational-efficiency"]', name: 'Operational Efficiency Insight' }
     ]
   };
-
-  // Fast preparation function
   const prepareForCapture = () => {
     const changes = [];
-    
-    // Expand all cards instantly
     const cards = document.querySelectorAll('.modern-card-content.collapsed');
     cards.forEach(card => {
       changes.push({
@@ -110,8 +102,6 @@ const HistoryPDFDownload = ({
       card.style.maxHeight = 'none';
       card.style.overflow = 'visible';
     });
-
-    // Expand all phase sections
     const phaseSections = document.querySelectorAll('.modern-phase-content.collapsed');
     phaseSections.forEach(section => {
       changes.push({
@@ -124,8 +114,6 @@ const HistoryPDFDownload = ({
       section.style.maxHeight = 'none';
       section.style.overflow = 'visible';
     });
-
-    // Hide buttons
     const buttons = document.querySelectorAll('button, .regenerate-button, .dropdown-button');
     buttons.forEach(btn => {
       changes.push({
@@ -136,8 +124,6 @@ const HistoryPDFDownload = ({
       });
       btn.style.display = 'none';
     });
-
-    // Fix overflow for scroll containers
     const scrollContainers = document.querySelectorAll('.ch-heatmap-scroll, .scroll-container');
     scrollContainers.forEach(container => {
       changes.push({
@@ -151,8 +137,6 @@ const HistoryPDFDownload = ({
 
     return changes;
   };
-
-  // Fast restore function
   const restoreChanges = (changes) => {
     changes.forEach(({ element, property, oldValue }) => {
       if (property === 'className') {
@@ -162,8 +146,6 @@ const HistoryPDFDownload = ({
       }
     });
   };
-
-  // Optimized capture with better zoom level
   const captureComponent = async (selector, name) => {
     const component = document.querySelector(selector);
     if (!component || component.offsetHeight === 0) {
@@ -172,9 +154,9 @@ const HistoryPDFDownload = ({
 
     try {
       const html2canvas = (await import('html2canvas')).default;
-      
+
       const canvas = await html2canvas(component, {
-        scale: 0.8, // Zoomed out for better overview
+        scale: 0.8,
         useCORS: true,
         allowTaint: true,
         backgroundColor: '#ffffff',
@@ -184,9 +166,9 @@ const HistoryPDFDownload = ({
         onclone: (clonedDoc) => {
           const style = clonedDoc.createElement('style');
           style.textContent = `
-            * { 
-              animation: none !important; 
-              transition: none !important; 
+            * {
+              animation: none !important;
+              transition: none !important;
             }
           `;
           clonedDoc.head.appendChild(style);
@@ -203,15 +185,13 @@ const HistoryPDFDownload = ({
       return null;
     }
   };
-
-  // Original conversation history function
   const addConversationHistory = async (pdf, pageWidth, pageHeight) => {
     if (!userDetails?.conversation || userDetails.conversation.length === 0) {
       return false;
     }
 
     pdf.addPage();
-    
+
     pdf.setFontSize(16);
     pdf.setFont('helvetica', 'bold');
     pdf.setTextColor(59, 130, 246);
@@ -223,24 +203,22 @@ const HistoryPDFDownload = ({
     pdf.setFont('helvetica', 'normal');
 
     userDetails.conversation.forEach((phase) => {
-      // Add phase header
       if (yPosition > pageHeight - 30) {
         pdf.addPage();
         yPosition = 20;
       }
-      
+
       pdf.setFont('helvetica', 'bold');
       pdf.text(`${phase.phase.charAt(0).toUpperCase() + phase.phase.slice(1)} Phase`, 20, yPosition);
       yPosition += 8;
       pdf.setFont('helvetica', 'normal');
 
       phase.questions?.forEach((qa, qaIndex) => {
-        // Question
         if (yPosition > pageHeight - 20) {
           pdf.addPage();
           yPosition = 20;
         }
-        
+
         const questionLines = pdf.splitTextToSize(`Q${qaIndex + 1}: ${qa.question}`, pageWidth - 40);
         questionLines.forEach(line => {
           if (yPosition > pageHeight - 10) {
@@ -250,8 +228,6 @@ const HistoryPDFDownload = ({
           pdf.text(line, 20, yPosition);
           yPosition += 4;
         });
-
-        // Answer
         yPosition += 2;
         const answerLines = pdf.splitTextToSize(`A: ${qa.answer}`, pageWidth - 40);
         answerLines.forEach(line => {
@@ -262,22 +238,20 @@ const HistoryPDFDownload = ({
           pdf.text(line, 20, yPosition);
           yPosition += 4;
         });
-        
-        yPosition += 4; // Space between Q&A pairs
+
+        yPosition += 4;
       });
-      
-      yPosition += 6; // Space between phases
+
+      yPosition += 6;
     });
 
     return true;
   };
-
-  // Main optimized export function
   const handleFastExport = async () => {
     if (isExporting) return;
 
     const exportPhase = getExportPhase();
-    
+
     if (!exportPhase || !phaseComponents[exportPhase]) {
       return;
     }
@@ -286,43 +260,31 @@ const HistoryPDFDownload = ({
 
     try {
       setIsExporting(true);
-
-      // Fast preparation
       changes = prepareForCapture();
-
-      // Short wait for DOM to settle
       await new Promise(resolve => setTimeout(resolve, 150));
-
-      // Dynamic imports
       const jsPDF = (await import('jspdf')).default;
 
       const pdf = new jsPDF('p', 'mm', 'a4');
       const pageWidth = pdf.internal.pageSize.getWidth();
       const pageHeight = pdf.internal.pageSize.getHeight();
-
-      // Title page - same as original
       pdf.setFontSize(24);
       pdf.setFont('helvetica', 'bold');
       pdf.setTextColor(59, 130, 246);
       const phaseTitle = 'Analysis Result';
       pdf.text(phaseTitle, pageWidth / 2, 30, { align: 'center' });
-      
+
       pdf.setFontSize(16);
       pdf.setTextColor(0, 0, 0);
       pdf.text(businessName, pageWidth / 2, 45, { align: 'center' });
-      
+
       pdf.setFontSize(12);
       pdf.setTextColor(128, 128, 128);
       pdf.text(`Generated on ${new Date().toLocaleDateString()}`, pageWidth / 2, 55, { align: 'center' });
-
-      // Add conversation history
       await addConversationHistory(pdf, pageWidth, pageHeight);
-
-      // Filter to only visible components with content - same as original
       const components = phaseComponents[exportPhase].filter(({ selector }) => {
         const element = document.querySelector(selector);
-        return element && 
-               element.offsetHeight > 50 && 
+        return element &&
+               element.offsetHeight > 50 &&
                element.offsetWidth > 50 &&
                !element.closest('.collapsed');
       });
@@ -331,13 +293,11 @@ const HistoryPDFDownload = ({
         console.warn('No content available to export');
         return;
       }
-
-      // Capture components in batches of 3 for faster processing
       let capturedCount = 0;
-      
+
       for (let i = 0; i < components.length; i += 3) {
         const batch = components.slice(i, i + 3);
-        
+
         const results = await Promise.all(
           batch.map(({ selector, name }) => captureComponent(selector, name))
         );
@@ -345,31 +305,25 @@ const HistoryPDFDownload = ({
         results.forEach(result => {
           if (result) {
             pdf.addPage();
-            
-            // Add section title
             pdf.setFontSize(16);
             pdf.setFont('helvetica', 'bold');
             pdf.setTextColor(59, 130, 246);
             pdf.text(result.name, 20, 25);
-
-            // Calculate image dimensions to fit page - same as original
             const imgWidth = pageWidth - 40;
             const canvas = result.canvas;
             const imgHeight = (canvas.height * imgWidth) / canvas.width;
             const maxHeight = pageHeight - 60;
-            
+
             if (imgHeight > maxHeight) {
               const scale = maxHeight / imgHeight;
               pdf.addImage(result.imgData, 'PNG', 20, 35, imgWidth * scale, maxHeight);
             } else {
               pdf.addImage(result.imgData, 'PNG', 20, 35, imgWidth, imgHeight);
             }
-            
+
             capturedCount++;
           }
         });
-        
-        // Small delay between batches
         if (i + 3 < components.length) {
           await new Promise(resolve => setTimeout(resolve, 50));
         }
@@ -379,19 +333,14 @@ const HistoryPDFDownload = ({
         console.warn('No components could be captured');
         return;
       }
-
-      // Generate filename - same as original
       const timestamp = new Date().toISOString().split('T')[0];
       const phaseLabel = exportPhase.charAt(0).toUpperCase() + exportPhase.slice(1);
       const filename = `${businessName.replace(/[^a-z0-9]/gi, '_')}_Insights_${phaseLabel}_Phase_${timestamp}.pdf`;
-      
-      // Save the PDF
       pdf.save(filename);
 
     } catch (error) {
       console.error('PDF export error:', error);
     } finally {
-      // Always restore changes
       if (changes.length > 0) {
         restoreChanges(changes);
       }
@@ -401,7 +350,7 @@ const HistoryPDFDownload = ({
 
   return (
     <>
-      {/* Loading overlay - same as original */}
+      {}
       {isExporting && (
         <div style={{
           position: 'fixed',
@@ -420,8 +369,8 @@ const HistoryPDFDownload = ({
             boxShadow: '0 10px 30px rgba(0, 0, 0, 0.3)',
             minWidth: '280px'
           }}>
-            <Loader size={32} style={{ 
-              color: '#1a73e8', 
+            <Loader size={32} style={{
+              color: '#1a73e8',
               animation: 'spin 1s linear infinite',
               marginBottom: '12px'
             }} />
@@ -434,7 +383,7 @@ const HistoryPDFDownload = ({
           </div>
         </div>
       )}
-      
+
       <button
         onClick={handleFastExport}
         disabled={isExporting || !analysisData}

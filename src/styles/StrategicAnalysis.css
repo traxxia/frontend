@@ -1,11 +1,9 @@
-/* Main Container */
 .strategic-analysis-container {
   width: 100%;
   margin: 0 auto;
   padding: 20px;
 }
 
-/* Loading State */
 .loading-state {
   display: flex;
   flex-direction: column;
@@ -14,7 +12,6 @@
   padding: 60px 20px;
   text-align: center;
 }
-
 
 .loading-spinner {
   color: #3b82f6;
@@ -34,7 +31,6 @@
   margin: 0;
 }
 
-/* Error State */
 .error-state {
   display: flex;
   flex-direction: column;
@@ -78,7 +74,6 @@
   background-color: #2563eb;
 }
 
-/* Dashboard Container */
 .dashboard-container {
   pointer-events: auto;
   width: 100%;
@@ -90,12 +85,10 @@
   font-size: 13px;
 }
 
-/* Strategic Content */
 .strategic-content {
   width: 100%;
 }
 
-/* Analysis Category */
 .analysis-category {
   margin-bottom: 15px;
 }
@@ -106,7 +99,7 @@
   justify-content: space-between;
   padding: 20px !important;
   background-color: #f9fafb;
-  /* border: 1px solid #e5e7eb; */
+
   border-radius: 8px;
   cursor: pointer;
   transition: background-color 0.2s;
@@ -140,7 +133,6 @@
   align-items: center;
 }
 
-/* Category Content */
 .category-content {
   overflow: hidden;
   transition: max-height 0.3s ease-out, opacity 0.3s ease-out;
@@ -160,7 +152,6 @@
   padding: 20px 0;
 }
 
-/* Pillar Containers */
 .pillar-container {
   margin-bottom: 10px;
 }
@@ -176,12 +167,11 @@
     background-color: #1a1d23 !important;
 }
 
-
 .pillar-header {
   display: flex;
   align-items: center;
   gap: 10px;
-  /* margin-bottom: 10px; */
+
   padding: 8px;
 }
 
@@ -203,134 +193,87 @@
     color: #ffffff !important;
 }
 
-
-/* Strategy Pillar */
 .strategy-card {
   border: 1px solid #3b82f6;
   box-shadow: 0 2px 8px rgba(59, 130, 246, 0.1);
 }
 
-/* .strategy-header {
-  border-bottom: 1px solid #3b82f6;
-} */
-
 .strategy-icon {
   color: #3b82f6;
 }
 
-/* Tactics Pillar */
 .tactics-card {
   border: 1px solid #f59e0b;
   box-shadow: 0 2px 8px rgba(245, 158, 11, 0.1);
 }
 
-/* .tactics-header {
-  border-bottom: 1px solid #f59e0b;
-} */
-
 .tactics-icon {
   color: #f59e0b;
 }
 
-/* Resources Pillar */
 .resources-card {
   border: 1px solid #8b5cf6;
   box-shadow: 0 2px 8px rgba(139, 92, 246, 0.1);
 }
 
-/* .resources-header {
-  border-bottom: 1px solid #8b5cf6;
-} */
-
 .resources-icon {
   color: #8b5cf6;
 }
 
-/* Analysis Data Pillar */
 .analysis-data-card {
   border: 1px solid #a5f3fc;
   box-shadow: 0 2px 8px rgba(165, 243, 252, 0.15);
 }
 
-/* .analysis-data-header {
-  border-bottom: 1px solid #a5f3fc;
-} */
-
 .analysis-data-icon {
   color: #06b6d4;
 }
 
-/* Technology Pillar */
 .technology-card {
   border: 1px solid #bae6fd;
   box-shadow: 0 2px 8px rgba(186, 230, 253, 0.15);
 }
 
-/* .technology-header {
-  border-bottom: 1px solid #bae6fd;
-} */
-
 .technology-icon {
   color: #0ea5e9;
 }
 
-/* Execution Pillar */
 .execution-card {
   border: 1px solid #a7f3d0;
   box-shadow: 0 2px 8px rgba(167, 243, 208, 0.15);
 }
 
-/* .execution-header {
-  border-bottom: 1px solid #a7f3d0;
-} */
-
 .execution-icon {
   color: #10b981;
 }
 
-/* Governance Pillar */
 .governance-card {
   border: 1px solid #c7d2fe;
   box-shadow: 0 2px 8px rgba(199, 210, 254, 0.15);
 }
 
-/* .governance-header {
-  border-bottom: 1px solid #c7d2fe;
-} */
-
 .governance-icon {
   color: #6366f1;
 }
 
-/* Innovation Pillar */
 .innovation-card {
   border: 1px solid #f9a8d4;
   box-shadow: 0 2px 8px rgba(249, 168, 212, 0.15);
 }
 
-/* .innovation-header {
-  border-bottom: 1px solid #f9a8d4;
-} */
-
 .innovation-icon {
   color: #ec4899;
 }
 
-/* Culture Pillar */
 .culture-card {
   border: 1px solid #fcd34d;
   box-shadow: 0 2px 8px rgba(252, 211, 77, 0.15);
 }
 
-/* .culture-header {
-  border-bottom: 1px solid #fcd34d;
-} */
-
 .culture-icon {
   color: #f59e0b;
 }
 
-/* Subsections */
 .subsection {
   margin-bottom: 20px;
 }
@@ -362,7 +305,6 @@
   line-height: 1.6;
 }
 
-/* Horizons */
 .horizon-container {
   margin-bottom: 20px;
 }
@@ -404,7 +346,6 @@
   border-radius: 2px;
 }
 
-
 .horizon-label {
   font-size: 15px;
   font-weight: 600;
@@ -443,7 +384,6 @@
   line-height: 1.6;
 }
 
-/* Info Boxes */
 .info-box {
   padding: 14px;
   border-radius: 8px;
@@ -462,7 +402,6 @@
 [data-theme="dark"] .info-box.resources {
     background-color: #1a1d23 !important;
 }
-
 
 .info-box.governance {
   background-color: #eef2ff;
@@ -517,7 +456,6 @@
   color: #166534;
 }
 
-/* Governance Select */
 .governance-select-container {
   display: flex;
   align-items: center;
@@ -549,7 +487,6 @@
   font-style: italic;
 }
 
-/* Portfolio Mix */
 .portfolio-mix-container {
   display: flex;
   gap: 12px;
@@ -614,7 +551,6 @@
   color: #6b21a8;
 }
 
-/* Cultural Shifts */
 .cultural-shifts-container {
   display: flex;
   flex-direction: column;
@@ -631,7 +567,6 @@
 [data-theme="dark"] .cultural-shift-card {
     background-color: #1a1d23 !important;
 }
-
 
 .cultural-shift-content {
   display: flex;
@@ -663,7 +598,6 @@
   flex-shrink: 0;
 }
 
-/* Tables */
 .table-container {
   margin: 0;
   padding: 10px !important;
@@ -723,7 +657,6 @@
   margin-bottom: 0;
 }
 
-/* Strategic Page Section */
 .strategic-page-section {
   margin-bottom: 0px;
 }
@@ -745,9 +678,6 @@
     color: #ffffff !important;
 }
 
-
-
-
 .section-headers h4 {
   margin-top: 5px;
   font-size: 18px;
@@ -755,7 +685,6 @@
   color: #1f2937;
 }
 
-/* Strategic Linkages */
 .strategic-linkages-container {
   background-color: #f9fafb;
   border-radius: 8px;
@@ -769,7 +698,6 @@
   font-style: italic;
 }
 
-/* Badge Styles */
 .badge {
   padding: 4px 10px;
   border-radius: 12px;
@@ -797,9 +725,6 @@
   color: #065f46;
 }
 
-/* Icon Styles */
-
-/* Pillar Content Visibility */
 .pillar-content {
   overflow: hidden;
   transition: max-height 0.3s ease-out, opacity 0.3s ease-out;
@@ -817,7 +742,6 @@
   display: block;
 }
 
-/* PDF Export Mode Overrides */
 body.pdf-export-active .pillar-content.collapsed,
 body.pdf-export-active .category-content.collapsed {
   display: block !important;
@@ -854,7 +778,6 @@ body.pdf-export-active .StreamingRow {
   height: 16px;
 }
 
-/* Flex Utilities */
 .flex-center {
   display: flex;
   align-items: center;

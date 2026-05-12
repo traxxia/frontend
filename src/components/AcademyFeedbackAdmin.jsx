@@ -10,11 +10,9 @@ const AcademyFeedbackAdmin = ({ onToast }) => {
     const [feedbackData, setFeedbackData] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
-    const [filterHelpful, setFilterHelpful] = useState('all'); // 'all', 'yes', 'no'
+    const [filterHelpful, setFilterHelpful] = useState('all');
     const [currentPage, setCurrentPage] = useState(1);
     const [lastPageBeforeSearch, setLastPageBeforeSearch] = useState(null);
-
-    // Modal state
     const [showModal, setShowModal] = useState(false);
     const [selectedFeedback, setSelectedFeedback] = useState('');
 
@@ -23,8 +21,6 @@ const AcademyFeedbackAdmin = ({ onToast }) => {
         setSelectedFeedback(feedback);
         setShowModal(true);
     };
-
-    // Configurable items per page
     const itemsPerPage = 10;
 
     const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
@@ -94,8 +90,6 @@ const AcademyFeedbackAdmin = ({ onToast }) => {
 
     const totalItems = filteredFeedback.length;
     const totalPages = Math.ceil(totalItems / itemsPerPage) || 1;
-
-    // Handle search term changes to manage page state
     useEffect(() => {
         if (searchTerm) {
             if (lastPageBeforeSearch === null) {
@@ -248,7 +242,7 @@ const AcademyFeedbackAdmin = ({ onToast }) => {
                 emptyMessage={filterHelpful !== 'all' || searchTerm ? "No feedback matches your filter" : "No feedback collected yet"}
             />
 
-            {/* Feedback Detail Modal */}
+            {}
             <Modal
                 show={showModal}
                 onHide={handleCloseModal}

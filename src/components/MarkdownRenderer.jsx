@@ -4,27 +4,12 @@ import DOMPurify from 'dompurify';
 import '../styles/academy.css';
 import { ACADEMY_CONFIG } from '../utils/academyConfig';
 import { resolveAcademyPath, findArticleById } from '../utils/academyIndex';
-
-/**
- * MarkdownRenderer Component
- * 
- * Renders markdown content with:
- * - Syntax highlighting
- * - Image lazy loading with placeholder fallback
- * - Auto-generated heading anchors
- * - Custom alert/callout styling
- * - Table support
- */
-
-// Configure marked options once
 marked.setOptions({
-    gfm: true, // GitHub Flavored Markdown
-    breaks: true, // Convert \n to <br>
-    headerIds: true, // Add IDs to headers
-    mangle: false // Don't escape autolinked email addresses
+    gfm: true,
+    breaks: true,
+    headerIds: true,
+    mangle: false
 });
-
-// Helper to replace placeholders like {{SUPPORTED_LANGUAGES.SPANISH}}
 const replacePlaceholders = (text) => {
     if (!text) return '';
     return text.replace(/\{\{([\w\.]+)\}\}/g, (match, path) => {
@@ -36,12 +21,8 @@ const replacePlaceholders = (text) => {
         return value !== undefined ? value : match;
     });
 };
-
-// Helper to transform "Next: [Title](Path)" into a premium card
 const enhanceMarkdown = (text, currentCategoryId) => {
     if (!text) return '';
-
-    // Match lines starting with "Next:" followed by a markdown link
     return text.replace(/^Next:\s+\[(.*?)\]\((.*?)\)/gm, (match, title, path) => {
         const resolvedPath = resolveAcademyPath(path, currentCategoryId);
         return `
@@ -57,8 +38,6 @@ const enhanceMarkdown = (text, currentCategoryId) => {
 
 const createCustomRenderer = (currentCategoryId) => {
     const renderer = new marked.Renderer();
-
-    // Custom renderer for images with ALT text placeholder support
     renderer.image = function (href, title, text) {
         if (href === 'ALT_TEXT_PLACEHOLDER') {
             return `
@@ -71,9 +50,9 @@ const createCustomRenderer = (currentCategoryId) => {
 
         const titleAttr = title ? `title="${DOMPurify.sanitize(title)}"` : '';
         return `
-            <img 
-                src="${href}" 
-                alt="${DOMPurify.sanitize(text)}" 
+            <img
+                src="${href}"
+                alt="${DOMPurify.sanitize(text)}"
                 ${titleAttr}
                 loading="lazy"
                 class="academy-image"
@@ -81,8 +60,6 @@ const createCustomRenderer = (currentCategoryId) => {
             />
         `;
     };
-
-    // Custom renderer for blockquotes (for alerts/callouts)
     renderer.blockquote = function (quote) {
         if (!quote || typeof quote !== 'string') {
             return `<blockquote>Error: Invalid blockquote content</blockquote>`;
@@ -113,8 +90,6 @@ const createCustomRenderer = (currentCategoryId) => {
 
         return `<blockquote>${quote}</blockquote>`;
     };
-
-    // Custom renderer for links to convert .md paths to React Router paths
     renderer.link = function (href, title, text) {
         if (text.includes('next-step-label')) {
             return `<a href="${href}" class="academy-next-step-card">${text}</a>`;
@@ -142,8 +117,6 @@ const createCustomRenderer = (currentCategoryId) => {
 const MarkdownRenderer = ({ content, articleId }) => {
     const [renderedHTML, setRenderedHTML] = useState('');
     const [tableOfContents, setTableOfContents] = useState([]);
-
-    // Get current category from articleId if possible to provide context for relative links
     const [currentCategoryId, setCurrentCategoryId] = useState(null);
 
     useEffect(() => {
@@ -154,7 +127,6 @@ const MarkdownRenderer = ({ content, articleId }) => {
             }
         }
     }, [articleId]);
-
 
     const { cleanHTML, toc } = useMemo(() => {
         if (!content) {
@@ -186,8 +158,6 @@ const MarkdownRenderer = ({ content, articleId }) => {
         setRenderedHTML(cleanHTML);
         setTableOfContents(toc);
     }, [cleanHTML, toc]);
-
-
 
     if (!content) {
         return (

@@ -7,8 +7,6 @@ export const exportToPDF = async (elementId, filename, options = {}) => {
     if (!element) {
       throw new Error(`Element with ID "${elementId}" not found`);
     }
-
-    // Show loading state
     const originalContent = element.innerHTML;
     const loadingDiv = document.createElement('div');
     loadingDiv.style.cssText = `
@@ -36,8 +34,6 @@ export const exportToPDF = async (elementId, filename, options = {}) => {
       </style>
     `;
     document.body.appendChild(loadingDiv);
-
-    // Create a temporary container for PDF content
     const pdfContainer = document.createElement('div');
     pdfContainer.style.cssText = `
       position: absolute;
@@ -50,17 +46,11 @@ export const exportToPDF = async (elementId, filename, options = {}) => {
       line-height: 1.6;
       color: #333;
     `;
-
-    // Clone the content and clean it up for PDF
     const clonedElement = element.cloneNode(true);
-    
-    // Remove interactive elements and edit buttons
     const elementsToRemove = clonedElement.querySelectorAll(
       '.edit-button, .save-button, .cancel-button, .edit-actions, .download-pdf-btn, button, .simple-toast'
     );
     elementsToRemove.forEach(el => el.remove());
-
-    // Convert edit containers back to text
     const editContainers = clonedElement.querySelectorAll('.edit-container');
     editContainers.forEach(container => {
       const textarea = container.querySelector('textarea');
@@ -71,8 +61,6 @@ export const exportToPDF = async (elementId, filename, options = {}) => {
         container.parentNode.replaceChild(textDiv, container);
       }
     });
-
-    // Style improvements for PDF
     const styles = document.createElement('style');
     styles.textContent = `
       .pdf-header {
@@ -176,8 +164,6 @@ export const exportToPDF = async (elementId, filename, options = {}) => {
     `;
 
     pdfContainer.appendChild(styles);
-
-    // Add header
     const header = document.createElement('div');
     header.className = 'pdf-header';
     header.innerHTML = `
@@ -186,11 +172,7 @@ export const exportToPDF = async (elementId, filename, options = {}) => {
       <div class="pdf-date">Generated on ${new Date().toLocaleDateString()}</div>
     `;
     pdfContainer.appendChild(header);
-
-    // Add the cleaned content
     pdfContainer.appendChild(clonedElement);
-
-    // Add footer
     const footer = document.createElement('div');
     footer.style.cssText = `
       margin-top: 40px;
@@ -207,8 +189,6 @@ export const exportToPDF = async (elementId, filename, options = {}) => {
     pdfContainer.appendChild(footer);
 
     document.body.appendChild(pdfContainer);
-
-    // Generate PDF
     const canvas = await html2canvas(pdfContainer, {
       width: 800,
       height: pdfContainer.scrollHeight,
@@ -220,53 +200,43 @@ export const exportToPDF = async (elementId, filename, options = {}) => {
 
     const imgData = canvas.toDataURL('image/png');
     const pdf = new jsPDF('p', 'mm', 'a4');
-    
+
     const pdfWidth = pdf.internal.pageSize.getWidth();
     const pdfHeight = pdf.internal.pageSize.getHeight();
     const canvasWidth = canvas.width;
     const canvasHeight = canvas.height;
-    
+
     const ratio = Math.min(pdfWidth / canvasWidth, pdfHeight / canvasHeight);
     const imgWidth = canvasWidth * ratio;
     const imgHeight = canvasHeight * ratio;
-    
-    // Calculate how many pages we need
     const totalPages = Math.ceil(imgHeight / pdfHeight);
-    
+
     for (let i = 0; i < totalPages; i++) {
       if (i > 0) {
         pdf.addPage();
       }
-      
+
       const yOffset = -(pdfHeight * i);
       pdf.addImage(imgData, 'PNG', 0, yOffset, imgWidth, imgHeight);
     }
-
-    // Clean up
     document.body.removeChild(pdfContainer);
     document.body.removeChild(loadingDiv);
-
-    // Save the PDF
     pdf.save(filename);
-    
+
     return true;
   } catch (error) {
     console.error('Error generating PDF:', error);
-    
-    // Remove loading indicator if it exists
     const loadingDiv = document.querySelector('[style*="position: fixed"][style*="z-index: 10000"]');
     if (loadingDiv) {
       document.body.removeChild(loadingDiv);
     }
-    
+
     throw error;
   }
 };
-
-// Specific export functions
 export const exportAnalysisToPDF = async (businessName = 'Your Business') => {
   const filename = `${businessName.replace(/[^a-z0-9]/gi, '_')}_Analysis_Report_${new Date().toISOString().split('T')[0]}.pdf`;
-  
+
   return await exportToPDF('analysis-pdf-content', filename, {
     title: 'SWOT Analysis Report',
     businessName: businessName
@@ -275,7 +245,7 @@ export const exportAnalysisToPDF = async (businessName = 'Your Business') => {
 
 export const exportStrategicToPDF = async (businessName = 'Your Business') => {
   const filename = `${businessName.replace(/[^a-z0-9]/gi, '_')}_Strategic_Report_${new Date().toISOString().split('T')[0]}.pdf`;
-  
+
   return await exportToPDF('strategic-pdf-content', filename, {
     title: 'S.T.R.A.T.E.G.I.C Analysis Report',
     businessName: businessName

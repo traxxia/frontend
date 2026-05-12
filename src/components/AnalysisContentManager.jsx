@@ -145,11 +145,7 @@ const CategorySection = React.memo(
             <IconComponent size={24} className="category-icon" />
             <div className="category-title-group">
               <h2 className="category-title">{title}</h2>
-              {/* {subtitle && (
-                <p style={{ fontSize: '12px', color: '#6b7280', margin: '4px 0 0 0', fontWeight: '500' }}>
-                  {subtitle}
-                </p>
-              )} */}
+              {}
             </div>
           </div>
           <div className="category-toggle">
@@ -512,7 +508,6 @@ const AnalysisContentManager = () => {
   const streamingManager = useStreamingManager();
 
   const isAnalysisLoading = useCallback((analysisType) => {
-    // If store says it's regenerating, it's loading
     if (isTypeRegenerating(analysisType)) return true;
 
     const excelAnalysisTypes = ['profitabilityAnalysis', 'growthTracker', 'liquidityEfficiency', 'investmentPerformance', 'leverageRisk'];
@@ -607,7 +602,7 @@ const AnalysisContentManager = () => {
 
     const data = dataMap[analysisKey];
     const Component = config.component;
-    
+
     const refsMap = {
       swotRef, purchaseCriteriaRef, loyaltyNpsRef, portersRef, pestelRef,
       fullSwotRef, competitiveAdvantageRef, expandedCapabilityRef, strategicRadarRef,
@@ -706,8 +701,6 @@ const AnalysisContentManager = () => {
     propsInvestmentPerformanceData, propsLeverageRiskData, propsStrategicData,
     setPurchaseCriteriaData, setLoyaltyNPSData
   ]);
-
-  // Get unlocked features and determine current analyses
   const unlockedFeatures = useMemo(() => phaseManager?.getUnlockedFeatures?.() || {}, [phaseManager]);
 
   const currentAnalyses = useMemo(() => {
@@ -751,13 +744,9 @@ const AnalysisContentManager = () => {
     };
 
     const activeAnalyses = new Set();
-
-    // Financial analyses are always additive if a document is present
     if (unlockedFeatures.hasDocument) {
       sets.financial.forEach(a => activeAnalyses.add(a));
     }
-
-    // Determine the highest phase reached for brief-based analyses (Exclusive logic)
     if (unlockedFeatures.advancedPhase) {
       sets.advanced.forEach(a => activeAnalyses.add(a));
     } else if (unlockedFeatures.essentialPhase) {
@@ -768,9 +757,6 @@ const AnalysisContentManager = () => {
 
     return Array.from(activeAnalyses);
   }, [unlockedFeatures]);
-
-
-  // Memoize the categorized analyses
   const categorizedAnalyses = useMemo(() => {
     const result = {};
     CATEGORIES.forEach(cat => {
@@ -821,8 +807,8 @@ const AnalysisContentManager = () => {
               ? t("Generating all Insights...")
               : isFinancialRegenerating
                 ? t("Regenerating financial insights like profitability, growth tracker, liquidity, investment performance, leverage and risk insight...")
-                : (isAnalysisRegenerating && isStrategicRegenerating) 
-                  ? t("Generating all Insights...") 
+                : (isAnalysisRegenerating && isStrategicRegenerating)
+                  ? t("Generating all Insights...")
                 : (isStrategicRegenerating && !isAnalysisRegenerating)
                   ? t("Generating Strategic Analysis...")
                   : t("Generating Insight...")}

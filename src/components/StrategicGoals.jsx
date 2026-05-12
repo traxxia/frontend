@@ -30,8 +30,6 @@ const StrategicGoals = ({
   onRedirectToBrief,
 }) => {
   const { t } = useTranslation();
-
-  // Use Zustand store
   const {
     strategicGoalsData: storeStrategicGoalsData,
     isRegenerating: isTypeRegenerating,
@@ -40,13 +38,9 @@ const StrategicGoals = ({
 
   const isRegenerating =
     propIsRegenerating || isTypeRegenerating("strategicGoals");
-
-  // Normalize data from store or props
   const data = useMemo(() => {
     const rawData = propStrategicGoalsData || storeStrategicGoalsData;
     if (!rawData) return null;
-
-    // Handle nested structure
     const actualData = rawData.strategicGoals || rawData;
     return actualData;
   }, [propStrategicGoalsData, storeStrategicGoalsData]);

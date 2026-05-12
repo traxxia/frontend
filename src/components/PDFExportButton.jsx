@@ -84,29 +84,24 @@ const getExportPhase = (unlockedFeatures = {}) => {
   if (unlockedFeatures.initialPhase || unlockedFeatures.analysis) return 'initial';
   return 'initial';
 };
-
-// --- OPTIMIZED CAPTURE LOGIC ---
 const captureComponent = async (selector, name, html2canvas) => {
   const component = document.querySelector(selector);
   if (!component) {
     return null;
   }
-
-  // Delay to ensure dynamic content or charts are fully rendered
   await new Promise(resolve => setTimeout(resolve, 2000));
 
   try {
     const canvas = await html2canvas(component, {
-      scale: 2, 
+      scale: 2,
       useCORS: true,
       backgroundColor: '#ffffff',
       logging: false,
       imageTimeout: 60000,
       onclone: (clonedDoc) => {
-        // 1. Inject global override styles into the clone
         const style = clonedDoc.createElement('style');
         style.innerHTML = `
-          /* Force all containers to be visible and expanded */
+
           .collapsed, .modern-card-content.collapsed, .modern-phase-content.collapsed, .section-container.collapsed {
             max-height: none !important;
             height: auto !important;
@@ -121,8 +116,7 @@ const captureComponent = async (selector, name, html2canvas) => {
             display: block !important;
             overflow: visible !important;
           }
-          
-          /* Force Recharts and custom chart containers to have fixed size in clone */
+
           .recharts-responsive-container, .ch-chart-wrapper, .ch-chart-section {
             width: 900px !important;
             height: 400px !important;
@@ -131,8 +125,7 @@ const captureComponent = async (selector, name, html2canvas) => {
             visibility: visible !important;
             display: block !important;
           }
-          
-          /* Force SVGs to be visible and remove problematic filters */
+
           svg {
             overflow: visible !important;
             visibility: visible !important;
@@ -140,7 +133,6 @@ const captureComponent = async (selector, name, html2canvas) => {
             transform: none !important;
           }
 
-          /* Ensure all table rows are visible */
           tr {
             opacity: 1 !important;
             visibility: visible !important;
@@ -155,7 +147,6 @@ const captureComponent = async (selector, name, html2canvas) => {
 
         const clonedEl = clonedDoc.querySelector(selector);
         if (clonedEl) {
-          // 2. Force all parents to be visible
           let parent = clonedEl.parentElement;
           while (parent) {
             parent.style.maxHeight = 'none';
@@ -164,21 +155,15 @@ const captureComponent = async (selector, name, html2canvas) => {
             parent.style.display = 'block';
             parent = parent.parentElement;
           }
-
-          // 3. Force explicit dimensions on all SVGs and disable animations
           const allSVGs = clonedEl.querySelectorAll('svg');
           allSVGs.forEach((svg) => {
             if (svg.classList.contains('lucide')) return;
-
-            // Force visible and remove any filters/transforms
             svg.style.display = 'block';
             svg.style.visibility = 'visible';
             svg.style.opacity = '1';
             svg.style.filter = 'none';
             svg.style.transition = 'none';
             svg.style.animation = 'none';
-
-            // If it's a Recharts container parent, force it to show
             const parent = svg.closest('.recharts-responsive-container, .ch-chart-wrapper');
             if (parent) {
               parent.style.display = 'block';
@@ -187,22 +172,16 @@ const captureComponent = async (selector, name, html2canvas) => {
               parent.style.width = '900px';
             }
           });
-
-          // 4. Remove UI junk
           const uiJunk = clonedEl.querySelectorAll('button, .regenerate-button, .dropdown-button, .help-icon, .tooltip, .modern-expand-btn');
           uiJunk.forEach(el => el.style.display = 'none');
-          
-          // 5. Final layout fixes for the target
           clonedEl.style.display = 'block';
           clonedEl.style.visibility = 'visible';
           clonedEl.style.maxHeight = 'none';
           clonedEl.style.height = 'auto';
-          clonedEl.style.padding = '40px'; 
+          clonedEl.style.padding = '40px';
           clonedEl.style.backgroundColor = '#ffffff';
-          clonedEl.style.width = '1000px'; 
+          clonedEl.style.width = '1000px';
           clonedEl.style.overflow = 'visible';
-          
-          // Force all text to be visible
           const allText = clonedEl.querySelectorAll('text, span, p, h1, h2, h3, h4');
           allText.forEach(t => {
             t.style.opacity = '1';
@@ -228,7 +207,7 @@ const PDFExportButton = ({
   disabled = false,
   className = "",
   style = {},
-  exportType = "insights", 
+  exportType = "insights",
   unlockedFeatures = {},
   showText = false,
 }) => {
@@ -236,15 +215,15 @@ const PDFExportButton = ({
   const [exportProgress, setExportProgress] = useState({ current: 0, total: 0, sectionName: '' });
   const { t } = useTranslation();
 
-  const handleDownload = useCallback(async () => { 
+  const handleDownload = useCallback(async () => {
     try {
       setIsExportingPDF(true);
       setExportProgress({ current: 0, total: 0, sectionName: 'Preparing document...' });
 
       document.body.classList.add('generating-pdf');
-      
+
       await new Promise(resolve => setTimeout(resolve, 500));
-      
+
       const forceStyle = document.createElement('style');
       forceStyle.id = 'force-pdf-styles';
       forceStyle.innerHTML = `
@@ -264,30 +243,22 @@ const PDFExportButton = ({
         }
       `;
       document.head.appendChild(forceStyle);
-
-      // Give browser time to reflow and render all previously collapsed sections
       await new Promise(resolve => setTimeout(resolve, 1500));
-
-      // 2. Dynamic imports
       const [jsPDFModule, html2canvasModule] = await Promise.all([
         import('jspdf'),
         import('html2canvas')
       ]);
       const jsPDF = jsPDFModule.default;
       const html2canvas = html2canvasModule.default;
-
-      // 3. Determine components to capture
       const exportPhase = (exportType === "advanced-brief" || exportType === "executive") ? exportType : getExportPhase(unlockedFeatures);
-      
-      let rawComponents = (exportType === "strategic") 
+
+      let rawComponents = (exportType === "strategic")
         ? [
             { selector: '[data-component="strategic-direction"]', name: 'Direction & Positioning' },
             { selector: '[data-component="strategic-execution"]', name: 'Execution & Monitoring' },
             { selector: '[data-component="strategic-sustainability"]', name: 'Sustainability & Reinforcement' }
           ]
         : (PHASE_COMPONENTS[exportPhase] || []);
-
-      // 3a. Filter components based on what is actually present in the DOM
       const components = rawComponents.filter(comp => {
         const el = document.querySelector(comp.selector);
         return el !== null;
@@ -301,47 +272,37 @@ const PDFExportButton = ({
         setIsExportingPDF(false);
         return;
       }
-
-      // 4. Setup PDF
       const pdf = new jsPDF('p', 'mm', 'a4');
       const pageWidth = pdf.internal.pageSize.getWidth();
       const pageHeight = pdf.internal.pageSize.getHeight();
-      
-      // Title Page
       pdf.setFontSize(24);
       pdf.setFont('helvetica', 'bold');
       pdf.setTextColor(26, 115, 232);
       pdf.text(exportType === 'strategic' ? 'Strategic Analysis' : 'Insight Analysis Report', pageWidth / 2, 40, { align: 'center' });
-      
+
       pdf.setFontSize(16);
       pdf.setTextColor(60, 60, 60);
       pdf.text(businessName, pageWidth / 2, 55, { align: 'center' });
-      
+
       pdf.setFontSize(12);
       pdf.setTextColor(130, 130, 130);
       pdf.text(`Generated on ${new Date().toLocaleDateString()}`, pageWidth / 2, 65, { align: 'center' });
-
-      // 5. Sequential Capture (Filtered list)
       let capturedResults = [];
       setExportProgress({ current: 0, total: components.length, sectionName: 'Starting capture...' });
 
       for (let i = 0; i < components.length; i++) {
         const comp = components[i];
         setExportProgress({ current: i + 1, total: components.length, sectionName: `Capturing ${comp.name}...` });
-        
-        // Scroll into view to ensure browser prioritizes rendering
         const element = document.querySelector(comp.selector);
         if (element) {
           element.scrollIntoView({ block: 'center' });
-          await new Promise(resolve => setTimeout(resolve, 1000)); // Wait for scroll and potential re-render
+          await new Promise(resolve => setTimeout(resolve, 1000));
         }
 
         const result = await captureComponent(comp.selector, comp.name, html2canvas);
         if (result) capturedResults.push(result);
       }
-
-      // 6. Build PDF (Continuous Flow with Multi-Page Splitting)
-      let yOffset = 75; 
+      let yOffset = 75;
 
       for (let i = 0; i < capturedResults.length; i++) {
         const { name, canvas, imgData } = capturedResults[i];
@@ -351,15 +312,13 @@ const PDFExportButton = ({
         const availableWidth = pageWidth - (margin * 2);
         const imgWidth = availableWidth;
         const fullImgHeight = (canvas.height * imgWidth) / canvas.width;
-        
-        let sY = 0; 
+
+        let sY = 0;
         let remainingImgHeight = fullImgHeight;
         let isFirstSlice = true;
 
          while (remainingImgHeight > 0.1) {
           let spaceLeftOnPage = pageHeight - yOffset - 15;
-          
-          // If we are at the bottom of the page, move to next page immediately
           if (spaceLeftOnPage < 20) {
             pdf.addPage();
             yOffset = 20;
@@ -389,7 +348,7 @@ const PDFExportButton = ({
             tempCanvas.height = Math.max(1, sourceSliceHeight);
             const ctx = tempCanvas.getContext('2d');
             ctx.drawImage(canvas, 0, sY, canvas.width, sourceSliceHeight, 0, 0, canvas.width, sourceSliceHeight);
-            
+
             const sliceData = tempCanvas.toDataURL('image/jpeg', 0.85);
             pdf.addImage(sliceData, 'JPEG', margin, yOffset, imgWidth, sliceHeightOnPage, undefined, 'FAST');
           } catch (err) {
@@ -402,14 +361,12 @@ const PDFExportButton = ({
 
           if (remainingImgHeight > 0.1) {
             pdf.addPage();
-            yOffset = 20; 
+            yOffset = 20;
           } else {
-            yOffset += sliceHeightOnPage + 15; 
+            yOffset += sliceHeightOnPage + 15;
           }
         }
       }
-
-      // 7. Save
       const filename = `${businessName.replace(/\s+/g, '_')}_Report_${new Date().toISOString().split('T')[0]}.pdf`;
       pdf.save(filename);
       onToastMessage?.('PDF downloaded successfully', 'success');
@@ -418,11 +375,10 @@ const PDFExportButton = ({
       console.error('Export Error:', error);
       onToastMessage?.('Failed to export PDF', 'error');
     } finally {
-      // Cleanup
       document.body.classList.remove('generating-pdf');
       const forceStyle = document.getElementById('force-pdf-styles');
       if (forceStyle) forceStyle.remove();
-      
+
       setIsExportingPDF(false);
       setExportProgress({ current: 0, total: 0, sectionName: '' });
     }

@@ -1,8 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import axios from "axios";
 import { useAuthStore } from "../store/authStore";
-
-// Global cache for lock requests shared across hook instances
 const fieldLockCache = new Map();
 
 export const useFieldLockPolling = (projectId, enabled = true) => {
@@ -14,9 +12,7 @@ export const useFieldLockPolling = (projectId, enabled = true) => {
     if (!projectId || !token) return;
 
     const cacheKey = `locks-${projectId}`;
-    const timestamp = Math.floor(Date.now() / 1000); // 1-second granularity for polling deduplication
-
-    // If a request for this project was made in the last 1 second, reuse it
+    const timestamp = Math.floor(Date.now() / 1000);
     if (fieldLockCache.has(cacheKey)) {
       const cached = fieldLockCache.get(cacheKey);
       if (timestamp - cached.time <= 1) {
@@ -54,7 +50,7 @@ export const useFieldLockPolling = (projectId, enabled = true) => {
 
     fetchLocks();
 
-    pollingRef.current = setInterval(fetchLocks, 5000); 
+    pollingRef.current = setInterval(fetchLocks, 5000);
 
     return () => {
       clearInterval(pollingRef.current);

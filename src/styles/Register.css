@@ -14,7 +14,6 @@
   background-color: var(--color-bg-primary);
 }
 
-/* Left Section - Branding */
 .register-left-section {
   flex: 1;
   background: url('../assets/71d46d88977b8f5269d03ea65a25e6dff7c73d30.png');
@@ -92,7 +91,6 @@
   transform: rotate(45deg);
 }
 
-/* Right Section - Register Form */
 .register-right-section {
   flex: 1;
   display: flex;
@@ -108,11 +106,9 @@
 .register-box {
   width: 100%;
   max-width: 600px;
-  /* Increased for registration form */
+
   padding: var(--spacing-2xl);
 }
-
-
 
 .register-header {
   text-align: center;
@@ -143,7 +139,6 @@
   object-fit: contain;
 }
 
-/* Step Indicator */
 .register-steps-container {
   display: flex;
   align-items: center;
@@ -198,7 +193,7 @@
   height: 2px;
   background: var(--color-border-medium);
   margin-bottom: 24px;
-  /* Align with circles */
+
 }
 
 .step-item.completed+.step-line {
@@ -218,7 +213,6 @@
   color: var(--color-text-primary);
 }
 
-/* Form Layout */
 .register-form-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -307,9 +301,6 @@
   color: var(--color-primary);
 }
 
-
-
-/* Action Type Selection */
 .selection-header {
   display: flex;
   flex-direction: column;
@@ -323,7 +314,7 @@
   padding: 4px;
   border-radius: var(--border-radius-md);
   gap: 0;
-  /* Gap handled by padding if needed, but 0 is better for sliding */
+
   position: relative;
   border: 1px solid var(--color-border-light);
 }
@@ -375,7 +366,6 @@
   margin-top: 0px !important;
 }
 
-/* Checkbox */
 .checkbox-group {
   margin: 0;
 }
@@ -403,7 +393,6 @@
   font-weight: var(--font-weight-semibold);
 }
 
-/* Navigation Buttons */
 .tab-navigation {
   display: flex;
   justify-content: space-between;
@@ -449,7 +438,6 @@
   transform: translateY(-1px);
 }
 
-/* Modals */
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -548,7 +536,6 @@
   background: var(--color-danger);
 }
 
-/* Responsive */
 @media (max-width: 1024px) {
   .register-left-section {
     display: none;
@@ -643,7 +630,6 @@
   width: 100% !important;
 }
 
-/* Payment UI Redesign */
 .payment-methods-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -665,9 +651,9 @@
   position: relative;
   background: var(--color-bg-primary);
   text-align: center;
-  /* Ensure text is centered */
+
   justify-content: center;
-  /* Reinforce centering */
+
 }
 
 .payment-method-card:hover:not(.disabled) {
@@ -774,7 +760,6 @@
   }
 }
 
-/* Visual Card Preview */
 .visual-card-wrapper {
   display: flex;
   justify-content: center;
@@ -870,7 +855,6 @@
   text-shadow: 0 1px 1px rgba(0, 0, 0, 0.3);
 }
 
-/* Compact Success Modal (Toast Style) */
 .compact-success-modal {
   max-width: 350px !important;
   width: 100% !important;
@@ -923,7 +907,6 @@
   padding: 0 !important;
 }
 
-/* Ensure no footer extra space if it exists */
 .compact-success-modal .modal-footer {
   padding: 0.75rem !important;
   margin-top: 0 !important;
@@ -954,7 +937,6 @@
   }
 }
 
-/* Visual Card Preview */
 .visual-card-wrapper {
   display: flex;
   justify-content: center;
@@ -1050,7 +1032,6 @@
   text-shadow: 0 1px 1px rgba(0, 0, 0, 0.3);
 }
 
-/* Compact Success Modal (Toast Style) */
 .compact-success-modal {
   max-width: 350px !important;
   width: 100% !important;
@@ -1103,14 +1084,12 @@
   padding: 0 !important;
 }
 
-/* Ensure no footer extra space if it exists */
 .compact-success-modal .modal-footer {
   padding: 0.75rem !important;
   margin-top: 0 !important;
   border-top: 1px solid var(--color-border-light) !important;
 }
 
-/* Custom Searchable Dropdown */
 .custom-select-container {
   position: relative;
   width: 100%;
@@ -1250,7 +1229,6 @@
   text-align: center;
 }
 
-/* Custom Scrollbar for Dropdown */
 .options-list::-webkit-scrollbar {
   width: 10px;
 }
@@ -1272,7 +1250,6 @@
   background: #444;
 }
 
-/* Registration Inline Error Box */
 .registration-error-box {
   background: #fff5f5;
   border: 1px solid #feb2b2;
@@ -1345,4 +1322,3 @@
 .registration-error-box .error-close:hover {
   opacity: 1;
 }
-

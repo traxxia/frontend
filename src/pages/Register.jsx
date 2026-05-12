@@ -58,8 +58,6 @@ const Register = () => {
   const [showTermsModal, setShowTermsModal] = useState(false);
   const [showPrivacyModal, setShowPrivacyModal] = useState(false);
   const [stripeComponents, setStripeComponents] = useState(null);
-
-  // Lazy load Stripe
   const stripePromise = useMemo(async () => {
     if (activeTab === 3 && isNewCompany) {
       const [stripeJs, reactStripeJs] = await Promise.all([
@@ -130,7 +128,7 @@ const Register = () => {
 
               <AnimatePresence mode="wait">
                 {submitError && (
-                  <motion.div 
+                  <motion.div
                     initial={{ opacity: 0, height: 0, marginBottom: 0 }}
                     animate={{ opacity: 1, height: 'auto', marginBottom: 20 }}
                     exit={{ opacity: 0, height: 0, marginBottom: 0 }}
@@ -248,7 +246,7 @@ const Register = () => {
         </div>
       </div>
 
-      {/* Success Modal */}
+      {}
       <Modal show={showSuccessModal} onHide={() => setShowSuccessModal(false)} centered className="success-modal">
         <Modal.Body>
           <div className={`modal-status-icon ${isError ? 'error' : 'success'}`}>
@@ -262,7 +260,7 @@ const Register = () => {
         </Modal.Body>
       </Modal>
 
-      {/* Terms & Privacy Modals */}
+      {}
       <Modal show={showTermsModal} onHide={() => setShowTermsModal(false)} size="lg" centered className="terms-modal">
         <Modal.Header closeButton>
           <Modal.Title>{t('terms_and_conditions')}</Modal.Title>

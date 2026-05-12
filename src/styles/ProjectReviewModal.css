@@ -341,7 +341,6 @@
     cursor: not-allowed;
 }
 
-/* Review Status Badges */
 .review-badge {
     display: inline-flex;
     align-items: center;

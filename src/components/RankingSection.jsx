@@ -1,7 +1,3 @@
-// src/components/RankingSection.jsx
-// Standalone Ranking page — completely separate from ProjectsSection.
-// Fetches its own data on mount (once), with no shared state/effect loops.
-
 import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useTranslation } from "../hooks/useTranslation";
 import { Users, CheckCircle, ListOrdered } from "lucide-react";
@@ -22,19 +18,11 @@ const RankingSection = ({ isArchived, companyAdminIds, setActiveTab }) => {
   const { userRole, userId: myUserId, userName: user } = useAuthStore();
   const { addToast } = useUIStore();
   const queryClient = useQueryClient();
-
-  // ─── Store state (reactive reads only — no action extraction) ───────────────
   const lockSummary = useProjectStore(state => state.lockSummary) || { total_users: 0, locked_users_count: 0, locked_users: [] };
   const businessStatus = useProjectStore(state => state.businessStatus) || "draft";
   const lockRanking = useProjectStore(state => state.lockRanking);
-
-  // ─── TanStack Query for projects list ───────────────────────────────────────
   const { data: projects = [], isLoading: isLoadingProjects } = useProjects(selectedBusinessId);
-
-  // ─── Access control ─────────────────────────────────────────────────────────
   const { userHasRerankAccess, userHasRankingAccess } = useAccessControl(selectedBusinessId);
-
-  // ─── Derived flags ───────────────────────────────────────────────────────────
   const isViewer = userRole === "viewer";
   const isSuperAdmin = userRole === "super_admin" || userRole === "company_admin" || userRole === "admin";
   const allCollaboratorsLocked = lockSummary.locked_users_count === lockSummary.total_users;
@@ -43,15 +31,11 @@ const RankingSection = ({ isArchived, companyAdminIds, setActiveTab }) => {
     lockSummary.locked_users?.some(u => String(u.user_id) === String(myUserId)) || false,
     [lockSummary.locked_users, myUserId]
   );
-
-  // ─── UI sub-view state ───────────────────────────────────────────────────────
   const [showRankScreen, setShowRankScreen] = useState(!isViewer);
   const [showTeamRankings, setShowTeamRankings] = useState(isViewer);
   const [activeAccordionKey, setActiveAccordionKey] = useState(null);
   const [apiIsArchived, setApiIsArchived] = useState(isArchived);
   const [isTransitioning, setIsTransitioning] = useState(false);
-
-  // Sync isArchived prop
   useEffect(() => { setApiIsArchived(isArchived); }, [isArchived]);
 
   useEffect(() => {
@@ -61,8 +45,6 @@ const RankingSection = ({ isArchived, companyAdminIds, setActiveTab }) => {
       })
     );
   }, []);
-
-  // ─── Rank / AI rank maps ─────────────────────────────────────────────────────
   const normalizeId = (id) => (id ? String(id) : "");
 
   const storeProjects = useProjectStore(state => state.projects);
@@ -108,20 +90,14 @@ const RankingSection = ({ isArchived, companyAdminIds, setActiveTab }) => {
     if (rA === rB) return new Date(b.created_at) - new Date(a.created_at);
     return rA - rB;
   }), [projects, rankMap]);
-
-  // ─── Toast helper ─────────────────────────────────────────────────────────────
   const handleShowToast = useCallback((message, type = "error", duration = 3000) => {
     addToast({ message, type, duration });
   }, [addToast]);
-
-  // ─── Stable data refresh (called once on mount + manually on user actions) ───
   const fetchedBusinessIdRef = useRef(null);
 
   const refreshData = useCallback(async (options = { silent: true }) => {
     if (!selectedBusinessId) return;
     const store = useProjectStore.getState();
-
-    // Clear caches so next call is fresh
     store.clearCache(selectedBusinessId);
     queryClient.invalidateQueries({ queryKey: ["projects", selectedBusinessId] });
     queryClient.invalidateQueries({ queryKey: ["teamRankings", selectedBusinessId] });
@@ -138,13 +114,9 @@ const RankingSection = ({ isArchived, companyAdminIds, setActiveTab }) => {
       );
     }
   }, [selectedBusinessId, queryClient]);
-
-  // ─── Fetch gracefully on mount instead of a hard refresh (which clears cache) ───
   useEffect(() => {
     if (!selectedBusinessId || fetchedBusinessIdRef.current === selectedBusinessId) return;
     fetchedBusinessIdRef.current = selectedBusinessId;
-    
-    // useProjects handles projects list automatically. We just need to load rankings and access:
     const store = useProjectStore.getState();
     Promise.all([
       store.fetchTeamRankings(selectedBusinessId, { silent: true }),
@@ -156,9 +128,7 @@ const RankingSection = ({ isArchived, companyAdminIds, setActiveTab }) => {
         );
       }
     }).catch(err => console.error("Error loading rankings:", err));
-  }, [selectedBusinessId]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // ─── Handlers ────────────────────────────────────────────────────────────────
+  }, [selectedBusinessId]);
   const onToggleTeamRankings = useCallback(() => {
     setShowTeamRankings(true);
     setShowRankScreen(false);
@@ -180,14 +150,12 @@ const RankingSection = ({ isArchived, companyAdminIds, setActiveTab }) => {
       return next;
     });
   }, [refreshData]);
-
-  // ─── Render ───────────────────────────────────────────────────────────────────
   return (
     <div ref={undefined} className="projects-section-wrapper">
       <ToastNotifications />
 
       <div className="d-flex align-items-center justify-content-between gap-2 mb-4 flex-wrap">
-        {/* Sub-tabs: Rank | Team Rankings */}
+        {}
         <div className="d-flex align-items-center gap-2 flex-grow-1">
           {!isViewer && (
             <div className="status-tabs-container" style={{ WebkitOverflowScrolling: "touch", overflowX: "auto" }}>
@@ -212,7 +180,7 @@ const RankingSection = ({ isArchived, companyAdminIds, setActiveTab }) => {
           )}
         </div>
 
-        {/* Collaborator progress badge — admin only */}
+        {}
         {isSuperAdmin && lockSummary.total_users > 0 && (
           <div
             className="collaborator-progress-compact d-flex align-items-center gap-2 px-3 py-2"
@@ -236,7 +204,7 @@ const RankingSection = ({ isArchived, companyAdminIds, setActiveTab }) => {
         )}
       </div>
 
-      {/* Loading spinner or Transition overlay */}
+      {}
       {(isTransitioning || (isLoadingProjects && projects.length === 0)) ? (
         <div className="d-flex flex-column justify-content-center align-items-center py-5" style={{ minHeight: 400 }}>
           <div className="spinner-border text-primary mb-3" role="status" style={{ width: '3rem', height: '3rem' }}>
@@ -257,7 +225,6 @@ const RankingSection = ({ isArchived, companyAdminIds, setActiveTab }) => {
                   await refreshData();
                   const currentLockSummary = useProjectStore.getState().lockSummary;
                   if (!currentLockSummary || currentLockSummary.total_users === 0) {
-                    // No collaborators — switch back to projects view via navigation
                     useProjectStore.getState().setViewMode("projects");
                     if (setActiveTab) {
                       setActiveTab("bets");
@@ -266,8 +233,6 @@ const RankingSection = ({ isArchived, companyAdminIds, setActiveTab }) => {
                     onToggleTeamRankings();
                   }
                 } finally {
-                  // We stay in transitioning state if redirecting, 
-                  // but if we just toggle view, we stop it after a short delay
                   setTimeout(() => setIsTransitioning(false), 500);
                 }
               }}

@@ -8,22 +8,20 @@ import { useStaleProjects } from '../hooks/useQueries';
 
 const StaleBetsAdmin = ({ onToast }) => {
   const { t } = useTranslation();
-  // --- TanStack Query Hook ---
   const { data, isLoading: loading, error: queryError } = useStaleProjects();
   const staleProjects = data?.stale_projects || [];
-  
+
   useEffect(() => {
     if (queryError) setError(queryError.message || "Failed to fetch stale projects");
   }, [queryError]);
 
   const fetchStaleProjects = () => {
-    // TanStack Query handles refetching automatically or via invalidateQueries
   };
 
   const initializedRef = useRef(false);
   const [error, setError] = useState('');
   const [sortField, setSortField] = useState('next_review_date');
-  const [sortOrder, setSortOrder] = useState('asc'); 
+  const [sortOrder, setSortOrder] = useState('asc');
   const [currentPage, setCurrentPage] = useState(1);
   const projectsPerPage = 10;
 
@@ -41,15 +39,13 @@ const StaleBetsAdmin = ({ onToast }) => {
     sorted.sort((a, b) => {
       let valA = a[sortField];
       let valB = b[sortField];
-      
+
       if (typeof valA === 'string') valA = valA.toLowerCase();
       if (typeof valB === 'string') valB = valB.toLowerCase();
-      
-      // Null safety
       if (!valA && valB) return sortOrder === 'asc' ? 1 : -1;
       if (valA && !valB) return sortOrder === 'asc' ? -1 : 1;
       if (!valA && !valB) return 0;
-      
+
       if (valA < valB) return sortOrder === 'asc' ? -1 : 1;
       if (valA > valB) return sortOrder === 'asc' ? 1 : -1;
       return 0;
@@ -58,8 +54,6 @@ const StaleBetsAdmin = ({ onToast }) => {
   };
 
   const sortedData = getSortedData();
-
-  // Pagination
   const indexOfLastItem = currentPage * projectsPerPage;
   const indexOfFirstItem = indexOfLastItem - projectsPerPage;
   const currentItems = sortedData.slice(indexOfFirstItem, indexOfLastItem);

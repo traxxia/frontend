@@ -5,28 +5,26 @@ import { useAnalysisStore } from "../store";
 import FinancialEmptyState from './FinancialEmptyState';
 import CitationSource from './CitationSource';
 import { checkMissingQuestionsAndRedirect, ANALYSIS_TYPES } from '../services/missingQuestionsService';
-
-// Helper function to get traffic light color based on value vs threshold
 const getTrafficLightColor = (value, threshold, isHigherBetter = true) => {
   if (!threshold || threshold === 'NA' || threshold === null || threshold === undefined) {
-    return '#6b7280'; // Gray for NA
+    return '#6b7280';
   }
 
   const numValue = parsePercentageValue(value);
   const numThreshold = parsePercentageValue(threshold);
 
   if (isNaN(numValue) || isNaN(numThreshold)) {
-    return '#6b7280'; // Gray for invalid values
+    return '#6b7280';
   }
 
   if (isHigherBetter) {
-    if (numValue >= numThreshold * 1.1) return '#10b981'; // Green - 10% above threshold
-    if (numValue >= numThreshold * 0.9) return '#f59e0b'; // Yellow - within 10% of threshold
-    return '#ef4444'; // Red - below threshold
+    if (numValue >= numThreshold * 1.1) return '#10b981';
+    if (numValue >= numThreshold * 0.9) return '#f59e0b';
+    return '#ef4444';
   } else {
-    if (numValue <= numThreshold * 0.9) return '#10b981'; // Green - 10% below threshold
-    if (numValue <= numThreshold * 1.1) return '#f59e0b'; // Yellow - within 10% of threshold
-    return '#ef4444'; // Red - above threshold
+    if (numValue <= numThreshold * 0.9) return '#10b981';
+    if (numValue <= numThreshold * 1.1) return '#f59e0b';
+    return '#ef4444';
   }
 };
 
@@ -85,8 +83,6 @@ const extractInvestmentMetrics = (data) => {
 
   return { metrics, thresholds, citations };
 };
-
-// Paired Bar Chart Component
 const PairedBarChart = React.memo(({ metrics, thresholds, citations }) => {
   const [containerWidth, setContainerWidth] = useState(600);
   const containerRef = useRef(null);
@@ -121,17 +117,17 @@ const PairedBarChart = React.memo(({ metrics, thresholds, citations }) => {
   const maxValue = Math.max(...chartData.map(d => Math.max(d.actualValue, d.benchmarkValue)), 10);
   const chartHeight = chartData.length * 100 + 20;
   const chartWidth = containerWidth;
-  const leftMargin = 140; 
+  const leftMargin = 140;
   const rightMargin = 60;
-  const barHeight = 22; 
-  const groupSpacing = 100; 
+  const barHeight = 22;
+  const groupSpacing = 100;
 
   return (
     <div
       ref={containerRef}
       style={{
         width: '100%',
-        padding: '20px', 
+        padding: '20px',
         background: '#fff',
         borderRadius: '12px',
         border: '1px solid #e5e7eb',
@@ -287,7 +283,7 @@ const InvestmentPerformance = ({
   isRegenerating: propIsRegenerating = false,
   canRegenerate = true,
   investmentData = null,
-  investmentPerformanceData = null, // Unified prop support
+  investmentPerformanceData = null,
   selectedBusinessId,
   onRedirectToBrief,
   uploadedFile = null,
@@ -298,10 +294,10 @@ const InvestmentPerformance = ({
   readOnly = false,
   documentInfo = null,
 }) => {
-  const { 
+  const {
     investmentPerformanceData: storeInvestmentData,
     isRegenerating: isTypeRegenerating,
-    regenerateIndividualAnalysis 
+    regenerateIndividualAnalysis
   } = useAnalysisStore();
 
   const isRegenerating = propIsRegenerating || isTypeRegenerating('investmentPerformance');

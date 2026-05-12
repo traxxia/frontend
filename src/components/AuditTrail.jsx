@@ -32,26 +32,20 @@ const AuditTrail = ({ onToast }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [lastPageBeforeSearch, setLastPageBeforeSearch] = useState(1);
   const itemsPerPage = 10;
-
-  // Debounce search term
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearchTerm(searchTerm);
     }, 500);
     return () => clearTimeout(timer);
   }, [searchTerm]);
-
-  // --- TanStack Query Hook ---
-  const { data, isLoading: loading } = useAuditTrailQuery(currentPage, itemsPerPage, { 
-    ...filters, 
-    search_term: debouncedSearchTerm 
+  const { data, isLoading: loading } = useAuditTrailQuery(currentPage, itemsPerPage, {
+    ...filters,
+    search_term: debouncedSearchTerm
   });
   const auditEntries = data?.audit_entries || [];
   const pagination = data?.pagination || {};
   const [loadingAnalysisData, setLoadingAnalysisData] = useState({});
   const { t } = useTranslation();
-
-  // Modal state
   const [modalData, setModalData] = useState({
     isOpen: false,
     analysisType: '',
@@ -65,11 +59,6 @@ const AuditTrail = ({ onToast }) => {
 
   const REACT_APP_BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
-
-
-
-  // Legacy fetch functions removed, now handled by hook
-
   const closeModal = () => {
     setModalData({
       isOpen: false,
@@ -81,16 +70,12 @@ const AuditTrail = ({ onToast }) => {
     });
   };
 
-
-
   const handleSearch = (value) => {
     if (searchTerm === "" && value !== "") setLastPageBeforeSearch(currentPage);
     if (searchTerm !== "" && value === "") setCurrentPage(lastPageBeforeSearch);
     if (value !== searchTerm) setCurrentPage(1);
     setSearchTerm(value);
   };
-
-
 
   const getEventIcon = (eventType) => {
     const iconMap = {
@@ -123,7 +108,6 @@ const AuditTrail = ({ onToast }) => {
   };
 
   const formatEventData = (eventType, eventData, eventDataSummary, row) => {
-    // Use summary for analysis_generated if available
     const data = eventType === 'analysis_generated' && eventDataSummary ? eventDataSummary : (eventData || {});
 
     const formatMap = {
@@ -177,7 +161,6 @@ const AuditTrail = ({ onToast }) => {
     return Object.entries(data)
       .filter(([key]) => !excludedKeys.includes(key.toLowerCase()))
       .map(([key, value]) => {
-        // Skip IDs and internal fields if needed, or format them
         const label = key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
         let displayValue = value;
 
@@ -219,8 +202,6 @@ const AuditTrail = ({ onToast }) => {
         );
       });
   };
-
-
 
   const openAnalysisModal = async (entry) => {
     const eventData = entry.event_data_summary || entry.event_data || {};

@@ -20,7 +20,6 @@ import {
   Trash,
 } from "lucide-react";
 import { Modal, Button, Spinner, Alert } from "react-bootstrap";
-// Stripe imports removed for lazy loading
 import PaymentForm from "./PaymentForm";
 import { useTranslation } from "../hooks/useTranslation";
 import { useAuthStore } from "../store/authStore";
@@ -29,8 +28,6 @@ import AdminTable from "./AdminTable";
 import { usePlanDetails } from "../hooks/useQueries";
 import { useQueryClient } from "@tanstack/react-query";
 import "../styles/SubscriptionTab.css";
-
-/* --- helpers --- */
 
 const getDaysRemaining = (end) => {
   if (!end) return 0;
@@ -81,7 +78,6 @@ const buildFeatureRows = (limits = {}) => [
   { label: "PMF Access", active: !!limits.pmf },
 ];
 
-/* --- sub-components --- */
 const UsageBar = ({ label, current, limit, color, icon: Icon }) => {
   const unlimited = limit === true;
   const pct = unlimited || !limit ? 0 : Math.min(100, (current / limit) * 100);
@@ -122,8 +118,6 @@ const FeatureRow = ({ label, active }) => (
   </li>
 );
 
-/* --- Payment Methods Section --- */
-/* --- Add Card Modal Content (using Stripe hooks) --- */
 const AddCardModalContent = ({
   onHide,
   onAddSuccess,
@@ -167,8 +161,6 @@ const AddCardModalContent = ({
         setIsSubmitting(false);
         return;
       }
-
-      // Local duplicate check
       const card = paymentMethod.card;
       const isDuplicate = paymentMethods.some(
         (pm) =>
@@ -183,8 +175,6 @@ const AddCardModalContent = ({
         setIsSubmitting(false);
         return;
       }
-
-      // Attach to customer on backend
       const res = await fetch(
         `${apiBase}/api/subscription/payment-methods/add`,
         {
@@ -469,14 +459,11 @@ const PaymentMethodsSection = ({
   );
 };
 
-/* --- main --- */
 const SubscriptionTab = ({ onToast }) => {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const token = useAuthStore((state) => state.token);
   const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
-
-  // --- TanStack Query Hook ---
   const { data: subscription, isLoading: loading, error: queryError } = usePlanDetails();
 
   const handlePaymentMethodsUpdate = (data) => {
@@ -492,8 +479,6 @@ const SubscriptionTab = ({ onToast }) => {
     setSelectedPlanId(id);
     setShowUpgradeModal(true);
   };
-
-  // Loading state moved into the main render to preserve header
   if (queryError) return <Alert variant="danger">{queryError.message || "Failed to load subscription details"}</Alert>;
   if (!subscription && !loading) return null;
 
@@ -621,15 +606,15 @@ const SubscriptionTab = ({ onToast }) => {
           </div>
         </Alert>
       </div>
-      
-      {/* ---- Premium Loading Bar ---- */}
+
+      {}
       {loading && (
         <div className="admin-loading-bar-container" style={{ marginBottom: '1rem' }}>
           <div className="admin-loading-bar" />
         </div>
       )}
 
-      {/* === HEADER === */}
+      {}
       <div className="st-header-clean">
         <div className="st-header-main">
           <div className="st-header-info">
@@ -670,9 +655,9 @@ const SubscriptionTab = ({ onToast }) => {
         </div>
       </div>
 
-      {/* === BODY GRID === */}
+      {}
       <div className="st-body-grid">
-        {/* ── Usage Metrics ── */}
+        {}
         <div className="st-card st-usage-card">
           <div className="st-card-header">
             <div className="st-card-title">Usage Metrics</div>
@@ -717,7 +702,7 @@ const SubscriptionTab = ({ onToast }) => {
           </div>
         </div>
 
-        {/* ── Feature Access ── */}
+        {}
         <div className="st-card st-access-card">
           <div className="st-card-header">
             <div className="st-card-title">Feature Access</div>
@@ -756,7 +741,7 @@ const SubscriptionTab = ({ onToast }) => {
           </div>
         </div>
 
-        {/* ── Plan Summary ── */}
+        {}
         {currentPlanData && (
           <div className="st-card st-plan-summary-card">
             <div className="st-card-header">
@@ -802,7 +787,7 @@ const SubscriptionTab = ({ onToast }) => {
         )}
       </div>
 
-      {/* === PAYMENT METHODS === */}
+      {}
       <PaymentMethodsSection
         paymentMethods={payment_methods}
         defaultId={default_payment_method_id}
@@ -812,7 +797,7 @@ const SubscriptionTab = ({ onToast }) => {
         onToast={onToast}
       />
 
-      {/* === AVAILABLE PLANS === */}
+      {}
       <div className="st-card st-plans-wrapper">
         <div className="st-card-header st-plans-header-row">
           <div>
@@ -860,7 +845,7 @@ const SubscriptionTab = ({ onToast }) => {
         </div>
       </div>
 
-      {/* === BILLING HISTORY === */}
+      {}
       <AdminTable
         title={t("billing_history") || "Billing History"}
         count={totalItems}
@@ -885,7 +870,6 @@ const SubscriptionTab = ({ onToast }) => {
         initialPlanId={selectedPlanId}
         onUpgradeSuccess={(updatedSub) => {
           queryClient.invalidateQueries({ queryKey: ["planDetails"] });
-          // Plan changes can affect business access_mode/status — refresh admin view
           queryClient.invalidateQueries({ queryKey: ["adminBusinesses"] });
           queryClient.invalidateQueries({ queryKey: ["businesses"] });
           if (onToast)

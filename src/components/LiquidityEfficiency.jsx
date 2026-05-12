@@ -9,26 +9,23 @@ import { checkMissingQuestionsAndRedirect, ANALYSIS_TYPES } from '../services/mi
 
 const getTrafficLightColor = (value, threshold, metricType, t) => {
   if (!threshold || threshold === 'NA' || threshold === null || threshold === undefined) {
-    return '#6b7280'; // Gray for NA
+    return '#6b7280';
   }
 
   const numValue = typeof value === 'string' ? parseFloat(value.replace(/[,$%]/g, '')) : value;
   const numThreshold = typeof threshold === 'string' ? parseFloat(threshold.replace(/[,$%]/g, '')) : threshold;
 
   if (isNaN(numValue) || isNaN(numThreshold)) {
-    return '#6b7280'; // Gray for invalid values
+    return '#6b7280';
   }
-
-  // Cash Conversion Cycle - lower is better
   if (metricType === 'Cash Conversion Cycle' || (t && metricType === t('cash_conversion_cycle'))) {
-    if (numValue <= numThreshold * 0.9) return '#10b981'; // Green - 10% below threshold
-    if (numValue <= numThreshold * 1.1) return '#f59e0b'; // Yellow - within 10% of threshold
-    return '#ef4444'; // Red - above threshold
+    if (numValue <= numThreshold * 0.9) return '#10b981';
+    if (numValue <= numThreshold * 1.1) return '#f59e0b';
+    return '#ef4444';
   } else {
-    // Current Ratio and Quick Ratio - higher is better
-    if (numValue >= numThreshold * 1.1) return '#10b981'; // Green - 10% above threshold
-    if (numValue >= numThreshold * 0.9) return '#f59e0b'; // Yellow - within 10% of threshold
-    return '#ef4444'; // Red - below threshold
+    if (numValue >= numThreshold * 1.1) return '#10b981';
+    if (numValue >= numThreshold * 0.9) return '#f59e0b';
+    return '#ef4444';
   }
 };
 
@@ -93,8 +90,6 @@ const isLiquidityDataIncomplete = (data) => {
 
   return !hasValidRatio;
 };
-
-// Paired Bar Chart Component
 const PairedBarChart = React.memo(({ metrics, thresholds, citations, t, activeBusinessName }) => {
   const [containerWidth, setContainerWidth] = useState(600);
   const containerRef = useRef(null);
@@ -130,7 +125,7 @@ const PairedBarChart = React.memo(({ metrics, thresholds, citations, t, activeBu
   const maxValue = Math.max(...chartData.map(d => Math.max(d.actualValue, d.benchmarkValue)), 10);
   const chartHeight = chartData.length * 120 + 40;
   const chartWidth = containerWidth;
-  const leftMargin = 160; 
+  const leftMargin = 160;
   const rightMargin = 60;
   const barHeight = 25;
   const groupSpacing = 120;
@@ -289,7 +284,7 @@ const LiquidityEfficiency = ({
   isRegenerating: propIsRegenerating = false,
   canRegenerate = true,
   liquidityData = null,
-  liquidityEfficiencyData = null, // Unified prop support
+  liquidityEfficiencyData = null,
   selectedBusinessId,
   onRedirectToBrief,
   uploadedFile = null,
@@ -301,11 +296,11 @@ const LiquidityEfficiency = ({
   documentInfo = null,
 }) => {
   const { t } = useTranslation();
-  
-  const { 
+
+  const {
     liquidityEfficiencyData: storeLiquidityData,
     isRegenerating: isTypeRegenerating,
-    regenerateIndividualAnalysis 
+    regenerateIndividualAnalysis
   } = useAnalysisStore();
 
   const isRegenerating = propIsRegenerating || isTypeRegenerating('liquidityEfficiency');

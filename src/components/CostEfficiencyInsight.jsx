@@ -19,26 +19,20 @@ const CostEfficiencyInsight = ({
   onRedirectToBrief
 }) => {
   const { t } = useTranslation();
-  
-  // Use Zustand store
-  const { 
+  const {
     costEfficiencyData: storeCostEfficiencyData,
     isRegenerating: isTypeRegenerating,
-    regenerateIndividualAnalysis 
+    regenerateIndividualAnalysis
   } = useAnalysisStore();
 
   const isRegenerating = propIsRegenerating || isTypeRegenerating('costEfficiency');
-
-  // Normalize data from store or props
   const analysisData = useMemo(() => {
     const rawData = propCostEfficiencyData || storeCostEfficiencyData;
     if (!rawData) return null;
-    
-    // Normalize structure
     if (rawData.costEfficiencyInsight) return rawData;
     if (rawData.cost_efficiency_insight) return { costEfficiencyInsight: rawData.cost_efficiency_insight };
     if (rawData.unitEconomics && rawData.costBreakdown) return { costEfficiencyInsight: rawData };
-    
+
     return null;
   }, [propCostEfficiencyData, storeCostEfficiencyData]);
 

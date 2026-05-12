@@ -29,12 +29,8 @@ import '../styles/AdminTableStyles.css';
 import { useTranslation } from '../hooks/useTranslation';
 import { useAuthStore } from '../store';
 import { answerService } from '../services/answerService';
-
-// Constants
 const ITEMS_PER_PAGE = 10;
 const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
-
-// Utility functions
 const getAuthToken = () => useAuthStore.getState().token;
 const getUserInfo = () => ({
   id: useAuthStore.getState().userId,
@@ -52,8 +48,6 @@ const transformUser = (user) => ({
   company_name: user.company_name || 'No Company',
   activity_summary: { has_activity: true, total_answers: 0 }
 });
-
-// Main Component
 const UserHistory = ({ onToast }) => {
   const { t } = useTranslation();
   const [selectedRole, setSelectedRole] = useState("All Roles");
@@ -76,7 +70,6 @@ const UserHistory = ({ onToast }) => {
     setSelectedRole(value);
     applyFilters(searchTerm, value);
   };
-
 
   const initializedRef = useRef(false);
 
@@ -123,8 +116,6 @@ const UserHistory = ({ onToast }) => {
       setIsLoading(false);
     }
   };
-
-  // Load Initial Data
   useEffect(() => {
     if (initializedRef.current) return;
     initializedRef.current = true;
@@ -142,7 +133,6 @@ const UserHistory = ({ onToast }) => {
           const data = await companiesResponse.json();
           setCompanies(data.companies || []);
         }
-        // Removed: await loadUsers(); // Now handled by the useEffect below to prevent double calls
         await loadGlobalQuestions();
       } catch (err) {
         console.error(err);
@@ -201,8 +191,6 @@ const UserHistory = ({ onToast }) => {
 
       if (response.ok) {
         const data = await response.json();
-
-        // Enhance with direct answers from answers API
         if (businessId) {
           try {
             const answersResponse = await answerService.getAnswersByBusiness(businessId);
@@ -284,14 +272,12 @@ const UserHistory = ({ onToast }) => {
   ];
 
   const totalPages = Math.ceil(filteredUsers.length / ITEMS_PER_PAGE);
-  // Visual clamping: if current page is out of bounds due to filters, show the last page
-  // but keep the state variable high so it restores when filter is cleared.
   const displayPage = Math.max(1, Math.min(currentPage, totalPages || 1));
   const paginatedUsers = filteredUsers.slice((displayPage - 1) * ITEMS_PER_PAGE, displayPage * ITEMS_PER_PAGE);
 
   return (
     <div className="user-history-redesign">
-      {/* ---- Toolbar ---- */}
+      {}
 
       <AdminTable
         title={t('user_history_and_chat_records')}
@@ -309,21 +295,6 @@ const UserHistory = ({ onToast }) => {
         totalItems={filteredUsers.length}
         itemsPerPage={ITEMS_PER_PAGE}
         loading={isLoading}
-        // toolbarContent={
-        //   companies.length > 0 && userRole === 'super_admin' && (
-        //     <Form.Select
-        //       className="role-select"
-        //       style={{ width: '220px' }}
-        //       value={selectedCompany}
-        //       onChange={(e) => setSelectedCompany(e.target.value)}
-        //     >
-        //       <option value="">{t('all_companies')}</option>
-        //       {companies.map(c => (
-        //         <option key={c._id} value={c._id}>{c.company_name}</option>
-        //       ))}
-        //     </Form.Select>
-        //   )
-        // }
         toolbarContent={
           <Form.Select
             className="role-select"
@@ -353,13 +324,10 @@ const UserHistory = ({ onToast }) => {
     </div>
   );
 };
-
-// Sorting and filtering utilities
 const parseAnalysisData = (userDetails, user, globalQuestions = []) => {
   if (!userDetails) return null;
 
   const analysisData = {
-    // Initial Phase Components
     swot: null,
     purchaseCriteria: null,
     channelHeatmap: null,
@@ -368,8 +336,6 @@ const parseAnalysisData = (userDetails, user, globalQuestions = []) => {
     porters: null,
     pestel: null,
     strategic: null,
-
-    // Essential Phase Components
     fullSwot: null,
     customerSegmentation: null,
     competitiveAdvantage: null,
@@ -380,8 +346,6 @@ const parseAnalysisData = (userDetails, user, globalQuestions = []) => {
     cultureProfile: null,
     productivityMetrics: null,
     maturityScore: null,
-
-    // Good Phase Components - Financial analyses
     costEfficiency: null,
     financialPerformance: null,
     financialBalance: null,
@@ -397,8 +361,6 @@ const parseAnalysisData = (userDetails, user, globalQuestions = []) => {
     questions: [],
     phaseAnalysisArray: userDetails.system || []
   };
-
-  // Process conversation data
   if (userDetails.conversation?.length > 0) {
     userDetails.conversation.forEach(phase => {
       phase.questions?.forEach(qa => {
@@ -406,9 +368,9 @@ const parseAnalysisData = (userDetails, user, globalQuestions = []) => {
         analysisData.questions.push({
           _id: questionId,
           question_id: questionId,
-          question: qa.question, // UI expects 'question'
+          question: qa.question,
           question_text: qa.question,
-          answer: qa.answer, // UI expects 'answer'
+          answer: qa.answer,
           phase: phase.phase,
           severity: phase.severity,
           order: qa.order || 0,
@@ -418,12 +380,8 @@ const parseAnalysisData = (userDetails, user, globalQuestions = []) => {
       });
     });
   }
-
-  // Inject raw answers from Advanced Tab (mapped to question text)
   if (userDetails.rawAnswers?.length > 0 && globalQuestions.length > 0) {
     const questionMap = new Map(globalQuestions.map(q => [q._id.toString(), q]));
-
-    // Create a virtual phase for Advanced Tab answers if they aren't already represented
     const advancedPhaseData = {
       phase: 'Advanced Tab Edits',
       severity: 'mandatory',
@@ -435,29 +393,23 @@ const parseAnalysisData = (userDetails, user, globalQuestions = []) => {
       const questionObj = questionMap.get(qId);
 
       if (questionObj) {
-        // Update userAnswers map
         analysisData.userAnswers[qId] = ans.answer;
-
-        // Add to questions list for history view if not already there
         const existingQuestion = analysisData.questions.find(q => q.question_id === qId);
         if (!existingQuestion) {
           analysisData.questions.push({
             _id: qId,
             question_id: qId,
-            question: questionObj.question_text, // UI expects 'question'
+            question: questionObj.question_text,
             question_text: questionObj.question_text,
-            answer: ans.answer, // UI expects 'answer'
+            answer: ans.answer,
             phase: questionObj.phase || 'advanced',
             severity: questionObj.severity || 'mandatory',
             order: questionObj.order || 99,
             last_updated: ans.updated_at
           });
         } else {
-          // Update the answer of the existing question to reflect Advanced Tab edit
           existingQuestion.answer = ans.answer;
           existingQuestion.last_updated = ans.updated_at;
-
-          // Ensure 'question' field is populated for UI components
           if (!existingQuestion.question) {
             existingQuestion.question = existingQuestion.question_text || questionObj.question_text;
           }
@@ -466,12 +418,8 @@ const parseAnalysisData = (userDetails, user, globalQuestions = []) => {
     });
 
     if (advancedPhaseData.questions.length > 0) {
-      // Ensure we have a place for them in conversation structure if needed
-      // but parseAnalysisData's conversation processing is mostly for the questions[] array
     }
   }
-
-  // Process ALL analysis types from system data - SIMPLIFIED LOGIC
   userDetails.system?.forEach(result => {
     try {
       const analysisResult = typeof result.analysis_result === 'string'
@@ -481,10 +429,7 @@ const parseAnalysisData = (userDetails, user, globalQuestions = []) => {
       const analysisType = result.analysis_type?.toLowerCase() ||
         result.name?.toLowerCase() ||
         result.normalized_type?.toLowerCase() || '';
-
-      // Enhanced analysis type mapping - Same as AnalysisContentManager
       switch (analysisType) {
-        // Initial Phase Analysis Types
         case 'swot':
           analysisData.swot = analysisResult;
           break;
@@ -518,8 +463,6 @@ const parseAnalysisData = (userDetails, user, globalQuestions = []) => {
         case 'strategic_analysis':
           analysisData.strategic = analysisResult;
           break;
-
-        // Essential Phase Analysis Types
         case 'fullswot':
         case 'full_swot':
         case 'full_swot_portfolio':
@@ -580,8 +523,6 @@ const parseAnalysisData = (userDetails, user, globalQuestions = []) => {
         case 'core_adjacency_matrix':
           analysisData.coreAdjacencyData = analysisResult;
           break;
-
-        // Financial Analysis Types - SIMPLIFIED: Just check if data exists
         case 'profitabilityanalysis':
         case 'profitability_analysis':
         case 'profitability':
@@ -626,7 +567,6 @@ const parseAnalysisData = (userDetails, user, globalQuestions = []) => {
           break;
 
         default:
-          // Fallback detection for financial analyses based on is_financial_analysis flag
           if (result.is_financial_analysis) {
             if (analysisType.includes('profitab')) {
               analysisData.profitabilityData = analysisResult;
@@ -646,8 +586,6 @@ const parseAnalysisData = (userDetails, user, globalQuestions = []) => {
       console.error('Error parsing analysis result:', error, result);
     }
   });
-
-  // Create a clean, normalized array for phase-based components
   const normalizedSystemResults = (userDetails.system || []).map(result => {
     try {
       const parsedData = typeof result.analysis_result === 'string'
@@ -655,7 +593,6 @@ const parseAnalysisData = (userDetails, user, globalQuestions = []) => {
         : result.analysis_result;
 
       let type = (result.analysis_type || result.name || result.normalized_type || '').toLowerCase();
-      // Standardize types
       if (['porters', 'porter_analysis', 'porters_five_forces'].includes(type)) type = 'porters';
       if (['pestel', 'pestel_analysis'].includes(type)) type = 'pestel';
       if (['swot'].includes(type)) type = 'swot';
@@ -665,7 +602,7 @@ const parseAnalysisData = (userDetails, user, globalQuestions = []) => {
         ...result,
         analysis_type: type,
         analysis_data: parsedData,
-        analysis_result: parsedData // keep both for compatibility
+        analysis_result: parsedData
       };
     } catch (e) {
       return result;
@@ -677,12 +614,8 @@ const parseAnalysisData = (userDetails, user, globalQuestions = []) => {
     phaseAnalysisArray: normalizedSystemResults
   };
 };
-
-// Check if analysis data exists
 const hasAnalysisData = (analysisData) => {
   if (!analysisData) return false;
-
-  // Check if any analysis exists
   return !!(
     analysisData.swot || analysisData.purchaseCriteria ||
     analysisData.channelHeatmap || analysisData.loyaltyNPS ||
@@ -702,7 +635,6 @@ const hasAnalysisData = (analysisData) => {
   );
 };
 const createSimplePhaseManager = (analysisData, userDetails) => {
-  // Simplified logic - similar to AnalysisContentManager
   const hasInitial = !!(
     analysisData?.swot ||
     analysisData?.purchaseCriteria ||
@@ -729,16 +661,12 @@ const createSimplePhaseManager = (analysisData, userDetails) => {
     analysisData?.investmentPerformanceData ||
     analysisData?.leverageRiskData
   );
-
-  // Determine if a document is present from userDetails or data
   const hasDocumentInSystemResults = userDetails?.system?.some(result =>
     result.business_context?.has_document === true ||
     result.business_context?.document_exists === true
   );
 
   const hasDocument = hasAnyFinancialData || !!userDetails?.document_info?.has_document || hasDocumentInSystemResults;
-
-  // Determine phases reached
   const isAdvancedReached = hasAnyFinancialData || hasDocument;
   const isEssentialReached = hasEssential || isAdvancedReached;
   const isInitialReached = hasInitial || isEssentialReached;
@@ -750,14 +678,11 @@ const createSimplePhaseManager = (analysisData, userDetails) => {
       essentialPhase: isEssentialReached,
       advancedPhase: isAdvancedReached,
       hasDocument: hasDocument,
-      // Legacy flags
       fullSwot: hasEssential,
       goodPhase: isAdvancedReached
     })
   };
 };
-
-// Export utility
 const exportUserData = async (user, userDetails, onToast) => {
   try {
     if (!userDetails) {
@@ -831,10 +756,7 @@ const exportUserData = async (user, userDetails, onToast) => {
 
 const UserHistoryModal = ({ user, userDetails, isLoading, onClose, onExport, onToast, loadUserHistory, globalQuestions }) => {
   useEffect(() => {
-    // Lock body scroll
     document.body.style.overflow = 'hidden';
-
-    // Restore body scroll on unmount
     return () => {
       document.body.style.overflow = 'unset';
     };
@@ -858,8 +780,6 @@ const UserHistoryModal = ({ user, userDetails, isLoading, onClose, onExport, onT
     </div>
   );
 };
-
-// Enhanced UserDetailsPanel with Strategic Analysis Tab
 const UserDetailsPanel = ({ user, userDetails, isLoading, onClose, onExport, onToast, loadUserHistory, globalQuestions }) => {
   const [activeTab, setActiveTab] = useState('businesses');
   const [selectedBusiness, setSelectedBusiness] = useState('');
@@ -1115,8 +1035,6 @@ const TabContent = ({
       return null;
   }
 };
-
-// BusinessesTab Component
 const BusinessesTab = ({ businesses }) => {
   const { t } = useTranslation();
   if (businesses.length === 0) {
@@ -1183,8 +1101,6 @@ const BusinessStats = ({ stats }) => {
     </div>
   );
 };
-
-// BusinessFilter Component (reusable)
 const BusinessFilter = ({ businesses, selectedBusinessId, onBusinessChange, isLoadingBusiness }) => {
   const { t } = useTranslation();
   return (
@@ -1213,8 +1129,6 @@ const BusinessFilter = ({ businesses, selectedBusinessId, onBusinessChange, isLo
     </div>
   );
 };
-
-// StatsRow Component (reusable) - Updated to support strategic PDF download
 const StatsRow = ({
   businesses,
   selectedBusinessId,
@@ -1283,7 +1197,7 @@ const StatsRow = ({
                 businessName={selectedBusiness}
                 onToastMessage={onToast}
                 exportType="insights"
-                unlockedFeatures={analysisData.unlockedFeatures || { analysis: true, advancedPhase: true }} // Fallback for admin view context
+                unlockedFeatures={analysisData.unlockedFeatures || { analysis: true, advancedPhase: true }}
                 showText={true}
                 swotAnalysis={analysisData.swot}
                 purchaseCriteria={analysisData.purchaseCriteria}
@@ -1325,7 +1239,6 @@ const ConversationTab = ({
   isLoadingBusiness = false
 }) => {
   const { t } = useTranslation();
-  // Flatten all questions from all phases into a single array
   const allQuestions = enrichedQuestions.length > 0
     ? [...enrichedQuestions].sort((a, b) => (a.order || 0) - (b.order || 0))
     : conversation.reduce((questions, phase) => {
@@ -1390,7 +1303,7 @@ const QuestionItem = ({ question, questionNumber }) => {
 
   return (
     <div className="question-item">
-      {/* Main Question - Always shown as the anchor */}
+      {}
       <div className="flow-turn main-question">
         <div className="turn-label">Q{questionNumber}:</div>
         <div className="turn-content">{question.question}</div>
@@ -1399,7 +1312,6 @@ const QuestionItem = ({ question, questionNumber }) => {
       <div className="conversation-turns">
         {hasFlow ? (
           question.conversation_flow.map((turn, idx) => {
-            // Skip the first turn if it's identical to the main question to avoid redundancy
             if (idx === 0 && turn.type === 'question' && turn.text === question.question) {
               return null;
             }
@@ -1444,8 +1356,6 @@ const AnalysisTab = ({
     phases: conversationCount,
     progress: totalQuestions > 0 ? Math.round((totalCompletedQuestions / totalQuestions) * 100) : 0,
   };
-
-  // Create a fallback phase manager if none is provided
   const safePhaseManager = phaseManager || createSimplePhaseManager(analysisData);
 
   if (!analysisData || !hasAnalysisData(analysisData)) {
@@ -1648,8 +1558,6 @@ const StrategicTab = ({
     phases: conversationCount,
     progress: totalQuestions > 0 ? Math.round((totalCompletedQuestions / totalQuestions) * 100) : 0,
   };
-
-  // Create a fallback phase manager if none is provided
   const safePhaseManager = phaseManager || createSimplePhaseManager(analysisData);
 
   if (!analysisData || !analysisData.strategic) {
@@ -1712,6 +1620,5 @@ const StrategicTab = ({
     </div>
   );
 };
-
 
 export default UserHistory;

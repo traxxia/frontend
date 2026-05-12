@@ -33,11 +33,8 @@ const ProjectsList = ({
   const { t } = useTranslation();
   const userPlan = useAuthStore((state) => state.userPlan);
   const [showMenuId, setShowMenuId] = useState(null);
-
-  // Close menu when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
-      // If the click is inside a menu-button or menu-dropdown, ignore
       if (event.target.closest(".menu-button") || event.target.closest(".menu-dropdown") || event.target.closest(".actions-dropdown-btn")) {
         return;
       }
@@ -51,7 +48,6 @@ const ProjectsList = ({
       document.removeEventListener("click", handleClickOutside);
     };
   }, [showMenuId]);
-
 
   const renderProjectTable = (projects) => {
     if (!projects || projects.length === 0) return null;
@@ -78,7 +74,6 @@ const ProjectsList = ({
     );
   };
 
-
   const getFilteredGroups = () => {
     if (isLoading) {
       return (
@@ -90,13 +85,9 @@ const ProjectsList = ({
         </div>
       );
     }
-
-    // Show flat rank-ordered list if "All" is selected
     if (!selectedCategories || selectedCategories.includes("All")) {
       return renderProjectTable(sortedProjects);
     }
-
-    // Show projects that match any of the selected categories
     const filteredProjects = sortedProjects.filter(p => {
       const statusValue = (p.status || "Draft").toLowerCase();
       return selectedCategories.some(catId => {

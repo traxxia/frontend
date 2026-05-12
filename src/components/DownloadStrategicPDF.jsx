@@ -17,7 +17,7 @@ const DownloadStrategicPDF = ({
 
         try {
             setIsGenerating(true);
-            
+
             const [jsPDFModule, html2canvasModule] = await Promise.all([
                 import('jspdf'),
                 import('html2canvas')
@@ -76,10 +76,10 @@ const DownloadStrategicPDF = ({
                     <Loader size={48} color="white" style={{ animation: 'spin 1s linear infinite' }} />
                 </div>
             )}
-            
+
             <button
                 onClick={handleDownload}
-                disabled={isDisabled || isGenerating} 
+                disabled={isDisabled || isGenerating}
                 style={{
                     backgroundColor: "#1a73e8", color: "#fff", border: "none", borderRadius: "10px",
                     padding: "10px 18px", fontSize: "14px", fontWeight: 600, display: "flex",

@@ -10,7 +10,6 @@ const AnalysisError = ({
   showRetryButton = true
 }) => {
   const handleRetry = (e) => {
-    // Prevent default behavior and event bubbling
     e.preventDefault();
     e.stopPropagation();
 

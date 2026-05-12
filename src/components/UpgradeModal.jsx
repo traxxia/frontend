@@ -1,17 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Modal, Button, Row, Col, Spinner, Alert, Form } from 'react-bootstrap';
 import { ArrowRight, Zap, CreditCard, Check, AlertTriangle } from 'lucide-react';
-// Stripe imports removed for lazy loading
 import PricingPlanCard from './PricingPlanCard';
 import PlanConfigurationModal from './PlanConfigurationModal';
 import PaymentForm from './PaymentForm';
 import '../styles/UpgradeModal.css';
 import { useTranslation } from '../hooks/useTranslation';
 import { useAuthStore } from '../store/authStore';
-
-// Stripe initialization will be handled inside the component for lazy loading
-
-// Removed hardcoded TIER_ORDER. Plans are now compared via price and limits for dynamism.
 
 const UpgradeModalContent = ({
     onHide,
@@ -32,17 +27,12 @@ const UpgradeModalContent = ({
 }) => {
     const { t } = useTranslation();
     const { CardNumberElement } = stripeComponents || {};
-
-    // Default to the default PM, or 'new' if none exist
     const [selectedMethodId, setSelectedMethodId] = useState('new');
     const [localError, setLocalError] = useState(null);
     const [cardHolderName, setCardHolderName] = useState('');
     const scrollAnchorRef = useRef(null);
-
-    // Auto-scroll to bottom when an error appears
     useEffect(() => {
         if ((error || localError) && scrollAnchorRef.current) {
-            // Delay slightly to allow the element to render and animate
             setTimeout(() => {
                 scrollAnchorRef.current.scrollIntoView({ behavior: 'smooth', block: 'end' });
             }, 100);
@@ -62,9 +52,7 @@ const UpgradeModalContent = ({
     const handleConfirm = async () => {
         setLocalError(null);
         let paymentMethodId = selectedMethodId;
-        let saveNewCard = true; // Default true for existing cards (make them default)
-
-        // If using new card, create payment method first
+        let saveNewCard = true;
         if (selectedMethodId === 'new') {
             if (!stripe || !elements) return;
 
@@ -92,8 +80,6 @@ const UpgradeModalContent = ({
                     setLocalError(stripeError.message);
                     return;
                 }
-
-                // Local duplicate check
                 const card = paymentMethod.card;
                 const isDuplicate = paymentMethods.some(pm =>
                     pm.last4 === card.last4 &&
@@ -115,8 +101,6 @@ const UpgradeModalContent = ({
                 return;
             }
         }
-
-        // Proceed and pass save boolean
         onProcessUpgrade(paymentMethodId, saveNewCard);
     };
 
@@ -185,12 +169,12 @@ const UpgradeModalContent = ({
                             ))}
                         </div>
 
-                        {/* Payment Selection */}
+                        {}
                         <div className="payment-section border-top pt-3">
                             {paymentMethods.length > 0 && (
                                 <>
                                     <h6 className="fw-bold mb-3">{t("Preferred Payment Methods")}</h6>
-                                    {/* Saved Cards */}
+                                    {}
                                     {paymentMethods.map(pm => (
                                         <div
                                             key={pm.id}
@@ -286,8 +270,6 @@ const UpgradeModal = ({ show, onHide, onUpgradeSuccess, paymentMethod, initialPl
     const [stripeComponents, setStripeComponents] = useState(null);
 
     const updateUser = useAuthStore(state => state.updateUser);
-
-    // Lazy load Stripe only when the modal is active
     const stripePromise = React.useMemo(async () => {
         if (!show) return null;
         const [stripeJs, reactStripeJs] = await Promise.all([
@@ -304,8 +286,6 @@ const UpgradeModal = ({ show, onHide, onUpgradeSuccess, paymentMethod, initialPl
     const [plans, setPlans] = useState([]);
     const [subscription, setSubscription] = useState(null);
     const [selectedPlanId, setSelectedPlanId] = useState(null);
-
-    // Plan configuration state
     const [showConfigurationModal, setShowConfigurationModal] = useState(false);
     const [configurationData, setConfigurationData] = useState(null);
 
@@ -387,15 +367,14 @@ const UpgradeModal = ({ show, onHide, onUpgradeSuccess, paymentMethod, initialPl
 
             if (data.requires_configuration) {
                 setConfigurationData({ ...data, plan_id: selectedPlanId });
-                // Sequential modal transition: Close this one, then open config
                 onHide();
                 setTimeout(() => {
                     setShowConfigurationModal(true);
-                }, 100); // Small delay to let Bootstrap modal backdrop clean up
+                }, 100);
                 return;
             }
 
-            updateUser({ 
+            updateUser({
                 userPlan: data.plan,
                 userLimits: data.plan_limits || data.limits || data.usage || {}
             });
@@ -429,7 +408,7 @@ const UpgradeModal = ({ show, onHide, onUpgradeSuccess, paymentMethod, initialPl
                 throw new Error(data.error || 'Configuration failed');
             }
 
-            updateUser({ 
+            updateUser({
                 userPlan: data.subscription_plan || data.plan || selectedPlan?.name || 'unknown',
                 userLimits: data.plan_limits || data.limits || data.usage || {}
             });

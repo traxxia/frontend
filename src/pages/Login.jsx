@@ -49,11 +49,8 @@ const Login = () => {
         email,
         password,
       });
-
-      // Use Zustand auth store instead of sessionStorage
       const setAuth = useAuthStore.getState().setAuth;
       setAuth(res.data);
-
 
       if (res.data.user.role === "super_admin") {
         navigate("/super-admin");

@@ -21,7 +21,7 @@ const PurchaseCriteria = ({
 }) => {
   const { t } = useTranslation();
   const token = useAuthStore(state => state.token);
-  
+
   const {
     purchaseCriteriaData: storePurchaseCriteriaData,
     isRegenerating: isTypeRegenerating,
@@ -333,4 +333,4 @@ const PurchaseCriteria = ({
   );
 };
 
-export default PurchaseCriteria;
+export default PurchaseCriteria;

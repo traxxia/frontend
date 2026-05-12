@@ -51,9 +51,9 @@ const CoreAdjacency = ({
 
     const data = useMemo(() => {
         if (!rawCoreAdjacencyData) return null;
-        return rawCoreAdjacencyData.coreAdjacency || 
-               rawCoreAdjacencyData.core_adjacency || 
-               rawCoreAdjacencyData.CoreAdjacency || 
+        return rawCoreAdjacencyData.coreAdjacency ||
+               rawCoreAdjacencyData.core_adjacency ||
+               rawCoreAdjacencyData.CoreAdjacency ||
                (rawCoreAdjacencyData.coreBusinessDefinition || rawCoreAdjacencyData.growthOpportunities ? rawCoreAdjacencyData : null);
     }, [rawCoreAdjacencyData]);
 
@@ -140,7 +140,7 @@ const CoreAdjacency = ({
                 if (Array.isArray(arr)) total += arr.length;
             });
         }
-        
+
         if (normalized.missingInformation) {
             if (Array.isArray(normalized.missingInformation)) {
                 total += normalized.missingInformation.length;
@@ -150,7 +150,7 @@ const CoreAdjacency = ({
                 });
             }
         }
-        
+
         if (Array.isArray(normalized.recommendedNextSteps)) total += normalized.recommendedNextSteps.length;
         return total;
     }, [isCoreAdjacencyDataIncomplete]);
@@ -233,10 +233,10 @@ const CoreAdjacency = ({
 
                 if (normalized.growthVectorCategorization) {
                     const gvc = normalized.growthVectorCategorization;
-                    const allVectors = Object.entries(gvc).flatMap(([key, items]) => 
-                        (Array.isArray(items) ? items : []).map(item => 
-                            typeof item === 'string' 
-                                ? { vector: item, category: key } 
+                    const allVectors = Object.entries(gvc).flatMap(([key, items]) =>
+                        (Array.isArray(items) ? items : []).map(item =>
+                            typeof item === 'string'
+                                ? { vector: item, category: key }
                                 : { ...item, category: key }
                         )
                     );
@@ -288,7 +288,7 @@ const CoreAdjacency = ({
                     }
                     rowsProcessed += normalized.recommendedNextSteps.length;
                 }
-                
+
                 currentRow++;
             } else {
                 clearInterval(streamingIntervalRef.current);
@@ -379,7 +379,7 @@ const CoreAdjacency = ({
             });
         }
     }
-    
+
     if (Array.isArray(data.recommendedNextSteps)) data.recommendedNextSteps.forEach(() => indices.nextSteps.push(currentRowIndex++));
 
     const isStreaming = streamingManager?.shouldStream(cardId);

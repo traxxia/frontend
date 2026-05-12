@@ -97,7 +97,6 @@ const getThemeIcon = (theme) => {
     }
 };
 
-
 const ProjectDetails = ({
     project,
     onBack,
@@ -169,7 +168,7 @@ const ProjectDetails = ({
 
     return (
         <div className="project-details-container">
-            {/* Breadcrumb */}
+            {}
             <div className="projects-breadcrumb" ref={breadcrumbRef}>
 
                 <Breadcrumb>
@@ -207,7 +206,7 @@ const ProjectDetails = ({
                 </div>
             )}
 
-            {/* Header with Title and Actions */}
+            {}
             <div className="details-header mb-4">
                 <h1 className="details-title">{project.project_name}</h1>
                 <div className="details-actions">
@@ -219,12 +218,11 @@ const ProjectDetails = ({
                 </div>
             </div>
 
-
-            {/* Required Information */}
+            {}
             <div className="form-card">
                 <h3 className="section-title">{t("Required_Information")}</h3>
-                
-                {/* Project Name */}
+
+                {}
                 <div className="field-row">
                     <div className="field-label-row">
                         <label className="field-label">
@@ -236,7 +234,7 @@ const ProjectDetails = ({
                     </div>
                 </div>
 
-                {/* Project Description */}
+                {}
                 <div className="field-row">
                     <div className="field-label-row">
                         <label className="field-label">
@@ -249,11 +247,11 @@ const ProjectDetails = ({
                 </div>
             </div>
 
-            {/* Strategic Core */}
+            {}
             <div className="form-card">
                 <h3 className="section-title">{t("Strategic_Core")}</h3>
-                
-                {/* Accountable Owner */}
+
+                {}
                 <div className="field-row">
                     <div className="field-label-row">
                         <label className="field-label">
@@ -265,7 +263,7 @@ const ProjectDetails = ({
                     </div>
                 </div>
 
-                {/* Key Assumptions */}
+                {}
                 <div className="field-row">
                     <div className="field-label-row">
                         <label className="field-label">
@@ -285,7 +283,7 @@ const ProjectDetails = ({
                     )}
                 </div>
 
-                {/* Success & Kill Criteria */}
+                {}
                 <div className="grid-2">
                     <div className="field-row">
                         <div className="field-label-row">
@@ -309,7 +307,7 @@ const ProjectDetails = ({
                     </div>
                 </div>
 
-                {/* Status, Cadence, Learning State */}
+                {}
                 <div className="grid-3" style={{ marginTop: '16px' }}>
                     <div className="field-row">
                         <div className="field-label-row">
@@ -367,7 +365,7 @@ const ProjectDetails = ({
                     </div>
                 </div>
 
-                {/* Review Dates (View-specific but in Strategic Core) */}
+                {}
                 <div className="grid-2">
                     <div className="field-row">
                         <div className="field-label-row">
@@ -405,7 +403,7 @@ const ProjectDetails = ({
                     </div>
                 </div>
 
-                {/* Actions */}
+                {}
                 <div className="field-row" style={{ display: 'flex', gap: '12px', marginTop: '8px' }}>
                     {canEdit && !["completed", "scaled", "killed"].includes(project.status?.toLowerCase()) && (
                         <button className="btn-edit" onClick={() => onEdit(project)} style={{ padding: '8px 16px', fontSize: '13px' }}>
@@ -425,7 +423,7 @@ const ProjectDetails = ({
                 </div>
             </div>
 
-            {/* Strategic Context */}
+            {}
             <div className="form-card">
                 <h3 className="section-title">{t("Strategic_Context")}</h3>
                 <div className="grid-2">
@@ -496,10 +494,10 @@ const ProjectDetails = ({
                 </div>
             </div>
 
-            {/* Detailed Planning */}
+            {}
             <div className="form-card">
                 <h3 className="section-title">{t("Detailed_Planning")}</h3>
-                
+
                 <div className="field-row">
                     <div className="field-label-row">
                         <label className="field-label">{t("Constraints_Non_Negotiables")}</label>

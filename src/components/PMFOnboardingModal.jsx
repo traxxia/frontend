@@ -27,15 +27,13 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId, onToastMessage
 
   const modalBodyRef = useRef(null);
   const errorRef = useRef(null);
-
-  // API Service setup
   const ML_API_BASE_URL = process.env.REACT_APP_ML_BACKEND_URL;
   const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
   const getAuthToken = () => useAuthStore.getState().token;
   const analysisService = new AnalysisApiService(ML_API_BASE_URL, API_BASE_URL, getAuthToken);
 
   const [currentStep, setCurrentStep] = useState(1);
-  const [submissionStep, setSubmissionStep] = useState(0); // 0: initial, 1: saving, 2: generating, 3: finalizing
+  const [submissionStep, setSubmissionStep] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     companyName: '',
@@ -88,14 +86,7 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId, onToastMessage
     }
     return () => clearInterval(interval);
   }, [isSubmitting, submissionStep, loadingMessages.length]);
-
-  // Calculate progress based on 9 steps (dots)
-  // Step 1 = 0% progress, 100% to complete
-  // Step 9 = 100% progress, 0% to complete (or close to it)
-  // We use TOTAL_STEPS - 1 to handle 8 intervals between 9 dots
   let completedSteps = currentStep - 1;
-
-  // If we are on last step AND it is completed, count it
   if (
     currentStep === TOTAL_STEPS &&
     formData.usageContext
@@ -116,7 +107,6 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId, onToastMessage
       label: t(ind) || ind
     }))
   }));
-
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -172,7 +162,6 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId, onToastMessage
       };
     });
   };
-
 
   const validateStep1 = () => {
     const newErrors = {};
@@ -269,8 +258,6 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId, onToastMessage
   };
 
   const validateStep5 = () => {
-    // Step 5 is now optional and allows alphabets, numbers, and symbols.
-    // No specific validation required for these fields.
     setErrors({});
     return true;
   };
@@ -354,7 +341,6 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId, onToastMessage
   };
 
   const handleNext = () => {
-    // Validate current step before proceeding
     if (currentStep === 1) {
       if (!validateStep1()) {
         return;
@@ -409,7 +395,6 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId, onToastMessage
       if (!validateStep9()) return;
     }
 
-
     if (currentStep < TOTAL_STEPS) {
       setCurrentStep(prev => prev + 1);
     } else {
@@ -423,24 +408,18 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId, onToastMessage
     }
   };
 
-
-
   const handleSubmit = async () => {
     try {
       setApiError(null);
       setIsSubmitting(true);
-      setSubmissionStep(1); // Saving data
-
-      // 1. Save onboarding data to our backend
+      setSubmissionStep(1);
       const dataToSave = {
         ...formData,
         primaryIndustry: formData.primaryIndustry === "Other" ? formData.primaryIndustryOther : formData.primaryIndustry
       };
       await analysisService.savePMFOnboardingData(businessId, dataToSave);
 
-      setSubmissionStep(2); // Generating insights (The long part)
-
-      // 2. Prepare payload for ML backend in the new structured "raw" format
+      setSubmissionStep(2);
       const rawPayload = {
         company: {
           name: formData.companyName,
@@ -465,19 +444,17 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId, onToastMessage
           usp: [...formData.differentiation.filter(d => d !== 'Other'), formData.differentiationOther].filter(Boolean),
         }
       };
-
-      // 3 & 4. Call ML Backend APIs in parallel
       const [insightResult, summaryResult] = await Promise.all([
         analysisService.makeAPICall(
           'aha-insight',
-          null, // No questionsArray needed
-          null, // No answersArray needed
+          null,
+          null,
           businessId,
           null,
           null,
           null,
           formData.companyName,
-          rawPayload // Passing the structured payload
+          rawPayload
         ),
         analysisService.makeAPICall(
           'executive-summary',
@@ -492,24 +469,14 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId, onToastMessage
         )
       ]);
 
-      setSubmissionStep(3); // Finalizing
-
-      // 5. Save insights to our backend
+      setSubmissionStep(3);
       await analysisService.savePMFInsights(businessId, insightResult);
-
-      // 6. Save executive summary to our backend
       await analysisService.savePMFExecutiveSummary(businessId, summaryResult);
-
-      // 7. Fetch final PMF analysis to ensure data is updated
       const finalAnalysis = await analysisService.getPMFAnalysis(businessId);
-
-      // Mark that we expect to see our own data for this business
-      // This is the most robust way to detect a simultaneous overwrite
       const currentUserId = useAuthStore.getState().userId;
       if (currentUserId && businessId) {
         console.info(`PMF Save: Setting expectation flag for business ${businessId} and user ${currentUserId}`);
         useUIStore.getState().setBusinessSetting(businessId, 'pmfExpectingMyData', currentUserId);
-        // Also clear any old submission data to prevent conflicts
         useUIStore.getState().setBusinessSetting(businessId, 'pmfLastSubmission', null);
       }
 
@@ -531,8 +498,6 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId, onToastMessage
       setSubmissionStep(0);
     }
   };
-
-
 
   const handleClose = () => {
     if (isSubmitting) return;
@@ -1257,7 +1222,7 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId, onToastMessage
                   id={`differentiation-${option.replace(/\s+/g, '-').toLowerCase()}`}
                   label={t(option)}
                   checked={formData.differentiation.includes(option)}
-                  onChange={() => { }} // Controlled by card onClick
+                  onChange={() => { }}
                   className="pmf-checkbox-input"
                 />
 
@@ -1267,7 +1232,7 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId, onToastMessage
                       type="text"
                       placeholder={t("Please specify")}
                       value={formData.differentiationOther}
-                      onClick={(e) => e.stopPropagation()} // Prevent card deselect
+                      onClick={(e) => e.stopPropagation()}
                       onChange={(e) => {
                         const val = e.target.value;
                         setFormData(prev => ({
@@ -1417,9 +1382,7 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId, onToastMessage
         )}
       </Modal.Body>
 
-
       <Modal.Footer className="pmf-modal-footer">
-
 
         {currentStep > 1 && (
           <Button

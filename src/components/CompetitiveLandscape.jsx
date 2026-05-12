@@ -40,17 +40,10 @@ const CompetitiveLandscape = ({
     const { t } = useTranslation();
 
     const { lastRowRef, setUserHasScrolled } = useAutoScroll(streamingManager, cardId, isExpanded, visibleRows);
-
-    // Parse the data based on the new structure
     const competitorSwot = useMemo(() => {
         if (!rawData) return null;
-        
-        // If the data has a specific key, use it
         const swot = rawData.competitor_swot || rawData.competitiveLandscape || rawData.competitive_landscape;
         if (swot) return swot;
-
-        // Otherwise, check if rawData itself looks like a competitor map
-        // (has keys that aren't the standard ones we expect like 'our_differentiators')
         const keys = Object.keys(rawData);
         if (keys.length > 0 && !rawData.our_differentiators) {
             return rawData;
@@ -95,21 +88,15 @@ const CompetitiveLandscape = ({
 
     const isDataIncomplete = useCallback((data) => {
         if (!data || typeof data !== 'object') return true;
-        
-        // Handle case where data is a string error message
         if (data.error) return true;
 
         const swot = data.competitor_swot || data.competitiveLandscape || data.competitive_landscape;
         const diffs = data.our_differentiators;
-        
-        // If we found specific keys, check them
         if (swot || (diffs && diffs.length > 0)) {
             if (swot && Object.keys(swot).length > 0) return false;
             if (diffs && diffs.length > 0) return false;
             return true;
         }
-
-        // If no specific keys, check if the object itself is the swot map
         const keys = Object.keys(data);
         if (keys.length > 0) return false;
 
@@ -118,12 +105,12 @@ const CompetitiveLandscape = ({
 
     const calculateTotalRows = useCallback((data) => {
         if (!data || isDataIncomplete(data)) return 0;
-        
+
         const swot = data.competitor_swot || data.competitiveLandscape || data.competitive_landscape;
         const diffs = data.our_differentiators || [];
-        
+
         let total = 0;
-        
+
         if (swot) {
             Object.keys(swot).forEach(competitor => {
                 const competitorData = swot[competitor];
@@ -133,9 +120,9 @@ const CompetitiveLandscape = ({
                 });
             });
         }
-        
+
         total += diffs.length;
-        
+
         return total;
     }, [isDataIncomplete]);
 
@@ -179,13 +166,11 @@ const CompetitiveLandscape = ({
         streamingIntervalRef.current = setInterval(() => {
             if (currentRow < totalItems) {
                 setVisibleRows(currentRow + 1);
-                
+
                 const swot = rawData.competitor_swot || rawData.competitiveLandscape || rawData.competitive_landscape;
                 const diffs = rawData.our_differentiators || [];
-                
-                let rowCounter = 0;
 
-                // Stream SWOT first
+                let rowCounter = 0;
                 if (swot) {
                     const competitors = Object.keys(swot);
                     for (const competitor of competitors) {
@@ -212,8 +197,6 @@ const CompetitiveLandscape = ({
                         }
                     }
                 }
-
-                // Stream Differentiators
                 for (const diff of diffs) {
                     if (rowCounter === currentRow) {
                         typeText(diff.description, currentRow, 'item', 0);
@@ -238,8 +221,6 @@ const CompetitiveLandscape = ({
     const toggleSection = (sectionKey) => {
         setExpandedSections(prev => ({ ...prev, [sectionKey]: !prev[sectionKey] }));
     };
-
-
 
     const getCategoryColor = (category) => {
         const categoryLower = category.toLowerCase();
@@ -297,8 +278,6 @@ const CompetitiveLandscape = ({
             </div>
         );
     }
-
-    // Pre-calculate indices for streaming
     let totalSwotRows = 0;
     const swotRowIndices = {};
     if (competitorSwot) {
@@ -307,8 +286,8 @@ const CompetitiveLandscape = ({
             Object.keys(competitorData).forEach(category => {
                 const categoryData = competitorData[category];
                 if (Array.isArray(categoryData)) {
-                    categoryData.forEach((_, itemIndex) => { 
-                        swotRowIndices[`${competitor}-${category}-${itemIndex}`] = totalSwotRows++; 
+                    categoryData.forEach((_, itemIndex) => {
+                        swotRowIndices[`${competitor}-${category}-${itemIndex}`] = totalSwotRows++;
                     });
                 } else {
                     swotRowIndices[`${competitor}-${category}-single`] = totalSwotRows++;
@@ -322,8 +301,8 @@ const CompetitiveLandscape = ({
 
     return (
         <div className="porters-container full-swot-container" data-analysis-type="competitiveLandscape" data-analysis-name="Competitive Landscape" data-analysis-order="9">
-            
-            {/* Our Differentiators Section */}
+
+            {}
             {ourDifferentiators.length > 0 && (
                 <div className="section-container">
                     <div className="section-header" onClick={() => toggleSection('differentiators')} style={{ background: 'linear-gradient(90deg, #f0f9ff 0%, #e0f2fe 100%)' }}>
@@ -351,11 +330,11 @@ const CompetitiveLandscape = ({
                                         if (!isVisible) return null;
 
                                         return (
-                                            <StreamingRow 
-                                                key={index} 
-                                                isVisible={isVisible} 
-                                                isLast={rowIndex === visibleRows - 1 && isStreaming} 
-                                                lastRowRef={lastRowRef} 
+                                            <StreamingRow
+                                                key={index}
+                                                isVisible={isVisible}
+                                                isLast={rowIndex === visibleRows - 1 && isStreaming}
+                                                lastRowRef={lastRowRef}
                                                 isStreaming={isStreaming}
                                             >
                                                 <td style={{ fontWeight: 600, color: '#1e293b' }}>{diff.differentiator}</td>
@@ -369,11 +348,11 @@ const CompetitiveLandscape = ({
                                                     </div>
                                                 </td>
                                                 <td>
-                                                    <span style={{ 
-                                                        fontSize: '0.75rem', 
-                                                        padding: '4px 10px', 
-                                                        borderRadius: '12px', 
-                                                        background: getSustainabilityColor(diff.sustainability) + '20', 
+                                                    <span style={{
+                                                        fontSize: '0.75rem',
+                                                        padding: '4px 10px',
+                                                        borderRadius: '12px',
+                                                        background: getSustainabilityColor(diff.sustainability) + '20',
                                                         color: getSustainabilityColor(diff.sustainability),
                                                         fontWeight: 700,
                                                         border: `1px solid ${getSustainabilityColor(diff.sustainability)}40`
@@ -391,7 +370,7 @@ const CompetitiveLandscape = ({
                 </div>
             )}
 
-            {/* Competitor SWOT Section */}
+            {}
             {competitorSwot && Object.keys(competitorSwot).map((competitor, competitorIndex) => {
                 const competitorData = competitorSwot[competitor];
                 const categories = Object.keys(competitorData);

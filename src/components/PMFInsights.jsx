@@ -17,8 +17,6 @@ const PMFInsights = ({ businessId, onContinue }) => {
   const [loading, setLoading] = useState(true);
   const [showOverwriteModal, setShowOverwriteModal] = useState(false);
   const [overwrittenBy, setOverwrittenBy] = useState("");
-
-  // API Service setup
   const ML_API_BASE_URL = process.env.REACT_APP_ML_BACKEND_URL;
   const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
   const getAuthToken = () => useAuthStore.getState().token;
@@ -34,9 +32,6 @@ const PMFInsights = ({ businessId, onContinue }) => {
     try {
       setLoading(true);
       const result = await analysisService.getPMFAnalysis(businessId);
-
-      // Detection is now isolated to the AHA Insights page (PMFInsightsTab.jsx)
-      // to avoid duplication and clutter in the main dashboard view.
 
       let rawInsights = [];
       if (result) {
@@ -70,14 +65,10 @@ const PMFInsights = ({ businessId, onContinue }) => {
 
   const getIcon = (type, index) => {
     const iconType = type?.toLowerCase() || '';
-
-    // First try keyword matching
     if (iconType.includes('market')) return <TrendingUp size={18} color="#2563eb" />;
     if (iconType.includes('core')) return <Target size={18} color="#2563eb" />;
     if (iconType.includes('adjacency')) return <Puzzle size={18} color="#2563eb" />;
     if (iconType.includes('risk') || iconType.includes('constraint')) return <AlertCircle size={18} color="#2563eb" />;
-
-    // Fallback to index-based mapping (Market, Core, Adjacency, Risk/Constraint)
     switch (index % 4) {
       case 0: return <TrendingUp size={18} color="#2563eb" />;
       case 1: return <Target size={18} color="#2563eb" />;
@@ -193,8 +184,6 @@ const PMFInsights = ({ businessId, onContinue }) => {
     </div>
   );
 };
-
-// Internal styles for the component
 const StyleSheet = () => (
   <style>{`
     .insight-list {
@@ -209,8 +198,7 @@ const StyleSheet = () => (
     .icon-box:hover {
       transform: scale(1.1);
     }
-    
-    /* Ensure subtle badges look premium and are available */
+
     .bg-success-subtle {
       background-color: #d1fae5 !important;
       color: #065f46 !important;
@@ -231,7 +219,7 @@ const StyleSheet = () => (
       background-color: #f3f4f6 !important;
       color: #374151 !important;
     }
-    
+
     .text-success { color: #065f46 !important; }
     .text-warning { color: #92400e !important; }
     .text-danger { color: #991b1b !important; }

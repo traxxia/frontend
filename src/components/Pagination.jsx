@@ -14,14 +14,9 @@ const Pagination = ({
     showInfo = true
 }) => {
     const { t } = useTranslation();
-    // Don't render if there's only one page or no pages
-    if (totalPages <= 1) return null; 
-
-    // Calculate pagination info
+    if (totalPages <= 1) return null;
     const startItem = ((currentPage - 1) * itemsPerPage) + 1;
     const endItem = Math.min(currentPage * itemsPerPage, totalItems);
-
-    // Pagination info component
     const PaginationInfo = () => (
         showInfo && totalItems > 0 ? (
             <div className="pagination-info minimal">
@@ -29,22 +24,16 @@ const Pagination = ({
             </div>
         ) : null
     );
-
-    // Generate page numbers
     const getPageNumbers = () => {
         const delta = 2;
         const range = [];
         const rangeWithDots = [];
-
-        // For small number of pages, show all
         if (totalPages <= 7) {
             for (let i = 1; i <= totalPages; i++) {
                 range.push(i);
             }
             return range;
         }
-
-        // Complex pagination with dots
         for (
             let i = Math.max(2, currentPage - delta);
             i <= Math.min(totalPages - 1, currentPage + delta);
@@ -71,7 +60,7 @@ const Pagination = ({
     };
 
     const pageNumbers = getPageNumbers();
- 
+
     return (
         <div className={`pagination-container ${className}`}>
             <div className="pagination">

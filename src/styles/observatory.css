@@ -1,7 +1,3 @@
-/* ================================================================
-   AI Observatory — Styles
-   ================================================================ */
-
 :root {
   --obs-bg: var(--color-bg-primary, #0d0f1a);
   --obs-surface: var(--color-bg-secondary, #13162a);
@@ -35,7 +31,6 @@
   --obs-shadow-sm: var(--shadow-sm, 0 2px 8px rgba(0, 0, 0, 0.05));
 }
 
-/* ── Page Shell ── */
 .observatory-page {
   min-height: 100vh;
   background: var(--obs-bg);
@@ -105,7 +100,6 @@
   border-color: var(--obs-accent);
 }
 
-/* ── Tab Navigation ── */
 .obs-tabs {
   display: flex;
   gap: 4px;
@@ -156,7 +150,6 @@
   color: #a5b4fc;
 }
 
-/* ── Body Layout ── */
 .obs-body {
   display: grid;
   grid-template-columns: 260px 1fr;
@@ -183,7 +176,6 @@
   gap: 16px;
 }
 
-/* ── Filter Section ── */
 .obs-filter-label {
   font-size: 10px;
   font-weight: 700;
@@ -219,7 +211,6 @@
   gap: 5px;
 }
 
-/* ── Stats Cards ── */
 .obs-stat-cards {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -250,7 +241,6 @@
   letter-spacing: 0.5px;
 }
 
-/* ── Session / Chat Cards (list) ── */
 .obs-card {
   background: var(--obs-card);
   border: 1px solid var(--obs-border);
@@ -304,7 +294,6 @@
   padding-top: 12px;
 }
 
-/* ── Timeline ── */
 .obs-timeline {
   display: flex;
   flex-direction: column;
@@ -380,7 +369,6 @@
   flex-shrink: 0;
 }
 
-/* ── Prompt Inspector (detail pane) ── */
 .obs-inspector {
   background: var(--obs-card);
   border: 1px solid var(--obs-border);
@@ -422,7 +410,6 @@
   gap: 14px;
 }
 
-/* ── Prompt Block ── */
 .obs-prompt-block {
   border-radius: var(--obs-radius-sm);
   overflow: hidden;
@@ -489,7 +476,6 @@
   border-radius: 2px;
 }
 
-/* ── Badges / Chips ── */
 .obs-badge {
   display: inline-flex;
   align-items: center;
@@ -565,7 +551,6 @@
   letter-spacing: -0.2px;
 }
 
-/* ── Token Display ── */
 .obs-tokens {
   display: flex;
   align-items: center;
@@ -589,7 +574,6 @@
   color: var(--obs-text-dim);
 }
 
-/* ── Meta row ── */
 .obs-meta-row {
   display: flex;
   align-items: center;
@@ -605,7 +589,6 @@
   gap: 4px;
 }
 
-/* ── Source list ── */
 .obs-sources-list {
   list-style: none;
   padding: 0;
@@ -635,7 +618,6 @@
   text-decoration: underline;
 }
 
-/* ── Timestamp ── */
 .obs-timestamp {
   font-size: 11px;
   color: var(--obs-text-muted);
@@ -649,7 +631,6 @@
   font-style: italic;
 }
 
-/* ── Empty / Loading ── */
 .obs-empty {
   display: flex;
   flex-direction: column;
@@ -680,7 +661,6 @@
   }
 }
 
-/* ── Scrollbars ── */
 .obs-sidebar::-webkit-scrollbar,
 .obs-main::-webkit-scrollbar {
   width: 4px;
@@ -697,7 +677,6 @@
   border-radius: 2px;
 }
 
-/* ── Responsive ── */
 @media (max-width: 900px) {
   .obs-body {
     grid-template-columns: 1fr;

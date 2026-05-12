@@ -7,8 +7,6 @@ import FinancialTemplatesPopup from './FinancialTemplatesPopup';
 import { detectTemplateType, validateAgainstTemplate } from '../utils/templateValidator';
 import '../styles/CompanyManagement.css';
 
-
-
 import { useAuthStore } from '../store/authStore';
 
 const EditableField = ({
@@ -37,7 +35,6 @@ const EditableField = ({
   const isEditing = editingField === field.key;
   const isEdited = editedFields.has(field.key);
   const isHighlighted = isQuestionHighlighted(field.questionId);
-
 
   return (
     <div
@@ -199,7 +196,7 @@ const EditableField = ({
                   height: '32px',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '6px', 
+                  gap: '6px',
                   color: '#374151',
                   border: '1px solid #d1d5db',
                   borderRadius: '6px',
@@ -535,13 +532,13 @@ const AIAnswerSupportBlock = ({
           </div>
         </div>
       </div>
-      
-      <div style={{ 
-        fontSize: '11.5px', 
-        color: '#5b21b6', 
-        marginBottom: '12px', 
-        lineHeight: '1.4', 
-        paddingLeft: '10px',  
+
+      <div style={{
+        fontSize: '11.5px',
+        color: '#5b21b6',
+        marginBottom: '12px',
+        lineHeight: '1.4',
+        paddingLeft: '10px',
         opacity: 0.85
       }}>
         {t("ai_refinement_helper") || "Traxxia will start from your INITIAL answers, propose refined versions, and label them AI‑REFINED. You can edit or revert to INITIAL at any time."}
@@ -567,7 +564,7 @@ const AIAnswerSupportBlock = ({
         {isEnriching ? <Loader size={18} className="antigravity-rotating" /> : <Wand2 size={18} />}
        {isEnriching ? t("generating_suggestions") : t("generate_ai_answers")}
       </button>
-      
+
       {isEnriching && (
         <div style={{ textAlign: 'center', fontSize: '11px', color: '#6d28d9', marginTop: '8px', fontWeight: '600' }}>
           {t("estimated_time_30_60") || "Estimated time: 30 - 60 sec"}
@@ -576,7 +573,6 @@ const AIAnswerSupportBlock = ({
     </div>
   );
 };
-
 
 const EditableBriefSection = ({
   questions = [],
@@ -648,8 +644,6 @@ const EditableBriefSection = ({
     }
   }, [questions, userAnswers]);
 
-  // Removed redundant document info fetch as it is now handled and passed down by BusinessSetupPage
-
   useEffect(() => {
     if (documentInfo) {
       if (documentInfo.filename || documentInfo.id || documentInfo.has_document || documentInfo.file_size) {
@@ -666,7 +660,6 @@ const EditableBriefSection = ({
         setUploadedFileInfo(null);
       }
     } else if (documentInfo === null && !selectedBusinessId) {
-      // Clear if both are null
       setHasUploadedDocument(false);
       setUploadedFileInfo(null);
     }
@@ -692,7 +685,6 @@ const EditableBriefSection = ({
       console.error('Error loading document info:', error);
     }
   };
-
 
   useEffect(() => {
     return () => {
@@ -755,7 +747,7 @@ const EditableBriefSection = ({
         </div>
         <div>
           {highlightedMissingQuestions.message ||
-            `To generate <strong>${highlightedMissingQuestions.analysis_type}</strong> analysis, 
+            `To generate <strong>${highlightedMissingQuestions.analysis_type}</strong> analysis,
             please answer the highlighted questions below.`}
         </div>
         <div style={{ fontSize: '12px', color: '#78350f', marginTop: '4px' }}>
@@ -767,8 +759,6 @@ const EditableBriefSection = ({
 
   const generateBriefFields = () => {
     const fields = [];
-
-    // Order: initial (1), essential (2), advanced (3)
     const phaseOrderMap = {
       'initial': 1,
       'essential': 2,
@@ -790,11 +780,11 @@ const EditableBriefSection = ({
       return (a.order || 0) - (b.order || 0);
     });
 
-    let sequentialNumber = 1; // Add sequential counter
+    let sequentialNumber = 1;
 
     sortedQuestions.forEach(question => {
       const qId = question._id || question.question_id;
-      const answer = userAnswers[qId] || ''; // Include even if empty
+      const answer = userAnswers[qId] || '';
 
       fields.push({
         key: `question_${qId}`,
@@ -804,13 +794,12 @@ const EditableBriefSection = ({
         phase: question.phase,
         severity: question.severity,
         order: question.order,
-        sequentialNumber: sequentialNumber++ // Use sequential number instead of question.order
+        sequentialNumber: sequentialNumber++
       });
     });
 
     setBriefFields(fields);
   };
-
 
   const showToastMessage = (message, type = 'success') => {
     setShowToast({ show: true, message, type });
@@ -834,10 +823,8 @@ const EditableBriefSection = ({
 
       let response;
       if (existingAnswerId) {
-        // Update existing answer 
         response = await answerService.updateAnswer(existingAnswerId, newAnswer);
       } else {
-        // Create new answer 
         response = await answerService.createAnswer(selectedBusinessId, questionId, newAnswer);
         if (response && response.data && response.data._id) {
           if (setAnswerIds) {
@@ -845,33 +832,6 @@ const EditableBriefSection = ({
           }
         }
       }
-
-      /* 
-      // Sync with legacy conversation collection for backward compatibility
-      try {
-        await fetch(`${API_BASE_URL}/api/conversations`, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            question_id: questionId,
-            answer_text: newAnswer.trim(),
-            is_followup: false,
-            business_id: selectedBusinessId || null,
-            is_complete: true,
-            metadata: {
-              from_editable_brief: true,
-              timestamp: new Date().toISOString(),
-              is_edit: true
-            }
-          })
-        });
-      } catch (convError) {
-        console.warn('Legacy conversation update failed, but answer was saved:', convError);
-      }
-      */
 
       return response;
     } catch (error) {
@@ -899,7 +859,7 @@ const EditableBriefSection = ({
           showToastMessage('Auto-save failed', 'error');
         }
       }
-    }, 3000); // Auto-save after 3 seconds of no typing
+    }, 3000);
   };
 
   const handleEdit = (field) => {
@@ -909,7 +869,7 @@ const EditableBriefSection = ({
     const fieldElement = fieldRefs.current[field.key];
 
     if (fieldElement) {
-      const yOffset = -250; // adjust how high it scrolls
+      const yOffset = -250;
       const y =
         fieldElement.getBoundingClientRect().top +
         window.pageYOffset +
@@ -995,8 +955,6 @@ const EditableBriefSection = ({
     try {
       setIsEnriching(true);
       setEnrichedAnswers(null);
-
-      // 1. Fetch real onboarding data for this business
       let onboardingData = null;
       try {
         const analysisResult = await analysisService.getPMFAnalysis(selectedBusinessId);
@@ -1004,20 +962,13 @@ const EditableBriefSection = ({
       } catch (err) {
         console.warn("Could not fetch onboarding data:", err);
       }
-
-      // Check if onboarding data is missing
       if (!onboardingData || Object.keys(onboardingData).length === 0) {
         showToastMessage(t("completeOnboardingPrompt") || "Please complete the PMF Onboarding to see answers here.", 'error');
         setIsEnriching(false);
         return;
       }
-
-      // Find company name from current brief fields/user answers as backup
       const companyNameField = briefFields.find(f => f.label.toLowerCase().includes('company') || f.label.toLowerCase().includes('name'));
       const companyName = onboardingData?.companyName || companyNameField?.value || "";
-
-      // 2. Construct the rich payload for the ML enrichment API
-      // We follow the same structure as the executive summary payload in PMFOnboardingModal
       const rawPayload = {
         company: {
           name: companyName || "N/A",
@@ -1152,10 +1103,6 @@ const EditableBriefSection = ({
         size: file.size,
         uploadDate: new Date().toLocaleDateString()
       });
-
-      //showToastMessage(`✅ File uploaded successfully! Detected as ${validation.templateName}. Running financial analysis...`, 'success');
-
-      // Also notify parent to refresh display
       if (onUploadedFileUpdate) {
         onUploadedFileUpdate(file);
       }
@@ -1198,8 +1145,6 @@ const EditableBriefSection = ({
         showToastMessage('No matching questions found to apply', 'warning');
         return;
       }
-
-      // 1. Save to the new answers collection (using bulk create for new answers)
       const newAnswerIds = { ...answerIds };
       let idsUpdated = false;
 
@@ -1215,10 +1160,8 @@ const EditableBriefSection = ({
           toCreate.push(item);
         }
       });
-
-      // Handle bulk create for new answers
       if (toCreate.length > 0) {
-        try { 
+        try {
           const bulkRes = await answerService.bulkCreateAnswers(selectedBusinessId, toCreate.map(item => ({
             question_id: item.question_id,
             answer: item.answer_text
@@ -1237,10 +1180,8 @@ const EditableBriefSection = ({
           console.error('Failed to bulk create answers:', err);
         }
       }
-
-      // Handle bulk updates for existing answers
       if (toUpdate.length > 0) {
-        try { 
+        try {
           await answerService.bulkUpdateAnswers(selectedBusinessId, toUpdate.map(item => ({
             answer_id: item.id,
             answer: item.answer_text
@@ -1253,11 +1194,6 @@ const EditableBriefSection = ({
       if (idsUpdated && setAnswerIds) {
         setAnswerIds(newAnswerIds);
       }
-
-      // 2. Legacy bulk update for conversations and side effects
-      // await analysisService.bulkUpdateConversations(selectedBusinessId, answersToSave);
-
-      // Update local state for immediate UI feedback
       const newlyEdited = new Set(editedFields);
       answersToSave.forEach(item => {
         if (onAnswerUpdate) {
@@ -1269,14 +1205,12 @@ const EditableBriefSection = ({
 
       setEnrichedAnswers(null);
       showToastMessage('Enriched answers applied and saved!', 'success');
-
-      // Trigger auto-regeneration of Insights 6'Cs and Strategic Tab
       if (onAnalysisRegenerate) {
-        onAnalysisRegenerate({ 
-          updatedQuestionIds, 
-          alsoRegenerateStrategic: true, 
+        onAnalysisRegenerate({
+          updatedQuestionIds,
+          alsoRegenerateStrategic: true,
           skipConfirmation: true,
-          skipFinancial: true 
+          skipFinancial: true
         });
       }
     } catch (error) {
@@ -1296,7 +1230,6 @@ const EditableBriefSection = ({
       )}
 
       {renderMissingQuestionsBanner()}
-
 
       {enrichedAnswers && (
         <div className="enrichment-preview" style={{
@@ -1391,46 +1324,7 @@ const EditableBriefSection = ({
         </div>
       )}
 
-      {/* <div className="brief-progress">
-        <div className="progress-info">
-          {isLoading ? (
-            <span className="progress-text">
-              <Loader size={16} className="antigravity-rotating" style={{ display: 'inline', marginRight: '8px' }} />
-              Loading progress...
-            </span>
-          ) : (
-            <>
-              {answeredQuestions > 0 && (
-                <span className="progress-text">
-                  Progress: {progressPercentage}% completed
-                </span>
-              )}
-            </>
-          )}
-        </div>
-
-        {!isLoading && answeredQuestions > 0 && (
-          <div className="progress-bar-container" style={{
-            width: '100%',
-            height: '8px',
-            backgroundColor: '#e5e7eb',
-            borderRadius: '4px',
-            marginTop: '8px',
-            overflow: 'hidden'
-          }}>
-            <div
-              className="progress-bar-fill"
-              style={{
-                width: `${(answeredQuestions / totalQuestions) * 100}%`,
-                height: '100%',
-                backgroundColor: isInitialPhaseComplete ? '#10b981' : '#3b82f6',
-                borderRadius: '4px',
-                transition: 'width 0.3s ease-in-out'
-              }}
-            />
-          </div>
-        )}
-      </div> */}
+      {}
 
       <div className="brief-content">
         <div className="brief-list">
@@ -1442,8 +1336,6 @@ const EditableBriefSection = ({
           ) : briefFields.length > 0 ? (
             (() => {
               const rows = [];
-
-              // Insert Feature Row at the top
               rows.push(
                 <div key="feature-blocks-row" style={{
                   display: 'flex',

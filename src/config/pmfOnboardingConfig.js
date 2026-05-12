@@ -1,15 +1,5 @@
-/**
- * PMF Onboarding Modal Configuration
- * This file contains all static data used in the PMF Onboarding process
- * Making it easy to update content without modifying the component
- */
-
 import countryList from 'react-select-country-list'
-
-// Countries list
 export const COUNTRIES = countryList().getData();
-
-// Industries organized by category
 export const INDUSTRIES_BY_CATEGORY = [
   {
     category: 'Extraction & Natural Resources',
@@ -78,8 +68,6 @@ export const INDUSTRIES_BY_CATEGORY = [
     ]
   }
 ];
-
-// Strategic Objectives
 export const STRATEGIC_OBJECTIVES = [
   'Grow',
   'Improve profitability',
@@ -88,8 +76,6 @@ export const STRATEGIC_OBJECTIVES = [
   'Fix execution',
   'Other'
 ];
-
-// Key Challenges
 export const KEY_CHALLENGES = [
   'Too many initiatives',
   'Weak differentiation',
@@ -98,8 +84,6 @@ export const KEY_CHALLENGES = [
   'Talent / structure',
   'Other'
 ];
-
-// Differentiation Options
 export const DIFFERENTIATION_OPTIONS = [
   'Price',
   'Quality / expertise',
@@ -110,14 +94,10 @@ export const DIFFERENTIATION_OPTIONS = [
   'Brand',
   'Other'
 ];
-
-// Usage Context Options
 export const USAGE_CONTEXT_OPTIONS = [
   'My company',
   'A client'
 ];
-
-// Form configuration with metadata for each step
 export const FORM_STEPS = [
   {
     step: 1,
@@ -165,19 +145,13 @@ export const FORM_STEPS = [
     fields: ['usageContext']
   }
 ];
-
-// Total steps count
 export const TOTAL_STEPS = FORM_STEPS.length;
-
-// Field hints and examples
 export const FIELD_HINTS = {
   geography: 'e.g., United States, LATAM, Southeast Asia',
   customerSegment: 'e.g., Young adults, SMEs, Enterprise',
   productService: 'e.g., Ice cream, M&A advisory',
   channel: 'e.g., Convenience stores, Direct sales'
 };
-
-// Field descriptions for tooltips
 export const FIELD_DESCRIPTIONS = {
   companyName: 'The official name of the company or the specific client you are analyzing.',
   website: 'The primary URL of the business. This helps in identifying the industry and online presence.',

@@ -1,4 +1,3 @@
-// src/store/subscriptionStore.js
 import { create } from 'zustand';
 import { useAuthStore } from './authStore';
 

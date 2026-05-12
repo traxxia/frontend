@@ -13,10 +13,7 @@ import { useProjectStore } from "../store";
 const AccessManagement = ({ onToast }) => {
     const { t } = useTranslation();
     const queryClient = useQueryClient();
-
-    // --- TanStack Query Hooks ---
     const { data: businessesRaw, isLoading: fetchingBusinesses } = useBusinesses();
-    // Combine owned + collaborating for the admin access management view
     const businessesQuery = React.useMemo(() => [
         ...(businessesRaw?.businesses || []),
         ...(businessesRaw?.collaborating_businesses || [])
@@ -29,8 +26,6 @@ const AccessManagement = ({ onToast }) => {
     const [selectedBusinessId, setSelectedBusinessId] = useState("");
 
     const { data: accessData, isLoading: loadingAccess } = useAccessControlQuery(selectedBusinessId);
-
-    // Auto-select first business if none selected
     useEffect(() => {
         if (!selectedBusinessId && businesses.length > 0) {
             setSelectedBusinessId(businesses[0]._id);
@@ -182,7 +177,7 @@ const AccessManagement = ({ onToast }) => {
 
     return (
         <div>
-            {/* ---- Tool Actions ---- */}
+            {}
             <div className="admin-toolbar-row mb-3 mt-4">
                 <div className="d-flex align-items-center gap-3">
                     <div className="business-selector-minimal">
@@ -200,8 +195,7 @@ const AccessManagement = ({ onToast }) => {
                                 <option value="">{t("No_Business_Found")}</option>
                             ) : (
                                 <>
-                                    {/* No placeholder here as it auto-selects the first one in the original logic, 
-                                        but if businesses > 0 we keep the original mapping */}
+                                    {}
                                     {businesses.map((b) => (
                                         <option key={b._id} value={b._id}>
                                             {b.business_name || b.name}
@@ -230,7 +224,7 @@ const AccessManagement = ({ onToast }) => {
                 searchPlaceholder={t("Search users...")}
             />
 
-            {/* Revoke Modal */}
+            {}
             <Modal show={showRevokeModal} onHide={() => setShowRevokeModal(false)} centered backdrop="static">
                 <Modal.Header closeButton className="border-0 pb-2">
                     <Modal.Title className="fw-bold">{t("Confirm Revocation")}</Modal.Title>

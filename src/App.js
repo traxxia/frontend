@@ -3,16 +3,12 @@ import { BrowserRouter as Router, Route, Routes, useLocation } from 'react-route
 
 import './styles/styles-index';
 
-
-/* Core Logic */
 import Login from './pages/Login';
 import ProtectedRoute from './components/ProtectedRoute';
 import Aiassistant from './components/Aiassistant';
 import ToastNotifications from './components/ToastNotifications';
 import { useUIStore } from './store/uiStore';
 import { useLanguageStore } from './store/languageStore';
-
-// Pages where the AI assistant should NOT appear
 const AI_EXCLUDED_EXACT_PATHS = ['/', '/login', '/register', '/dashboard', '/admin', '/super-admin', '/super-admin/observatory'];
 const AI_EXCLUDED_PREFIX_PATHS = ['/academy'];
 
@@ -44,8 +40,6 @@ const GlobalAiAssistant = () => {
       window.removeEventListener('ai_context_changed', handleContextChange);
     };
   }, []);
-
-  // Reset project context and archived status on route change
   useEffect(() => {
     setProjectId(null);
     setPageContext(null);
@@ -81,8 +75,6 @@ const App = () => {
   const { setLanguage, currentLanguage } = useLanguageStore();
 
   useEffect(() => {
-    // Ensure the store is synchronized with the initial preference
-    // This also triggers translation loading via the store's action
     setLanguage(currentLanguage);
   }, [setLanguage, currentLanguage]);
 

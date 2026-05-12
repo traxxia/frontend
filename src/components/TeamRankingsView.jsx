@@ -21,14 +21,11 @@ const TeamRankingsView = ({
   const [consensusSummary, setConsensusSummary] = useState(null);
   const [consensusMode, setConsensusMode] = useState("ai");
   const [expandedRows, setExpandedRows] = useState(new Set());
-
-  // Load data immediately on mount (or when businessId/mode changes)
   useEffect(() => {
     if (businessId) {
       loadConsensusData();
     }
   }, [businessId, consensusMode]);
-
 
   const loadConsensusData = async () => {
     if (!businessId) return;
@@ -78,8 +75,6 @@ const TeamRankingsView = ({
       default: return "⚪";
     }
   };
-
-  // Render collaborator rankings details
   const renderCollaboratorDetails = (consensus) => {
     const collabData = consensus?.collaborator_rankings || consensus?.collaborator_ranks;
     if (!collabData || collabData.length === 0) {
@@ -127,10 +122,9 @@ const TeamRankingsView = ({
   return (
     <div className="ranking-panel-container expanded-view">
 
-
-      {/* Content Body - Always Visible since this component is only rendered when open */}
+      {}
       <div className="ranking-content-body">
-        {/* Toolbar: Consensus Mode Toggle */}
+        {}
         {isSuperAdmin && (
           <div className="ranking-toolbar">
             <div className="consensus-toggle-group">
@@ -148,7 +142,7 @@ const TeamRankingsView = ({
               </button>
             </div>
 
-            {/* Mini Summary - Inline with toggles */}
+            {}
             {consensusSummary && consensusMode === "ai" && (
               <div className="mini-summary">
                 <span className="dot green" title="High Agreement"></span> {consensusSummary.high_consensus || 0}
@@ -229,9 +223,9 @@ const TeamRankingsView = ({
                             {consensus ? (
                               <div className="d-flex align-items-center justify-content-center gap-2">
                                 <span>{getConsensusEmoji(consensus.consensus_score)}</span>
-                                <span className="small fw-bold" style={{ color: 
-                                  consensus.consensus_score === 'green' ? '#10b981' : 
-                                  consensus.consensus_score === 'yellow' ? '#f59e0b' : 
+                                <span className="small fw-bold" style={{ color:
+                                  consensus.consensus_score === 'green' ? '#10b981' :
+                                  consensus.consensus_score === 'yellow' ? '#f59e0b' :
                                   consensus.consensus_score === 'red' ? '#ef4444' : '#64748b'
                                 }}>
                                 </span>

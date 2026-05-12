@@ -8,7 +8,6 @@ const FinancialEmptyState = ({
   hasUploadedDocument,
   uploadedFile
 }) => {
-  // Enhanced document detection - check multiple sources
   const hasDocumentUploaded = uploadedFile || hasUploadedDocument || (documentInfo && documentInfo.has_document);
 
   const effectiveDocumentInfo = useMemo(() => documentInfo || {

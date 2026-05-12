@@ -3,20 +3,6 @@ import { Modal, Button } from 'react-bootstrap';
 import { AlertTriangle, Info } from 'lucide-react';
 import { useTranslation } from '../hooks/useTranslation';
 
-/**
- * ConfirmationModal - A generic reusable confirmation dialog
- * 
- * Props:
- *   show            - boolean
- *   onHide          - function (called on cancel/close)
- *   onConfirm       - function (called on primary action)
- *   title           - string (Modal Title)
- *   message         - string (Main message body)
- *   confirmText     - string (Primary button label, default: "Confirm")
- *   cancelText      - string (Secondary button label, default: "Cancel")
- *   confirmVariant  - string (Bootstrap variant for primary button, default: "primary")
- *   icon            - ReactNode (Optional custom icon, default: AlertTriangle)
- */
 const ConfirmationModal = ({
     show,
     onHide,

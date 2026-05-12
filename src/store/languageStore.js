@@ -1,4 +1,3 @@
-// src/store/languageStore.js
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { staticTranslations, initializeTranslations } from '../utils/translations';
@@ -22,11 +21,10 @@ export const useLanguageStore = create(
 
       t: (key, params = {}) => {
         const state = get();
-        // Fallback hierarchy: state.translations[key] -> staticTranslations[lang][key] -> key
-        let text = state.translations[key] || 
-                   staticTranslations[state.currentLanguage]?.[key] || 
+        let text = state.translations[key] ||
+                   staticTranslations[state.currentLanguage]?.[key] ||
                    key;
-        
+
         Object.keys(params).forEach(pKey => {
           text = text.replace(new RegExp('{{' + pKey + '}}', 'g'), params[pKey]);
         });

@@ -23,8 +23,6 @@ const PhaseUnlockPopup = ({ phase, show, onClose, autoCloseMs = 2500 }) => {
     good: "Good Phase is now open — upload your document to explore!",
     advanced: "Advanced Phase unlocked — final stage ahead 🏆",
   };
-
-  // Keep latest onClose without resetting the timer on each re-render
   const onCloseRef = useRef(onClose);
   useEffect(() => {
     onCloseRef.current = onClose;

@@ -102,8 +102,6 @@ const PrioritiesProjects = ({ selectedBusinessId, onSuccess, onStayOnPriorities,
           totalProjectsCreated += priority.actions.length;
         }
       }
-
-      // Refresh data to show kickstarted status
       await fetchKickstartData(selectedBusinessId);
       setSelected([]);
       setLastKickstartedCount(totalProjectsCreated);
@@ -136,10 +134,7 @@ const PrioritiesProjects = ({ selectedBusinessId, onSuccess, onStayOnPriorities,
 
   const handleConfirmRedirect = useCallback(() => {
     setShowSuccessModal(false);
-    // Clear project-store caches so the Projects page fetches fresh data
     clearProjectCache(selectedBusinessId);
-
-    // Set view mode to projects to ensure we see the card view
     useProjectStore.getState().setViewMode('projects');
 
     if (onSuccess) {
@@ -265,8 +260,6 @@ const PrioritiesProjects = ({ selectedBusinessId, onSuccess, onStayOnPriorities,
       {priorities.map((item, idx) => {
         const isExpanded = expandedId === idx;
         const actions = item.actions || [];
-
-        // Calculate granular progress
         const totalActions = actions.length;
         const kickstartedActions = actions.filter(a => a.isKickstarted || a.status === 'kickstarted').length;
         const progressPercent = totalActions > 0 ? (kickstartedActions / totalActions) * 100 : 0;
@@ -277,7 +270,7 @@ const PrioritiesProjects = ({ selectedBusinessId, onSuccess, onStayOnPriorities,
           <Card key={idx} className={`priority-card mb-3 ${isFullyKickstarted ? 'kickstarted' : isPartiallyKickstarted ? 'partially-kickstarted' : ''}`}>
             <Card.Body onClick={() => toggleExpand(idx)} className="expand-trigger">
               <div className="priority-card-inner">
-                {/* TOP SECTION */}
+                {}
                 <div className="priority-top justify-content-between">
                   <div className="d-flex align-items-center gap-3">
                     {isAdmin && (
@@ -301,7 +294,7 @@ const PrioritiesProjects = ({ selectedBusinessId, onSuccess, onStayOnPriorities,
                   )}
                 </div>
 
-                {/* BOTTOM SECTION */}
+                {}
                 <div className="priority-bottom mt-1">
                   <div className="priority-meta text-muted">
                     <Folder size={12} className="me-1" />

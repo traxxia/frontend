@@ -11,8 +11,6 @@ import { useQueryClient } from '@tanstack/react-query';
 const QuestionManagement = ({ onToast }) => {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
-
-  // --- TanStack Query Hook ---
   const { data: qData, isLoading } = useGlobalQuestions();
   const questions = qData || [];
 
@@ -31,8 +29,6 @@ const QuestionManagement = ({ onToast }) => {
   const getAuthToken = () => useAuthStore.getState().token;
 
   const phases = ['initial', 'essential', 'advanced'];
-
-  // Group questions by phase (Memoized for performance)
   const questionsByPhase = React.useMemo(() => {
     const grouped = questions.reduce((acc, question) => {
       const phase = question.phase || 'initial';
@@ -49,7 +45,6 @@ const QuestionManagement = ({ onToast }) => {
   }, [questions]);
 
   const loadQuestions = () => {
-    // Handled by hook
   };
 
   const handleCreateQuestion = async (formData) => {
@@ -227,8 +222,6 @@ const QuestionManagement = ({ onToast }) => {
     }));
   };
 
-  // Loading state moved into main render to preserve header and metrics
-
   return (
     <div className="question-management">
       <div className="admin-metrics-grid" style={{ marginBottom: '2rem' }}>
@@ -269,7 +262,7 @@ const QuestionManagement = ({ onToast }) => {
         </button>
       </div>
 
-      {/* ---- Premium Loading Bar ---- */}
+      {}
       {isLoading && (
         <div className="admin-loading-bar-container" style={{ marginBottom: '1.5rem' }}>
           <div className="admin-loading-bar" />

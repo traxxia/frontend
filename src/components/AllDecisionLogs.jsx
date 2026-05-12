@@ -83,8 +83,6 @@ const AllDecisionLogs = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-
-  // Read filter state from URL search params so links are shareable
   const getParam = (key, fallback = "") => searchParams.get(key) || fallback;
 
   const [selectedLog, setSelectedLog] = useState(null);
@@ -113,7 +111,6 @@ const AllDecisionLogs = () => {
       } else {
         next.delete(key);
       }
-      // Reset to page 1 when any filter changes
       if (key !== "page") next.set("page", "1");
       setSearchParams(next);
     },
@@ -164,7 +161,7 @@ const AllDecisionLogs = () => {
       <MenuBar />
 
       <div style={{ maxWidth: "1200px", margin: "0 auto", padding: "24px 20px" }}>
-        {/* Page Header */}
+        {}
         <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "24px" }}>
           <button
             onClick={() => navigate("/dashboard")}
@@ -183,7 +180,7 @@ const AllDecisionLogs = () => {
           </div>
         </div>
 
-        {/* Filter Bar */}
+        {}
         <div
           style={{
             background: "#fff",
@@ -284,9 +281,9 @@ const AllDecisionLogs = () => {
           </Row>
         </div>
 
-        {/* Table Wrapper */}
+        {}
         <div className="admin-table-wrapper">
-          {/* Table header bar */}
+          {}
           <div className="admin-table-header">
             <div className="admin-table-title-group">
               <h2 className="admin-table-title">
@@ -400,7 +397,7 @@ const AllDecisionLogs = () => {
             </div>
           )}
 
-          {/* Pagination */}
+          {}
           {!isLoading && logs.length > 0 && (
             <div className="admin-pagination">
               <span className="admin-pagination-info">
@@ -433,7 +430,7 @@ const AllDecisionLogs = () => {
         </div>
       </div>
 
-      {/* Detail Modal */}
+      {}
       <Modal show={!!selectedLog} onHide={() => setSelectedLog(null)} centered>
         <Modal.Header closeButton>
           <Modal.Title style={{ fontSize: "16px", fontWeight: 700 }}>
@@ -453,7 +450,7 @@ const AllDecisionLogs = () => {
                   <div className="admin-cell-primary">{selectedLog.project_name || String(selectedLog.project_id)}</div>
                 </div>
               </div>
-              
+
               <div className="admin-toolbar-row">
                 <div>
                   <span className="admin-metric-label">{t("Log_Type")}:</span>
@@ -505,15 +502,15 @@ const AllDecisionLogs = () => {
               {selectedLog.before_snapshot && Object.keys(selectedLog.before_snapshot).length > 0 && (
                 <div>
                   <span className="admin-metric-label">{t("Before")}:</span>
-                  <div 
-                    style={{ 
-                      fontSize: "11px", 
-                      color: "#6b7280", 
-                      background: "#f3f4f6", 
-                      padding: "8px", 
+                  <div
+                    style={{
+                      fontSize: "11px",
+                      color: "#6b7280",
+                      background: "#f3f4f6",
+                      padding: "8px",
                       borderRadius: "6px",
                       marginTop: "4px",
-                      overflowX: "auto" 
+                      overflowX: "auto"
                     }}
                   >
                     {JSON.stringify(selectedLog.before_snapshot, null, 2)}
@@ -524,15 +521,15 @@ const AllDecisionLogs = () => {
               {selectedLog.after_snapshot && Object.keys(selectedLog.after_snapshot).length > 0 && (
                 <div>
                   <span className="admin-metric-label">{t("After")}:</span>
-                  <div 
-                    style={{ 
-                      fontSize: "11px", 
-                      color: "#6b7280", 
-                      background: "#f3f4f6", 
-                      padding: "8px", 
+                  <div
+                    style={{
+                      fontSize: "11px",
+                      color: "#6b7280",
+                      background: "#f3f4f6",
+                      padding: "8px",
                       borderRadius: "6px",
                       marginTop: "4px",
-                      overflowX: "auto" 
+                      overflowX: "auto"
                     }}
                   >
                     {JSON.stringify(selectedLog.after_snapshot, null, 2)}
@@ -543,9 +540,9 @@ const AllDecisionLogs = () => {
           )}
         </Modal.Body>
         <Modal.Footer>
-          <RBButton 
-            className="admin-secondary-btn" 
-            style={{ color: "#374151 !important" }} 
+          <RBButton
+            className="admin-secondary-btn"
+            style={{ color: "#374151 !important" }}
             onClick={() => setSelectedLog(null)}
           >
             {t("close")}

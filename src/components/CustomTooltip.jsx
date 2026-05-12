@@ -1,15 +1,11 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-/**
- * A reusable, animated tooltip component.
- * Wraps any element and shows a styled message on hover.
- */
 const CustomTooltip = ({ children, message, position = 'bottom', align = 'center' }) => {
   const [isVisible, setIsVisible] = useState(false);
 
   return (
-    <div 
+    <div
       className="custom-tooltip-wrapper"
       onMouseEnter={() => setIsVisible(true)}
       onMouseLeave={() => setIsVisible(false)}

@@ -27,25 +27,21 @@ const ProfitabilityAnalysis = ({
   documentInfo = null,
 }) => {
   const { t } = useTranslation();
-  
-  // Use Zustand store
-  const { 
+  const {
     profitabilityData: storeProfitabilityData,
     isRegenerating: isTypeRegenerating,
-    regenerateIndividualAnalysis 
+    regenerateIndividualAnalysis
   } = useAnalysisStore();
 
   const isRegenerating = propIsRegenerating || isTypeRegenerating('profitabilityAnalysis');
-
-  // Normalize data from store or props
   const analysisData = useMemo(() => {
     const rawData = propProfitabilityData || storeProfitabilityData;
     if (!rawData) return null;
 
-    const normalized = rawData.profitability || 
-                       rawData.profitability_analysis || 
-                       rawData.profitabilityAnalysis || 
-                       rawData.ProfitabilityAnalysis || 
+    const normalized = rawData.profitability ||
+                       rawData.profitability_analysis ||
+                       rawData.profitabilityAnalysis ||
+                       rawData.ProfitabilityAnalysis ||
                        (Object.keys(rawData).length > 0 && !rawData.profitability ? rawData : null);
 
     return normalized ? { profitability: normalized } : null;
@@ -124,32 +120,28 @@ const ProfitabilityAnalysis = ({
       }
     }
   }, [onRegenerate, regenerateIndividualAnalysis, questions, userAnswers, selectedBusinessId]);
-
-  // Helper function to get traffic light color based on value vs threshold
   const getTrafficLightColor = useCallback((value, threshold, isHigherBetter = true) => {
     if (!threshold || threshold === 'NA' || threshold === null || threshold === undefined) {
-      return '#6b7280'; // Gray for NA
+      return '#6b7280';
     }
 
     const numValue = typeof value === 'string' ? parseFloat(value.replace(/[,$%]/g, '')) : value;
     const numThreshold = typeof threshold === 'string' ? parseFloat(threshold.replace(/[,$%]/g, '')) : threshold;
 
     if (isNaN(numValue) || isNaN(numThreshold)) {
-      return '#6b7280'; // Gray for invalid values
+      return '#6b7280';
     }
 
     if (isHigherBetter) {
-      if (numValue >= numThreshold * 1.1) return '#10b981'; // Green - 10% above threshold
-      if (numValue >= numThreshold * 0.9) return '#f59e0b'; // Yellow - within 10% of threshold
-      return '#ef4444'; // Red - below threshold
+      if (numValue >= numThreshold * 1.1) return '#10b981';
+      if (numValue >= numThreshold * 0.9) return '#f59e0b';
+      return '#ef4444';
     } else {
-      if (numValue <= numThreshold * 0.9) return '#10b981'; // Green - 10% below threshold
-      if (numValue <= numThreshold * 1.1) return '#f59e0b'; // Yellow - within 10% of threshold
-      return '#ef4444'; // Red - above threshold
+      if (numValue <= numThreshold * 0.9) return '#10b981';
+      if (numValue <= numThreshold * 1.1) return '#f59e0b';
+      return '#ef4444';
     }
   }, []);
-
-  // Helper function to parse percentage values
   const parsePercentageValue = useCallback((value) => {
     if (value === null || value === undefined || value === '' || value === 'NA') return 0;
 
@@ -164,15 +156,9 @@ const ProfitabilityAnalysis = ({
 
     return 0;
   }, []);
-
-  // Helper function to get citation URL for a metric
   const getCitationUrl = useCallback((metricKey, citations) => {
     if (!citations) return null;
-
-    // Check for exact match first
     if (citations[metricKey]) return citations[metricKey];
-
-    // Check for alternative keys
     const alternativeKeys = {
       'gross_margin': ['gross_margin'],
       'operating_margin': ['operating_margin'],
@@ -187,8 +173,6 @@ const ProfitabilityAnalysis = ({
 
     return null;
   }, []);
-
-  // Paired Bar Chart Component
   const PairedBarChart = React.memo(({ metrics, thresholds, citations }) => {
     const [containerWidth, setContainerWidth] = useState(600);
     const containerRef = useRef(null);
@@ -219,7 +203,7 @@ const ProfitabilityAnalysis = ({
       return () => window.removeEventListener('resize', updateWidth);
     }, []);
 
-    const maxValue = chartData.length > 0 
+    const maxValue = chartData.length > 0
       ? Math.max(...chartData.map(d => Math.max(d.actualValue, d.benchmarkValue)), 10)
       : 10;
     const chartHeight = chartData.length * 100 + 20;
@@ -419,7 +403,7 @@ const ProfitabilityAnalysis = ({
 
     Object.entries(profitabilityData).forEach(([key, value]) => {
       if (key === 'citations') {
-        return; // Skip citations object in this loop
+        return;
       } else if (key.includes('_threshold') || key.includes('threshold')) {
         const baseKey = key.replace('_threshold', '').replace('threshold', '');
         const displayKey = getDisplayName(baseKey);
@@ -432,8 +416,6 @@ const ProfitabilityAnalysis = ({
 
     return { metrics, thresholds, citations };
   }, [getDisplayName]);
-
-  // Show loading state
   if (isRegenerating) {
     return (
       <div className="channel-heatmap channel-heatmap-container">
@@ -446,7 +428,6 @@ const ProfitabilityAnalysis = ({
   }
 
   const renderContent = () => {
-    // Show error message within the normal structure if there's an error
     if (error) {
       return (
         <div className="profitability-warning">
@@ -458,8 +439,6 @@ const ProfitabilityAnalysis = ({
         </div>
       );
     }
-
-    // Show empty state if no data
     if (!analysisData || isProfitabilityDataIncomplete(analysisData)) {
       return (
         <FinancialEmptyState
@@ -518,8 +497,6 @@ const ProfitabilityAnalysis = ({
         />
       );
     }
-
-    // Show normal analysis content with paired bar chart and citations
     return (
       <div className="ch-heatmap-container">
         <div className="ch-heatmap-scroll">

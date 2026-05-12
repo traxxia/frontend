@@ -1,5 +1,4 @@
-/* Project Details Container */
-.project-details-container { 
+.project-details-container {
     margin: 0 auto;
     padding: 24px;
     background: #f8fafc;
@@ -24,7 +23,6 @@
     margin-bottom: 20px;
 }
 
-/* Header */
 .details-header {
     display: flex;
     justify-content: space-between;
@@ -48,7 +46,6 @@
     gap: 12px;
 }
 
-/* Buttons */
 .btn-back,
 .btn-back-alt {
     display: flex;
@@ -93,7 +90,6 @@
     box-shadow: 0 4px 12px rgba(26, 115, 232, 0.3);
 }
 
-/* Form Card Improvements */
 .form-card {
   background: #ffffff;
   border-radius: 12px;
@@ -111,11 +107,10 @@
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
 }
 
-.center-row { 
+.center-row {
   margin: 0 auto;
 }
 
-/* Section Title */
 .section-title {
   font-size: 18px;
   font-weight: 700;
@@ -130,7 +125,6 @@
     color: white !important;
 }
 
-/* Field Styling */
 .field-row {
   margin-bottom: 20px;
 }
@@ -169,7 +163,6 @@
     font-style: italic;
 }
 
-/* Icons */
 .detail-value-with-icon {
     display: inline-flex;
     align-items: center;
@@ -183,7 +176,6 @@
     color: #e2e8f0 !important;
 }
 
-/* Grid Layouts */
 .grid-2 {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -196,8 +188,6 @@
   gap: 24px;
 }
 
-
-/* Footer */
 .details-footer {
     display: flex;
     justify-content: space-between;
@@ -214,7 +204,6 @@
     margin: 0;
 }
 
-/* Breadcrumb Improvements */
 .projects-breadcrumb {
     margin-bottom: 20px;
     background: transparent;
@@ -243,8 +232,6 @@
     color: #ffffff !important;
 }
 
-
-
 [data-theme="dark"] .breadcrumb-item+.breadcrumb-item::before {
     color: #ffffff !important;
 }
@@ -253,7 +240,6 @@
     color: rgb(26, 115, 232);
 }
 
-/* Status Badges */
 .status-badge {
     display: inline-flex;
     align-items: center;
@@ -279,18 +265,17 @@
     color: #9a3412;
 }
 
-/* Responsive Design */
 @media (max-width: 968px) {
     .detail-item {
         flex-direction: column;
         gap: 8px;
     }
-    
+
     .detail-label {
         min-width: 100%;
         max-width: 100%;
     }
-    
+
     .grid-2,
     .grid-3 {
         grid-template-columns: 1fr;
@@ -303,7 +288,7 @@
         border-bottom: 1px solid #f1f5f9;
         border-right: none;
     }
-    
+
     .grid-2 .detail-item:last-child,
     .grid-3 .detail-item:last-child {
         border-bottom: none;
@@ -366,7 +351,6 @@
     .grid-3 .detail-value {
         font-size: 14px;
     }
-
 
     .assumptions-list {
         padding-left: 20px;

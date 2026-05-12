@@ -2,17 +2,6 @@ import React from 'react';
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import '../styles/AdminTableStyles.css';
 
-/**
- * MetricCard — reusable stat card for admin panels.
- *
- * Props:
- *  label       {string}          Card title, e.g. "Total Businesses"
- *  value       {string|number}   Main displayed value
- *  icon        {React.Component} Lucide icon component
- *  iconColor   {string}          One of: green | blue | orange | purple | red | teal
- *  trend       {number}          Optional percentage (positive = up, negative = down, 0 = neutral)
- *  trendLabel  {string}          Optional label after trend, e.g. "vs last month"
- */
 const MetricCard = ({
     label,
     value,

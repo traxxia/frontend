@@ -46,8 +46,6 @@ export const PHASE_API_CONFIG = {
     'leverageRisk'
   ]
 };
-
-// API endpoint mapping
 export const API_ENDPOINTS = {
   swot: 'find',
   purchaseCriteria: 'purchase-criteria',
@@ -73,8 +71,6 @@ export const API_ENDPOINTS = {
   executiveSummary: 'executive-summary',
   answerQuestionsWithEnrichment: 'answer-questions-with-enrichment'
 };
-
-// Metric type mapping for excel-analysis
 const EXCEL_ANALYSIS_METRIC_TYPES = {
   profitabilityAnalysis: 'profitability',
   growthTracker: 'growth_trends',
@@ -84,8 +80,6 @@ const EXCEL_ANALYSIS_METRIC_TYPES = {
 };
 
 const DEEP_SEARCH_ENDPOINTS = ['find', 'pestel-analysis', 'full-swot-portfolio', 'porter-analysis'];
-
-// Global caches shared across all service instances to prevent redundant concurrent requests
 const kickstartRequestCache = new Map();
 const pmfAnalysisCache = new Map();
 const pmfExecutiveSummaryCache = new Map();
@@ -99,7 +93,7 @@ export class AnalysisApiService {
     this.API_BASE_URL = API_BASE_URL;
     this.getAuthToken = getAuthToken;
     this.setApiLoading = setApiLoading;
-    this.excelAnalysisCache = null; // Cache the excel-analysis result
+    this.excelAnalysisCache = null;
   }
 
   async fetchAnalysisDataThroughBackend(businessId, forceRefresh = false) {
@@ -124,13 +118,9 @@ export class AnalysisApiService {
     analysisDataCache.set(cacheKey, fetchPromise);
     return fetchPromise;
   }
-
-
-  // PMF Analysis Methods
   async savePMFOnboardingData(businessId, onboardingData) {
     try {
       const token = this.getAuthToken();
-      // Clear caches on save to ensure fresh data next time
       pmfAnalysisCache.delete(`pmf-${businessId}`);
       pmfExecutiveSummaryCache.delete(`exec-${businessId}`);
       kickstartRequestCache.delete(`kickstart-${businessId}`);
@@ -188,7 +178,6 @@ export class AnalysisApiService {
   async savePMFExecutiveSummary(businessId, summary) {
     try {
       const token = this.getAuthToken();
-      // Clear cache on save
       pmfExecutiveSummaryCache.delete(`exec-${businessId}`);
       kickstartRequestCache.delete(`kickstart-${businessId}`);
 
@@ -272,7 +261,6 @@ export class AnalysisApiService {
   async savePMFInsights(businessId, insights) {
     try {
       const token = this.getAuthToken();
-      // Clear caches
       pmfAnalysisCache.delete(`pmf-${businessId}`);
       kickstartRequestCache.delete(`kickstart-${businessId}`);
 
@@ -296,15 +284,9 @@ export class AnalysisApiService {
     if (!businessId) return null;
 
     const cacheKey = `kickstart-${businessId}`;
-
-    // If not forcing refresh and we have data, return it
     if (!forceRefresh && kickstartRequestCache.has(cacheKey)) {
       return await kickstartRequestCache.get(cacheKey);
     }
-
-    // If forcing refresh, we still check for an existing request in flight to avoid 
-    // duplicate concurrent calls. Since mutations clear this cache, any existing
-    // promise here is fresh enough to satisfy concurrent callers.
     if (kickstartRequestCache.has(cacheKey)) {
       return await kickstartRequestCache.get(cacheKey);
     }
@@ -398,8 +380,6 @@ export class AnalysisApiService {
   requiresDeepSearch(endpoint) {
     return DEEP_SEARCH_ENDPOINTS.includes(endpoint);
   }
-
-  // Fetch document metadata from backend
   async fetchFinancialDocument(businessId) {
     if (!businessId) return null;
 
@@ -445,8 +425,6 @@ export class AnalysisApiService {
     financialDocumentCache.set(cacheKey, fetchPromise);
     return fetchPromise;
   }
-
-  // Download financial document binary data
   async downloadFinancialDocument(businessId) {
     try {
       const token = this.getAuthToken();
@@ -462,7 +440,6 @@ export class AnalysisApiService {
       });
 
       if (!response.ok) {
-        // Log more details if possible
         const errorText = await response.text().catch(() => 'No error body');
         console.warn(`Financial document download failed (${response.status}): ${errorText}`);
         return null;
@@ -481,15 +458,11 @@ export class AnalysisApiService {
       return null;
     }
   }
-
-  // Create File object from downloaded document
   async createFileFromDocument(documentBlob, documentInfo) {
     try {
       if (!documentBlob || !documentInfo) {
         return null;
       }
-
-      // Determine the correct MIME type based on file extension
       const getMimeType = (filename) => {
         const ext = filename.toLowerCase().split('.').pop();
         switch (ext) {
@@ -505,8 +478,6 @@ export class AnalysisApiService {
       };
 
       const mimeType = getMimeType(documentInfo.filename) || documentInfo.file_type || 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
-
-      // Create a File object from the blob with correct MIME type
       const file = new File([documentBlob], documentInfo.filename, {
         type: mimeType,
         lastModified: new Date(documentInfo.upload_date).getTime()
@@ -543,8 +514,6 @@ export class AnalysisApiService {
       throw error;
     }
   }
-
-  // Helper method to prepare questions and answers
   prepareQuestionsAndAnswers(questions, answers, filterFn = null) {
     const questionsArray = [];
     const answersArray = [];
@@ -572,11 +541,11 @@ export class AnalysisApiService {
     selectedBusinessId = null,
     uploadedFile = null,
     metricType = null,
-    onStreamChunk = null, // ✅ Added live streaming callback
-    companyName = null, // Add company name for specific analyses like aha-insight
-    rawPayload = null,   // ✅ Added raw payload support
-    loadingKey = null,   // ✅ NEW: Added loading key support
-    analysisType = null  // ✅ NEW: Added analysis type for logging
+    onStreamChunk = null,
+    companyName = null,
+    rawPayload = null,
+    loadingKey = null,
+    analysisType = null
   ) {
     if (!rawPayload && (!questionsArray || questionsArray.length === 0) && endpoint !== 'excel-analysis') {
       throw new Error(`No questions available for ${endpoint} analysis`);
@@ -588,11 +557,7 @@ export class AnalysisApiService {
       }
 
       const isExcelAnalysis = endpoint === 'excel-analysis';
-
-      // Determine the stage name for Observatory logging
       const stage = analysisType || (isExcelAnalysis ? metricType : endpoint);
-
-      // Setup Observatory Headers
       const obsHeaders = {};
       try {
         const authState = JSON.parse(
@@ -611,18 +576,14 @@ export class AnalysisApiService {
           }
           obsHeaders['x-request-timestamp'] = new Date().toISOString();
         }
-      } catch (_) { /* silent */ }
+      } catch (_) {  }
 
       let response;
-
-      // ✅ Handle Excel-based endpoints with file upload
       if (isExcelAnalysis) {
         const formData = new FormData();
 
         let fileToUpload = uploadedFile;
         let documentInfo = null;
-
-        // Try backend-saved financial document if not uploaded
         if (!fileToUpload && selectedBusinessId) {
           documentInfo = await this.fetchFinancialDocument(selectedBusinessId);
           if (documentInfo) {
@@ -632,7 +593,6 @@ export class AnalysisApiService {
             }
           }
         } else if (fileToUpload) {
-          // Ensure we have document metadata for the source header if it's missing
           if (!documentInfo && selectedBusinessId) {
             documentInfo = await this.fetchFinancialDocument(selectedBusinessId);
           }
@@ -641,18 +601,13 @@ export class AnalysisApiService {
         if (fileToUpload) {
           formData.append('file', fileToUpload);
         } else {
-          // Create a text fallback with business Q&A data when no file is available
           const businessInfo = `Business Information:\n${questionsArray.map((q, i) => `${q}: ${answersArray[i]}`).join('\n')}`;
           const dummyFile = new Blob([businessInfo], { type: 'text/plain' });
           formData.append('file', dummyFile, 'business_data.txt');
         }
-
-        // Include template metadata
         if (documentInfo?.template_type) {
           formData.append('source', documentInfo.template_type);
         }
-
-        // Build URL with metric_type query parameter
         let url = `${this.ML_API_BASE_URL}/excel-analysis`;
         const params = new URLSearchParams();
         if (metricType) {
@@ -682,10 +637,6 @@ export class AnalysisApiService {
         if (this.requiresDeepSearch(endpoint)) {
           headers['deep_search'] = 'true';
         }
-
-
-
-        // Use rawPayload if provided, otherwise construct the default payload
         const payload = rawPayload || {
           questions: questionsArray,
           answers: answersArray,
@@ -697,14 +648,10 @@ export class AnalysisApiService {
           body: JSON.stringify(payload)
         });
       }
-
-      // ✅ Handle non-OK responses
       if (!response.ok) {
         const errorText = await response.text();
         throw new Error(`${endpoint} API returned ${response.status}: ${errorText}`);
       }
-
-      // ✅ Stream response progressively
       if (response.body && onStreamChunk) {
         const reader = response.body.getReader();
         const decoder = new TextDecoder('utf-8');
@@ -716,12 +663,10 @@ export class AnalysisApiService {
           if (value) {
             const chunk = decoder.decode(value, { stream: true });
             buffer += chunk;
-            onStreamChunk(buffer); // ✅ Send partial text to UI
+            onStreamChunk(buffer);
           }
           done = readerDone;
         }
-
-        // ✅ Attempt to parse final JSON object from stream
         try {
           const jsonStart = buffer.indexOf('{');
           const jsonEnd = buffer.lastIndexOf('}');
@@ -732,12 +677,8 @@ export class AnalysisApiService {
         } catch (err) {
           console.warn('Error parsing JSON stream:', err);
         }
-
-        // Return raw buffer if parsing fails
         return { raw: buffer };
       }
-
-      // ✅ Non-streaming fallback (Excel / file endpoints)
       return await response.json();
     } finally {
       if (this.setApiLoading) {
@@ -745,8 +686,6 @@ export class AnalysisApiService {
       }
     }
   }
-
-
 
   async handlePhaseCompletion(
     phase,
@@ -812,8 +751,6 @@ export class AnalysisApiService {
             return { status: "rejected", analysisType, reason: err };
           });
       };
-
-      // Process analysis types in batches of 2 to avoid overwhelming the ML backend
       const batchSize = 2;
       for (let i = 0; i < analysisTypes.length; i += batchSize) {
         const batch = analysisTypes.slice(i, i + batchSize);
@@ -902,7 +839,6 @@ export class AnalysisApiService {
       maturityScore: 'setMaturityData',
       competitiveLandscape: 'setCompetitiveLandscapeData',
       coreAdjacency: 'setCoreAdjacencyData',
-      // 5 financial analysis setters
       profitabilityAnalysis: 'setProfitabilityData',
       growthTracker: 'setGrowthTrackerData',
       liquidityEfficiency: 'setLiquidityEfficiencyData',
@@ -943,7 +879,6 @@ export class AnalysisApiService {
         'maturityScore': 'essential',
         'competitiveLandscape': 'essential',
         'coreAdjacency': 'essential',
-        // 5 financial analysis types
         'leverageRisk': 'good',
         'strategic': 'advanced'
       };
@@ -999,8 +934,6 @@ export class AnalysisApiService {
       }
 
       await AnalysisService.upsertAnalysis(this.API_BASE_URL, token, analysisPayload);
-
-      // Clear analysis cache for this business after upsert
       analysisDataCache.delete(`analysis-${selectedBusinessId}`);
 
       return true;
@@ -1017,7 +950,7 @@ export class AnalysisApiService {
     selectedBusinessId,
     stateSetters,
     showToastMessage,
-    streamingCallbacks = {}  // ✅ NEW: Added streaming callbacks parameter
+    streamingCallbacks = {}
   ) {
     return async () => {
       try {
@@ -1028,14 +961,10 @@ export class AnalysisApiService {
         if (setter) {
           setter(null);
         }
-
-        // ✅ NEW: Handle streaming setup for Porter's
         if (analysisType === 'porters' && streamingCallbacks.setIsStreaming && streamingCallbacks.setStreamingText) {
           streamingCallbacks.setIsStreaming(true);
           streamingCallbacks.setStreamingText('');
         }
-
-        // Clear cache if regenerating any excel-analysis type
         if (this.isExcelAnalysisType(analysisType)) {
           this.excelAnalysisCache = null;
         }
@@ -1048,29 +977,22 @@ export class AnalysisApiService {
           selectedBusinessId,
           stateSetters
         };
-
-        // ✅ NEW: Create streaming callback for Porter's
         const onStreamChunk = (analysisType === 'porters' && streamingCallbacks.setStreamingText)
           ? (buffer) => {
             streamingCallbacks.setStreamingText(buffer);
           }
           : null;
-
-        // ✅ NEW: Use streaming-aware endpoint call
         const response = await this.callAnalysisEndpointWithStreaming(
           analysisType,
           payload,
           onStreamChunk
         );
 
-
         if (setter) {
           setter(response.data);
         }
 
         await this.saveAnalysisToBackend(response.data, analysisType, selectedBusinessId);
-
-        // ✅ NEW: Clean up streaming state
         if (analysisType === 'porters' && streamingCallbacks.setIsStreaming) {
           streamingCallbacks.setIsStreaming(false);
         }
@@ -1078,8 +1000,6 @@ export class AnalysisApiService {
         showToastMessage(`${analysisType} regenerated successfully!`, "success");
       } catch (error) {
         console.error(`Error regenerating ${analysisType}:`, error);
-
-        // ✅ NEW: Clean up streaming state on error
         if (analysisType === 'porters' && streamingCallbacks.setIsStreaming) {
           streamingCallbacks.setIsStreaming(false);
         }
@@ -1097,8 +1017,6 @@ export class AnalysisApiService {
           console.error(`Unknown analysis type: ${analysisType}`);
           throw new Error(`Unknown analysis type: ${analysisType}`);
         }
-
-        // Use specialized generation methods if they exist to ensure consistent normalization
         const methodNameMap = {
           swot: 'generateSWOTAnalysis',
           purchaseCriteria: 'generatePurchaseCriteria',
@@ -1140,8 +1058,6 @@ export class AnalysisApiService {
           }
           return { data: result };
         }
-
-        // Fallback for types without specialized methods
         const { questionsArray, answersArray } = this.prepareQuestionsAndAnswers(
           payload.questions,
           payload.userAnswers
@@ -1176,8 +1092,6 @@ export class AnalysisApiService {
           console.error(`Unknown analysis type: ${analysisType}`);
           throw new Error(`Unknown analysis type: ${analysisType}`);
         }
-
-        // For excel-analysis types, call with specific metric_type
         if (this.isExcelAnalysisType(analysisType)) {
           const { questionsArray, answersArray } = this.prepareQuestionsAndAnswers(
             payload.questions,
@@ -1203,8 +1117,6 @@ export class AnalysisApiService {
 
           return { data: result };
         }
-
-        // For other analyses
         const { questionsArray, answersArray } = this.prepareQuestionsAndAnswers(
           payload.questions,
           payload.userAnswers
@@ -1220,7 +1132,7 @@ export class AnalysisApiService {
           onStreamChunk,
           null,
           null,
-          null, // loadingKey
+          null,
           analysisType
         );
 
@@ -1228,7 +1140,6 @@ export class AnalysisApiService {
       } catch (error) {
         if (!isRetry) {
           console.warn(`Analysis ${analysisType} failed, retrying once...`, error);
-          // Wait briefly before retrying
           await new Promise(resolve => setTimeout(resolve, 1500));
           return await performCall(true);
         }
@@ -1238,13 +1149,9 @@ export class AnalysisApiService {
 
     return await performCall();
   }
-
-  // Strategic Analysis (kept for compatibility)
   async generateStrategicAnalysis(questions, answers, selectedBusinessId) {
     const performGeneration = async (isRetry = false) => {
       try {
-        // Fetch fresh answers data to ensure we have the absolute latest answers
-        // especially when called immediately after bulk updates
         const { freshAnswers } = await this.getFreshAnswersData(selectedBusinessId);
         const combinedAnswers = { ...answers, ...freshAnswers };
 
@@ -1277,8 +1184,6 @@ export class AnalysisApiService {
       throw error;
     }
   }
-
-  // Keep individual methods for backward compatibility
   async generateSWOTAnalysis(questions, answers, selectedBusinessId) {
     try {
       const { questionsArray, answersArray } = this.prepareQuestionsAndAnswers(questions, answers);
@@ -1291,8 +1196,6 @@ export class AnalysisApiService {
       throw error;
     }
   }
-
-  // Fetch fresh answers data from the new collection
   async getFreshAnswersData(selectedBusinessId) {
     try {
       const token = this.getAuthToken();
@@ -1327,8 +1230,6 @@ export class AnalysisApiService {
       return { freshAnswers: {}, freshCompletedSet: new Set() };
     }
   }
-
-  // Fetch fresh conversation data (Legacy - kept for compatibility if needed elsewhere, but not used for analysis)
   async getFreshConversationData(selectedBusinessId) {
     try {
       const token = this.getAuthToken();
@@ -1373,10 +1274,6 @@ export class AnalysisApiService {
       return { freshAnswers: {}, freshCompletedSet: new Set() };
     }
   }
-
-  // Individual analysis methods - Active ones only
-
-
 
   async generatePurchaseCriteria(questions, answers, selectedBusinessId) {
     try {
@@ -1530,8 +1427,6 @@ export class AnalysisApiService {
       }
 
       const { questionsArray, answersArray } = this.prepareQuestionsAndAnswers(questions, answers);
-
-      // Setup Observatory Headers
       const obsHeaders = {};
       try {
         const authState = JSON.parse(
@@ -1546,7 +1441,7 @@ export class AnalysisApiService {
           obsHeaders['x-stage'] = 'coreAdjacency';
           obsHeaders['x-request-timestamp'] = new Date().toISOString();
         }
-      } catch (_) { /* silent */ }
+      } catch (_) {  }
 
       const response = await fetch(`${this.ML_API_BASE_URL}/core-adjacency-matrix`, {
         method: 'POST',
@@ -1565,8 +1460,6 @@ export class AnalysisApiService {
       }
 
       const result = await response.json();
-
-      // Save to backend
       await this.saveAnalysisToBackend(result, 'coreAdjacency', selectedBusinessId);
 
       return result;
@@ -1601,8 +1494,6 @@ export class AnalysisApiService {
       throw error;
     }
   }
-
-  // Financial analysis methods with metric_type support
   async generateProfitabilityAnalysis(questions, answers, selectedBusinessId, uploadedFile = null) {
     try {
       const { questionsArray, answersArray } = this.prepareQuestionsAndAnswers(questions, answers);

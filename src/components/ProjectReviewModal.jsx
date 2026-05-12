@@ -7,7 +7,7 @@ const ProjectReviewModal = ({
     isOpen,
     onClose,
     project,
-    type = "review", // "review" or "adhoc"
+    type = "review",
     onSubmit
 }) => {
     const { t } = useTranslation();

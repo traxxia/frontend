@@ -7,18 +7,14 @@ import reportWebVitals from './utils/reportWebVitals';
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 5 * 60 * 1000, // 5 minutes
-      cacheTime: 10 * 60 * 1000, // 10 minutes
+      staleTime: 5 * 60 * 1000,
+      cacheTime: 10 * 60 * 1000,
       retry: 1,
       refetchOnWindowFocus: false,
     },
   },
 });
-
-// Create the root once
 const root = ReactDOM.createRoot(document.getElementById('root'));
-
-// Render the App component
 root.render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
@@ -26,6 +22,4 @@ root.render(
     </QueryClientProvider>
   </React.StrictMode>
 );
-
-// Optional: report web vitals (for performance tracking)
 reportWebVitals();

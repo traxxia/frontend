@@ -13,9 +13,9 @@ import { useAnalysisStore } from "../store/analysisStore";
 import { useBusinessSetupContext } from "../context/BusinessSetupContext";
 
 const ExecutiveSummary = () => {
-  const { 
-    selectedBusinessId: businessId, 
-    openModal, 
+  const {
+    selectedBusinessId: businessId,
+    openModal,
     pmfRefreshTrigger: refreshTrigger,
     t,
     apiService: analysisService,
@@ -52,32 +52,23 @@ const ExecutiveSummary = () => {
 
   const fetchSummary = useCallback(async () => {
     setLoading(true);
-    setData(null); // Clear old data to show loader during refresh
+    setData(null);
     if (!businessId) {
       setLoading(false);
       return;
     }
     try {
-      // Fetch both Executive Summary and PMF Insights (AHA)
       const [summaryResult, ahaResult] = await Promise.all([
         analysisService.getPMFExecutiveSummary(businessId),
         analysisService.getPMFAnalysis(businessId)
       ]);
-
-      // Handle Executive Summary Data
       let summaryContent = summaryResult?.summary || summaryResult;
       if (summaryResult?.onboarding_data && !summaryContent.onboarding_data) {
         summaryContent = { ...summaryContent, onboarding_data: summaryResult.onboarding_data };
       }
       setData(summaryContent);
-
-      // Handle AHA Data
       setAhaData(ahaResult);
-
-      // Fetch kickstart data for collaborator check
       await fetchKickstartData(businessId, false);
-
-      // Fetch projects to check for existing ones
       await fetchProjects(businessId);
     } catch (error) {
       console.error("Error fetching data:", error);
@@ -96,8 +87,6 @@ const ExecutiveSummary = () => {
       [section]: !prev[section],
     }));
   };
-
-  // Helper to extract Aha Insights
   const getTopAhaInsights = () => {
     if (!ahaData) return [];
     let rawInsights = [];
@@ -110,7 +99,7 @@ const ExecutiveSummary = () => {
         rawInsights = ahaData.insights.insights;
       }
     }
-    return rawInsights.slice(0, 4); // Limit to top 3-4
+    return rawInsights.slice(0, 4);
   };
 
   const isAlreadyProject = useCallback((adj) => {
@@ -142,11 +131,7 @@ const ExecutiveSummary = () => {
         businessId,
         priority
       });
-
-      // Clear cache so projects page is fresh
       useProjectStore.getState().clearCache(businessId);
-
-      // Refetch projects to update the UI button states
       await fetchProjects(businessId);
 
       setShowConfirmModal(false);
@@ -161,7 +146,6 @@ const ExecutiveSummary = () => {
 
   const handleRedirectToProjects = () => {
     setShowSuccessModal(false);
-    // Set view mode to projects to ensure we see the card view
     useProjectStore.getState().setViewMode('projects');
     setActiveTab('bets');
   };
@@ -174,8 +158,6 @@ const ExecutiveSummary = () => {
       </div>
     );
   }
-
-  // Robust check for empty content
   const hasActualContent = data && (
     (data.top_priorities && Array.isArray(data.top_priorities) && data.top_priorities.length > 0) ||
     (data.topPriorities && Array.isArray(data.topPriorities) && data.topPriorities.length > 0) ||
@@ -204,30 +186,23 @@ const ExecutiveSummary = () => {
       </div>
     );
   }
-
-  // Enhanced helper to find data regardless of snake_case or camelCase or Title Case
   const getSection = (key) => {
     if (!data) return null;
     return data[key] ||
-      data[key.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase())] || // Title Case
-      data[key.replace(/_/g, "")] || // No spaces
-      data[key.split('_').map((w, i) => i === 0 ? w : w.charAt(0).toUpperCase() + w.slice(1)).join('')]; // camelCase
+      data[key.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase())] ||
+      data[key.replace(/_/g, "")] ||
+      data[key.split('_').map((w, i) => i === 0 ? w : w.charAt(0).toUpperCase() + w.slice(1)).join('')];
   };
 
   const whereToCompete = getSection('where_to_compete') || data;
   const howToCompete = getSection('how_to_compete');
   const topPriorities = getSection('top_priorities') || data.top_priorities || data.topPriorities || data["Top Priorities"];
-
-  // Helper for nested access
   const getNested = (obj, path) => {
     return path.split('.').reduce((acc, part) => {
       if (!acc) return null;
-      // Try snake_case, then Title Case with spaces
       return acc[part] || acc[part.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase())] || acc[part.replace(/_/g, " ")];
     }, obj);
   };
-
-  // Specific mappings for the provided JSON structure
   const differentiationLevers = howToCompete?.recommended_differentiation?.primary_lever || howToCompete?.differentiation_levers || howToCompete?.["Differentiation Levers"] || "N/A";
   const implications = howToCompete?.what_this_implies || howToCompete?.implies || howToCompete?.implications || howToCompete?.Implies;
   const excludes = howToCompete?.what_this_excludes || howToCompete?.excludes || howToCompete?.Excludes;
@@ -240,7 +215,7 @@ const ExecutiveSummary = () => {
   return (
     <div className="exc-executive-summary-container">
       <div className="exc-executive-content">
-        {/* AHA INSIGHTS SECTION */}
+        {}
         {topAhaInsights.length > 0 && (
           <div className="exc-section-card">
             <div className="exc-section-header" onClick={() => toggleSection("ahaInsights")}>
@@ -301,7 +276,7 @@ const ExecutiveSummary = () => {
           </div>
         )}
 
-        {/* WHERE TO COMPETE */}
+        {}
         <div className="exc-section-card">
           <div className="exc-section-header" onClick={() => toggleSection("whereToCompete")}>
             <div className="exc-section-title-wrapper">
@@ -321,7 +296,7 @@ const ExecutiveSummary = () => {
           </div>
 
           <div className={`exc-section-body ${expandedSections.whereToCompete ? 'expanded' : 'collapsed'}`} data-component="executive-where">
-            {/* Current Core */}
+            {}
             <div className="exc-subsection exc-current-core">
               <div className="exc-subsection-icon exc-blue">
                 <Target size={18} />
@@ -346,7 +321,7 @@ const ExecutiveSummary = () => {
               </div>
             </div>
 
-            {/* Existing Adjacencies */}
+            {}
             <div className="exc-subsection exc-existing-adjacencies">
               <div className="exc-subsection-icon exc-orange">
                 <FileText size={18} />
@@ -380,7 +355,7 @@ const ExecutiveSummary = () => {
               </div>
             </div>
 
-            {/* New Adjacencies */}
+            {}
             <div className="exc-subsection exc-new-adjacencies">
               <div className="exc-subsection-icon exc-green">
                 <ListChecks size={18} />
@@ -423,7 +398,7 @@ const ExecutiveSummary = () => {
           </div>
         </div>
 
-        {/* HOW TO COMPETE */}
+        {}
         <div className="exc-section-card">
           <div className="exc-section-header" onClick={() => toggleSection("howToCompete")}>
             <div className="exc-section-title-wrapper">
@@ -522,7 +497,7 @@ const ExecutiveSummary = () => {
           </div>
         </div>
 
-        {/* TOP PRIORITIES */}
+        {}
         <div className="exc-section-card">
           <div className="exc-section-header" onClick={() => toggleSection("topPriorities")}>
             <div className="exc-section-title-wrapper">
@@ -543,7 +518,6 @@ const ExecutiveSummary = () => {
 
           <div className={`exc-section-body ${expandedSections.topPriorities ? 'expanded' : 'collapsed'}`} data-component="executive-priorities">
             {topPriorities?.map((item, idx) => {
-              // Determine actions list
               const actions = item.actions || item.Actions || [];
 
               return (
@@ -591,7 +565,7 @@ const ExecutiveSummary = () => {
         </div>
       </div>
 
-      {/* CONFIRMATION MODAL */}
+      {}
       <Modal
         show={showConfirmModal}
         onHide={() => !kickstarting && setShowConfirmModal(false)}
@@ -663,7 +637,7 @@ const ExecutiveSummary = () => {
         </Modal.Body>
       </Modal>
 
-      {/* SUCCESS MODAL */}
+      {}
       <Modal
         show={showSuccessModal}
         onHide={() => setShowSuccessModal(false)}

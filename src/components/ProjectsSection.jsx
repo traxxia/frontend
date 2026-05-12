@@ -14,7 +14,6 @@ import { useProjects } from "../hooks/useQueries";
 
 import { useQueryClient } from "@tanstack/react-query";
 
-
 import { Users, CheckCircle, Plus, ListOrdered, Rocket, Menu, BarChart4, ChevronDown, Check, List } from "lucide-react";
 import RankProjectsPanel from "../components/RankProjectsPanel";
 import TeamRankingsView from "../components/TeamRankingsView";
@@ -37,8 +36,6 @@ const CATEGORIES = [
   { id: "Completed", label: "Completed" },
   { id: "Scaled", label: "Scaled" },
 ];
-
-
 
 const getToken = () => useAuthStore.getState().token;
 
@@ -103,11 +100,8 @@ const ProjectsSection = ({
   const queryClient = useQueryClient();
   const { data: projects = [], isLoading: isLoadingProjects } = useProjects(selectedBusinessId);
 
-  
   const lockSummary = storeLockSummary || { total_users: 0, locked_users_count: 0, locked_users: [] };
   const businessStatus = storeBusinessStatus || "draft";
-
-
 
   const { addToast, openModal, closeModal, isModalOpen } = useUIStore();
 
@@ -117,7 +111,6 @@ const ProjectsSection = ({
   const containerRef = useRef(null);
 
   useEffect(() => {
-    // Prevent unmounting the page incorrectly: only report count when loading has finished
     if (onProjectCountChange && !isLoadingProjects) {
       onProjectCountChange(projects.length);
     }
@@ -126,8 +119,6 @@ const ProjectsSection = ({
   const location = useLocation();
   const navigate = useNavigate();
   const [currentProject, setCurrentProject] = useState(null);
-  
-  // Remove ranking specific view mode syncs as this is now handled by RankingSection
   const [activeAccordionKey, setActiveAccordionKey] = useState(null);
   const [pendingSavePayload, setPendingSavePayload] = useState(null);
   const [pendingStateChanges, setPendingStateChanges] = useState([]);
@@ -158,52 +149,30 @@ const ProjectsSection = ({
       );
     }
   }, [activeView]);
-  
-  // Consolidate data refresh logic
-  // Uses getState()-based stable refs to avoid re-creating this callback on every Zustand update
   const refreshAllData = useCallback(async (options = { silent: true }) => {
     if (!selectedBusinessId) return;
-    
-    // Update signature to prevent immediate redundant automated refresh
-    lastRefreshRef.current = `${selectedBusinessId}-${activeView}`; 
-    
-    // 1. Clear custom store caches
+    lastRefreshRef.current = `${selectedBusinessId}-${activeView}`;
     useProjectStore.getState().clearCache(selectedBusinessId);
-    
-    // 2. Invalidate TanStack queries
     queryClient.invalidateQueries({ queryKey: ["projects", selectedBusinessId] });
     queryClient.invalidateQueries({ queryKey: ["rankingsSummary", selectedBusinessId] });
     queryClient.invalidateQueries({ queryKey: ["grantedAccess", selectedBusinessId] });
-
-    // 3. Trigger store refreshes using stable getState() calls
     const accessData = await useProjectStore.getState().checkAllAccess(selectedBusinessId);
 
     if (accessData?.businessAccessMode) {
       const apiArchived = accessData.businessAccessMode === 'archived' || accessData.businessAccessMode === 'hidden';
       setApiIsArchived(apiArchived);
     }
-  }, [selectedBusinessId, queryClient]); // stable deps only
-
-  // Signature guard to prevent redundant calls during rapid state/view transitions
+  }, [selectedBusinessId, queryClient]);
   const lastRefreshRef = useRef("");
   const hasMountedRef = useRef(false);
-  
-  // Trigger fresh fetch on mount only. The signature guard prevents repeat calls
-  // for the same view configuration (e.g. switching tabs back and forth).
-  // Trigger fresh fetch on mount only. The signature guard prevents repeat calls
-  // for the same view configuration (e.g. switching tabs back and forth).
   useEffect(() => {
     if (!selectedBusinessId) return;
-
-    // On mount: fetch access data (useProjects handles projects fetching automatically)
     if (!hasMountedRef.current) {
       hasMountedRef.current = true;
       const isMainView = activeView === "list";
       if (isMainView) {
         const signature = `${selectedBusinessId}-${activeView}`;
         lastRefreshRef.current = signature;
-        
-        // Fetch access control only. It's cached in projectStore.
         useProjectStore.getState().checkAllAccess(selectedBusinessId).then(accessData => {
           if (accessData?.businessAccessMode) {
             setApiIsArchived(
@@ -214,10 +183,8 @@ const ProjectsSection = ({
       }
       return;
     }
-
-    // After mount: only refresh if view transitions (e.g. navigating back to list from edit)
     const signature = `${selectedBusinessId}-${activeView}`;
-    if (lastRefreshRef.current === signature) { 
+    if (lastRefreshRef.current === signature) {
       return;
     }
 
@@ -226,22 +193,10 @@ const ProjectsSection = ({
       lastRefreshRef.current = signature;
       refreshAllData();
     }
-  }, [selectedBusinessId, activeView]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // Sync prop to internal state
+  }, [selectedBusinessId, activeView]);
   useEffect(() => {
     setApiIsArchived(isArchived);
   }, [isArchived]);
-
-
-
-
-
-
-
-
-
-  // Derived status flags based on businessStatus from store
   const projectCreationLocked = useMemo(() => ["prioritizing", "prioritized", "launched"].includes(businessStatus), [businessStatus]);
   const finalizeCompleted = useMemo(() => ["prioritized", "launched"].includes(businessStatus), [businessStatus]);
   const launched = useMemo(() => businessStatus === "launched", [businessStatus]);
@@ -267,10 +222,6 @@ const ProjectsSection = ({
     getPayload,
     validateForm,
   } = useProjectForm();
-
-
-  // Reset sub-view to list whenever activeView goes entirely out of scope (Top-level navigation)
-  // Since viewMode was removed, we don't have an equivalent top-level reset trigger here unless needed.
 
   const isViewer = userRole === "viewer";
   const isEditor = userRole === "super_admin" || userRole === "company_admin" || userRole === "collaborator" || userRole === "user";
@@ -313,8 +264,6 @@ const ProjectsSection = ({
 
   const storeProjects = useProjectStore(state => state.projects);
   const rankMap = useMemo(() => {
-    // Priority 1: User-specific ranks from the Zustand store (populated via fetchTeamRankings)
-    // Priority 2: Global ranks from the TanStack Query projects list
     const projectsToProcess = projects || [];
     const storeRankingMap = (storeProjects || []).reduce((acc, p) => {
       const id = normalizeId(p._id || p.project_id);
@@ -325,11 +274,10 @@ const ProjectsSection = ({
     return projectsToProcess.reduce((acc, p) => {
       const id = normalizeId(p._id);
       if (id) {
-        // Check store first for collaborator's personal rank, then fallback to p.rank (global) or p.ai_rank
         const storeRank = storeRankingMap[id];
-        const displayRank = (storeRank !== null && storeRank !== undefined) ? storeRank : 
+        const displayRank = (storeRank !== null && storeRank !== undefined) ? storeRank :
                           ((p.rank !== null && p.rank !== undefined) ? p.rank : p.ai_rank);
-        
+
         if (displayRank !== null && displayRank !== undefined) {
           acc[id] = displayRank;
         }
@@ -337,7 +285,6 @@ const ProjectsSection = ({
       return acc;
     }, {});
   }, [projects, storeProjects]);
-
 
   const adminRankMap = useMemo(() => (adminRanks || []).reduce((acc, r) => {
     acc[normalizeId(r.project_id)] = r.rank;
@@ -388,7 +335,6 @@ const ProjectsSection = ({
       } else if (statusValue === "draft") {
         counts.Draft++;
       } else {
-        // Unknown fallback
         counts.Draft++;
       }
     });
@@ -425,9 +371,6 @@ const ProjectsSection = ({
     return lock?.locked_by_name || null;
   }, [locks, myUserId]);
 
-
-
-
   const handleLockProjectRanking = useCallback(async () => {
     try {
       await lockRanking();
@@ -437,7 +380,6 @@ const ProjectsSection = ({
     }
   }, [lockRanking, refreshAllData]);
 
-
   const executeLaunchProjects = useCallback(async () => {
     try {
       setShowMissingRankModal(false);
@@ -446,8 +388,6 @@ const ProjectsSection = ({
 
       if (success) {
         addToast({ message: t("Projects_launched_Ready_for_execution."), type: "success" });
-        
-        // Immediately update TanStack Query cache with fresh project data, merging to preserve ranks
         if (data && data.projects) {
           queryClient.setQueryData(["projects", selectedBusinessId], (oldProjects = []) => {
             return data.projects.map(newProj => {
@@ -458,12 +398,11 @@ const ProjectsSection = ({
         }
 
         clearCache(selectedBusinessId);
-        // We still invalidate to ensure total sync, but setQueryData fixed the immediate "old data" issue
         queryClient.invalidateQueries({ queryKey: ["projects", selectedBusinessId] });
         queryClient.invalidateQueries({ queryKey: ["teamRankings", selectedBusinessId] });
-        
+
         await refreshAllData();
-        setSelectedProjectIds([]); // Clear selection
+        setSelectedProjectIds([]);
 
       } else {
         handleShowToast(error || "Failed to launch projects.", "error", 7000);
@@ -478,8 +417,6 @@ const ProjectsSection = ({
       handleShowToast(t("Please select at least one project to launch."), "error");
       return;
     }
-
-    // Check if all selected projects have been ranked
     const unrankedProjects = selectedProjectIds.filter(id => {
       const rank = rankMap[String(id)];
       return rank === null || rank === undefined;
@@ -586,8 +523,6 @@ const ProjectsSection = ({
     }
   }, [validateForm, getPayload, selectedBusinessId, createProject, currentProject?._id, refreshAllData, handleBackToList, handleShowToast]);
 
-
-
   const executeSave = useCallback(async (payload, justification = null) => {
     setIsSubmitting(true);
     try {
@@ -638,9 +573,6 @@ const ProjectsSection = ({
       const isProjectLaunched = (currentProject.launch_status || "").toLowerCase() === "launched";
 
       const isKilled = newStatus === 'killed';
-
-      // If either status or learning state changed, show justification modal
-      // We show it for ALL launched projects, OR if the project is being "Killed" (even if not launched)
       if ((isProjectLaunched || isKilled) && (statusChanged || learningStateChanged)) {
         const changes = [];
         if (statusChanged) {
@@ -675,7 +607,7 @@ const ProjectsSection = ({
     if (!selectedReviewProject?._id) return;
 
     try {
-      const { success, error } = reviewType === "review" 
+      const { success, error } = reviewType === "review"
         ? await reviewProjectAction(selectedReviewProject._id, data)
         : await adhocUpdateProjectAction(selectedReviewProject._id, data);
 
@@ -697,7 +629,6 @@ const ProjectsSection = ({
     }
   }, [selectedReviewProject?._id, reviewType, refreshAllData, handleShowToast]);
 
-
   const handleAccordionSelect = useCallback((eventKey) => {
     setActiveAccordionKey((prevKey) => {
       const nextKey = prevKey === eventKey ? null : eventKey;
@@ -708,7 +639,6 @@ const ProjectsSection = ({
     });
   }, [refreshAllData]);
 
-
   useEffect(() => {
     return () => {
       window.dispatchEvent(new CustomEvent('ai_context_changed', { detail: { projectId: null } }));
@@ -716,7 +646,6 @@ const ProjectsSection = ({
   }, []);
 
   const renderProjectForm = () => {
-    // Use ProjectDetails component for view mode
     if (activeView === "view") {
       return (
         <ProjectDetails
@@ -730,8 +659,6 @@ const ProjectsSection = ({
         />
       );
     }
-
-    // Use ProjectForm for new and edit modes
     return (
       <ProjectForm
         mode={activeView}
@@ -762,8 +689,6 @@ const ProjectsSection = ({
   };
 
   const [isStatusDropdownOpen, setIsStatusDropdownOpen] = useState(false);
-
-  // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (!event.target.closest(".status-dropdown-wrapper")) {
@@ -779,29 +704,29 @@ const ProjectsSection = ({
   const toggleCategory = useCallback((catId) => {
     setSelectedCategories((prev) => {
       if (catId === "All") return ["All"];
-      
+
       let next = prev.filter(id => id !== "All");
       if (next.includes(catId)) {
         next = next.filter(id => id !== catId);
       } else {
         next = [...next, catId];
       }
-      
+
       return next.length === 0 ? ["All"] : next;
     });
   }, []);
 
   const renderProjectList = () => {
     const isAllSelected = selectedCategories.includes("All");
-    
-    const selectedCategoryLabel = isAllSelected 
-      ? t("all") 
-      : selectedCategories.length === 1 
+
+    const selectedCategoryLabel = isAllSelected
+      ? t("all")
+      : selectedCategories.length === 1
         ? t(CATEGORIES.find(c => c.id === selectedCategories[0])?.label || "all")
         : `${selectedCategories.length} ${t("selected")}`;
 
-    const totalCount = isAllSelected 
-      ? projects.length 
+    const totalCount = isAllSelected
+      ? projects.length
       : projects.filter(p => {
           const statusValue = (p.status || "Draft").toLowerCase();
           return selectedCategories.some(catId => {
@@ -812,17 +737,17 @@ const ProjectsSection = ({
 
     return (
       <>
-        {/* Secondary Tabs - Toggle Style */}
+        {}
         <div className="secondary-tabs-container">
-          <button 
+          <button
             className={`secondary-tab ${activeView === "list" ? "active" : ""}`}
             onClick={() => setActiveView("list")}
           >
             <List size={16} /> {t("Summary")}
           </button>
-          <button 
+          <button
             className={`secondary-tab ${activeView === "analysis" ? "active" : ""}`}
-            onClick={() => {}} // Disabled
+            onClick={() => {}}
             style={{ cursor: 'not-allowed' }}
             title={t("Executive Analysis (Coming Soon)")}
           >
@@ -837,9 +762,9 @@ const ProjectsSection = ({
             </h2>
 
             <div className="bet-ledger-actions d-flex align-items-center gap-3">
-              {/* Custom Status Dropdown */}
+              {}
               <div className="status-dropdown-wrapper">
-                <div 
+                <div
                   className="status-dropdown-btn"
                   onClick={() => setIsStatusDropdownOpen(!isStatusDropdownOpen)}
                 >
@@ -855,8 +780,8 @@ const ProjectsSection = ({
                 {isStatusDropdownOpen && (
                   <div className="status-dropdown-menu">
                     {CATEGORIES.map(cat => (
-                      <div 
-                        key={cat.id} 
+                      <div
+                        key={cat.id}
                         className="status-menu-item"
                         onClick={(e) => {
                           e.stopPropagation();

@@ -18,9 +18,8 @@ import axios from "axios";
 import "../styles/RankProjectsPanel.css";
 import { validateRationale } from "../utils/validation";
 import ConfirmationModal from "./ConfirmationModal";
-import { Checkbox } from "lucide-react"; 
+import { Checkbox } from "lucide-react";
 
-/* ---------- PROJECT FILTERING HELPERS ---------- */
 const isLaunched = (p) => {
   const ls = p?.launch_status?.toLowerCase();
   return ls === 'launched' || ls === 'pending_launch';
@@ -37,22 +36,14 @@ const isTerminalStatus = (p) => {
 };
 
 const isKilled = (p) => p?.status?.toLowerCase() === 'killed';
-
-// Projects that are "live" or in active development (Active, Launched, etc.)
-// Projects that MUST be in the ranking list (Step 2)
-const isMandatoryOrActive = (p) => 
-  (isLaunched(p) || isActiveStatus(p)) && 
+const isMandatoryOrActive = (p) =>
+  (isLaunched(p) || isActiveStatus(p)) &&
   !isTerminalStatus(p);
-
-// Projects that MUST be ranked (Collaborators see AI ranked ones too and any admin-ranked ones)
 const isMandatoryForCollaborator = (p) =>
   ((p.ai_rank !== null && p.ai_rank !== undefined) || p.is_admin_ranked || isLaunched(p) || isActiveStatus(p)) &&
   !isTerminalStatus(p);
-
-// Projects that are considered "Draft" or "Unlaunched"
 const isDraftProject = (p) => !isLaunched(p) && !isActiveStatus(p) && !isTerminalStatus(p);
 
-/* ---------- RATIONALE TOGGLE (UI ONLY) ---------- */
 function RationaleToggle({ eventKey, children }) {
   const decoratedOnClick = useAccordionButton(eventKey);
 
@@ -82,7 +73,7 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, onRankSaved, isAdmi
   const [pendingDragResult, setPendingDragResult] = useState(null);
   const [tempRationale, setTempRationale] = useState("");
   const [movedProjectName, setMovedProjectName] = useState("");
-  const [step, setStep] = useState(1); // 1: Selection, 2: Ranking
+  const [step, setStep] = useState(1);
   const [selectedDraftIds, setSelectedDraftIds] = useState([]);
   const [initialSelectedDraftIds, setInitialSelectedDraftIds] = useState([]);
   const [isGeneratingAI, setIsGeneratingAI] = useState(false);
@@ -103,36 +94,28 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, onRankSaved, isAdmi
 
   useEffect(() => {
     if (!projects || projects.length === 0) return;
-
-    // 1. INITIALIZATION (Run once when projects are first available)
     if (!hasInitialized.current) {
       if (isAdmin) {
         const initialRankedIds = projects
           .filter(p => !isLaunched(p) && p.rank !== null && p.rank !== undefined)
           .map(p => p._id);
-        
-        setSelectedDraftIds(initialRankedIds);
 
-        // Check if all eligible projects are ranked to decide initial step
+        setSelectedDraftIds(initialRankedIds);
         const allEligible = projects.filter(p => !isKilled(p));
-        const unranked = allEligible.filter(p => 
-          (isMandatoryOrActive(p) || initialRankedIds.includes(p._id)) && 
+        const unranked = allEligible.filter(p =>
+          (isMandatoryOrActive(p) || initialRankedIds.includes(p._id)) &&
           (p.rank === null || p.rank === undefined)
         );
         const allRanked = unranked.length === 0 && allEligible.length > 0;
-        
+
         setInitialAllRanked(allRanked);
       } else {
-        // Collaborators always start on Step 2
         setStep(2);
       }
       hasInitialized.current = true;
     }
-
-    // 2. PROJECT LIST CALCULATION (Sync Step 2 ranking list)
-    // Only recalc Step 2 list when on step 2 (for Admin) or always for Collaborators
     if (step === 2 || !isAdmin) {
-      const listToShow = isAdmin 
+      const listToShow = isAdmin
         ? projects.filter(p => (isMandatoryOrActive(p) || selectedDraftIds.includes(p._id)) && !isTerminalStatus(p))
         : projects.filter(isMandatoryForCollaborator);
 
@@ -158,11 +141,9 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, onRankSaved, isAdmi
   const activeProjects = useMemo(() => projects.filter(isMandatoryOrActive), [projects]);
 
   const draftProjects = useMemo(() => projects.filter(isDraftProject), [projects]);
-  
-  // Projects that have a manual rank set (drafts specifically)
   const rankedDraftIds = useMemo(() => projects
     .filter(p => !isLaunched(p) && p.rank !== null && p.rank !== undefined)
-    .map(p => p._id), 
+    .map(p => p._id),
   [projects]);
 
   const hasSelectionChanged = useMemo(() => {
@@ -173,13 +154,10 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, onRankSaved, isAdmi
   }, [selectedDraftIds, rankedDraftIds]);
 
   const isFullyRanked = useMemo(() => {
-    // Check if everything selected (Mandatory + Selected Drafts) has a rank
     const selectedProjects = [...activeProjects, ...draftProjects.filter(p => selectedDraftIds.includes(p._id))];
     const unranked = selectedProjects.filter(p => p.rank === null || p.rank === undefined);
     return unranked.length === 0 && selectedProjects.length > 0;
   }, [activeProjects, draftProjects, selectedDraftIds]);
-
-
 
   const handleToggleDraft = (projectId) => {
     setSelectedDraftIds(prev =>
@@ -197,7 +175,6 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, onRankSaved, isAdmi
 
     setIsGeneratingAI(true);
     try {
-      // Deduplicate projects by ID before sending to ML API
       const uniqueProjects = selectedProjects.filter((project, index, self) =>
         index === self.findIndex(p => p._id === project._id)
       );
@@ -206,18 +183,15 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, onRankSaved, isAdmi
       const { success, rankings } = await callMLRankingAPI(uniqueProjects);
 
       if (success && rankings && rankings.length > 0) {
-        // Map rankings back to projects
         const rankedList = uniqueProjects.map(p => {
           const r = rankings.find(rankItem => rankItem.project_id === p._id);
           return {
             ...p,
             rank: r ? r.rank : Infinity,
-            rationale: "", // Reset rationale for new AI-suggested order
+            rationale: "",
             description: p.description || p.project_description || ""
           };
         }).sort((a, b) => a.rank - b.rank);
-
-        // Persist AI rankings to backend so collaborators can see them
         const validRankings = rankedList
           .filter(p => p.rank !== Infinity && p.rank !== null && p.rank !== undefined)
           .map(p => ({
@@ -227,7 +201,6 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, onRankSaved, isAdmi
 
         if (validRankings.length > 0) {
           await saveAIRankings(businessId, validRankings);
-          // Refresh background data, but don't wait for UI update
           fetchTeamRankings(businessId, { silent: true });
         }
 
@@ -236,12 +209,10 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, onRankSaved, isAdmi
         setInitialOrder(rankedList.map(p => p._id));
         setStep(2);
       } else {
-        // Fallback if AI succeeds but returns no results
         throw new Error("No AI rankings returned");
       }
     } catch (err) {
       console.error("AI Ranking Error:", err);
-      // If AI ranking fails, do not proceed to step 2
       onShowToast("ai ranking api is failed", "error");
     } finally {
       setIsGeneratingAI(false);
@@ -262,7 +233,6 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, onRankSaved, isAdmi
       return initialOrder[index] !== project._id;
     });
   };
-
 
   const validateRankings = () => {
     const missingRationales = [];
@@ -293,8 +263,6 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, onRankSaved, isAdmi
     const initialIndex = initialOrder.indexOf(movedProjectId);
 
     const willChangePosition = initialIndex !== destIndex;
-
-    // Check if the rationale is auto-generated
     const isAutoRationale = movedProject.rationale && movedProject.rationale.includes("Order changed due to");
 
     if (willChangePosition && movedProject.rationale && movedProject.rationale.trim() !== "" && !isAutoRationale) {
@@ -312,7 +280,6 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, onRankSaved, isAdmi
     if (willChangePosition) {
       setPendingDragResult(result);
       setMovedProjectName(movedProject.project_name);
-      // Clear auto-generated rationale from the modal, require user to enter new one
       setTempRationale(isAutoRationale ? "" : (movedProject.rationale || ""));
       setShowRationaleModal(true);
       return;
@@ -450,7 +417,6 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, onRankSaved, isAdmi
   };
 
   const handleSaveRankings = async () => {
-    // Only check if rankings have changed if user has already saved in this session
     if (hasEverSaved && !hasRankingsChanged()) {
       onShowToast("No changes detected. Please reorder projects before saving.", "warning");
       return;
@@ -510,7 +476,6 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, onRankSaved, isAdmi
   };
 
   const handleSaveAndClose = () => {
-    // Only show confirmation if there are actually changes to save or it's the first save
     if (hasRankingsChanged() || !hasEverSaved) {
       setShowConfirmModal(true);
     } else {
@@ -571,7 +536,7 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, onRankSaved, isAdmi
         </div>
       )}
 
-      {/* Validation Error Alert */}
+      {}
       {validationError && (
         <Alert variant="danger" dismissible onClose={() => setValidationError("")} className="mt-3">
           <div className="d-flex align-items-center gap-2">
@@ -581,7 +546,7 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, onRankSaved, isAdmi
         </Alert>
       )}
 
-      {/* ---------- DRAG & DROP ---------- */}
+      {}
       <DragDropContext onDragEnd={handleDragEnd}>
         <Droppable droppableId="rank-projects">
           {(provided) => (
@@ -617,7 +582,7 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, onRankSaved, isAdmi
                             } ${needsRationale ? "needs-rationale" : ""}`}
                         >
                           <Card.Body>
-                            {/* ---------- TOP ---------- */}
+                            {}
                             <div className="rank-card-top responsive-card-top">
                               <div className="rank-number">{index + 1}</div>
 
@@ -644,7 +609,7 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, onRankSaved, isAdmi
                               </div>
                             </div>
 
-                            {/* ---------- RATIONALE ---------- */}
+                            {}
                             <div className="rank-rationale-btn-container responsive-rationale-btn">
                               <RationaleToggle eventKey={index.toString()}>
                                 {item.rationale && item.rationale.trim() !== "" ? (
@@ -764,8 +729,7 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, onRankSaved, isAdmi
             </Button>
           )}
 
-
-          {/* Lock Rankings removed - saving is final */}
+          {}
         </Col>
       </Row>
 
@@ -773,7 +737,7 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, onRankSaved, isAdmi
         {step === 1 && isAdmin ? renderStep1() : renderStep2()}
       </div>
 
-      {/* ---------- RATIONALE MODAL ---------- */}
+      {}
       <Modal
         show={showRationaleModal}
         onHide={handleRationaleCancel}

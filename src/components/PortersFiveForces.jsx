@@ -26,7 +26,7 @@ const PortersFiveForces = ({
 }) => {
   const { t } = useTranslation();
   const token = useAuthStore(state => state.token);
-  
+
   const {
     portersData: storePortersData,
     isRegenerating: isTypeRegenerating,

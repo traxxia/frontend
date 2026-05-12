@@ -23,8 +23,6 @@ const MenuBar = () => {
   const location = useLocation();
   const { t } = useTranslation();
   const REACT_APP_BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
-
-  // Zustand auth store selectors
   const isAdmin = useAuthStore((state) => state.isAdmin);
   const isSuperAdmin = useAuthStore((state) => state.isSuperAdmin());
   const isObservatory = useAuthStore((state) => state.isObservatory);
@@ -51,10 +49,7 @@ const MenuBar = () => {
     } catch (error) {
       console.error("Error during logout:", error);
     } finally {
-      // Clear the local state first
       logout();
-
-      // Perform a full page reload to the login page to ensure all memory state is cleared
       window.location.href = "/login";
     }
   };
@@ -66,8 +61,6 @@ const MenuBar = () => {
   const handleSuperAdminClick = () => navigate("/super-admin");
   const handleObservatoryClick = () => navigate("/super-admin/observatory");
   const handleAcademyClick = () => navigate("/academy");
-
-  // Handler for audit trail navigation
   const handleAuditTrailClick = () => navigate("/audit-trail");
   const handleDecisionLogsClick = () => navigate("/decision-logs");
 
@@ -75,7 +68,7 @@ const MenuBar = () => {
     <Navbar className="traxia-navbar p-0" id="main-menu-bar">
       <Container fluid className="px-3 py-2">
         <div className="d-flex align-items-center justify-content-between w-100">
-          {/* Left side - Company Logo */}
+          {}
           <div className="navbar-left">
             {companyLogo && (
               <div
@@ -102,7 +95,7 @@ const MenuBar = () => {
             )}
           </div>
 
-          {/* Center - Traxxia Logo */}
+          {}
           <div className="navbar-center">
             <Navbar.Brand
               className="traxia-logo"
@@ -117,9 +110,9 @@ const MenuBar = () => {
             </Navbar.Brand>
           </div>
 
-          {/* Right side - User Menu */}
+          {}
           <div className="navbar-right d-flex align-items-center" style={{ gap: '15px' }}>
-            {/* Observatory Link directly in menubar */}
+            {}
             {isObservatory && (
               <div
                 onClick={handleObservatoryClick}
@@ -175,7 +168,7 @@ const MenuBar = () => {
                 <Dropdown.Header className="pt-3 pb-3 px-3 mb-2">
                   <div className="d-flex flex-column gap-2">
 
-                    {/* User Name */}
+                    {}
                     <div className="d-flex align-items-center">
                       <div className="d-flex align-items-center justify-content-center rounded me-3" style={{ width: '32px', height: '32px', backgroundColor: '#e0e7ff' }}>
                         <User size={16} style={{ color: '#4338ca' }} />
@@ -186,7 +179,7 @@ const MenuBar = () => {
                       </div>
                     </div>
 
-                    {/* Role */}
+                    {}
                     {userRole && (
                       <div className="d-flex align-items-center">
                         <div className="d-flex align-items-center justify-content-center rounded me-3" style={{ width: '32px', height: '32px', backgroundColor: '#e0e7ff' }}>
@@ -201,7 +194,7 @@ const MenuBar = () => {
                       </div>
                     )}
 
-                    {/* Company */}
+                    {}
                     {companyName && (
                       <div className="d-flex align-items-center">
                         <div className="d-flex align-items-center justify-content-center rounded me-3" style={{ width: '32px', height: '32px', backgroundColor: '#e0e7ff' }}>
@@ -217,7 +210,7 @@ const MenuBar = () => {
                 </Dropdown.Header>
                 <Dropdown.Divider />
 
-                {/* Dashboard Link */}
+                {}
                 {!isSuperAdmin && (
                   <Dropdown.Item
                     onClick={handleDashboardClick}
@@ -228,7 +221,7 @@ const MenuBar = () => {
                   </Dropdown.Item>
                 )}
 
-                {/* Traxxia Academy Link */}
+                {}
                 <Dropdown.Item
                   onClick={handleAcademyClick}
                   className={`dropdown-item-traxia ${isCurrentPage("/academy") || location.pathname.startsWith("/academy/") ? "active" : ""}`}
@@ -237,7 +230,7 @@ const MenuBar = () => {
                   {t("traxxia_academy")}
                 </Dropdown.Item>
 
-                {/* NEW: Super Admin Panel (only for super admin) */}
+                {}
                 {isSuperAdmin && (
                   <Dropdown.Item
                     onClick={handleSuperAdminClick}
@@ -260,9 +253,7 @@ const MenuBar = () => {
                   </Dropdown.Item>
                 )}
 
-
-
-                {/* Admin Link (only for regular admins, not super admin) */}
+                {}
                 {isAdmin && !isSuperAdmin && (
                   <Dropdown.Item
                     onClick={handleAdminClick}
@@ -273,21 +264,12 @@ const MenuBar = () => {
                   </Dropdown.Item>
                 )}
 
-                {/* Future: Reports Section (commented out, ready for future use) */}
-                {/*
-                <Dropdown.Item
-                  className="dropdown-item-traxia text-muted"
-                  disabled
-                >
-                  <FileText size={16} className="me-2" />
-                  {t('reports') || 'Reports'}
-                  <small className="ms-auto text-muted">{t('coming_soon') || 'Soon'}</small>
-                </Dropdown.Item>
-                */}
+                {}
+                {}
 
                 <Dropdown.Divider />
 
-                {/* Logout */}
+                {}
                 <Dropdown.Item
                   onClick={handleLogout}
                   className="dropdown-item-traxia text-danger"

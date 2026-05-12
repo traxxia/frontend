@@ -1,12 +1,8 @@
-/* Centralized Styles Index */
-
-/* Global Styles Foundation */
 import './variables.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './index.css';
 import './App.css';
 
-/* Layout & Page Styles */
 import './menubar.css';
 import './dashboard.css';
 import './AdminTableStyles.css';

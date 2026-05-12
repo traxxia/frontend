@@ -6,13 +6,11 @@ import { useAnalysisStore } from '../store';
 import FinancialEmptyState from './FinancialEmptyState';
 import AnalysisError from './AnalysisError';
 import { checkMissingQuestionsAndRedirect, ANALYSIS_TYPES } from '../services/missingQuestionsService';
-
-// Utility function to handle empty values
 const formatValue = (value, type = 'text', fallback = '-') => {
   if (value === null || value === undefined || value === '' || (typeof value === 'string' && value.trim() === '')) {
     return fallback;
   }
-  
+
   switch (type) {
     case 'currency':
       return isNaN(value) ? fallback : `$${Number(value).toLocaleString()}`;
@@ -37,25 +35,19 @@ const OperationalEfficiencyInsight = ({
   onRedirectToBrief
 }) => {
   const { t } = useTranslation();
-  
-  // Use Zustand store
-  const { 
+  const {
     operationalEfficiencyData: storeOperationalEfficiencyData,
     isRegenerating: isTypeRegenerating,
-    regenerateIndividualAnalysis 
+    regenerateIndividualAnalysis
   } = useAnalysisStore();
 
   const isRegenerating = propIsRegenerating || isTypeRegenerating('operationalEfficiency');
-
-  // Normalize data from store or props
   const analysisData = useMemo(() => {
     const rawData = propOperationalEfficiencyData || storeOperationalEfficiencyData;
     if (!rawData) return null;
-    
-    // Normalize structure
     if (rawData.operationalEfficiencyInsight) return rawData;
     if (rawData.operational_efficiency_insight) return { operationalEfficiencyInsight: rawData.operational_efficiency_insight };
-    
+
     return { operationalEfficiencyInsight: rawData };
   }, [propOperationalEfficiencyData, storeOperationalEfficiencyData]);
 
@@ -74,9 +66,9 @@ const OperationalEfficiencyInsight = ({
       displayName: 'Operational Efficiency Analysis',
       customMessage: 'Complete operational questions to unlock efficiency insights, resource optimization recommendations, and performance analytics.'
     };
-    
+
     await checkMissingQuestionsAndRedirect(
-      'operationalEfficiency', 
+      'operationalEfficiency',
       selectedBusinessId,
       handleRedirectToBrief,
       {
@@ -91,17 +83,17 @@ const OperationalEfficiencyInsight = ({
 
     const insight = data.operationalEfficiencyInsight;
 
-    const hasResourceUtilization = insight.resourceUtilization && 
-      (insight.resourceUtilization.employeeROI?.totalValueGenerated || 
+    const hasResourceUtilization = insight.resourceUtilization &&
+      (insight.resourceUtilization.employeeROI?.totalValueGenerated ||
        insight.resourceUtilization.costPerRevenueDollar);
 
     const hasEfficiencyTrends = insight.efficiencyTrends &&
-      (insight.efficiencyTrends.costReductionRate || 
-       insight.efficiencyTrends.productivityGain || 
+      (insight.efficiencyTrends.costReductionRate ||
+       insight.efficiencyTrends.productivityGain ||
        insight.efficiencyTrends.automationImpact);
 
     const hasCapabilityData = insight.capabilityPerformance &&
-      Object.values(insight.capabilityPerformance).some(value => 
+      Object.values(insight.capabilityPerformance).some(value =>
         value !== '' && value !== null && value !== undefined
       );
 
@@ -188,11 +180,11 @@ const OperationalEfficiencyInsight = ({
     if (!analysisData?.operationalEfficiencyInsight?.capabilityPerformance) return [];
 
     const capabilities = analysisData.operationalEfficiencyInsight.capabilityPerformance;
-    
+
     return Object.entries(capabilities).map(([key, value]) => {
       let score = 0;
       let hasValue = false;
-      
+
       if (value !== '' && value !== null && value !== undefined) {
         if (typeof value === 'string') {
           const lowerValue = value.toLowerCase();
@@ -208,7 +200,7 @@ const OperationalEfficiencyInsight = ({
 
       return {
         capability: key.charAt(0).toUpperCase() + key.slice(1).replace(/([A-Z])/g, ' $1'),
-        score: Math.min(score, 10), // Cap at 10 for display
+        score: Math.min(score, 10),
         fullMark: 10,
         hasValue
       };
@@ -260,7 +252,7 @@ const OperationalEfficiencyInsight = ({
   const renderContent = () => {
     if (error) {
       return (
-        <AnalysisError 
+        <AnalysisError
           error={error}
           onRetry={handleRegenerate}
           title="Operational Efficiency Analysis Error"
@@ -298,10 +290,10 @@ const OperationalEfficiencyInsight = ({
 
     return (
       <div style={{ padding: '20px', fontFamily: 'Arial, sans-serif' }}>
-        {/* Key Metrics */}
-        <div style={{ 
-          display: 'grid', 
-          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', 
+        {}
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
           gap: '16px',
           marginBottom: '32px'
         }}>
@@ -342,7 +334,7 @@ const OperationalEfficiencyInsight = ({
           </div>
         </div>
 
-        {/* Charts Section */}
+        {}
         <div style={{ marginBottom: '32px' }}>
           <h3 style={{ marginBottom: '24px', fontSize: '20px' }}>Operational Efficiency Analysis</h3>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '24px' }}>
@@ -359,8 +351,8 @@ const OperationalEfficiencyInsight = ({
                       {efficiencyTrendsData.map((entry, index) => (
                         <Cell
                           key={`cell-${index}`}
-                          fill={entry.hasValue ? 
-                            (entry.value >= entry.target ? '#10b981' : '#f59e0b') : 
+                          fill={entry.hasValue ?
+                            (entry.value >= entry.target ? '#10b981' : '#f59e0b') :
                             '#d1d5db'
                           }
                         />
@@ -395,7 +387,7 @@ const OperationalEfficiencyInsight = ({
           </div>
         </div>
 
-        {/* Resource Utilization Details */}
+        {}
         <div>
           <h3 style={{ marginBottom: '24px', fontSize: '20px' }}>Resource Utilization Analysis</h3>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '16px' }}>

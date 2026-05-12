@@ -1,4 +1,3 @@
-// Updated PhaseTabsComponent.jsx with Good phase support
 import React from 'react';
 import { ChevronDown } from "lucide-react";
 import PDFExportButton from "./PDFExportButton";
@@ -22,8 +21,6 @@ const PhaseTabsComponent = ({
   const getAvailablePhases = () => {
     const unlockedFeatures = phaseManager.getUnlockedFeatures();
     const phases = [];
-
-    // Always show initial phase if analysis is unlocked
     if (unlockedFeatures.analysis) {
       phases.push({
         key: 'initial',
@@ -31,8 +28,6 @@ const PhaseTabsComponent = ({
         unlocked: true
       });
     }
-
-    // Only show essential phase if it's actually unlocked
     if (unlockedFeatures.fullSwot) {
       phases.push({
         key: 'essential',
@@ -40,8 +35,6 @@ const PhaseTabsComponent = ({
         unlocked: true
       });
     }
-
-    // Only show good phase if it's actually unlocked
     if (unlockedFeatures.goodPhase) {
       phases.push({
         key: 'good',
@@ -102,7 +95,7 @@ const PhaseTabsComponent = ({
           justifyContent: 'space-between',
           width: '100%'
         }}>
-          {/* Left side - Phase tabs */}
+          {}
           <div className="phase-tabs-nav">
             {availablePhases.map(phase => (
               <button
@@ -115,9 +108,9 @@ const PhaseTabsComponent = ({
             ))}
           </div>
 
-          {/* Right side - Go to Section and PDF Download */}
+          {}
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            {/* Go to Section dropdown */}
+            {}
             <div ref={dropdownRef} className="dropdown-wrapper" style={{ position: "relative" }}>
               <button
                 className="dropdown-button"
@@ -173,7 +166,7 @@ const PhaseTabsComponent = ({
                   overflowY: "scroll",
                   backdropFilter: "blur(20px)"
                 }}>
-                  {/* Phase Header */}
+                  {}
                   <div style={{
                     padding: "12px 16px",
                     backgroundColor:
@@ -193,7 +186,7 @@ const PhaseTabsComponent = ({
                         selectedPhase === 'good' ? 'Good Phase' : selectedPhase} Sections
                   </div>
 
-                  {/* Options */}
+                  {}
                   {currentPhaseOptions.map((item, index) => (
                     <div
                       key={item}
@@ -253,7 +246,7 @@ const PhaseTabsComponent = ({
               )}
             </div>
 
-            {/* PDF Export Button */}
+            {}
             <CustomTooltip align="right" message={t("download_insights_tooltip") || "Export the insights into PDF report."}>
               <PDFExportButton
                 className="pdf-export-button"

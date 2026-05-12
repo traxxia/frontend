@@ -9,26 +9,23 @@ import { checkMissingQuestionsAndRedirect, ANALYSIS_TYPES } from '../services/mi
 
 const getTrafficLightColor = (value, threshold, metricType) => {
   if (!threshold || threshold === 'NA' || threshold === null || threshold === undefined) {
-    return '#6b7280'; // Gray for NA
+    return '#6b7280';
   }
 
   const numValue = typeof value === 'string' ? parseFloat(value.replace(/[,$%]/g, '')) : value;
   const numThreshold = typeof threshold === 'string' ? parseFloat(threshold.replace(/[,$%]/g, '')) : threshold;
 
   if (isNaN(numValue) || isNaN(numThreshold)) {
-    return '#6b7280'; // Gray for invalid values
+    return '#6b7280';
   }
-
-  // Interest Coverage - higher is better
   if (metricType === 'Interest Coverage') {
-    if (numValue >= numThreshold * 1.1) return '#10b981'; // Green - 10% above threshold
-    if (numValue >= numThreshold * 0.9) return '#f59e0b'; // Yellow - within 10% of threshold
-    return '#ef4444'; // Red - below threshold
+    if (numValue >= numThreshold * 1.1) return '#10b981';
+    if (numValue >= numThreshold * 0.9) return '#f59e0b';
+    return '#ef4444';
   } else {
-    // Debt-to-Equity - lower is better
-    if (numValue <= numThreshold * 0.9) return '#10b981'; // Green - 10% below threshold
-    if (numValue <= numThreshold * 1.1) return '#f59e0b'; // Yellow - within 10% of threshold
-    return '#ef4444'; // Red - above threshold
+    if (numValue <= numThreshold * 0.9) return '#10b981';
+    if (numValue <= numThreshold * 1.1) return '#f59e0b';
+    return '#ef4444';
   }
 };
 
@@ -100,8 +97,6 @@ const isLeverageDataIncomplete = (data) => {
 
   return !hasValidMetric;
 };
-
-// Paired Bar Chart Component
 const PairedBarChart = React.memo(({ metrics, thresholds, citations, activeBusinessName }) => {
   const [containerWidth, setContainerWidth] = useState(600);
   const containerRef = useRef(null);
@@ -137,17 +132,17 @@ const PairedBarChart = React.memo(({ metrics, thresholds, citations, activeBusin
   const maxValue = Math.max(...chartData.map(d => Math.max(d.actualValue, d.benchmarkValue)), 10);
   const chartHeight = chartData.length * 100 + 20;
   const chartWidth = containerWidth;
-  const leftMargin = 140; 
+  const leftMargin = 140;
   const rightMargin = 60;
-  const barHeight = 22; 
-  const groupSpacing = 100; 
+  const barHeight = 22;
+  const groupSpacing = 100;
 
   return (
     <div
       ref={containerRef}
       style={{
         width: '100%',
-        padding: '20px', 
+        padding: '20px',
         background: '#fff',
         borderRadius: '12px',
         border: '1px solid #e5e7eb',
@@ -289,7 +284,7 @@ const LeverageRisk = ({
   isRegenerating: propIsRegenerating = false,
   canRegenerate = true,
   leverageData = null,
-  leverageRiskData = null, // Unified prop support
+  leverageRiskData = null,
   selectedBusinessId,
   onRedirectToBrief,
   uploadedFile = null,
@@ -301,11 +296,11 @@ const LeverageRisk = ({
   documentInfo = null,
 }) => {
   const { t } = useTranslation();
-  
-  const { 
+
+  const {
     leverageRiskData: storeLeverageData,
     isRegenerating: isTypeRegenerating,
-    regenerateIndividualAnalysis 
+    regenerateIndividualAnalysis
   } = useAnalysisStore();
 
   const isRegenerating = propIsRegenerating || isTypeRegenerating('leverageRisk');

@@ -45,8 +45,6 @@ const SuperAdminPanel = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const queryClient = useQueryClient();
-
-  // Derive activeTab from URL 'tab' parameter, default to "companies"
   const activeTab = searchParams.get('tab') || "companies";
 
   const [showToast, setShowToast] = useState({
@@ -56,8 +54,6 @@ const SuperAdminPanel = () => {
   });
   const userRole = useAuthStore(state => state.userRole || "");
   const isSuperAdmin = useAuthStore(state => state.isSuperAdmin());
-
-  // Status check for questions tab
   useEffect(() => {
     if (activeTab === "questions" && !isSuperAdmin) {
       navigate("?tab=companies", { replace: true });
@@ -104,7 +100,7 @@ const SuperAdminPanel = () => {
       id: "subscription",
       label: t('subscription') || "Subscription",
       icon: CreditCard,
-      superAdminHidden: true  // Hide for super admin
+      superAdminHidden: true
     },
     {
       id: "plans",
@@ -118,8 +114,6 @@ const SuperAdminPanel = () => {
     if (tab.superAdminOnly && !isSuperAdmin) return false;
 
     if (tab.adminOnly && userRole !== 'company_admin') return false;
-
-    // Hide subscription tab for super admin
     if (tab.superAdminHidden && isSuperAdmin) return false;
 
     return true;
@@ -162,8 +156,6 @@ const SuperAdminPanel = () => {
 
   const panelTitle = isSuperAdmin ? t("super_admin_panel") : t("Admin_Panel");
   const HeaderIcon = isSuperAdmin ? Shield : Settings;
-
-
 
   return (
     <div className="super-admin-container">

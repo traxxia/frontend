@@ -23,11 +23,11 @@ export const useStreamingManager = () => {
   };
 
   const shouldStream = (cardId) => {
-    return false; // Global disable for streaming effect
+    return false;
   };
 
   const hasStreamed = (cardId) => {
-    return true; // Treat as always streamed to show full content
+    return true;
   };
 
   const resetCard = (cardId) => {
@@ -54,12 +54,12 @@ export const useStreamingManager = () => {
 
 export const StreamingRow = ({ children, isVisible, isLast, lastRowRef, isStreaming, tag: Tag = 'tr' }) => {
   return (
-    <Tag 
+    <Tag
       ref={isLast ? lastRowRef : null}
       style={{
-        opacity: isVisible ? 1 : 1, // Ensure visibility
-        transform: 'none', // Remove transform
-        transition: 'none' // Remove transition
+        opacity: isVisible ? 1 : 1,
+        transform: 'none',
+        transition: 'none'
       }}
     >
       {children}

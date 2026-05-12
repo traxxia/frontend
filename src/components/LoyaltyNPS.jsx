@@ -5,8 +5,6 @@ import { useAuthStore, useAnalysisStore } from "../store";
 import AnalysisEmptyState from './AnalysisEmptyState';
 import AnalysisError from './AnalysisError';
 import { checkMissingQuestionsAndRedirect, ANALYSIS_TYPES } from '../services/missingQuestionsService';
-
-// Get score classification based on NPS zones
 const getScoreClassification = (score, method = 'NPS') => {
   if (score === null || score === undefined) {
     return { label: 'No Data', color: '#6B7280', zone: 'none' };
@@ -23,7 +21,6 @@ const getScoreClassification = (score, method = 'NPS') => {
     if (score >= 60) return { label: 'Average', color: '#F59E0B', zone: 'neutral' };
     return { label: 'Poor', color: '#EF4444', zone: 'dissatisfied' };
   }
-  // Default for other methods
   if (score >= 80) return { label: 'Excellent', color: '#10B981', zone: 'high' };
   if (score >= 60) return { label: 'Good', color: '#06B6D4', zone: 'medium' };
   if (score >= 40) return { label: 'Average', color: '#F59E0B', zone: 'medium' };
@@ -64,8 +61,6 @@ const isLoyaltyNPSDataIncomplete = (data) => {
   const hasBenchmark = metrics.benchmark !== null && metrics.benchmark !== undefined;
   return !(hasOverallScore || (hasMethod && hasScale) || hasBenchmark);
 };
-
-// Gauge Chart Component
 const GaugeChart = React.memo(({ loyaltyData }) => {
   if (!loyaltyData) return null;
 
@@ -124,8 +119,6 @@ const GaugeChart = React.memo(({ loyaltyData }) => {
     </div>
   );
 });
-
-// Score Interpretation Component
 const ScoreInterpretation = React.memo(({ loyaltyData, t }) => {
   if (!loyaltyData?.scale) return null;
 
@@ -183,7 +176,7 @@ const LoyaltyNPS = ({
 
   const { t } = useTranslation();
   const token = useAuthStore(state => state.token);
-  
+
   const {
     loyaltyNPSData: storeLoyaltyNPSData,
     isRegenerating: isTypeRegenerating,
@@ -295,7 +288,7 @@ const LoyaltyNPS = ({
   const trendIndicator = getTrendIndicator(loyaltyData.trend);
 
   return (
-    <div className="loyalty-nps" 
+    <div className="loyalty-nps"
       data-component="loyalty-nps"
       data-analysis-type="loyalty-nps"
       data-analysis-name="Loyalty & NPS Analysis"
@@ -377,4 +370,4 @@ const LoyaltyNPS = ({
   );
 };
 
-export default LoyaltyNPS;
+export default LoyaltyNPS;

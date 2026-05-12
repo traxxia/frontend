@@ -1,6 +1,3 @@
-// src/store/index.js
-// Central re-export file for all Zustand stores
-
 export { useAuthStore } from './authStore';
 export { useUIStore } from './uiStore';
 export { useBusinessStore } from './businessStore';

@@ -16,8 +16,6 @@ const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const BusinessOverview = ({ onToast }) => {
     const { t } = useTranslation();
     const queryClient = useQueryClient();
-
-    // --- TanStack Query Hook ---
     const { data: qBusinesses = [], isLoading: loading } = useAdminBusinesses();
     const businesses = qBusinesses;
 
@@ -25,18 +23,12 @@ const BusinessOverview = ({ onToast }) => {
     const [currentPage, setCurrentPage] = useState(1);
     const [pageBeforeSearch, setPageBeforeSearch] = useState(1);
     const itemsPerPage = 10;
-
-    // Collaborator modal state
     const [showCollabModal, setShowCollabModal] = useState(false);
     const [selectedBizForCollab, setSelectedBizForCollab] = useState(null);
-
-    // Confirmation modal state
     const [showConfirmModal, setShowConfirmModal] = useState(false);
     const [pendingRemoval, setPendingRemoval] = useState(null);
 
     const token = useAuthStore(state => state.token);
-
-
 
     const handleSearch = (value) => {
         if (value && !searchTerm) setPageBeforeSearch(currentPage);
@@ -76,8 +68,6 @@ const BusinessOverview = ({ onToast }) => {
         (currentPage - 1) * itemsPerPage,
         currentPage * itemsPerPage
     );
-
-    // Metrics
     const launchedCount = businesses.filter(
         (b) => b.status?.toLowerCase() === "launched" || b.status?.toLowerCase() === "lauched"
     ).length;
@@ -132,8 +122,6 @@ const BusinessOverview = ({ onToast }) => {
             onToast(t("participant_removed_successfully") || "Participant removed successfully", "success");
 
             queryClient.invalidateQueries({ queryKey: ["adminBusinesses"] });
-
-            // Also update selectedBizForCollab if modal is open
             if (selectedBizForCollab && selectedBizForCollab._id === businessId) {
                 setSelectedBizForCollab({
                     ...selectedBizForCollab,
@@ -148,8 +136,6 @@ const BusinessOverview = ({ onToast }) => {
             setPendingRemoval(null);
         }
     };
-
-    // Column definitions for AdminTable
     const columns = [
         {
             key: "business_name",
@@ -232,7 +218,6 @@ const BusinessOverview = ({ onToast }) => {
                     statusColor = "#ecaa1cff";
                     statusBg = "#FCF9C3";
                 } else {
-                    // Everything else (launched, prioritized, kick_start, draft, etc.) → Active
                     label = t("active") || "Active";
                     statusColor = "#16a34a";
                     statusBg = "#dcfce7";
@@ -265,9 +250,9 @@ const BusinessOverview = ({ onToast }) => {
 
     return (
         <div>
-            {/* ---- Table ---- */}
+            {}
 
-            {/* ---- Table ---- */}
+            {}
             <AdminTable
                 title={t("business_overview") || "Business Overview"}
                 count={filteredBusinesses.length}
@@ -291,7 +276,7 @@ const BusinessOverview = ({ onToast }) => {
                 loading={loading}
             />
 
-            {/* ---- Collaborators Modal (native, no Bootstrap) ---- */}
+            {}
             {showCollabModal && selectedBizForCollab && (
                 <div className="admin-modal-overlay" onClick={() => setShowCollabModal(false)}>
                     <div className="admin-modal-box" onClick={(e) => e.stopPropagation()}>
@@ -340,7 +325,7 @@ const BusinessOverview = ({ onToast }) => {
                     </div>
                 </div>
             )}
-            {/* ---- Confirmation Modal ---- */}
+            {}
             {showConfirmModal && (
                 <div className="admin-modal-overlay" onClick={() => setShowConfirmModal(false)}>
                     <div className="admin-modal-box confirm-box" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '400px' }}>

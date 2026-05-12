@@ -6,10 +6,7 @@ import { validateField } from "../utils/validation";
 import "../styles/NewProjectPage.css";
 
 import { useAuthStore } from '../store/authStore';
-
-// Module-level cache to deduplicate requests across re-renders
 const eligibleOwnersCache = new Map();
-
 
 const impactOptions = [
   { value: "High", label: "High - Game changer", icon: <Circle size={14} color="green" fill="green" /> },
@@ -118,14 +115,12 @@ const SelectField = forwardRef(({
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        if (open) setOpen(); // Close only if open
+        if (open) setOpen();
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [open, setOpen]);
-
-  // Combine refs if needed, but here we just need ref for scrolling
   return (
     <div className="sf-wrapper" ref={(node) => {
       dropdownRef.current = node;
@@ -165,7 +160,7 @@ const SelectField = forwardRef(({
                 key={item.value}
                 className={`sf-option ${item.disabled ? 'disabled' : ''}`}
                 onClick={() => {
-                  if (item.disabled) return; // Prevent selection of disabled options
+                  if (item.disabled) return;
                   onChange(item.value);
                   onFieldEdit?.(fieldName);
                   setOpen();
@@ -186,8 +181,6 @@ const SelectField = forwardRef(({
     </div>
   );
 });
-
-// Reusable Input Field Component
 const InputField = forwardRef(({
   label,
   subLabel,
@@ -229,8 +222,6 @@ const InputField = forwardRef(({
     </div>
   );
 });
-
-// Reusable Text Area Component
 const TextAreaField = forwardRef(({
   label,
   subLabel,
@@ -313,7 +304,6 @@ const ProjectForm = ({
   getLockOwnerForField,
   onFieldFocus,
   onFieldEdit,
-  // Strategic Core Props
   strategicDecision,
   setStrategicDecision,
   accountableOwner,
@@ -330,7 +320,7 @@ const ProjectForm = ({
   setReviewCadence,
   status,
   setStatus,
-  launchStatus, // Added launchStatus
+  launchStatus,
   learningState,
   setLearningState,
   isSubmitting = false,
@@ -364,9 +354,7 @@ const ProjectForm = ({
     return () => clearTimeout(timer);
   }, []);
 
-
   useEffect(() => {
-    // Only fetch for New or Edit mode
     if (selectedBusinessId && mode !== "view") {
       const cacheKey = `owners-${selectedBusinessId}`;
 
@@ -402,11 +390,8 @@ const ProjectForm = ({
   }, [selectedBusinessId, mode]);
 
   useEffect(() => {
-    // DEFAULT: Set business owner as default if currently empty
-    // This applies to new projects AND existing projects with no owner assigned yet.
     if (!accountableOwnerId && eligibleOwners.length > 0) {
-      // 1. Try to find a match for the existing name (which might be created_by fallback from useProjectForm)
-      const existingMatch = accountableOwner ? eligibleOwners.find(o => 
+      const existingMatch = accountableOwner ? eligibleOwners.find(o =>
         o.name === accountableOwner || o.email === accountableOwner
       ) : null;
 
@@ -414,7 +399,6 @@ const ProjectForm = ({
         setAccountableOwnerId(String(existingMatch._id));
         setAccountableOwner(existingMatch.name || existingMatch.email);
       } else {
-        // 2. Fallback: Find first admin or business owner
         const admin =
           eligibleOwners.find(o => o.is_company_admin) ||
           eligibleOwners.find(o => o.is_business_owner);
@@ -425,8 +409,6 @@ const ProjectForm = ({
       }
     }
   }, [accountableOwnerId, accountableOwner, eligibleOwners, setAccountableOwnerId, setAccountableOwner]);
-
-  // Refs for error fields
   const projectNameRef = useRef(null);
   const descriptionRef = useRef(null);
   const importanceRef = useRef(null);
@@ -518,7 +500,6 @@ const ProjectForm = ({
 
   const handleProjectNameChange = (e) => {
     let value = e.target.value;
-    // Allow standard characters
     value = value.replace(/[^A-Za-z0-9\s!@#$%^&*()_\-+=\[\]{};:'",.<>/?\\|`~]/g, "");
 
     setProjectName(value);
@@ -605,17 +586,14 @@ const ProjectForm = ({
 
   const handleAccountableOwnerChange = (e) => {
     let value = e.target.value;
-    // Allow letters, numbers, spaces, dot, hyphen, @
     value = value.replace(/[^A-Za-z0-9\s.@-]/g, "");
 
     setAccountableOwner(value);
 
     let customError = null;
-    // Required
     if (!value.trim()) {
       customError = t("Accountable Owner is required.");
     }
-    // Must contain at least one alphabet
     else if (!/[A-Za-z]/.test(value)) {
       customError = t("Accountable Owner must contain at least one alphabet.");
     }
@@ -690,7 +668,6 @@ const ProjectForm = ({
   };
 
   const handleBudgetKeyPress = (e) => {
-    // Allow numbers, decimal point, comma, dash, dollar sign, K, M
     const allowedChars = /[0-9.,\-$KMkm]/;
     const controlKeys = ['Backspace', 'Delete', 'Tab', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'];
 
@@ -761,7 +738,6 @@ const ProjectForm = ({
   };
 
   const handleSubmit = () => {
-    // Unified validation from hook
     const validation = validateForm({ isNew: mode === "new" });
     const errors = validation.errors || {};
 
@@ -775,7 +751,6 @@ const ProjectForm = ({
       else if (errors.description) scrollToError(descriptionRef);
       else if (errors.importance) scrollToError(importanceRef);
       else if (errors.strategicDecision) scrollToError(strategicDecisionRef);
-      // Map both hook's 'accountableOwner' and 'accountableOwnerId' to the owner ref
       else if (errors.accountableOwnerId || errors.accountableOwner) scrollToError(accountableOwnerRef);
       else if (errors.successCriteria) scrollToError(successCriteriaRef);
       else if (errors.killCriteria) scrollToError(killCriteriaRef);
@@ -789,18 +764,14 @@ const ProjectForm = ({
       else if (errors.keyAssumptions_1) scrollToError(keyAssumptionsRefs[1]);
       else if (errors.keyAssumptions_2) scrollToError(keyAssumptionsRefs[2]);
       else if (errors.learningState) {
-        // We don't have a direct ref for learningState SelectField but we can scroll to the status area
         scrollToError(statusRef);
       }
       else if (errors.reviewCadence) {
-        // We don't have a ref for cadence, but let's scroll to the status area which is nearby
         scrollToError(statusRef);
       }
       else if (errors.budget) scrollToError(budgetRef);
       return;
     }
-
-    // All validations passed, submit the form
     onSubmit();
   };
 
@@ -848,7 +819,7 @@ const ProjectForm = ({
             </div>
           </div>
         )}
-        {/* Breadcrumb & Actions Header */}
+        {}
         <div className="projects-breadcrumb" ref={breadcrumbRef}>
 
           <Breadcrumb style={{ margin: 0 }}>
@@ -858,7 +829,7 @@ const ProjectForm = ({
             <Breadcrumb.Item active>{getTitle()}</Breadcrumb.Item>
           </Breadcrumb>
 
-          {/* Actions - Moved to Top */}
+          {}
           {!isReadOnly && (
             <div className="actions-row-top">
               <button type="button" className="btn-cancel" onClick={onBack} style={{ padding: "8px 16px" }}>
@@ -877,12 +848,12 @@ const ProjectForm = ({
           )}
         </div>
 
-        {/* Required Information */}
+        {}
         <div className="center-row">
           <div className="form-card">
             <h3 className="section-title">{t("Required_Information")}</h3>
 
-            {/* Project Name Field - Editable in new mode, readonly in edit mode */}
+            {}
             <div className="field-row">
               <div className="field-label-row">
                 <label className="field-label">
@@ -965,14 +936,12 @@ const ProjectForm = ({
           </div>
         </div>
 
-
-
-        {/* Strategic Core (Start of New V2 Section) */}
+        {}
         <div className="center-row">
           <div className="form-card">
             <h3 className="section-title">{t("Strategic_Core")}</h3>
 
-            {/* Strategic Decision */}
+            {}
             <TextAreaField
               ref={strategicDecisionRef}
               label={t("Strategic_Decision_Bet")}
@@ -986,8 +955,8 @@ const ProjectForm = ({
               required
             />
 
-            {/* Accountable Owner */}
-            {/* Accountable Owner Selection */}
+            {}
+            {}
             <SelectField
               ref={accountableOwnerRef}
               label={t("Accountable_Owner")}
@@ -1024,7 +993,7 @@ const ProjectForm = ({
               disabled={isFieldDisabled("accountable_owner")}
             />
 
-            {/* Key Assumptions */}
+            {}
             <div className="field-row">
               <div className="field-label-row">
                 <label className="field-label">
@@ -1052,7 +1021,7 @@ const ProjectForm = ({
               </div>
             </div>
 
-            {/* Success & Kill Criteria */}
+            {}
             <div className="grid-2">
               <TextAreaField
                 ref={successCriteriaRef}
@@ -1082,7 +1051,7 @@ const ProjectForm = ({
               />
             </div>
 
-            {/* Review Cadence, Status & Learning State */}
+            {}
             <div className="grid-3" style={{ marginTop: "16px" }}>
               <SelectField
                 label={t("Review_Cadence")}
@@ -1153,20 +1122,17 @@ const ProjectForm = ({
                     if (target === currentStatus) {
                       isDisabled = false;
                     } else if (!isLaunched) {
-                      // Unlaunched: Draft and Killed are allowed. Active is handled via Launch mechanism.
                       if (mode === "new") {
                         if (['draft'].includes(target)) isDisabled = false;
                       } else {
                         if (['draft', 'killed'].includes(target)) isDisabled = false;
                       }
                     } else {
-                      // Launched
                       if (currentStatus === 'active' || currentStatus === 'at risk') {
                         if (['active', 'at risk', 'paused', 'completed', 'killed', 'scaled'].includes(target)) isDisabled = false;
                       } else if (currentStatus === 'paused') {
                         if (['active', 'killed'].includes(target)) isDisabled = false;
                       } else if (currentStatus === 'killed' && isAdmin) {
-                        // Admins can move back to Active or Draft (if unlaunched)
                         if (isLaunched) {
                           if (['active', 'at risk', 'paused'].includes(target)) isDisabled = false;
                         } else {
@@ -1216,8 +1182,6 @@ const ProjectForm = ({
                     icon,
                     disabled: isDisabled && val.toLowerCase() !== currentLearningState
                   });
-
-                  // Validated and Invalidated are only available after launch
                   return [
                     createOption("Testing", t("Testing"), <Clock size={14} color="blue" />, false),
                     createOption("Validated", t("Validated"), <CheckCircle size={14} color="green" />, !isLaunched || isTerminal),
@@ -1249,8 +1213,7 @@ const ProjectForm = ({
           </div>
         </div>
 
-
-        {/* Strategic Context */}
+        {}
         <div className="center-row">
           <div className="form-card">
             <h3 className="section-title">{t("Strategic_Context")}</h3>
@@ -1341,7 +1304,7 @@ const ProjectForm = ({
           </div>
         </div>
 
-        {/* Detailed Planning */}
+        {}
         <div className="center-row">
           <div className="form-card">
             <h3 className="section-title">{t("Detailed_Planning")}</h3>
@@ -1461,7 +1424,6 @@ const ProjectForm = ({
             </div>
           </div>
         </div>
-
 
       </fieldset >
     </>

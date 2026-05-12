@@ -36,8 +36,6 @@ export const useBusinessSetup = () => {
 
   const ML_API_BASE_URL = process.env.REACT_APP_ML_BACKEND_URL || 'http://127.0.0.1:8000';
   const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
-
-  // Refs for scrolling
   const swotRef = useRef(null);
   const purchaseCriteriaRef = useRef(null);
   const loyaltyNpsRef = useRef(null);
@@ -77,7 +75,7 @@ export const useBusinessSetup = () => {
   const [hasUploadedDocument, setHasUploadedDocument] = useState(false);
   const [highlightedCard, setHighlightedCard] = useState(null);
   const [expandedCards, setExpandedCards] = useState(new Set());
-  
+
   const fetchedAnalysisKeys = useRef(new Set());
 
   const {
@@ -137,8 +135,6 @@ export const useBusinessSetup = () => {
   const isStrategicRegenerating = isTypeRegenerating('strategic');
   const isFinancialRegenerating = isTypeRegenerating('financial') || isTypeRegenerating('profitability') || isTypeRegenerating('growth') || isTypeRegenerating('liquidity') || isTypeRegenerating('investment') || isTypeRegenerating('leverage');
   const isEssentialPhaseGenerating = isTypeRegenerating('initial') || isTypeRegenerating('essential') || isTypeRegenerating('advanced') || isTypeRegenerating('fullSwot') || isTypeRegenerating('competitiveAdvantage') || isTypeRegenerating('expandedCapability') || isTypeRegenerating('strategicRadar') || isTypeRegenerating('productivity') || isTypeRegenerating('maturity');
-
-  // Shared UI state needed by PhaseManager
   const [showToast, setShowToast] = useState({ show: false, message: "", type: "success" });
   const showToastMessage = useCallback((message, type = "success") => {
     setShowToast({ show: true, message, type });
@@ -227,8 +223,6 @@ export const useBusinessSetup = () => {
 
   const [accessModalMessage, setAccessModalMessage] = useState('');
   const [accessModalSubMessage, setAccessModalSubMessage] = useState('');
-
-  // Handlers
   const handleScrollToSection = useCallback((cardId) => {
     const refs = {
       swot: swotRef,
@@ -342,8 +336,6 @@ export const useBusinessSetup = () => {
   }, [isMobile, isAnalysisExpanded, showToastMessage]);
 
   const handleBack = useCallback(() => navigate("/dashboard"), [navigate]);
-
-  // Effects
   useEffect(() => {
     if (location.state?.business?._id && location.state.business._id !== selectedBusinessId) {
       setSelectedBusinessId(location.state.business._id);
@@ -358,7 +350,6 @@ export const useBusinessSetup = () => {
   }, [selectedBusinessId, fetchAnalysisData]);
 
   const isArchived = (currentBusiness?.access_mode === 'archived' || currentBusiness?.access_mode === 'hidden');
-
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth <= 768);
@@ -384,7 +375,6 @@ export const useBusinessSetup = () => {
   }, [phaseManager]);
 
   const currentPhase = getCurrentPhase();
-
 
   const handleRegeneratePhase = (phaseOverride = null, alsoRegenerateStrategic = false, options = {}) => {
     const targetPhase = phaseOverride || getCurrentPhase();

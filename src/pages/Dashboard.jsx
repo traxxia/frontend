@@ -95,10 +95,10 @@ const Dashboard = () => {
                 <p className="welcome-description">
                   {t('dashboard_description_redesign') || "Create business plans step by step with the S.T.R.A.T.E.G.I.C framework. Activate AI capabilities for analysis, prediction, and decision-making."}
                 </p>
-                
+
                 <div className="action-buttons">
                   {!isCollaborator && !isViewer && (
-                    <button 
+                    <button
                       className="btn-create-business"
                       onClick={handleShowCreateModal}
                       disabled={isLoadingBusinesses}
@@ -107,7 +107,7 @@ const Dashboard = () => {
                       {t('create_business')}
                     </button>
                   )}
-                  <button 
+                  <button
                     className="btn-how-it-works"
                     onClick={() => openModal('howItWorks')}
                   >
@@ -125,9 +125,9 @@ const Dashboard = () => {
                 <div className="businesses-container">
                   <div className="businesses-header d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-3">
                     <h2>{t('your_businesses_all_states') || "YOUR BUSINESSES — ALL STATES"}</h2>
-                    
+
                     <div className="status-filter-wrapper">
-                      <button 
+                      <button
                         className="status-filter-btn"
                         onClick={() => setIsFilterOpen(!isFilterOpen)}
                       >
@@ -143,8 +143,8 @@ const Dashboard = () => {
                           <div className="status-filter-overlay" onClick={() => setIsFilterOpen(false)} />
                           <div className="status-dropdown">
                           {['ALL', 'EXECUTION', 'CREATED', 'DELETED'].map(status => (
-                            <div 
-                              key={status} 
+                            <div
+                              key={status}
                               className="dropdown-item"
                               onClick={() => toggleStatusFilter(status)}
                             >
@@ -160,8 +160,8 @@ const Dashboard = () => {
                       )}
                     </div>
                   </div>
-                  
-                  <BusinessTable 
+
+                  <BusinessTable
                     businesses={filteredBusinesses}
                     isCollaborator={isCollaborator}
                     isViewer={isViewer}
@@ -177,7 +177,7 @@ const Dashboard = () => {
             </div>
           </Container>
 
-          {/* How It Works Modal */}
+          {}
           {isModalOpen('howItWorks') && (
             <div className="popup-overlay" onClick={() => closeModal('howItWorks')}>
               <div className="popup-content large" onClick={(e) => e.stopPropagation()}>
@@ -209,7 +209,7 @@ const Dashboard = () => {
             </div>
           )}
 
-          {/* Create Business Modal */}
+          {}
           <Modal show={isModalOpen('createBusiness')} onHide={() => closeModal('createBusiness')} centered className="create-business-modal">
             <Modal.Header closeButton>
               <Modal.Title>{t('create_new_business')}</Modal.Title>
@@ -248,7 +248,7 @@ const Dashboard = () => {
             </Modal.Body>
           </Modal>
 
-          {/* Delete Business Modal */}
+          {}
           <Modal show={isModalOpen('deleteBusiness')} onHide={() => closeModal('deleteBusiness')} centered className="delete-modal">
             <Modal.Body className="text-center p-4">
               <div className="delete-icon-wrapper mb-4">
@@ -269,8 +269,8 @@ const Dashboard = () => {
             </Modal.Body>
           </Modal>
 
-          <PMFOnboardingModal 
-            show={isModalOpen('pmfOnboarding')} 
+          <PMFOnboardingModal
+            show={isModalOpen('pmfOnboarding')}
             onHide={() => closeModal('pmfOnboarding')}
             onComplete={() => {
               closeModal('pmfOnboarding');

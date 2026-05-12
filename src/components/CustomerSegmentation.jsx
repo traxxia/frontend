@@ -19,25 +19,19 @@ const CustomerSegmentation = ({
   onRedirectToBrief
 }) => {
   const { t } = useTranslation();
-  
-  // Use Zustand store
-  const { 
+  const {
     customerSegmentationData: storeCustomerSegmentationData,
     isRegenerating: isTypeRegenerating,
-    regenerateIndividualAnalysis 
+    regenerateIndividualAnalysis
   } = useAnalysisStore();
 
   const isRegenerating = propIsRegenerating || isTypeRegenerating('customerSegmentation');
-
-  // Normalize data from store or props
   const segmentationData = useMemo(() => {
     const rawData = propCustomerSegmentationData || storeCustomerSegmentationData;
     if (!rawData) return null;
-    
-    // Check if it's the direct object or wrapped in strategyRecommendation
     if (rawData.segments) return rawData;
     if (rawData.customerSegmentation) return rawData.customerSegmentation;
-    
+
     return null;
   }, [propCustomerSegmentationData, storeCustomerSegmentationData]);
 
@@ -213,7 +207,7 @@ const CustomerSegmentation = ({
 
     return (
       <>
-        {/* Overview section */}
+        {}
         <div className="section-container">
           <div className="section-header" onClick={() => toggleSection('summary')}>
             <h3>Segmentation Overview</h3>
@@ -269,7 +263,7 @@ const CustomerSegmentation = ({
           </div>
         </div>
 
-        {/* Distribution chart */}
+        {}
         <div className="section-container">
           <div className="section-header" onClick={() => toggleSection('distribution')}>
             <h3>Customer Distribution</h3>
@@ -340,7 +334,7 @@ const CustomerSegmentation = ({
           </div>
         </div>
 
-        {/* Segment Details */}
+        {}
         <div className="section-container">
           <div className="section-header" onClick={() => toggleSection('segments')}>
             <h3>Segment Details</h3>
@@ -385,7 +379,7 @@ const CustomerSegmentation = ({
           </div>
         </div>
 
-        {/* Criteria section */}
+        {}
         {purchaseCriteriaData.length > 0 && (
           <div className="section-container">
             <div className="section-header" onClick={() => toggleSection('criteria')}>

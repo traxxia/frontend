@@ -7,13 +7,10 @@ const PlanConfigurationModal = ({ show, onHide, data, onConfirm, submitting, ext
     const { t } = useTranslation();
     const [selections, setSelections] = useState({});
     const [error, setError] = useState(null);
-
-    // Initialize selections with currently active items
     useEffect(() => {
         if (show && data?.configurable_features) {
             const initial = {};
             data.configurable_features.forEach(feat => {
-                // Initialize with active items up to the limit
                 initial[feat.id] = feat.active_items.slice(0, feat.limit).map(i => i._id);
             });
             setSelections(initial);
@@ -27,20 +24,14 @@ const PlanConfigurationModal = ({ show, onHide, data, onConfirm, submitting, ext
     const handleToggle = useCallback((featureId, itemId, limit, featureTitle) => {
         setSelections(prev => {
             const currentList = prev[featureId] || [];
-            
-            // If already selected, deselect
             if (currentList.includes(itemId)) {
                 setError(null);
                 return { ...prev, [featureId]: currentList.filter(id => id !== itemId) };
             }
-            
-            // If trying to select more than limit
             if (currentList.length >= limit) {
                 setError(`${t("You can only select up to")} ${limit} ${t("active")} ${t(featureTitle)}.`);
                 return prev;
             }
-
-            // Can select
             setError(null);
             return { ...prev, [featureId]: [...currentList, itemId] };
         });
@@ -48,8 +39,6 @@ const PlanConfigurationModal = ({ show, onHide, data, onConfirm, submitting, ext
 
     const handleConfirm = useCallback(() => {
         if (!data?.configurable_features) return;
-
-        // Final validation
         for (const feat of data.configurable_features) {
             const selectedCount = selections[feat.id]?.length || 0;
             if (selectedCount > feat.limit) {
@@ -116,10 +105,10 @@ const PlanConfigurationModal = ({ show, onHide, data, onConfirm, submitting, ext
                             {[...feature.active_items, ...feature.archived_items].map(item => {
                                 const isSelected = selections[feature.id]?.includes(item._id);
                                 const isActive = feature.active_items.some(i => i._id === item._id);
-                                
+
                                 return (
                                     <Col key={item._id}>
-                                        <Card 
+                                        <Card
                                             className={`h-100 cursor-pointer selection-card transition-all ${isSelected ? 'selected bg-light-blue border-primary shadow-sm' : 'border-light-subtle'}`}
                                             onClick={() => handleToggle(feature.id, item._id, feature.limit, feature.title)}
                                             style={{ transition: 'all 0.2s ease-in-out' }}
@@ -128,7 +117,7 @@ const PlanConfigurationModal = ({ show, onHide, data, onConfirm, submitting, ext
                                                 <Form.Check
                                                     type="checkbox"
                                                     checked={isSelected}
-                                                    onChange={() => { }} // Handled by onClick on the Card
+                                                    onChange={() => { }}
                                                     className="me-2 cursor-pointer"
                                                 />
                                                 <div className="flex-grow-1 overflow-hidden me-2">

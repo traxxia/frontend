@@ -1,8 +1,3 @@
-/* TRAXIA MenuBar Styles */
-/* Import the CSS variables file before using this */
-/* @import 'path/to/css-variables.css'; */
-/* Add these styles to your menubar.css file */
-
 .traxia-navbar .container-fluid>div {
   display: flex;
   align-items: center;
@@ -20,7 +15,6 @@
   --color-text-white: #ffffff;
 }
 
-/* Left section - Company Logo */
 .navbar-left {
   flex: 0 0 auto;
   display: flex;
@@ -33,7 +27,7 @@
   align-items: center;
   justify-content: flex-start;
   height: 44px;
-  /* Slightly larger height for better visibility */
+
   max-width: 140px;
 }
 
@@ -51,7 +45,6 @@
   cursor: pointer;
 }
 
-/* Center section - Traxxia Logo */
 .navbar-center {
   position: absolute;
   left: 50%;
@@ -73,17 +66,15 @@
   text-decoration: none;
 }
 
-/* Right section - User Menu */
 .navbar-right {
   flex: 0 0 auto;
   display: flex;
   align-items: center;
   justify-content: flex-end;
   min-width: 120px;
-  /* Reserve space for user menu */
+
 }
 
-/* Responsive adjustments */
 @media (max-width: 768px) {
   .navbar-left {
     min-width: 80px;
@@ -136,7 +127,6 @@
   max-height: var(--navbar-height);
 }
 
-/* Hamburger Menu */
 .hamburger-menu {
   background: none !important;
   color: var(--color-text-secondary) !important;
@@ -156,7 +146,6 @@
   box-shadow: none !important;
 }
 
-/* TRAXIA Logo */
 .traxia-logo {
   font-weight: var(--font-weight-bold) !important;
   font-size: var(--font-size-lg) !important;
@@ -175,7 +164,6 @@
   transform: scale(1.02);
 }
 
-/* User Menu */
 .user-menu {
   background: none !important;
   color: var(--color-text-secondary) !important;
@@ -195,7 +183,6 @@
   box-shadow: none !important;
 }
 
-/* Dropdown Styles */
 .traxia-dropdown {
   border: 1px solid var(--color-border-light);
   border-radius: var(--border-radius-md);
@@ -236,7 +223,6 @@
   color: var(--color-danger);
 }
 
-/* Navbar Layout */
 .navbar-left,
 .navbar-right {
   min-width: 60px;
@@ -260,14 +246,12 @@
   height: 68px;
 }
 
-/* Dropdown Toggle Arrows - Hide them */
 .hamburger-menu::after,
 .user-menu::after,
 .notification-menu::after {
   display: none !important;
 }
 
-/* Dropdown Header */
 .traxia-dropdown .dropdown-header {
   padding: var(--spacing-sm) var(--spacing-lg);
   font-size: var(--font-size-xs);
@@ -286,13 +270,11 @@
   color: var(--color-text-white) !important;
 }
 
-/* Dropdown Divider */
 .traxia-dropdown .dropdown-divider {
   margin: var(--spacing-sm) var(--spacing-lg);
   border-color: var(--color-border-light);
 }
 
-/* Responsive adjustments */
 @media (max-width: 576px) {
   .traxia-logo {
     font-size: var(--font-size-md) !important;
@@ -309,7 +291,6 @@
   }
 }
 
-/* Animation for dropdown */
 .traxia-dropdown {
   animation: fadeInDown var(--transition-fast) ease-out;
 }
@@ -326,7 +307,6 @@
   }
 }
 
-/* Focus states for accessibility */
 .hamburger-menu:focus-visible,
 .user-menu:focus-visible {
   outline: 2px solid var(--color-primary);
@@ -338,7 +318,6 @@
   outline-offset: -2px;
 }
 
-/* DROPDOWN ALIGNMENT */
 .traxia-dropdown .dropdown-item-traxia {
   display: flex !important;
   align-items: center !important;
@@ -347,7 +326,6 @@
   width: 100%;
 }
 
-/* Notification Empty State Animation */
 @keyframes emptyStateFloatPulse {
   0% {
     transform: translateY(0) scale(1);
@@ -380,7 +358,6 @@
   animation: emptyStateSoftSwing 4s ease-in-out infinite;
 }
 
-/* Premium Active Bell Styling */
 .notification-bell-container {
   display: flex;
   align-items: center;
@@ -411,7 +388,6 @@
   color: var(--color-primary, #0B5ED7) !important;
 }
 
-/* Badge Blink Animation */
 @keyframes badgeBlinkPulse {
   0% { transform: scale(1); opacity: 1; }
   50% { transform: scale(1.15); opacity: 0.7; box-shadow: 0 0 8px rgba(220, 53, 69, 0.6); }

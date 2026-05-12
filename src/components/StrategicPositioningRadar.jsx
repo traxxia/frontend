@@ -26,7 +26,7 @@ const StrategicPositioningRadar = ({
 }) => {
     const { t } = useTranslation();
     const token = useAuthStore(state => state.token);
-    
+
     const {
         strategicRadarData: storeStrategicRadarData,
         isRegenerating: isTypeRegenerating,
@@ -229,8 +229,6 @@ const StrategicPositioningRadar = ({
         return 'low-intensity';
     };
 
-
-
     if (isRegenerating) {
         return (
             <div className="strategic-radar-container">
@@ -266,10 +264,10 @@ const StrategicPositioningRadar = ({
     const { dimensions, overallPosition } = strategicRadar;
 
     let currentRowIndex = 0;
-    const executiveIndices = overallPosition ? { 
-        currentAverage: currentRowIndex++, 
-        targetAverage: currentRowIndex++, 
-        improvementGap: currentRowIndex++ 
+    const executiveIndices = overallPosition ? {
+        currentAverage: currentRowIndex++,
+        targetAverage: currentRowIndex++,
+        improvementGap: currentRowIndex++
     } : {};
     const dimensionIndices = dimensions?.map(() => currentRowIndex++) || [];
 

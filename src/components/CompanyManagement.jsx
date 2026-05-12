@@ -5,10 +5,7 @@ import '../styles/CompanyManagement.css';
 import { useTranslation } from '../hooks/useTranslation';
 import AdminTable from './AdminTable';
 
-
 import { useAuthStore } from '../store/authStore';
-
-// ------------------ CompanyEdit Modal ------------------
 const CompanyEditModal = ({ company, onClose, onSave, onToast }) => {
   const { t } = useTranslation();
   const [formData, setFormData] = useState({
@@ -28,14 +25,10 @@ const CompanyEditModal = ({ company, onClose, onSave, onToast }) => {
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (!file) return;
-
-    // Validate image type
     if (!file.type.startsWith('image/')) {
       onToast('Please upload an image file.', 'error');
       return;
     }
-
-    // Set local preview
     const previewUrl = URL.createObjectURL(file);
     setLogoPreview(previewUrl);
     setSelectedFile(file);
@@ -43,8 +36,6 @@ const CompanyEditModal = ({ company, onClose, onSave, onToast }) => {
 
   const handleSave = async (e) => {
     e.preventDefault();
-
-    // Validation
     const newErrors = {};
     const name = formData.company_name.trim();
     const industry = formData.industry.trim();
@@ -90,8 +81,6 @@ const CompanyEditModal = ({ company, onClose, onSave, onToast }) => {
 
     try {
       let finalLogoUrl = company.logo;
-
-      // 1. Upload logo if a new one was selected
       if (selectedFile) {
         const logoFormData = new FormData();
         logoFormData.append('logo', selectedFile);
@@ -112,8 +101,6 @@ const CompanyEditModal = ({ company, onClose, onSave, onToast }) => {
         const logoData = await logoRes.json();
         finalLogoUrl = logoData.logo_url;
       }
-
-      // 2. Update company details
       const detailRes = await fetch(`${API_BASE_URL}/api/admin/companies/${company._id}`, {
         method: 'PUT',
         headers: {
@@ -126,8 +113,6 @@ const CompanyEditModal = ({ company, onClose, onSave, onToast }) => {
       if (detailRes.ok) {
         onToast('Company updated successfully', 'success');
         onSave({ ...company, ...formData, logo: finalLogoUrl });
-
-        // Update authStore if this is the user's company
         if (useAuthStore.getState().userRole === 'company_admin') {
           useAuthStore.getState().updateUser({
             companyName: formData.company_name,
@@ -337,8 +322,6 @@ const CompanyManagement = ({ onToast }) => {
   const handleUpdateCompany = (updatedCompany) => {
     setCompanies(prev => prev.map(c => c._id === updatedCompany._id ? updatedCompany : c));
   };
-
-  // Search
   const filteredCompanies = companies.filter((company) => {
     const search = searchTerm.toLowerCase();
 
@@ -369,8 +352,6 @@ const CompanyManagement = ({ onToast }) => {
     currentPage * pageSize
   );
   const totalPages = Math.ceil(filteredCompanies.length / pageSize);
-
-  // Column definitions
   const columns = [
     {
       key: 'logo',

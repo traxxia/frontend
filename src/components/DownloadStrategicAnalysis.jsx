@@ -6,7 +6,7 @@ const DownloadStrategicAnalysis = ({
     businessName = '',
     isDisabled = false,
     size = 'medium',
-    onToastMessage 
+    onToastMessage
 }) => {
     const { t } = useTranslation();
     const [isGenerating, setIsGenerating] = useState(false);
@@ -16,8 +16,6 @@ const DownloadStrategicAnalysis = ({
 
         try {
             setIsGenerating(true);
-            
-            // 1. Load libraries
             const [jsPDFModule, html2canvasModule] = await Promise.all([
                 import('jspdf'),
                 import('html2canvas')
@@ -27,8 +25,6 @@ const DownloadStrategicAnalysis = ({
 
             const pdf = new jsPDF('p', 'mm', 'a4');
             const pageWidth = pdf.internal.pageSize.getWidth();
-            
-            // 2. Capture Strategic Container
             const container = document.querySelector('.strategic-content, .strategic-analysis-container');
             if (!container) {
                 onToastMessage?.('Strategic content not found', 'error');
@@ -81,15 +77,15 @@ const DownloadStrategicAnalysis = ({
                     <Loader size={48} color="white" style={{ animation: 'spin 1s linear infinite' }} />
                 </div>
             )}
-            
+
             <button
                 onClick={handleDownload}
-                disabled={isDisabled || isGenerating} 
+                disabled={isDisabled || isGenerating}
                 style={{
                     backgroundColor: "#1a73e8", color: "#fff", border: "none", borderRadius: "10px",
                     padding: "10px 18px", fontSize: "14px", fontWeight: 600, display: "flex",
                     alignItems: "center", cursor: "pointer", gap: "8px",
-                    boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)", 
+                    boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)",
                 }}
             >
                 <Download size={iconSizes[size]} />

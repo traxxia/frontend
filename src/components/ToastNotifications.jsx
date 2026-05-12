@@ -10,8 +10,8 @@ const ToastNotifications = () => {
   if (toasts.length === 0) return null;
 
   return (
-    <div 
-      className="global-toast-container" 
+    <div
+      className="global-toast-container"
       style={{
         position: 'fixed',
         top: '20px',

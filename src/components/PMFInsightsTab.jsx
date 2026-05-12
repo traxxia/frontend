@@ -11,7 +11,6 @@ import { AnalysisApiService } from "../services/analysisApiService";
 import { useTranslation } from "../hooks/useTranslation";
 import { Modal } from "react-bootstrap";
 
-
 import { useAuthStore, useBusinessStore, useUIStore } from '../store';
 
 const PMFInsightsTab = ({ onStartOnboarding, refreshTrigger }) => {
@@ -27,8 +26,6 @@ const PMFInsightsTab = ({ onStartOnboarding, refreshTrigger }) => {
     ""
   ).toLowerCase();
   const isViewer = userRole === "viewer";
-
-  // API Service setup
   const ML_API_BASE_URL = process.env.REACT_APP_ML_BACKEND_URL;
   const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
   const getAuthToken = () => useAuthStore.getState().token;
@@ -46,12 +43,10 @@ const PMFInsightsTab = ({ onStartOnboarding, refreshTrigger }) => {
       }
 
       try {
-        setLoading(prev => (data ? false : true)); // Only show spinner on first load
+        setLoading(prev => (data ? false : true));
         const result = await analysisService.getPMFAnalysis(businessId);
         if (!cancelled) {
           setData(result);
-
-          // --- OVERWRITE DETECTION (AHA Page) ---
           if (result && result.user_id) {
             const currentUserId = useAuthStore.getState().userId;
             const bId = String(businessId);
@@ -68,10 +63,6 @@ const PMFInsightsTab = ({ onStartOnboarding, refreshTrigger }) => {
               const dbUserId = getStrId(result.user_id);
               const expUserId = getStrId(expectedUserId);
               const currentUser = getStrId(currentUserId);
-
-              // Condition for overwrite:
-              // 1. We expected our own data (flag matches us)
-              // 2. Data in DB belongs to someone else
               if (dbUserId && expUserId === currentUser && dbUserId !== currentUser) {
                 console.info("PMF Overwrite TRIGGERED", { dbUserId, currentUser });
                 try {
@@ -86,7 +77,6 @@ const PMFInsightsTab = ({ onStartOnboarding, refreshTrigger }) => {
               }
             }
           }
-          // --- END OVERWRITE DETECTION ---
         }
       } catch (error) {
         console.error("PMFInsightsTab: Error fetching insights:", error);
@@ -96,8 +86,6 @@ const PMFInsightsTab = ({ onStartOnboarding, refreshTrigger }) => {
     };
 
     fetchInsights();
-
-    // Background check every 30 seconds for concurrent overwrites
     const interval = setInterval(() => {
       if (!showOverwriteModal) {
         fetchInsights();
@@ -108,7 +96,6 @@ const PMFInsightsTab = ({ onStartOnboarding, refreshTrigger }) => {
       cancelled = true;
       clearInterval(interval);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedBusinessId, refreshTrigger]);
 
   if (loading) {
@@ -138,8 +125,6 @@ const PMFInsightsTab = ({ onStartOnboarding, refreshTrigger }) => {
       </div>
     );
   }
-
-  // Robustly extract insights from data
   let rawInsights = [];
   if (data) {
     if (Array.isArray(data)) {
@@ -152,8 +137,6 @@ const PMFInsightsTab = ({ onStartOnboarding, refreshTrigger }) => {
       }
     }
   }
-
-  // Ensure it's an array and handle fields like key_points vs details
   const insights = rawInsights.map(insight => ({
     ...insight,
     details: insight.details || insight.key_points || []
@@ -181,14 +164,10 @@ const PMFInsightsTab = ({ onStartOnboarding, refreshTrigger }) => {
 
   const getIcon = (type, index) => {
     const iconType = type?.toLowerCase() || '';
-
-    // First try keyword matching
     if (iconType.includes('market')) return <TrendingUp size={18} color="#2563eb" />;
     if (iconType.includes('core')) return <Target size={18} color="#2563eb" />;
     if (iconType.includes('adjacency')) return <Puzzle size={18} color="#2563eb" />;
     if (iconType.includes('risk') || iconType.includes('constraint')) return <AlertCircle size={18} color="#2563eb" />;
-
-    // Fallback to index-based mapping
     switch (index % 4) {
       case 0: return <TrendingUp size={18} color="#2563eb" />;
       case 1: return <Target size={18} color="#2563eb" />;
@@ -274,7 +253,7 @@ const PMFInsightsTab = ({ onStartOnboarding, refreshTrigger }) => {
         </Row>
       </Container>
 
-      {/* Overwrite Notification Modal */}
+      {}
       <Modal
         show={showOverwriteModal}
         onHide={() => setShowOverwriteModal(false)}
@@ -318,8 +297,6 @@ const PMFInsightsTab = ({ onStartOnboarding, refreshTrigger }) => {
     </div>
   );
 };
-
-// Internal styles for the component
 const StyleSheet = () => (
   <style>{`
     .insight-list {
@@ -334,8 +311,7 @@ const StyleSheet = () => (
     .icon-box:hover {
       transform: scale(1.1);
     }
-    
-    /* Ensure subtle badges look premium and are available */
+
     .bg-success-subtle {
       background-color: #d1fae5 !important;
       color: #065f46 !important;
@@ -356,13 +332,12 @@ const StyleSheet = () => (
       background-color: #f3f4f6 !important;
       color: #374151 !important;
     }
-    
+
     .text-success { color: #065f46 !important; }
     .text-warning { color: #92400e !important; }
     .text-danger { color: #991b1b !important; }
     .text-primary { color: #1e40af !important; }
 
-    /* Compact Overwrite Modal Styles */
     .pmf-overwrite-modal .modal-content {
       border-radius: 12px;
       border: none;
@@ -370,14 +345,13 @@ const StyleSheet = () => (
       width: 100%;
       margin: 0 auto;
     }
-    
+
     @media (min-width: 576px) {
       .pmf-overwrite-modal .modal-dialog {
         max-width: 380px;
       }
     }
 
-    /* Compact Overwrite Modal Styles */
 .pmf-overwrite-modal .modal-dialog {
   max-width: 380px;
 }

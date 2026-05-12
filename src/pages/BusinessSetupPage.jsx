@@ -61,7 +61,6 @@ const BusinessSetupContent = () => {
 
   const userRole = useAuthStore(state => state.userRole);
 
-
   return (
     <div className={`business-setup-container ${isArchived ? 'is-archived' : ''}`}>
       <MenuBar />

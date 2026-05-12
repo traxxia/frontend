@@ -4,7 +4,7 @@ import { useTranslation } from '@/hooks/useTranslation';
 
 const TEMPLATE_METRICS = {
   simple: {
-    name: "Simplified", 
+    name: "Simplified",
     metrics: [
       { key: "revenue", name: "Revenue", required: true },
       { key: "net_income", name: "Net Income", required: true },
@@ -52,15 +52,15 @@ const TEMPLATE_METRICS = {
 };
 
 const getCurrentTemplateType = (documentInfo) => {
-  let type = "standard"; 
+  let type = "standard";
   if (documentInfo?.template_name) {
     const templateName = documentInfo.template_name.toLowerCase();
     if (templateName.includes("simplified") || templateName.includes("simple") || templateName.includes("basic")) {
       type = "simple";
     } else if (templateName.includes("detailed") || templateName.includes("advanced") || templateName.includes("comprehensive")) {
       type = "detailed";
-    } 
-  } else if (documentInfo?.template_type) { 
+    }
+  } else if (documentInfo?.template_type) {
     const templateType = documentInfo.template_type.toLowerCase();
     if (templateType === "simple" || templateType === "basic") {
       type = "simple";
@@ -76,10 +76,10 @@ const isMetricRequired = (metricKey, templateKey) => {
   return template.metrics.some(m => m.key === metricKey && m.required);
 };
 
-const MissingMetricsDisplay = ({ 
-  documentInfo,  
-  className = "" 
-}) => { 
+const MissingMetricsDisplay = ({
+  documentInfo,
+  className = ""
+}) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const { t } = useTranslation();
 
@@ -92,7 +92,7 @@ const MissingMetricsDisplay = ({
   const allMetrics = useMemo(() => {
     const metrics = [];
     const metricSet = new Set();
-    
+
     Object.values(TEMPLATE_METRICS).forEach(template => {
       template.metrics.forEach(metric => {
         if (!metricSet.has(metric.key)) {
@@ -110,33 +110,33 @@ const MissingMetricsDisplay = ({
 
   return (
     <div className={`missing-metrics-display ${className}`}>
-      {/* Header */}
+      {}
       <div className="header" style={{ color: hasDocument ? '#dc2626' : '#2563eb' }}>
         {hasDocument ? <AlertTriangle size={18} /> : <Info size={18} />}
         <span>{hasDocument ? t("Template_Requirements_Missing") : "Financial Template Requirements"}</span>
       </div>
 
-      {/* Main Message */}
+      {}
       <div className="message-box">
         <div className="main-message" style={{ color: hasDocument ? '#991b1b' : '#1e40af' }}>
-          {hasDocument 
-            ? t("Some_required_metrics_are_missing_for_your_selected_template.") 
+          {hasDocument
+            ? t("Some_required_metrics_are_missing_for_your_selected_template.")
             : "Please upload a financial document follows the requirements below to unlock detailed insights."}
-        </div> 
+        </div>
       </div>
 
-      {/* Template Info */}
-      <div className="template-info"> 
+      {}
+      <div className="template-info">
         <div className="template-details">
           <div className="template-name">Current Template: {currentTemplate.name}</div>
           <div className="template-desc">{currentTemplate.metrics.length} metrics required</div>
         </div>
         <button
           onClick={handleToggleExpanded}
-          style={{ 
-            background: 'none', 
-            border: 'none', 
-            cursor: 'pointer', 
+          style={{
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
             color: '#1d4ed8',
             display: 'flex',
             alignItems: 'center',
@@ -157,31 +157,31 @@ const MissingMetricsDisplay = ({
           )}
         </button>
       </div>
- 
+
       <div style={{ marginTop: '16px' }}>
         <div className="section-title">
           <span>Required Metrics for {currentTemplate.name}</span>
         </div>
         <div className="metrics-grid">
           {currentTemplate.metrics.map((metric) => (
-            <div key={metric.key} className="metric required-metric"> 
+            <div key={metric.key} className="metric required-metric">
               <span>{metric.name}</span>
             </div>
           ))}
         </div>
       </div>
 
-      {/* Expanded View */}
+      {}
       {isExpanded && (
         <div style={{ marginTop: '16px' }}>
           <div className="section-title">
             All Template Comparison
           </div>
-          
-          {/* Comparison Table */}
-          <div style={{ 
-            backgroundColor: 'white', 
-            borderRadius: '8px', 
+
+          {}
+          <div style={{
+            backgroundColor: 'white',
+            borderRadius: '8px',
             border: '1px solid #e2e8f0',
             overflow: 'hidden',
             marginTop: '12px'
@@ -190,9 +190,9 @@ const MissingMetricsDisplay = ({
               <thead>
                 <tr style={{ backgroundColor: '#f8fafc' }}>
                   <th style={{ padding: '8px 12px', textAlign: 'center', fontWeight: '600' }}>Metric</th>
-                  <th style={{ 
-                    padding: '8px 12px', 
-                    textAlign: 'center', 
+                  <th style={{
+                    padding: '8px 12px',
+                    textAlign: 'center',
                     fontWeight: '600',
                     backgroundColor: currentTemplateType === 'simple' ? '#fed7aa' : '#f8fafc',
                     color: currentTemplateType === 'simple' ? '#9a3412' : '#374151'
@@ -202,9 +202,9 @@ const MissingMetricsDisplay = ({
                       <div style={{ fontSize: '10px', fontWeight: 'bold' }}>(Current)</div>
                     )}
                   </th>
-                  <th style={{ 
-                    padding: '8px 12px', 
-                    textAlign: 'center', 
+                  <th style={{
+                    padding: '8px 12px',
+                    textAlign: 'center',
                     fontWeight: '600',
                     backgroundColor: currentTemplateType === 'standard' ? '#fed7aa' : '#f8fafc',
                     color: currentTemplateType === 'standard' ? '#9a3412' : '#374151'
@@ -214,9 +214,9 @@ const MissingMetricsDisplay = ({
                       <div style={{ fontSize: '10px', fontWeight: 'bold' }}>(Current)</div>
                     )}
                   </th>
-                  <th style={{ 
-                    padding: '8px 12px', 
-                    textAlign: 'center', 
+                  <th style={{
+                    padding: '8px 12px',
+                    textAlign: 'center',
                     fontWeight: '600',
                     backgroundColor: currentTemplateType === 'detailed' ? '#fed7aa' : '#f8fafc',
                     color: currentTemplateType === 'detailed' ? '#9a3412' : '#374151'
@@ -230,13 +230,13 @@ const MissingMetricsDisplay = ({
               </thead>
               <tbody>
                 {allMetrics.map((metric, index) => (
-                  <tr key={metric.key} style={{ 
+                  <tr key={metric.key} style={{
                     borderTop: index > 0 ? '1px solid #e2e8f0' : 'none',
-                    backgroundColor: index % 2 === 0 ? 'white' : '#f8fafc' 
+                    backgroundColor: index % 2 === 0 ? 'white' : '#f8fafc'
                   }}>
                     <td style={{ padding: '8px 12px', fontWeight: '500' }}>{metric.name}</td>
-                    <td style={{ 
-                      padding: '8px 12px', 
+                    <td style={{
+                      padding: '8px 12px',
                       textAlign: 'center',
                       backgroundColor: currentTemplateType === 'simple' ? '#fef3c7' : (index % 2 === 0 ? 'white' : '#f8fafc')
                     }}>
@@ -246,8 +246,8 @@ const MissingMetricsDisplay = ({
                         <X size={14} style={{ color: '#d1d5db', margin: '0 auto', display: 'block' }} />
                       )}
                     </td>
-                    <td style={{ 
-                      padding: '8px 12px', 
+                    <td style={{
+                      padding: '8px 12px',
                       textAlign: 'center',
                       backgroundColor: currentTemplateType === 'standard' ? '#fef3c7' : (index % 2 === 0 ? 'white' : '#f8fafc')
                     }}>
@@ -257,8 +257,8 @@ const MissingMetricsDisplay = ({
                         <X size={14} style={{ color: '#d1d5db', margin: '0 auto', display: 'block' }} />
                       )}
                     </td>
-                    <td style={{ 
-                      padding: '8px 12px', 
+                    <td style={{
+                      padding: '8px 12px',
                       textAlign: 'center',
                       backgroundColor: currentTemplateType === 'detailed' ? '#fef3c7' : (index % 2 === 0 ? 'white' : '#f8fafc')
                     }}>
@@ -272,9 +272,9 @@ const MissingMetricsDisplay = ({
                 ))}
               </tbody>
             </table>
-          </div> 
+          </div>
         </div>
-      )} 
+      )}
     </div>
   );
 };

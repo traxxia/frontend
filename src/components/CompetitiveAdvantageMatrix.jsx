@@ -33,7 +33,6 @@ const CompetitiveAdvantageMatrix = ({
     const rawCompetitiveData = propCompetitiveAdvantageData || storeCompetitiveAdvantageData;
     const isRegenerating = propIsRegenerating || isTypeRegenerating('competitiveAdvantage');
 
-
     const [expandedSections, setExpandedSections] = useState({
         position: false
     });

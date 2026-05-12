@@ -6,14 +6,11 @@ import '../styles/AnalysisEmptyState.css';
 import { useAuthStore } from '../store/authStore';
 
 const AnalysisEmptyState = ({
-  // Required props
   analysisType,
   analysisDisplayName,
   icon: IconComponent,
   onImproveAnswers,
   onRegenerate,
-
-  // Optional props
   isRegenerating = false,
   canRegenerate = true,
   userAnswers = {},
@@ -21,8 +18,6 @@ const AnalysisEmptyState = ({
   customMessage = null,
   showRegenerateButton = true,
   showImproveButton = true,
-
-  // File upload props
   showFileUpload = false,
   onFileUpload = null,
   onGenerateWithFile = null,
@@ -32,8 +27,6 @@ const AnalysisEmptyState = ({
   isUploading = false,
   fileUploadMessage = "Upload documents for detailed analysis",
   acceptedFileTypes = ".pdf,.xlsx,.xls,.csv,.jpg,.jpeg,.png",
-
-  // Styling props
   iconSize = 40,
   buttonGap = '16px',
   marginTop = '0px'
@@ -45,12 +38,8 @@ const AnalysisEmptyState = ({
 
   const answeredCount = Object.keys(userAnswers).length;
   const hasEnoughAnswers = answeredCount >= minimumAnswersRequired;
-
-  // Override visibility flags if user is a viewer
   const effectiveShowImproveButton = isViewer ? false : showImproveButton;
   const effectiveShowRegenerateButton = isViewer ? false : showRegenerateButton;
-
-  // Determine what message and buttons to show
   const getMessage = () => {
     if (customMessage) {
       return customMessage;
@@ -75,7 +64,7 @@ const AnalysisEmptyState = ({
         {getMessage()}
       </p>
 
-      {/* Regular Action Buttons */}
+      {}
       {shouldShowButtons && (
         <div className="empty-state-actions" style={{ marginTop: marginTop }}>
           {effectiveShowImproveButton && (

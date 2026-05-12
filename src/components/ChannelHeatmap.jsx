@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
-import { BarChart3, TrendingUp, Layers, Loader, Zap, Grid3x3 } from 'lucide-react'; 
+import { BarChart3, TrendingUp, Layers, Loader, Zap, Grid3x3 } from 'lucide-react';
 import '../styles/Analytics.css';
 import { useTranslation } from "../hooks/useTranslation";
 import { useAnalysisStore } from '../store';
@@ -19,28 +19,22 @@ const ChannelHeatmap = ({
   onRedirectToBrief
 }) => {
   const { t } = useTranslation();
-  
-  // Use Zustand store
-  const { 
+  const {
     channelHeatmapData: storeChannelHeatmapData,
     isRegenerating: isTypeRegenerating,
-    regenerateIndividualAnalysis 
+    regenerateIndividualAnalysis
   } = useAnalysisStore();
 
   const isRegenerating = propIsRegenerating || isTypeRegenerating('channelHeatmap');
-
-  // Normalize data from store or props
   const heatmapData = useMemo(() => {
     const rawData = propChannelHeatmapData || storeChannelHeatmapData;
     if (!rawData) return null;
-    
-    // Normalize structure
     if (rawData.channels && rawData.products && rawData.matrix) return rawData;
-    
+
     return null;
   }, [propChannelHeatmapData, storeChannelHeatmapData]);
 
-  const [selectedCell, setSelectedCell] = useState(null); 
+  const [selectedCell, setSelectedCell] = useState(null);
   const [error, setError] = useState(null);
 
   const handleRedirectToBrief = useCallback((missingQuestionsData = null) => {
@@ -56,7 +50,7 @@ const ChannelHeatmap = ({
     };
 
     await checkMissingQuestionsAndRedirect(
-      'channelHeatmap',  
+      'channelHeatmap',
       selectedBusinessId,
       handleRedirectToBrief,
       {
@@ -65,7 +59,7 @@ const ChannelHeatmap = ({
       }
     );
   }, [selectedBusinessId, handleRedirectToBrief]);
- 
+
   const handleRegenerate = useCallback(async () => {
     if (onRegenerate) {
       try {
@@ -85,12 +79,12 @@ const ChannelHeatmap = ({
   }, [onRegenerate, regenerateIndividualAnalysis, questions, userAnswers, selectedBusinessId]);
 
   const isHeatmapDataIncomplete = useCallback((data) => {
-    if (!data) return true; 
+    if (!data) return true;
     if (!data.products || data.products.length === 0) return true;
     if (!data.channels || data.channels.length === 0) return true;
-    if (!data.matrix || data.matrix.length === 0) return true; 
+    if (!data.matrix || data.matrix.length === 0) return true;
     return !data.legend;
-  }, []); 
+  }, []);
 
   const getMatrixValue = useCallback((product, channel) => {
     if (!heatmapData?.matrix) return null;
@@ -98,12 +92,12 @@ const ChannelHeatmap = ({
       item.product === product && item.channel === channel
     );
   }, [heatmapData]);
- 
+
   const getHeatmapColor = useCallback((value) => {
     if (!value || !heatmapData?.legend) return '#f3f4f6';
 
-    const intensity = value / 100; 
-    const { colorRange } = heatmapData.legend; 
+    const intensity = value / 100;
+    const { colorRange } = heatmapData.legend;
     const hexToRgb = (hex) => {
       const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
       return result ? {
@@ -116,27 +110,27 @@ const ChannelHeatmap = ({
     const lowColor = hexToRgb(colorRange.low);
     const highColor = hexToRgb(colorRange.high);
 
-    if (!lowColor || !highColor) return colorRange.low; 
+    if (!lowColor || !highColor) return colorRange.low;
     const r = Math.round(lowColor.r + (highColor.r - lowColor.r) * intensity);
     const g = Math.round(lowColor.g + (highColor.g - lowColor.g) * intensity);
     const b = Math.round(lowColor.b + (highColor.b - lowColor.b) * intensity);
     return `rgb(${r}, ${g}, ${b})`;
   }, [heatmapData]);
- 
+
   const getChannelTotal = useCallback((channel) => {
     if (!heatmapData?.matrix) return 0;
     return heatmapData.matrix
       .filter(item => item.channel === channel)
       .reduce((sum, item) => sum + item.value, 0);
   }, [heatmapData]);
- 
+
   const getProductTotal = useCallback((product) => {
     if (!heatmapData?.matrix) return 0;
     return heatmapData.matrix
       .filter(item => item.product === product)
       .reduce((sum, item) => sum + item.value, 0);
   }, [heatmapData]);
- 
+
   const topPerformers = useMemo(() => {
     if (!heatmapData?.matrix) return [];
     return [...heatmapData.matrix]
@@ -158,13 +152,13 @@ const ChannelHeatmap = ({
   const renderContent = () => {
     if (error) {
       return (
-        <AnalysisError 
+        <AnalysisError
           error={error}
           onRetry={handleRegenerate}
           title="Channel Heatmap Analysis Error"
         />
       );
-    } 
+    }
 
     if (!heatmapData || isHeatmapDataIncomplete(heatmapData)) {
       return (
@@ -178,7 +172,7 @@ const ChannelHeatmap = ({
           canRegenerate={canRegenerate}
           userAnswers={userAnswers}
           minimumAnswersRequired={3}
-        /> 
+        />
       );
     }
 
@@ -210,12 +204,12 @@ const ChannelHeatmap = ({
               {topPerformers.length > 0 ? `${topPerformers[0].value}%` : 'N/A'}
             </p>
           </div>
-        </div> 
+        </div>
 
         <div className="ch-heatmap-container">
           <div className="ch-heatmap-scroll">
             <div className="ch-heatmap-header-section">
-              <h3 className="ch-section-title">Performance Heatmap</h3> 
+              <h3 className="ch-section-title">Performance Heatmap</h3>
               {heatmapData.legend && (
                 <div className="ch-legend-gradient">
                   <div
@@ -233,7 +227,7 @@ const ChannelHeatmap = ({
             </div>
 
             <div className="ch-heatmap-wrapper">
-              <div className="ch-heatmap"> 
+              <div className="ch-heatmap">
                 <div className="ch-heatmap-header">
                   <div className="ch-cell ch-cell-corner"></div>
                   {heatmapData.channels?.map((channel, index) => (
@@ -245,7 +239,7 @@ const ChannelHeatmap = ({
                     </div>
                   ))}
                 </div>
-   
+
                 {heatmapData.products?.map((product, productIndex) => (
                   <div key={productIndex} className="ch-heatmap-row">
                     <div className="ch-cell ch-cell-header ch-product-header">
@@ -272,7 +266,7 @@ const ChannelHeatmap = ({
                             {cellData?.volume && (
                               <span className="ch-cell-volume">Vol: {cellData.volume}</span>
                             )}
-                          </div> 
+                          </div>
                           {selectedCell === `${productIndex}-${channelIndex}` && (
                             <div className="ch-tooltip">
                               <div className="ch-tooltip-header">
@@ -301,7 +295,7 @@ const ChannelHeatmap = ({
   return (
     <div className="channel-heatmap channel-heatmap-container" data-analysis-type="channel-heatmap"
       data-analysis-name="Channel Heatmap"
-      data-analysis-order="3">  
+      data-analysis-order="3">
       {renderContent()}
     </div>
   );

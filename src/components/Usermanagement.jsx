@@ -53,16 +53,12 @@ const UserManagement = ({ onToast }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedRole, setSelectedRole] = useState("All Roles");
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
-  const [isLoading, setIsLoading] = useState(false); // Legacy
+  const [isLoading, setIsLoading] = useState(false);
   const [isAssigning, setIsAssigning] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  // Pagination & Search state
   const [currentPage, setCurrentPage] = useState(1);
   const [lastPageBeforeSearch, setLastPageBeforeSearch] = useState(1);
   const itemsPerPage = 10;
-
-  // Modal contexts
   const [showModal, setShowModal] = useState(false);
   const [newName, setNewName] = useState("");
   const [newEmail, setNewEmail] = useState("");
@@ -88,64 +84,54 @@ const UserManagement = ({ onToast }) => {
   const [accessType, setAccessType] = useState("reRanking");
   const [showAccessConfirmation, setShowAccessConfirmation] = useState(false);
   const [isGrantingAccess, setIsGrantingAccess] = useState(false);
-
-  // Confirmation state
   const [pendingUserId, setPendingUserId] = useState(null);
   const [pendingUserName, setPendingUserName] = useState("");
   const [pendingRole, setPendingRole] = useState("");
   const [isReactivating, setIsReactivating] = useState(false);
   const [isRoleChanging, setIsRoleChanging] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
-
-  // Plan level & errors
   const [showPlanLimitModal, setShowPlanLimitModal] = useState(false);
   const [planLimitConfig, setPlanLimitConfig] = useState({});
   const [showErrorModal, setShowErrorModal] = useState(false);
   const [errorModalConfig, setErrorModalConfig] = useState({});
 
   const queryClient = useQueryClient();
-
-  // --- TanStack Query hooks ---
   const { data: usageData, isLoading: loadingPlans } = usePlanDetails();
   const usage = usageData?.usage;
   const { data: users = [], isLoading: loadingUsers } = useAdminUsers();
   const { data: companies = [], isLoading: loadingCompanies } = useCompanies();
   const { data: businessesRaw, isLoading: loadingBusinesses } = useBusinesses();
-  // Combine owned + collaborating into a flat list for the admin view
   const businessData = React.useMemo(() => [
     ...(businessesRaw?.businesses || []),
     ...(businessesRaw?.collaborating_businesses || [])
   ], [businessesRaw]);
 
-
   const { data: collaboratorData = [], isLoading: loadingCollaborators } = useCompanyCollaborators(accessBusinessId);
   const { data: projectData = [], isLoading: loadingProjects } = useProjects(accessBusinessId);
-
-  // Derive specialized business lists
-  const allBusinesses = React.useMemo(() => 
+  const allBusinesses = React.useMemo(() =>
     businessData.filter(b => {
       const s = (b.status || "").toLowerCase().trim();
       const am = (b.access_mode || "").toLowerCase().trim();
-      
+
       const isDeleted = s === "deleted" || am === "deleted";
       const isArchived = s === "archived" || am === "archived";
       const isInactive = s === "inactive" || am === "inactive" || am === "hidden";
-      
+
       return !isDeleted && !isArchived && !isInactive;
-    }), 
+    }),
     [businessData]
   );
   const launchedBusinesses = React.useMemo(() =>
     businessData.filter(b => {
       const s = (b.status || "").toLowerCase().trim();
       const am = (b.access_mode || "").toLowerCase().trim();
-      
+
       const isDeleted = s === "deleted" || am === "deleted";
       const isArchived = s === "archived" || am === "archived";
       const isInactive = s === "inactive" || am === "inactive" || am === "hidden";
-      
+
       const isLaunched = s === "launched" || b.has_launched_projects === true;
-      
+
       return !isDeleted && !isArchived && !isInactive && isLaunched;
     }),
     [businessData]
@@ -161,10 +147,7 @@ const UserManagement = ({ onToast }) => {
   }, [projectData]);
 
   const loadLaunchedBusinessAndProjects = () => {
-    // Legacy placeholder, now handled by TanStack hooks
   };
-
-
 
   const handleOpenModal = () => {
     setNewName("");
@@ -260,8 +243,6 @@ const UserManagement = ({ onToast }) => {
   const handleAddUser = async (e) => {
     e.preventDefault();
     if (!validateForm()) return;
-
-    // Dynamic Limit Check
     if (usage) {
       const roleKey = newRole.toLowerCase() === 'collaborator' ? 'collaborators' :
         (newRole.toLowerCase() === 'viewer' ? 'viewers' : 'users');
@@ -293,8 +274,6 @@ const UserManagement = ({ onToast }) => {
         headers: { Authorization: `Bearer ${token}` }
       });
       onToast(t("User_added_successfully"), "success");
-
-      // Invalidate queries to trigger parallel refetch
       queryClient.invalidateQueries({ queryKey: ["adminUsers"] });
       queryClient.invalidateQueries({ queryKey: ["planDetails"] });
 
@@ -308,9 +287,7 @@ const UserManagement = ({ onToast }) => {
     }
   };
 
-
   const handleRoleUpdate = async (userId, role) => {
-    // Dynamic Limit Check for role update
     if (usage) {
       const roleKey = role.toLowerCase() === 'collaborator' ? 'collaborators' :
         (role.toLowerCase() === 'viewer' ? 'viewers' : 'users');
@@ -413,9 +390,6 @@ const UserManagement = ({ onToast }) => {
       return;
     }
 
-    // Assigning usually means they are already a user/collaborator.
-    // The total seat limit is checked when adding a user or changing their role.
-
     setIsAssigning(true);
     try {
       await axios.post(`${BACKEND_URL}/api/businesses/${assignBusinessId}/collaborators`, { user_id: assignUserId }, {
@@ -443,11 +417,9 @@ const UserManagement = ({ onToast }) => {
     }
   };
 
-
   const handleSearch = (value) => {
     if (searchTerm === "" && value !== "") setLastPageBeforeSearch(currentPage);
     if (searchTerm !== "" && value === "") setCurrentPage(lastPageBeforeSearch);
-    // if (value !== searchTerm) setCurrentPage(1);
     setSearchTerm(value);
   };
 
@@ -456,8 +428,6 @@ const UserManagement = ({ onToast }) => {
     setSelectedRole(value);
     setCurrentPage(1);
   };
-
-  // Filtered users for the table
   const filteredUsers = users.filter((user) => {
     const search = searchTerm.toLowerCase();
     const matchSearch =
@@ -496,16 +466,12 @@ const UserManagement = ({ onToast }) => {
     return new Date(iso).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
   };
 
-
-
   const getSelectedCollaboratorNames = () => collaborators.filter(c => selectedCollaboratorIds.includes(c._id)).map(c => c.name);
   const getSelectedProjectName = () => projects.find(p => p._id === selectedProjectId)?.project_name || "";
   const getSelectedBusinessName = () => {
     const b = launchedBusinesses.find(b => b._id === accessBusinessId);
     return b?.business_name || b?.name || "";
   };
-
-  // Metrics calculation
   const activeUsers = users.filter(u => u.status !== 'inactive' && u.status !== 'deleted' && u.access_mode !== 'archived');
   const orgAdminsCount = activeUsers.filter(u => formatRole(u.role_name || u.role) === "Org Admin").length;
   const collaboratorsCount = activeUsers.filter(u => formatRole(u.role_name || u.role) === "Collaborator").length;
@@ -630,7 +596,7 @@ const UserManagement = ({ onToast }) => {
 
   return (
     <div>
-      {/* ---- Metric Cards ---- */}
+      {}
       <div className="admin-metrics-grid">
         {currentRole !== "company_admin" && (
           <MetricCard
@@ -660,15 +626,12 @@ const UserManagement = ({ onToast }) => {
         />
       </div>
 
-      {/* ---- Tool Actions ---- */}
+      {}
       <div className="admin-toolbar-row mb-3 mt-4">
         <div className="d-flex gap-2 ms-auto">
           {!isSuperAdmin && (
             <>
               <Button className="admin-primary-btn" onClick={() => {
-                // If usage has loaded, we check if they can add ANY role.
-                // If they have 0 limit for ALL roles (which shouldn't happen), then show modal.
-                // Otherwise, let them open the modal and check specifically on submit.
                 if (usage &&
                   usage.users.current >= usage.users.limit &&
                   usage.collaborators.current >= usage.collaborators.limit &&
@@ -736,8 +699,8 @@ const UserManagement = ({ onToast }) => {
         }
       />
 
-      {/* --- Modals Stay Same --- */}
-      {/* --- Add New User Modal --- */}
+      {}
+      {}
       <Modal show={showModal} onHide={handleCloseModal} centered scrollable size="lg" className="new-user-modal">
         <Modal.Header closeButton>
           <Modal.Title>{t("New_user")}</Modal.Title>
@@ -897,7 +860,7 @@ const UserManagement = ({ onToast }) => {
         </Modal.Body>
       </Modal>
 
-      {/* --- Modals for Assign, Access, Confirm --- */}
+      {}
       <Modal show={showAssignModal} onHide={handleCloseAssignModal} centered>
         <Modal.Header closeButton><Modal.Title>{t("Assign_Business_Access")}</Modal.Title></Modal.Header>
         <Modal.Body>
@@ -909,9 +872,7 @@ const UserManagement = ({ onToast }) => {
                 onChange={(e) => {
                   const bizId = e.target.value;
                   setAssignBusinessId(bizId);
-                  setAssignUserId(""); // Reset user selection when business changes
-                  // Populate current collaborators of the selected business so the user
-                  // dropdown can filter them out
+                  setAssignUserId("");
                   const selectedBiz = businessData.find(b => b._id === bizId);
                   setAssigningBusinessCollaborators(
                     (selectedBiz?.collaborators || []).map(c =>
@@ -942,8 +903,6 @@ const UserManagement = ({ onToast }) => {
                 {(() => {
                     const selectedBiz = businessData.find(b => b._id === assignBusinessId);
                     const ownerId = selectedBiz?.user_id?.toString();
-                    
-                    // NEW: Check if the business was created by a regular 'user' role
                     const ownerUser = users.find(u => u._id?.toString() === ownerId);
                     const ownerRole = (ownerUser?.role_name || ownerUser?.role)?.toLowerCase();
                     const isOwnerRegularUser = ownerRole === 'user';
@@ -957,9 +916,7 @@ const UserManagement = ({ onToast }) => {
                       const isOwner = u._id?.toString() === ownerId;
                       const isSuperAdminUser = rawRole === "super_admin";
                       const isOrgAdminUser = rawRole === "company_admin";
-
-                      // Allow 'Org Admin' to be assigned if the business was created by a regular user
-                      const isEligibleRole = ["Collaborator", "User", "Viewer"].includes(roleName) || 
+                      const isEligibleRole = ["Collaborator", "User", "Viewer"].includes(roleName) ||
                                             (isOrgAdminUser && isOwnerRegularUser);
 
                       return !isArchivedOrDeleted &&
@@ -1046,26 +1003,22 @@ const UserManagement = ({ onToast }) => {
               <Form.Label>{t("Participants")}</Form.Label>
               <div className="collaborator-checkbox-list" style={{ maxHeight: "350px", overflowY: "auto", border: "1px solid #dee2e6", borderRadius: "4px", padding: "17px" }}>
                 {(() => {
-                  // Find selected business from ALL business data (not just launched)
                   const selectedBizData = businessData.find(b => b._id?.toString() === accessBusinessId?.toString());
 
                   const filteredCollaborators = collaborators.filter(c => {
                     const cId = c._id?.toString();
                     const isOwner = cId === selectedBizData?.user_id?.toString();
-
-                    // Filter out viewers and administrators (unless they are the business owner)
                     const role = c.role_name?.toLowerCase();
                     if (!isOwner && (role === 'viewer' || role === 'company_admin' || role === 'super_admin')) return false;
 
                     if (accessType === "reRanking") {
-                      // Exclude collaborators already granted reranking access
                       const existing = (selectedBizData?.allowed_ranking_collaborators || []);
                       const alreadyHas = existing.some(id => id?.toString() === cId);
                       return !alreadyHas;
                     }
 
                     if (accessType === "projectEdit") {
-                      if (!selectedProjectId) return true; // No project chosen yet — show all
+                      if (!selectedProjectId) return true;
                       const project = projects.find(p => p._id?.toString() === selectedProjectId?.toString());
                       const existing = project?.allowed_collaborators || [];
                       const alreadyHas = existing.some(id => id?.toString() === cId);

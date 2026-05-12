@@ -6,7 +6,7 @@ import { useAuthStore } from '../store/authStore';
 
 const AcademyFeedback = ({ articleId }) => {
     const [submitted, setSubmitted] = useState(false);
-    const [feedbackType, setFeedbackType] = useState(null); // 'yes' or 'no'
+    const [feedbackType, setFeedbackType] = useState(null);
     const [feedbackText, setFeedbackText] = useState('');
     const [showTextarea, setShowTextarea] = useState(false);
     const [error, setError] = useState('');
@@ -14,7 +14,6 @@ const AcademyFeedback = ({ articleId }) => {
 
     const handleFeedback = (type) => {
         setFeedbackType(type);
-        // Show textarea for both positive and negative feedback
         setShowTextarea(true);
     };
 
@@ -25,7 +24,6 @@ const AcademyFeedback = ({ articleId }) => {
             feedback: text
         };
         try {
-            // Get user ID from Zustand auth store
             const storedUserId = useAuthStore.getState().userId;
             if (storedUserId) {
                 payload.userId = storedUserId;
@@ -35,7 +33,6 @@ const AcademyFeedback = ({ articleId }) => {
         }
 
         try {
-            // Using the base URL from the environment variables
             const baseUrl = process.env.REACT_APP_BACKEND_URL || '';
             const response = await fetch(`${baseUrl}/api/academy-feedback`, {
                 method: 'POST',
@@ -52,7 +49,7 @@ const AcademyFeedback = ({ articleId }) => {
                 console.error('Failed to submit feedback', errorMessage);
                 return;
             }
-            
+
             setSubmitted(true);
             setTimeout(() => {
                 setShowTextarea(false);
@@ -65,9 +62,9 @@ const AcademyFeedback = ({ articleId }) => {
 
     const validateFeedback = (text) => {
         const trimmedText = text.trim();
-        
+
         if (!trimmedText) {
-            return ''; // Optional
+            return '';
         }
         if (trimmedText.length < 10) {
             return t('feedback_min_length') || 'Feedback must be at least 10 characters long';

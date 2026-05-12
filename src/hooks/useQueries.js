@@ -4,10 +4,6 @@ import { useAuthStore } from '../store';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
-/**
- * Hook to fetch all businesses for the current user.
- * Replaces manual useEffect-based fetching in Dashboard and Projects components.
- */
 export const useBusinesses = () => {
   const token = useAuthStore((state) => state.token);
 
@@ -17,8 +13,6 @@ export const useBusinesses = () => {
       const res = await axios.get(`${BACKEND_URL}/api/businesses`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-
-      // If the server returns the legacy flat-array format, wrap it for backward compat
       if (Array.isArray(res.data)) {
         return { businesses: res.data, collaborating_businesses: [] };
       }
@@ -37,14 +31,11 @@ export const useBusinesses = () => {
       };
     },
     enabled: !!token,
-    staleTime: 0, // Always fresh so collaborators see newly assigned businesses immediately
+    staleTime: 0,
     refetchOnMount: 'always',
   });
 };
 
-/**
- * Hook to fetch subscription plan details and usage limits.
- */
 export const usePlanDetails = () => {
   const token = useAuthStore((state) => state.token);
 
@@ -54,23 +45,17 @@ export const usePlanDetails = () => {
       const res = await axios.get(`${BACKEND_URL}/api/subscription/plan-details`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      
-      // Auto-sync frontend auth limits so the user doesn't have to logout/login
-      // to see new tabs when their subscription plan is upgraded behind the scenes
       if (res.data?.plan_limits) {
         useAuthStore.getState().updateUser({ userLimits: res.data.plan_limits });
       }
-      
+
       return res.data;
     },
     enabled: !!token,
-    staleTime: 0, // Fresh every time for admin/subscription view
+    staleTime: 0,
   });
 };
 
-/**
- * Hook to fetch access control settings for a specific business.
- */
 export const useAccessControlQuery = (businessId) => {
   const token = useAuthStore((state) => state.token);
 
@@ -84,13 +69,10 @@ export const useAccessControlQuery = (businessId) => {
       return res.data;
     },
     enabled: !!token && !!businessId,
-    staleTime: 0, // Fresh every time for admin access control
+    staleTime: 0,
   });
 };
 
-/**
- * Hook to fetch global questions.
- */
 export const useGlobalQuestions = () => {
   const token = useAuthStore((state) => state.token);
 
@@ -103,13 +85,10 @@ export const useGlobalQuestions = () => {
       return res.data.questions || [];
     },
     enabled: !!token,
-    staleTime: 10 * 60 * 1000, // 10 minutes (static content)
+    staleTime: 10 * 60 * 1000,
   });
 };
 
-/**
- * Hook to fetch conversations for a business.
- */
 export const useConversations = (businessId) => {
   const token = useAuthStore((state) => state.token);
 
@@ -122,14 +101,10 @@ export const useConversations = (businessId) => {
       return res.data;
     },
     enabled: !!token,
-    staleTime: 30 * 1000, // 30 seconds
+    staleTime: 30 * 1000,
   });
 };
 
-
-/**
- * Hook to fetch all projects for a specific business.
- */
 export const useProjects = (businessId) => {
   const token = useAuthStore((state) => state.token);
 
@@ -146,10 +121,6 @@ export const useProjects = (businessId) => {
   });
 };
 
-/**
- * Hook to fetch team ranking summary (lock status) for a specific business.
- * Replaces the broken useTeamRankings that pointed to a non-existent endpoint.
- */
 export const useRankingsSummary = (businessId) => {
   const token = useAuthStore((state) => state.token);
 
@@ -168,17 +139,12 @@ export const useRankingsSummary = (businessId) => {
   });
 };
 
-/**
- * Hook to fetch detailed team rankings for a specific business.
- * Note: Pointing to the correct backend route if needed, otherwise use useRankingsSummary for progress.
- */
 export const useTeamRankings = (businessId) => {
   const token = useAuthStore((state) => state.token);
 
   return useQuery({
     queryKey: ['teamRankings', businessId],
     queryFn: async () => {
-      // If we need the full consensus analysis, this should probably call the consensus endpoint
       const res = await axios.get(`${BACKEND_URL}/api/projects/collaborator-consensus`, {
         params: { business_id: businessId },
         headers: { Authorization: `Bearer ${token}` },
@@ -189,9 +155,6 @@ export const useTeamRankings = (businessId) => {
   });
 };
 
-/**
- * Hook to fetch academy article content (markdown).
- */
 export const useAcademyArticle = (articlePath) => {
   return useQuery({
     queryKey: ['academy', articlePath],
@@ -203,13 +166,10 @@ export const useAcademyArticle = (articlePath) => {
       return await res.text();
     },
     enabled: !!articlePath,
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 5 * 60 * 1000,
   });
 };
 
-/**
- * Hook to fetch all pricing plans.
- */
 export const usePlans = (includeInactive = false) => {
   const token = useAuthStore((state) => state.token);
 
@@ -223,13 +183,10 @@ export const usePlans = (includeInactive = false) => {
       const res = await axios.get(`${BACKEND_URL}/api/plans`, config);
       return res.data.plans || [];
     },
-    staleTime: 10 * 60 * 1000, // 10 minutes (static)
+    staleTime: 10 * 60 * 1000,
   });
 };
 
-/**
- * Hook to fetch all companies (public list).
- */
 export const useCompanies = () => {
   return useQuery({
     queryKey: ['companies'],
@@ -237,13 +194,10 @@ export const useCompanies = () => {
       const res = await axios.get(`${BACKEND_URL}/api/companies`);
       return res.data.companies || [];
     },
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 5 * 60 * 1000,
   });
 };
 
-/**
- * Hook to fetch all users for admin management.
- */
 export const useAdminUsers = (companyId = null) => {
   const token = useAuthStore((state) => state.token);
 
@@ -257,13 +211,10 @@ export const useAdminUsers = (companyId = null) => {
       return res.data.users || [];
     },
     enabled: !!token,
-    staleTime: 30 * 1000, // 30 seconds
+    staleTime: 30 * 1000,
   });
 };
 
-/**
- * Hook to fetch all businesses for admin management.
- */
 export const useAdminBusinesses = () => {
   const token = useAuthStore((state) => state.token);
 
@@ -276,14 +227,11 @@ export const useAdminBusinesses = () => {
       return res.data.businesses || [];
     },
     enabled: !!token,
-    staleTime: 0,              // Always consider data stale
-    refetchOnMount: 'always',  // Always refetch when component mounts
+    staleTime: 0,
+    refetchOnMount: 'always',
   });
 };
 
-/**
- * Hook to fetch stale projects for admin dashboard.
- */
 export const useStaleProjects = () => {
   const token = useAuthStore((state) => state.token);
 
@@ -296,13 +244,10 @@ export const useStaleProjects = () => {
       return res.data.staleProjects || [];
     },
     enabled: !!token,
-    staleTime: 60 * 1000, // 1 minute
+    staleTime: 60 * 1000,
   });
 };
 
-/**
- * Hook to fetch collaborators for a specific business/project context.
- */
 export const useCompanyCollaborators = (businessId) => {
   const token = useAuthStore((state) => state.token);
 
@@ -315,13 +260,10 @@ export const useCompanyCollaborators = (businessId) => {
       return res.data.collaborators || [];
     },
     enabled: !!token && !!businessId,
-    staleTime: 60 * 1000, // 1 minute
+    staleTime: 60 * 1000,
   });
 };
 
-/**
- * Hook to fetch cross-project paginated decision logs for the current user's business.
- */
 export const useAllDecisionLogsQuery = (page = 1, limit = 20, filters = {}) => {
   const token = useAuthStore((state) => state.token);
 
@@ -335,13 +277,10 @@ export const useAllDecisionLogsQuery = (page = 1, limit = 20, filters = {}) => {
       return res.data;
     },
     enabled: !!token,
-    staleTime: 30 * 1000, // 30 seconds
+    staleTime: 30 * 1000,
   });
 };
 
-/**
- * Hook to fetch paginated audit trail data.
- */
 export const useAuditTrailQuery = (page = 1, limit = 10, filters = {}) => {
   const token = useAuthStore((state) => state.token);
 
@@ -355,8 +294,6 @@ export const useAuditTrailQuery = (page = 1, limit = 10, filters = {}) => {
       return res.data;
     },
     enabled: !!token,
-    staleTime: 30 * 1000, // 30 seconds
+    staleTime: 30 * 1000,
   });
 };
-
-

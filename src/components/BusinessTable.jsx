@@ -5,12 +5,12 @@ const BusinessRow = ({ business, isCollaborator, isViewer, onBusinessClick, onDe
   const isDeleted = business.status === 'deleted';
   const state = isDeleted ? 'DELETED' : (business.has_projects ? 'EXECUTION' : 'CREATED');
   const stateClass = `state-${state.toLowerCase()}`;
-  const date = business.created_at ? new Date(business.created_at).toLocaleDateString('en-US', { 
-    month: 'short', 
-    day: '2-digit', 
-    year: 'numeric' 
+  const date = business.created_at ? new Date(business.created_at).toLocaleDateString('en-US', {
+    month: 'short',
+    day: '2-digit',
+    year: 'numeric'
   }) : 'N/A';
-  
+
   const activeBets = business.project_count || business.question_statistics?.total_projects || 0;
   const collaborators = business.collaborators_count ?? (business.company_admin_id?.length || 1);
 
@@ -18,12 +18,12 @@ const BusinessRow = ({ business, isCollaborator, isViewer, onBusinessClick, onDe
   const accessLower = (business.access_mode || '').toLowerCase();
   const isActuallyArchived = statusLower === 'archived' || accessLower === 'archived';
   const isActuallyDeleted = statusLower === 'deleted';
-  
+
   const displayStatus = isActuallyDeleted ? 'Deleted' : (isActuallyArchived ? 'Archived' : 'Active');
   const statusBadgeClass = isActuallyDeleted ? 'status-deleted' : (isActuallyArchived ? 'status-archived' : 'status-active');
 
   return (
-    <tr 
+    <tr
       onClick={!isDeleted ? () => onBusinessClick(business) : undefined}
       className={isDeleted ? 'row-deleted' : ''}
     >
@@ -83,9 +83,9 @@ const BusinessTable = ({ businesses, isCollaborator, isViewer, onBusinessClick, 
             </tr>
           ) : (
             businesses.map((business) => (
-              <BusinessRow 
-                key={business._id || business.id} 
-                business={business} 
+              <BusinessRow
+                key={business._id || business.id}
+                business={business}
                 isCollaborator={isCollaborator}
                 isViewer={isViewer}
                 onBusinessClick={onBusinessClick}

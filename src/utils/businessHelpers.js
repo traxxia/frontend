@@ -17,7 +17,6 @@ export const showToastMessage = (setShowToast) => (message, type = "success", op
   const { duration = 5000 } = options;
   setShowToast({ show: true, message, type });
 
-  
   if (duration > 0) {
     setTimeout(() => {
       setShowToast({ show: false, message: "", type: "success" });

@@ -9,11 +9,8 @@ import {
 } from 'lucide-react';
 
 const API = process.env.REACT_APP_BACKEND_URL;
-
-// ── Helpers ──────────────────────────────────────────────────────────
 function getAuthHeaders() {
   try {
-    // Auth store is persisted to sessionStorage (see authStore.js)
     const raw = sessionStorage.getItem('auth-storage')
       || localStorage.getItem('auth-storage')
       || '{}';
@@ -40,9 +37,6 @@ function fmtTime(ts) {
     hour: '2-digit', minute: '2-digit', second: '2-digit'
   });
 }
-
-// ── Cost Estimation ─────────────────────────────────────────────────────
-// Cost per 1M tokens in USD (Input, Output)
 const COST_RATES = {
   'gpt-4o-mini': { input: 0.150, output: 0.600 },
   'gpt-4o': { input: 5.00, output: 15.00 },
@@ -60,7 +54,6 @@ const COST_RATES = {
   'sonar-pro': { input: 3.00, output: 15.00 },
   'sonar': { input: 1.00, output: 1.00 },
   'openai/gpt-oss-120b': { input: 0.60, output: 0.60 },
-  // ── Gemini Family (Google) ──
   'gemini-1.5-flash': { input: 0.075, output: 0.30 },
   'gemini-1.5-pro': { input: 3.50, output: 10.50 },
   'gemini-2.0-flash': { input: 0.075, output: 0.30 },
@@ -68,11 +61,9 @@ const COST_RATES = {
   'gemini-3.0-flash': { input: 0.05, output: 0.20 },
   'gemini-3-flash': { input: 0.05, output: 0.20 },
   'gemini-3.0-pro': { input: 2.50, output: 7.50 },
-  'gemini': { input: 0.075, output: 0.30 }, // Catch-all fallback for Gemini
-  // ── DeepSeek ──
+  'gemini': { input: 0.075, output: 0.30 },
   'deepseek-chat': { input: 0.14, output: 0.28 },
   'deepseek-coder': { input: 0.14, output: 0.28 },
-  // ── GPT-5 Family ──
   'gpt-5-nano': { input: 0.05, output: 0.40 },
   'gpt-5-mini': { input: 0.25, output: 2.00 },
   'gpt-5': { input: 1.25, output: 10.00 },
@@ -84,12 +75,10 @@ const COST_RATES = {
 function calculateCost(modelId, usage) {
   if (!modelId || !usage) return null;
   const model = modelId.toLowerCase().trim();
-  
+
   const promptTokens = usage.prompt_tokens || 0;
   const completionTokens = usage.completion_tokens || 0;
   const totalTokens = usage.total_tokens || (promptTokens + completionTokens);
-
-  // Find rate entry
   let r = COST_RATES[model];
   if (!r) {
     const entry = Object.entries(COST_RATES).find(([k]) => model.includes(k) || k.includes(model));
@@ -100,12 +89,10 @@ function calculateCost(modelId, usage) {
     console.warn(`[Observatory] No cost rate found for model: "${model}"`);
     return null;
   }
-
-  // Fallback: If both are 0 but we have total_tokens, use the input rate as an estimate
   if (promptTokens === 0 && completionTokens === 0 && totalTokens > 0) {
     return (totalTokens / 1000000) * r.input;
   }
-  
+
   return ((promptTokens / 1000000) * r.input) + ((completionTokens / 1000000) * r.output);
 }
 
@@ -115,7 +102,7 @@ function CostBadge({ model, usage }) {
     console.log(`[Observatory] Cost calculation returned null for model: ${model}`);
     return null;
   }
-  
+
   if (cost === 0 && (usage?.prompt_tokens > 0 || usage?.completion_tokens > 0)) {
     console.warn(`[Observatory] Cost is 0 but tokens are present! Model: ${model}, Usage:`, usage);
   }
@@ -162,8 +149,6 @@ function PromptBlock({ label, content, variant }) {
     </div>
   );
 }
-
-// ── Prompt Inspector ──────────────────────────────────────────────────
 function PromptInspector({ entry, onClose }) {
   if (!entry) return (
     <div className="obs-inspector">
@@ -192,7 +177,7 @@ function PromptInspector({ entry, onClose }) {
         </div>
       </div>
       <div className="obs-inspector__body">
-        {/* Meta */}
+        {}
         <div className="obs-meta-row">
           <span><Clock size={12} /> {fmtTime(entry.timestamp)}</span>
           <span style={{ color: 'var(--obs-text-dim)', fontStyle: 'italic' }}>{relativeTime(entry.timestamp)}</span>
@@ -208,7 +193,7 @@ function PromptInspector({ entry, onClose }) {
         <PromptBlock label="💬 User Input" content={entry.user_prompt || entry.user_input} variant="user" />
         <PromptBlock label="🤖 LLM Response" content={entry.llm_response || entry.assistant_response} variant="response" />
 
-        {/* Crawl sources */}
+        {}
         {entry.crawl_details?.citations?.length > 0 && (
           <div className="obs-prompt-block">
             <div className="obs-prompt-block__label obs-prompt-block__label--crawl">
@@ -230,8 +215,6 @@ function PromptInspector({ entry, onClose }) {
     </div>
   );
 }
-
-// ── Session Card ──────────────────────────────────────────────────────
 function SessionCard({ session, onSelectEntry, selectedEntry }) {
   const [open, setOpen] = useState(false);
   const [entries, setEntries] = useState([]);
@@ -243,7 +226,7 @@ function SessionCard({ session, onSelectEntry, selectedEntry }) {
     try {
       const r = await axios.get(`${API}/api/superadmin/sessions/${session._id}`, { headers: getAuthHeaders() });
       setEntries(r.data.data || []);
-    } catch { /* silent */ }
+    } catch {  }
     finally { setLoading(false); }
   }, [session._id, entries.length, loading]);
 
@@ -293,8 +276,6 @@ function SessionCard({ session, onSelectEntry, selectedEntry }) {
     </div>
   );
 }
-
-// ── Analysis Tab ──────────────────────────────────────────────────────
 function AnalysisTab() {
   const [sessions, setSessions] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -309,7 +290,7 @@ function AnalysisTab() {
 
   return (
     <div className="obs-body">
-      {/* Sidebar */}
+      {}
       <div className="obs-sidebar">
         <div className="obs-section-title">Sessions</div>
         {loading && <div className="obs-empty"><div className="obs-spinner" /></div>}
@@ -320,15 +301,13 @@ function AnalysisTab() {
           <SessionCard key={s._id} session={s} onSelectEntry={setSelectedEntry} selectedEntry={selectedEntry} />
         ))}
       </div>
-      {/* Main */}
+      {}
       <div className="obs-main">
         <PromptInspector entry={selectedEntry} onClose={selectedEntry ? () => setSelectedEntry(null) : null} />
       </div>
     </div>
   );
 }
-
-// ── Chat Log Card ─────────────────────────────────────────────────────
 function ChatLogCard({ log, selected, onSelect }) {
   return (
     <div className={`obs-card ${selected ? 'selected' : ''}`} style={{ cursor: 'pointer' }}>
@@ -355,8 +334,6 @@ function ChatLogCard({ log, selected, onSelect }) {
     </div>
   );
 }
-
-// ── Chat Tab ──────────────────────────────────────────────────────────
 function ChatTab() {
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -375,8 +352,6 @@ function ChatTab() {
   }, [filters]);
 
   useEffect(() => { load(); }, []);
-
-  // Derive businesses from loaded logs for filter dropdown
   useEffect(() => {
     const biz = {};
     logs.forEach(l => { if (l.business_id && l.business_name) biz[l.business_id] = l.business_name; });
@@ -386,10 +361,10 @@ function ChatTab() {
   return (
     <div className="obs-body" style={{ display: 'flex' }}>
 
-      {/* Main: list + inspector split view */}
+      {}
       <div className="obs-main" style={{ flex: 1, display: 'grid', gridTemplateColumns: selectedLog ? '350px 1fr' : '1fr', gap: 20, overflow: 'hidden', padding: 0 }}>
 
-        {/* Left: Chat List */}
+        {}
         <div style={{ overflowY: 'auto', padding: 20, display: 'flex', flexDirection: 'column', gap: 12 }}>
           {loading && <div className="obs-empty"><div className="obs-spinner" /></div>}
           {!loading && logs.length === 0 && (
@@ -403,7 +378,7 @@ function ChatTab() {
           ))}
         </div>
 
-        {/* Right: Inspector */}
+        {}
         {selectedLog && (
           <div style={{ overflowY: 'auto', padding: '20px 20px 20px 0' }}>
             <PromptInspector
@@ -423,10 +398,6 @@ function ChatTab() {
     </div>
   );
 }
-
-// Removed old cost estimation location
-
-// ── Stats Tab ─────────────────────────────────────────────────────────
 function StatsTab() {
   const [modelStats, setModelStats] = useState([]);
   const [stageStats, setStageStats] = useState([]);
@@ -447,8 +418,6 @@ function StatsTab() {
   }, []);
 
   if (loading) return <div className="obs-empty"><div className="obs-spinner" /></div>;
-
-  // Aggregated calculations
   const totalCalls = modelStats.reduce((acc, curr) => acc + (curr.call_count || 0), 0);
   const totalTokens = modelStats.reduce((acc, curr) => acc + (curr.total_tokens || 0), 0);
   const maxStageCount = Math.max(...stageStats.map(s => s.count || 0), 1);
@@ -457,10 +426,10 @@ function StatsTab() {
   return (
     <div className="obs-main" style={{ width: '100%', padding: '24px 32px' }}>
 
-      {/* Top Level KPIs */}
+      {}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 16, marginBottom: 32 }}>
 
-        {/* KPI 1 */}
+        {}
         <div className="obs-card" style={{ padding: 20, border: '1px solid var(--obs-border-strong)' }}>
           <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--obs-accent)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
             <Cpu size={14} /> Total API Calls
@@ -470,7 +439,7 @@ function StatsTab() {
           </div>
         </div>
 
-        {/* KPI 2 */}
+        {}
         <div className="obs-card" style={{ padding: 20, border: '1px solid var(--obs-border-strong)' }}>
           <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--obs-green)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
             <Zap size={14} /> Total Tokens Used
@@ -480,7 +449,7 @@ function StatsTab() {
           </div>
         </div>
 
-        {/* KPI 3 */}
+        {}
         <div className="obs-card" style={{ padding: 20, border: '1px solid var(--obs-border-strong)' }}>
           <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--obs-cyan)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
             <MessageSquare size={14} /> AI Chat Turns
@@ -493,7 +462,7 @@ function StatsTab() {
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(450px, 1fr))', gap: 24 }}>
 
-        {/* Model usage */}
+        {}
         <div>
           <div className="obs-section-title" style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 12 }}>
             <Cpu size={14} color="var(--obs-accent)" /> Model Token Distribution
@@ -514,7 +483,7 @@ function StatsTab() {
                 {modelStats.map((r, i) => {
                   const pct = Math.max((r.total_tokens / maxModelTokens) * 100, 2);
                   const cost = calculateCost(r._id?.model, r);
-                  
+
                   return (
                     <tr key={i} style={{ borderBottom: '1px solid var(--obs-border)', transition: 'background 0.2s' }} className="obs-tr-hover">
                       <td style={{ padding: '14px 16px' }}>
@@ -555,7 +524,7 @@ function StatsTab() {
           </div>
         </div>
 
-        {/* Stage breakdown */}
+        {}
         <div>
           <div className="obs-section-title" style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 12 }}>
             <BarChart3 size={14} color="var(--obs-green)" /> ML Stage Activity
@@ -597,7 +566,7 @@ function StatsTab() {
 
       </div>
 
-      {/* Chat usage (full width bottom) */}
+      {}
       {chatStats?.top_pages?.length > 0 && (
         <div style={{ marginTop: 24 }}>
           <div className="obs-section-title" style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 12 }}>
@@ -632,9 +601,6 @@ function StatsTab() {
     </div>
   );
 }
-
-
-// ── Main Page ─────────────────────────────────────────────────────────
 const TABS = [
   { id: 'analysis', label: 'Analysis Sessions', icon: <BarChart3 size={14} /> },
   { id: 'chat', label: 'AI Chat', icon: <MessageSquare size={14} /> },
@@ -648,7 +614,7 @@ const ObservatoryPage = () => {
     <div className="observatory-page">
       <MenuBar currentPage="OBSERVATORY" />
 
-      {/* Header */}
+      {}
       <div className="observatory-header">
         <div className="observatory-header__brand">
           <div className="observatory-header__icon">
@@ -661,7 +627,7 @@ const ObservatoryPage = () => {
         </div>
       </div>
 
-      {/* Tabs */}
+      {}
       <div className="obs-tabs">
         {TABS.map(t => (
           <button key={t.id} className={`obs-tab ${tab === t.id ? 'active' : ''}`} onClick={() => setTab(t.id)}>
@@ -670,7 +636,7 @@ const ObservatoryPage = () => {
         ))}
       </div>
 
-      {/* Content */}
+      {}
       {tab === 'analysis' && <AnalysisTab />}
       {tab === 'chat' && <ChatTab />}
       {tab === 'stats' && <StatsTab />}

@@ -15,7 +15,7 @@ import {
 } from 'lucide-react';
 
 const StrategicWheel = ({ pillarsData, className = '' }) => {
-    const [viewMode, setViewMode] = useState('wheel'); // 'wheel' or 'table'
+    const [viewMode, setViewMode] = useState('wheel');
 
     if (!pillarsData || Object.keys(pillarsData).length === 0) {
         return null;
@@ -23,18 +23,16 @@ const StrategicWheel = ({ pillarsData, className = '' }) => {
 
     const pillarsArray = Object.entries(pillarsData);
     const totalPillars = pillarsArray.length;
-
-    // Define colors for each segment
     const segmentColors = [
-        '#e74c3c', // Red
-        '#f39c12', // Orange
-        '#f1c40f', // Yellow
-        '#27ae60', // Green
-        '#16a085', // Teal
-        '#3498db', // Blue
-        '#9b59b6', // Purple
-        '#e67e22', // Dark Orange
-        '#34495e', // Dark Blue Gray
+        '#e74c3c',
+        '#f39c12',
+        '#f1c40f',
+        '#27ae60',
+        '#16a085',
+        '#3498db',
+        '#9b59b6',
+        '#e67e22',
+        '#34495e',
     ];
 
     const getPillarIcon = (pillarKey) => {
@@ -70,15 +68,11 @@ const StrategicWheel = ({ pillarsData, className = '' }) => {
             default: return '#6b7280';
         }
     };
-
-    // Calculate segment angle
     const segmentAngle = 360 / totalPillars;
     const radius = 180;
     const innerRadius = 65;
     const centerX = 220;
     const centerY = 220;
-
-    // Function to create SVG path for each segment
     const createSegmentPath = (index) => {
         const startAngle = (index * segmentAngle - 90) * (Math.PI / 180);
         const endAngle = ((index + 1) * segmentAngle - 90) * (Math.PI / 180);
@@ -97,18 +91,14 @@ const StrategicWheel = ({ pillarsData, className = '' }) => {
 
         return `M ${x1} ${y1} L ${x2} ${y2} A ${radius} ${radius} 0 ${largeArcFlag} 1 ${x3} ${y3} L ${x4} ${y4} A ${innerRadius} ${innerRadius} 0 ${largeArcFlag} 0 ${x1} ${y1}`;
     };
-
-    // Function to calculate text position
     const getTextPosition = (index) => {
         const angle = (index * segmentAngle + segmentAngle / 2 - 90) * (Math.PI / 180);
-        const textRadius = (radius + innerRadius) / 2 + 10; // Added +10 for more space
+        const textRadius = (radius + innerRadius) / 2 + 10;
         return {
             x: centerX + textRadius * Math.cos(angle),
             y: centerY + textRadius * Math.sin(angle)
         };
     };
-
-    // Function to calculate icon position
     const getIconPosition = (index) => {
         const angle = (index * segmentAngle + segmentAngle / 2 - 90) * (Math.PI / 180);
         const iconRadius = innerRadius + 20;
@@ -198,7 +188,7 @@ const StrategicWheel = ({ pillarsData, className = '' }) => {
             borderRadius: '8px',
             border: '1px solid #e5e7eb'
         }}>
-            {/* View Toggle */}
+            {}
             <div style={{
                 display: 'flex',
                 gap: '10px',
@@ -253,7 +243,7 @@ const StrategicWheel = ({ pillarsData, className = '' }) => {
                 <>
                     <div style={{ position: "relative", width: "100%", maxWidth: "440px" }}>
                         <svg viewBox="0 0 440 440" style={{ width: "100%", height: "auto" }}>
-                            {/* Render segments */}
+                            {}
                             {pillarsArray.map(([pillarKey, pillarData], index) => {
                                 const IconComponent = getPillarIcon(pillarKey);
                                 const textPos = getTextPosition(index);
@@ -262,7 +252,7 @@ const StrategicWheel = ({ pillarsData, className = '' }) => {
 
                                 return (
                                     <g key={pillarKey}>
-                                        {/* Segment background */}
+                                        {}
                                         <path
                                             d={createSegmentPath(index)}
                                             fill={segmentColors[index % segmentColors.length]}
@@ -277,14 +267,14 @@ const StrategicWheel = ({ pillarsData, className = '' }) => {
                                             onMouseLeave={(e) => e.target.style.opacity = '0.8'}
                                         />
 
-                                        {/* Pillar name text */}
+                                        {}
                                         <text
                                             x={textPos.x}
-                                            y={textPos.y - 12} // Increased spacing
+                                            y={textPos.y - 12}
                                             textAnchor="middle"
                                             dominantBaseline="middle"
                                             fill="white"
-                                            fontSize="9" // Reduced font size
+                                            fontSize="9"
                                             fontWeight="bold"
                                             style={{ pointerEvents: 'none' }}
                                         >
@@ -295,14 +285,14 @@ const StrategicWheel = ({ pillarsData, className = '' }) => {
                                             ))}
                                         </text>
 
-                                        {/* Score text */}
+                                        {}
                                         <text
                                             x={textPos.x}
-                                            y={textPos.y + 18} // Increased spacing from name
+                                            y={textPos.y + 18}
                                             textAnchor="middle"
                                             dominantBaseline="middle"
                                             fill="white"
-                                            fontSize="11" // Slightly smaller
+                                            fontSize="11"
                                             fontWeight="bold"
                                             style={{ pointerEvents: 'none' }}
                                         >
@@ -312,7 +302,7 @@ const StrategicWheel = ({ pillarsData, className = '' }) => {
                                 );
                             })}
 
-                            {/* Center circle */}
+                            {}
                             <circle
                                 cx={centerX}
                                 cy={centerY}
@@ -322,7 +312,7 @@ const StrategicWheel = ({ pillarsData, className = '' }) => {
                                 strokeWidth="3"
                             />
 
-                            {/* Center text */}
+                            {}
                             <text
                                 x={centerX}
                                 y={centerY - 5}

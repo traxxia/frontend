@@ -6,18 +6,10 @@ import { useAnalysisStore } from "../store";
 import FinancialEmptyState from './FinancialEmptyState';
 import CitationSource from './CitationSource';
 import { checkMissingQuestionsAndRedirect, ANALYSIS_TYPES } from '../services/missingQuestionsService';
-
-// Helper to normalize growth data structure
 const getNormalizedData = (data) => {
   if (!data) return null;
-
-  // 1. Direct growth_trends access
   if (data.growth_trends) return data.growth_trends;
-
-  // 2. Handle cases where the whole object IS the growth_trends content
   if (data.revenue && data.revenue.values) return data;
-
-  // 3. Handle various wrapper keys
   const wrapper = data.growthTracker || data.growth_tracker || data.GrowthTracker;
   if (wrapper) {
     return wrapper.growth_trends || wrapper;
@@ -124,7 +116,7 @@ const GrowthTracker = ({
   isRegenerating: propIsRegenerating = false,
   canRegenerate = true,
   growthData = null,
-  growthTrackerData = null, // Support for naming variants
+  growthTrackerData = null,
   selectedBusinessId,
   onRedirectToBrief,
   uploadedFile = null,
@@ -135,10 +127,10 @@ const GrowthTracker = ({
   readOnly = false,
   documentInfo = null,
 }) => {
-  const { 
+  const {
     growthTrackerData: storeGrowthTrackerData,
     isRegenerating: isTypeRegenerating,
-    regenerateIndividualAnalysis 
+    regenerateIndividualAnalysis
   } = useAnalysisStore();
 
   const isRegenerating = propIsRegenerating || isTypeRegenerating('growthTracker');
@@ -286,7 +278,7 @@ const GrowthTracker = ({
             gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))',
             gap: '16px'
           }}>
-            {/* Revenue Chart */}
+            {}
             <div className="ch-chart-section" style={{
               background: '#fff',
               padding: '20px',
@@ -321,7 +313,7 @@ const GrowthTracker = ({
                 </ResponsiveContainer>
               </div>
 
-              {/* QoQ Revenue Growth */}
+              {}
               {trends.revenue?.qoq_growth && (
                 <div className="qoq-indicators" style={{ marginTop: '16px', display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
                   {Object.entries(trends.revenue.qoq_growth).map(([quarter, growth]) => (
@@ -333,7 +325,7 @@ const GrowthTracker = ({
               )}
             </div>
 
-            {/* Net Income Chart */}
+            {}
             <div className="ch-chart-section" style={{
               background: '#fff',
               padding: '20px',
@@ -368,7 +360,7 @@ const GrowthTracker = ({
                 </ResponsiveContainer>
               </div>
 
-              {/* QoQ Net Income Growth */}
+              {}
               {trends.net_income?.qoq_growth && (
                 <div className="qoq-indicators" style={{ marginTop: '16px', display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
                   {Object.entries(trends.net_income.qoq_growth).map(([quarter, growth]) => (
@@ -381,7 +373,7 @@ const GrowthTracker = ({
             </div>
           </div>
 
-          {/* Growth Insights */}
+          {}
           <div className="growth-insights" style={{ marginTop: '32px' }}>
             <h4 style={{ marginBottom: '16px' }}>Growth Performance Insights</h4>
             <div className="growth-insights-grid" style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>

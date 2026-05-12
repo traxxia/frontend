@@ -18,13 +18,7 @@ import { useProjectStore } from "../store/projectStore";
 import { useUIStore } from "../store/uiStore";
 import "../styles/AdminTableStyles.css";
 
-
-
-
-
 const ITEMS_PER_PAGE = 10;
-
-
 
 function formatDateOnly(dateVal) {
   if (!dateVal) return "-";
@@ -76,13 +70,9 @@ function LogTypeBadge({ logType }) {
   );
 }
 
-
-
 const BusinessDecisionLogs = ({ businessId }) => {
   const { t } = useTranslation();
   const [searchParams, setSearchParams] = useSearchParams();
-
-  // Extract primitive string values to avoid reference change loops
   const projectIdParam = searchParams.get("project_id") || "";
   const logTypeParam = searchParams.get("log_type") || "";
   const stateParam = searchParams.get("state") || "";
@@ -126,7 +116,6 @@ const BusinessDecisionLogs = ({ businessId }) => {
         } else {
           next.delete(key);
         }
-        // Reset to page 1 when any filter changes
         if (key !== "page") next.set("page", "1");
         return next;
       });
@@ -155,8 +144,6 @@ const BusinessDecisionLogs = ({ businessId }) => {
         limit: ITEMS_PER_PAGE,
         sort_order: filters.sort_order
       };
-
-      // Only add filters if they have values
       if (filters.project_id) {
         apiParams.project_id = filters.project_id;
       }
@@ -164,24 +151,19 @@ const BusinessDecisionLogs = ({ businessId }) => {
         apiParams.log_type = filters.log_type;
       }
       if (filters.state) {
-        // Send status value as-is (extracted from actual logs data)
         apiParams.execution_state = filters.state;
       }
-
-      // Convert date string to ISO datetime range for the entire day
       if (filters.date) {
         const dateObj = new Date(filters.date);
-        // Set start of day (00:00:00)
         const fromDate = new Date(dateObj);
         fromDate.setHours(0, 0, 0, 0);
-        // Set end of day (23:59:59)
         const toDate = new Date(dateObj);
         toDate.setHours(23, 59, 59, 999);
 
         apiParams.from = fromDate.toISOString();
         apiParams.to = toDate.toISOString();
       }
- 
+
       const response = await decisionLogApiService.getBusinessLogs(businessId, apiParams);
       setData(response);
     } catch (error) {
@@ -196,8 +178,6 @@ const BusinessDecisionLogs = ({ businessId }) => {
     if (!businessId) return;
     try {
       const response = await decisionLogApiService.getBusinessFilterOptions(businessId);
-
-      // Helper to normalize and deduplicate
       const getUniqueOptions = (items) => {
         const unique = new Map();
         items.forEach(item => {
@@ -228,8 +208,6 @@ const BusinessDecisionLogs = ({ businessId }) => {
   useEffect(() => {
     fetchFilterOptions();
   }, [fetchFilterOptions]);
-
-  // Fix ESLint warning by memoizing the logs array so it doesn't change reference when empty
   const logs = useMemo(() => data?.logs || [], [data?.logs]);
   const total = data?.total || 0;
   const totalPages = data?.total_pages || Math.ceil(total / ITEMS_PER_PAGE) || 1;
@@ -239,11 +217,8 @@ const BusinessDecisionLogs = ({ businessId }) => {
     filters.log_type ||
     filters.state ||
     filters.date;
-
-  // Get unique projects for filtering
   const availableProjects = useMemo(() => {
     const projects = new Map();
-    // Add all active projects from the store
     if (projectsFromStore && projectsFromStore.length > 0) {
       projectsFromStore.forEach(p => {
         if (p._id || p.id) {
@@ -251,7 +226,6 @@ const BusinessDecisionLogs = ({ businessId }) => {
         }
       });
     }
-    // Add projects from logs (this ensures deleted projects with logs are still selectable)
     logs.forEach(log => {
       if (log.project_id && log.project_name) {
         if (!projects.has(log.project_id)) {
@@ -271,7 +245,7 @@ const BusinessDecisionLogs = ({ businessId }) => {
   return (
     <div className="business-decision-logs-page" style={{ minHeight: "100vh", backgroundColor: "var(--bg-primary, #f8fafc)" }}>
       <div className="business-decision-logs-content" style={{ maxWidth: "1200px", margin: "0 auto", padding: "24px 20px" }}>
-        {/* Page Header */}
+        {}
         <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "24px" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
             <FileText size={20} color="#4f46e5" />
@@ -281,7 +255,7 @@ const BusinessDecisionLogs = ({ businessId }) => {
           </div>
         </div>
 
-        {/* Filter Bar */}
+        {}
         <div
           className="business-decision-logs-filters"
           style={{
@@ -405,9 +379,9 @@ const BusinessDecisionLogs = ({ businessId }) => {
           </Row>
         </div>
 
-        {/* Table Wrapper */}
+        {}
         <div className="admin-table-wrapper">
-          {/* Table header bar */}
+          {}
           <div className="admin-table-header">
             <div className="admin-table-title-group">
               <h2 className="admin-table-title">
@@ -529,7 +503,7 @@ const BusinessDecisionLogs = ({ businessId }) => {
             </div>
           )}
 
-          {/* Pagination */}
+          {}
           {!isLoading && logs.length > 0 && (
             <div className="admin-pagination">
               <span className="admin-pagination-info">
@@ -562,7 +536,7 @@ const BusinessDecisionLogs = ({ businessId }) => {
         </div>
       </div>
 
-      {/* Detail Modal */}
+      {}
       <Modal show={!!selectedLog} onHide={() => setSelectedLog(null)} centered>
         <Modal.Header closeButton>
           <Modal.Title style={{ fontSize: "16px", fontWeight: 700 }}>
@@ -572,7 +546,7 @@ const BusinessDecisionLogs = ({ businessId }) => {
         <Modal.Body style={{ fontSize: "14px" }}>
           {selectedLog && (
             <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
-              {/* Before Snapshot */}
+              {}
               {selectedLog.before_snapshot && Object.keys(selectedLog.before_snapshot).length > 0 && (
                 <div>
                   <h5 style={{ marginBottom: "12px", fontWeight: 600, color: "#1f2937" }}>
@@ -586,7 +560,7 @@ const BusinessDecisionLogs = ({ businessId }) => {
                 </div>
               )}
 
-              {/* After Snapshot */}
+              {}
               {selectedLog.after_snapshot && Object.keys(selectedLog.after_snapshot).length > 0 && (
                 <div>
                   <h5 style={{ marginBottom: "12px", fontWeight: 600, color: "#1f2937" }}>
@@ -600,7 +574,7 @@ const BusinessDecisionLogs = ({ businessId }) => {
                 </div>
               )}
 
-              {/* Empty State */}
+              {}
               {(!selectedLog.before_snapshot || Object.keys(selectedLog.before_snapshot).length === 0) &&
                 (!selectedLog.after_snapshot || Object.keys(selectedLog.after_snapshot).length === 0) && (
                   <div style={{ textAlign: "center", padding: "20px", color: "#9ca3af" }}>
@@ -621,7 +595,7 @@ const BusinessDecisionLogs = ({ businessId }) => {
         </Modal.Footer>
       </Modal>
 
-      {/* Justification Modal */}
+      {}
       <Modal show={!!selectedJustificationLog} onHide={() => setSelectedJustificationLog(null)} centered>
         <Modal.Header closeButton>
           <Modal.Title style={{ fontSize: "16px", fontWeight: 700 }}>

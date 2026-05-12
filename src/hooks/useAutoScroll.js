@@ -20,14 +20,11 @@ export const useAutoScroll = (streamingManager, cardId, isExpanded, visibleRows)
 
       const currentScrollTop = target.scrollTop;
       const scrollDiff = currentScrollTop - lastScrollTopRef.current;
-      const isScrollingUp = scrollDiff < -5; // Lenient threshold for upward scroll
+      const isScrollingUp = scrollDiff < -5;
       const distanceFromBottom = target.scrollHeight - (currentScrollTop + target.clientHeight);
-      
-      // Only pause if they scroll UP specifically and are not at the bottom
       if (isScrollingUp && distanceFromBottom > 100) {
         setUserHasScrolled(true);
-      } 
-      // If user scrolls back to bottom, resume auto-scrolling
+      }
       else if (distanceFromBottom < 50) {
         setUserHasScrolled(false);
       }
@@ -36,7 +33,6 @@ export const useAutoScroll = (streamingManager, cardId, isExpanded, visibleRows)
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
-    // Use capture to catch events from scrollable div containers
     document.addEventListener('scroll', handleScroll, { passive: true, capture: true });
 
     return () => {
@@ -49,7 +45,7 @@ export const useAutoScroll = (streamingManager, cardId, isExpanded, visibleRows)
   useEffect(() => {
     const isFinished = streamingManager?.isStreamingFinished(cardId);
     const shouldStream = streamingManager?.shouldStream(cardId);
-    
+
     if (!shouldStream || isFinished || !isExpanded || !lastRowRef.current || userHasScrolled) {
       return;
     }
@@ -59,14 +55,12 @@ export const useAutoScroll = (streamingManager, cardId, isExpanded, visibleRows)
     requestAnimationFrame(() => {
       if (lastRowRef.current) {
         isScrollingRef.current = true;
-        
+
         lastRowRef.current.scrollIntoView({
-          behavior: 'smooth', // user wants smooth
+          behavior: 'smooth',
           block: 'nearest',
           inline: 'nearest'
         });
-
-        // Small buffer to allow scroll events to fire
         scrollTimeoutRef.current = setTimeout(() => {
           isScrollingRef.current = false;
         }, 200);

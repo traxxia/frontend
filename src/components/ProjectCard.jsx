@@ -20,14 +20,11 @@ import {
 } from "lucide-react";
 import { useTranslation } from "../hooks/useTranslation";
 import { getUserLimits } from "../utils/authUtils";
-
-// Helper to get strategic signal
 const getStrategicSignal = (project) => {
   const impact = project.impact;
   const theme = project.strategic_theme || "None";
   return { impact, theme };
 };
-
 
 const ProjectCard = ({
   project,
@@ -57,9 +54,6 @@ const ProjectCard = ({
   myUserId,
 }) => {
   const { t } = useTranslation();
-
-
-  // Determine if user can edit this project
   const userCanEdit = canEditProject ? canEditProject(project) : true;
   const userCanReview = canReviewProject ? canReviewProject(project, isAdmin, myUserId, isArchived) : false;
   const statusLower = project.status?.toLowerCase();
@@ -85,14 +79,12 @@ const ProjectCard = ({
     if (!status && project.launch_status === "launched") {
       return "active";
     }
-
-    // Default
     return "draft";
   })();
 
   return (
     <div className={`project-card-premium ${statusClass}-border`}>
-      {/* Header: Selection, Rank, Title, Menu */}
+      {}
       <div className="card-header-premium">
         <div className="card-title-container-premium">
           {isAdmin && !isArchived && getUserLimits().project &&
@@ -127,7 +119,7 @@ const ProjectCard = ({
             {project.project_name}
           </h3>
 
-          {/* Review Badges */}
+          {}
           {userCanReview && project.launch_status === 'launched' && !isTerminal && ((project.is_stale || (project.next_review_date && (new Date(project.next_review_date).setHours(0, 0, 0, 0) < new Date().setHours(0, 0, 0, 0)))) ? (
             <span
               className="footer-status-premium"
@@ -197,12 +189,12 @@ const ProjectCard = ({
         </div>
       </div>
 
-      {/* Description */}
+      {}
       <p className="card-description-premium">
         {project.description ? project.description : t("No description provided.")}
       </p>
 
-      {/* Attributes Grid */}
+      {}
       <div className="attribute-row-premium">
         <div className="attribute-item-premium">
           <span className="attribute-label-premium">{t("Impact")}</span>
@@ -242,9 +234,7 @@ const ProjectCard = ({
         </div>
       </div>
 
-
-
-      {/* Footer: Status and Date */}
+      {}
       <div className="card-footer-premium">
         <span className={`status-badge status-${(project.status || "Draft").toLowerCase().replace(" ", "-")}`} style={{ fontSize: '11px' }}>
           {project.status && t(project.status) !== project.status ? t(project.status) : (project.status || t("Draft"))}

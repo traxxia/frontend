@@ -6,13 +6,8 @@ import { useTranslation } from '../hooks/useTranslation';
 import { Loader, Plus, Search, Users } from 'lucide-react';
 import Pagination from './Pagination';
 
-
-
 const UserOverview = ({ onToast }) => {
-  // const [users, setUsers] = useState([]);
-  // const [companies, setCompanies] = useState([]);
   const [roles, setRoles] = useState([]);
-  // const [isLoading, setIsLoading] = useState(true);
   const [selectedCompany, setSelectedCompany] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [showAddUser, setShowAddUser] = useState(false);
@@ -35,8 +30,6 @@ const UserOverview = ({ onToast }) => {
   const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
   const token = useAuthStore(state => state.token);
   const queryClient = useQueryClient();
-
-  // --- Hooks ---
   const { data: rawUsers = [], isLoading: isLoadingUsers } = useAdminUsers(selectedCompany);
   const { data: companiesData = [], isLoading: isLoadingCompanies } = useCompanies();
   const companies = companiesData || [];
@@ -54,19 +47,15 @@ const UserOverview = ({ onToast }) => {
   })), [rawUsers]);
 
   const getAuthToken = () => token;
-
-  // Validation function for individual fields
   const validateField = (fieldName, value) => {
     switch (fieldName) {
       case 'name':
         if (!value || !value.trim()) {
           return t('Name_is_required');
         }
-        // Only allow letters and spaces
         if (!/^[A-Za-z\s]+$/.test(value)) {
           return t('Name_can_only_contain_letters_and_spaces');
         }
-        // No consecutive spaces allowed
         if (/\s{2,}/.test(value)) {
           return t('Name_cannot_contain_consecutive_spaces');
         }
@@ -105,7 +94,6 @@ const UserOverview = ({ onToast }) => {
     }
   };
 
-
   const validateUserForm = (user) => {
     const errors = {};
     errors.name = validateField('name', user.name);
@@ -114,26 +102,13 @@ const UserOverview = ({ onToast }) => {
     return errors;
   };
 
-  // Check if form is valid
-
-  // Legacy effects removed, data is now hook-driven.
-
-
-
   const handleChange = (field, value) => {
     setNewUser(prev => ({ ...prev, [field]: value }));
 
-    // Real-time validation - validate field as user types
-
   };
   const addUser = async () => {
-    // Validate the form before making the API call
     const validationErrors = validateUserForm(newUser);
-
-    // Update error state to show messages
     setFormErrors(validationErrors);
-
-    // Check if there are any errors
     const hasErrors = Object.values(validationErrors).some(error => error);
     if (hasErrors) {
       onToast('Please fix the highlighted errors', 'warning');
@@ -181,16 +156,12 @@ const UserOverview = ({ onToast }) => {
       setIsCreating(false);
     }
   };
-
-  // Derived filtered visibility
   const filteredUsers = React.useMemo(() => users.filter(user => {
     return (
       user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       user.email.toLowerCase().includes(searchTerm.toLowerCase())
     );
   }), [users, searchTerm]);
-
-  // Pagination logic
   const ITEMS_PER_PAGE = 10;
   const totalPages = Math.ceil(filteredUsers.length / ITEMS_PER_PAGE);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
@@ -200,8 +171,6 @@ const UserOverview = ({ onToast }) => {
     e.preventDefault();
     addUser();
   };
-
-  // Helper function to render form fields with validation
   const renderFormField = (label, field, type = 'text', placeholder = '', required = false) => (
     <div className="form-field">
       <label>{label} {required && '*'}</label>
@@ -219,8 +188,6 @@ const UserOverview = ({ onToast }) => {
     </div>
   );
 
-  // Loading state moved into main render to preserve header
-
   return (
     <>
       <style>{`
@@ -228,24 +195,23 @@ const UserOverview = ({ onToast }) => {
           border-color: #dc3545;
           box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
         }
-        
+
         .error-message {
           color: #dc3545;
           font-size: 0.875rem;
           margin-top: 0.25rem;
           display: block;
         }
-        
+
         .form-field {
           margin-bottom: 1rem;
         }
 
-        /* Header layout fix */
         .section-header {
           display: flex;
           align-items: center;
           justify-content: space-between;
-          flex-wrap: wrap; /* allow wrapping on smaller screens */
+          flex-wrap: wrap;
           gap: 10px;
           width: 100%;
         }
@@ -274,18 +240,17 @@ const UserOverview = ({ onToast }) => {
           gap: 6px;
           cursor: pointer;
           transition: background-color 0.2s ease;
-          white-space: nowrap; /* prevents text from wrapping */
+          white-space: nowrap;
         }
 
         .primary-btn:hover {
           background-color: #1e40af;
         }
 
-        /* Make responsive */
          @media (max-width: 768px) {
           .section-header {
             flex-direction: column;
-            align-items: stretch; /* makes both elements full width */
+            align-items: stretch;
             gap: 12px;
           }
 
@@ -312,15 +277,15 @@ const UserOverview = ({ onToast }) => {
             </button>
           </div>
         </div>
-        
-        {/* ---- Premium Loading Bar ---- */}
+
+        {}
         {isLoading && (
           <div className="admin-loading-bar-container" style={{ margin: '15px 0' }}>
             <div className="admin-loading-bar" />
           </div>
         )}
 
-        {/* Filters */}
+        {}
         <div className="filters-section">
           <div className="search-box">
             <Search size={16} />
@@ -348,7 +313,7 @@ const UserOverview = ({ onToast }) => {
             ))}
           </select>
         </div>
-        {/* Users Table */}
+        {}
         {filteredUsers.length > 0 ? (
           <>
             <div className="table-container">
@@ -403,7 +368,7 @@ const UserOverview = ({ onToast }) => {
           </div>
         )}
 
-        {/* Add User Modal */}
+        {}
         {showAddUser && (
           <div className="modal-overlay">
             <div className="modal-content centered">
@@ -452,7 +417,6 @@ const UserOverview = ({ onToast }) => {
                     className="secondary-btn"
                     onClick={() => {
                       setShowAddUser(false);
-                      // Clear form errors when closing modal
                       setFormErrors({
                         name: '',
                         email: '',

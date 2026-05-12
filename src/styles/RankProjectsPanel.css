@@ -1,4 +1,3 @@
-/* Outer Container */
 .rank-panel-container {
   margin-top: 10px;
   background: white;
@@ -8,7 +7,6 @@
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
 }
 
-/* Header */
 .rank-panel-header {
   display: flex;
   justify-content: space-between;
@@ -27,8 +25,6 @@
   gap: 12px;
 }
 
-
-/* Description */
 .rank-description {
   font-size: 14px;
   color: #6b7280;
@@ -36,7 +32,6 @@
   margin-bottom: 16px;
 }
 
-/* Project Cards */
 .rank-project-card {
   background: white;
   padding: 16px;
@@ -47,14 +42,12 @@
   transition: all 0.2s;
 }
 
-/* Top Row */
 .rank-card-top {
   display: flex;
   align-items: center;
   justify-content: space-between;
 }
 
-/* Number Circle */
 .rank-number {
   width: 36px;
   height: 36px;
@@ -68,7 +61,6 @@
   margin-right: 10px;
 }
 
-/* Title + Description */
 .rank-content {
   flex: 1;
 }
@@ -88,7 +80,6 @@
   margin-left: 40px !important;
 }
 
-/* Hover effect for each card */
 .rank-project-card:hover {
   border-color: rgb(26, 115, 232) !important;
   box-shadow: 0 0 6px rgb(200, 225, 255) !important;
@@ -96,8 +87,6 @@
   cursor: pointer;
 }
 
-
-/* Up/Down Buttons */
 .rank-move-buttons {
   display: flex;
   flex-direction: column;
@@ -113,7 +102,6 @@
   color: #000;
 }
 
-/* Rationale Area */
 .rank-rationale-btn-container {
   padding-left: 0 !important;
   margin-top: 4px !important;
@@ -141,12 +129,10 @@
   font-size: 14px;
 }
 
-/* Remove global drag cursor */
 .rank-project-card * {
   cursor: default !important;
 }
 
-/* Apply drag cursor ONLY to the drag zone */
 .rank-card-top {
   cursor: grab !important;
 }
@@ -155,19 +141,16 @@
   cursor: grabbing !important;
 }
 
-/* Up/Down buttons → pointer */
 .rank-move-buttons,
 .rank-move-buttons * {
   cursor: pointer !important;
 }
 
-/* Rationale toggle → pointer */
 .rank-rationale-btn-container,
 .rank-rationale-btn-container * {
   cursor: pointer !important;
 }
 
-/* ---- COMPACT MODE (GLOBAL SHRINK) ---- */
 .compact-mode {
   font-size: 0.85rem !important;
 }
@@ -205,33 +188,28 @@
   padding: 8px !important;
 }
 
-
 .compact-mode .rank-description {
   font-size: 12px !important;
   margin-top: 4px !important;
-  /* was 12px */
+
   margin-bottom: 8px !important;
-  /* add small buffer, no big gap */
+
   line-height: 1.2 !important;
 }
 
-/* Header spacing */
 .compact-mode .rank-panel-header {
   margin-bottom: 4px !important;
 }
 
 .rank-project-card .card-body {
   padding: 8px !important;
-  /* compress the inside area */
+
 }
 
 [data-theme="dark"] .rank-project-card .card-body {
     background-color: #333946 ;
 }
 
-
-
-/* ------- MOBILE RESPONSIVE ------- */
 @media (max-width: 768px) {
   .responsive-panel {
     padding: 12px;
@@ -268,7 +246,7 @@
 
   .responsive-card-top {
     flex-direction: row !important;
-    /* Keep rank and title in same row */
+
     align-items: center !important;
     gap: 10px;
   }
@@ -281,7 +259,7 @@
   .rank-content {
     flex: 1;
     min-width: 0;
-    /* Enable text truncation/wrapping */
+
   }
 
   .responsive-move-buttons {
@@ -307,7 +285,7 @@
 
   .rank-rationale-btn-container {
     margin-left: 0px !important;
-    /* Remove large margin on mobile */
+
     margin-top: 8px !important;
   }
 
@@ -321,10 +299,6 @@
     min-height: 80px;
   }
 }
-
-/* ----------------------------- */
-/*          DARK MODE            */
-/* ----------------------------- */
 
 [data-theme="dark"] .rank-panel-container {
   background-color: #1a1d23 !important;
@@ -373,15 +347,11 @@
   box-shadow: 0 0 6px rgb(200, 225, 255) !important;
 }
 
-/* Add these styles to your existing RankProjectsPanel.css */
-
-/* Highlight cards that need rationale */
 .rank-project-card.needs-rationale {
   border-left: 4px solid #dc3545;
   background-color: #fff5f5;
 }
 
-/* Style for rationale textarea when required */
 .rank-rationale-textarea.border-danger {
   border-color: #dc3545 !important;
 }
@@ -391,13 +361,11 @@
   box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
 }
 
-/* Disabled drag state */
 .rank-project-card[aria-disabled="true"] {
   opacity: 0.6;
   cursor: not-allowed;
 }
 
-/* Save Rankings Button States */
 .btn-save-rank,
 .btn-lock-rank {
   opacity: 1;
@@ -417,7 +385,6 @@
   opacity: 0.9;
 }
 
-/* Lock Rankings Button States */
 .btn-rank-projects,
 .btn-lock-rank {
   background-color: rgb(26, 115, 232) !important;
@@ -437,7 +404,6 @@
   opacity: 0.9;
 }
 
-/* Step 1: Selection UI */
 .rank-step-selection {
   padding: 10px 0;
 }
@@ -484,7 +450,6 @@
 [data-theme="dark"] .selection-item.mandatory label {
   color: #bfdbfe;
 }
-
 
 .selection-item.clickable-row {
   padding: 10px 12px;

@@ -19,12 +19,10 @@ export const useProjectForm = () => {
   const [timeline, setTimeline] = useState("");
   const [budget, setBudget] = useState("");
   const [errors, setErrors] = useState({});
-
-  // Strategic Core Fields (v2)
   const [strategicDecision, setStrategicDecision] = useState("");
   const [accountableOwner, setAccountableOwner] = useState("");
   const [accountableOwnerId, setAccountableOwnerId] = useState("");
-  const [keyAssumptions, setKeyAssumptions] = useState(["", "", ""]); // Max 3
+  const [keyAssumptions, setKeyAssumptions] = useState(["", "", ""]);
   const [successCriteria, setSuccessCriteria] = useState("");
   const [killCriteria, setKillCriteria] = useState("");
   const [reviewCadence, setReviewCadence] = useState("");
@@ -47,8 +45,6 @@ export const useProjectForm = () => {
     setSuccessMetrics("");
     setTimeline("");
     setBudget("");
-
-    // Reset Strategic Core
     setStrategicDecision("");
     setAccountableOwner("");
     setAccountableOwnerId("");
@@ -84,9 +80,6 @@ export const useProjectForm = () => {
     setSuccessMetrics(project.success_metrics || "");
     setTimeline(project.estimated_timeline || "");
     setBudget(project.budget_estimate || "");
-
-    // Load Strategic Core
-    // Ensure strategic decision field shows the project name for consistency in v2
     setStrategicDecision(project.strategic_decision || project.project_name || "");
     setAccountableOwner(project.accountable_owner || project.created_by || "");
     setAccountableOwnerId(project.accountable_owner_id || "");
@@ -94,15 +87,12 @@ export const useProjectForm = () => {
     setSuccessCriteria(project.success_criteria || "");
     setKillCriteria(project.kill_criteria || "");
     setReviewCadence(project.review_cadence || "");
-    // Normalize learning_state to match dropdown option values (Title Case)
     const rawLearning = (project.learning_state || "").toLowerCase();
     let normalizedLearning = "";
     if (rawLearning === "testing") normalizedLearning = "Testing";
     else if (rawLearning === "validated") normalizedLearning = "Validated";
     else if (rawLearning === "invalidated") normalizedLearning = "Invalidated";
     setLearningState(normalizedLearning || project.learning_state || "");
-
-    // Normalize status string to match UI options (capitalized)
     const rawStatus = (project.status || "").toLowerCase();
     let normalizedStatus = "";
     if (rawStatus === "active") normalizedStatus = "Active";
@@ -135,8 +125,6 @@ export const useProjectForm = () => {
       success_metrics: successMetrics,
       estimated_timeline: timeline,
       budget_estimate: budget,
-
-      // Strategic Core Payload
       strategic_decision: strategicDecision,
       accountable_owner: accountableOwner,
       accountable_owner_id: accountableOwnerId || null,
@@ -181,8 +169,6 @@ export const useProjectForm = () => {
     const newErrors = {};
 
     const isEmpty = (val) => !val || val.trim().length === 0;
-
-    // Stricter validators matching Dashboard.jsx
     const hasLetter = (val) => /[a-zA-Z]/.test(val);
     const hasTooManyConsecutiveNumbers = (val) => /[0-9]{5,}/.test(val);
     const hasTooManyConsecutiveSpecial = (val) => /[^A-Za-z0-9\s]{5,}/.test(val);
@@ -215,15 +201,11 @@ export const useProjectForm = () => {
     validateField(accountableOwner, "accountableOwner", { label: "Accountable Owner", minLength: 2, required: true, skipStrict: true });
     validateField(successCriteria, "successCriteria", { label: "Success criteria", minLength: 10, required: true });
     validateField(killCriteria, "killCriteria", { label: "Kill criteria", minLength: 10, required: true });
-
-    // Additional fields requested by user (Now optional)
     validateField(dependencies, "dependencies", { label: "Dependencies", minLength: 10, required: false });
     validateField(highLevelReq, "highLevelReq", { label: "Constraints / Non-Negotiables", minLength: 10, required: false });
     validateField(scope, "scope", { label: "Explicitly Out of Scope", minLength: 10, required: false });
     validateField(outcome, "outcome", { label: "Expected Outcome", minLength: 10, required: false });
     validateField(successMetrics, "successMetrics", { label: "Success Metrics (KPIs)", minLength: 10, required: false });
-
-    // Key Assumptions (Array)
     keyAssumptions.forEach((assumption, index) => {
       if (assumption && assumption.trim().length > 0) {
         validateField(assumption, `keyAssumptions_${index}`, { label: `${t("Assumption")} ${index + 1}`, minLength: 10 });
@@ -254,7 +236,7 @@ export const useProjectForm = () => {
       newErrors.learningState = t("Learning state is required");
     }
 
-    setErrors(newErrors); 
+    setErrors(newErrors);
     return {
       isValid: Object.keys(newErrors).length === 0,
       errors: newErrors,
@@ -284,7 +266,6 @@ export const useProjectForm = () => {
       timeline,
       budget,
       errors,
-      // Strategic Core
       strategicDecision,
       accountableOwner,
       accountableOwnerId,
@@ -312,7 +293,6 @@ export const useProjectForm = () => {
       setSuccessMetrics,
       setTimeline,
       setBudget,
-      // Strategic Core
       setStrategicDecision,
       setAccountableOwner,
       setAccountableOwnerId,

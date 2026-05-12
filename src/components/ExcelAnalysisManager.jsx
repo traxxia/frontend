@@ -5,8 +5,6 @@ import { useTranslation } from "../hooks/useTranslation";
 import AnalysisEmptyState from './AnalysisEmptyState';
 import { checkMissingQuestionsAndRedirect, ANALYSIS_TYPES } from '../services/missingQuestionsService';
 import { ExcelAnalysisService } from '../services/excelAnalysisService';
-
-// Import individual analysis components
 import ProfitabilityAnalysis from './ProfitabilityAnalysis';
 import GrowthTracker from './GrowthTracker';
 import LiquidityEfficiency from './LiquidityEfficiency';
@@ -42,8 +40,6 @@ const ExcelAnalysisManager = ({
   const ML_API_BASE_URL = process.env.REACT_APP_ML_BACKEND_URL || 'http://127.0.0.1:8000';
   const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
   const getAuthToken = () => useAuthStore.getState().token;
-
-  // Initialize Excel Analysis Service
   const excelAnalysisService = new ExcelAnalysisService(
     ML_API_BASE_URL,
     getAuthToken,
@@ -79,8 +75,6 @@ const ExcelAnalysisManager = ({
 
   const isExcelAnalysisDataIncomplete = (data) => {
     if (!data) return true;
-
-    // Check if we have data for at least one analysis component
     return !data.profitability &&
       !data.growth_trends &&
       !data.liquidity &&
@@ -163,14 +157,11 @@ const ExcelAnalysisManager = ({
     setError(null);
 
     try {
-      // Get all metrics at once (no metric_type parameter)
       const result = await excelAnalysisService.generateExcelAnalysis(
         localUploadedFile,
         questions,
         userAnswers
       );
-
-      // The API now returns the structured data directly
       const transformedData = {
         profitability: result.profitability,
         growth_trends: result.growth_trends,
@@ -180,8 +171,6 @@ const ExcelAnalysisManager = ({
       };
 
       setAnalysisData(transformedData);
-
-      // Save to backend
       await saveAnalysisToBackend(transformedData);
 
       if (onDataGenerated) {
@@ -195,8 +184,6 @@ const ExcelAnalysisManager = ({
       setIsLoading(false);
     }
   };
-
-  // Function to generate specific metric types
   const generateSpecificAnalysis = async (metricType) => {
     setIsLoading(true);
     setError(null);
@@ -208,8 +195,6 @@ const ExcelAnalysisManager = ({
         userAnswers,
         metricType
       );
-
-      // Update only the specific metric in analysisData
       setAnalysisData(prevData => ({
         ...prevData,
         ...result
@@ -322,8 +307,6 @@ const ExcelAnalysisManager = ({
       </div>
     );
   }
-
-  // Render all 5 analysis components
   return (
     <div className="excel-analysis-manager">
       <div className="analysis-suite-header" style={{
@@ -350,7 +333,7 @@ const ExcelAnalysisManager = ({
         </p>
       </div>
 
-      {/* Profitability Analysis */}
+      {}
       {analysisData.profitability && (
         <div style={{ marginBottom: '40px' }}>
           <ProfitabilityAnalysis
@@ -367,7 +350,7 @@ const ExcelAnalysisManager = ({
         </div>
       )}
 
-      {/* Growth Tracker */}
+      {}
       {analysisData.growth_trends && (
         <div style={{ marginBottom: '40px' }}>
           <GrowthTracker
@@ -384,7 +367,7 @@ const ExcelAnalysisManager = ({
         </div>
       )}
 
-      {/* Liquidity & Efficiency */}
+      {}
       {analysisData.liquidity && (
         <div style={{ marginBottom: '40px' }}>
           <LiquidityEfficiency
@@ -401,7 +384,7 @@ const ExcelAnalysisManager = ({
         </div>
       )}
 
-      {/* Investment Performance */}
+      {}
       {analysisData.investment && (
         <div style={{ marginBottom: '40px' }}>
           <InvestmentPerformance
@@ -418,7 +401,7 @@ const ExcelAnalysisManager = ({
         </div>
       )}
 
-      {/* Leverage & Risk */}
+      {}
       {analysisData.leverage && (
         <div style={{ marginBottom: '40px' }}>
           <LeverageRisk

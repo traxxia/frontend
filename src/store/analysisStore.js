@@ -5,8 +5,6 @@ import { useUIStore } from './uiStore';
 
 const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
 const ML_API_BASE_URL = process.env.REACT_APP_ML_BACKEND_URL;
-
-// Initial state for resetting
 const initialState = {
   questions: [],
   questionsLoaded: false,
@@ -108,7 +106,7 @@ export const useAnalysisStore = create((set, get) => ({
       : state.completedQuestions.filter(id => id !== questionId),
   })),
 
-  initializeBusinessData: ({ questions, userAnswers, completedQuestions, analysisUpdates = {}, questionsLoaded = true }) => 
+  initializeBusinessData: ({ questions, userAnswers, completedQuestions, analysisUpdates = {}, questionsLoaded = true }) =>
     set((state) => ({
       questions: questions !== undefined ? questions : state.questions,
       userAnswers: userAnswers !== undefined ? userAnswers : state.userAnswers,
@@ -159,10 +157,6 @@ export const useAnalysisStore = create((set, get) => ({
     if (!token) return;
 
     if (!skipLoadingFlag) set({ questionsLoaded: false });
-    
-    // Always reset the analysis-related state when fetching for a potentially different business
-    // or when forcing a refresh. This prevents data "bleeding" between different business contexts.
-    // However, skip it if skipReset is explicitly true (e.g. when switching tabs for the same business)
     if (!skipReset) {
       const resetData = {
         swotAnalysis: null, purchaseCriteria: null, loyaltyNPS: null,
@@ -186,7 +180,7 @@ export const useAnalysisStore = create((set, get) => ({
     try {
       const apiService = getApiService();
       const newsAnalysisData = await apiService.fetchAnalysisDataThroughBackend(businessId, forceRefresh);
-      
+
       const latestAnalysisByType = {};
       newsAnalysisData
         .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
@@ -225,7 +219,7 @@ export const useAnalysisStore = create((set, get) => ({
           }
         }
 
-        updates[dataKey] = type === 'swot' 
+        updates[dataKey] = type === 'swot'
           ? (typeof analysis.analysis_data === 'string' ? analysis.analysis_data : JSON.stringify(analysis.analysis_data))
           : analysis.analysis_data;
       });
@@ -241,38 +235,33 @@ export const useAnalysisStore = create((set, get) => ({
 
   regeneratePhase: async (phase, questions, userAnswers, businessId, onToast) => {
     if (!businessId || !phase) return;
-
-    // Set both the phase and all its constituent analysis types as regenerating
     const phaseTypes = PHASE_API_CONFIG[phase] || [];
     const regenerationUpdates = { [phase]: true };
     phaseTypes.forEach(type => { regenerationUpdates[type] = true; });
 
-    set((state) => ({ 
+    set((state) => ({
       regenerating: { ...state.regenerating, ...regenerationUpdates }
     }));
 
     try {
       const apiService = getApiService();
       const stateSetters = {};
-      // Create transient setters for the service to call for all analysis types
       const analysisTypes = [
-        'swot', 'purchaseCriteria', 'loyaltyNPS', 'porters', 'pestel', 
-        'fullSwot', 'competitiveAdvantage', 'strategic', 'expandedCapability', 
-        'strategicRadar', 'productivityMetrics', 'maturityScore', 'competitiveLandscape', 
-        'coreAdjacency', 'profitabilityAnalysis', 'growthTracker', 'liquidityEfficiency', 
+        'swot', 'purchaseCriteria', 'loyaltyNPS', 'porters', 'pestel',
+        'fullSwot', 'competitiveAdvantage', 'strategic', 'expandedCapability',
+        'strategicRadar', 'productivityMetrics', 'maturityScore', 'competitiveLandscape',
+        'coreAdjacency', 'profitabilityAnalysis', 'growthTracker', 'liquidityEfficiency',
         'investmentPerformance', 'leverageRisk'
       ];
-      
+
       analysisTypes.forEach(type => {
         const setterName = apiService.getStateSetterName(type);
         if (setterName) {
           stateSetters[setterName] = (data) => get().setAnalysisData(type, data);
         }
       });
-      
+
       stateSetters.setRegenerating = (type, isRegenerating) => get().setRegenerating(type, isRegenerating);
-      
-      // Include uploaded file if available in the arguments or global context
       if (userAnswers && userAnswers.uploadedFile) {
         stateSetters.uploadedFile = userAnswers.uploadedFile;
       }
@@ -293,7 +282,7 @@ export const useAnalysisStore = create((set, get) => ({
       const completionUpdates = { [phase]: false };
       phaseTypes.forEach(type => { completionUpdates[type] = false; });
 
-      set((state) => ({ 
+      set((state) => ({
         regenerating: { ...state.regenerating, ...completionUpdates }
       }));
     }
@@ -304,26 +293,22 @@ export const useAnalysisStore = create((set, get) => ({
     set((state) => ({ regenerating: { ...state.regenerating, [type]: true } }));
     try {
       const apiService = getApiService();
-      
-      // Prepare stateSetters for the individual analysis
       const stateSetters = {};
       const setterName = apiService.getStateSetterName(type);
       if (setterName) {
         stateSetters[setterName] = (data) => get().setAnalysisData(type, data);
       }
-      
-      // Include uploaded file if available
       if (uploadedFile) {
         stateSetters.uploadedFile = uploadedFile;
       } else if (userAnswers && userAnswers.uploadedFile) {
         stateSetters.uploadedFile = userAnswers.uploadedFile;
       }
 
-      const payload = { 
-        questions, 
-        userAnswers, 
+      const payload = {
+        questions,
+        userAnswers,
         selectedBusinessId: businessId,
-        stateSetters 
+        stateSetters
       };
 
       const result = await apiService.callAnalysisEndpoint(type, payload);
@@ -367,4 +352,3 @@ export const useAnalysisStore = create((set, get) => ({
   isStreamingType: (type) => get().isStreaming[type] || false,
   getStreamingText: (type) => get().streamingText[type] || '',
 }));
-

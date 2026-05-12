@@ -5,26 +5,10 @@ import { AlertTriangle, Info, ArrowRight } from "lucide-react";
 
 const JUSTIFICATION_REGEX = /^[A-Za-z0-9\s.,'()\-!&?]+$/;
 
-/**
- * StateChangeModal - Common modal for status and/or learning state changes.
- * 
- * Props:
- *   show       - boolean
- *   onHide     - cancel callback
- *   onConfirm  - (justification: string) => void
- *   changes    - Array<{ label: string, oldValue: string, newValue: string }>
- *                e.g. [{ label: "Status", oldValue: "Active", newValue: "Paused" },
- *                      { label: "Learning State", oldValue: "Testing", newValue: "Validated" }]
- *
- *   Legacy single-change props still supported:
- *   oldState / newState - used when `changes` is not provided
- */
 const StateChangeModal = ({ show, onHide, onConfirm, changes = [], oldState, newState }) => {
     const { t } = useTranslation();
     const [justification, setJustification] = useState("");
     const [error, setError] = useState("");
-
-    // Build the effective changes list (support legacy props as fallback)
     const effectiveChanges = changes.length > 0
         ? changes
         : (oldState || newState)
@@ -38,20 +22,14 @@ const StateChangeModal = ({ show, onHide, onConfirm, changes = [], oldState, new
             setError(t("Justification is required to change project state"));
             return;
         }
-
-        // Minimum 10 characters
         if (text.length < 10) {
             setError(t("Justification must be at least 10 characters long"));
             return;
         }
-
-        // Only alphabets + numbers + space + punctuation
         if (!JUSTIFICATION_REGEX.test(text)) {
             setError(t("Invalid characters in justification"));
             return;
         }
-
-        // Check for other invalid characters
         if (!JUSTIFICATION_REGEX.test(text)) {
             setError(t("Invalid characters in justification. Use only letters and standard punctuation."));
             return;

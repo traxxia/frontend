@@ -1,9 +1,3 @@
-/* ============================================================
-   AdminTableStyles.css
-   Shared styles for AdminTable & MetricCard reusable components
-   ============================================================ */
-
-/* ---- Metric Cards ---- */
 .admin-metrics-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -115,7 +109,6 @@
     color: #0d9488;
 }
 
-/* ---- Admin Table Container ---- */
 .admin-table-wrapper {
     background: #ffffff;
     border: 1px solid #e8eaf0;
@@ -132,8 +125,6 @@
     position: static !important;
 }
 
-
-/* ---- Table Header Bar ---- */
 .admin-table-header {
     display: flex;
     align-items: center;
@@ -148,7 +139,6 @@
 [data-theme="dark"] .admin-table-header {
     background: #1a1d23 !important;
 }
-
 
 .admin-table-title-group {
     display: flex;
@@ -180,7 +170,6 @@
     flex-wrap: wrap;
 }
 
-/* Search Input */
 .admin-search-wrapper {
     position: relative;
     display: flex;
@@ -220,7 +209,6 @@
     vertical-align: middle;
 }
 
-/* Filter / Sort Buttons */
 .admin-table-btn {
     display: flex;
     align-items: center;
@@ -242,7 +230,6 @@
     border-color: #d1d5db;
 }
 
-/* ---- Toolbar Row & Buttons ---- */
 .admin-toolbar-row {
     display: flex;
     align-items: center;
@@ -251,7 +238,7 @@
     gap: 1rem;
 }
 
-.admin-primary-btn { 
+.admin-primary-btn {
     color: #ffffff !important;
     border: none;
     padding: 0.55rem 1.1rem;
@@ -281,7 +268,6 @@
     gap: 0.5rem;
     transition: all 0.2s;
 }
- 
 
 .role-select {
     border-radius: 10px !important;
@@ -292,7 +278,6 @@
     background-color: #ffffff !important;
 }
 
-/* ---- Table Itself ---- */
 .admin-table-scroll {
     overflow-x: auto;
 }
@@ -314,13 +299,13 @@
     width: 100%;
     border-collapse: separate;
     border-spacing: 0 8px;
-    /* 0 horizontal gap, 8px vertical gap */
+
     table-layout: auto;
 }
 
 .admin-data-table thead tr {
     background: #f8f9fc;
-    /* border-bottom: 1px solid #e8eaf0; - Removed as per instruction */
+
 }
 
 .admin-data-table th {
@@ -331,7 +316,7 @@
     text-transform: uppercase;
     letter-spacing: 0.025em;
     border-bottom: 2px solid #f0f2f5;
-    /* Thicker line for header separation */
+
     white-space: nowrap;
 }
 
@@ -342,7 +327,7 @@
 }
 
 .admin-data-table tbody tr {
-    /* border-bottom: 1px solid #f0f2f5; - Removed as per instruction */
+
     transition: background 0.15s;
 }
 
@@ -356,15 +341,15 @@
 
 .admin-data-table td {
     padding: 5px 1rem;
-    /* Increased vertical padding */
+
     color: #111827;
     vertical-align: middle;
     word-wrap: break-word;
     word-break: break-word;
     border-bottom: 1px solid #f9fafb;
-    /* Very light border instead of heavy gray */
+
     background: #ffffff;
-    /* Ensure white background for rows if container has gray bg */
+
     font-size: 0.85rem;
     border-bottom: 1px solid #f0f2f5;
 }
@@ -454,8 +439,8 @@
     }
 
     .business-decision-logs-page .admin-data-table {
-        display: table !important; /* Force table display */
-        min-width: 900px; /* Ensure it's wide enough to scroll */
+        display: table !important;
+        min-width: 900px;
         border-spacing: 0;
     }
 
@@ -482,7 +467,7 @@
     }
 
     .business-decision-logs-page .admin-data-table td::before {
-        display: none !important; /* Hide the data-label headers */
+        display: none !important;
     }
 
     .business-decision-logs-page .admin-data-table td .td-inner {
@@ -508,7 +493,6 @@
     }
 }
 
-/* ---- Status Badges ---- */
 .admin-status-badge {
     display: inline-flex;
     align-items: center;
@@ -568,7 +552,6 @@
     color: #6b7280;
 }
 
-/* ---- Logo / Avatar cell ---- */
 .admin-table-logo {
     width: 34px;
     height: 34px;
@@ -589,7 +572,6 @@
     border: 1px solid #e5e7eb;
 }
 
-/* ---- Empty State ---- */
 .admin-table-empty {
     display: flex;
     flex-direction: column;
@@ -623,7 +605,6 @@
     color: #4b5563;
 }
 
-/* ---- Loading State ---- */
 .admin-table-loading {
     display: flex;
     flex-direction: column;
@@ -649,7 +630,6 @@
     }
 }
 
-/* ---- Premium Loading Bar (Linear) ---- */
 .admin-loading-bar-container {
     height: 3px;
     width: 100%;
@@ -688,7 +668,6 @@
     background-color: #1a1d23;
 }
 
-/* ---- Pagination ---- */
 .admin-pagination {
     display: flex;
     align-items: center;
@@ -773,7 +752,6 @@
     font-size: 0.85rem;
 }
 
-/* ---- Cell helpers ---- */
 .admin-cell-primary {
     font-weight: 600;
     color: #111827;
@@ -782,7 +760,6 @@
 [data-theme="dark"] .admin-cell-primary {
     color: #ffffff !important;
 }
-
 
 .admin-cell-secondary {
     font-size: 0.78rem;
@@ -810,7 +787,6 @@
     text-decoration: underline;
 }
 
-/* ---- Collaborator Modal (native, no Bootstrap) ---- */
 .admin-modal-overlay {
     position: fixed;
     inset: 0;
@@ -1002,7 +978,6 @@
     background: #e5e7eb;
 }
 
-/* ---- Dark mode support ---- */
 [data-theme="dark"] .admin-table-wrapper,
 [data-theme="dark"] .admin-metric-card {
     background: var(--color-card, #1e2535);
@@ -1074,16 +1049,15 @@
     max-width: 420px;
 }
 
-/* ---- Help Icon Trigger ---- */
 .admin-search-tooltip-trigger {
     display: flex;
     align-items: center;
     justify-content: center;
     margin-left: 10px;
-    /* Moved little bit right */
+
     cursor: pointer;
     color: #845dc8;
-    /* Matches popover gradient start */
+
     opacity: 0.8;
     transition: opacity 0.2s;
     flex-shrink: 0;
@@ -1093,8 +1067,6 @@
     opacity: 1;
 }
 
-
-/* Help Popover */
 .admin-help-popover .popover-body {
     padding: 14px 16px;
 }
@@ -1108,7 +1080,6 @@
     box-shadow: 0 10px 25px rgba(248, 246, 246, 0.15);
 }
 
-/* remove bootstrap arrow color */
 .admin-help-popover.bs-popover-top .popover-arrow::before {
     border-top-color: #7c3aed !important;
 }

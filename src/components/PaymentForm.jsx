@@ -1,9 +1,8 @@
 import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react';
-// Stripe imports removed for lazy loading
 import { FaCreditCard, FaPaypal, FaUniversity, FaCheck, FaMicrochip, FaCcVisa, FaCcMastercard, FaCcAmex, FaCcDiscover, FaCcDinersClub, FaCcJcb } from 'react-icons/fa';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from "../hooks/useTranslation";
-import '../styles/Register.css'; // Reusing Register styles for consistency
+import '../styles/Register.css';
 
 const STRIPE_STYLE = {
     base: {
@@ -49,7 +48,7 @@ const PaymentForm = ({
 }) => {
     const { t } = useTranslation();
     const { CardNumberElement, CardExpiryElement, CardCvcElement } = stripeComponents || {};
-    
+
     const [localError, setLocalError] = useState(null);
     const [paymentMethodType, setPaymentMethodType] = useState('card');
     const [cardBrand, setCardBrand] = useState('unknown');
@@ -61,9 +60,9 @@ const PaymentForm = ({
     useEffect(() => {
         if (pendingScroll && isActive && paymentMethodType === 'card' && cardDetailsRef.current) {
             const timer = setTimeout(() => {
-                cardDetailsRef.current.scrollIntoView({ 
-                    behavior: 'smooth', 
-                    block: 'start' 
+                cardDetailsRef.current.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
                 });
                 setPendingScroll(false);
             }, 100);
@@ -74,7 +73,7 @@ const PaymentForm = ({
     const handleMethodSelect = useCallback((type) => {
         setPaymentMethodType(type);
         if (onMethodSelect) onMethodSelect(type);
-        
+
         if (type === 'card') {
             setPendingScroll(true);
         }
@@ -84,8 +83,6 @@ const PaymentForm = ({
         style: STRIPE_STYLE,
         disabled: isSubmitting,
     }), [isSubmitting]);
-
-
 
     const handleStripeChange = useCallback((e) => {
         if (e.elementType === 'cardNumber') {
@@ -136,7 +133,7 @@ const PaymentForm = ({
                         transition={{ duration: 0.3 }}
                         className="card-details-container mt-4"
                     >
-                        {/* Visual Card Preview */}
+                        {}
                         <AnimatePresence>
                             {cardComplete && (
                                 <motion.div
@@ -229,7 +226,6 @@ const PaymentForm = ({
                                 </div>
                             </div>
                         </div>
-
 
                     </motion.div>
                 )}

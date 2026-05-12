@@ -8,38 +8,33 @@ import { checkMissingQuestionsAndRedirect, ANALYSIS_TYPES } from '../services/mi
 const ChannelEffectivenessMap = ({
   questions = [],
   userAnswers = {},
-  onRegenerate, 
+  onRegenerate,
   isRegenerating: propIsRegenerating = false,
   canRegenerate = true,
-  channelEffectivenessData: propChannelEffectivenessData = null,  
+  channelEffectivenessData: propChannelEffectivenessData = null,
   selectedBusinessId,
   onRedirectToBrief
-}) => { 
-  // Use Zustand store
-  const { 
+}) => {
+  const {
     channelEffectivenessData: storeChannelEffectivenessData,
     isRegenerating: isTypeRegenerating,
-    regenerateIndividualAnalysis 
+    regenerateIndividualAnalysis
   } = useAnalysisStore();
 
   const isRegenerating = propIsRegenerating || isTypeRegenerating('channelEffectiveness');
-
-  // Normalize data from store or props
   const analysisData = useMemo(() => {
     const rawData = propChannelEffectivenessData || storeChannelEffectivenessData;
     if (!rawData) return null;
-    
-    // Normalize structure
     if (rawData.channelEffectiveness) return rawData;
     if (rawData.channels) return { channelEffectiveness: rawData };
-    
+
     return null;
   }, [propChannelEffectivenessData, storeChannelEffectivenessData]);
 
   const [hoveredChannel, setHoveredChannel] = useState(null);
   const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
   const [error, setError] = useState(null);
-  const bubbleChartRef = useRef(null); 
+  const bubbleChartRef = useRef(null);
 
   const handleRedirectToBrief = useCallback((missingQuestionsData = null) => {
     if (onRedirectToBrief) {
@@ -63,7 +58,7 @@ const ChannelEffectivenessMap = ({
       }
     );
   }, [selectedBusinessId, handleRedirectToBrief]);
- 
+
   const handleRegenerate = useCallback(async () => {
     if (onRegenerate) {
       try {
@@ -81,11 +76,11 @@ const ChannelEffectivenessMap = ({
       }
     }
   }, [onRegenerate, regenerateIndividualAnalysis, questions, userAnswers, selectedBusinessId]);
- 
-  const extractScore = useCallback((data, type) => {
-    if (!data) return 50;  
 
-    let score = null; 
+  const extractScore = useCallback((data, type) => {
+    if (!data) return 50;
+
+    let score = null;
     if (typeof data.score === 'number' && !isNaN(data.score) && isFinite(data.score)) {
       score = Math.min(Math.max(data.score, 0), 100);
     } else if (typeof data.customerSatisfaction === 'number' && !isNaN(data.customerSatisfaction) && isFinite(data.customerSatisfaction)) {
@@ -94,20 +89,20 @@ const ChannelEffectivenessMap = ({
       score = Math.min(Math.max(data.roi, 0), 100);
     } else if (typeof data.costPerAcquisition === 'number' && !isNaN(data.costPerAcquisition) && isFinite(data.costPerAcquisition)) {
       score = Math.max(Math.min(100 - data.costPerAcquisition, 100), 0);
-    } 
-    if (score !== null) return score; 
+    }
+    if (score !== null) return score;
 
     const qualitativeMap = {
       'highest': 95, 'excellent': 90, 'high': 80,
       'good': 70, 'medium': 60, 'moderate': 50,
       'low': 30, 'poor': 20, 'lowest': 10
-    }; 
+    };
     for (const value of Object.values(data)) {
       if (typeof value === 'string') {
         const mapped = qualitativeMap[value.toLowerCase()];
         if (mapped && !isNaN(mapped)) return mapped;
       }
-    } 
+    }
     return 50;
   }, []);
 
@@ -115,13 +110,13 @@ const ChannelEffectivenessMap = ({
     const colors = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#feca57', '#ff9ff3', '#54a0ff', '#5f27cd', '#00d2d3', '#ff9f43', '#a55eea', '#26de81'];
     return colors[index % colors.length];
   };
- 
+
   const processedData = useMemo(() => {
     if (!analysisData?.channelEffectiveness?.channels) return [];
 
     const channels = analysisData.channelEffectiveness.channels;
     return channels
-      .map((channel, index) => { 
+      .map((channel, index) => {
         const hasInsufficientData = (obj) => {
           if (!obj) return false;
           const checkValue = (value) => {
@@ -136,7 +131,7 @@ const ChannelEffectivenessMap = ({
                 lowerValue === 'undefined';
             }
             return false;
-          }; 
+          };
           for (const value of Object.values(obj)) {
             if (checkValue(value)) return true;
             if (typeof value === 'object' && value !== null) {
@@ -145,15 +140,15 @@ const ChannelEffectivenessMap = ({
           }
           return false;
         };
- 
-        if (hasInsufficientData(channel)) return null; 
-        
+
+        if (hasInsufficientData(channel)) return null;
+
         const effectiveness = extractScore(channel.effectiveness, 'effectiveness');
-        const efficiency = extractScore(channel.efficiency, 'efficiency'); 
-        let revenue = 25;   
-        
+        const efficiency = extractScore(channel.efficiency, 'efficiency');
+        let revenue = 25;
+
         if (channel.effectiveness?.revenueContribution) {
-          const revenueValue = channel.effectiveness.revenueContribution; 
+          const revenueValue = channel.effectiveness.revenueContribution;
           if (typeof revenueValue === 'string') {
             const numericMatch = revenueValue.match(/(\d+(?:\.\d+)?)/);
             if (numericMatch) {
@@ -163,13 +158,13 @@ const ChannelEffectivenessMap = ({
           } else if (typeof revenueValue === 'number' && !isNaN(revenueValue) && isFinite(revenueValue)) {
             revenue = revenueValue;
           }
-        } 
-        
+        }
+
         if (channel.revenue) {
           const channelRevenue = typeof channel.revenue === 'number' ? channel.revenue : parseFloat(channel.revenue);
           if (!isNaN(channelRevenue) && isFinite(channelRevenue)) revenue = channelRevenue;
-        } 
-        
+        }
+
         if (isNaN(effectiveness) || isNaN(efficiency) || isNaN(revenue) ||
           !isFinite(effectiveness) || !isFinite(efficiency) || !isFinite(revenue)) return null;
 
@@ -183,7 +178,7 @@ const ChannelEffectivenessMap = ({
           rawData: channel
         };
       })
-      .filter(channel => channel !== null);  
+      .filter(channel => channel !== null);
   }, [analysisData, extractScore]);
 
   const isChannelEffectivenessDataIncomplete = useCallback((data) => {
@@ -204,7 +199,7 @@ const ChannelEffectivenessMap = ({
     setHoveredChannel(null);
   };
 
-  const BubbleChart = ({ data }) => { 
+  const BubbleChart = ({ data }) => {
     if (!data || data.length === 0) {
       return (
         <div style={{
@@ -239,7 +234,7 @@ const ChannelEffectivenessMap = ({
     return (
       <div className="bubble-chart-container" ref={bubbleChartRef} style={{ position: 'relative' }}>
         <svg width={width} height={height}>
-          <g transform={`translate(${margin.left}, ${margin.top})`}> 
+          <g transform={`translate(${margin.left}, ${margin.top})`}>
             {[0, 25, 50, 75, 100].map(val => (
               <g key={val}>
                 <line x1={xScale(val)} x2={xScale(val)} y1={0} y2={chartHeight} stroke="#e2e8f0" strokeWidth="1" strokeDasharray="4,4" opacity="0.8" />
@@ -247,17 +242,17 @@ const ChannelEffectivenessMap = ({
               </g>
             ))}
             <line x1={0} x2={chartWidth} y1={chartHeight / 2} y2={chartHeight / 2} stroke="#374151" strokeWidth="2" />
-            <line x1={chartWidth / 2} x2={chartWidth / 2} y1={0} y2={chartHeight} stroke="#374151" strokeWidth="2" /> 
-            
+            <line x1={chartWidth / 2} x2={chartWidth / 2} y1={0} y2={chartHeight} stroke="#374151" strokeWidth="2" />
+
             <text x={chartWidth * 0.75} y={20} textAnchor="middle" fontSize="15" fontWeight="700" fill="#1f2937">High Performance</text>
             <text x={chartWidth * 0.25} y={20} textAnchor="middle" fontSize="15" fontWeight="700" fill="#1f2937">Optimize Efficiency</text>
             <text x={chartWidth * 0.25} y={chartHeight - 10} textAnchor="middle" fontSize="15" fontWeight="700" fill="#1f2937">Needs Improvement</text>
             <text x={chartWidth * 0.75} y={chartHeight - 10} textAnchor="middle" fontSize="15" fontWeight="700" fill="#1f2937">Optimize Effectiveness</text>
- 
+
             {data.map((channel) => {
               const x = xScale(channel.effectiveness);
               const y = yScale(channel.efficiency);
-              const radius = radiusScale(channel.revenue); 
+              const radius = radiusScale(channel.revenue);
               const isHovered = hoveredChannel?.name === channel.name;
               return (
                 <g key={channel.name}>
@@ -278,9 +273,9 @@ const ChannelEffectivenessMap = ({
                   )}
                 </g>
               );
-            })} 
+            })}
             <text x={chartWidth / 2} y={chartHeight + 40} textAnchor="middle" fontSize="16" fontWeight="800" fill="#111827">Effectiveness Score →</text>
-            <text x={-chartHeight / 2} y={-40} textAnchor="middle" fontSize="16" fontWeight="800" fill="#111827" transform={`rotate(-90, -${chartHeight / 2}, -40)`}>← Efficiency Score</text> 
+            <text x={-chartHeight / 2} y={-40} textAnchor="middle" fontSize="16" fontWeight="800" fill="#111827" transform={`rotate(-90, -${chartHeight / 2}, -40)`}>← Efficiency Score</text>
             {[0, 25, 50, 75, 100].map(val => (
               <g key={val}>
                 <text x={xScale(val)} y={chartHeight + 20} textAnchor="middle" fontSize="13" fontWeight="600" fill="#374151">{val}</text>
@@ -288,7 +283,7 @@ const ChannelEffectivenessMap = ({
               </g>
             ))}
           </g>
-        </svg> 
+        </svg>
         {hoveredChannel && (
           <div style={{
               position: 'absolute', left: tooltipPosition.x + 15, top: tooltipPosition.y - 10,
@@ -307,7 +302,7 @@ const ChannelEffectivenessMap = ({
         )}
       </div>
     );
-  }; 
+  };
 
   if (isRegenerating) {
     return (
@@ -319,17 +314,17 @@ const ChannelEffectivenessMap = ({
       </div>
     );
   }
- 
+
   const renderContent = () => {
     if (error) {
       return (
-        <AnalysisError 
+        <AnalysisError
           error={error}
           onRetry={handleRegenerate}
           title="Channel Effectiveness Analysis Error"
         />
       );
-    } 
+    }
 
     if (!analysisData?.channelEffectiveness || isChannelEffectivenessDataIncomplete(analysisData)) {
       return (

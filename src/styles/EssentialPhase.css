@@ -131,7 +131,7 @@
 .category-badge {
   font-size: 0.75rem;
   padding: 0.125rem 0.375rem;
-  border-radius: 4px; 
+  border-radius: 4px;
   font-weight: 500;
 }
 
@@ -139,17 +139,17 @@
   text-transform: capitalize;
 }
 
-.full-swot-container .data-table td:nth-child(3) { 
-  text-align: center; 
+.full-swot-container .data-table td:nth-child(3) {
+  text-align: center;
 }
 
 .full-swot-container .data-table .force-tag {
-  white-space: nowrap; 
-  display: inline-block; 
-  min-width: 80px; 
-  padding: 4px 8px; 
-  overflow: hidden; 
-  text-overflow: ellipsis; 
+  white-space: nowrap;
+  display: inline-block;
+  min-width: 80px;
+  padding: 4px 8px;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .item-details {
@@ -319,7 +319,6 @@
   }
 }
 
-/* Animations */
 @keyframes slideInRight {
   from {
     transform: translateX(100%);
@@ -344,9 +343,7 @@
     background-position: 20px 0;
   }
 }
- 
 
-/* Responsive Design */
 @media (max-width: 768px) {
   .channel-header {
     flex-direction: column;
@@ -406,7 +403,6 @@
   }
 }
 
-/* Header */
 .maturity-header {
   display: flex;
   justify-content: space-between;
@@ -432,7 +428,6 @@
   font-size: 14px;
 }
 
-/* Buttons */
 .maturity-btn {
   display: inline-flex;
   align-items: center;
@@ -480,10 +475,6 @@
   border-color: #dc2626;
 }
 
- 
-
-
-/* Main Container */
 .analysis-card {
   background: white;
   border-radius: 16px;
@@ -492,7 +483,6 @@
   overflow: hidden;
 }
 
-/* Card Header */
 .card-header {
   display: flex;
   justify-content: space-between;
@@ -518,7 +508,6 @@
   line-height: 1.5;
 }
 
-/* Regenerate Button */
 .regenerate-button {
   display: inline-flex;
   align-items: center;
@@ -545,7 +534,6 @@
   cursor: not-allowed;
 }
 
-/* Loading State */
 .loading-state {
   text-align: center;
   padding: 60px 20px;
@@ -566,7 +554,6 @@
   color: #374151;
 }
 
-/* Placeholder Content */
 .placeholder-content {
   text-align: center;
   padding: 60px 20px;
@@ -584,7 +571,6 @@
   line-height: 1.6;
 }
 
-/* Error State */
 .error-state {
   text-align: center;
   padding: 40px 20px;
@@ -596,12 +582,10 @@
   font-size: 16px;
 }
 
-/* Goals Content */
 .goals-content {
   padding: 0;
 }
 
-/* Overall Progress Section */
 .overall-progress {
   background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
   padding: 0px 10px;
@@ -644,7 +628,6 @@
   background-clip: text;
 }
 
-/* Progress Bar */
 .progress-bar-container {
   width: 100%;
   height: 12px;
@@ -684,7 +667,6 @@
   }
 }
 
-/* Strategic Themes */
 .strategic-themes {
   margin-top: 16px;
 }
@@ -718,7 +700,6 @@
   transform: translateY(-1px);
 }
 
-/* Objectives List */
 .objectives-list {
   margin-top: 24px;
 }
@@ -732,7 +713,6 @@
   border-bottom: 2px solid #e5e7eb;
 }
 
-/* Objective Card */
 .objective-card {
   background: white;
   border-radius: 12px;
@@ -748,8 +728,6 @@
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
 }
 
-
-/* Objective Header */
 .objective-header {
   display: flex;
   justify-content: space-between;
@@ -804,7 +782,6 @@
   color: white;
 }
 
-/* Key Results Section */
 .key-results {
   margin-top: 10px;
 }
@@ -824,7 +801,6 @@
   font-size: 14px;
 }
 
-/* Key Result Item */
 .key-result-item {
   background: #f8fafc;
   padding: 16px;
@@ -901,7 +877,6 @@
   color: #ef4444;
 }
 
-/* Mini Progress Bar */
 .mini-progress-bar {
   width: 100%;
   height: 6px;
@@ -929,7 +904,6 @@
   background: linear-gradient(90deg, #ef4444, #dc2626);
 }
 
-/* Responsive Design */
 @media (max-width: 768px) {
   .card-header {
     flex-direction: column;
@@ -1010,12 +984,10 @@
 @keyframes spin {
 }
 
-/* Heatmap Content */
 .heatmap-content {
   padding: 0 24px 24px 24px;
 }
 
-/* Maturity Distribution */
 .maturity-distribution {
   background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
   padding: 20px;
@@ -1089,7 +1061,6 @@
   text-transform: capitalize;
 }
 
-/* Capabilities Grid */
 .capabilities-grid {
   margin-bottom: 24px;
 }
@@ -1111,7 +1082,6 @@
   font-size: 18px;
 }
 
-/* Capability Card */
 .capability-card {
   background: white;
   border-radius: 12px;
@@ -1154,7 +1124,6 @@
   background: linear-gradient(135deg, #ffffff 0%, #faf5ff 100%);
 }
 
-/* Capability Header */
 .capability-header {
   display: flex;
   justify-content: space-between;
@@ -1289,7 +1258,6 @@
   border-top: 1px solid #f3f4f6;
 }
 
-/* Capability Gaps */
 .capability-gaps {
   background: linear-gradient(135deg, #fef3c7 0%, #fed7aa 100%);
   padding: 20px;
@@ -1311,7 +1279,7 @@
 .gap-item {
   background: white;
   padding: 16px;
-  border-radius: 8px; 
+  border-radius: 8px;
   border-left: 4px solid #f59e0b;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   transition: all 0.2s ease;
@@ -1396,7 +1364,6 @@
   color: white;
 }
 
-/* Responsive Design */
 @media (max-width: 768px) {
 
   .heatmap-content {
@@ -1464,38 +1431,9 @@
   }
 }
 
-
-
-
-
-
-
-
-
-
-
-
-/* Channel Effectiveness Component Styles */
-
-/* Loading Animation */
 @keyframes spin {
 }
 
-
-
-
-
-
-
-
-
-
-
-
-/* Channel Effectiveness Map Styles */
-
-
-/* Bubble Chart - Bold & Vibrant Version */
 .bubble-chart-container {
   position: relative;
   display: flex;
@@ -1508,7 +1446,6 @@
   border: none;
 }
 
-/* Grid Lines */
 .grid-line {
   stroke: #525252;
   stroke-width: 1.5;
@@ -1516,20 +1453,17 @@
   opacity: 0.8;
 }
 
-/* Main Axis Lines (X and Y axes) */
 .axis-line {
   stroke: #374151;
   stroke-width: 2;
   opacity: 1;
 }
 
-/* Axis ticks */
 .axis-tick {
   stroke: #6b7280;
   stroke-width: 1;
 }
 
-/* Quadrant Labels */
 .quadrant-label {
   text-anchor: middle;
   font-size: 15px;
@@ -1537,7 +1471,6 @@
   fill: #1f2937;
 }
 
-/* Bubbles - Vibrant Colors */
 .bubble {
   fill-opacity: 0.85;
   stroke-width: 3;
@@ -1546,80 +1479,65 @@
   filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
 }
 
-/* Vibrant color palette for bubbles */
 .bubble.color-1 {
   fill: #ff6b6b;
   stroke: #ff5252;
 }
 
-/* Vibrant Red */
 .bubble.color-2 {
   fill: #4ecdc4;
   stroke: #26a69a;
 }
 
-/* Vibrant Teal */
 .bubble.color-3 {
   fill: #45b7d1;
   stroke: #2196f3;
 }
 
-/* Vibrant Blue */
 .bubble.color-4 {
   fill: #96ceb4;
   stroke: #66bb6a;
 }
 
-/* Vibrant Green */
 .bubble.color-5 {
   fill: #feca57;
   stroke: #ffb74d;
 }
 
-/* Vibrant Yellow */
 .bubble.color-6 {
   fill: #ff9ff3;
   stroke: #e91e63;
 }
 
-/* Vibrant Pink */
 .bubble.color-7 {
   fill: #54a0ff;
   stroke: #3f51b5;
 }
 
-/* Vibrant Indigo */
 .bubble.color-8 {
   fill: #5f27cd;
   stroke: #673ab7;
 }
 
-/* Vibrant Purple */
 .bubble.color-9 {
   fill: #00d2d3;
   stroke: #00bcd4;
 }
 
-/* Vibrant Cyan */
 .bubble.color-10 {
   fill: #ff9f43;
   stroke: #ff7043;
 }
 
-/* Vibrant Orange */
 .bubble.color-11 {
   fill: #a55eea;
   stroke: #8e44ad;
 }
 
-/* Vibrant Lavender */
 .bubble.color-12 {
   fill: #26de81;
   stroke: #27ae60;
 }
-
-/* Vibrant Emerald */
-
 
 .bubble-text {
   text-anchor: middle;
@@ -1630,7 +1548,6 @@
   text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
 }
 
-/* Trend Arrows - More Vibrant */
 .trend-arrow {
   font-size: 16px;
   pointer-events: none;
@@ -1671,7 +1588,6 @@
   }
 }
 
-/* Axis Labels - Clean Dark Text */
 .axis-label {
   text-anchor: middle;
   font-size: 16px;
@@ -1686,7 +1602,6 @@
   fill: #374151;
 }
 
-/* Axis title styles */
 .axis-title {
   text-anchor: middle;
   font-size: 14px;
@@ -1694,7 +1609,6 @@
   fill: #1f2937;
 }
 
-/* Grid Lines */
 .grid-line {
   stroke: #241e1e;
   stroke-width: 1.5;
@@ -1708,7 +1622,6 @@
 @keyframes pulse-red {
 }
 
-/* Tooltip - Clean Modern Style */
 .tooltip {
   position: absolute;
   background: rgba(0, 0, 0, 0.9);
@@ -1736,7 +1649,6 @@
   transform: scale(1);
 }
 
-/* Tooltip positioning variants */
 .tooltip.tooltip-right {
   transform: translateX(10px);
 }
@@ -1792,7 +1704,6 @@
   color: #ff4757;
 }
 
-/* Loading State */
 .loading-container {
   display: flex;
   flex-direction: column;
@@ -1820,7 +1731,6 @@
   font-weight: 500;
 }
 
-/* Error State */
 .error-container {
   display: flex;
   flex-direction: column;
@@ -1848,7 +1758,6 @@
   font-weight: 500;
 }
 
-/* Empty State */
 .empty-container {
   display: flex;
   flex-direction: column;
@@ -1877,7 +1786,6 @@
   color: #6b7280;
 }
 
-/* Enhanced Spinner Animation */
 .spinner {
   animation: spin 1s linear infinite;
   color: #4f46e5;
@@ -1886,7 +1794,6 @@
 @keyframes spin {
 }
 
-/* Pulse Animation for Interactive Elements */
 @keyframes glow {
 
   0%,
@@ -1899,8 +1806,6 @@
   }
 }
 
-
-/* Responsive Design */
 @media (max-width: 768px) {
   .channel-effectiveness-map {
     padding: 12px;
@@ -1912,7 +1817,6 @@
     gap: 16px;
     align-items: flex-start;
   }
-
 
   .bubble-chart-container svg {
     width: 100%;
@@ -1948,22 +1852,6 @@
   }
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/* Legend */
 .heatmap-legend {
   display: flex;
   align-items: center;
@@ -2007,7 +1895,6 @@
   color: #4b5563;
 }
 
-/* Heatmap Grid */
 .heatmap-grid {
   display: grid;
   gap: 0.25rem;
@@ -2070,7 +1957,6 @@
   border: 1px solid #e5e7eb;
 }
 
-/* Heatmap Cell */
 .heatmap-cell {
   position: relative;
   min-height: 80px;
@@ -2117,7 +2003,6 @@
   color: rgba(0, 0, 0, 0.8);
 }
 
-/* Tooltip */
 .heatmap-tooltip {
   position: absolute;
   z-index: 1000;
@@ -2168,7 +2053,6 @@
   font-weight: 700;
 }
 
-/* Summary Statistics */
 .heatmap-summary {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -2211,7 +2095,6 @@
    color:#374151;
 }
 
-/* Capability Gaps */
 .capability-gaps {
   background: rgba(255, 255, 255, 0.95);
   border-radius: 16px;
@@ -2291,7 +2174,6 @@
   color: white;
 }
 
-/* Loading and Error States */
 .placeholder-content,
 .loading-state,
 .error-state {
@@ -2328,7 +2210,6 @@
 @keyframes spin {
 }
 
-/* Responsive Design */
 @media (max-width: 768px) {
   .expanded-capability-heatmap {
     padding: 1rem;
@@ -2359,20 +2240,6 @@
   }
 }
 
-
-
-
-
-
-
-
-
-
-
-
-/* Header */
-
-/* Overall Progress Section */
 .overall-progress {
   background: #f8fafc;
   border-radius: 10px;
@@ -2426,7 +2293,6 @@
   transition: width 0.3s ease;
 }
 
-/* Progress Colors */
 .progress-high {
   color: #059669;
 }
@@ -2481,8 +2347,6 @@
   font-weight: 500;
 }
 
-/* Gantt Chart */
-/* Gantt Chart Container - Full Width */
 .gantt-container {
   width: 100%;
   margin-bottom: 2rem;
@@ -2507,14 +2371,13 @@
   min-height: 200px;
 }
 
-/* Timeline Header - Full Width Grid */
 .timeline-header {
   display: grid;
   grid-template-columns: 200px repeat(12, 1fr);
-  /* Fixed width for initiative name, equal width for months */
+
   width: 100%;
   min-width: 1000px;
-  /* Minimum width to prevent squishing */
+
   background: #f1f5f9;
   border-bottom: 2px solid #e2e8f0;
 }
@@ -2537,14 +2400,13 @@
   background: #f8fafc;
 }
 
-/* Initiative Rows - Full Width Grid */
 .initiative-row {
   display: grid;
   grid-template-columns: 200px repeat(12, 1fr);
-  /* Match header grid */
+
   width: 100%;
   min-width: 1000px;
-  /* Match header minimum width */
+
   border-bottom: 1px solid #e2e8f0;
 }
 
@@ -2569,7 +2431,6 @@
   background: #fefefe;
 }
 
-/* Timeline Bars - Full Cell Width */
 .timeline-bar {
   width: 100%;
   height: 32px;
@@ -2587,7 +2448,6 @@
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
 }
 
-/* Priority Colors */
 .timeline-bar.priority-1 {
   background: linear-gradient(135deg, #dc2626, #ef4444);
   border: 1px solid #b91c1c;
@@ -2608,7 +2468,6 @@
   border: 1px solid #047857;
 }
 
-/* Responsive Design */
 @media (max-width: 1200px) {
 
   .timeline-header,
@@ -2657,7 +2516,6 @@
   }
 }
 
-/* Objectives Section */
 .objectives-section h4 {
   margin: 0 0 7px 0;
   font-size: 18px;
@@ -2672,7 +2530,6 @@
   padding: 10px;
   margin-bottom: 10px;
 }
-
 
 .objective-header {
   display: flex;
@@ -2725,7 +2582,6 @@
   background: #f97316;
 }
 
-/* Key Results */
 .key-results h5 {
   margin: 0 0 5px 0;
   font-size: 14px;
@@ -2793,7 +2649,6 @@
   transition: width 0.3s ease;
 }
 
-/* Loading and Empty States */
 .loading-state {
   display: flex;
   flex-direction: column;
@@ -2823,7 +2678,6 @@
   margin-bottom: 16px;
 }
 
-/* Responsive Design */
 @media (max-width: 768px) {
   .strategic-goals-container {
     padding: 16px;
@@ -2864,21 +2718,11 @@
   }
 }
 
-
-
-
-
-
-
-
-
-
-
 .strategic-radar-container {
   background: white;
   border-radius: 16px;
   padding: 24px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08); 
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
 }
 
 .radar-header {
@@ -2934,7 +2778,6 @@
   padding: 48px 24px;
   color: #6b7280;
 }
- 
 
 @keyframes spin {
 }
@@ -3219,7 +3062,6 @@
   color: #92400e;
 }
 
-/* Responsive Design */
 @media (max-width: 768px) {
   .strategic-radar-container {
     padding: 16px;
@@ -3281,19 +3123,6 @@
   }
 }
 
-
-
-
-
-
-
-
-
-
- /* OrganizationalCultureProfile.css */
- 
-
-/* States */
 .loading-state,
 .error-state,
 .empty-state {
@@ -3315,7 +3144,6 @@
   margin-bottom: 1rem;
 }
 
-/* Header */
 .profile-header {
   padding: 2rem 2rem 1rem;
   display: flex;
@@ -3340,7 +3168,6 @@
   font-size: 0.95rem;
 }
 
-/* Buttons - Updated to remove custom button styles since we're using RegenerateButton */
 .btn-retry {
   display: flex;
   align-items: center;
@@ -3361,7 +3188,6 @@
   transform: translateY(-1px);
 }
 
-/* Content */
 .profile-content {
   padding: 0px;
 }
@@ -3384,7 +3210,6 @@
   color: #111827;
 }
 
-/* Section Row Layout */
 .section-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -3392,7 +3217,6 @@
   margin-bottom: 2rem;
 }
 
-/* Word Cloud */
 .word-cloud-section {
   background: white;
     padding: 10px 20px;
@@ -3436,7 +3260,6 @@
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
-/* Culture Map */
 .culture-map-section {
   background: #fff;
   padding: 15px;
@@ -3457,7 +3280,6 @@
   margin-bottom: 1.5rem;
 }
 
-/* Grid lines */
 .grid-line {
   position: absolute;
   background: #d1d5db;
@@ -3479,7 +3301,6 @@
   transform: translateX(-50%);
 }
 
-/* Axis labels */
 .axis-label {
   position: absolute;
   font-size: 0.75rem;
@@ -3512,7 +3333,6 @@
   transform: translateY(-50%) rotate(90deg);
 }
 
-/* Quadrants */
 .quadrant {
   position: absolute;
   opacity: 0.1;
@@ -3563,7 +3383,6 @@
   font-size: 0.875rem;
 }
 
-/* Current position */
 .current-position {
   position: absolute;
   width: 16px;
@@ -3595,7 +3414,6 @@
   white-space: nowrap;
 }
 
-/* Culture fit indicators */
 .culture-fit-indicators {
   display: flex;
   flex-direction: column;
@@ -3661,7 +3479,6 @@
   color: #ef4444;
 }
 
-/* Work Style & Metrics */
 .work-style-section,
 .metrics-section {
   background: #f9fafb;
@@ -3702,7 +3519,6 @@
   text-transform: capitalize;
 }
 
-/* Summary Section */
 .summary-section {
   text-align: center;
   padding: 1.5rem;
@@ -3730,7 +3546,6 @@
   box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
 }
 
-/* Responsive */
 @media (max-width: 768px) {
   .profile-header {
     flex-direction: column;
@@ -3777,17 +3592,6 @@
   }
 }
 
-
-
-
-
-
-
-
-
-
-
-/* Header */
 .maturity-header {
   display: flex;
   justify-content: space-between;
@@ -4108,10 +3912,6 @@
 @keyframes spin {
 }
 
-
-/* Productivity Metrics Specific Styles */
-
-/* Productivity Chart */
 .productivity-chart {
   display: flex;
   flex-direction: column;
@@ -4167,7 +3967,6 @@
   color: rgba(255, 255, 255, 0.9);
 }
 
-/* Cost Indicator */
 .cost-indicator {
   background: #f1f5f9;
   border-radius: 8px;
@@ -4197,7 +3996,6 @@
   text-align: center;
 }
 
-/* Value Drivers */
 .value-drivers {
   width: 100%;
 }
@@ -4262,7 +4060,6 @@
   text-transform: capitalize;
 }
 
-/* Cost Structure */
 .cost-structure-section {
   flex: 1;
 }
@@ -4294,12 +4091,10 @@
   color: #1e293b;
 }
 
-/* Value Drivers Section */
 .value-drivers-section {
   flex: 1;
 }
 
-/* Improvement Opportunities */
 .opportunities-section {
   width: 100%;
 }
@@ -4341,24 +4136,23 @@
   line-height: 1.5;
 }
 
-/* Responsive Design */
 @media (max-width: 768px) {
   .chart-metrics {
     grid-template-columns: repeat(2, 1fr);
   }
-  
+
   .metric-card {
     padding: 1rem;
   }
-  
+
   .metric-value {
     font-size: 1.5rem;
   }
-  
+
   .section-row {
     flex-direction: column;
   }
-  
+
   .driver-header {
     flex-direction: column;
     align-items: flex-start;
@@ -4370,21 +4164,15 @@
   .chart-metrics {
     grid-template-columns: 1fr;
   }
-  
+
   .metric-card {
     padding: 0.75rem;
   }
-  
+
   .metric-value {
     font-size: 1.25rem;
   }
 }
-
-
-
-
-
-/* MaturityScore.css */
 
 .maturity-score {
   background: white;
@@ -4393,7 +4181,6 @@
   overflow: hidden;
 }
 
-/* Header */
 .ms-header {
   display: flex;
   align-items: center;
@@ -4425,7 +4212,6 @@
   color: #6b7280;
 }
 
-/* Loading and Error States */
 .loading-state,
 .error-state,
 .empty-state {
@@ -4481,7 +4267,6 @@
   cursor: not-allowed;
 }
 
-/* Content */
 .maturity-content {
   padding: 24px;
 }
@@ -4514,7 +4299,6 @@
   }
 }
 
-/* Overall Score Gauge */
 .overall-section {
   display: flex;
   justify-content: center;
@@ -4586,7 +4370,6 @@
   font-style: italic;
 }
 
-/* Components Grid */
 .components-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -4632,7 +4415,6 @@
   transition: width 1s ease-in-out;
 }
 
-/* Insights Lists */
 .insights-list {
   list-style: none;
   padding: 0;
@@ -4661,7 +4443,6 @@
   flex-shrink: 0;
 }
 
-/* Next Level Section */
 .next-level-section {
   background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
   border-radius: 8px;
@@ -4723,7 +4504,6 @@
   flex-shrink: 0;
 }
 
-/* Responsive Design */
 @media (max-width: 640px) {
   .ms-header {
     flex-direction: column;
@@ -4753,7 +4533,6 @@
   }
 }
 
-/*Dark Mode*/
 [data-theme="dark"] .strategic-radar-container {
   background: #23263a !important;
   border-radius: 16px;
@@ -4765,10 +4544,6 @@
 [data-theme="dark"] .radar-content .text {
     color: #ffffff !important;
 }
-
-
-
-
 
 [data-theme="dark"]  .coreBusinessDefinition {
    background-color: #1a1d23 !important;

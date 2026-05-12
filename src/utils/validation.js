@@ -86,23 +86,17 @@ export const validateField = (fieldName, value, rules = {}) => {
     allowSpecialChars = null,
     skipStrict = false,
   } = rules;
-
-  // Required validation
   if (required && (!value || value.toString().trim() === '')) {
     return {
       isValid: false,
       message: `${fieldName} is required`,
     };
   }
-
-  // Skip other validations if field is empty and not required
   if (!value || value.toString().trim() === '') {
     return { isValid: true, message: '' };
   }
 
   const stringValue = value.toString().trim();
-
-  // Numeric validation (numbers and allowed special characters only)
   if (numeric) {
     const allowedChars = allowSpecialChars || ['.', ','];
     const numericPattern = new RegExp(`^[0-9${allowedChars.map(c => '\\' + c).join('')}]+$`);
@@ -114,8 +108,6 @@ export const validateField = (fieldName, value, rules = {}) => {
           }`,
       };
     }
-
-    // Validate numeric value
     const numValue = parseFloat(stringValue.replace(/,/g, ''));
 
     if (isNaN(numValue)) {
@@ -139,24 +131,18 @@ export const validateField = (fieldName, value, rules = {}) => {
       };
     }
   }
-
-  // Alphanumeric validation
   if (alphanumeric && !/^[a-zA-Z0-9\s]+$/.test(stringValue)) {
     return {
       isValid: false,
       message: `${fieldName} must contain only letters and numbers`,
     };
   }
-
-  // Custom pattern validation
   if (pattern && !pattern.test(stringValue)) {
     return {
       isValid: false,
       message: `${fieldName} format is invalid`,
     };
   }
-
-  // Length validations
   if (minLength && stringValue.length < minLength) {
     return {
       isValid: false,
@@ -170,16 +156,12 @@ export const validateField = (fieldName, value, rules = {}) => {
       message: `${fieldName} cannot exceed ${maxLength} characters`,
     };
   }
-
-  // Text requirement (must contain at least one letter)
   if (rules.requiresText && !/[a-zA-Z]/.test(stringValue)) {
     return {
       isValid: false,
       message: `${fieldName} must contain at least some alphabetic characters`,
     };
   }
-
-  // Stricter consecutive limits matching Dashboard.jsx
   if (!skipStrict) {
     if (/[0-9]{5,}/.test(stringValue)) {
       return {

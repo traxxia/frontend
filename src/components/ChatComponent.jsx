@@ -10,7 +10,6 @@ import { useAuthStore } from '../store/authStore';
 import { useGlobalQuestions, useConversations } from '../hooks/useQueries';
 import { useQueryClient } from '@tanstack/react-query';
 
-
 const ChatComponent = ({
   selectedBusinessId,
   userAnswers = {},
@@ -45,13 +44,9 @@ const ChatComponent = ({
   const queryClient = useQueryClient();
   const { data: questionsQuery } = useGlobalQuestions();
   const { data: conversationsQuery, isLoading: isLoadingConversations } = useConversations(selectedBusinessId);
-
-  // Sync isLoading
   useEffect(() => {
     setIsLoading(isLoadingConversations);
   }, [isLoadingConversations]);
-
-  // Sync questions and start/process chat
   useEffect(() => {
     if (questionsQuery && conversationsQuery && !hasInitialized.current) {
       setQuestions(questionsQuery);
@@ -65,8 +60,6 @@ const ChatComponent = ({
       hasInitialized.current = true;
     }
   }, [questionsQuery, conversationsQuery, onQuestionsLoaded]);
-
-  // Sync metadata
   useEffect(() => {
     if (conversationsQuery) {
       const documentExists = conversationsQuery.document_info?.has_document === true;
@@ -93,7 +86,6 @@ const ChatComponent = ({
       }
     }
   }, [conversationsQuery]);
-
 
   const messagesEndRef = useRef(null);
   const hasInitialized = useRef(false);
@@ -128,9 +120,6 @@ const ChatComponent = ({
 
     return () => window.removeEventListener("conversationUpdated", handleConversationUpdate);
   }, []);
-
-
-
 
   useEffect(() => {
     if (uploadedFileForAnalysis) {
@@ -172,7 +161,6 @@ const ChatComponent = ({
             messageChanged = true;
           }
         } else {
-          // Remove any skip indicator for this question if it now has an answer
           newMessages = newMessages.filter(
             (msg) =>
               !(
@@ -214,7 +202,6 @@ const ChatComponent = ({
       setMessages(newMessages);
     }
   }, [userAnswers, questions]);
-
 
   useEffect(() => {
     if (scrollToUploadCard && uploadedFileCardRef.current) {
@@ -359,7 +346,6 @@ const ChatComponent = ({
     ]);
   };
 
-
   const startFreshConversation = (availableQuestions) => {
     const firstQuestion = findNextUnansweredQuestion(availableQuestions, new Set());
     if (firstQuestion) {
@@ -431,7 +417,6 @@ const ChatComponent = ({
           ),
           questionId,
           phase: question.phase,
-          // Add a small offset based on conversation index to handle duplicate orders
           order: (question.order || 0) + index * 0.01,
           isFollowUp: false,
         };
@@ -445,7 +430,6 @@ const ChatComponent = ({
         );
 
         sortedFlow.forEach((interaction, idx) => {
-          // Deduplicate: If it's a bot question identical to the main question text, skip it
           if (interaction.type === "question" &&
             interaction.text?.trim() === question.question_text?.trim() &&
             !interaction.is_followup) {
@@ -461,7 +445,6 @@ const ChatComponent = ({
             questionId,
             phase: question.phase,
             isFollowUp: !!interaction.is_followup,
-            // Keep the interaction within high-level question order
             order: (question.order || 0) + index * 0.01 + (idx + 1) * 0.0001,
           };
           messagesArray.push(msg);
@@ -602,7 +585,6 @@ const ChatComponent = ({
       .filter((conv) => conv.conversation_flow.length > 0 || conv.is_skipped)
       .sort((a, b) => new Date(b.last_updated || b.created_at) - new Date(a.last_updated || a.created_at))[0];
 
-
     if (lastConversation?.completion_status === "incomplete" && !lastConversation.is_skipped) {
       handleIncompleteConversation(
         lastConversation,
@@ -677,8 +659,6 @@ const ChatComponent = ({
         isDuplicate = false;
       }
     }
-
-    // Attempt to determine order if not provided
     let order = metadata.order;
     if (order === undefined && metadata.questionId) {
       const qIndex = questions.findIndex(qu => qu._id === metadata.questionId);
@@ -703,7 +683,6 @@ const ChatComponent = ({
     setMessages(prev => [...prev, newMessage]);
     return newMessage;
   };
-
 
   const validateAnswerWithML = async (questionText, answerText) => {
     try {
@@ -749,13 +728,8 @@ const ChatComponent = ({
 
       if (response.ok) {
         queryClient.invalidateQueries({ queryKey: ['conversations', selectedBusinessId] });
-        
+
         if (isComplete) {
-          // Optimization: Instead of a manual GET fetch (waterfall), 
-          // we use the local knowledge that we just completed this question.
-          // The background refetch will eventually sync everything perfectly.
-          
-          // Fallback to locally provided answer text for immediate UI update
           onNewAnswer?.(questionId, answerText);
 
           if (onQuestionCompleted) {
@@ -801,7 +775,6 @@ const ChatComponent = ({
 
       queryClient.invalidateQueries({ queryKey: ['conversations', selectedBusinessId] });
       let canonicalAnswer = '[Question Skipped]';
-
 
       if (selectedBusinessId) {
         try {
@@ -1556,7 +1529,6 @@ const ChatComponent = ({
     !processingAnswer.current &&
     !isFileUploading;
 
-
   const UploadedFileCard = () => {
     if (!uploadedFileInfo && !hasUploadedDocument) return null;
 
@@ -1884,4 +1856,4 @@ const ChatComponent = ({
   );
 };
 
-export default ChatComponent;  
+export default ChatComponent;

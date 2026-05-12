@@ -122,7 +122,6 @@ const ProjectsTable = ({
             const statusLower = project.status?.toLowerCase();
             const isTerminal = ["completed", "scaled", "killed"].includes(statusLower);
 
-
             return (
               <tr key={project._id} className={isLastTwoRows ? "last-two-rows" : ""}>
                 <td className="col-selection">
@@ -152,7 +151,7 @@ const ProjectsTable = ({
                   </span>
                 </td>
                 <td className="col-score">
-                  {/* Use backend-calculated score, or ai_score if present */}
+                  {}
                   {project.score !== undefined ? Number(project.score).toFixed(1) :
                     (project.ai_score ? (Number(project.ai_score) * 10).toFixed(1) : "0.0")}
                 </td>
@@ -180,7 +179,7 @@ const ProjectsTable = ({
                       {t("Actions")} <ChevronDown size={14} />
                     </Dropdown.Toggle>
 
-                    <Dropdown.Menu 
+                    <Dropdown.Menu
                       className="menu-dropdown"
                       popperConfig={{ strategy: 'fixed' }}
                     >

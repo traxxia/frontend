@@ -8,7 +8,7 @@ const FinancialTemplatesPopup = ({
   onClose,
   onFileUploaded,
   isFileUploading = false,
-  readOnly = false // Add this prop to control upload functionality
+  readOnly = false
 }) => {
   const { t } = useTranslation();
   const fileInputRef = useRef(null);
@@ -114,11 +114,8 @@ const FinancialTemplatesPopup = ({
     }
 
     if (onFileUploaded) {
-      // Pass the selected template type for validation
       onFileUploaded(file, selectedTemplateType);
     }
-
-    // Reset selection
     setSelectedTemplateType(null);
     onClose();
   };
@@ -159,7 +156,7 @@ const FinancialTemplatesPopup = ({
           boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)'
         }}
       >
-        {/* Header */}
+        {}
         <div
           className="flex items-center justify-between p-6 border-b border-gray-200"
           style={{
@@ -204,7 +201,7 @@ const FinancialTemplatesPopup = ({
           </button>
         </div>
 
-        {/* Hidden file input - only if not readOnly */}
+        {}
         {!readOnly && (
           <input
             ref={fileInputRef}
@@ -216,7 +213,7 @@ const FinancialTemplatesPopup = ({
         )}
 
         <div style={{ padding: '24px' }}>
-          {/* Download Templates Section */}
+          {}
           <div style={{ marginBottom: '32px' }}>
             <Accordion defaultActiveKey={null}>
               <Accordion.Item eventKey="0">
@@ -303,7 +300,7 @@ const FinancialTemplatesPopup = ({
             </Accordion>
           </div>
 
-          {/* Template Comparison Section */}
+          {}
           <div style={{ marginBottom: '32px' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
               <h3
@@ -377,7 +374,6 @@ const FinancialTemplatesPopup = ({
                   </thead>
                   <tbody>
                     {(() => {
-                      // Get all unique metrics
                       const allMetrics = [];
                       const metricSet = new Set();
 
@@ -389,8 +385,6 @@ const FinancialTemplatesPopup = ({
                           }
                         });
                       });
-
-                      // Check if a metric is required for a specific template
                       const isMetricRequired = (metricKey, templateKey) => {
                         const template = TEMPLATE_METRICS[templateKey];
                         return template.metrics.some(m => m.key === metricKey && m.required);
@@ -434,10 +428,10 @@ const FinancialTemplatesPopup = ({
             )}
           </div>
 
-          {/* Only show upload section if not readOnly */}
+          {}
           {!readOnly && (
             <>
-              {/* Divider */}
+              {}
               <div style={{ position: 'relative', marginBottom: '32px' }}>
                 <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center' }}>
                   <div style={{ width: '100%', borderTop: '1px solid #e5e7eb' }} />
@@ -447,7 +441,7 @@ const FinancialTemplatesPopup = ({
                 </div>
               </div>
 
-              {/* General Upload Section */}
+              {}
               <div>
                 <h3
                   style={{
@@ -545,7 +539,7 @@ const FinancialTemplatesPopup = ({
             </>
           )}
 
-          {/* Instructions */}
+          {}
           <div
             style={{
               marginTop: '32px',
@@ -577,7 +571,7 @@ const FinancialTemplatesPopup = ({
         </div>
       </div>
 
-      {/* Add keyframe animation for spinner */}
+      {}
       <style>{`
         @keyframes spin {
           0% { transform: rotate(0deg); }

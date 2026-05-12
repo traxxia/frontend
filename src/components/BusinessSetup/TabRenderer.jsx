@@ -140,7 +140,6 @@ const TabRenderer = () => {
             isAnalysisRegenerating={isAnalysisRegenerating}
             isStrategicRegenerating={isStrategicRegenerating}
             questionsLoaded={questionsLoaded}
-            // Compatibility for both desktop/mobile variants
             questions={questions}
             userAnswers={userAnswers}
             businessName={businessData.name}

@@ -1,8 +1,6 @@
-/* ProjectsTable.css */
-
 .projects-table-container {
   background: transparent;
-  box-shadow: none; 
+  box-shadow: none;
   overflow-x: auto;
   overflow-y: hidden;
   -webkit-overflow-scrolling: touch;
@@ -28,7 +26,6 @@
   margin-top: 12px;
 }
 
-/* Styles for when it's in a portal */
 .score-formula-tooltip.portal-tooltip {
   visibility: visible;
   opacity: 1;
@@ -44,7 +41,6 @@
   opacity: 1;
 }
 
-/* Original Arrow Styling */
 .score-formula-tooltip::before {
   content: '';
   position: absolute;
@@ -105,14 +101,12 @@
   background-color: #fcfdfe;
 }
 
-/* Selection Column */
 .col-selection {
   width: 40px;
   text-align: center !important;
   padding-right: 0 !important;
 }
 
-/* Index Column */
 .col-index {
   width: 50px;
   text-align: center !important;
@@ -131,14 +125,12 @@
   font-weight: 700;
 }
 
-/* Bets Column */
 .col-bets {
   min-width: 250px;
   font-weight: 600;
   line-height: 1.4;
 }
 
-/* Status & Learning State Badges */
 .table-badge {
   display: inline-flex;
   align-items: center;
@@ -211,14 +203,12 @@
   border: 1px solid #10b98140;
 }
 
-/* Score Column */
 .col-score {
   font-weight: 800;
   font-size: 16px;
   color: #2d3748;
 }
 
-/* Impact, Effort, Risk Pills */
 .pill-attribute {
   display: inline-flex;
   align-items: center;
@@ -275,13 +265,11 @@
 
 .pill-na { background-color: #f1f5f9; color: #94a3b8; border: 1px solid #e2e8f0; }
 
-/* Owner Column */
 .col-owner {
   color: #718096;
   font-size: 13px;
 }
 
-/* Actions Column */
 .actions-dropdown-btn {
   display: flex;
   align-items: center;
@@ -302,7 +290,6 @@
   border-color: #cbd5e0;
 }
 
-/* Checkbox alignment */
 .premium-table input[type="checkbox"] {
   width: 18px;
   height: 18px;
@@ -310,7 +297,6 @@
   accent-color: #4f46e5;
 }
 
-/* Info Icon for Score */
 .col-score-header {
   position: relative;
 }
@@ -335,7 +321,6 @@
   padding: 1px;
 }
 
-/* Tooltip Section */
 .tooltip-section {
   display: flex;
   flex-direction: column;
@@ -382,9 +367,8 @@
   font-weight: 400;
 }
 
-/* Responsive Table Styles */
 @media (max-width: 1024px) {
-  .projects-table-container { 
+  .projects-table-container {
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
     border-radius: 8px;
@@ -396,11 +380,10 @@
   }
 
   .premium-table {
-    min-width: 1100px; /* Ensure table is wide enough to be readable with scroll */
+    min-width: 1100px;
     width: 100%;
   }
 
-  /* Add a subtle indicator that the table is scrollable */
   .projects-table-container::after {
     content: '';
     position: absolute;
@@ -415,7 +398,7 @@
 }
 
 @media (max-width: 768px) {
-  .premium-table th, 
+  .premium-table th,
   .premium-table td {
     padding: 12px 10px;
     font-size: 13px;

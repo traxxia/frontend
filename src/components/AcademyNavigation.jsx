@@ -35,24 +35,19 @@ const AcademyNavigation = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
                     const containerRect = container.getBoundingClientRect();
                     const elementRect = categoryEl.getBoundingClientRect();
 
-                    const stickyHeaderHeight = 90; // Approx height of the top sticky nav
+                    const stickyHeaderHeight = 90;
                     let currentScroll = container.scrollTop;
                     const topOffset = elementRect.top - containerRect.top;
-
-                    // Check if the top of the category is hidden under the sticky header
                     if (topOffset < stickyHeaderHeight) {
                         container.scrollTo({
                             top: currentScroll + topOffset - stickyHeaderHeight - 10,
                             behavior: 'smooth'
                         });
                     } else {
-                        // Check if bottom is hidden
                         const bottomOverflow = elementRect.bottom - containerRect.bottom + 20;
                         if (bottomOverflow > 0) {
                             let targetScroll = currentScroll + bottomOverflow;
                             const maxAllowedScroll = currentScroll + topOffset - stickyHeaderHeight - 10;
-
-                            // Ensure we don't scroll so far that the top of the category becomes hidden
                             if (targetScroll > maxAllowedScroll) {
                                 targetScroll = maxAllowedScroll;
                             }

@@ -19,7 +19,7 @@ const ExpandedCapabilityHeatmap = ({
 }) => {
     const { t } = useTranslation();
     const token = useAuthStore(state => state.token);
-    
+
     const {
         expandedCapabilityData: storeExpandedCapabilityData,
         isRegenerating: isTypeRegenerating,
@@ -64,11 +64,11 @@ const ExpandedCapabilityHeatmap = ({
 
     const data = useMemo(() => {
         if (!rawCapabilityData) return null;
-        const heatmap = rawCapabilityData.expandedCapabilityHeatmap || 
-                        rawCapabilityData.expanded_capability_heatmap || 
-                        rawCapabilityData.ExpandedCapabilityHeatmap || 
-                        rawCapabilityData.expandedCapability || 
-                        rawCapabilityData.expanded_capability || 
+        const heatmap = rawCapabilityData.expandedCapabilityHeatmap ||
+                        rawCapabilityData.expanded_capability_heatmap ||
+                        rawCapabilityData.ExpandedCapabilityHeatmap ||
+                        rawCapabilityData.expandedCapability ||
+                        rawCapabilityData.expanded_capability ||
                         (rawCapabilityData.capabilities ? rawCapabilityData : null);
 
         if (heatmap && heatmap.capabilities) {
@@ -88,11 +88,11 @@ const ExpandedCapabilityHeatmap = ({
 
     const getMaturityColor = (maturityLevel, intensity = 1) => {
         const colors = {
-            1: `rgba(239, 68, 68, ${intensity})`,    // Vibrant Red
-            2: `rgba(249, 115, 22, ${intensity})`,   // Vibrant Orange  
-            3: `rgba(59, 130, 246, ${intensity})`,   // Vibrant Blue
-            4: `rgba(34, 197, 94, ${intensity})`,    // Vibrant Green
-            5: `rgba(168, 85, 247, ${intensity})`    // Vibrant Purple
+            1: `rgba(239, 68, 68, ${intensity})`,
+            2: `rgba(249, 115, 22, ${intensity})`,
+            3: `rgba(59, 130, 246, ${intensity})`,
+            4: `rgba(34, 197, 94, ${intensity})`,
+            5: `rgba(168, 85, 247, ${intensity})`
         };
         return colors[maturityLevel] || `rgba(107, 114, 128, ${intensity})`;
     };
@@ -135,7 +135,7 @@ const ExpandedCapabilityHeatmap = ({
         const cellKey = `${businessFunction}-${maturityLevel}`;
         const isEmpty = cellCapabilities.length === 0;
         const allCellCounts = [];
-        
+
         if (heatmapMatrixData) {
             Object.values(heatmapMatrixData.heatmapMatrix).forEach(row => {
                 Object.values(row).forEach(cells => {

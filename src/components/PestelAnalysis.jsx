@@ -25,7 +25,7 @@ const PestelAnalysis = ({
 }) => {
   const { t } = useTranslation();
   const token = useAuthStore(state => state.token);
-  
+
   const {
     pestelData: storePestelData,
     isRegenerating: isTypeRegenerating,

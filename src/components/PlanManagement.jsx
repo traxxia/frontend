@@ -109,19 +109,14 @@ const PlanModal = ({ show, plan, onClose, onSave, isSubmitting, onToast }) => {
 
     const handleKeyDown = (e) => {
         const { name } = e.target;
-        
-        // Basic keys that should always be allowed
         const isControlKey = ['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'Tab', 'Home', 'End'].includes(e.key);
         if (isControlKey) return;
-
-        // Prevent navigation keys like 'e', '+', '-', etc. that are sometimes allowed in type="number"
         if (['e', 'E', '+', '-'].includes(e.key)) {
             e.preventDefault();
             return;
         }
 
         if (name === 'price') {
-            // Allow only digits and one dot
             if (e.key === '.') {
                 if (formData.price.toString().includes('.')) {
                     e.preventDefault();
@@ -130,7 +125,6 @@ const PlanModal = ({ show, plan, onClose, onSave, isSubmitting, onToast }) => {
                 e.preventDefault();
             }
         } else if (['workspace_limit', 'limit_users', 'limit_collaborators', 'limit_viewers'].includes(name)) {
-            // Allow only digits
             if (!/[0-9]/.test(e.key)) {
                 e.preventDefault();
             }
@@ -139,14 +133,9 @@ const PlanModal = ({ show, plan, onClose, onSave, isSubmitting, onToast }) => {
 
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
-        // Immediate status toggle confirmation removed as per requirement: 
-        // Confirmation now happens on Save for all edits.
 
         let processedValue = type === 'checkbox' ? checked : value;
-
-        // Double-check and filter value during change (catches paste, etc.)
         if (name === 'price') {
-            // Allow only numbers and a single dot
             processedValue = value.replace(/[^0-9.]/g, '');
             const dots = processedValue.split('.').length - 1;
             if (dots > 1) {
@@ -154,7 +143,6 @@ const PlanModal = ({ show, plan, onClose, onSave, isSubmitting, onToast }) => {
                 processedValue = parts[0] + '.' + parts.slice(1).join('');
             }
         } else if (['workspace_limit', 'limit_users', 'limit_collaborators', 'limit_viewers'].includes(name)) {
-            // Allow only whole numbers
             processedValue = value.replace(/[^0-9]/g, '');
         }
 
@@ -203,8 +191,6 @@ const PlanModal = ({ show, plan, onClose, onSave, isSubmitting, onToast }) => {
             onToast(t('period_required'), 'error');
             return;
         }
-
-        // Strict regex for price: non-negative, up to 2 decimal places
         const priceStr = formData.price.toString().trim();
         if (priceStr === '' || !/^\d+(\.\d{1,2})?$/.test(priceStr)) {
             onToast(t('price_invalid'), 'error');
@@ -245,19 +231,16 @@ const PlanModal = ({ show, plan, onClose, onSave, isSubmitting, onToast }) => {
         };
 
         if (plan) {
-            // Edit mode: trigger confirmation before saving
             setPendingData(submitData);
             setShowStatusConfirm(true);
             return;
         }
-
-        // Create mode: proceed immediately
         onSave(submitData);
     };
 
     return (
         <Modal show={show} onHide={onClose} size="lg" centered backdrop="static" dialogClassName="plan-modal-dialog">
-            {/* ── Header: title left, status badge right ── */}
+            {}
             <Modal.Header closeButton className="plan-modal-header">
                 <div className="plan-modal-header-inner">
                     <Modal.Title className="plan-modal-title">
@@ -286,7 +269,7 @@ const PlanModal = ({ show, plan, onClose, onSave, isSubmitting, onToast }) => {
             <form onSubmit={handleSubmit}>
                 <Modal.Body className="plan-modal-body">
 
-                    {/* ── Section 1: Basic Info ── */}
+                    {}
                     <div className="plan-section">
                         <p className="plan-section-label">{t('basic_info')}</p>
                         <div className="row g-3">
@@ -317,7 +300,7 @@ const PlanModal = ({ show, plan, onClose, onSave, isSubmitting, onToast }) => {
                         </div>
                     </div>
 
-                    {/* ── Section 2: Pricing ── */}
+                    {}
                     <div className="plan-section">
                         <p className="plan-section-label">{t('pricing')}</p>
                         <div className="row g-3">
@@ -359,7 +342,7 @@ const PlanModal = ({ show, plan, onClose, onSave, isSubmitting, onToast }) => {
                         </div>
                     </div>
 
-                    {/* ── Section 3: Limits ── */}
+                    {}
                     <div className="plan-section">
                         <p className="plan-section-label">{t('plan_limits')}</p>
                         <div className="row g-3">
@@ -418,7 +401,7 @@ const PlanModal = ({ show, plan, onClose, onSave, isSubmitting, onToast }) => {
                         </div>
                     </div>
 
-                    {/* ── Section 4: Feature Access ── */}
+                    {}
                     <div className="plan-section">
                         <p className="plan-section-label">{t('feature_access')}</p>
                         <div className="plan-access-grid">
@@ -474,7 +457,7 @@ const PlanModal = ({ show, plan, onClose, onSave, isSubmitting, onToast }) => {
                         </div>
                     </div>
 
-                    {/* ── Section 5: Generated Features Preview ── */}
+                    {}
                     <div className="plan-section plan-section--last">
                         <p className="plan-section-label">{t('features_preview')}</p>
                         <div className="plan-features-preview">
@@ -508,7 +491,7 @@ const PlanModal = ({ show, plan, onClose, onSave, isSubmitting, onToast }) => {
                 </Modal.Footer>
             </form>
 
-            {/* ── Status Confirm Sub-Modal ── */}
+            {}
             <Modal
                 show={showStatusConfirm}
                 onHide={cancelStatusChange}
@@ -520,7 +503,7 @@ const PlanModal = ({ show, plan, onClose, onSave, isSubmitting, onToast }) => {
             >
                 <Modal.Header closeButton className="border-0 pb-0">
                     <Modal.Title className="status-confirm-title">
-                        {formData.isActive 
+                        {formData.isActive
                             ? (t('confirm_plan_update') || 'Confirm Plan Update')
                             : (t('Confirm Status Change') || 'Confirm Status Change')
                         }
@@ -563,8 +546,6 @@ const PlanModal = ({ show, plan, onClose, onSave, isSubmitting, onToast }) => {
 const PlanManagement = ({ onToast }) => {
     const { t } = useTranslation();
     const queryClient = useQueryClient();
-
-    // --- TanStack Query Hook ---
     const { data: plans = [], isLoading: loading } = usePlans(true);
 
     const [searchTerm, setSearchTerm] = useState('');
@@ -580,7 +561,6 @@ const PlanManagement = ({ onToast }) => {
     const getAuthToken = () => useAuthStore.getState().token;
 
     const loadPlans = () => {
-        // Handled by hook
     };
 
     const handleSavePlan = async (planData) => {

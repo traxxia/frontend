@@ -78,8 +78,6 @@ const StrategicAnalysis = ({
     userAnswers: storeUserAnswers,
     isRegenerating: isTypeRegenerating
   } = useAnalysisStore();
-
-  // Prioritize props over store for multi-user/history support
   const displayStrategicData = propsStrategicData || storeStrategicData;
   const pestelData = propsPestelData || storePestelData;
   const portersData = propsPortersData || storePortersData;
@@ -280,12 +278,9 @@ const StrategicAnalysis = ({
     }
     setHasKickstarted(true);
     try {
-      // Logic for showProjectsTab and activeTab should ideally be moved to UI store or handled by parent
-      // For now, we keep it but avoid explicit storage if possible, or just leave it for Phase 7
     } catch { }
   };
   useEffect(() => {
-    // If we want to detect projects tab state, we should check UI store or parent state
   }, [hasProjectsTab, hasKickstarted]);
 
   useEffect(() => {
@@ -490,7 +485,6 @@ const StrategicAnalysis = ({
     if (isRegenerating) {
       setVisibleRows(0);
     } else if (totalRows > 0) {
-      // ONLY stream if specifically requested (via regenerate button)
       if (!streamingManager?.shouldStream(cardId)) {
         setVisibleRows(totalRows);
         return;
@@ -510,8 +504,6 @@ const StrategicAnalysis = ({
 
   const { lastRowRef } = useAutoScroll(streamingManager, cardId, isExpanded, visibleRows);
 
-
-
   useEffect(() => {
     if (displayStrategicData) {
       setLocalStrategicData(displayStrategicData);
@@ -520,12 +512,9 @@ const StrategicAnalysis = ({
       setIsLoading(false);
 
       const isFresh = displayStrategicData._isFreshGeneration === true;
-
-      // Only expand on fresh generation
       if (isFresh && !isStrategicDataIncomplete(displayStrategicData)) {
         setCollapsedCategories(new Set([]));
       } else if (!hasInitialized.current) {
-        // First load - keep collapsed
         hasInitialized.current = true;
         setCollapsedCategories(new Set(['strategy-block', 'execution-block', 'sustainability-block']));
       }
@@ -534,9 +523,6 @@ const StrategicAnalysis = ({
       setHasGenerated(false);
     }
   }, [displayStrategicData]);
-
-
-
 
   const CategorySection = ({ id, title, icon: IconComponent, children, description }) => {
     const isCollapsed = collapsedCategories.has(id);
@@ -607,7 +593,7 @@ const StrategicAnalysis = ({
       <div className="pillar-container">
         <div className="pillar-card strategy-card">
 
-          {/* HEADER CLICKABLE */}
+          {}
           <div
             className="pillar-header strategy-header"
             onClick={() => togglePillar("strategy")}
@@ -618,7 +604,7 @@ const StrategicAnalysis = ({
               {t("strategy_where_to_compete")}
             </h3>
 
-            {/* ICON */}
+            {}
             {expandedPillar === "strategy" ? (
               <ChevronUp size={18} />
             ) : (
@@ -626,7 +612,7 @@ const StrategicAnalysis = ({
             )}
           </div>
 
-          {/* CONTENT (ONLY SHOW WHEN EXPANDED) */}
+          {}
           <div className={`pillar-content ${expandedPillar === "strategy" ? 'expanded' : 'collapsed'}`}>
             <>
               <DiagnosticBox diagnostic={strategy.diagnostic} />
@@ -713,7 +699,7 @@ const StrategicAnalysis = ({
       <div className="pillar-container">
         <div className="pillar-card tactics-card">
 
-          {/* HEADER CLICKABLE */}
+          {}
           <div
             className="pillar-header tactics-header"
             onClick={() => togglePillar("tactics")}
@@ -724,7 +710,7 @@ const StrategicAnalysis = ({
               {t("execution_subtitle_1")}
             </h3>
 
-            {/* ICON */}
+            {}
             {expandedPillar === "tactics" ? (
               <ChevronUp size={18} />
             ) : (
@@ -732,7 +718,7 @@ const StrategicAnalysis = ({
             )}
           </div>
 
-          {/* CONTENT (ONLY WHEN EXPANDED) */}
+          {}
           <div className={`pillar-content ${expandedPillar === "tactics" ? 'expanded' : 'collapsed'}`}>
             <>
               <DiagnosticBox diagnostic={tactics.diagnostic} />
@@ -753,7 +739,7 @@ const StrategicAnalysis = ({
       <div className="pillar-container">
         <div className="pillar-card resources-card">
 
-          {/* HEADER CLICKABLE */}
+          {}
           <div
             className="pillar-header resources-header"
             onClick={() => togglePillar("resources")}
@@ -764,7 +750,7 @@ const StrategicAnalysis = ({
               {t("execution_table5_header")}
             </h3>
 
-            {/* ICON */}
+            {}
             {expandedPillar === "resources" ? (
               <ChevronUp size={18} />
             ) : (
@@ -772,7 +758,7 @@ const StrategicAnalysis = ({
             )}
           </div>
 
-          {/* CONTENT (ONLY WHEN EXPANDED) */}
+          {}
           <div className={`pillar-content ${expandedPillar === "resources" ? 'expanded' : 'collapsed'}`}>
             <>
               <DiagnosticBox diagnostic={resources.diagnostic} />
@@ -910,7 +896,7 @@ const StrategicAnalysis = ({
       <div className="pillar-container">
         <div className="pillar-card analysis-data-card">
 
-          {/* HEADER CLICKABLE */}
+          {}
           <div
             className="pillar-header analysis-data-header"
             onClick={() => togglePillar("analysis")}
@@ -921,7 +907,7 @@ const StrategicAnalysis = ({
               {t("execution1_table_header1")}
             </h3>
 
-            {/* ICON */}
+            {}
             {expandedPillar === "analysis" ? (
               <ChevronUp size={18} />
             ) : (
@@ -929,7 +915,7 @@ const StrategicAnalysis = ({
             )}
           </div>
 
-          {/* CONTENT (ONLY WHEN EXPANDED) */}
+          {}
           <div className={`pillar-content ${expandedPillar === "analysis" ? 'expanded' : 'collapsed'}`}>
             <>
               <DiagnosticBox diagnostic={analysisData.diagnostic} />
@@ -981,7 +967,7 @@ const StrategicAnalysis = ({
       <div className="pillar-container">
         <div className="pillar-card technology-card">
 
-          {/* HEADER CLICKABLE */}
+          {}
           <div
             className="pillar-header technology-header"
             onClick={() => togglePillar("technology")}
@@ -992,7 +978,7 @@ const StrategicAnalysis = ({
               {t("execution1_table1_header1")}
             </h3>
 
-            {/* ICON */}
+            {}
             {expandedPillar === "technology" ? (
               <ChevronUp size={18} />
             ) : (
@@ -1000,7 +986,7 @@ const StrategicAnalysis = ({
             )}
           </div>
 
-          {/* CONTENT (ONLY WHEN EXPANDED) */}
+          {}
           <div className={`pillar-content ${expandedPillar === "technology" ? 'expanded' : 'collapsed'}`}>
             <>
               <DiagnosticBox diagnostic={tech.diagnostic} />
@@ -1716,7 +1702,6 @@ const StrategicAnalysis = ({
                         </thead>
                         <tbody>
                           {governance.decision_delegation.map((delegation, idx) => {
-                            // Search for sections and add their lengths.
                             const getExecutionTotal = () => {
                               const exec = localStrategicData?.strategic_analysis?.strategic_recommendations?.execution_block;
                               if (!exec) return 0;
@@ -2215,10 +2200,7 @@ const StrategicAnalysis = ({
       if (!data) return null;
 
       try {
-        // Handle stringified data if it somehow got through
         const parsedData = typeof data === 'string' ? JSON.parse(data) : data;
-
-        // Check both nested key and top level
         return parsedData[typeKey]?.strategic_recommendations ||
           parsedData.strategic_recommendations ||
           parsedData;
@@ -2639,7 +2621,7 @@ const StrategicAnalysis = ({
     );
   };
 
-  if (isRegenerating || isLoading) { 
+  if (isRegenerating || isLoading) {
     return (
       <div className="strategic-analysis-container">
         <div className="loading-state">
@@ -2790,7 +2772,6 @@ const StrategicAnalysis = ({
           if (onToastMessage) {
             onToastMessage(t('plan_updated_success') || 'Plan updated successfully!', 'success');
           }
-          // Optionally refresh data or simply allow re-trying handleKickstart
         }}
       />
       <PlanLimitModal
