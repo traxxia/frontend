@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useCallback } from 'react';
 import { Users, Loader, ChevronDown, ChevronRight } from 'lucide-react';
-import '../styles/Analytics.css';
+import '../styles/CustomerSegmentation.css';
 import { useTranslation } from "../hooks/useTranslation";
 import { useAnalysisStore } from '../store';
 import AnalysisEmptyState from './AnalysisEmptyState';

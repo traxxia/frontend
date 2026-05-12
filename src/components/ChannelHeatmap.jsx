@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { BarChart3, TrendingUp, Layers, Loader, Zap, Grid3x3 } from 'lucide-react';
-import '../styles/Analytics.css';
+import '../styles/ChannelHeatmap.css';
 import { useTranslation } from "../hooks/useTranslation";
 import { useAnalysisStore } from '../store';
 import AnalysisEmptyState from './AnalysisEmptyState';

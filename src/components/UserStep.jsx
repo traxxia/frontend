@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { FaAngleLeft, FaAngleRight, FaSpinner, FaEye, FaEyeSlash } from 'react-icons/fa';
+import { ChevronLeft, ChevronRight, Loader, Eye, EyeOff } from 'lucide-react';
 
 const UserStep = ({ form, handleChange, errors, isCheckingEmail, showPassword, setShowPassword, showConfirmPassword, setShowConfirmPassword, handleNext, onBackToLogin, t }) => {
   return (
@@ -65,7 +65,7 @@ const UserStep = ({ form, handleChange, errors, isCheckingEmail, showPassword, s
                 className="password-toggle"
                 onClick={() => setShowPassword(!showPassword)}
               >
-                {showPassword ? <FaEye /> : <FaEyeSlash />}
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
             </div>
             {errors.password && <span className="error-message">{errors.password}</span>}
@@ -89,7 +89,7 @@ const UserStep = ({ form, handleChange, errors, isCheckingEmail, showPassword, s
                 className="password-toggle"
                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
               >
-                {showConfirmPassword ? <FaEye /> : <FaEyeSlash />}
+                {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
             </div>
             {errors.confirmPassword && <span className="error-message">{errors.confirmPassword}</span>}
@@ -98,10 +98,10 @@ const UserStep = ({ form, handleChange, errors, isCheckingEmail, showPassword, s
 
         <div className="form-actions">
           <button type="button" className="btn-secondary" onClick={onBackToLogin}>
-            <FaAngleLeft /> {t('back_to_home')}
+            <ChevronLeft size={18} /> {t('back_to_login')}
           </button>
           <button type="submit" className="btn-primary" disabled={isCheckingEmail}>
-            {isCheckingEmail ? <><FaSpinner className="spinner" /> {t('checking') || 'Checking...'}</> : <>{t('next_step')} <FaAngleRight /></>}
+            {isCheckingEmail ? <><Loader className="animate-spin" size={16} /> {t('checking') || 'Checking...'}</> : <>{t('next')} <ChevronRight size={18} /></>}
           </button>
         </div>
       </form>

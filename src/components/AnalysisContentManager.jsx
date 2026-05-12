@@ -23,6 +23,7 @@ import CoreAdjacency from "./CoreAdjacency";
 import { useStreamingManager } from './StreamingManager';
 import { useTranslation } from "../hooks/useTranslation";
 import { useAnalysisStore } from "../store";
+import '../styles/Analytics.css';
 const MemoizedAnalysisCard = React.memo(({
   id,
   title,

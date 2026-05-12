@@ -4,7 +4,7 @@ import PMFInsightsTab from "../PMFInsightsTab";
 import ExecutiveSummary from "../ExecutiveSummary";
 import EditableBriefSection from "../EditableBriefSection";
 import AnalysisContentManager from "../AnalysisContentManager";
-import StrategicAnalysis from "../StrategicAnalysis";
+import StrategicAnalysis from "../StrategicAnalysis.jsx";
 import ProjectsSection from "../ProjectsSection";
 import RankingSection from "../RankingSection";
 import BusinessDecisionLogs from "../BusinessDecisionLogs";

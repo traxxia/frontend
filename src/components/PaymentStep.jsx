@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { FaAngleLeft, FaCheck, FaSpinner } from 'react-icons/fa';
+import { ChevronLeft, Check, Loader } from 'lucide-react';
 import { useTranslation } from '../hooks/useTranslation';
 import PaymentForm from './PaymentForm';
 
@@ -82,10 +82,10 @@ const PaymentStep = ({ onBack, onSubmit, isSubmitting, error, selectedPlanPrice,
 
       <div className="tab-navigation full-width-field">
         <button type="button" onClick={onBack} disabled={isSubmitting} className="btn-vibrant btn-secondary-vibrant">
-          <FaAngleLeft />{t("Previous")}
+          <ChevronLeft size={18} />{t("Previous")}
         </button>
         <button type="button" onClick={handlePayClick} disabled={isSubmitting} className="btn-vibrant btn-primary-vibrant create-account-btn">
-          {isSubmitting ? <><FaSpinner className="spinner" /> {t("Processing...")}</> : <><FaCheck /> {t("Pay & Register")}</>}
+          {isSubmitting ? <><Loader className="animate-spin" size={16} /> {t("Processing...")}</> : <><Check size={18} /> {t("Pay & Register")}</>}
         </button>
       </div>
     </motion.div>

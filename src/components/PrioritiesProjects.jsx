@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { Card, Button, Form, Badge, Spinner, Modal, ProgressBar } from "react-bootstrap";
-import { ChevronRight, ArrowRight } from "react-bootstrap-icons";
+import { ChevronRight, ArrowRight } from "lucide-react";
 import { Folder, CheckCircle, Rocket, Info, AlertTriangle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore, useAnalysisStore, useProjectStore } from "../store";

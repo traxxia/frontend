@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import '../styles/PortersFiveForces.css';
 import { useTranslation } from "../hooks/useTranslation";
 import { Shield, Loader, AlertTriangle, Users, DollarSign, TrendingUp, Building, ArrowRight, ChevronDown, ChevronRight } from 'lucide-react';
 import { useAuthStore, useAnalysisStore } from "../store";

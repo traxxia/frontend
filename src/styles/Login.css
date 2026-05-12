@@ -36,7 +36,7 @@
 
 .login-left-section {
   flex: 1;
-  background: url('../assets/71d46d88977b8f5269d03ea65a25e6dff7c73d30.png');
+  background: url('../assets/login-background.png');
   background-size: cover;
   color: var(--color-text-white);
   display: flex;
@@ -47,7 +47,7 @@
 }
 
 [data-theme="dark"] .login-left-section {
-  background: linear-gradient(135deg, rgba(50, 50, 50, 0.9), rgba(30, 30, 30, 0.9)), url('../assets/71d46d88977b8f5269d03ea65a25e6dff7c73d30.png');
+  background: linear-gradient(135deg, rgba(50, 50, 50, 0.9), rgba(30, 30, 30, 0.9)), url('../assets/login-background.png');
   background-size: cover;
 }
 

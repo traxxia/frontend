@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import '../styles/StrategicPositioningRadar.css';
 import { useTranslation } from "../hooks/useTranslation";
 import { RefreshCw, Loader, Target, TrendingUp, Users, BarChart3, Activity, Award, ChevronDown, ChevronRight } from 'lucide-react';
 import { useAuthStore, useAnalysisStore } from "../store";

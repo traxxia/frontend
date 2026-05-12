@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import '../styles/PestelAnalysis.css';
 import { useTranslation } from "../hooks/useTranslation";
 import { ChevronDown, ChevronRight, BarChart3, TrendingUp, Loader } from 'lucide-react';
 import { useAuthStore, useAnalysisStore } from "../store";

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Card, Table, Alert, Spinner, Button } from 'react-bootstrap';
 import Pagination from './Pagination';
-import { MdRefresh, MdUnfoldMore, MdArrowUpward, MdArrowDownward } from 'react-icons/md';
+import { RefreshCcw, ChevronsUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import { useTranslation } from '../hooks/useTranslation';
 import { useAuthStore } from '../store';
 import { useStaleProjects } from '../hooks/useQueries';
@@ -62,17 +62,15 @@ const StaleBetsAdmin = ({
       fontSize: '16px',
       display: 'inline-block'
     };
-    if (sortField !== field) return <MdUnfoldMore style={{
-      ...iconStyle
-    }} className="stale-bets-admin--s1" />;
-    return sortOrder === 'asc' ? <MdArrowUpward style={iconStyle} /> : <MdArrowDownward style={iconStyle} />;
+    if (sortField !== field) return <ChevronsUpDown size={16} style={iconStyle} />;
+    return sortOrder === 'asc' ? <ArrowUp size={16} style={iconStyle} /> : <ArrowDown size={16} style={iconStyle} />;
   };
   return <div className="admin-content-card">
       <Card>
         <Card.Header className="d-flex justify-content-between align-items-center">
           <h5 className="mb-0">{t('stale_bets') || "Stale Bets (Overdue Reviews)"}</h5>
           <Button variant="outline-primary" onClick={fetchStaleProjects} disabled={loading} size="sm">
-            {loading ? <Spinner size="sm" /> : <MdRefresh size={20} />}
+            {loading ? <Spinner size="sm" /> : <RefreshCcw size={18} />}
           </Button>
         </Card.Header>
 

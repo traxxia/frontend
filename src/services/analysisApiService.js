@@ -1149,53 +1149,172 @@ export class AnalysisApiService {
 
     return await performCall();
   }
-  async generateStrategicAnalysis(questions, answers, selectedBusinessId) {
-    const performGeneration = async (isRetry = false) => {
-      try {
-        const { freshAnswers } = await this.getFreshAnswersData(selectedBusinessId);
-        const combinedAnswers = { ...answers, ...freshAnswers };
+  async generateAnalysis(analysisType, questions, answers, selectedBusinessId, options = {}) {
+    const { uploadedFile = null, onStreamChunk = null, forceRefresh = false } = options;
+    
+    try {
+      const endpoint = API_ENDPOINTS[analysisType];
+      if (!endpoint) throw new Error(`Unknown analysis type: ${analysisType}`);
 
-        const { questionsArray, answersArray } = this.prepareQuestionsAndAnswers(questions, combinedAnswers);
-        const result = await this.makeAPICall('strategic-analysis', questionsArray, answersArray, selectedBusinessId, null, null, null, null, null, null, 'strategic');
-        const strategicContent = result.strategic_analysis || result.strategic || result;
-        await this.saveAnalysisToBackend(strategicContent, 'strategic', selectedBusinessId);
-        return strategicContent;
-      } catch (error) {
-        if (!isRetry) {
-          console.warn('Strategic analysis failed, retrying...', error);
-          return await performGeneration(true);
-        }
-        console.error('Error generating strategic analysis after retry:', error);
-        throw error;
+      // 1. Prepare Data
+      let freshAnswers = {};
+      if (selectedBusinessId) {
+        const freshData = await this.getFreshAnswersData(selectedBusinessId);
+        freshAnswers = freshData.freshAnswers;
       }
-    };
+      const combinedAnswers = { ...answers, ...freshAnswers };
+      
+      const { questionsArray, answersArray } = this.prepareQuestionsAndAnswers(
+        questions, 
+        combinedAnswers,
+        analysisType === 'fullSwot' ? (q, ans) => ans[q._id] && ans[q._id].trim() !== '' : null
+      );
 
-    return await performGeneration();
+      // 2. API Call
+      let result;
+      if (this.isExcelAnalysisType(analysisType)) {
+        const metricType = EXCEL_ANALYSIS_METRIC_TYPES[analysisType];
+        const loadingKey = `excel-analysis-${metricType?.replace('_trends', '')}`;
+        result = await this.makeAPICall(
+          'excel-analysis',
+          questionsArray,
+          answersArray,
+          selectedBusinessId,
+          uploadedFile,
+          metricType,
+          onStreamChunk,
+          null,
+          null,
+          loadingKey,
+          analysisType
+        );
+      } else {
+        result = await this.makeAPICall(
+          endpoint, 
+          questionsArray, 
+          answersArray, 
+          selectedBusinessId, 
+          null, 
+          null, 
+          onStreamChunk, 
+          null, 
+          null, 
+          null, 
+          analysisType
+        );
+      }
+
+      // 3. Post-processing
+      let processedResult = result;
+      if (analysisType === 'swot') {
+        processedResult = typeof result === 'string' ? result : JSON.stringify(result);
+      } else if (analysisType === 'strategic') {
+        processedResult = result.strategic_analysis || result.strategic || result;
+      } else if (analysisType === 'purchaseCriteria') {
+        processedResult = result.purchase_criteria || result.purchaseCriteria || result;
+      } else if (analysisType === 'loyaltyNPS') {
+        processedResult = result.loyalty_nps || result.loyaltyNPS || result;
+      } else if (analysisType === 'porters') {
+        processedResult = result.porters_analysis || result.porters || result;
+      } else if (analysisType === 'expandedCapability') {
+        processedResult = result.expandedCapabilityHeatmap ? result : (result.expanded_capability_heatmap ? { expandedCapabilityHeatmap: result.expanded_capability_heatmap } : { expandedCapabilityHeatmap: result });
+      } else if (analysisType === 'strategicRadar') {
+        processedResult = result.strategicRadar ? result : (result.strategic_radar ? { strategicRadar: result.strategic_radar } : { strategicRadar: result });
+      } else if (analysisType === 'productivityMetrics') {
+        processedResult = result.productivityMetrics ? result : (result.productivity_metrics ? { productivityMetrics: result.productivity_metrics } : { productivityMetrics: result });
+      } else if (analysisType === 'maturityScore') {
+        processedResult = (result.maturityScore || result.maturity_score || (result.dimensions && result.overallMaturity)) ? (result.maturityScore ? result : { maturityScore: result }) : { maturityScore: result };
+      }
+
+      // 4. Save & Cache
+      if (selectedBusinessId) {
+        await this.saveAnalysisToBackend(processedResult, analysisType, selectedBusinessId);
+      }
+      
+      return processedResult;
+    } catch (error) {
+      console.error(`Error generating ${analysisType} analysis:`, error);
+      throw error;
+    }
+  }
+
+  // Wrapper methods for backward compatibility and specific use cases
+  async generateStrategicAnalysis(questions, answers, selectedBusinessId) {
+    return this.generateAnalysis('strategic', questions, answers, selectedBusinessId);
   }
 
   async generateCompetitiveLandscape(questions, answers, selectedBusinessId) {
-    try {
-      const { questionsArray, answersArray } = this.prepareQuestionsAndAnswers(questions, answers);
-      const result = await this.makeAPICall('simple-swot-portfolio', questionsArray, answersArray, selectedBusinessId, null, null, null, null, null, null, 'competitiveLandscape');
-      await this.saveAnalysisToBackend(result, 'competitiveLandscape', selectedBusinessId);
-      return result;
-    } catch (error) {
-      console.error('Error generating Competitive Landscape analysis:', error);
-      throw error;
-    }
+    return this.generateAnalysis('competitiveLandscape', questions, answers, selectedBusinessId);
   }
+
   async generateSWOTAnalysis(questions, answers, selectedBusinessId) {
-    try {
-      const { questionsArray, answersArray } = this.prepareQuestionsAndAnswers(questions, answers);
-      const result = await this.makeAPICall('find', questionsArray, answersArray, selectedBusinessId, null, null, null, null, null, null, 'swot');
-      const analysisContent = typeof result === 'string' ? result : JSON.stringify(result);
-      await this.saveAnalysisToBackend(analysisContent, 'swot', selectedBusinessId);
-      return analysisContent;
-    } catch (error) {
-      console.error('Error generating SWOT analysis:', error);
-      throw error;
-    }
+    return this.generateAnalysis('swot', questions, answers, selectedBusinessId);
   }
+
+  async generatePurchaseCriteria(questions, answers, selectedBusinessId) {
+    return this.generateAnalysis('purchaseCriteria', questions, answers, selectedBusinessId);
+  }
+
+  async generateLoyaltyNPS(questions, answers, selectedBusinessId) {
+    return this.generateAnalysis('loyaltyNPS', questions, answers, selectedBusinessId);
+  }
+
+  async generatePortersAnalysis(questions, answers, selectedBusinessId) {
+    return this.generateAnalysis('porters', questions, answers, selectedBusinessId);
+  }
+
+  async generatePestelAnalysis(questions, answers, selectedBusinessId) {
+    return this.generateAnalysis('pestel', questions, answers, selectedBusinessId);
+  }
+
+  async generateFullSwotPortfolio(questions, answers, selectedBusinessId) {
+    return this.generateAnalysis('fullSwot', questions, answers, selectedBusinessId);
+  }
+
+  async generateCompetitiveAdvantage(questions, answers, selectedBusinessId) {
+    return this.generateAnalysis('competitiveAdvantage', questions, answers, selectedBusinessId);
+  }
+
+  async generateExpandedCapability(questions, answers, selectedBusinessId) {
+    return this.generateAnalysis('expandedCapability', questions, answers, selectedBusinessId);
+  }
+
+  async generateStrategicRadar(questions, answers, selectedBusinessId) {
+    return this.generateAnalysis('strategicRadar', questions, answers, selectedBusinessId);
+  }
+
+  async generateProductivityMetrics(questions, answers, selectedBusinessId) {
+    return this.generateAnalysis('productivityMetrics', questions, answers, selectedBusinessId);
+  }
+
+  async generateCoreAdjacency(questions, answers, selectedBusinessId) {
+    return this.generateAnalysis('coreAdjacency', questions, answers, selectedBusinessId);
+  }
+
+  async generateMaturityScore(questions, answers, selectedBusinessId) {
+    return this.generateAnalysis('maturityScore', questions, answers, selectedBusinessId);
+  }
+
+  async generateProfitabilityAnalysis(questions, answers, selectedBusinessId, uploadedFile = null) {
+    return this.generateAnalysis('profitabilityAnalysis', questions, answers, selectedBusinessId, { uploadedFile });
+  }
+
+  async generateGrowthTracker(questions, answers, selectedBusinessId, uploadedFile = null) {
+    return this.generateAnalysis('growthTracker', questions, answers, selectedBusinessId, { uploadedFile });
+  }
+
+  async generateLiquidityEfficiency(questions, answers, selectedBusinessId, uploadedFile = null) {
+    return this.generateAnalysis('liquidityEfficiency', questions, answers, selectedBusinessId, { uploadedFile });
+  }
+
+  async generateInvestmentPerformance(questions, answers, selectedBusinessId, uploadedFile = null) {
+    return this.generateAnalysis('investmentPerformance', questions, answers, selectedBusinessId, { uploadedFile });
+  }
+
+  async generateLeverageRisk(questions, answers, selectedBusinessId, uploadedFile = null) {
+    return this.generateAnalysis('leverageRisk', questions, answers, selectedBusinessId, { uploadedFile });
+  }
+
   async getFreshAnswersData(selectedBusinessId) {
     try {
       const token = this.getAuthToken();
@@ -1205,31 +1324,25 @@ export class AnalysisApiService {
           'Content-Type': 'application/json'
         }
       });
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch fresh answers data');
-      }
-
+      if (!response.ok) throw new Error('Failed to fetch fresh answers data');
       const { data } = await response.json();
       const freshAnswers = {};
       const freshCompletedSet = new Set();
-
       data?.forEach(answerDoc => {
         const questionId = String(answerDoc.question_id);
         const answerText = answerDoc.answer;
-
         if (answerText && answerText.trim()) {
           freshCompletedSet.add(questionId);
           freshAnswers[questionId] = answerText.trim();
         }
       });
-
       return { freshAnswers, freshCompletedSet };
     } catch (error) {
       console.error('Error fetching fresh answers data:', error);
       return { freshAnswers: {}, freshCompletedSet: new Set() };
     }
   }
+
   async getFreshConversationData(selectedBusinessId) {
     try {
       const token = this.getAuthToken();
@@ -1239,20 +1352,14 @@ export class AnalysisApiService {
           'Content-Type': 'application/json'
         }
       });
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch fresh conversation data');
-      }
-
+      if (!response.ok) throw new Error('Failed to fetch fresh conversation data');
       const data = await response.json();
       const freshAnswers = {};
       const freshCompletedSet = new Set();
-
       data.conversations?.forEach(conversation => {
         if (conversation.completion_status === 'complete' || conversation.completion_status === 'skipped') {
           const questionId = conversation.question_id;
           freshCompletedSet.add(questionId);
-
           if (conversation.completion_status === 'skipped' || conversation.is_skipped) {
             freshAnswers[questionId] = '[Question Skipped]';
           } else {
@@ -1260,302 +1367,14 @@ export class AnalysisApiService {
               .filter(item => item.type === 'answer')
               .map(a => a.text.trim())
               .filter(text => text.length > 0 && text !== '[Question Skipped]');
-
-            if (allAnswers.length > 0) {
-              freshAnswers[questionId] = allAnswers.join('. ');
-            }
+            if (allAnswers.length > 0) freshAnswers[questionId] = allAnswers.join('. ');
           }
         }
       });
-
       return { freshAnswers, freshCompletedSet };
     } catch (error) {
       console.error('Error fetching fresh conversation data:', error);
       return { freshAnswers: {}, freshCompletedSet: new Set() };
-    }
-  }
-
-  async generatePurchaseCriteria(questions, answers, selectedBusinessId) {
-    try {
-      const { questionsArray, answersArray } = this.prepareQuestionsAndAnswers(questions, answers);
-      const result = await this.makeAPICall('purchase-criteria', questionsArray, answersArray, selectedBusinessId, null, null, null, null, null, null, 'purchaseCriteria');
-      const criteriaData = result.purchase_criteria || result.purchaseCriteria || result;
-      await this.saveAnalysisToBackend(criteriaData, 'purchaseCriteria', selectedBusinessId);
-      return criteriaData;
-    } catch (error) {
-      console.error('Error generating Purchase Criteria analysis:', error);
-      throw error;
-    }
-  }
-
-  async generateLoyaltyNPS(questions, answers, selectedBusinessId) {
-    try {
-      const { questionsArray, answersArray } = this.prepareQuestionsAndAnswers(questions, answers);
-      const result = await this.makeAPICall('loyalty-metrics', questionsArray, answersArray, selectedBusinessId, null, null, null, null, null, null, 'loyaltyNPS');
-      const loyaltyData = result.loyalty_nps || result.loyaltyNPS || result;
-      await this.saveAnalysisToBackend(loyaltyData, 'loyaltyNPS', selectedBusinessId);
-      return loyaltyData;
-    } catch (error) {
-      console.error('Error generating Loyalty NPS analysis:', error);
-      throw error;
-    }
-  }
-
-  async generatePortersAnalysis(questions, answers, selectedBusinessId) {
-    try {
-      const { questionsArray, answersArray } = this.prepareQuestionsAndAnswers(questions, answers);
-      const result = await this.makeAPICall('porter-analysis', questionsArray, answersArray, selectedBusinessId, null, null, null, null, null, null, 'porters');
-      const portersContent = result.porters_analysis || result.porters || result;
-      await this.saveAnalysisToBackend(portersContent, 'porters', selectedBusinessId);
-      return portersContent;
-    } catch (error) {
-      console.error('Error generating Porter\'s Five Forces analysis:', error);
-      throw error;
-    }
-  }
-
-  async generatePestelAnalysis(questions, answers, selectedBusinessId) {
-    try {
-      const { questionsArray, answersArray } = this.prepareQuestionsAndAnswers(questions, answers);
-      const result = await this.makeAPICall('pestel-analysis', questionsArray, answersArray, selectedBusinessId, null, null, null, null, null, null, 'pestel');
-      await this.saveAnalysisToBackend(result, 'pestel', selectedBusinessId);
-      return result;
-    } catch (error) {
-      console.error('Error generating PESTEL analysis:', error);
-      throw error;
-    }
-  }
-
-  async generateFullSwotPortfolio(questions, answers, selectedBusinessId) {
-    try {
-      const { questionsArray, answersArray } = this.prepareQuestionsAndAnswers(
-        questions,
-        answers,
-        (q, ans) => ans[q._id] && ans[q._id].trim() !== ''
-      );
-      const result = await this.makeAPICall('full-swot-portfolio', questionsArray, answersArray, selectedBusinessId, null, null, null, null, null, null, 'fullSwot');
-      await this.saveAnalysisToBackend(result, 'fullSwot', selectedBusinessId);
-      return result;
-    } catch (error) {
-      console.error('Error generating Full SWOT Portfolio analysis:', error);
-      throw error;
-    }
-  }
-
-  async generateCompetitiveAdvantage(questions, answers, selectedBusinessId) {
-    try {
-      const { questionsArray, answersArray } = this.prepareQuestionsAndAnswers(questions, answers);
-      const result = await this.makeAPICall('competitive-advantage', questionsArray, answersArray, selectedBusinessId, null, null, null, null, null, null, 'competitiveAdvantage');
-      await this.saveAnalysisToBackend(result, 'competitiveAdvantage', selectedBusinessId);
-      return result;
-    } catch (error) {
-      console.error('Error generating Competitive Advantage Matrix:', error);
-      throw error;
-    }
-  }
-
-  async generateExpandedCapability(questions, answers, selectedBusinessId) {
-    try {
-      const { questionsArray, answersArray } = this.prepareQuestionsAndAnswers(questions, answers);
-      const result = await this.makeAPICall('expanded-capability-heatmap', questionsArray, answersArray, selectedBusinessId, null, null, null, null, null, null, 'expandedCapability');
-
-      let expandedCapabilityContent = null;
-      if (result.expandedCapabilityHeatmap) {
-        expandedCapabilityContent = result;
-      } else if (result.expanded_capability_heatmap) {
-        expandedCapabilityContent = { expandedCapabilityHeatmap: result.expanded_capability_heatmap };
-      } else {
-        expandedCapabilityContent = { expandedCapabilityHeatmap: result };
-      }
-
-      await this.saveAnalysisToBackend(expandedCapabilityContent, 'expandedCapability', selectedBusinessId);
-      return expandedCapabilityContent;
-    } catch (error) {
-      console.error('Error generating Capability Heatmap:', error);
-      throw error;
-    }
-  }
-
-  async generateStrategicRadar(questions, answers, selectedBusinessId) {
-    try {
-      const { questionsArray, answersArray } = this.prepareQuestionsAndAnswers(questions, answers);
-      const result = await this.makeAPICall('strategic-positioning-radar', questionsArray, answersArray, selectedBusinessId, null, null, null, null, null, null, 'strategicRadar');
-
-      let strategicRadarContent = null;
-      if (result.strategicRadar) {
-        strategicRadarContent = result;
-      } else if (result.strategic_radar) {
-        strategicRadarContent = { strategicRadar: result.strategic_radar };
-      } else {
-        strategicRadarContent = { strategicRadar: result };
-      }
-
-      await this.saveAnalysisToBackend(strategicRadarContent, 'strategicRadar', selectedBusinessId);
-      return strategicRadarContent;
-    } catch (error) {
-      console.error('Error generating Strategic Positioning Radar:', error);
-      throw error;
-    }
-  }
-
-  async generateProductivityMetrics(questions, answers, selectedBusinessId) {
-    try {
-      const { questionsArray, answersArray } = this.prepareQuestionsAndAnswers(questions, answers);
-      const result = await this.makeAPICall('productivity-metrics', questionsArray, answersArray, selectedBusinessId, null, null, null, null, null, null, 'productivityMetrics');
-
-      let productivityContent = null;
-      if (result.productivityMetrics) {
-        productivityContent = result;
-      } else if (result.productivity_metrics) {
-        productivityContent = { productivityMetrics: result.productivity_metrics };
-      } else {
-        productivityContent = { productivityMetrics: result };
-      }
-
-      await this.saveAnalysisToBackend(productivityContent, 'productivityMetrics', selectedBusinessId);
-      return productivityContent;
-    } catch (error) {
-      console.error('Error generating Productivity Metrics:', error);
-      throw error;
-    }
-  }
-
-  async generateCoreAdjacency(questions, answers, selectedBusinessId) {
-    try {
-      if (this.setApiLoading) {
-        this.setApiLoading('core-adjacency-matrix', true);
-      }
-
-      const { questionsArray, answersArray } = this.prepareQuestionsAndAnswers(questions, answers);
-      const obsHeaders = {};
-      try {
-        const authState = JSON.parse(
-          sessionStorage.getItem('auth-storage') || localStorage.getItem('auth-storage') || '{}'
-        );
-        const isObservatory = authState?.state?.isObservatory === true;
-        obsHeaders['x-is-observatory'] = isObservatory ? 'true' : 'false';
-        if (selectedBusinessId) {
-          obsHeaders['x-business-id'] = selectedBusinessId;
-        }
-        if (isObservatory) {
-          obsHeaders['x-stage'] = 'coreAdjacency';
-          obsHeaders['x-request-timestamp'] = new Date().toISOString();
-        }
-      } catch (_) {  }
-
-      const response = await fetch(`${this.ML_API_BASE_URL}/core-adjacency-matrix`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...obsHeaders
-        },
-        body: JSON.stringify({
-          questions: questionsArray,
-          answers: answersArray
-        })
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const result = await response.json();
-      await this.saveAnalysisToBackend(result, 'coreAdjacency', selectedBusinessId);
-
-      return result;
-    } catch (error) {
-      console.error('Error generating Core vs. Adjacency analysis:', error);
-      throw error;
-    } finally {
-      if (this.setApiLoading) {
-        this.setApiLoading('core-adjacency-matrix', false);
-      }
-    }
-  }
-
-  async generateMaturityScore(questions, answers, selectedBusinessId) {
-    try {
-      const { questionsArray, answersArray } = this.prepareQuestionsAndAnswers(questions, answers);
-      const result = await this.makeAPICall('maturity-scoring', questionsArray, answersArray, selectedBusinessId, null, null, null, null, null, null, 'maturityScore');
-
-      let maturityContent = null;
-      if (result.maturityScore || result.maturity_score) {
-        maturityContent = result;
-      } else if (result.dimensions && result.overallMaturity) {
-        maturityContent = { maturityScore: result };
-      } else {
-        maturityContent = { maturityScore: result };
-      }
-
-      await this.saveAnalysisToBackend(maturityContent, 'maturityScore', selectedBusinessId);
-      return maturityContent;
-    } catch (error) {
-      console.error('Error generating Maturity Score:', error);
-      throw error;
-    }
-  }
-  async generateProfitabilityAnalysis(questions, answers, selectedBusinessId, uploadedFile = null) {
-    try {
-      const { questionsArray, answersArray } = this.prepareQuestionsAndAnswers(questions, answers);
-      const result = await this.makeAPICall('excel-analysis', questionsArray, answersArray, selectedBusinessId, uploadedFile, 'profitability', null, null, null, null, 'profitabilityAnalysis');
-
-      await this.saveAnalysisToBackend(result, 'profitabilityAnalysis', selectedBusinessId);
-      return result;
-    } catch (error) {
-      console.error('Error generating Profitability Analysis:', error);
-      throw error;
-    }
-  }
-
-  async generateGrowthTracker(questions, answers, selectedBusinessId, uploadedFile = null) {
-    try {
-      const { questionsArray, answersArray } = this.prepareQuestionsAndAnswers(questions, answers);
-      const result = await this.makeAPICall('excel-analysis', questionsArray, answersArray, selectedBusinessId, uploadedFile, 'growth_trends', null, null, null, null, 'growthTracker');
-
-      await this.saveAnalysisToBackend(result, 'growthTracker', selectedBusinessId);
-      return result;
-    } catch (error) {
-      console.error('Error generating Growth Tracker:', error);
-      throw error;
-    }
-  }
-
-  async generateLiquidityEfficiency(questions, answers, selectedBusinessId, uploadedFile = null) {
-    try {
-      const { questionsArray, answersArray } = this.prepareQuestionsAndAnswers(questions, answers);
-      const result = await this.makeAPICall('excel-analysis', questionsArray, answersArray, selectedBusinessId, uploadedFile, 'liquidity', null, null, null, null, 'liquidityEfficiency');
-
-      await this.saveAnalysisToBackend(result, 'liquidityEfficiency', selectedBusinessId);
-      return result;
-    } catch (error) {
-      console.error('Error generating Liquidity & Efficiency:', error);
-      throw error;
-    }
-  }
-
-  async generateInvestmentPerformance(questions, answers, selectedBusinessId, uploadedFile = null) {
-    try {
-      const { questionsArray, answersArray } = this.prepareQuestionsAndAnswers(questions, answers);
-      const result = await this.makeAPICall('excel-analysis', questionsArray, answersArray, selectedBusinessId, uploadedFile, 'investment', null, null, null, null, 'investmentPerformance');
-
-      await this.saveAnalysisToBackend(result, 'investmentPerformance', selectedBusinessId);
-      return result;
-    } catch (error) {
-      console.error('Error generating Investment Performance:', error);
-      throw error;
-    }
-  }
-
-  async generateLeverageRisk(questions, answers, selectedBusinessId, uploadedFile = null) {
-    try {
-      const { questionsArray, answersArray } = this.prepareQuestionsAndAnswers(questions, answers);
-      const result = await this.makeAPICall('excel-analysis', questionsArray, answersArray, selectedBusinessId, uploadedFile, 'leverage', null, null, null, null, 'leverageRisk');
-
-      await this.saveAnalysisToBackend(result, 'leverageRisk', selectedBusinessId);
-      return result;
-    } catch (error) {
-      console.error('Error generating Leverage & Risk:', error);
-      throw error;
     }
   }
 }

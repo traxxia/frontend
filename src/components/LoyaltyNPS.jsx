@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Heart, TrendingUp, Calendar, Loader, Target, Award, BarChart3 } from 'lucide-react';
+import '../styles/LoyaltyNPS.css';
 import { useTranslation } from "../hooks/useTranslation";
 import { useAuthStore, useAnalysisStore } from "../store";
 import AnalysisEmptyState from './AnalysisEmptyState';

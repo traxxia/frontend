@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { FaCheck, FaTimes, FaTimesCircle } from 'react-icons/fa';
+import { Check, X, XCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Modal, Button } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 
 import '../styles/Register.css';
-import logo from '../assets/01a2750def81a5872ec67b2b5ec01ff5e9d69d0e.png';
+import logo from '../assets/traxxia-logo.png';
 
 import { useRegister } from '../hooks/useRegister';
 import UserStep from '../components/UserStep';
@@ -22,30 +22,11 @@ const StripeHookWrapper = (props) => {
 const Register = () => {
   const navigate = useNavigate();
   const {
-    activeTab, setActiveTab,
-    form, setForm,
-    isNewCompany, setIsNewCompany,
-    selectedPlanId, setSelectedPlanId,
-    errors, setErrors,
-    isSubmitting,
-    showPassword, setShowPassword,
-    showConfirmPassword, setShowConfirmPassword,
-    showSuccessModal, setShowSuccessModal,
-    modalMessage,
-    isError,
-    isCheckingEmail,
-    companySearch, setCompanySearch,
-    submitError, setSubmitError,
-    isCompanyDropdownOpen, setIsCompanyDropdownOpen,
-    isRoleDropdownOpen, setIsRoleDropdownOpen,
-    plans, loadingPlans,
-    companies, loadingCompanies,
-    filteredCompanies,
-    handleChange,
-    handleNext,
-    handleBack,
-    handleSubmit,
-    t
+    activeTab, setActiveTab, form, setForm, isNewCompany, setIsNewCompany, selectedPlanId, setSelectedPlanId,
+    errors, setErrors, isSubmitting, showPassword, setShowPassword, showConfirmPassword, setShowConfirmPassword,
+    showSuccessModal, setShowSuccessModal, modalMessage, isError, isCheckingEmail, companySearch, setCompanySearch,
+    submitError, setSubmitError, isCompanyDropdownOpen, setIsCompanyDropdownOpen, isRoleDropdownOpen, setIsRoleDropdownOpen,
+    plans, loadingPlans, companies, loadingCompanies, filteredCompanies, handleChange, handleNext, handleBack, handleSubmit, t
   } = useRegister();
 
   const companyErrorRef = useRef(null);
@@ -58,6 +39,7 @@ const Register = () => {
   const [showTermsModal, setShowTermsModal] = useState(false);
   const [showPrivacyModal, setShowPrivacyModal] = useState(false);
   const [stripeComponents, setStripeComponents] = useState(null);
+
   const stripePromise = useMemo(async () => {
     if (activeTab === 3 && isNewCompany) {
       const [stripeJs, reactStripeJs] = await Promise.all([
@@ -72,12 +54,8 @@ const Register = () => {
 
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (companyDropdownRef.current && !companyDropdownRef.current.contains(event.target)) {
-        setIsCompanyDropdownOpen(false);
-      }
-      if (roleDropdownRef.current && !roleDropdownRef.current.contains(event.target)) {
-        setIsRoleDropdownOpen(false);
-      }
+      if (companyDropdownRef.current && !companyDropdownRef.current.contains(event.target)) setIsCompanyDropdownOpen(false);
+      if (roleDropdownRef.current && !roleDropdownRef.current.contains(event.target)) setIsRoleDropdownOpen(false);
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
@@ -87,13 +65,9 @@ const Register = () => {
     const tab2Errors = await handleNext();
     if (tab2Errors && Object.keys(tab2Errors).length > 0) {
       setTimeout(() => {
-        if (tab2Errors.company_name || tab2Errors.company_id) {
-          companyErrorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        } else if (tab2Errors.selectedPlanId) {
-          plansErrorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        } else if (tab2Errors.terms) {
-          termsErrorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
+        if (tab2Errors.company_name || tab2Errors.company_id) companyErrorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        else if (tab2Errors.selectedPlanId) plansErrorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        else if (tab2Errors.terms) termsErrorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }, 100);
     }
   };
@@ -116,11 +90,7 @@ const Register = () => {
 
         <div className="register-right-section">
           <main className="register-main-content">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="register-box"
-            >
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="register-box">
               <div className="register-header">
                 <h1>{t('register_title')}</h1>
                 <p>{t('create_account_subtitle')}</p>
@@ -128,46 +98,27 @@ const Register = () => {
 
               <AnimatePresence mode="wait">
                 {submitError && (
-                  <motion.div
-                    initial={{ opacity: 0, height: 0, marginBottom: 0 }}
-                    animate={{ opacity: 1, height: 'auto', marginBottom: 20 }}
-                    exit={{ opacity: 0, height: 0, marginBottom: 0 }}
-                    className="registration-error-box"
-                    ref={errorBoxRef}
-                  >
-                    <div className="error-icon">
-                      <FaTimesCircle />
-                    </div>
+                  <motion.div initial={{ opacity: 0, height: 0, marginBottom: 0 }} animate={{ opacity: 1, height: 'auto', marginBottom: 20 }} exit={{ opacity: 0, height: 0, marginBottom: 0 }} className="registration-error-box" ref={errorBoxRef}>
+                    <div className="error-icon"><XCircle size={20} /></div>
                     <div className="error-content">
                       <p>{submitError}</p>
-                      {submitError.includes('limit') && (
-                        <span className="error-action">{t('contact_admin_to_upgrade')}</span>
-                      )}
+                      {submitError.includes('limit') && <span className="error-action">{t('contact_admin_to_upgrade')}</span>}
                     </div>
-                    <button className="error-close" onClick={() => setSubmitError(null)}>
-                      <FaTimes />
-                    </button>
+                    <button className="error-close" onClick={() => setSubmitError(null)}><X size={18} /></button>
                   </motion.div>
                 )}
               </AnimatePresence>
 
               <div className="register-steps-container">
                 <div className={`step-item ${activeTab >= 1 ? 'active' : ''} ${activeTab > 1 ? 'completed' : ''}`}>
-                  <div className="step-circle">
-                    {activeTab > 1 ? <FaCheck /> : 1}
-                  </div>
+                  <div className="step-circle">{activeTab > 1 ? <Check size={16} /> : 1}</div>
                   <span className="step-label">{t('step_1_user_info')}</span>
                 </div>
-
                 <div className={`step-line ${activeTab > 1 ? 'completed' : ''}`}></div>
-
                 <div className={`step-item ${activeTab >= 2 ? 'active' : ''} ${activeTab > 2 ? 'completed' : ''}`}>
-                  <div className="step-circle">
-                    {activeTab > 2 ? <FaCheck /> : 2}
-                  </div>
+                  <div className="step-circle">{activeTab > 2 ? <Check size={16} /> : 2}</div>
                   <span className="step-label">{t('step_2_company_setup')}</span>
                 </div>
-
                 {isNewCompany && (
                   <>
                     <div className={`step-line ${activeTab > 2 ? 'completed' : ''}`}></div>
@@ -182,62 +133,27 @@ const Register = () => {
               <AnimatePresence mode="wait">
                 {activeTab === 1 && (
                   <UserStep
-                    form={form}
-                    handleChange={handleChange}
-                    errors={errors}
-                    isCheckingEmail={isCheckingEmail}
-                    showPassword={showPassword}
-                    setShowPassword={setShowPassword}
-                    showConfirmPassword={showConfirmPassword}
-                    setShowConfirmPassword={setShowConfirmPassword}
-                    handleNext={handleNext}
-                    onBackToLogin={() => navigate('/login')}
-                    t={t}
+                    form={form} handleChange={handleChange} errors={errors} isCheckingEmail={isCheckingEmail}
+                    showPassword={showPassword} setShowPassword={setShowPassword}
+                    showConfirmPassword={showConfirmPassword} setShowConfirmPassword={setShowConfirmPassword}
+                    handleNext={handleNext} onBackToLogin={() => navigate('/login')} t={t}
                   />
                 )}
-
                 {activeTab === 2 && (
                   <CompanyStep
-                    form={form}
-                    handleChange={handleChange}
-                    isNewCompany={isNewCompany}
-                    setIsNewCompany={setIsNewCompany}
-                    errors={errors}
-                    loadingCompanies={loadingCompanies}
-                    isCompanyDropdownOpen={isCompanyDropdownOpen}
-                    setIsCompanyDropdownOpen={setIsCompanyDropdownOpen}
-                    companySearch={companySearch}
-                    setCompanySearch={setCompanySearch}
-                    filteredCompanies={filteredCompanies}
-                    companies={companies}
-                    companyDropdownRef={companyDropdownRef}
-                    isRoleDropdownOpen={isRoleDropdownOpen}
-                    setIsRoleDropdownOpen={setIsRoleDropdownOpen}
-                    roleDropdownRef={roleDropdownRef}
-                    plans={plans}
-                    selectedPlanId={selectedPlanId}
-                    setSelectedPlanId={setSelectedPlanId}
-                    onNext={handleNextWithScroll}
-                    onBack={handleBack}
-                    setShowTermsModal={setShowTermsModal}
-                    setShowPrivacyModal={setShowPrivacyModal}
-                    companyErrorRef={companyErrorRef}
-                    plansErrorRef={plansErrorRef}
-                    termsErrorRef={termsErrorRef}
-                    t={t}
+                    form={form} handleChange={handleChange} isNewCompany={isNewCompany} setIsNewCompany={setIsNewCompany}
+                    errors={errors} loadingCompanies={loadingCompanies} isCompanyDropdownOpen={isCompanyDropdownOpen}
+                    setIsCompanyDropdownOpen={setIsCompanyDropdownOpen} companySearch={companySearch} setCompanySearch={setCompanySearch}
+                    filteredCompanies={filteredCompanies} companies={companies} companyDropdownRef={companyDropdownRef}
+                    isRoleDropdownOpen={isRoleDropdownOpen} setIsRoleDropdownOpen={setIsRoleDropdownOpen} roleDropdownRef={roleDropdownRef}
+                    plans={plans} selectedPlanId={selectedPlanId} setSelectedPlanId={setSelectedPlanId} onNext={handleNextWithScroll}
+                    onBack={handleBack} setShowTermsModal={setShowTermsModal} setShowPrivacyModal={setShowPrivacyModal}
+                    companyErrorRef={companyErrorRef} plansErrorRef={plansErrorRef} termsErrorRef={termsErrorRef} t={t}
                   />
                 )}
-
                 {activeTab === 3 && isNewCompany && stripeComponents && (
                   <stripeComponents.Elements stripe={stripePromise}>
-                    <StripeHookWrapper
-                      onBack={handleBack}
-                      onSubmit={handleSubmit}
-                      isSubmitting={isSubmitting}
-                      error={errors.payment}
-                      selectedPlanPrice={plans.find(p => p._id === selectedPlanId)?.price}
-                      stripeComponents={stripeComponents}
-                    />
+                    <StripeHookWrapper onBack={handleBack} onSubmit={handleSubmit} isSubmitting={isSubmitting} error={errors.payment} selectedPlanPrice={plans.find(p => p._id === selectedPlanId)?.price} stripeComponents={stripeComponents} />
                   </stripeComponents.Elements>
                 )}
               </AnimatePresence>
@@ -246,37 +162,23 @@ const Register = () => {
         </div>
       </div>
 
-      {}
       <Modal show={showSuccessModal} onHide={() => setShowSuccessModal(false)} centered className="success-modal">
         <Modal.Body>
-          <div className={`modal-status-icon ${isError ? 'error' : 'success'}`}>
-            {isError ? <FaTimesCircle /> : <FaCheck />}
-          </div>
+          <div className={`modal-status-icon ${isError ? 'error' : 'success'}`}>{isError ? <XCircle size={48} /> : <Check size={48} />}</div>
           <h3>{isError ? t('error') : t('success')}</h3>
           <p>{modalMessage}</p>
-          <Button variant="primary" onClick={() => setShowSuccessModal(false)}>
-            {t('close')}
-          </Button>
+          <Button variant="primary" onClick={() => setShowSuccessModal(false)}>{t('close')}</Button>
         </Modal.Body>
       </Modal>
 
-      {}
       <Modal show={showTermsModal} onHide={() => setShowTermsModal(false)} size="lg" centered className="terms-modal">
-        <Modal.Header closeButton>
-          <Modal.Title>{t('terms_and_conditions')}</Modal.Title>
-        </Modal.Header>
-        <Modal.Body className="terms-content">
-          <p>This is where your Terms and Conditions text would go...</p>
-        </Modal.Body>
+        <Modal.Header closeButton><Modal.Title>{t('terms_and_conditions')}</Modal.Title></Modal.Header>
+        <Modal.Body className="terms-content"><p>Terms and Conditions...</p></Modal.Body>
       </Modal>
 
       <Modal show={showPrivacyModal} onHide={() => setShowPrivacyModal(false)} size="lg" centered className="terms-modal">
-        <Modal.Header closeButton>
-          <Modal.Title>{t('privacy_policy')}</Modal.Title>
-        </Modal.Header>
-        <Modal.Body className="terms-content">
-          <p>This is where your Privacy Policy text would go...</p>
-        </Modal.Body>
+        <Modal.Header closeButton><Modal.Title>{t('privacy_policy')}</Modal.Title></Modal.Header>
+        <Modal.Body className="terms-content"><p>Privacy Policy...</p></Modal.Body>
       </Modal>
     </>
   );

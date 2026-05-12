@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Target, TrendingUp, Star, Calendar, Loader, BarChart3, Zap, RefreshCw } from 'lucide-react';
-import '../styles/Analytics.css';
+import '../styles/PurchaseCriteria.css';
 import { useTranslation } from "../hooks/useTranslation";
 import { useAuthStore, useAnalysisStore } from "../store";
 import AnalysisEmptyState from './AnalysisEmptyState';

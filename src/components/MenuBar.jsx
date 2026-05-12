@@ -1,7 +1,7 @@
 import React from "react";
 import { Navbar, Container, Dropdown } from "react-bootstrap";
 import { useNavigate, useLocation } from "react-router-dom";
-import { LogOut, Settings, Home, User, Archive, FileText, Shield, BookOpen, Briefcase, Building } from "lucide-react";
+import { LogOut, Settings, Home, User, Archive, FileText, Shield, BookOpen, Briefcase, Building, ScanSearch } from "lucide-react";
 import "../styles/menubar.css";
 import { useTranslation } from "../hooks/useTranslation";
 import NotificationBell from "./NotificationBell";
@@ -77,7 +77,7 @@ const MenuBar = () => {
             background: isCurrentPage("/super-admin/observatory") ? "#1e1b4b" : "transparent",
             color: isCurrentPage("/super-admin/observatory") ? "#a5b4fc" : "#495057"
           }} className="menu-bar--s3">
-                <span className="menu-bar--s4">🔭</span>
+                <ScanSearch size={18} className="me-2" />
                 AI Observatory
               </div>}
 

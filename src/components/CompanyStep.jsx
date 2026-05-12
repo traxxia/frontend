@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FaUser, FaBuilding, FaSpinner, FaChevronUp, FaChevronDown, FaSearch, FaAngleLeft, FaAngleRight } from 'react-icons/fa';
+import { User, Building, Loader, ChevronUp, ChevronDown, Search, ChevronLeft, ChevronRight } from 'lucide-react';
 import PricingPlanCard from './PricingPlanCard';
 
 const CompanyStep = ({
@@ -48,9 +48,7 @@ const CompanyStep = ({
               <div className="action-selection-group">
                 <div
                   className={`selection-pill-option ${!isNewCompany ? 'active' : ''}`}
-                  onClick={() => {
-                    setIsNewCompany(false);
-                  }}
+                  onClick={() => setIsNewCompany(false)}
                 >
                   {!isNewCompany && (
                     <motion.div
@@ -59,13 +57,11 @@ const CompanyStep = ({
                       transition={{ type: "spring", stiffness: 300, damping: 30 }}
                     />
                   )}
-                  <span className="pill-text"><FaUser /> {t("join_existing")}</span>
+                  <span className="pill-text"><User size={20} /> {t("join_existing")}</span>
                 </div>
                 <div
                   className={`selection-pill-option ${isNewCompany ? 'active' : ''}`}
-                  onClick={() => {
-                    setIsNewCompany(true);
-                  }}
+                  onClick={() => setIsNewCompany(true)}
                 >
                   {isNewCompany && (
                     <motion.div
@@ -74,7 +70,7 @@ const CompanyStep = ({
                       transition={{ type: "spring", stiffness: 300, damping: 30 }}
                     />
                   )}
-                  <span className="pill-text"><FaBuilding /> {t("create_new")}</span>
+                  <span className="pill-text"><Building size={20} /> {t("create_new")}</span>
                 </div>
               </div>
             </div>
@@ -107,7 +103,7 @@ const CompanyStep = ({
                     <label>{t("select_company")} <span className="required">*</span></label>
                     <div className="custom-select-container" ref={companyDropdownRef}>
                       {loadingCompanies ? (
-                        <div className="loading-select"><FaSpinner className="spinner" /> Loading...</div>
+                        <div className="loading-select"><Loader className="animate-spin" size={16} /> Loading...</div>
                       ) : (
                         <>
                           <div
@@ -119,7 +115,7 @@ const CompanyStep = ({
                                 ? companies.find(c => c._id === form.company_id)?.company_name || t('select_a_company')
                                 : t('select_a_company')}
                             </span>
-                            {isCompanyDropdownOpen ? <FaChevronUp /> : <FaChevronDown />}
+                            {loadingCompanies ? <Loader className="animate-spin" size={16} /> : (isCompanyDropdownOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />)}
                           </div>
 
                           {isCompanyDropdownOpen && (
@@ -133,7 +129,7 @@ const CompanyStep = ({
                                   onClick={(e) => e.stopPropagation()}
                                   autoFocus
                                 />
-                                <FaSearch className="search-icon" />
+                                <Search className="search-icon" size={18} />
                               </div>
 
                               <div className="options-list">
@@ -164,6 +160,7 @@ const CompanyStep = ({
                 )}
               </AnimatePresence>
             </div>
+            
             <div ref={companyErrorRef}>
               {(errors.company_name || errors.company_id) && <div className="error-message">{errors.company_name || errors.company_id}</div>}
             </div>
@@ -179,7 +176,7 @@ const CompanyStep = ({
                     <span>
                       {form.role ? t(form.role === 'company_admin' ? 'Org_Admin' : form.role.charAt(0).toUpperCase() + form.role.slice(1)) : t('Select_Role')}
                     </span>
-                    {isRoleDropdownOpen ? <FaChevronUp /> : <FaChevronDown />}
+                    {isRoleDropdownOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                   </div>
 
                   {isRoleDropdownOpen && (
@@ -254,10 +251,10 @@ const CompanyStep = ({
 
         <div className="form-actions mt-4">
           <button type="button" className="btn-secondary" onClick={onBack}>
-            <FaAngleLeft /> {t('Previous')}
+            <ChevronLeft size={18} /> {t('Previous')}
           </button>
           <button type="submit" className="btn-primary">
-             {isNewCompany ? <>{t('next_step')} <FaAngleRight /></> : t('register_title')}
+             {isNewCompany ? <>{t('next_step')} <ChevronRight size={18} /></> : t('register_title')}
           </button>
         </div>
       </form>
