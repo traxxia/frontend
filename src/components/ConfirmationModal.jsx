@@ -2,29 +2,27 @@ import React from 'react';
 import { Modal, Button } from 'react-bootstrap';
 import { AlertTriangle, Info } from 'lucide-react';
 import { useTranslation } from '../hooks/useTranslation';
-
 const ConfirmationModal = ({
-    show,
-    onHide,
-    onConfirm,
-    title,
-    message,
-    confirmText,
-    cancelText,
-    confirmVariant = 'primary',
-    icon
+  show,
+  onHide,
+  onConfirm,
+  title,
+  message,
+  confirmText,
+  cancelText,
+  confirmVariant = 'primary',
+  icon
 }) => {
-    const { t } = useTranslation();
-
-    const handleConfirm = () => {
-        if (onConfirm && typeof onConfirm === 'function') {
-            onConfirm();
-        }
-        onHide();
-    };
-
-    return (
-        <Modal show={show} onHide={onHide} centered backdrop="static">
+  const {
+    t
+  } = useTranslation();
+  const handleConfirm = () => {
+    if (onConfirm && typeof onConfirm === 'function') {
+      onConfirm();
+    }
+    onHide();
+  };
+  return <Modal show={show} onHide={onHide} centered backdrop="static">
             <Modal.Header closeButton>
                 <Modal.Title className="d-flex align-items-center gap-2">
                     {icon || <AlertTriangle size={22} className="text-warning" />}
@@ -33,7 +31,7 @@ const ConfirmationModal = ({
             </Modal.Header>
             <Modal.Body>
                 <div className="py-2">
-                    <p className="mb-0 fs-6 text-dark" style={{ lineHeight: '1.6' }}>
+                    <p className="mb-0 fs-6 text-dark confirmation-modal--s1">
                         {message}
                     </p>
                 </div>
@@ -46,8 +44,6 @@ const ConfirmationModal = ({
                     {confirmText || t('Confirm')}
                 </Button>
             </Modal.Footer>
-        </Modal>
-    );
+        </Modal>;
 };
-
 export default ConfirmationModal;

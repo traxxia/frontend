@@ -3,116 +3,96 @@ import { Link, useParams, useNavigate } from 'react-router-dom';
 import { academyStructure } from '../utils/academyIndex';
 import * as LucideIcons from 'lucide-react';
 import '../styles/academy.css';
-
 import { useAuthStore } from '../store/authStore';
-
-const AcademyNavigation = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
-    const { category: activeCategory, article: activeArticle } = useParams();
-    const navigate = useNavigate();
-    const [userRole, setUserRole] = useState('');
-    const [expandedCategories, setExpandedCategories] = useState([activeCategory || 'getting-started']);
-    const categoryRefs = useRef({});
-    const navRef = useRef(null);
-
-    useEffect(() => {
-        const storedRole = useAuthStore.getState().userRole;
-        setUserRole(storedRole || '');
-    }, []);
-
-    const toggleCategory = (categoryId) => {
-        const isCurrentlyExpanded = expandedCategories.includes(categoryId);
-        setExpandedCategories(prev =>
-            isCurrentlyExpanded
-                ? prev.filter(id => id !== categoryId)
-                : [...prev, categoryId]
-        );
-        if (!isCurrentlyExpanded) {
-            setTimeout(() => {
-                const container = navRef.current;
-                const categoryEl = categoryRefs.current[categoryId];
-
-                if (container && categoryEl) {
-                    const containerRect = container.getBoundingClientRect();
-                    const elementRect = categoryEl.getBoundingClientRect();
-
-                    const stickyHeaderHeight = 90;
-                    let currentScroll = container.scrollTop;
-                    const topOffset = elementRect.top - containerRect.top;
-                    if (topOffset < stickyHeaderHeight) {
-                        container.scrollTo({
-                            top: currentScroll + topOffset - stickyHeaderHeight - 10,
-                            behavior: 'smooth'
-                        });
-                    } else {
-                        const bottomOverflow = elementRect.bottom - containerRect.bottom + 20;
-                        if (bottomOverflow > 0) {
-                            let targetScroll = currentScroll + bottomOverflow;
-                            const maxAllowedScroll = currentScroll + topOffset - stickyHeaderHeight - 10;
-                            if (targetScroll > maxAllowedScroll) {
-                                targetScroll = maxAllowedScroll;
-                            }
-
-                            if (targetScroll < 0) targetScroll = 0;
-
-                            container.scrollTo({
-                                top: targetScroll,
-                                behavior: 'smooth'
-                            });
-                        }
-                    }
-                }
-            }, 150);
+const AcademyNavigation = ({
+  isMobileMenuOpen,
+  onCloseMobileMenu
+}) => {
+  const {
+    category: activeCategory,
+    article: activeArticle
+  } = useParams();
+  const navigate = useNavigate();
+  const [userRole, setUserRole] = useState('');
+  const [expandedCategories, setExpandedCategories] = useState([activeCategory || 'getting-started']);
+  const categoryRefs = useRef({});
+  const navRef = useRef(null);
+  useEffect(() => {
+    const storedRole = useAuthStore.getState().userRole;
+    setUserRole(storedRole || '');
+  }, []);
+  const toggleCategory = categoryId => {
+    const isCurrentlyExpanded = expandedCategories.includes(categoryId);
+    setExpandedCategories(prev => isCurrentlyExpanded ? prev.filter(id => id !== categoryId) : [...prev, categoryId]);
+    if (!isCurrentlyExpanded) {
+      setTimeout(() => {
+        const container = navRef.current;
+        const categoryEl = categoryRefs.current[categoryId];
+        if (container && categoryEl) {
+          const containerRect = container.getBoundingClientRect();
+          const elementRect = categoryEl.getBoundingClientRect();
+          const stickyHeaderHeight = 90;
+          let currentScroll = container.scrollTop;
+          const topOffset = elementRect.top - containerRect.top;
+          if (topOffset < stickyHeaderHeight) {
+            container.scrollTo({
+              top: currentScroll + topOffset - stickyHeaderHeight - 10,
+              behavior: 'smooth'
+            });
+          } else {
+            const bottomOverflow = elementRect.bottom - containerRect.bottom + 20;
+            if (bottomOverflow > 0) {
+              let targetScroll = currentScroll + bottomOverflow;
+              const maxAllowedScroll = currentScroll + topOffset - stickyHeaderHeight - 10;
+              if (targetScroll > maxAllowedScroll) {
+                targetScroll = maxAllowedScroll;
+              }
+              if (targetScroll < 0) targetScroll = 0;
+              container.scrollTo({
+                top: targetScroll,
+                behavior: 'smooth'
+              });
+            }
+          }
         }
-    };
-
-    const handleArticleClick = (categoryId, articleId) => {
-        navigate(`/academy/${categoryId}/${articleId}`);
-        if (onCloseMobileMenu) {
-            onCloseMobileMenu();
-        }
-    };
-
-    const renderCategoryIcon = (iconName) => {
-        const IconComponent = LucideIcons[iconName];
-        return IconComponent ? <IconComponent size={16} /> : <LucideIcons.BookOpen size={16} />;
-    };
-
-    return (
-        <div ref={navRef} className={`academy-navigation ${isMobileMenuOpen ? 'mobile-open' : ''}`}>
+      }, 150);
+    }
+  };
+  const handleArticleClick = (categoryId, articleId) => {
+    navigate(`/academy/${categoryId}/${articleId}`);
+    if (onCloseMobileMenu) {
+      onCloseMobileMenu();
+    }
+  };
+  const renderCategoryIcon = iconName => {
+    const IconComponent = LucideIcons[iconName];
+    return IconComponent ? <IconComponent size={16} /> : <LucideIcons.BookOpen size={16} />;
+  };
+  return <div ref={navRef} className={`academy-navigation ${isMobileMenuOpen ? 'mobile-open' : ''}`}>
             <div className="academy-nav-sticky-top">
                 <div className="academy-nav-header">
                     <Link to="/academy" className="academy-home-link">
                         <LucideIcons.BookOpen size={24} />
                         <span>Traxxia Academy</span>
                     </Link>
-                    {onCloseMobileMenu && (
-                        <button aria-label="Close navigation menu" className="mobile-close-btn" onClick={onCloseMobileMenu}>
+                    {onCloseMobileMenu && <button aria-label="Close navigation menu" className="mobile-close-btn" onClick={onCloseMobileMenu}>
                             <LucideIcons.X size={24} />
-                        </button>
-                    )}
+                        </button>}
                 </div>
 
             </div>
 
             <nav className="academy-nav-categories">
-                {academyStructure.categories.map((category) => {
-                    const isExpanded = expandedCategories.includes(category.id);
-                    const isActive = activeCategory === category.id;
-
-                    return (
-                        <div key={category.id} ref={el => categoryRefs.current[category.id] = el} className={`category-section ${isActive ? 'active-category' : ''}`}>
-                            <div
-                                className="category-header"
-                                onClick={() => toggleCategory(category.id)}
-                                role="button"
-                                tabIndex={0}
-                                onKeyDown={(e) => {
-                                    if (e.key === 'Enter' || e.key === ' ') {
-                                        e.preventDefault();
-                                        toggleCategory(category.id);
-                                    }
-                                }}
-                            >
+                {academyStructure.categories.map(category => {
+        const isExpanded = expandedCategories.includes(category.id);
+        const isActive = activeCategory === category.id;
+        return <div key={category.id} ref={el => categoryRefs.current[category.id] = el} className={`category-section ${isActive ? 'active-category' : ''}`}>
+                            <div className="category-header" onClick={() => toggleCategory(category.id)} role="button" tabIndex={0} onKeyDown={e => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              toggleCategory(category.id);
+            }
+          }}>
                                 <div className="category-title">
                                     {renderCategoryIcon(category.icon)}
                                     <span>{category.title}</span>
@@ -121,42 +101,28 @@ const AcademyNavigation = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
                                     <span className="article-count-badge">
                                         {category.articles.length}
                                     </span>
-                                    <LucideIcons.ChevronDown
-                                        size={16}
-                                        className={`category-chevron ${isExpanded ? 'expanded' : ''}`}
-                                    />
+                                    <LucideIcons.ChevronDown size={16} className={`category-chevron ${isExpanded ? 'expanded' : ''}`} />
                                 </div>
                             </div>
 
-                            {isExpanded && (
-                                <ul className="category-articles">
-                                    {category.articles.map((article) => {
-                                        const isArticleActive = activeCategory === category.id && activeArticle === article.id;
-
-                                        return (
-                                            <li key={article.id} className={isArticleActive ? 'active-article' : ''}>
-                                                <button
-                                                    className="article-link"
-                                                    onClick={() => handleArticleClick(category.id, article.id)}
-                                                >
+                            {isExpanded && <ul className="category-articles">
+                                    {category.articles.map(article => {
+              const isArticleActive = activeCategory === category.id && activeArticle === article.id;
+              return <li key={article.id} className={isArticleActive ? 'active-article' : ''}>
+                                                <button className="article-link" onClick={() => handleArticleClick(category.id, article.id)}>
                                                     <span className="article-title-text">{article.title}</span>
-                                                    {isArticleActive && (
-                                                        <LucideIcons.ChevronRight size={14} className="active-indicator flex-shrink-0 ml-2" />
-                                                    )}
+                                                    {isArticleActive && <LucideIcons.ChevronRight size={14} className="active-indicator flex-shrink-0 ml-2" />}
                                                 </button>
-                                            </li>
-                                        );
-                                    })}
-                                </ul>
-                            )}
-                        </div>
-                    );
-                })}
+                                            </li>;
+            })}
+                                </ul>}
+                        </div>;
+      })}
             </nav>
 
             <div className="academy-nav-footer">
                 <div className="nav-footer-links">
-                    <Link to={userRole === 'super_admin' ? '/super-admin' : '/dashboard'} className="footer-link" style={{ marginBottom: '8px' }}>
+                    <Link to={userRole === 'super_admin' ? '/super-admin' : '/dashboard'} className="footer-link academy-navigation--s1">
                         <LucideIcons.LayoutDashboard size={16} />
                         <span>Back to Main</span>
                     </Link>
@@ -169,8 +135,6 @@ const AcademyNavigation = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
                     <small>Version 1.0 • Phase 3</small>
                 </div>
             </div>
-        </div>
-    );
+        </div>;
 };
-
 export default AcademyNavigation;

@@ -1,49 +1,40 @@
 import React, { useState, useEffect } from "react";
 import { Container, Row, Col, Card, Badge, Button, Spinner } from "react-bootstrap";
-import {
-  TrendingUp,
-  Target,
-  Puzzle,
-  AlertCircle,
-  RefreshCw
-} from "lucide-react";
+import { TrendingUp, Target, Puzzle, AlertCircle, RefreshCw } from "lucide-react";
 import { AnalysisApiService } from "../services/analysisApiService";
 import { useTranslation } from "../hooks/useTranslation";
 import { Modal } from "react-bootstrap";
-
 import { useAuthStore, useBusinessStore, useUIStore } from '../store';
-
-const PMFInsightsTab = ({ onStartOnboarding, refreshTrigger }) => {
-  const { selectedBusinessId } = useBusinessStore();
-  const { t } = useTranslation();
+const PMFInsightsTab = ({
+  onStartOnboarding,
+  refreshTrigger
+}) => {
+  const {
+    selectedBusinessId
+  } = useBusinessStore();
+  const {
+    t
+  } = useTranslation();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [showOverwriteModal, setShowOverwriteModal] = useState(false);
   const [overwrittenBy, setOverwrittenBy] = useState("");
-  const userRole = (
-    useAuthStore.getState().userRole ||
-    useAuthStore.getState().userRole ||
-    ""
-  ).toLowerCase();
+  const userRole = (useAuthStore.getState().userRole || useAuthStore.getState().userRole || "").toLowerCase();
   const isViewer = userRole === "viewer";
   const ML_API_BASE_URL = process.env.REACT_APP_ML_BACKEND_URL;
   const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
   const getAuthToken = () => useAuthStore.getState().token;
   const analysisService = new AnalysisApiService(ML_API_BASE_URL, API_BASE_URL, getAuthToken);
-
   useEffect(() => {
     let cancelled = false;
-
     const fetchInsights = async () => {
       let businessId = selectedBusinessId;
-
       if (!businessId) {
         console.warn("PMFInsightsTab: No business ID found, skipping fetch.");
         return;
       }
-
       try {
-        setLoading(prev => (data ? false : true));
+        setLoading(prev => data ? false : true);
         const result = await analysisService.getPMFAnalysis(businessId);
         if (!cancelled) {
           setData(result);
@@ -51,25 +42,26 @@ const PMFInsightsTab = ({ onStartOnboarding, refreshTrigger }) => {
             const currentUserId = useAuthStore.getState().userId;
             const bId = String(businessId);
             const expectedUserId = useUIStore.getState().getBusinessSetting(bId, 'pmfExpectingMyData');
-
             if (expectedUserId) {
-              const getStrId = (val) => {
+              const getStrId = val => {
                 if (!val) return "";
                 if (typeof val === 'string') return val.toLowerCase().trim();
                 if (val.$oid) return val.$oid.toLowerCase().trim();
                 return String(val).toLowerCase().trim();
               };
-
               const dbUserId = getStrId(result.user_id);
               const expUserId = getStrId(expectedUserId);
               const currentUser = getStrId(currentUserId);
               if (dbUserId && expUserId === currentUser && dbUserId !== currentUser) {
-                console.info("PMF Overwrite TRIGGERED", { dbUserId, currentUser });
+                console.info("PMF Overwrite TRIGGERED", {
+                  dbUserId,
+                  currentUser
+                });
                 try {
                   const eligibleRes = await analysisService.getEligibleOwners(bId);
                   const users = eligibleRes.eligible_owners || [];
                   const updater = users.find(u => getStrId(u._id || u.id) === dbUserId);
-                  setOverwrittenBy(updater ? (updater.name || updater.email) : t("another user"));
+                  setOverwrittenBy(updater ? updater.name || updater.email : t("another user"));
                 } catch (e) {
                   setOverwrittenBy(t("another user"));
                 }
@@ -84,46 +76,32 @@ const PMFInsightsTab = ({ onStartOnboarding, refreshTrigger }) => {
         if (!cancelled) setLoading(false);
       }
     };
-
     fetchInsights();
     const interval = setInterval(() => {
       if (!showOverwriteModal) {
         fetchInsights();
       }
     }, 30000);
-
     return () => {
       cancelled = true;
       clearInterval(interval);
     };
   }, [selectedBusinessId, refreshTrigger]);
-
   if (loading) {
-    return (
-      <div className="d-flex justify-content-center align-items-center min-vh-100">
+    return <div className="d-flex justify-content-center align-items-center min-vh-100">
         <Spinner animation="border" variant="primary" />
-      </div>
-    );
+      </div>;
   }
-
   if (!data) {
-    return (
-      <div className="bg-light py-5 min-vh-100 text-center">
+    return <div className="bg-light py-5 min-vh-100 text-center">
         <Container>
           <h3>{t("noInsightsAvailable") || "No insights available yet."}</h3>
           <p>{t("completeOnboardingPrompt") || "Please complete the PMF Onboarding to see results here."}</p>
-          {onStartOnboarding && !isViewer && (
-            <Button
-              variant="primary"
-              className="mt-3 rounded-pill px-4"
-              onClick={onStartOnboarding}
-            >
+          {onStartOnboarding && !isViewer && <Button variant="primary" className="mt-3 rounded-pill px-4" onClick={onStartOnboarding}>
               {t("startPMFOnboarding")}
-            </Button>
-          )}
+            </Button>}
         </Container>
-      </div>
-    );
+      </div>;
   }
   let rawInsights = [];
   if (data) {
@@ -141,27 +119,17 @@ const PMFInsightsTab = ({ onStartOnboarding, refreshTrigger }) => {
     ...insight,
     details: insight.details || insight.key_points || []
   }));
-
   if (insights.length === 0) {
-    return (
-      <div className="bg-light py-5 min-vh-100 text-center">
+    return <div className="bg-light py-5 min-vh-100 text-center">
         <Container>
           <h3>{t("noInsightsAvailable") || "No insights available yet."}</h3>
           <p>{t("completeOnboardingPrompt") || "Please complete the PMF Onboarding to see results here."}</p>
-          {onStartOnboarding && !isViewer && (
-            <Button
-              variant="primary"
-              className="mt-3 rounded-pill px-4"
-              onClick={onStartOnboarding}
-            >
+          {onStartOnboarding && !isViewer && <Button variant="primary" className="mt-3 rounded-pill px-4" onClick={onStartOnboarding}>
               {t("startPMFOnboarding")}
-            </Button>
-          )}
+            </Button>}
         </Container>
-      </div>
-    );
+      </div>;
   }
-
   const getIcon = (type, index) => {
     const iconType = type?.toLowerCase() || '';
     if (iconType.includes('market')) return <TrendingUp size={18} color="#2563eb" />;
@@ -169,35 +137,45 @@ const PMFInsightsTab = ({ onStartOnboarding, refreshTrigger }) => {
     if (iconType.includes('adjacency')) return <Puzzle size={18} color="#2563eb" />;
     if (iconType.includes('risk') || iconType.includes('constraint')) return <AlertCircle size={18} color="#2563eb" />;
     switch (index % 4) {
-      case 0: return <TrendingUp size={18} color="#2563eb" />;
-      case 1: return <Target size={18} color="#2563eb" />;
-      case 2: return <Puzzle size={18} color="#2563eb" />;
-      case 3: default: return <AlertCircle size={18} color="#2563eb" />;
+      case 0:
+        return <TrendingUp size={18} color="#2563eb" />;
+      case 1:
+        return <Target size={18} color="#2563eb" />;
+      case 2:
+        return <Puzzle size={18} color="#2563eb" />;
+      case 3:
+      default:
+        return <AlertCircle size={18} color="#2563eb" />;
     }
   };
-
-  const getBadgeProps = (confidence) => {
+  const getBadgeProps = confidence => {
     const conf = confidence?.toLowerCase() || '';
     if (conf.includes('high')) {
-      return { bg: 'success-subtle', text: 'success' };
+      return {
+        bg: 'success-subtle',
+        text: 'success'
+      };
     } else if (conf.includes('medium')) {
-      return { bg: 'warning-subtle', text: 'warning' };
+      return {
+        bg: 'warning-subtle',
+        text: 'warning'
+      };
     } else if (conf.includes('low')) {
-      return { bg: 'danger-subtle', text: 'danger' };
+      return {
+        bg: 'danger-subtle',
+        text: 'danger'
+      };
     }
-    return { bg: 'secondary-subtle', text: 'secondary' };
+    return {
+      bg: 'secondary-subtle',
+      text: 'secondary'
+    };
   };
-
-  return (
-    <div className="bg-light">
+  return <div className="bg-light">
       <StyleSheet />
-      <Container style={{ maxWidth: "100%" }}>
+      <Container className="p-m-f-insights-tab--s1">
         <div className="text-center mb-3">
-          <Badge
-            bg="primary-subtle"
-            text="primary"
-            className="px-4 py-2 rounded-pill fw-bold fs-5"
-          >
+          <Badge bg="primary-subtle" text="primary" className="px-4 py-2 rounded-pill fw-bold fs-5">
             {t("AHA Insights")}
           </Badge>
 
@@ -209,13 +187,12 @@ const PMFInsightsTab = ({ onStartOnboarding, refreshTrigger }) => {
 
         <Row className="g-4">
           {Array.isArray(insights) ? insights.map((insight, index) => {
-            const badgeProps = getBadgeProps(insight.confidence);
-            return (
-              <Col md={6} key={index}>
+          const badgeProps = getBadgeProps(insight.confidence);
+          return <Col md={6} key={index}>
                 <Card className="h-100 border-0 shadow-sm rounded-4">
                   <Card.Body className="p-4">
                     <div className="d-flex align-items-start gap-3">
-                      <div className="icon-box d-flex align-items-center justify-content-center bg-primary-subtle rounded-3" style={{ width: '40px', height: '40px', flexShrink: 0 }}>
+                      <div className="icon-box d-flex align-items-center justify-content-center bg-primary-subtle rounded-3 p-m-f-insights-tab--s2">
                         {getIcon(insight.type, index)}
                       </div>
 
@@ -224,43 +201,26 @@ const PMFInsightsTab = ({ onStartOnboarding, refreshTrigger }) => {
                           {insight.title}
                         </h6>
 
-                        {insight.confidence && (
-                          <Badge
-                            bg={badgeProps.bg}
-                            text={badgeProps.text}
-                            className="rounded-pill fw-semibold mb-3"
-                          >
+                        {insight.confidence && <Badge bg={badgeProps.bg} text={badgeProps.text} className="rounded-pill fw-semibold mb-3">
                             {t("Confidence")}: {insight.confidence}
-                          </Badge>
-                        )}
+                          </Badge>}
 
-                        <ul className="insight-list mb-0" style={{ paddingLeft: '1.2rem' }}>
-                          {Array.isArray(insight.details) && insight.details.map((detail, dIndex) => (
-                            <li key={dIndex} className="mb-1">{detail}</li>
-                          ))}
+                        <ul className="insight-list mb-0 p-m-f-insights-tab--s3">
+                          {Array.isArray(insight.details) && insight.details.map((detail, dIndex) => <li key={dIndex} className="mb-1">{detail}</li>)}
                         </ul>
                       </div>
                     </div>
                   </Card.Body>
                 </Card>
-              </Col>
-            );
-          }) : (
-            <Col xs={12}>
+              </Col>;
+        }) : <Col xs={12}>
               <p className="text-center text-muted">No specific insights found in the data structure.</p>
-            </Col>
-          )}
+            </Col>}
         </Row>
       </Container>
 
       {}
-      <Modal
-        show={showOverwriteModal}
-        onHide={() => setShowOverwriteModal(false)}
-        centered
-        size="sm"
-        className="pmf-overwrite-modal"
-      >
+      <Modal show={showOverwriteModal} onHide={() => setShowOverwriteModal(false)} centered size="sm" className="pmf-overwrite-modal">
         <Modal.Header closeButton className="border-0 pb-0">
           <Modal.Title className="fw-bold fs-6 text-dark">
             {t("Update Notification")}
@@ -271,34 +231,27 @@ const PMFInsightsTab = ({ onStartOnboarding, refreshTrigger }) => {
             <div className="icon-box bg-warning-subtle rounded-circle p-2 flex-shrink-0">
               <AlertCircle size={20} color="#92400e" />
             </div>
-            <p className="mb-0 fs-6 text-dark" style={{ lineHeight: '1.4' }}>
+            <p className="mb-0 fs-6 text-dark p-m-f-insights-tab--s4">
               {t("Your PMF onboarding was updated by")} <strong>{overwrittenBy}</strong>
             </p>
           </div>
           <div className="text-center">
-            <Button
-              variant="primary"
-              size="sm"
-              className="px-4 rounded-3 fw-semibold"
-              onClick={() => {
-                setShowOverwriteModal(false);
-                const bId = String(selectedBusinessId);
-                if (bId) {
-                  useUIStore.getState().setBusinessSetting(bId, 'pmfExpectingMyData', null);
-                  useUIStore.getState().setBusinessSetting(bId, 'pmfLastSubmission', null);
-                }
-              }}
-            >
+            <Button variant="primary" size="sm" className="px-4 rounded-3 fw-semibold" onClick={() => {
+            setShowOverwriteModal(false);
+            const bId = String(selectedBusinessId);
+            if (bId) {
+              useUIStore.getState().setBusinessSetting(bId, 'pmfExpectingMyData', null);
+              useUIStore.getState().setBusinessSetting(bId, 'pmfLastSubmission', null);
+            }
+          }}>
               {t("OK")}
             </Button>
           </div>
         </Modal.Body>
       </Modal>
-    </div>
-  );
+    </div>;
 };
-const StyleSheet = () => (
-  <style>{`
+const StyleSheet = () => <style>{`
     .insight-list {
       list-style-type: disc;
     }
@@ -375,7 +328,5 @@ const StyleSheet = () => (
 .pmf-overwrite-modal .modal-body p {
   margin-bottom: 0;
 }
-  `}</style>
-);
-
+  `}</style>;
 export default PMFInsightsTab;

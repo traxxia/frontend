@@ -5,14 +5,17 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from '../hooks/useTranslation';
 import { Loader, Plus, Search, Users } from 'lucide-react';
 import Pagination from './Pagination';
-
-const UserOverview = ({ onToast }) => {
+const UserOverview = ({
+  onToast
+}) => {
   const [roles, setRoles] = useState([]);
   const [selectedCompany, setSelectedCompany] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [showAddUser, setShowAddUser] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
-  const { t } = useTranslation();
+  const {
+    t
+  } = useTranslation();
   const [newUser, setNewUser] = useState({
     name: '',
     email: '',
@@ -26,16 +29,19 @@ const UserOverview = ({ onToast }) => {
     password: ''
   });
   const [currentPage, setCurrentPage] = useState(1);
-
   const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
   const token = useAuthStore(state => state.token);
   const queryClient = useQueryClient();
-  const { data: rawUsers = [], isLoading: isLoadingUsers } = useAdminUsers(selectedCompany);
-  const { data: companiesData = [], isLoading: isLoadingCompanies } = useCompanies();
+  const {
+    data: rawUsers = [],
+    isLoading: isLoadingUsers
+  } = useAdminUsers(selectedCompany);
+  const {
+    data: companiesData = [],
+    isLoading: isLoadingCompanies
+  } = useCompanies();
   const companies = companiesData || [];
-
   const isLoading = isLoadingUsers || isLoadingCompanies;
-
   const users = React.useMemo(() => rawUsers.map(user => ({
     id: user._id,
     name: user.name,
@@ -45,7 +51,6 @@ const UserOverview = ({ onToast }) => {
     status: 'active',
     created_at: user.created_at
   })), [rawUsers]);
-
   const getAuthToken = () => token;
   const validateField = (fieldName, value) => {
     switch (fieldName) {
@@ -66,7 +71,6 @@ const UserOverview = ({ onToast }) => {
           return t('Name_must_be_at_most_20_characters_long');
         }
         return '';
-
       case 'email':
         if (!value || !value.trim()) {
           return t('Email_is_required');
@@ -76,7 +80,6 @@ const UserOverview = ({ onToast }) => {
           return t('Please_enter_a_valid_email_address');
         }
         return '';
-
       case 'password':
         if (!value || !value.trim()) {
           return t('Password_is_required');
@@ -88,23 +91,22 @@ const UserOverview = ({ onToast }) => {
           return t('Password_must_contain_at_least_one_uppercase_letter_one_lowercase_letter_and_one_number');
         }
         return '';
-
       default:
         return '';
     }
   };
-
-  const validateUserForm = (user) => {
+  const validateUserForm = user => {
     const errors = {};
     errors.name = validateField('name', user.name);
     errors.email = validateField('email', user.email);
     errors.password = validateField('password', user.password);
     return errors;
   };
-
   const handleChange = (field, value) => {
-    setNewUser(prev => ({ ...prev, [field]: value }));
-
+    setNewUser(prev => ({
+      ...prev,
+      [field]: value
+    }));
   };
   const addUser = async () => {
     const validationErrors = validateUserForm(newUser);
@@ -114,21 +116,17 @@ const UserOverview = ({ onToast }) => {
       onToast('Please fix the highlighted errors', 'warning');
       return;
     }
-
     try {
       setIsCreating(true);
       const token = getAuthToken();
-
       const payload = {
         name: newUser.name.trim(),
         email: newUser.email.trim(),
         password: newUser.password.trim()
       };
-
       if (newUser.company_id) {
         payload.company_id = newUser.company_id;
       }
-
       const response = await fetch(`${API_BASE_URL}/api/admin/users`, {
         method: 'POST',
         headers: {
@@ -137,15 +135,25 @@ const UserOverview = ({ onToast }) => {
         },
         body: JSON.stringify(payload)
       });
-
       const data = await response.json();
-
       if (response.ok) {
         onToast('User created successfully', 'success');
         setShowAddUser(false);
-        setNewUser({ name: '', email: '', password: '', company_id: '', job_title: '' });
-        setFormErrors({ name: '', email: '', password: '' });
-        queryClient.invalidateQueries({ queryKey: ['adminUsers'] });
+        setNewUser({
+          name: '',
+          email: '',
+          password: '',
+          company_id: '',
+          job_title: ''
+        });
+        setFormErrors({
+          name: '',
+          email: '',
+          password: ''
+        });
+        queryClient.invalidateQueries({
+          queryKey: ['adminUsers']
+        });
       } else {
         onToast(data.error || data.message || 'User creation failed', 'error');
       }
@@ -157,39 +165,22 @@ const UserOverview = ({ onToast }) => {
     }
   };
   const filteredUsers = React.useMemo(() => users.filter(user => {
-    return (
-      user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    return user.name.toLowerCase().includes(searchTerm.toLowerCase()) || user.email.toLowerCase().includes(searchTerm.toLowerCase());
   }), [users, searchTerm]);
   const ITEMS_PER_PAGE = 10;
   const totalPages = Math.ceil(filteredUsers.length / ITEMS_PER_PAGE);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
   const paginatedUsers = filteredUsers.slice(startIndex, startIndex + ITEMS_PER_PAGE);
-
-  const handleSubmit = (e) => {
+  const handleSubmit = e => {
     e.preventDefault();
     addUser();
   };
-  const renderFormField = (label, field, type = 'text', placeholder = '', required = false) => (
-    <div className="form-field">
+  const renderFormField = (label, field, type = 'text', placeholder = '', required = false) => <div className="form-field">
       <label>{label} {required && '*'}</label>
-      <input
-        type={type}
-        className={`form-control ${formErrors[field] ? 'error' : ''}`}
-        value={newUser[field] || ''}
-        onChange={(e) => handleChange(field, e.target.value)}
-        placeholder={placeholder}
-        minLength={type === 'password' ? '8' : undefined}
-      />
-      {formErrors[field] && (
-        <div className="error-message">{formErrors[field]}</div>
-      )}
-    </div>
-  );
-
-  return (
-    <>
+      <input type={type} className={`form-control ${formErrors[field] ? 'error' : ''}`} value={newUser[field] || ''} onChange={e => handleChange(field, e.target.value)} placeholder={placeholder} minLength={type === 'password' ? '8' : undefined} />
+      {formErrors[field] && <div className="error-message">{formErrors[field]}</div>}
+    </div>;
+  return <>
       <style>{`
         .form-control.error {
           border-color: #dc3545;
@@ -279,43 +270,28 @@ const UserOverview = ({ onToast }) => {
         </div>
 
         {}
-        {isLoading && (
-          <div className="admin-loading-bar-container" style={{ margin: '15px 0' }}>
+        {isLoading && <div className="admin-loading-bar-container user-overview--s1">
             <div className="admin-loading-bar" />
-          </div>
-        )}
+          </div>}
 
         {}
         <div className="filters-section">
           <div className="search-box">
             <Search size={16} />
-            <input
-              type="text"
-              className='form-control'
-              placeholder={t('search_users')}
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
+            <input type="text" className='form-control' placeholder={t('search_users')} value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
           </div>
 
-          <select
-            value={selectedCompany}
-            className='select-company-dropdown'
-            onChange={(e) => {
-              setSelectedCompany(e.target.value);
-            }}
-          >
+          <select value={selectedCompany} className='select-company-dropdown' onChange={e => {
+          setSelectedCompany(e.target.value);
+        }}>
             <option value="">{t('all_companies')}</option>
-            {companies.map((company) => (
-              <option key={company._id} value={company._id}>
+            {companies.map(company => <option key={company._id} value={company._id}>
                 {company.company_name}
-              </option>
-            ))}
+              </option>)}
           </select>
         </div>
         {}
-        {filteredUsers.length > 0 ? (
-          <>
+        {filteredUsers.length > 0 ? <>
             <div className="table-container">
               <table className="company-table">
                 <thead>
@@ -329,8 +305,7 @@ const UserOverview = ({ onToast }) => {
                   </tr>
                 </thead>
                 <tbody>
-                  {paginatedUsers.map(user => (
-                    <tr key={user.id}>
+                  {paginatedUsers.map(user => <tr key={user.id}>
                       <td>{user.name}</td>
                       <td>{user.email}</td>
                       <td>
@@ -345,32 +320,19 @@ const UserOverview = ({ onToast }) => {
                         </span>
                       </td>
                       <td>{new Date(user.createdAt).toLocaleDateString()}</td>
-                    </tr>
-                  ))}
+                    </tr>)}
                 </tbody>
               </table>
             </div>
-            <Pagination
-              currentPage={currentPage}
-              totalPages={totalPages}
-              onPageChange={setCurrentPage}
-              variant="default"
-              showPageNumbers={true}
-              totalItems={filteredUsers.length}
-              itemsPerPage={ITEMS_PER_PAGE}
-            />
-          </>
-        ) : (
-          <div className="empty-state">
+            <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} variant="default" showPageNumbers={true} totalItems={filteredUsers.length} itemsPerPage={ITEMS_PER_PAGE} />
+          </> : <div className="empty-state">
             <Users size={48} />
             <h3>No Users Found</h3>
             <p>Try adjusting your search or filter criteria</p>
-          </div>
-        )}
+          </div>}
 
         {}
-        {showAddUser && (
-          <div className="modal-overlay">
+        {showAddUser && <div className="modal-overlay">
             <div className="modal-content centered">
               <div className="modal-header">
                 <h3>{t('create_new_user')}</h3>
@@ -385,71 +347,43 @@ const UserOverview = ({ onToast }) => {
 
                     <div className="form-field">
                       <label>{t('company')} *</label>
-                      <select
-                        value={newUser.company_id}
-                        onChange={(e) => handleChange('company_id', e.target.value)}
-                      >
+                      <select value={newUser.company_id} onChange={e => handleChange('company_id', e.target.value)}>
                         <option value="">{t('select_company')}</option>
-                        {companies.map(company => (
-                          <option key={company._id} value={company._id}>
+                        {companies.map(company => <option key={company._id} value={company._id}>
                             {company.company_name}
-                          </option>
-                        ))}
+                          </option>)}
                       </select>
                     </div>
 
                     <div className="form-field">
                       <label>{t('job_title')}</label>
-                      <input
-                        type="text"
-                        className='form-control'
-                        placeholder="Software Engineer (optional)"
-                        value={newUser.job_title || ''}
-                        onChange={(e) => handleChange('job_title', e.target.value)}
-                      />
+                      <input type="text" className='form-control' placeholder="Software Engineer (optional)" value={newUser.job_title || ''} onChange={e => handleChange('job_title', e.target.value)} />
                     </div>
                   </div>
                 </div>
 
                 <div className="form-actions">
-                  <button
-                    type="button"
-                    className="secondary-btn"
-                    onClick={() => {
-                      setShowAddUser(false);
-                      setFormErrors({
-                        name: '',
-                        email: '',
-                        password: ''
-                      });
-                    }}
-                    disabled={isCreating}
-                  >
+                  <button type="button" className="secondary-btn" onClick={() => {
+                setShowAddUser(false);
+                setFormErrors({
+                  name: '',
+                  email: '',
+                  password: ''
+                });
+              }} disabled={isCreating}>
                     Cancel
                   </button>
-                  <button
-                    type="button"
-                    className="primary-btn"
-                    onClick={handleSubmit}
-                    disabled={isCreating}
-                  >
-                    {isCreating ? (
-                      <>
+                  <button type="button" className="primary-btn" onClick={handleSubmit} disabled={isCreating}>
+                    {isCreating ? <>
                         <Loader size={14} className="spinner" />
                         Creating...
-                      </>
-                    ) : (
-                      t('create_user')
-                    )}
+                      </> : t('create_user')}
                   </button>
                 </div>
               </div>
             </div>
-          </div>
-        )}
+          </div>}
       </div>
-    </>
-  );
+    </>;
 };
-
 export default UserOverview;

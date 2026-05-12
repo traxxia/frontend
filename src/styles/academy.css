@@ -1525,3 +1525,18 @@
   border-color: var(--primary-color);
   box-shadow: 0 0 0 2px rgba(var(--primary-color-rgb), 0.1);
 }
+
+
+/* ── Extracted inline styles ── */
+.academy-feedback--s1 {
+  color: #dc3545;
+  font-size: 0.85rem;
+  margin-top: 5px;
+  margin-bottom: 5px;
+}
+
+
+/* ── Extracted inline styles ── */
+.academy-navigation--s1 {
+  margin-bottom: 8px;
+}

@@ -1,44 +1,59 @@
 import React, { useState, useCallback, useMemo } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { Row, Col, Form, Modal, Button as RBButton } from "react-bootstrap";
-import {
-  Filter,
-  RefreshCw,
-  FileText,
-  Calendar,
-  ChevronLeft,
-  ChevronRight,
-  X,
-  ArrowLeft,
-} from "lucide-react";
+import { Filter, RefreshCw, FileText, Calendar, ChevronLeft, ChevronRight, X, ArrowLeft } from "lucide-react";
 import { useTranslation } from "../hooks/useTranslation";
 import { useAllDecisionLogsQuery } from "../hooks/useQueries";
 import MenuBar from "./MenuBar";
 import "../styles/AdminTableStyles.css";
-
-const LOG_TYPES = [
-  { value: "", label: "All Types" },
-  { value: "status_change", label: "Status Change" },
-  { value: "cadence_review", label: "Cadence Review" },
-  { value: "no_change_review", label: "No Change Review" },
-  { value: "adhoc_update", label: "Ad-Hoc Update" },
-  { value: "manual", label: "Manual" },
-  { value: "project_update", label: "Project Update" },
-];
-
-const EXECUTION_STATES = [
-  { value: "", label: "All States" },
-  { value: "Draft", label: "Draft" },
-  { value: "Active", label: "Active" },
-  { value: "At Risk", label: "At Risk" },
-  { value: "Paused", label: "Paused" },
-  { value: "Killed", label: "Killed" },
-  { value: "Completed", label: "Completed" },
-  { value: "Scaled", label: "Scaled" },
-];
-
+const LOG_TYPES = [{
+  value: "",
+  label: "All Types"
+}, {
+  value: "status_change",
+  label: "Status Change"
+}, {
+  value: "cadence_review",
+  label: "Cadence Review"
+}, {
+  value: "no_change_review",
+  label: "No Change Review"
+}, {
+  value: "adhoc_update",
+  label: "Ad-Hoc Update"
+}, {
+  value: "manual",
+  label: "Manual"
+}, {
+  value: "project_update",
+  label: "Project Update"
+}];
+const EXECUTION_STATES = [{
+  value: "",
+  label: "All States"
+}, {
+  value: "Draft",
+  label: "Draft"
+}, {
+  value: "Active",
+  label: "Active"
+}, {
+  value: "At Risk",
+  label: "At Risk"
+}, {
+  value: "Paused",
+  label: "Paused"
+}, {
+  value: "Killed",
+  label: "Killed"
+}, {
+  value: "Completed",
+  label: "Completed"
+}, {
+  value: "Scaled",
+  label: "Scaled"
+}];
 const ITEMS_PER_PAGE = 20;
-
 function formatDate(dateVal) {
   if (!dateVal) return "-";
   try {
@@ -47,85 +62,85 @@ function formatDate(dateVal) {
     return "-";
   }
 }
-
 function humanizeLogType(logType) {
   if (!logType) return "-";
-  return logType
-    .replace(/_/g, " ")
-    .replace(/\b\w/g, (c) => c.toUpperCase());
+  return logType.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
 }
-
-function LogTypeBadge({ logType }) {
+function LogTypeBadge({
+  logType
+}) {
   const colorMap = {
-    status_change: { bg: "#dbeafe", color: "#1e40af" },
-    cadence_review: { bg: "#d1fae5", color: "#065f46" },
-    no_change_review: { bg: "#f3f4f6", color: "#374151" },
-    adhoc_update: { bg: "#fef3c7", color: "#92400e" },
-    manual: { bg: "#ede9fe", color: "#5b21b6" },
-    project_update: { bg: "#fee2e2", color: "#991b1b" },
+    status_change: {
+      bg: "#dbeafe",
+      color: "#1e40af"
+    },
+    cadence_review: {
+      bg: "#d1fae5",
+      color: "#065f46"
+    },
+    no_change_review: {
+      bg: "#f3f4f6",
+      color: "#374151"
+    },
+    adhoc_update: {
+      bg: "#fef3c7",
+      color: "#92400e"
+    },
+    manual: {
+      bg: "#ede9fe",
+      color: "#5b21b6"
+    },
+    project_update: {
+      bg: "#fee2e2",
+      color: "#991b1b"
+    }
   };
-  const style = colorMap[logType] || { bg: "#f3f4f6", color: "#374151" };
-  return (
-    <span
-      className="admin-status-badge"
-      style={{
-        backgroundColor: style.bg,
-        color: style.color,
-        fontSize: "11px",
-      }}
-    >
+  const style = colorMap[logType] || {
+    bg: "#f3f4f6",
+    color: "#374151"
+  };
+  return <span className="admin-status-badge all-decision-logs--s1" style={{
+    backgroundColor: style.bg,
+    color: style.color
+  }}>
       {humanizeLogType(logType)}
-    </span>
-  );
+    </span>;
 }
-
 const AllDecisionLogs = () => {
-  const { t } = useTranslation();
+  const {
+    t
+  } = useTranslation();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const getParam = (key, fallback = "") => searchParams.get(key) || fallback;
-
   const [selectedLog, setSelectedLog] = useState(null);
-
   const projectIdParam = getParam("project_id");
   const logTypeParam = getParam("log_type");
   const stateParam = getParam("state");
   const dateParam = getParam("date");
   const sortOrderParam = getParam("sort_order", "desc");
-
   const filters = useMemo(() => ({
     project_id: projectIdParam,
     log_type: logTypeParam,
     state: stateParam,
     date: dateParam,
-    sort_order: sortOrderParam,
+    sort_order: sortOrderParam
   }), [projectIdParam, logTypeParam, stateParam, dateParam, sortOrderParam]);
-
   const page = parseInt(getParam("page", "1"), 10);
-
-  const setFilter = useCallback(
-    (key, value) => {
-      const next = new URLSearchParams(searchParams);
-      if (value) {
-        next.set(key, value);
-      } else {
-        next.delete(key);
-      }
-      if (key !== "page") next.set("page", "1");
-      setSearchParams(next);
-    },
-    [searchParams, setSearchParams]
-  );
-
-  const setPage = useCallback(
-    (p) => setFilter("page", String(p)),
-    [setFilter]
-  );
-
+  const setFilter = useCallback((key, value) => {
+    const next = new URLSearchParams(searchParams);
+    if (value) {
+      next.set(key, value);
+    } else {
+      next.delete(key);
+    }
+    if (key !== "page") next.set("page", "1");
+    setSearchParams(next);
+  }, [searchParams, setSearchParams]);
+  const setPage = useCallback(p => setFilter("page", String(p)), [setFilter]);
   const resetFilters = () => {
     setSearchParams(new URLSearchParams());
   };
-
   const apiFilters = useMemo(() => {
     const params = {
       project_id: filters.project_id,
@@ -139,141 +154,80 @@ const AllDecisionLogs = () => {
     }
     return params;
   }, [filters]);
-
-  const { data, isLoading, isError, refetch } = useAllDecisionLogsQuery(
-    page,
-    ITEMS_PER_PAGE,
-    apiFilters
-  );
-
+  const {
+    data,
+    isLoading,
+    isError,
+    refetch
+  } = useAllDecisionLogsQuery(page, ITEMS_PER_PAGE, apiFilters);
   const logs = data?.logs || [];
   const total = data?.total || 0;
   const totalPages = data?.total_pages || Math.ceil(total / ITEMS_PER_PAGE) || 1;
-
-  const hasActiveFilters =
-    filters.project_id ||
-    filters.log_type ||
-    filters.state ||
-    filters.date;
-
-  return (
-    <div style={{ minHeight: "100vh", backgroundColor: "var(--bg-primary, #f8fafc)" }}>
+  const hasActiveFilters = filters.project_id || filters.log_type || filters.state || filters.date;
+  return <div className="all-decision-logs--s2">
       <MenuBar />
 
-      <div style={{ maxWidth: "1200px", margin: "0 auto", padding: "24px 20px" }}>
+      <div className="all-decision-logs--s3">
         {}
-        <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "24px" }}>
-          <button
-            onClick={() => navigate("/dashboard")}
-            className="admin-page-btn"
-            style={{ border: "none", background: "none", padding: 0 }}
-          >
+        <div className="all-decision-logs--s4">
+          <button onClick={() => navigate("/dashboard")} className="admin-page-btn all-decision-logs--s5">
             <ArrowLeft size={16} />
             {t("dashboard")}
           </button>
-          <span style={{ color: "#d1d5db" }}>/</span>
-          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+          <span className="all-decision-logs--s6">/</span>
+          <div className="all-decision-logs--s7">
             <FileText size={20} color="#4f46e5" />
-            <h1 style={{ fontSize: "20px", fontWeight: 700, margin: 0, color: "#111827" }}>
+            <h1 className="all-decision-logs--s8">
               {t("Decision_Log")}
             </h1>
           </div>
         </div>
 
         {}
-        <div
-          style={{
-            background: "#fff",
-            border: "1px solid #e8eaf0",
-            borderRadius: "16px",
-            padding: "16px 20px",
-            marginBottom: "20px",
-            boxShadow: "0 2px 8px rgba(0, 0, 0, 0.04)",
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "12px" }}>
+        <div className="all-decision-logs--s9">
+          <div className="all-decision-logs--s10">
             <Filter size={15} color="#6b7280" />
-            <span style={{ fontSize: "13px", fontWeight: 600, color: "#374151" }}>
+            <span className="all-decision-logs--s11">
               {t("Filters")}
             </span>
-            {hasActiveFilters && (
-              <button
-                onClick={resetFilters}
-                style={{
-                  marginLeft: "auto",
-                  background: "none",
-                  border: "none",
-                  cursor: "pointer",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "4px",
-                  fontSize: "12px",
-                  color: "#ef4444",
-                }}
-              >
+            {hasActiveFilters && <button onClick={resetFilters} className="all-decision-logs--s12">
                 <X size={13} /> {t("clear_all")}
-              </button>
-            )}
+              </button>}
           </div>
 
           <Row className="g-2">
             <Col xs={12} sm={6} md={3}>
-              <Form.Label className="admin-metric-label" style={{ marginBottom: "4px", fontSize: "10px" }}>
-                <Calendar size={12} style={{ marginRight: "4px" }} />
+              <Form.Label className="admin-metric-label all-decision-logs--s13">
+                <Calendar size={12} className="all-decision-logs--s14" />
                 {t("Date")}
               </Form.Label>
-              <Form.Control
-                className="role-select"
-                type="date"
-                size="sm"
-                value={filters.date}
-                onChange={(e) => setFilter("date", e.target.value)}
-              />
+              <Form.Control className="role-select" type="date" size="sm" value={filters.date} onChange={e => setFilter("date", e.target.value)} />
             </Col>
             <Col xs={12} sm={6} md={2}>
-              <Form.Label className="admin-metric-label" style={{ marginBottom: "4px", fontSize: "10px" }}>
+              <Form.Label className="admin-metric-label all-decision-logs--s13">
                 {t("Log_Type")}
               </Form.Label>
-              <Form.Select
-                className="role-select"
-                size="sm"
-                value={filters.log_type}
-                onChange={(e) => setFilter("log_type", e.target.value)}
-              >
-                {LOG_TYPES.map((o) => (
-                  <option key={o.value} value={o.value}>
+              <Form.Select className="role-select" size="sm" value={filters.log_type} onChange={e => setFilter("log_type", e.target.value)}>
+                {LOG_TYPES.map(o => <option key={o.value} value={o.value}>
                     {o.label}
-                  </option>
-                ))}
+                  </option>)}
               </Form.Select>
             </Col>
             <Col xs={12} sm={6} md={2}>
-              <Form.Label className="admin-metric-label" style={{ marginBottom: "4px", fontSize: "10px" }}>
+              <Form.Label className="admin-metric-label all-decision-logs--s13">
                 {t("status")}
               </Form.Label>
-              <Form.Select
-                className="role-select"
-                size="sm"
-                value={filters.state}
-                onChange={(e) => setFilter("state", e.target.value)}
-              >
-                {EXECUTION_STATES.map((o) => (
-                  <option key={o.value} value={o.value}>
+              <Form.Select className="role-select" size="sm" value={filters.state} onChange={e => setFilter("state", e.target.value)}>
+                {EXECUTION_STATES.map(o => <option key={o.value} value={o.value}>
                     {o.label}
-                  </option>
-                ))}
+                  </option>)}
               </Form.Select>
             </Col>
             <Col xs={12} sm={6} md={2}>
-              <Form.Label className="admin-metric-label" style={{ marginBottom: "4px", fontSize: "10px" }}>
+              <Form.Label className="admin-metric-label all-decision-logs--s13">
                 {t("Sort")}
               </Form.Label>
-              <Form.Select
-                className="role-select"
-                size="sm"
-                value={filters.sort_order}
-                onChange={(e) => setFilter("sort_order", e.target.value)}
-              >
+              <Form.Select className="role-select" size="sm" value={filters.sort_order} onChange={e => setFilter("sort_order", e.target.value)}>
                 <option value="desc">{t("Newest_First")}</option>
                 <option value="asc">{t("Oldest_First")}</option>
               </Form.Select>
@@ -294,36 +248,24 @@ const AllDecisionLogs = () => {
               </span>
             </div>
             <div className="admin-table-actions">
-              <button
-                className="admin-table-btn"
-                onClick={() => refetch()}
-              >
+              <button className="admin-table-btn" onClick={() => refetch()}>
                 <RefreshCw size={13} />
                 {t("refresh")}
               </button>
             </div>
           </div>
 
-          {isLoading ? (
-            <div className="admin-table-loading">
+          {isLoading ? <div className="admin-table-loading">
               <div className="admin-spinner" />
               <span>{t("loading")}</span>
-            </div>
-          ) : isError ? (
-            <div className="admin-table-empty">
-              <p style={{ color: "#ef4444" }}>{t("Failed_to_load_decision_logs")}</p>
-            </div>
-          ) : logs.length === 0 ? (
-            <div className="admin-table-empty">
+            </div> : isError ? <div className="admin-table-empty">
+              <p className="all-decision-logs--s15">{t("Failed_to_load_decision_logs")}</p>
+            </div> : logs.length === 0 ? <div className="admin-table-empty">
               <FileText size={40} strokeWidth={1.5} />
               <h3>
-                {hasActiveFilters
-                  ? t("No_logs_match_filters")
-                  : t("No_decision_logs_available")}
+                {hasActiveFilters ? t("No_logs_match_filters") : t("No_decision_logs_available")}
               </h3>
-            </div>
-          ) : (
-            <div className="admin-table-scroll">
+            </div> : <div className="admin-table-scroll">
               <table className="admin-data-table">
                 <thead>
                   <tr>
@@ -334,21 +276,20 @@ const AllDecisionLogs = () => {
                     <th>{t("status")}</th>
                     <th>{t("Actor")}</th>
                     <th>{t("Justification")}</th>
-                    <th style={{ width: "80px" }}></th>
+                    <th className="all-decision-logs--s16"></th>
                   </tr>
                 </thead>
                 <tbody>
-                  {logs.map((log) => (
-                    <tr key={String(log._id)}>
+                  {logs.map(log => <tr key={String(log._id)}>
                       <td>
                         <div className="td-inner">
                           {formatDate(log.created_at || log.changed_at)}
                         </div>
                       </td>
                       <td>
-                        <div className="td-inner" style={{ maxWidth: "160px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        <div className="td-inner all-decision-logs--s17">
                           <span title={log.project_name || String(log.project_id)}>
-                            {log.project_name || <span style={{ color: "#9ca3af" }}>{String(log.project_id).slice(-6)}</span>}
+                            {log.project_name || <span className="all-decision-logs--s18">{String(log.project_id).slice(-6)}</span>}
                           </span>
                         </div>
                       </td>
@@ -358,7 +299,7 @@ const AllDecisionLogs = () => {
                         </div>
                       </td>
                       <td>
-                        <div className="td-inner" style={{ maxWidth: "160px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        <div className="td-inner all-decision-logs--s17">
                           <span title={log.decision}>
                             {log.decision || `${log.from_status || "-"} → ${log.to_status || "-"}`}
                           </span>
@@ -370,76 +311,59 @@ const AllDecisionLogs = () => {
                         </div>
                       </td>
                       <td>
-                        <div className="td-inner" style={{ maxWidth: "120px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        <div className="td-inner all-decision-logs--s19">
                           {log.actor_name || "-"}
                         </div>
                       </td>
                       <td>
-                        <div className="td-inner" style={{ maxWidth: "200px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        <div className="td-inner all-decision-logs--s20">
                           <span title={log.justification}>{log.justification || "-"}</span>
                         </div>
                       </td>
                       <td>
                         <div className="td-inner">
-                          <button
-                            className="admin-primary-btn"
-                            style={{ padding: "4px 8px", fontSize: "11px" }}
-                            onClick={() => setSelectedLog(log)}
-                          >
+                          <button className="admin-primary-btn all-decision-logs--s21" onClick={() => setSelectedLog(log)}>
                             {t("view")}
                           </button>
                         </div>
                       </td>
-                    </tr>
-                  ))}
+                    </tr>)}
                 </tbody>
               </table>
-            </div>
-          )}
+            </div>}
 
           {}
-          {!isLoading && logs.length > 0 && (
-            <div className="admin-pagination">
+          {!isLoading && logs.length > 0 && <div className="admin-pagination">
               <span className="admin-pagination-info">
                 {t("showing")} {(page - 1) * ITEMS_PER_PAGE + 1}–
                 {Math.min(page * ITEMS_PER_PAGE, total)} {t("of")} {total}
               </span>
               <div className="admin-pagination-controls">
-                <button
-                  className="admin-page-btn"
-                  disabled={page <= 1}
-                  onClick={() => setPage(page - 1)}
-                >
+                <button className="admin-page-btn" disabled={page <= 1} onClick={() => setPage(page - 1)}>
                   <ChevronLeft size={14} />
                 </button>
-                <div style={{ display: "flex", gap: "4px" }}>
+                <div className="all-decision-logs--s22">
                   <span className="admin-page-number active">
                     {page} / {totalPages}
                   </span>
                 </div>
-                <button
-                  className="admin-page-btn"
-                  disabled={page >= totalPages}
-                  onClick={() => setPage(page + 1)}
-                >
+                <button className="admin-page-btn" disabled={page >= totalPages} onClick={() => setPage(page + 1)}>
                   <ChevronRight size={14} />
                 </button>
               </div>
-            </div>
-          )}
+            </div>}
         </div>
       </div>
 
       {}
       <Modal show={!!selectedLog} onHide={() => setSelectedLog(null)} centered>
         <Modal.Header closeButton>
-          <Modal.Title style={{ fontSize: "16px", fontWeight: 700 }}>
+          <Modal.Title className="all-decision-logs--s23">
             {t("Decision_Log_Details")}
           </Modal.Title>
         </Modal.Header>
-        <Modal.Body style={{ fontSize: "14px" }}>
-          {selectedLog && (
-            <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+        <Modal.Body className="all-decision-logs--s24">
+          {selectedLog && <div className="all-decision-logs--s25">
               <div className="admin-toolbar-row">
                 <div>
                   <span className="admin-metric-label">{t("Date")}:</span>
@@ -464,17 +388,15 @@ const AllDecisionLogs = () => {
 
               <div>
                 <span className="admin-metric-label">{t("Decision")}:</span>
-                <div className="admin-cell-primary" style={{ marginTop: "4px" }}>
+                <div className="admin-cell-primary all-decision-logs--s26">
                   {selectedLog.decision || `${selectedLog.from_status || "-"} → ${selectedLog.to_status || "-"}`}
                 </div>
               </div>
 
-              {selectedLog.assumption_state && (
-                <div>
+              {selectedLog.assumption_state && <div>
                   <span className="admin-metric-label">{t("Assumption_State")}:</span>
                   <div className="admin-cell-primary">{selectedLog.assumption_state}</div>
-                </div>
-              )}
+                </div>}
 
               <div>
                 <span className="admin-metric-label">{t("Actor")}:</span>
@@ -483,74 +405,32 @@ const AllDecisionLogs = () => {
 
               <div>
                 <span className="admin-metric-label">{t("Justification")}:</span>
-                <p
-                  style={{
-                    marginTop: "6px",
-                    padding: "12px",
-                    background: "#f8f9fc",
-                    borderRadius: "10px",
-                    border: "1px solid #f0f2f5",
-                    color: "#374151",
-                    lineHeight: "1.5",
-                    fontSize: "13px",
-                  }}
-                >
+                <p className="all-decision-logs--s27">
                   {selectedLog.justification || "-"}
                 </p>
               </div>
 
-              {selectedLog.before_snapshot && Object.keys(selectedLog.before_snapshot).length > 0 && (
-                <div>
+              {selectedLog.before_snapshot && Object.keys(selectedLog.before_snapshot).length > 0 && <div>
                   <span className="admin-metric-label">{t("Before")}:</span>
-                  <div
-                    style={{
-                      fontSize: "11px",
-                      color: "#6b7280",
-                      background: "#f3f4f6",
-                      padding: "8px",
-                      borderRadius: "6px",
-                      marginTop: "4px",
-                      overflowX: "auto"
-                    }}
-                  >
+                  <div className="all-decision-logs--s28">
                     {JSON.stringify(selectedLog.before_snapshot, null, 2)}
                   </div>
-                </div>
-              )}
+                </div>}
 
-              {selectedLog.after_snapshot && Object.keys(selectedLog.after_snapshot).length > 0 && (
-                <div>
+              {selectedLog.after_snapshot && Object.keys(selectedLog.after_snapshot).length > 0 && <div>
                   <span className="admin-metric-label">{t("After")}:</span>
-                  <div
-                    style={{
-                      fontSize: "11px",
-                      color: "#6b7280",
-                      background: "#f3f4f6",
-                      padding: "8px",
-                      borderRadius: "6px",
-                      marginTop: "4px",
-                      overflowX: "auto"
-                    }}
-                  >
+                  <div className="all-decision-logs--s28">
                     {JSON.stringify(selectedLog.after_snapshot, null, 2)}
                   </div>
-                </div>
-              )}
-            </div>
-          )}
+                </div>}
+            </div>}
         </Modal.Body>
         <Modal.Footer>
-          <RBButton
-            className="admin-secondary-btn"
-            style={{ color: "#374151 !important" }}
-            onClick={() => setSelectedLog(null)}
-          >
+          <RBButton className="admin-secondary-btn all-decision-logs--s29" onClick={() => setSelectedLog(null)}>
             {t("close")}
           </RBButton>
         </Modal.Footer>
       </Modal>
-    </div>
-  );
+    </div>;
 };
-
 export default AllDecisionLogs;

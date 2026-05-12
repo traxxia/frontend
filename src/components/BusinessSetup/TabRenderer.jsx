@@ -116,12 +116,12 @@ const TabRenderer = () => {
           />
         </div>
       )}
-      {activeTab === "insights" && hasInsightAccess && (
+      {activeTab === "insights" && (
         <div className="analysis-section">
           <AnalysisContentManager />
         </div>
       )}
-      {activeTab === "strategic" && hasStrategicAccess && (
+      {activeTab === "strategic" && (
         <div className="strategic-section">
           <StrategicAnalysis
             onRegenerate={handleStrategicAnalysisRegenerate}

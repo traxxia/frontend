@@ -2425,3 +2425,35 @@
     left: 0;
   }
 }
+
+
+/* ── Extracted inline styles ── */
+.ranking-section--s1 {
+  webkit-overflow-scrolling: touch;
+  overflow-x: auto;
+}
+
+.ranking-section--s2 {
+  background-color: #f8fafc;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.ranking-section--s3 {
+  font-weight: 600;
+}
+
+.ranking-section--s4 {
+  font-size: 11px;
+}
+
+.ranking-section--s5 {
+  min-height: 400px;
+}
+
+.ranking-section--s6 {
+  width: 3rem;
+  height: 3rem;
+}

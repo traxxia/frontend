@@ -233,6 +233,42 @@ export const useAnalysisStore = create((set, get) => ({
     }
   },
 
+  fetchInitialSetupData: async (businessId) => {
+    if (!businessId) return;
+    const { token } = useAuthStore.getState();
+    if (!token) return;
+
+    try {
+      const apiService = getApiService();
+      
+      // Fetch questions if not already loaded
+      if (get().questions.length === 0) {
+        const questionsResponse = await fetch(`${API_BASE_URL}/api/questions`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const questionsData = await questionsResponse.json();
+        set({ questions: questionsData.questions || [] });
+      }
+
+      // Fetch answers and document info in parallel
+      const [answersResult, docInfo] = await Promise.all([
+        apiService.getFreshAnswersData(businessId),
+        apiService.fetchFinancialDocument(businessId)
+      ]);
+
+      set({ 
+        userAnswers: answersResult.freshAnswers || {},
+        completedQuestions: Array.from(answersResult.freshCompletedSet || []),
+        questionsLoaded: true
+      });
+
+      return { answersResult, docInfo };
+    } catch (err) {
+      console.error('Failed to fetch initial setup data:', err);
+      set({ questionsLoaded: true });
+    }
+  },
+
   regeneratePhase: async (phase, questions, userAnswers, businessId, onToast) => {
     if (!businessId || !phase) return;
     const phaseTypes = PHASE_API_CONFIG[phase] || [];

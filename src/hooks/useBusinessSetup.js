@@ -114,6 +114,7 @@ export const useBusinessSetup = () => {
   const setUserAnswer = useAnalysisStore(state => state.setUserAnswer);
   const setAnalysisData = useAnalysisStore(state => state.setAnalysisData);
   const fetchAnalysisData = useAnalysisStore(state => state.fetchAnalysisData);
+  const fetchInitialSetupData = useAnalysisStore(state => state.fetchInitialSetupData);
   const regeneratePhase = useAnalysisStore(state => state.regeneratePhase);
   const regenerateIndividualAnalysis = useAnalysisStore(state => state.regenerateIndividualAnalysis);
   const isTypeRegenerating = useAnalysisStore(state => state.isRegenerating);
@@ -346,8 +347,16 @@ export const useBusinessSetup = () => {
     if (selectedBusinessId) {
       fetchedAnalysisKeys.current.clear();
       fetchAnalysisData(selectedBusinessId);
+      fetchInitialSetupData(selectedBusinessId).then(result => {
+        if (result?.docInfo) {
+          setDocumentInfo(result.docInfo);
+          setHasUploadedDocument(true);
+        } else {
+          setHasUploadedDocument(false);
+        }
+      });
     }
-  }, [selectedBusinessId, fetchAnalysisData]);
+  }, [selectedBusinessId, fetchAnalysisData, fetchInitialSetupData]);
 
   const isArchived = (currentBusiness?.access_mode === 'archived' || currentBusiness?.access_mode === 'hidden');
 

@@ -764,3 +764,14 @@
   z-index: 10;
 
 }
+
+
+/* ── Extracted inline styles ── */
+.login--s1 {
+  font-size: 20px;
+}
+
+.login--s2 {
+  color: #8F9098;
+  font-size: 20px;
+}

@@ -1144,3 +1144,10 @@ tbody{
     border-width: 0;
     background-color: white !important;
 }
+
+
+/* ── Extracted inline styles ── */
+.business-setup-page--s1 {
+  z-index: 1000;
+  position: relative;
+}

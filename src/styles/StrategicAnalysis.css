@@ -796,3 +796,384 @@ body.pdf-export-active .StreamingRow {
 .subsection .table-container {
   padding: 0px;
 }
+
+
+/* ── Extracted inline styles ── */
+.strategic-analysis--s1 {
+  font-size: 12px;
+  color: #000000;
+  margin: 4px 0 0 0;
+  font-weight: 500;
+}
+
+.strategic-analysis--s2 {
+  padding: 12px 16px;
+  background-color: #f0f9ff;
+  margin-bottom: 5px;
+  border-radius: 4px;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.strategic-analysis--s3 {
+  color: #3b82f6;
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+
+.strategic-analysis--s4 {
+  font-size: 14px;
+  font-style: italic;
+  color: #1e40af;
+  line-height: 1.5;
+}
+
+.strategic-analysis--s5 {
+  cursor: pointer;
+}
+
+.strategic-analysis--s6 {
+  position: absolute;
+  height: 20px;
+  border-radius: 4px;
+  opacity: 0.85;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 10px;
+  font-weight: 600;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.strategic-analysis--s7 {
+  display: flex;
+  margin-bottom: 15px;
+  font-size: 12px;
+  color: #4b5563;
+  font-weight: 600;
+  border-bottom: 2px solid #d1d5db;
+  padding-bottom: 8px;
+}
+
+.strategic-analysis--s8 {
+  flex: 1;
+  text-align: center;
+  padding: 4px 2px;
+  min-width: 40px;
+}
+
+.strategic-analysis--s9 {
+  margin-top: 20px;
+  margin-bottom: 30px;
+}
+
+.strategic-analysis--s10 {
+  margin-bottom: 20px;
+}
+
+.strategic-analysis--s11 {
+  background-color: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.strategic-analysis--s12 {
+  margin: 0 0 15px 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.strategic-analysis--s13 {
+  overflow-x: auto;
+}
+
+.strategic-analysis--s14 {
+  min-width: 700px;
+}
+
+.strategic-analysis--s15 {
+  position: relative;
+}
+
+.strategic-analysis--s16 {
+  position: relative;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+}
+
+.strategic-analysis--s17 {
+  font-size: 12px;
+  font-weight: 600;
+  margin-right: 12px;
+  color: #1f2937;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.strategic-analysis--s18 {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.strategic-analysis--s19 {
+  flex: 1;
+  position: relative;
+  height: 28px;
+  background-color: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  min-width: 520px;
+}
+
+.strategic-analysis--s20 {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.strategic-analysis--s21 {
+  justify-content: center;
+}
+
+.strategic-analysis--s22 {
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.strategic-analysis--s23 {
+  font-size: 12px;
+  color: #059669;
+  font-weight: 600;
+}
+
+.strategic-analysis--s24 {
+  font-size: 12px;
+}
+
+.strategic-analysis--s25 {
+  margin-bottom: 4px;
+}
+
+.strategic-analysis--s26 {
+  margin: 4px 0 0 0;
+  padding-left: 16px;
+}
+
+.strategic-analysis--s27 {
+  color: #3b82f6;
+}
+
+.strategic-analysis--s28 {
+  color: #8b5cf6;
+}
+
+.strategic-analysis--s29 {
+  color: #f59e0b;
+}
+
+.strategic-analysis--s30 {
+  color: #10b981;
+}
+
+.strategic-analysis--s31 {
+  font-weight: 600;
+}
+
+.strategic-analysis--s32 {
+  color: blue;
+}
+
+.strategic-analysis--s33 {
+  font-weight: 600;
+  font-size: 14px;
+  color: #1f2937;
+}
+
+.strategic-analysis--s34 {
+  font-size: 13px;
+}
+
+.strategic-analysis--s35 {
+  font-size: 13px;
+  color: #059669;
+  font-weight: 500;
+}
+
+.strategic-analysis--s36 {
+  margin-bottom: 25px;
+}
+
+.strategic-analysis--s37 {
+  font-size: 16px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #1f2937;
+  margin-bottom: 15px;
+}
+
+.strategic-analysis--s38 {
+  margin: 0;
+  padding: 0;
+}
+
+.strategic-analysis--s39 {
+  font-size: 13px;
+  color: #374151;
+}
+
+.strategic-analysis--s40 {
+  background-color: #3b82f6;
+  color: white;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 500;
+  display: inline-block;
+}
+
+.strategic-analysis--s41 {
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.strategic-analysis--s42 {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background-color: #3b82f6;
+}
+
+.strategic-analysis--s43 {
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+  color: #059669;
+}
+
+.strategic-analysis--s44 {
+  background-color: #8b5cf6;
+  color: white;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 500;
+  display: inline-block;
+}
+
+.strategic-analysis--s45 {
+  font-size: 13px;
+  color: #dc2626;
+}
+
+.strategic-analysis--s46 {
+  margin-bottom: 5px;
+}
+
+.strategic-analysis--s47 {
+  font-size: 13px;
+  color: #059669;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.strategic-analysis--s48 {
+  color: #ef4444;
+}
+
+.strategic-analysis--s49 {
+  padding: 40px;
+  text-align: center;
+  color: #64748b;
+  width: 100%;
+  grid-column: 1 / -1;
+}
+
+.strategic-analysis--s50 {
+  margin-bottom: 10px;
+  opacity: 0.5;
+}
+
+.strategic-analysis--s51 {
+  margin: 0;
+  font-weight: 500;
+}
+
+.strategic-analysis--s52 {
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+.strategic-analysis--s53 {
+  margin-top: 20px;
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+}
+
+.strategic-analysis--s54 {
+  background-color: #3b82f6;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.strategic-analysis--s55 {
+  background-color: white;
+  color: #374151;
+  border: 1px solid #d1d5db;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.strategic-analysis--s56 {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  text-align: center;
+  background: rgba(255, 255, 255, 0.5);
+  border-radius: 16px;
+  border: 1px dashed #cbd5e1;
+  margin: 20px;
+}
+
+.strategic-analysis--s57 {
+  color: #94a3b8;
+  margin-bottom: 20px;
+}
+
+.strategic-analysis--s58 {
+  font-size: 20px;
+  font-weight: 700;
+  color: #334155;
+  margin-bottom: 12px;
+}
+
+.strategic-analysis--s59 {
+  max-width: 400px;
+  color: #64748b;
+  line-height: 1.6;
+}

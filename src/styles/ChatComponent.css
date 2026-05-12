@@ -558,3 +558,148 @@
 .message-bubble.file-upload.error .message-text {
   background-color: #fef2f2;
 }
+
+
+/* ── Extracted inline styles ── */
+.chat-component--s1 {
+  display: flex;
+  flex-direction: row-reverse;
+}
+
+.chat-component--s2 {
+  background-color: #f0f9ff;
+  border: 1px solid rgb(26, 115, 232);
+  border-radius: 8px;
+  padding: 5px;
+  margin: 5px 0;
+  width: max-content;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.chat-component--s3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.chat-component--s4 {
+  font-weight: 500;
+  color: #0f172a;
+}
+
+.chat-component--s5 {
+  font-size: 12px;
+  color: #64748b;
+}
+
+.chat-component--s6 {
+  display: flex;
+  gap: 8px;
+}
+
+.chat-component--s7 {
+  background-color: rgb(26, 115, 232);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 6px 12px;
+  font-size: 12px;
+  cursor: pointer;
+  font-weight: 500;
+  margin: 10px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.chat-component--s8 {
+  display: none;
+}
+
+.chat-component--s9 {
+  display: flex;
+  gap: 12px;
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+
+.chat-component--s10 {
+  background-color: #10b981;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 16px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.chat-component--s11 {
+  background-color: #6b7280;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 16px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.chat-component--s12 {
+  display: flex;
+  margin-top: 12px;
+}
+
+.chat-component--s13 {
+  font-style: italic;
+}
+
+.chat-component--s14 {
+  background-color: #fef3c7;
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid #fcd34d;
+  text-align: center;
+}
+
+.chat-component--s15 {
+  color: #92400e;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.chat-component--s16 {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #10b981;
+  color: white;
+  padding: 16px 24px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.chat-component--s17 {
+  font-size: 24px;
+}
+
+.chat-component--s18 {
+  background: none;
+  border: none;
+  color: white;
+  cursor: pointer;
+  font-size: 18px;
+  margin-left: 8px;
+}

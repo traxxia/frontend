@@ -485,3 +485,18 @@
 .pmf-tooltip.bs-tooltip-top .tooltip-arrow::before {
   border-top-color: #e5e7eb !important;
 }
+
+
+/* ── Extracted inline styles ── */
+.p-m-f-onboarding-modal--s1 {
+  font-size: 14px;
+}
+
+.p-m-f-onboarding-modal--s2 {
+  font-size: 13px;
+  margin-top: -4px;
+}
+
+.p-m-f-onboarding-modal--s3 {
+  min-width: 160px;
+}

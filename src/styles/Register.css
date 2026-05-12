@@ -1322,3 +1322,26 @@
 .registration-error-box .error-close:hover {
   opacity: 1;
 }
+
+
+/* ── Extracted inline styles ── */
+.payment-form--s1 {
+  border: none;
+  padding: 0;
+}
+
+.payment-form--s2 {
+  overflow: hidden;
+}
+
+.payment-form--s3 {
+  width: 100%;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 16px;
+  padding: 0;
+  margin: 0;
+  box-shadow: none;
+  border-radius: 0;
+}

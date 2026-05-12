@@ -4548,3 +4548,131 @@
 [data-theme="dark"]  .coreBusinessDefinition {
    background-color: #1a1d23 !important;
  }
+
+
+/* ── Extracted inline styles ── */
+.competitive-landscape--s1 {
+  background: linear-gradient(90deg, #f0f9ff 0%, #e0f2fe 100%);
+}
+
+.competitive-landscape--s2 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.competitive-landscape--s3 {
+  margin: 0;
+}
+
+.competitive-landscape--s4 {
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.competitive-landscape--s5 {
+  font-size: 0.875rem;
+}
+
+.competitive-landscape--s6 {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.competitive-landscape--s7 {
+  font-size: 0.75rem;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-weight: 700;
+}
+
+
+/* ── Extracted inline styles ── */
+.core-adjacency--s1 {
+  margin-right: 8px;
+}
+
+.core-adjacency--s2 {
+  padding: 1rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+}
+
+.core-adjacency--s3 {
+  margin: 0;
+  line-height: 1.6;
+}
+
+.core-adjacency--s4 {
+  width: 30%;
+}
+
+.core-adjacency--s5 {
+  margin: 0;
+  padding-left: 1.5rem;
+}
+
+.core-adjacency--s6 {
+  margin: 1rem 0 0.5rem 0;
+  color: #2c5282;
+}
+
+.core-adjacency--s7 {
+  margin-bottom: 0.5rem;
+}
+
+.core-adjacency--s8 {
+  margin-top: 0.5rem;
+}
+
+.core-adjacency--s9 {
+  display: block;
+  font-size: 0.9em;
+  color: #6b7280;
+  margin-top: 2px;
+}
+
+
+/* ── Extracted inline styles ── */
+.strategic-goals--s1 {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: bold;
+  color: white;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+}
+
+.strategic-goals--s2 {
+  background: rgba(0,0,0,0.3);
+  padding: 1px 4px;
+  border-radius: 2px;
+  font-size: 10px;
+}
+
+.strategic-goals--s3 {
+  font-size: 10px;
+}
+
+.strategic-goals--s4 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.strategic-goals--s5 {
+  width: 60px;
+  height: 8px;
+  background-color: #f0f0f0;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.strategic-goals--s6 {
+  height: 100%;
+  transition: width 0.3s ease-in-out;
+}

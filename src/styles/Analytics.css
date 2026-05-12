@@ -9126,3 +9126,20 @@
  [data-theme="dark"]  .insight-list {
    color: #ffffff !important;
  }
+
+
+/* ── Extracted inline styles ── */
+.customer-segmentation--s1 {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+}
+
+.customer-segmentation--s2 {
+  width: 100px;
+  height: 20px;
+}
+
+.customer-segmentation--s3 {
+  height: 100%;
+}

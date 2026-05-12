@@ -2136,3 +2136,10 @@
   .delete-btn-simple:focus {
     outline: none !important;
   }
+
+
+/* ── Extracted inline styles ── */
+.dashboard--s1 {
+  font-size: 20px;
+  line-height: 1;
+}

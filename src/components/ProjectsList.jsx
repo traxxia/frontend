@@ -3,7 +3,6 @@ import { Spinner } from "react-bootstrap";
 import ProjectsTable from "./ProjectsTable";
 import { useTranslation } from '../hooks/useTranslation';
 import { useAuthStore } from '../store';
-
 const ProjectsList = ({
   isLoading,
   sortedProjects,
@@ -28,19 +27,20 @@ const ProjectsList = ({
   onPerformReview,
   onAdhocUpdate,
   canReviewProject,
-  myUserId,
+  myUserId
 }) => {
-  const { t } = useTranslation();
-  const userPlan = useAuthStore((state) => state.userPlan);
+  const {
+    t
+  } = useTranslation();
+  const userPlan = useAuthStore(state => state.userPlan);
   const [showMenuId, setShowMenuId] = useState(null);
   useEffect(() => {
-    const handleClickOutside = (event) => {
+    const handleClickOutside = event => {
       if (event.target.closest(".menu-button") || event.target.closest(".menu-dropdown") || event.target.closest(".actions-dropdown-btn")) {
         return;
       }
       setShowMenuId(null);
     };
-
     if (showMenuId) {
       document.addEventListener("click", handleClickOutside);
     }
@@ -48,42 +48,18 @@ const ProjectsList = ({
       document.removeEventListener("click", handleClickOutside);
     };
   }, [showMenuId]);
-
-  const renderProjectTable = (projects) => {
+  const renderProjectTable = projects => {
     if (!projects || projects.length === 0) return null;
-    return (
-      <ProjectsTable
-        projects={projects}
-        rankMap={rankMap}
-        onEdit={onEdit}
-        onView={onView}
-        onDelete={onDelete}
-        onPerformReview={onPerformReview}
-        onAdhocUpdate={onAdhocUpdate}
-        showMenuId={showMenuId}
-        setShowMenuId={setShowMenuId}
-        selectedProjectIds={selectedProjectIds}
-        onToggleSelection={onToggleSelection}
-        isAdmin={isAdmin}
-        isArchived={isArchived}
-        isViewer={isViewer}
-        canReviewProject={canReviewProject}
-        canEditProject={canEditProject}
-        myUserId={myUserId}
-      />
-    );
+    return <ProjectsTable projects={projects} rankMap={rankMap} onEdit={onEdit} onView={onView} onDelete={onDelete} onPerformReview={onPerformReview} onAdhocUpdate={onAdhocUpdate} showMenuId={showMenuId} setShowMenuId={setShowMenuId} selectedProjectIds={selectedProjectIds} onToggleSelection={onToggleSelection} isAdmin={isAdmin} isArchived={isArchived} isViewer={isViewer} canReviewProject={canReviewProject} canEditProject={canEditProject} myUserId={myUserId} />;
   };
-
   const getFilteredGroups = () => {
     if (isLoading) {
-      return (
-        <div className="d-flex justify-content-center align-items-center py-5" style={{ minHeight: "300px" }}>
+      return <div className="d-flex justify-content-center align-items-center py-5 projects-list--s1">
           <div className="text-center">
             <Spinner animation="border" variant="primary" size="lg" />
             <p className="mt-3 text-muted fw-500">{t("Loading projects...")}</p>
           </div>
-        </div>
-      );
+        </div>;
     }
     if (!selectedCategories || selectedCategories.includes("All")) {
       return renderProjectTable(sortedProjects);
@@ -95,23 +71,16 @@ const ProjectsList = ({
         return statusValue === catId.toLowerCase();
       });
     });
-
     if (filteredProjects.length === 0) {
       const labels = selectedCategories.map(id => t(id)).join(", ");
-      return (
-        <div className="empty-category-message text-center py-5">
+      return <div className="empty-category-message text-center py-5">
           <p className="text-muted">{t("No projects found in selected categories")}: {labels}.</p>
-        </div>
-      );
+        </div>;
     }
     return renderProjectTable(filteredProjects);
   };
-
-  return (
-    <div className={`projects-list-wrapper ${isFinalizedView ? "finalized-view" : ""}`}>
+  return <div className={`projects-list-wrapper ${isFinalizedView ? "finalized-view" : ""}`}>
       {getFilteredGroups()}
-    </div>
-  );
+    </div>;
 };
-
 export default ProjectsList;

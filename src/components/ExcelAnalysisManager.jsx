@@ -10,9 +10,7 @@ import GrowthTracker from './GrowthTracker';
 import LiquidityEfficiency from './LiquidityEfficiency';
 import InvestmentPerformance from './InvestmentPerformance';
 import LeverageRisk from './LeverageRisk';
-
 import { useAuthStore } from '../store/authStore';
-
 const ExcelAnalysisManager = ({
   questions = [],
   userAnswers = {},
@@ -30,58 +28,40 @@ const ExcelAnalysisManager = ({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [localUploadedFile, setLocalUploadedFile] = useState(uploadedFile);
-
   const isMounted = useRef(false);
   const hasInitialized = useRef(false);
   const fileInputRef = useRef(null);
-  const { t } = useTranslation();
+  const {
+    t
+  } = useTranslation();
   const userRole = useAuthStore(state => state.userRole);
-
   const ML_API_BASE_URL = process.env.REACT_APP_ML_BACKEND_URL || 'http://127.0.0.1:8000';
   const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
   const getAuthToken = () => useAuthStore.getState().token;
-  const excelAnalysisService = new ExcelAnalysisService(
-    ML_API_BASE_URL,
-    getAuthToken,
-    (endpoint, loading) => {
-      if (endpoint === 'excel-analysis') {
-        setIsLoading(loading);
-      }
+  const excelAnalysisService = new ExcelAnalysisService(ML_API_BASE_URL, getAuthToken, (endpoint, loading) => {
+    if (endpoint === 'excel-analysis') {
+      setIsLoading(loading);
     }
-  );
-
+  });
   const handleRedirectToBrief = (missingQuestionsData = null) => {
     if (onRedirectToBrief) {
       onRedirectToBrief(missingQuestionsData);
     }
   };
-
   const handleMissingQuestionsCheck = async () => {
     const analysisConfig = ANALYSIS_TYPES.excelAnalysis || {
       displayName: 'Financial Analysis Suite',
       customMessage: 'Answer more questions to unlock detailed financial analysis'
     };
-
-    await checkMissingQuestionsAndRedirect(
-      'excelAnalysis',
-      selectedBusinessId,
-      handleRedirectToBrief,
-      {
-        displayName: analysisConfig.displayName,
-        customMessage: analysisConfig.customMessage
-      }
-    );
+    await checkMissingQuestionsAndRedirect('excelAnalysis', selectedBusinessId, handleRedirectToBrief, {
+      displayName: analysisConfig.displayName,
+      customMessage: analysisConfig.customMessage
+    });
   };
-
-  const isExcelAnalysisDataIncomplete = (data) => {
+  const isExcelAnalysisDataIncomplete = data => {
     if (!data) return true;
-    return !data.profitability &&
-      !data.growth_trends &&
-      !data.liquidity &&
-      !data.investment &&
-      !data.leverage;
+    return !data.profitability && !data.growth_trends && !data.liquidity && !data.investment && !data.leverage;
   };
-
   const handleRegenerate = async () => {
     if (onRegenerate) {
       onRegenerate();
@@ -91,7 +71,6 @@ const ExcelAnalysisManager = ({
       await generateExcelAnalysis();
     }
   };
-
   useEffect(() => {
     if (excelAnalysisData && excelAnalysisData !== analysisData) {
       setAnalysisData(excelAnalysisData);
@@ -100,42 +79,30 @@ const ExcelAnalysisManager = ({
       }
     }
   }, [excelAnalysisData]);
-
   useEffect(() => {
     if (uploadedFile && uploadedFile !== localUploadedFile) {
       setLocalUploadedFile(uploadedFile);
     }
   }, [uploadedFile]);
-
   useEffect(() => {
     if (hasInitialized.current) return;
-
     isMounted.current = true;
     hasInitialized.current = true;
-
     if (excelAnalysisData) {
       setAnalysisData(excelAnalysisData);
     }
-
     return () => {
       isMounted.current = false;
     };
   }, []);
-
   useEffect(() => {
     if (analysisData && onDataGenerated) {
       onDataGenerated(analysisData);
     }
   }, [analysisData]);
-
-  const handleFileUpload = (file) => {
+  const handleFileUpload = file => {
     if (file) {
-      const allowedTypes = [
-        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        'application/vnd.ms-excel',
-        'text/csv'
-      ];
-
+      const allowedTypes = ['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/vnd.ms-excel', 'text/csv'];
       if (allowedTypes.includes(file.type)) {
         setLocalUploadedFile(file);
         setError(null);
@@ -144,24 +111,17 @@ const ExcelAnalysisManager = ({
       }
     }
   };
-
   const removeFile = () => {
     setLocalUploadedFile(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
   };
-
   const generateExcelAnalysis = async () => {
     setIsLoading(true);
     setError(null);
-
     try {
-      const result = await excelAnalysisService.generateExcelAnalysis(
-        localUploadedFile,
-        questions,
-        userAnswers
-      );
+      const result = await excelAnalysisService.generateExcelAnalysis(localUploadedFile, questions, userAnswers);
       const transformedData = {
         profitability: result.profitability,
         growth_trends: result.growth_trends,
@@ -169,14 +129,11 @@ const ExcelAnalysisManager = ({
         investment: result.investment,
         leverage: result.leverage
       };
-
       setAnalysisData(transformedData);
       await saveAnalysisToBackend(transformedData);
-
       if (onDataGenerated) {
         onDataGenerated(transformedData);
       }
-
     } catch (error) {
       console.error('Error generating excel analysis:', error);
       setError(`Failed to generate analysis: ${error.message}`);
@@ -184,22 +141,15 @@ const ExcelAnalysisManager = ({
       setIsLoading(false);
     }
   };
-  const generateSpecificAnalysis = async (metricType) => {
+  const generateSpecificAnalysis = async metricType => {
     setIsLoading(true);
     setError(null);
-
     try {
-      const result = await excelAnalysisService.generateExcelAnalysis(
-        localUploadedFile,
-        questions,
-        userAnswers,
-        metricType
-      );
+      const result = await excelAnalysisService.generateExcelAnalysis(localUploadedFile, questions, userAnswers, metricType);
       setAnalysisData(prevData => ({
         ...prevData,
         ...result
       }));
-
     } catch (error) {
       console.error(`Error generating ${metricType} analysis:`, error);
       setError(`Failed to generate ${metricType} analysis: ${error.message}`);
@@ -207,11 +157,9 @@ const ExcelAnalysisManager = ({
       setIsLoading(false);
     }
   };
-
-  const saveAnalysisToBackend = async (analysisData) => {
+  const saveAnalysisToBackend = async analysisData => {
     try {
       const token = getAuthToken();
-
       const response = await fetch(`${API_BASE_URL}/api/conversations/phase-analysis`, {
         method: 'POST',
         headers: {
@@ -231,194 +179,90 @@ const ExcelAnalysisManager = ({
           }
         })
       });
-
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.error || 'Failed to save Financial Analysis Suite');
       }
-
       return await response.json();
     } catch (error) {
       console.error('Error saving Financial Analysis Suite to backend:', error);
       throw error;
     }
   };
-
   if (isLoading || isRegenerating) {
-    return (
-      <div className="channel-heatmap channel-heatmap-container">
+    return <div className="channel-heatmap channel-heatmap-container">
         <div className="loading-state">
           <Loader size={24} className="loading-spinner" />
           <span>
-            {isRegenerating
-              ? "Regenerating financial analysis suite..."
-              : "Generating comprehensive financial analysis..."
-            }
+            {isRegenerating ? "Regenerating financial analysis suite..." : "Generating comprehensive financial analysis..."}
           </span>
         </div>
-      </div>
-    );
+      </div>;
   }
-
   if (error) {
-    return (
-      <div className="channel-heatmap channel-heatmap-container">
+    return <div className="channel-heatmap channel-heatmap-container">
         <div className="error-state">
           <div className="error-icon">⚠️</div>
           <h3>Analysis Error</h3>
           <p>{error}</p>
-          {userRole !== "viewer" && (
-            <button onClick={() => {
-              setError(null);
-              generateExcelAnalysis();
-            }} className="retry-button">
+          {userRole !== "viewer" && <button onClick={() => {
+          setError(null);
+          generateExcelAnalysis();
+        }} className="retry-button">
               Retry Analysis
-            </button>
-          )}
+            </button>}
         </div>
-      </div>
-    );
+      </div>;
   }
-
   if (!analysisData || isExcelAnalysisDataIncomplete(analysisData)) {
-    return (
-      <div className="channel-heatmap channel-heatmap-container">
-        <AnalysisEmptyState
-          analysisType="excelAnalysis"
-          analysisDisplayName="Financial Analysis Suite"
-          icon={Upload}
-          onImproveAnswers={handleMissingQuestionsCheck}
-          onRegenerate={handleRegenerate}
-          isRegenerating={isRegenerating}
-          canRegenerate={canRegenerate}
-          userAnswers={userAnswers}
-          minimumAnswersRequired={3}
-
-          showFileUpload={true}
-          onFileUpload={handleFileUpload}
-          onGenerateWithFile={() => generateExcelAnalysis()}
-          onGenerateWithoutFile={() => generateExcelAnalysis()}
-          uploadedFile={localUploadedFile}
-          onRemoveFile={removeFile}
-          isUploading={isLoading}
-          fileUploadMessage="Upload Excel files for comprehensive financial analysis including profitability, growth, liquidity, investment performance, and risk metrics"
-          acceptedFileTypes=".xlsx,.xls,.csv"
-        />
-      </div>
-    );
+    return <div className="channel-heatmap channel-heatmap-container">
+        <AnalysisEmptyState analysisType="excelAnalysis" analysisDisplayName="Financial Analysis Suite" icon={Upload} onImproveAnswers={handleMissingQuestionsCheck} onRegenerate={handleRegenerate} isRegenerating={isRegenerating} canRegenerate={canRegenerate} userAnswers={userAnswers} minimumAnswersRequired={3} showFileUpload={true} onFileUpload={handleFileUpload} onGenerateWithFile={() => generateExcelAnalysis()} onGenerateWithoutFile={() => generateExcelAnalysis()} uploadedFile={localUploadedFile} onRemoveFile={removeFile} isUploading={isLoading} fileUploadMessage="Upload Excel files for comprehensive financial analysis including profitability, growth, liquidity, investment performance, and risk metrics" acceptedFileTypes=".xlsx,.xls,.csv" />
+      </div>;
   }
-  return (
-    <div className="excel-analysis-manager">
-      <div className="analysis-suite-header" style={{
-        backgroundColor: '#f8fafc',
-        borderRadius: '12px',
-        padding: '20px',
-        margin: '0 0 30px 0',
-        border: '1px solid #e2e8f0'
-      }}>
-        <h2 style={{
-          fontSize: '24px',
-          fontWeight: 700,
-          color: '#1f2937',
-          margin: '0 0 8px 0'
-        }}>
+  return <div className="excel-analysis-manager">
+      <div className="analysis-suite-header excel-analysis-manager--s1">
+        <h2 className="excel-analysis-manager--s2">
           Financial Analysis Suite
         </h2>
-        <p style={{
-          fontSize: '16px',
-          color: '#6b7280',
-          margin: 0
-        }}>
+        <p className="excel-analysis-manager--s3">
           Comprehensive financial analysis across 5 key areas: Profitability, Growth, Liquidity, Investment Performance, and Risk Assessment
         </p>
       </div>
 
       {}
-      {analysisData.profitability && (
-        <div style={{ marginBottom: '40px' }}>
-          <ProfitabilityAnalysis
-            questions={questions}
-            userAnswers={userAnswers}
-            businessName={businessName}
-            profitabilityData={{ profitability: analysisData.profitability }}
-            selectedBusinessId={selectedBusinessId}
-            onRedirectToBrief={handleRedirectToBrief}
-            onRegenerate={() => generateSpecificAnalysis('profitability')}
-            isRegenerating={isLoading}
-            canRegenerate={canRegenerate}
-          />
-        </div>
-      )}
+      {analysisData.profitability && <div className="excel-analysis-manager--s4">
+          <ProfitabilityAnalysis questions={questions} userAnswers={userAnswers} businessName={businessName} profitabilityData={{
+        profitability: analysisData.profitability
+      }} selectedBusinessId={selectedBusinessId} onRedirectToBrief={handleRedirectToBrief} onRegenerate={() => generateSpecificAnalysis('profitability')} isRegenerating={isLoading} canRegenerate={canRegenerate} />
+        </div>}
 
       {}
-      {analysisData.growth_trends && (
-        <div style={{ marginBottom: '40px' }}>
-          <GrowthTracker
-            questions={questions}
-            userAnswers={userAnswers}
-            businessName={businessName}
-            growthData={{ growth_trends: analysisData.growth_trends }}
-            selectedBusinessId={selectedBusinessId}
-            onRedirectToBrief={handleRedirectToBrief}
-            onRegenerate={() => generateSpecificAnalysis('growth_trends')}
-            isRegenerating={isLoading}
-            canRegenerate={canRegenerate}
-          />
-        </div>
-      )}
+      {analysisData.growth_trends && <div className="excel-analysis-manager--s4">
+          <GrowthTracker questions={questions} userAnswers={userAnswers} businessName={businessName} growthData={{
+        growth_trends: analysisData.growth_trends
+      }} selectedBusinessId={selectedBusinessId} onRedirectToBrief={handleRedirectToBrief} onRegenerate={() => generateSpecificAnalysis('growth_trends')} isRegenerating={isLoading} canRegenerate={canRegenerate} />
+        </div>}
 
       {}
-      {analysisData.liquidity && (
-        <div style={{ marginBottom: '40px' }}>
-          <LiquidityEfficiency
-            questions={questions}
-            userAnswers={userAnswers}
-            businessName={businessName}
-            liquidityData={{ liquidity: analysisData.liquidity }}
-            selectedBusinessId={selectedBusinessId}
-            onRedirectToBrief={handleRedirectToBrief}
-            onRegenerate={() => generateSpecificAnalysis('liquidity')}
-            isRegenerating={isLoading}
-            canRegenerate={canRegenerate}
-          />
-        </div>
-      )}
+      {analysisData.liquidity && <div className="excel-analysis-manager--s4">
+          <LiquidityEfficiency questions={questions} userAnswers={userAnswers} businessName={businessName} liquidityData={{
+        liquidity: analysisData.liquidity
+      }} selectedBusinessId={selectedBusinessId} onRedirectToBrief={handleRedirectToBrief} onRegenerate={() => generateSpecificAnalysis('liquidity')} isRegenerating={isLoading} canRegenerate={canRegenerate} />
+        </div>}
 
       {}
-      {analysisData.investment && (
-        <div style={{ marginBottom: '40px' }}>
-          <InvestmentPerformance
-            questions={questions}
-            userAnswers={userAnswers}
-            businessName={businessName}
-            investmentData={{ investment: analysisData.investment }}
-            selectedBusinessId={selectedBusinessId}
-            onRedirectToBrief={handleRedirectToBrief}
-            onRegenerate={() => generateSpecificAnalysis('investment')}
-            isRegenerating={isLoading}
-            canRegenerate={canRegenerate}
-          />
-        </div>
-      )}
+      {analysisData.investment && <div className="excel-analysis-manager--s4">
+          <InvestmentPerformance questions={questions} userAnswers={userAnswers} businessName={businessName} investmentData={{
+        investment: analysisData.investment
+      }} selectedBusinessId={selectedBusinessId} onRedirectToBrief={handleRedirectToBrief} onRegenerate={() => generateSpecificAnalysis('investment')} isRegenerating={isLoading} canRegenerate={canRegenerate} />
+        </div>}
 
       {}
-      {analysisData.leverage && (
-        <div style={{ marginBottom: '40px' }}>
-          <LeverageRisk
-            questions={questions}
-            userAnswers={userAnswers}
-            businessName={businessName}
-            leverageData={{ leverage: analysisData.leverage }}
-            selectedBusinessId={selectedBusinessId}
-            onRedirectToBrief={handleRedirectToBrief}
-            onRegenerate={() => generateSpecificAnalysis('leverage')}
-            isRegenerating={isLoading}
-            canRegenerate={canRegenerate}
-          />
-        </div>
-      )}
-    </div>
-  );
+      {analysisData.leverage && <div className="excel-analysis-manager--s4">
+          <LeverageRisk questions={questions} userAnswers={userAnswers} businessName={businessName} leverageData={{
+        leverage: analysisData.leverage
+      }} selectedBusinessId={selectedBusinessId} onRedirectToBrief={handleRedirectToBrief} onRegenerate={() => generateSpecificAnalysis('leverage')} isRegenerating={isLoading} canRegenerate={canRegenerate} />
+        </div>}
+    </div>;
 };
-
 export default ExcelAnalysisManager;

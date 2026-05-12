@@ -715,3 +715,13 @@ textarea.plan-form-input {
 .status-confirm-modal-container {
     z-index: 1060 !important;
 }
+
+
+/* ── Extracted inline styles ── */
+.plan-management--s1 {
+  max-width: 300px;
+  display: inline-block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

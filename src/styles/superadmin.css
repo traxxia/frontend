@@ -1906,3 +1906,13 @@
   background-color: #293042;
 
 }
+
+
+/* ── Extracted inline styles ── */
+.super-admin-panel--s1 {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  white-space: nowrap;
+  scrollbar-width: thin;
+}

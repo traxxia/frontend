@@ -1,220 +1,173 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { Breadcrumb } from "react-bootstrap";
 import { useTranslation } from "../hooks/useTranslation";
-import {
-    Circle,
-    Diamond,
-    Rocket,
-    Bolt,
-    Lightbulb,
-    Heart,
-    Shield,
-    Boxes,
-    Clock,
-    ArrowLeft,
-    Edit3,
-    AlertTriangle,
-    XCircle,
-    CheckCircle,
-    Edit2,
-    Info,
-    Zap,
-    TrendingUp,
-    Lock,
-    DollarSign
-} from "lucide-react";
+import { Circle, Diamond, Rocket, Bolt, Lightbulb, Heart, Shield, Boxes, Clock, ArrowLeft, Edit3, AlertTriangle, XCircle, CheckCircle, Edit2, Info, Zap, TrendingUp, Lock, DollarSign } from "lucide-react";
 import "../styles/ProjectDetails.css";
-
-const getImpactIcon = (impact) => {
-    const normalizedImpact = !impact ? "" : impact.charAt(0).toUpperCase() + impact.slice(1).toLowerCase();
-    switch (normalizedImpact) {
-        case "High":
-            return <Circle size={14} color="green" fill="green" />;
-        case "Medium":
-            return <Circle size={14} color="gold" fill="gold" />;
-        case "Low":
-            return <Circle size={14} color="gray" fill="gray" />;
-        default:
-            return <Circle size={14} color="gray" />;
-    }
+const getImpactIcon = impact => {
+  const normalizedImpact = !impact ? "" : impact.charAt(0).toUpperCase() + impact.slice(1).toLowerCase();
+  switch (normalizedImpact) {
+    case "High":
+      return <Circle size={14} color="green" fill="green" />;
+    case "Medium":
+      return <Circle size={14} color="gold" fill="gold" />;
+    case "Low":
+      return <Circle size={14} color="gray" fill="gray" />;
+    default:
+      return <Circle size={14} color="gray" />;
+  }
 };
-
-const getEffortIcon = (effort) => {
-    const normalizedEffort = !effort ? "" : effort.charAt(0).toUpperCase() + effort.slice(1).toLowerCase();
-    switch (normalizedEffort) {
-        case "Small":
-            return <Diamond size={14} fill="black" color="black" />;
-        case "Medium":
-            return (
-                <div style={{ display: "flex", gap: "2px" }}>
+const getEffortIcon = effort => {
+  const normalizedEffort = !effort ? "" : effort.charAt(0).toUpperCase() + effort.slice(1).toLowerCase();
+  switch (normalizedEffort) {
+    case "Small":
+      return <Diamond size={14} fill="black" color="black" />;
+    case "Medium":
+      return <div className="project-details--s1">
                     <Diamond size={14} fill="black" color="black" />
                     <Diamond size={14} fill="black" color="black" />
-                </div>
-            );
-        case "Large":
-            return (
-                <div style={{ display: "flex", gap: "2px" }}>
+                </div>;
+    case "Large":
+      return <div className="project-details--s1">
                     <Diamond size={14} fill="black" color="black" />
                     <Diamond size={14} fill="black" color="black" />
                     <Diamond size={14} fill="black" color="black" />
-                </div>
-            );
-        default:
-            return null;
-    }
+                </div>;
+    default:
+      return null;
+  }
 };
-
-const getRiskIcon = (risk) => {
-    const normalizedRisk = !risk ? "" : risk.charAt(0).toUpperCase() + risk.slice(1).toLowerCase();
-    switch (normalizedRisk) {
-        case "Low":
-            return <Circle size={14} color="green" fill="green" />;
-        case "Medium":
-            return <Circle size={14} color="gold" fill="gold" />;
-        case "High":
-            return <Circle size={14} color="red" fill="red" />;
-        default:
-            return <Circle size={14} color="gray" />;
-    }
+const getRiskIcon = risk => {
+  const normalizedRisk = !risk ? "" : risk.charAt(0).toUpperCase() + risk.slice(1).toLowerCase();
+  switch (normalizedRisk) {
+    case "Low":
+      return <Circle size={14} color="green" fill="green" />;
+    case "Medium":
+      return <Circle size={14} color="gold" fill="gold" />;
+    case "High":
+      return <Circle size={14} color="red" fill="red" />;
+    default:
+      return <Circle size={14} color="gray" />;
+  }
 };
-
-const getThemeIcon = (theme) => {
-    switch (theme) {
-        case "Growth":
-            return <Rocket size={16} color="#e11d48" />;
-        case "Efficiency":
-            return <Bolt size={16} color="#f59e0b" />;
-        case "Innovation":
-            return <Lightbulb size={16} color="#facc15" />;
-        case "CustomerExperience":
-            return <Heart size={16} color="#dc2626" fill="#dc2626" />;
-        case "RiskMitigation":
-            return <Shield size={16} color="#3b82f6" />;
-        case "Platform":
-            return <Boxes size={16} color="#fb923c" />;
-        default:
-            return null;
-    }
+const getThemeIcon = theme => {
+  switch (theme) {
+    case "Growth":
+      return <Rocket size={16} color="#e11d48" />;
+    case "Efficiency":
+      return <Bolt size={16} color="#f59e0b" />;
+    case "Innovation":
+      return <Lightbulb size={16} color="#facc15" />;
+    case "CustomerExperience":
+      return <Heart size={16} color="#dc2626" fill="#dc2626" />;
+    case "RiskMitigation":
+      return <Shield size={16} color="#3b82f6" />;
+    case "Platform":
+      return <Boxes size={16} color="#fb923c" />;
+    default:
+      return null;
+  }
 };
-
 const ProjectDetails = ({
-    project,
-    onBack,
-    onEdit,
-    onPerformReview,
-    onAdhocUpdate,
-    canEdit = false,
-    canReview = false
+  project,
+  onBack,
+  onEdit,
+  onPerformReview,
+  onAdhocUpdate,
+  canEdit = false,
+  canReview = false
 }) => {
-    const { t } = useTranslation();
-    const breadcrumbRef = React.useRef(null);
-
-    useEffect(() => {
-        const timer = setTimeout(() => {
-            if (breadcrumbRef.current) {
-                breadcrumbRef.current.scrollIntoView({ behavior: 'auto', block: 'start' });
-            }
-            window.scrollTo(0, 0);
-            const parent = document.querySelector('.info-panel-content');
-            if (parent) {
-                parent.scrollTo({ top: 0, behavior: 'auto' });
-            }
-        }, 100);
-        return () => clearTimeout(timer);
-    }, []);
-
-    const isPendingReview = React.useMemo(() => {
-        if (!project || !project.next_review_date) return false;
-        const statusLower = (project?.status || "").toLowerCase();
-        if (["completed", "scaled", "killed"].includes(statusLower)) return false;
-        if (project.is_stale || new Date(project.next_review_date).getTime() < new Date().setHours(0, 0, 0, 0)) return false;
-        const nextDate = new Date(project.next_review_date);
-        nextDate.setHours(0, 0, 0, 0);
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        const diffDays = Math.round((nextDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-        return diffDays >= 0 && diffDays <= 3;
-    }, [project]);
-
-    const terminalStatusInfo = React.useMemo(() => {
-        const statusLower = (project?.status || "").toLowerCase();
-        const isTerminal = statusLower === "completed" || statusLower === "scaled" || statusLower === "killed";
-        if (!isTerminal) return { isTerminal: false };
-
-        let message = "Project reached a final state cannot be edited further.";
-        if (statusLower === "completed") message = "Project reached Completed state cannot be edited further.";
-        else if (statusLower === "scaled") message = "Project reached Scaled state cannot be edited further.";
-        else if (statusLower === "killed") message = "Project reached Killed state cannot be edited further.";
-
-        const latestTerminalLog = project?.decision_log && [...project.decision_log]
-            .reverse()
-            .find(log => (log.to_status || "").toLowerCase() === statusLower);
-
-        return { isTerminal, message, justification: latestTerminalLog?.justification };
-    }, [project]);
-
-    if (!project) {
-        return (
-            <div className="project-details-container">
+  const {
+    t
+  } = useTranslation();
+  const breadcrumbRef = React.useRef(null);
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (breadcrumbRef.current) {
+        breadcrumbRef.current.scrollIntoView({
+          behavior: 'auto',
+          block: 'start'
+        });
+      }
+      window.scrollTo(0, 0);
+      const parent = document.querySelector('.info-panel-content');
+      if (parent) {
+        parent.scrollTo({
+          top: 0,
+          behavior: 'auto'
+        });
+      }
+    }, 100);
+    return () => clearTimeout(timer);
+  }, []);
+  const isPendingReview = React.useMemo(() => {
+    if (!project || !project.next_review_date) return false;
+    const statusLower = (project?.status || "").toLowerCase();
+    if (["completed", "scaled", "killed"].includes(statusLower)) return false;
+    if (project.is_stale || new Date(project.next_review_date).getTime() < new Date().setHours(0, 0, 0, 0)) return false;
+    const nextDate = new Date(project.next_review_date);
+    nextDate.setHours(0, 0, 0, 0);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const diffDays = Math.round((nextDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+    return diffDays >= 0 && diffDays <= 3;
+  }, [project]);
+  const terminalStatusInfo = React.useMemo(() => {
+    const statusLower = (project?.status || "").toLowerCase();
+    const isTerminal = statusLower === "completed" || statusLower === "scaled" || statusLower === "killed";
+    if (!isTerminal) return {
+      isTerminal: false
+    };
+    let message = "Project reached a final state cannot be edited further.";
+    if (statusLower === "completed") message = "Project reached Completed state cannot be edited further.";else if (statusLower === "scaled") message = "Project reached Scaled state cannot be edited further.";else if (statusLower === "killed") message = "Project reached Killed state cannot be edited further.";
+    const latestTerminalLog = project?.decision_log && [...project.decision_log].reverse().find(log => (log.to_status || "").toLowerCase() === statusLower);
+    return {
+      isTerminal,
+      message,
+      justification: latestTerminalLog?.justification
+    };
+  }, [project]);
+  if (!project) {
+    return <div className="project-details-container">
                 <div className="no-project-message">
                     <p>{t("No_project_data")}</p>
                     <button className="btn-back" onClick={onBack}>
                         <ArrowLeft size={16} /> {t("Back_to_Projects")}
                     </button>
                 </div>
-            </div>
-        );
-    }
-
-    return (
-        <div className="project-details-container">
+            </div>;
+  }
+  return <div className="project-details-container">
             {}
             <div className="projects-breadcrumb" ref={breadcrumbRef}>
 
                 <Breadcrumb>
-                    <Breadcrumb.Item onClick={onBack} style={{ cursor: "pointer" }}>
+                    <Breadcrumb.Item onClick={onBack} className="project-details--s2">
                         {t("Projects")}
                     </Breadcrumb.Item>
                     <Breadcrumb.Item active>{project.project_name}</Breadcrumb.Item>
                 </Breadcrumb>
             </div>
 
-            {terminalStatusInfo?.isTerminal && (
-                <div className="terminal-status-banner" style={{
-                    backgroundColor: "#eff6ff",
-                    border: "1px solid #dbeafe",
-                    borderRadius: "8px",
-                    padding: "10px 16px",
-                    marginBottom: "20px",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "10px",
-                    color: "#1e40af"
-                }}>
-                    <Info size={18} color="#2563eb" style={{ flexShrink: 0 }} />
-                    <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap", fontSize: "14px" }}>
-                        <span style={{ fontWeight: "600" }}>{terminalStatusInfo.message}</span>
-                        {terminalStatusInfo.justification && (
-                            <>
-                                <span style={{ color: "#3b82f6", opacity: 0.8 }}>•</span>
-                                <span style={{ fontStyle: "italic", color: "#1d4ed8" }}>
+            {terminalStatusInfo?.isTerminal && <div className="terminal-status-banner project-details--s3">
+                    <Info size={18} color="#2563eb" className="project-details--s4" />
+                    <div className="project-details--s5">
+                        <span className="project-details--s6">{terminalStatusInfo.message}</span>
+                        {terminalStatusInfo.justification && <>
+                                <span className="project-details--s7">•</span>
+                                <span className="project-details--s8">
                                     "{terminalStatusInfo.justification || t("No_justification_provided")}"
                                 </span>
-                            </>
-                        )}
+                            </>}
                     </div>
-                </div>
-            )}
+                </div>}
 
             {}
             <div className="details-header mb-4">
                 <h1 className="details-title">{project.project_name}</h1>
                 <div className="details-actions">
-                    {canEdit && !["completed", "scaled", "killed"].includes(project.status?.toLowerCase()) && (
-                        <button className="btn-edit" onClick={() => onEdit(project)}>
+                    {canEdit && !["completed", "scaled", "killed"].includes(project.status?.toLowerCase()) && <button className="btn-edit" onClick={() => onEdit(project)}>
                             <Edit2 size={16} /> {t("Edit")}
-                        </button>
-                    )}
+                        </button>}
                 </div>
             </div>
 
@@ -229,7 +182,7 @@ const ProjectDetails = ({
                             {t("Project_Name")}
                         </label>
                     </div>
-                    <div className="detail-value-display" style={{ fontWeight: '700', fontSize: '16px' }}>
+                    <div className="detail-value-display project-details--s9">
                         {project.project_name}
                     </div>
                 </div>
@@ -270,17 +223,11 @@ const ProjectDetails = ({
                             {t("Key_Assumptions_Tested")}
                         </label>
                     </div>
-                    {project.key_assumptions && project.key_assumptions.length > 0 ? (
-                        <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                            {project.key_assumptions.filter(a => a).map((assumption, idx) => (
-                                <div key={idx} className="detail-value-display" style={{ padding: '8px 12px', background: '#f8fafc', borderRadius: '6px', border: '1px solid #e2e8f0' }}>
+                    {project.key_assumptions && project.key_assumptions.length > 0 ? <div className="project-details--s10">
+                            {project.key_assumptions.filter(a => a).map((assumption, idx) => <div key={idx} className="detail-value-display project-details--s11">
                                     {assumption}
-                                </div>
-                            ))}
-                        </div>
-                    ) : (
-                        <div className="detail-value-display">{t("Not_Available")}</div>
-                    )}
+                                </div>)}
+                        </div> : <div className="detail-value-display">{t("Not_Available")}</div>}
                 </div>
 
                 {}
@@ -308,7 +255,7 @@ const ProjectDetails = ({
                 </div>
 
                 {}
-                <div className="grid-3" style={{ marginTop: '16px' }}>
+                <div className="grid-3 project-details--s12">
                     <div className="field-row">
                         <div className="field-label-row">
                             <label className="field-label">
@@ -329,21 +276,21 @@ const ProjectDetails = ({
                         <div className="detail-value-display">
                             <div className="detail-value-with-icon">
                                 {(() => {
-                                    const validProjectStatuses = ["draft", "active", "at risk", "paused", "killed", "scaled"];
-                                    const statusLower = (project.status || "").toLowerCase();
-                                    const isValidStatus = validProjectStatuses.includes(statusLower);
-                                    const statusMap = {
-                                        "draft": "Draft",
-                                        "active": "Active",
-                                        "at risk": "At Risk",
-                                        "paused": "Paused",
-                                        "killed": "Killed",
-                                        "completed": "Completed",
-                                        "scaled": "Scaled"
-                                    };
-                                    const displayStatus = isValidStatus ? statusMap[statusLower] : "Draft";
-                                    return <span>{t(displayStatus)}</span>;
-                                })()}
+                const validProjectStatuses = ["draft", "active", "at risk", "paused", "killed", "scaled"];
+                const statusLower = (project.status || "").toLowerCase();
+                const isValidStatus = validProjectStatuses.includes(statusLower);
+                const statusMap = {
+                  "draft": "Draft",
+                  "active": "Active",
+                  "at risk": "At Risk",
+                  "paused": "Paused",
+                  "killed": "Killed",
+                  "completed": "Completed",
+                  "scaled": "Scaled"
+                };
+                const displayStatus = isValidStatus ? statusMap[statusLower] : "Draft";
+                return <span>{t(displayStatus)}</span>;
+              })()}
                             </div>
                         </div>
                     </div>
@@ -373,22 +320,17 @@ const ProjectDetails = ({
                                 <Clock size={16} /> {t("Next_Review_Date")}
                             </label>
                         </div>
-                        <div className="detail-value-display" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <div className="detail-value-display project-details--s13">
                             <span style={{
-                                color: (!terminalStatusInfo.isTerminal && (project.is_stale || (project.next_review_date && new Date(project.next_review_date).getTime() < new Date().setHours(0, 0, 0, 0)))) ? '#ef4444' : (isPendingReview && !terminalStatusInfo.isTerminal ? '#d97706' : 'inherit'),
-                                fontWeight: '600'
-                            }}>
+              color: !terminalStatusInfo.isTerminal && (project.is_stale || project.next_review_date && new Date(project.next_review_date).getTime() < new Date().setHours(0, 0, 0, 0)) ? '#ef4444' : isPendingReview && !terminalStatusInfo.isTerminal ? '#d97706' : 'inherit'
+            }} className="project-details--s6">
                                 {project.next_review_date ? new Date(project.next_review_date).toLocaleDateString() : t("Not_Available")}
                             </span>
-                            {!terminalStatusInfo.isTerminal && ((project.is_stale || (project.next_review_date && new Date(project.next_review_date).getTime() < new Date().setHours(0, 0, 0, 0))) ? (
-                                <span className="review-badge stale">
+                            {!terminalStatusInfo.isTerminal && (project.is_stale || project.next_review_date && new Date(project.next_review_date).getTime() < new Date().setHours(0, 0, 0, 0) ? <span className="review-badge stale">
                                     <AlertTriangle size={12} /> {t("Stale")}
-                                </span>
-                            ) : isPendingReview && (
-                                <span className="review-badge due">
+                                </span> : isPendingReview && <span className="review-badge due">
                                     <Clock size={12} /> {t("Pending_Review") || "Pending Review"}
-                                </span>
-                            ))}
+                                </span>)}
                         </div>
                     </div>
                     <div className="field-row">
@@ -404,22 +346,18 @@ const ProjectDetails = ({
                 </div>
 
                 {}
-                <div className="field-row" style={{ display: 'flex', gap: '12px', marginTop: '8px' }}>
-                    {canEdit && !["completed", "scaled", "killed"].includes(project.status?.toLowerCase()) && (
-                        <button className="btn-edit" onClick={() => onEdit(project)} style={{ padding: '8px 16px', fontSize: '13px' }}>
+                <div className="field-row project-details--s14">
+                    {canEdit && !["completed", "scaled", "killed"].includes(project.status?.toLowerCase()) && <button className="btn-edit project-details--s15" onClick={() => onEdit(project)}>
                             <Edit2 size={14} /> {t("Edit")}
-                        </button>
-                    )}
-                    {canReview && !["completed", "scaled", "killed"].includes(project.status?.toLowerCase()) && (
-                        <>
-                            <button className="btn-review" onClick={() => onPerformReview(project)} style={{ background: '#059669', color: 'white', border: 'none', padding: '8px 16px', borderRadius: '4px', fontSize: '13px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        </button>}
+                    {canReview && !["completed", "scaled", "killed"].includes(project.status?.toLowerCase()) && <>
+                            <button className="btn-review project-details--s16" onClick={() => onPerformReview(project)}>
                                 <CheckCircle size={14} /> {t("Perform_Review")}
                             </button>
-                            <button className="btn-adhoc" onClick={() => onAdhocUpdate(project)} style={{ background: '#4b5563', color: 'white', border: 'none', padding: '8px 16px', borderRadius: '4px', fontSize: '13px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <button className="btn-adhoc project-details--s17" onClick={() => onAdhocUpdate(project)}>
                                 <Edit3 size={14} /> {t("Ad_Hoc_Update")}
                             </button>
-                        </>
-                    )}
+                        </>}
                 </div>
             </div>
 
@@ -558,8 +496,6 @@ const ProjectDetails = ({
                 </div>
             </div>
 
-        </div>
-    );
+        </div>;
 };
-
 export default ProjectDetails;

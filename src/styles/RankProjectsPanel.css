@@ -460,3 +460,22 @@
 .selection-item.clickable-row:hover {
   background-color: #f1f5f9;
 }
+
+
+/* ── Extracted inline styles ── */
+.rank-projects-panel--s1 {
+  color: #28a745;
+}
+
+.rank-projects-panel--s2 {
+  color: #dc3545;
+}
+
+.rank-projects-panel--s3 {
+  padding: 10px;
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+  background-color: #f8f9fa;
+  min-height: 80px;
+  white-space: pre-wrap;
+}

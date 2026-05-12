@@ -818,3 +818,24 @@
         grid-template-columns: repeat(2, 1fr);
     }
 }
+
+
+/* ── Extracted inline styles ── */
+.subscription-tab--s1 {
+  text-transform: capitalize;
+}
+
+.subscription-tab--s2 {
+  background: #eff6ff;
+  color: #1e40af;
+  border-radius: 12px;
+}
+
+.subscription-tab--s3 {
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.subscription-tab--s4 {
+  margin-bottom: 1rem;
+}

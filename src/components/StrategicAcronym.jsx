@@ -1,9 +1,10 @@
 import React from 'react';
 import { detectLanguage } from '../utils/translations';
-
-const StrategicAcronym = ({ analysisResult }) => {
+const StrategicAcronym = ({
+  analysisResult
+}) => {
   const lang = detectLanguage(analysisResult);
-  const getTranslation = (key) => {
+  const getTranslation = key => {
     const translations = {
       en: {
         title: 'STRATEGIC Analysis',
@@ -24,37 +25,27 @@ const StrategicAcronym = ({ analysisResult }) => {
         recommendations: 'Recomendaciones Específicas'
       }
     };
-
     const langTranslations = translations[lang] || translations['en'];
     return langTranslations[key] || key;
   };
-
   const strategicItems = extractStrategicItemsWithH5(analysisResult, lang);
   const conclusion = getStrategicConclusion(analysisResult, lang);
   const recommendations = getRecommendations(analysisResult, lang);
-
   if (!strategicItems || strategicItems.length === 0 || strategicItems.every(item => item === null)) {
-    return (
-      <div className="alert alert-info">
+    return <div className="alert alert-info">
         <p><strong>Debug Information:</strong></p>
         <p>No STRATEGIC items found in the analysis result.</p>
         <p>Language detected: {lang}</p>
         <details>
           <summary>Raw Analysis Text (first 1000 chars)</summary>
-          <pre style={{ fontSize: '12px', maxHeight: '300px', overflow: 'auto' }}>
+          <pre className="strategic-acronym--s1">
             {analysisResult ? String(analysisResult).substring(0, 1000) + '...' : 'No content'}
           </pre>
         </details>
-      </div>
-    );
+      </div>;
   }
-
-  const acronymLetters = lang === 'es' ?
-    ['S', 'T', 'R', 'A', 'T', 'E', 'G', 'I', 'C'] :
-    ['S', 'T', 'R', 'A', 'T', 'E', 'G', 'I', 'C'];
-
-  return (
-    <>
+  const acronymLetters = lang === 'es' ? ['S', 'T', 'R', 'A', 'T', 'E', 'G', 'I', 'C'] : ['S', 'T', 'R', 'A', 'T', 'E', 'G', 'I', 'C'];
+  return <>
       <h5 className="mt-4 mb-3">
         <strong>{getTranslation('title')}</strong>
       </h5>
@@ -68,123 +59,88 @@ const StrategicAcronym = ({ analysisResult }) => {
           </thead>
           <tbody>
             {acronymLetters.map((letter, index) => {
-              const item = strategicItems[index];
-              const styleClass = STRATEGIC_COLUMN_STYLES[index] || 'neutral-bg';
-
-              return (
-                <tr key={`${letter}-${index}`}>
+            const item = strategicItems[index];
+            const styleClass = STRATEGIC_COLUMN_STYLES[index] || 'neutral-bg';
+            return <tr key={`${letter}-${index}`}>
                   <td className="text-center align-middle">
                     <strong>{String(letter)}</strong>
                   </td>
                   <td className="p-2">
-                    {item ? (
-                      <div className={`strategic-item ${styleClass}`}>
+                    {item ? <div className={`strategic-item ${styleClass}`}>
                         {}
-                        {item.header && (
-                          <div>
-                            <h5 className="strategic-header" style={{
-                              color: '#2c3e50',
-                              paddingBottom: '8px',
-                              marginBottom: '1px'
-                            }}>
+                        {item.header && <div>
+                            <h5 className="strategic-header strategic-acronym--s2">
                               {item.header}
                             </h5>
-                          </div>
-                        )}
+                          </div>}
 
                         {}
-                        {item.theory && (
-                          <div className="mb-2">
+                        {item.theory && <div className="mb-2">
                             <strong>{getTranslation('theory')}</strong> {String(item.theory)}
-                          </div>
-                        )}
+                          </div>}
 
                         {}
-                        {item.example && (
-                          <div className="mb-2">
+                        {item.example && <div className="mb-2">
                             <strong>{getTranslation('example')}</strong> {String(item.example)}
-                          </div>
-                        )}
+                          </div>}
 
                         {}
-                        {item.recommendation && (
-                          <div className="mb-2">
+                        {item.recommendation && <div className="mb-2">
                             <strong>{lang === 'es' ? 'Recomendación:' : 'Recommendation:'}</strong> {String(item.recommendation)}
-                          </div>
-                        )}
+                          </div>}
 
                         {}
-                        {item.content && (
-                          <div className="mb-2">
+                        {item.content && <div className="mb-2">
                             <div dangerouslySetInnerHTML={{
-                              __html: String(item.content).replace(/\n/g, "<br/>")
-                            }} />
-                          </div>
-                        )}
+                      __html: String(item.content).replace(/\n/g, "<br/>")
+                    }} />
+                          </div>}
 
                         {}
-                        {item.bulletPoints && Array.isArray(item.bulletPoints) && item.bulletPoints.length > 0 && (
-                          <div className="mt-2">
+                        {item.bulletPoints && Array.isArray(item.bulletPoints) && item.bulletPoints.length > 0 && <div className="mt-2">
                             <strong>{getTranslation('keyActions')}</strong>
                             <ul className="mb-0 mt-1">
-                              {item.bulletPoints.map((bullet, bulletIndex) => (
-                                <li key={bulletIndex} className="mb-1">{String(bullet)}</li>
-                              ))}
+                              {item.bulletPoints.map((bullet, bulletIndex) => <li key={bulletIndex} className="mb-1">{String(bullet)}</li>)}
                             </ul>
-                          </div>
-                        )}
-                      </div>
-                    ) : (
-                      <div className="text-muted">
+                          </div>}
+                      </div> : <div className="text-muted">
                         {getTranslation('noData')} {String(letter)}
-                      </div>
-                    )}
+                      </div>}
                   </td>
-                </tr>
-              );
-            })}
+                </tr>;
+          })}
           </tbody>
         </table>
       </div>
 
       {}
-      {recommendations && (
-        <div className="mt-4 recommendations-section">
+      {recommendations && <div className="mt-4 recommendations-section">
           <h5><strong>{getTranslation('recommendations')}</strong></h5>
           <div className="recommendations-text">
             <div dangerouslySetInnerHTML={{
-              __html: String(recommendations).replace(/\n/g, "<br/>")
-            }} />
+          __html: String(recommendations).replace(/\n/g, "<br/>")
+        }} />
           </div>
-        </div>
-      )}
+        </div>}
 
       {}
-      {conclusion && (
-        <div className="mt-4 conclusion-section">
+      {conclusion && <div className="mt-4 conclusion-section">
           <h5><strong>{getTranslation('conclusion')}</strong></h5>
           <div className="conclusion-text">
             <div dangerouslySetInnerHTML={{
-              __html: String(conclusion).replace(/\n/g, "<br/>")
-            }} />
+          __html: String(conclusion).replace(/\n/g, "<br/>")
+        }} />
           </div>
-        </div>
-      )}
-    </>
-  );
+        </div>}
+    </>;
 };
 const extractStrategicItemsWithH5 = (strategicContent, lang) => {
   if (!strategicContent) return [];
-
-  const acronymSequence = lang === 'es' ?
-    ['S', 'T', 'R', 'A', 'T', 'E', 'G', 'I', 'C'] :
-    ['S', 'T', 'R', 'A', 'T', 'E', 'G', 'I', 'C'];
-
+  const acronymSequence = lang === 'es' ? ['S', 'T', 'R', 'A', 'T', 'E', 'G', 'I', 'C'] : ['S', 'T', 'R', 'A', 'T', 'E', 'G', 'I', 'C'];
   const parsedItems = [];
   const h5Pattern = /<h5>(.*?)<\/h5>([\s\S]*?)(?=<h5>|$)/gi;
   const h5Sections = [];
   let match;
-
   while ((match = h5Pattern.exec(strategicContent)) !== null) {
     h5Sections.push({
       header: match[1],
@@ -196,18 +152,14 @@ const extractStrategicItemsWithH5 = (strategicContent, lang) => {
     for (const section of h5Sections) {
       const headerText = section.header.toLowerCase();
       const letterLower = letter.toLowerCase();
-      if (headerText.startsWith(letterLower + ' =') ||
-          headerText.startsWith(letterLower + ':') ||
-          headerText.startsWith(letterLower + ' -')) {
+      if (headerText.startsWith(letterLower + ' =') || headerText.startsWith(letterLower + ':') || headerText.startsWith(letterLower + ' -')) {
         foundSection = section;
         break;
       }
     }
-
     if (foundSection) {
       const content = foundSection.content.trim();
       let theoryMatch, exampleMatch, recommendationMatch;
-
       if (lang === 'es') {
         theoryMatch = /\*\s*Teoría:(.*?)(?=\*\s*Ejemplo|\*\s*Recomendación|$)/is.exec(content);
         exampleMatch = /\*\s*Ejemplo:(.*?)(?=\*\s*Teoría|\*\s*Recomendación|$)/is.exec(content);
@@ -217,26 +169,15 @@ const extractStrategicItemsWithH5 = (strategicContent, lang) => {
         exampleMatch = /\*\s*Example:(.*?)(?=\*\s*Theory|\*\s*Recommendation|$)/is.exec(content);
         recommendationMatch = /\*\s*Recommendation:(.*?)(?=\*\s*Theory|\*\s*Example|$)/is.exec(content);
       }
-
       const theory = theoryMatch ? theoryMatch[1].trim() : '';
       const example = exampleMatch ? exampleMatch[1].trim() : '';
       const recommendation = recommendationMatch ? recommendationMatch[1].trim() : '';
       let remainingContent = content;
-
       if (lang === 'es') {
-        remainingContent = content
-          .replace(/\*\s*Teoría:.*?(?=\*\s*Ejemplo|\*\s*Recomendación|$)/is, '')
-          .replace(/\*\s*Ejemplo:.*?(?=\*\s*Teoría|\*\s*Recomendación|$)/is, '')
-          .replace(/\*\s*Recomendación:.*?(?=\*\s*Teoría|\*\s*Ejemplo|$)/is, '')
-          .trim();
+        remainingContent = content.replace(/\*\s*Teoría:.*?(?=\*\s*Ejemplo|\*\s*Recomendación|$)/is, '').replace(/\*\s*Ejemplo:.*?(?=\*\s*Teoría|\*\s*Recomendación|$)/is, '').replace(/\*\s*Recomendación:.*?(?=\*\s*Teoría|\*\s*Ejemplo|$)/is, '').trim();
       } else {
-        remainingContent = content
-          .replace(/\*\s*Theory:.*?(?=\*\s*Example|\*\s*Recommendation|$)/is, '')
-          .replace(/\*\s*Example:.*?(?=\*\s*Theory|\*\s*Recommendation|$)/is, '')
-          .replace(/\*\s*Recommendation:.*?(?=\*\s*Theory|\*\s*Example|$)/is, '')
-          .trim();
+        remainingContent = content.replace(/\*\s*Theory:.*?(?=\*\s*Example|\*\s*Recommendation|$)/is, '').replace(/\*\s*Example:.*?(?=\*\s*Theory|\*\s*Recommendation|$)/is, '').replace(/\*\s*Recommendation:.*?(?=\*\s*Theory|\*\s*Example|$)/is, '').trim();
       }
-
       parsedItems.push({
         acronym: letter,
         header: foundSection.header,
@@ -251,7 +192,6 @@ const extractStrategicItemsWithH5 = (strategicContent, lang) => {
       parsedItems.push(fallbackItem);
     }
   });
-
   return parsedItems;
 };
 const extractLegacyFormat = (strategicContent, letter, lang) => {
@@ -267,7 +207,6 @@ const extractLegacyFormat = (strategicContent, letter, lang) => {
     'C': 'Cultura',
     'O': 'Organización'
   };
-
   const englishMapping = {
     'S': 'Strategy',
     'T': 'Tactics',
@@ -278,15 +217,9 @@ const extractLegacyFormat = (strategicContent, letter, lang) => {
     'I': 'Innovation',
     'C': 'Culture'
   };
-
   const searchTerm = lang === 'es' ? spanishMapping[letter] : englishMapping[letter];
-
   if (!searchTerm) return null;
-  const patterns = [
-    new RegExp(`\\*\\*${letter}\\s*=\\s*${searchTerm}[^*]*?\\*\\*\\s*([\\s\\S]*?)(?=\\*\\*[A-Z]\\s*=|$)`, 'i'),
-    new RegExp(`${letter}\\s*=\\s*${searchTerm}[:\n]([\\s\\S]*?)(?=[A-Z]\\s*=|$)`, 'i')
-  ];
-
+  const patterns = [new RegExp(`\\*\\*${letter}\\s*=\\s*${searchTerm}[^*]*?\\*\\*\\s*([\\s\\S]*?)(?=\\*\\*[A-Z]\\s*=|$)`, 'i'), new RegExp(`${letter}\\s*=\\s*${searchTerm}[:\n]([\\s\\S]*?)(?=[A-Z]\\s*=|$)`, 'i')];
   for (const pattern of patterns) {
     const match = pattern.exec(strategicContent);
     if (match) {
@@ -301,21 +234,11 @@ const extractLegacyFormat = (strategicContent, letter, lang) => {
       };
     }
   }
-
   return null;
 };
 const getStrategicConclusion = (strategicContent, lang) => {
   if (!strategicContent) return "";
-
-  const conclusionPatterns = [
-    /\*\*Conclusión\*\*\s*([\s\S]*?)$/i,
-    /En resumen[,:]\s*([\s\S]*?)$/i,
-    /Conclusión\s*([\s\S]*?)$/i,
-    /\*\*Conclusion\*\*\s*([\s\S]*?)$/i,
-    /In conclusion[,:]\s*([\s\S]*?)$/i,
-    /Conclusion\s*([\s\S]*?)$/i
-  ];
-
+  const conclusionPatterns = [/\*\*Conclusión\*\*\s*([\s\S]*?)$/i, /En resumen[,:]\s*([\s\S]*?)$/i, /Conclusión\s*([\s\S]*?)$/i, /\*\*Conclusion\*\*\s*([\s\S]*?)$/i, /In conclusion[,:]\s*([\s\S]*?)$/i, /Conclusion\s*([\s\S]*?)$/i];
   for (const pattern of conclusionPatterns) {
     const match = pattern.exec(strategicContent);
     if (match) {
@@ -323,51 +246,27 @@ const getStrategicConclusion = (strategicContent, lang) => {
       conclusion = conclusion.replace(/^\*+\s*/, '').replace(/\s*\*+$/, '');
       conclusion = conclusion.replace(/\*\*Recomendaciones[\s\S]*$/i, '');
       conclusion = conclusion.replace(/\*\*Recommendations[\s\S]*$/i, '');
-
       if (conclusion.length > 20) {
         return conclusion.trim();
       }
     }
   }
-
   return "";
 };
 const getRecommendations = (strategicContent, lang) => {
   if (!strategicContent) return "";
-
-  const recommendationPatterns = [
-    /\*\*Recomendaciones específicas\*\*\s*([\s\S]*?)(?=\*\*Conclusión|$)/i,
-    /Recomendaciones específicas[:\s]*([\s\S]*?)(?=\*\*Conclusión|$)/i,
-    /\*\*Specific Recommendations\*\*\s*([\s\S]*?)(?=\*\*Conclusion|$)/i,
-    /Specific Recommendations[:\s]*([\s\S]*?)(?=\*\*Conclusion|$)/i
-  ];
-
+  const recommendationPatterns = [/\*\*Recomendaciones específicas\*\*\s*([\s\S]*?)(?=\*\*Conclusión|$)/i, /Recomendaciones específicas[:\s]*([\s\S]*?)(?=\*\*Conclusión|$)/i, /\*\*Specific Recommendations\*\*\s*([\s\S]*?)(?=\*\*Conclusion|$)/i, /Specific Recommendations[:\s]*([\s\S]*?)(?=\*\*Conclusion|$)/i];
   for (const pattern of recommendationPatterns) {
     const match = pattern.exec(strategicContent);
     if (match) {
       let recommendations = String(match[1] || '').trim();
       recommendations = recommendations.replace(/^\*+\s*/, '').replace(/\s*\*+$/, '');
-
       if (recommendations.length > 20) {
         return recommendations.trim();
       }
     }
   }
-
   return "";
 };
-const STRATEGIC_COLUMN_STYLES = [
-  'political-bg',
-  'economic-bg',
-  'social-bg',
-  'technological-bg',
-  'legal-bg',
-  'environmental-bg',
-  'strengths-bg',
-  'weaknesses-bg',
-  'opportunities-bg',
-  'threats-bg',
-  'neutral-bg'
-];
-
+const STRATEGIC_COLUMN_STYLES = ['political-bg', 'economic-bg', 'social-bg', 'technological-bg', 'legal-bg', 'environmental-bg', 'strengths-bg', 'weaknesses-bg', 'opportunities-bg', 'threats-bg', 'neutral-bg'];
 export default StrategicAcronym;

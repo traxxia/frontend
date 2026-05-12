@@ -632,3 +632,47 @@
     font-style: italic;
     display: block;
 }
+
+
+/* ── Extracted inline styles ── */
+.access-management--s1 {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.access-management--s2 {
+  font-size: 0.9rem;
+}
+
+.access-management--s3 {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  max-width: 300px;
+}
+
+.access-management--s4 {
+  font-size: 0.9rem;
+  max-width: auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.access-management--s5 {
+  font-size: 0.65rem;
+}
+
+.access-management--s6 {
+  font-size: 17px;
+  margin-left: 10px;
+  text-transform: uppercase;
+}
+
+.access-management--s7 {
+  min-width: 220px;
+}
+
+.access-management--s8 {
+  border-radius: 8px;
+}
