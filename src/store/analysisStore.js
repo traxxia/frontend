@@ -39,9 +39,11 @@ const initialState = {
   cultureProfileData: null,
   strategicGoalsData: null,
   kickstartData: null,
-  regenerating: {},
-  streamingText: {},
-  isStreaming: {},
+  isInitialLoading: false,
+  isAnalysisLoading: false,
+  lastFetchedBusinessId: null,
+  lastSkipFinancial: false,
+  lastSkipQuestions: false,
 };
 
 const getApiService = () => {
@@ -95,6 +97,9 @@ export const useAnalysisStore = create((set, get) => ({
   regenerating: {},
   streamingText: {},
   isStreaming: {},
+  isInitialLoading: false,
+  isAnalysisLoading: false,
+  lastFetchedBusinessId: null,
 
   setQuestions: (questions) => set({ questions }),
   setQuestionsLoaded: (loaded) => set({ questionsLoaded: loaded }),
@@ -153,9 +158,16 @@ export const useAnalysisStore = create((set, get) => ({
 
   fetchAnalysisData: async (businessId, skipLoadingFlag = false, forceRefresh = false, skipReset = false) => {
     if (!businessId) return;
+    
+    // Guard against duplicate concurrent requests
+    if (get().isAnalysisLoading && get().lastFetchedBusinessId === businessId && !forceRefresh) {
+      return;
+    }
+
     const { token } = useAuthStore.getState();
     if (!token) return;
 
+    set({ isAnalysisLoading: true, lastFetchedBusinessId: businessId });
     if (!skipLoadingFlag) set({ questionsLoaded: false });
     if (!skipReset) {
       const resetData = {
@@ -224,25 +236,45 @@ export const useAnalysisStore = create((set, get) => ({
           : analysis.analysis_data;
       });
 
-      set({ ...updates });
+      set({ ...updates, isAnalysisLoading: false });
       if (!skipLoadingFlag) set({ questionsLoaded: true });
       return updates;
     } catch (err) {
       console.error('Failed to fetch analysis data:', err);
-      set({ questionsLoaded: true });
+      set({ questionsLoaded: true, isAnalysisLoading: false });
     }
   },
 
-  fetchInitialSetupData: async (businessId) => {
+  fetchInitialSetupData: async (businessId, options = {}) => {
     if (!businessId) return;
+    
+    const { isInitialLoading, lastFetchedBusinessId, lastSkipFinancial, lastSkipQuestions } = get();
+    
+    // Only skip if we are already loading the same business with compatible skip options
+    if (isInitialLoading && lastFetchedBusinessId === businessId) {
+      const financialCompatible = lastSkipFinancial === options.skipFinancial || (!lastSkipFinancial && options.skipFinancial);
+      const questionsCompatible = lastSkipQuestions === options.skipQuestions || (!lastSkipQuestions && options.skipQuestions);
+      
+      if (financialCompatible && questionsCompatible) {
+        return;
+      }
+    }
+
     const { token } = useAuthStore.getState();
     if (!token) return;
+
+    set({ 
+      isInitialLoading: true, 
+      lastFetchedBusinessId: businessId,
+      lastSkipFinancial: !!options.skipFinancial,
+      lastSkipQuestions: !!options.skipQuestions
+    });
 
     try {
       const apiService = getApiService();
       
-      // Fetch questions if not already loaded
-      if (get().questions.length === 0) {
+      // Fetch questions if not already loaded AND not skipping
+      if (get().questions.length === 0 && !options.skipQuestions) {
         const questionsResponse = await fetch(`${API_BASE_URL}/api/questions`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
@@ -250,22 +282,27 @@ export const useAnalysisStore = create((set, get) => ({
         set({ questions: questionsData.questions || [] });
       }
 
-      // Fetch answers and document info in parallel
-      const [answersResult, docInfo] = await Promise.all([
-        apiService.getFreshAnswersData(businessId),
-        apiService.fetchFinancialDocument(businessId)
-      ]);
+      // Fetch answers and optionally document info in parallel
+      const tasks = [apiService.getFreshAnswersData(businessId)];
+      if (!options.skipFinancial) {
+        tasks.push(apiService.fetchFinancialDocument(businessId));
+      }
+
+      const results = await Promise.all(tasks);
+      const answersResult = results[0];
+      const docInfo = options.skipFinancial ? null : results[1];
 
       set({ 
         userAnswers: answersResult.freshAnswers || {},
         completedQuestions: Array.from(answersResult.freshCompletedSet || []),
-        questionsLoaded: true
+        questionsLoaded: true,
+        isInitialLoading: false
       });
 
       return { answersResult, docInfo };
     } catch (err) {
       console.error('Failed to fetch initial setup data:', err);
-      set({ questionsLoaded: true });
+      set({ questionsLoaded: true, isInitialLoading: false });
     }
   },
 
@@ -274,11 +311,6 @@ export const useAnalysisStore = create((set, get) => ({
     const phaseTypes = PHASE_API_CONFIG[phase] || [];
     const regenerationUpdates = { [phase]: true };
     phaseTypes.forEach(type => { regenerationUpdates[type] = true; });
-
-    console.log(`DEBUG [analysisStore]: Regenerating phase: ${phase}`, {
-        phaseTypes,
-        businessId
-    });
 
     set((state) => ({
       regenerating: { ...state.regenerating, ...regenerationUpdates }
@@ -334,8 +366,6 @@ export const useAnalysisStore = create((set, get) => ({
     
     const regenerationUpdates = {};
     types.forEach(type => { regenerationUpdates[type] = true; });
-
-    console.log(`DEBUG [analysisStore]: Regenerating custom types:`, types);
 
     set((state) => ({
       regenerating: { ...state.regenerating, ...regenerationUpdates }

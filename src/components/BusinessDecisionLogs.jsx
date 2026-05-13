@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect, useMemo } from "react";
+import React, { useState, useCallback, useEffect, useMemo, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Row, Col, Form, Modal, Button as RBButton } from "react-bootstrap";
 import { Filter, RefreshCw, FileText, Calendar, ChevronLeft, ChevronRight, X, Folder } from "lucide-react";
@@ -122,10 +122,24 @@ const BusinessDecisionLogs = ({
   const resetFilters = () => {
     setSearchParams(new URLSearchParams());
   };
-  const fetchBusinessLogs = useCallback(async () => {
+  const fetchingRef = useRef(false);
+  const lastFetchedKeyRef = useRef("");
+  const filtersFetchingRef = useRef(false);
+  const lastFiltersBusinessIdRef = useRef("");
+
+  const fetchBusinessLogs = useCallback(async (force = false) => {
     if (!businessId) return;
+
+    const currentKey = JSON.stringify({ businessId, page, filters });
+    if (!force && fetchingRef.current && lastFetchedKeyRef.current === currentKey) {
+      return;
+    }
+
+    fetchingRef.current = true;
+    lastFetchedKeyRef.current = currentKey;
     setIsLoading(true);
     setIsError(false);
+    
     try {
       const apiParams = {
         page,
@@ -157,10 +171,23 @@ const BusinessDecisionLogs = ({
       setIsError(true);
     } finally {
       setIsLoading(false);
+      fetchingRef.current = false;
     }
   }, [businessId, page, filters]);
+
   const fetchFilterOptions = useCallback(async () => {
-    if (!businessId) return;
+    if (!businessId || (filtersFetchingRef.current && lastFiltersBusinessIdRef.current === businessId)) {
+      return;
+    }
+    
+    // If we already have data for this business, don't refetch unless forced
+    if (lastFiltersBusinessIdRef.current === businessId && availableLogTypes.length > 0) {
+      return;
+    }
+
+    filtersFetchingRef.current = true;
+    lastFiltersBusinessIdRef.current = businessId;
+
     try {
       const response = await decisionLogApiService.getBusinessFilterOptions(businessId);
       const getUniqueOptions = items => {
@@ -182,11 +209,15 @@ const BusinessDecisionLogs = ({
       setAvailableStatuses(getUniqueOptions(response.execution_states || []));
     } catch (error) {
       console.error('Error fetching filter options:', error);
+    } finally {
+      filtersFetchingRef.current = false;
     }
-  }, [businessId]);
+  }, [businessId, availableLogTypes.length]);
+
   useEffect(() => {
     fetchBusinessLogs();
   }, [fetchBusinessLogs]);
+
   useEffect(() => {
     fetchFilterOptions();
   }, [fetchFilterOptions]);
@@ -216,7 +247,7 @@ const BusinessDecisionLogs = ({
     })).sort((a, b) => (a.name || "").localeCompare(b.name || ""));
   }, [logs, projectsFromStore]);
   const refetch = useCallback(() => {
-    fetchBusinessLogs();
+    fetchBusinessLogs(true);
   }, [fetchBusinessLogs]);
   return <div className="business-decision-logs-page business-decision-logs--s2">
       <div className="business-decision-logs-content business-decision-logs--s3">

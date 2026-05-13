@@ -50,7 +50,8 @@ const DesktopHeader = () => {
     isStrategicRegenerating,
     strategicData,
     handleStrategicAnalysisRegenerate,
-    navDropdownRef
+    navDropdownRef,
+    selectedBusinessId
   } = useBusinessSetupContext();
 
   const canRegenerate = canShowRegenerateButtons;
@@ -184,7 +185,13 @@ const DesktopHeader = () => {
                         className={`dropdown-item ${activeTab === 'ranking' ? 'active' : ''}`}
                         onClick={() => {
                           useProjectStore.getState().setViewMode('ranking');
-                          setActiveTab('ranking');
+                          useProjectStore.getState().clearCache(selectedBusinessId);
+                          if (activeTab === 'ranking') {
+                            useProjectStore.getState().checkAllAccess(selectedBusinessId);
+                            useProjectStore.getState().fetchTeamRankings(selectedBusinessId);
+                          } else {
+                            setActiveTab('ranking');
+                          }
                           setActiveNavDropdown(null);
                         }}
                       >

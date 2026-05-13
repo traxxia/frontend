@@ -9,7 +9,7 @@ import Aiassistant from './components/Aiassistant';
 import ToastNotifications from './components/ToastNotifications';
 import { useUIStore } from './store/uiStore';
 import { useLanguageStore } from './store/languageStore';
-const AI_EXCLUDED_EXACT_PATHS = ['/', '/login', '/register', '/dashboard', '/admin', '/super-admin', '/super-admin/observatory'];
+const AI_EXCLUDED_EXACT_PATHS = ['/', '/login', '/register', '/dashboard', '/admin', '/super-admin', '/super-admin/observatory', '/forgot-password', '/reset-password'];
 const AI_EXCLUDED_PREFIX_PATHS = ['/academy'];
 
 const GlobalAiAssistant = () => {
@@ -64,6 +64,7 @@ const Register = React.lazy(() => import('./pages/Register'));
 const AcademyPage = React.lazy(() => import('./pages/AcademyPage'));
 const AllDecisionLogs = React.lazy(() => import('./components/AllDecisionLogs'));
 const ObservatoryPage = React.lazy(() => import('./pages/ObservatoryPage'));
+const ForgotPassword = React.lazy(() => import('./pages/ForgotPassword'));
 
 const App = () => {
   const theme = useUIStore((state) => state.theme);
@@ -88,6 +89,7 @@ const App = () => {
             <Route path="/" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/login" element={<Login />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route
               path="/dashboard"
               element={

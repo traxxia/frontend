@@ -41,6 +41,8 @@ const StrategicAnalysis = ({
   pestelData: propsPestelData = null,
   portersData: propsPortersData = null,
   questionsLoaded = false,
+  questions = [],
+  userAnswers = {},
   isExportActive = () => false
 }) => {
   const { token, userId } = useAuthStore();
@@ -110,6 +112,32 @@ const StrategicAnalysis = ({
   }, [isRegenerating, totalRows, streamingManager, cardId]);
 
   const { lastRowRef } = useAutoScroll(streamingManager, cardId, isExpanded, visibleRows);
+
+  const isStrategicDataIncomplete = (data) => {
+    if (!data) return true;
+    const analysisData = data.strategic_analysis || data;
+    if (!analysisData) return true;
+
+    const recommendations = analysisData.strategic_recommendations;
+    if (!recommendations) return true;
+
+    const hasStrategyBlock = !!(recommendations.strategy_block &&
+      (recommendations.strategy_block.S_strategy ||
+        recommendations.strategy_block.T_tactics ||
+        recommendations.strategy_block.R_resources));
+
+    const hasExecutionBlock = !!(recommendations.execution_block &&
+      (recommendations.execution_block.A_analysis_data ||
+        recommendations.execution_block.T_technology_digitalization ||
+        recommendations.execution_block.E_execution));
+
+    const hasSustainabilityBlock = !!(recommendations.sustainability_block &&
+      (recommendations.sustainability_block.G_governance ||
+        recommendations.sustainability_block.I_innovation ||
+        recommendations.sustainability_block.C_culture));
+
+    return !hasStrategyBlock && !hasExecutionBlock && !hasSustainabilityBlock;
+  };
 
   const handleRegenerate = async () => {
     const executeRegenerate = async () => {
@@ -420,7 +448,25 @@ const StrategicAnalysis = ({
       )}
 
       {kickstartError && <div className="kickstart-error-message">{kickstartError}</div>}
-      <div className="dashboard-container">{renderStrategicContent()}</div>
+      <div className="dashboard-container">
+        {isStrategicDataIncomplete(localStrategicData) ? (
+          <AnalysisEmptyState
+            analysisType="strategic"
+            analysisDisplayName={t("STRATEGIC_LABEL") || "S.T.R.A.T.E.G.I.C."}
+            icon={Target}
+            onImproveAnswers={onRedirectToBrief}
+            onRegenerate={handleRegenerate}
+            isRegenerating={isRegenerating}
+            canRegenerate={canRegenerate}
+            userAnswers={userAnswers}
+            minimumAnswersRequired={3}
+            showImproveButton={false}
+            showRegenerateButton={false}
+          />
+        ) : (
+          renderStrategicContent()
+        )}
+      </div>
       <UpgradeModal show={showUpgradeModal} onHide={() => setShowUpgradeModal(false)} />
       <PlanLimitModal show={showPlanLimitModal} onHide={() => setShowPlanLimitModal(false)} usage={usage} />
     </div>

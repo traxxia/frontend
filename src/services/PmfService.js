@@ -22,14 +22,18 @@ export class PmfService extends BaseApiService {
     const cacheKey = `pmf-${businessId}`;
     if (pmfCache.has(cacheKey)) return pmfCache.get(cacheKey);
 
-    try {
-      const data = await this.request(`/api/pmf-analysis/${businessId}`);
-      pmfCache.set(cacheKey, data);
-      return data;
-    } catch (error) {
-      if (error.status === 404) return null;
-      throw error;
-    }
+    const fetchPromise = (async () => {
+      try {
+        return await this.request(`/api/pmf-analysis/${businessId}`);
+      } catch (error) {
+        pmfCache.delete(cacheKey);
+        if (error.status === 404) return null;
+        throw error;
+      }
+    })();
+
+    pmfCache.set(cacheKey, fetchPromise);
+    return fetchPromise;
   }
 
   async savePMFExecutiveSummary(businessId, summary) {
@@ -45,14 +49,18 @@ export class PmfService extends BaseApiService {
     const cacheKey = `exec-${businessId}`;
     if (pmfCache.has(cacheKey)) return pmfCache.get(cacheKey);
 
-    try {
-      const data = await this.request(`/api/pmf-analysis/${businessId}/executive-summary`);
-      pmfCache.set(cacheKey, data);
-      return data;
-    } catch (error) {
-      if (error.status === 404) return null;
-      throw error;
-    }
+    const fetchPromise = (async () => {
+      try {
+        return await this.request(`/api/pmf-analysis/${businessId}/executive-summary`);
+      } catch (error) {
+        pmfCache.delete(cacheKey);
+        if (error.status === 404) return null;
+        throw error;
+      }
+    })();
+
+    pmfCache.set(cacheKey, fetchPromise);
+    return fetchPromise;
   }
 
   async savePMFInsights(businessId, insights) {

@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { Button, Container, Spinner, Modal, Form, Carousel } from "react-bootstrap";
+import { Button, Container, Spinner, Modal, Form, Carousel, Row, Col, Alert } from "react-bootstrap";
 import { Info, X, AlertTriangle, Check, ChevronDown } from "lucide-react";
 import MenuBar from "../components/MenuBar";
 import PMFOnboardingModal from "../components/PMFOnboardingModal";
@@ -41,11 +41,16 @@ const Dashboard = () => {
     setActiveSlide,
     createBusiness,
     deleteBusiness,
+    isCreatingBusiness,
+    isDeletingBusiness,
+    businessError,
+    storeDeleteError,
     handleBusinessClick,
     validateForm,
     handleShowCreateModal
   } = useDashboard();
   const ENABLE_PMF = getUserLimits().pmf;
+  const businessNameLength = businessFormData.business_name.length;
   useEffect(() => {
     const slidesToPreload = Array.from({
       length: 10
@@ -55,11 +60,26 @@ const Dashboard = () => {
       img.src = src;
     });
   }, []);
-  const handleSubmitBusiness = e => {
+  const handleSubmitBusiness = (e) => {
     e.preventDefault();
-    if (validateForm()) {
-      createBusiness();
+
+    if (!validateForm()) {
+      const firstErrorField = Object.keys(formErrors)[0];
+      if (firstErrorField) {
+        setTimeout(() => {
+          const element = document.querySelector(`input[name="${firstErrorField}"], textarea[name="${firstErrorField}"]`);
+          if (element) {
+            element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            element.focus();
+            element.classList.add('shake');
+            setTimeout(() => element.classList.remove('shake'), 500);
+          }
+        }, 100);
+      }
+      return;
     }
+
+    createBusiness();
   };
   return <div className="dashboard-layout">
       <UserTour />
@@ -67,9 +87,10 @@ const Dashboard = () => {
 
       {isModalOpen('insights') ? ENABLE_PMF ? <PMFInsights businessId={newlyCreatedBusinessId || allBusinessesQuery[0]?._id} onContinue={() => {
       closeModal('insights');
-      navigate("/businesspage", {
+      navigate("/businesspage?tab=executive", {
         state: {
-          business: newlyCreatedBusiness || allBusinessesQuery.find(b => b._id === newlyCreatedBusinessId) || allBusinessesQuery[0]
+          business: newlyCreatedBusiness || allBusinessesQuery.find(b => b._id === newlyCreatedBusinessId) || allBusinessesQuery[0],
+          initialTab: 'executive'
         }
       });
     }} /> : null : <>
@@ -156,33 +177,154 @@ const Dashboard = () => {
             </div>}
 
           {}
-          <Modal show={isModalOpen('createBusiness')} onHide={() => closeModal('createBusiness')} centered className="create-business-modal">
+          <Modal show={isModalOpen('createBusiness')} onHide={() => closeModal('createBusiness')} centered size="lg" backdrop="static">
             <Modal.Header closeButton>
               <Modal.Title>{t('create_new_business')}</Modal.Title>
             </Modal.Header>
-            <Modal.Body>
-              <Form onSubmit={handleSubmitBusiness}>
-                <Form.Group className="mb-3">
-                  <Form.Label>{t('business_name')} <span className="text-danger">*</span></Form.Label>
-                  <Form.Control name="business_name" value={businessFormData.business_name} onChange={handleFormChange} isInvalid={!!formErrors.business_name} placeholder={t('enter_business_name')} />
-                  <Form.Control.Feedback type="invalid">{formErrors.business_name}</Form.Control.Feedback>
-                </Form.Group>
-                <Form.Group className="mb-3">
-                  <Form.Label>{t('business_purpose')} <span className="text-danger">*</span></Form.Label>
-                  <Form.Control as="textarea" rows={3} name="business_purpose" value={businessFormData.business_purpose} onChange={handleFormChange} isInvalid={!!formErrors.business_purpose} placeholder={t('describe_business_purpose')} />
-                  <Form.Control.Feedback type="invalid">{formErrors.business_purpose}</Form.Control.Feedback>
-                </Form.Group>
-                <div className="d-flex justify-content-end gap-2">
-                  <Button variant="secondary" onClick={() => closeModal('createBusiness')}>{t('cancel')}</Button>
-                  <Button variant="primary" type="submit">{t('create')}</Button>
-                </div>
-              </Form>
-            </Modal.Body>
+            <Form onSubmit={handleSubmitBusiness} noValidate>
+              <fieldset disabled={isCreatingBusiness} style={{ border: 'none', padding: 0, margin: 0, minWidth: 0 }}>
+                <Modal.Body>
+                  <Form.Group className="mb-3">
+                    <Form.Label>{t('business_name')} <span className="text-danger">*</span></Form.Label>
+                    <Form.Control
+                      type="text"
+                      name="business_name"
+                      value={businessFormData.business_name}
+                      onChange={handleFormChange}
+                      placeholder={t('enter_your_business_name')}
+                      isInvalid={!!formErrors.business_name}
+                      maxLength={100}
+                    />
+                    <div className="d-flex justify-content-between align-items-center mt-1">
+                      <div>
+                        {formErrors.business_name && (
+                          <Form.Text className="text-danger">
+                            {formErrors.business_name}
+                          </Form.Text>
+                        )}
+                      </div>
+                      <Form.Text className={businessNameLength > 20 ? 'text-danger' : 'text-muted'}>
+                        {businessNameLength}/20
+                      </Form.Text>
+                    </div>
+                  </Form.Group>
+
+                  <Form.Group className="mb-3">
+                    <Form.Label>{t('business_purpose')} <span className="text-danger">*</span></Form.Label>
+                    <Form.Control
+                      type="text"
+                      name="business_purpose"
+                      value={businessFormData.business_purpose}
+                      onChange={handleFormChange}
+                      placeholder={t('brief_description_of_what')}
+                      isInvalid={!!formErrors.business_purpose}
+                    />
+                    {formErrors.business_purpose && (
+                      <Form.Text className="text-danger">
+                        {formErrors.business_purpose}
+                      </Form.Text>
+                    )}
+                  </Form.Group>
+
+                  {/* City and Country Fields Row */}
+                  <Row className="mb-3">
+                    <Col md={6}>
+                      <Form.Group>
+                        <Form.Label>{t('city')} ({t('optional')})</Form.Label>
+                        <Form.Control
+                          type="text"
+                          name="city"
+                          value={businessFormData.city}
+                          onChange={handleFormChange}
+                          placeholder={t('enter_city')}
+                          isInvalid={!!formErrors.city}
+                        />
+                        {formErrors.city && (
+                          <Form.Text className="text-danger">
+                            {formErrors.city}
+                          </Form.Text>
+                        )}
+                      </Form.Group>
+                    </Col>
+                    <Col md={6}>
+                      <Form.Group>
+                        <Form.Label>{t('country')} ({t('optional')})</Form.Label>
+                        <Form.Control
+                          type="text"
+                          name="country"
+                          value={businessFormData.country}
+                          onChange={handleFormChange}
+                          placeholder={t('enter_country')}
+                          isInvalid={!!formErrors.country}
+                        />
+                        {formErrors.country && (
+                          <Form.Text className="text-danger">
+                            {formErrors.country}
+                          </Form.Text>
+                        )}
+                      </Form.Group>
+                    </Col>
+                  </Row>
+
+                  <Form.Group className="mb-3">
+                    <Form.Label>{t('description')} ({t('optional')})</Form.Label>
+                    <Form.Control
+                      as="textarea"
+                      className="dark-textarea"
+                      rows={3}
+                      name="description"
+                      value={businessFormData.description}
+                      onChange={handleFormChange}
+                      placeholder={t('detailed_description_of_your_business')}
+                      isInvalid={!!formErrors.description}
+                    />
+                    {formErrors.description && (
+                      <Form.Text className="text-danger">
+                        {formErrors.description}
+                      </Form.Text>
+                    )}
+                  </Form.Group>
+                  {businessError && (
+                    <Alert variant="danger" className="mt-3">
+                      {businessError}
+                    </Alert>
+                  )}
+                </Modal.Body>
+                <Modal.Footer>
+                  <Button
+                    variant="secondary"
+                    className="cancel-button"
+                    onClick={() => closeModal('createBusiness')}
+                  >
+                    {t('cancel')}
+                  </Button>
+                  <Button
+                    variant="primary"
+                    type="submit"
+                    className="create-button"
+                  >
+                    {isCreatingBusiness ? (
+                      <>
+                        <Spinner size="sm" className="me-2" />
+                        {t('creating')}...
+                      </>
+                    ) : (
+                      t('create_business')
+                    )}
+                  </Button>
+                </Modal.Footer>
+              </fieldset>
+            </Form>
           </Modal>
 
           {}
           <Modal show={isModalOpen('deleteBusiness')} onHide={() => closeModal('deleteBusiness')} centered className="delete-modal">
             <Modal.Body className="text-center p-4">
+              {storeDeleteError && (
+                <Alert variant="danger" className="mb-3 text-start">
+                  {storeDeleteError}
+                </Alert>
+              )}
               <div className="delete-icon-wrapper mb-4">
                 <AlertTriangle size={48} color="#dc3545" />
               </div>
@@ -193,11 +335,18 @@ const Dashboard = () => {
             })}
               </p>
               <div className="d-flex justify-content-center gap-3">
-                <Button variant="outline-secondary" onClick={() => closeModal('deleteBusiness')}>
+                <Button variant="outline-secondary" onClick={() => closeModal('deleteBusiness')} disabled={isDeletingBusiness}>
                   {t('cancel')}
                 </Button>
-                <Button variant="danger" onClick={() => deleteBusiness(businessToDelete?._id)}>
-                  {t('delete_permanently')}
+                <Button variant="danger" onClick={() => deleteBusiness(businessToDelete?._id)} disabled={isDeletingBusiness}>
+                  {isDeletingBusiness ? (
+                    <>
+                      <Spinner size="sm" className="me-2" />
+                      {t('deleting')}...
+                    </>
+                  ) : (
+                    t('delete_permanently')
+                  )}
                 </Button>
               </div>
             </Modal.Body>

@@ -52,7 +52,8 @@ const MobileHeader = () => {
     handleBriefTabClick,
     handleAnalysisTabClick,
     handleStrategicTabClick,
-    triggerConfirmation
+    triggerConfirmation,
+    selectedBusinessId
   } = useBusinessSetupContext();
 
   const canRegenerate = canShowRegenerateButtons;
@@ -327,8 +328,13 @@ const MobileHeader = () => {
                         className={`mobile-menu-item ${activeTab === 'ranking' ? 'active' : ''}`}
                         onClick={() => {
                           useProjectStore.getState().setViewMode('ranking');
-                          useProjectStore.getState().clearCache(businessData.business_id);
-                          setActiveTab('ranking');
+                          useProjectStore.getState().clearCache(selectedBusinessId);
+                          if (activeTab === 'ranking') {
+                            useProjectStore.getState().checkAllAccess(selectedBusinessId);
+                            useProjectStore.getState().fetchTeamRankings(selectedBusinessId);
+                          } else {
+                            setActiveTab('ranking');
+                          }
                           closeModal('mobileMenu');
                         }}
                       >

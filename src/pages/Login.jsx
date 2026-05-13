@@ -123,6 +123,11 @@ const Login = () => {
                 </button>
               </div>
               {errors.password && <span className="error-message">{errors.password}</span>}
+              <div className="forgot-password-link" style={{ textAlign: 'right', marginTop: '8px' }}>
+                <Link to="/forgot-password" style={{ fontSize: '14px', color: 'var(--primary-color)', textDecoration: 'none' }}>
+                  {t("forgot_password_link") || "Forgot Password?"}
+                </Link>
+              </div>
             </div>
 
             <button type="submit" className={`login-button ${isLoading ? "loading" : ""}`} disabled={isLoading}>

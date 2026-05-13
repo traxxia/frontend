@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useCallback } from "react";
+import React, { useState, useMemo, useEffect, useCallback, useRef } from "react";
 import { ChevronDown, ChevronUp, CheckCircle2, AlertCircle, Info, Target, FileText, ListChecks, Loader2, Zap, Plus, Rocket, ArrowRight, AlertTriangle } from "lucide-react";
 import { Modal, Button, Spinner } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
@@ -43,15 +43,28 @@ const ExecutiveSummary = () => {
   const isViewer = useAuthStore(state => (state.userRole || "").toLowerCase() === "viewer");
   const isCompanyAdmin = useAuthStore(state => state.userRole === 'company_admin' || state.isAdmin);
   const theme = useUIStore(state => state.theme);
-  const fetchSummary = useCallback(async () => {
-    setLoading(true);
-    setData(null);
+  const fetchingRef = useRef(false);
+  const lastFetchedRef = useRef(null);
+
+  const fetchSummary = useCallback(async (force = false) => {
     if (!businessId) {
       setLoading(false);
       return;
     }
+
+    const fetchKey = `${businessId}-${refreshTrigger}`;
+    if (!force && (fetchingRef.current || lastFetchedRef.current === fetchKey)) return;
+    
+    fetchingRef.current = true;
+    lastFetchedRef.current = fetchKey;
+    
+    setLoading(true);
     try {
-      const [summaryResult, ahaResult] = await Promise.all([analysisService.getPMFExecutiveSummary(businessId), analysisService.getPMFAnalysis(businessId)]);
+      const [summaryResult, ahaResult] = await Promise.all([
+        analysisService.getPMFExecutiveSummary(businessId), 
+        analysisService.getPMFAnalysis(businessId)
+      ]);
+      
       let summaryContent = summaryResult?.summary || summaryResult;
       if (summaryResult?.onboarding_data && !summaryContent.onboarding_data) {
         summaryContent = {
@@ -67,11 +80,13 @@ const ExecutiveSummary = () => {
       console.error("Error fetching data:", error);
     } finally {
       setLoading(false);
+      fetchingRef.current = false;
     }
-  }, [businessId, refreshTrigger]);
+  }, [businessId, refreshTrigger, analysisService, fetchKickstartData, fetchProjects]);
+
   useEffect(() => {
     fetchSummary();
-  }, [fetchSummary, refreshTrigger]);
+  }, [fetchSummary]);
   const toggleSection = section => {
     setExpandedSections(prev => ({
       ...prev,

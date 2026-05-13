@@ -15,6 +15,8 @@ export const useDashboard = () => {
   const {
     isCreating: isCreatingBusiness,
     isDeleting: isDeletingBusiness,
+    createError: businessError,
+    deleteError: storeDeleteError,
     createBusiness: createBusinessAction,
     deleteBusiness: deleteBusinessAction,
     setSelectedBusinessId,
@@ -123,9 +125,15 @@ export const useDashboard = () => {
       if (data.business && (data.business._id || data.business.id)) {
         setSelectedBusinessId(data.business._id || data.business.id);
       }
+
+      // Close modal and show success toast immediately
       closeModal('createBusiness');
       addToast({ message: t('business_created_successfully'), type: 'success' });
+
+      // Open PMF onboarding if enabled
       if (ENABLE_PMF) openModal('pmfOnboarding');
+
+      // Clear form data
       setBusinessFormData({
         business_name: '',
         business_purpose: '',
@@ -133,6 +141,8 @@ export const useDashboard = () => {
         city: '',
         country: ''
       });
+
+      // Refresh data in background
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['businesses'] }),
         queryClient.invalidateQueries({ queryKey: ['planDetails'] })
@@ -142,15 +152,116 @@ export const useDashboard = () => {
     }
   }, [createBusinessAction, businessFormData, setSelectedBusinessId, t, ENABLE_PMF, closeModal, openModal, addToast, queryClient]);
 
+
   const validateForm = useCallback(() => {
     const errors = {};
-    const businessName = businessFormData.business_name.trim();
-    if (!businessName) errors.business_name = t('business_name_cannot_be_empty');
-    else if (businessName.length < 3) errors.business_name = "Business name must be at least 3 characters";
 
+    // Business Name validation
+    const businessName = businessFormData.business_name.trim();
+
+    if (!businessName) {
+      errors.business_name = t('business_name_cannot_be_empty');
+    }
+    else if (businessName.length < 3) {
+      errors.business_name = "Business name must be at least 3 characters";
+    }
+    else if (!/[A-Za-z]/.test(businessName)) {
+      errors.business_name = "Business name must contain at least one letter";
+    }
+    else if (/[0-9]{5,}/.test(businessName)) {
+      errors.business_name = "Too many consecutive numbers are not allowed";
+    }
+    else if (/[^A-Za-z0-9\s]{5,}/.test(businessName)) {
+      errors.business_name = "Too many consecutive special characters are not allowed";
+    }
+
+    // Business purpose validation
     const businessPurpose = businessFormData.business_purpose.trim();
-    if (!businessPurpose) errors.business_purpose = t('business_purpose_required');
-    else if (businessPurpose.length < 10) errors.business_purpose = "Business purpose must be at least 10 characters long";
+
+    if (!businessPurpose) {
+      errors.business_purpose = t('business_purpose_required');
+    }
+    else if (businessPurpose.length < 10) {
+      errors.business_purpose = "Business purpose must be at least 10 characters long";
+    }
+    else if (!/[A-Za-z]/.test(businessPurpose)) {
+      errors.business_purpose =
+        t('business_purpose_must_contain_alphabetic_characters') ||
+        "Business purpose must contain alphabetic characters";
+    }
+    else if (/[0-9]{5,}/.test(businessPurpose)) {
+      errors.business_purpose = "Too many consecutive numbers are not allowed";
+    }
+    else if (/[^A-Za-z0-9\s]{5,}/.test(businessPurpose)) {
+      errors.business_purpose = "Too many consecutive special characters are not allowed";
+    }
+
+    // City validation (optional but if provided, must be valid)
+    const cityTrimmed = businessFormData.city.trim();
+    const cityHasSpecialChars = /[^a-zA-ZÀ-ÿ\s.-]/.test(cityTrimmed);
+
+    if (businessFormData.city && cityTrimmed.length === 0) {
+      errors.city = t('city_cannot_contain_only_spaces');
+    } else if (cityTrimmed.length > 0 && cityTrimmed.length < 2) {
+      errors.city = t('city_min_length');
+    } else if (cityTrimmed.length > 20) {
+      errors.city = t('city_max_length');
+    } else {
+      const hasNumber = /\d/.test(cityTrimmed);
+      const hasSpecial = cityHasSpecialChars;
+
+      if (hasNumber && hasSpecial) {
+        errors.city = "Numeric and special characters are not allowed";
+      } else if (hasNumber) {
+        errors.city = "Numeric values not allowed.";
+      } else if (hasSpecial) {
+        errors.city = t('city_cannot_contain_special_characters');
+      }
+    }
+
+    // Country validation (optional but if provided, must be valid)
+    const countryTrimmed = businessFormData.country.trim();
+    const countryHasSpecialChars = /[^a-zA-ZÀ-ÿ\s.-]/.test(countryTrimmed);
+
+    if (businessFormData.country && countryTrimmed.length === 0) {
+      errors.country = t('country_cannot_contain_only_spaces');
+    } else if (countryTrimmed.length > 0 && countryTrimmed.length < 2) {
+      errors.country = t('country_min_length');
+    } else if (countryTrimmed.length > 20) {
+      errors.country = t('country_max_length');
+    } else {
+      const hasNumber = /\d/.test(countryTrimmed);
+      const hasSpecial = countryHasSpecialChars;
+
+      if (hasNumber && hasSpecial) {
+        errors.country = "Numeric and special characters are not allowed";
+      } else if (hasNumber) {
+        errors.country = t('Numeric_values_not_allowed');
+      } else if (hasSpecial) {
+        errors.country = t('country_cannot_contain_special_characters');
+      }
+    }
+
+    const description = businessFormData.description?.trim() || "";
+
+    if (description) {
+      if (description.length < 10) {
+        errors.description = t('description_min_length');
+      }
+      else if (!/[A-Za-z]/.test(description)) {
+        errors.description = t('description_alphabetic_required');
+      }
+      else if (/[0-9]{5,}/.test(description)) {
+        errors.description = t('description_consecutive_numbers');
+      }
+      else if (/[^A-Za-z0-9\s]{5,}/.test(description)) {
+        errors.description = t('description_consecutive_special');
+      }
+      else if (/\s{3,}/.test(description)) {
+        errors.description = t('description_consecutive_spaces');
+      }
+    }
+
 
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
@@ -158,8 +269,25 @@ export const useDashboard = () => {
 
   const handleFormChange = useCallback((e) => {
     const { name, value } = e.target;
-    setBusinessFormData(prev => ({ ...prev, [name]: value }));
-    setFormErrors(prev => ({ ...prev, [name]: '' }));
+
+    const sanitizedValue =
+      name === "business_name"
+        ? value.replace(/\\u[0-9A-Fa-f]{4}/g, '')
+        : value;
+
+    setBusinessFormData((prev) => ({
+      ...prev,
+      [name]: sanitizedValue,
+    }));
+
+    // Clear error for this field when user starts typing
+    setFormErrors(prev => {
+      if (!prev[name]) return prev;
+      return {
+        ...prev,
+        [name]: ''
+      };
+    });
   }, []);
 
   const handleBusinessClick = useCallback((business) => {
@@ -174,7 +302,7 @@ export const useDashboard = () => {
     if (limits.pmf) initialTab = 'executive';
     else if (limits.insight || limits.strategic) initialTab = 'advanced';
     else if (limits.project) initialTab = 'bets';
-    navigate('/businesspage', { state: { business, initialTab } });
+    navigate(`/businesspage?tab=${initialTab}`, { state: { business, initialTab } });
   }, [selectBusiness, navigate, openModal]);
 
   return {
@@ -190,6 +318,8 @@ export const useDashboard = () => {
     businessToDelete, setBusinessToDelete,
     activeSlide, setActiveSlide,
     createBusiness, deleteBusiness,
+    isCreatingBusiness, isDeletingBusiness,
+    businessError, storeDeleteError,
     handleBusinessClick,
     validateForm,
     handleShowCreateModal: () => {

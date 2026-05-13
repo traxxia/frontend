@@ -15,10 +15,10 @@ export const PHASE_API_CONFIG = {
 
   essential: [
     'purchaseCriteria',
+    'fullSwot',
     'loyaltyNPS',
     'porters',
     'pestel',
-    'fullSwot',
     'competitiveAdvantage',
     'expandedCapability',
     'strategicRadar',
@@ -30,10 +30,10 @@ export const PHASE_API_CONFIG = {
 
   advanced: [
     'purchaseCriteria',
+    'fullSwot',
     'loyaltyNPS',
     'porters',
     'pestel',
-    'fullSwot',
     'competitiveAdvantage',
     'expandedCapability',
     'strategicRadar',
@@ -53,10 +53,10 @@ export const PHASE_API_CONFIG = {
 export const API_ENDPOINTS = {
   swot: 'find',
   purchaseCriteria: 'purchase-criteria',
+  fullSwot: 'full-swot-portfolio',
   loyaltyNPS: 'loyalty-metrics',
   porters: 'porter-analysis',
   pestel: 'pestel-analysis',
-  fullSwot: 'full-swot-portfolio',
   competitiveAdvantage: 'competitive-advantage',
   expandedCapability: 'expanded-capability-heatmap',
   strategicRadar: 'strategic-positioning-radar',
@@ -449,12 +449,7 @@ export class AnalysisApiService {
     if (!analysisTypes) {
       console.error(`Unknown phase: ${phase}`);
       return;
-    }
-
-    console.log(`DEBUG [AnalysisApiService]: handlePhaseCompletion starting for phase "${phase}"`, {
-      analysisTypes,
-      businessId: selectedBusinessId
-    });
+    } 
 
     this.clearPhaseData(phase, stateSetters);
 
@@ -531,11 +526,6 @@ export class AnalysisApiService {
     showToastMessage
   ) {
     if (!types || types.length === 0) return;
-
-    console.log(`DEBUG [AnalysisApiService]: handleCustomTypesCompletion starting`, {
-      types,
-      businessId: selectedBusinessId
-    });
 
     // Clear existing data for these types
     types.forEach(analysisType => {

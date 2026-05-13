@@ -1,5 +1,6 @@
 import React from "react";
-import { AlertTriangle, LayoutDashboard, HelpCircle, TrendingUp, Target, ListTodo, Briefcase, FileText } from "lucide-react";
+import { AlertTriangle, LayoutDashboard, HelpCircle, TrendingUp, Target, ListTodo, Briefcase, FileText, BarChart4 } from "lucide-react";
+import { useProjectStore } from "../store";
 import { BusinessSetupProvider, useBusinessSetupContext } from "../context/BusinessSetupContext";
 import { useAuthStore } from "../store";
 import MenuBar from "../components/MenuBar";
@@ -105,6 +106,19 @@ const BusinessSetupContent = () => {
                     {(hasProjectAccess && showProjectsTab) && <button className={`desktop-tab ${activeTab === "bets" ? "active" : ""}`} onClick={() => setActiveTab("bets")}>
                         <Briefcase size={16} />
                         <span>{t("Bets")}</span>
+                      </button>}
+                    {(hasProjectAccess && showProjectsTab) && <button className={`desktop-tab ${activeTab === "ranking" ? "active" : ""}`} onClick={() => {
+                        useProjectStore.getState().setViewMode('ranking');
+                        useProjectStore.getState().clearCache(selectedBusinessId);
+                        if (activeTab === 'ranking') {
+                          useProjectStore.getState().checkAllAccess(selectedBusinessId);
+                          useProjectStore.getState().fetchTeamRankings(selectedBusinessId);
+                        } else {
+                          setActiveTab('ranking');
+                        }
+                      }}>
+                        <BarChart4 size={16} />
+                        <span>{t("Ranking")}</span>
                       </button>}
                     {(hasProjectAccess && showProjectsTab) && <button className={`desktop-tab ${activeTab === "decision-logs" ? "active" : ""}`} onClick={() => setActiveTab("decision-logs")}>
                         <FileText size={16} />

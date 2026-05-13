@@ -96,6 +96,17 @@ export const useBusinessSetup = () => {
   const [answerIds, setAnswerIds] = useState({});
   const [isPmfOnboardingComplete, setIsPmfOnboardingComplete] = useState(true);
 
+  const activeTab = useMemo(() => {
+    const urlTab = searchParams.get('tab');
+    if (urlTab) return urlTab;
+    if (window.__businessPageNavState?.initialTab) return window.__businessPageNavState.initialTab;
+    if (window.history.state?.usr?.initialTab) return window.history.state.usr.initialTab;
+    if (hasPmfAccess) return "executive";
+    if (hasInsightAccess || hasStrategicAccess) return "advanced";
+    if (hasProjectAccess) return "bets";
+    return "advanced";
+  }, [searchParams, hasPmfAccess, hasInsightAccess, hasStrategicAccess, hasProjectAccess]);
+
   const setApiLoading = useCallback((apiEndpoint, isLoading) => {
     setStoreLoading(apiEndpoint, isLoading);
   }, [setStoreLoading]);
@@ -185,18 +196,75 @@ export const useBusinessSetup = () => {
   const [businessData, setBusinessData] = useState({
     name: currentBusiness?.business_name || "",
     purpose: currentBusiness?.business_purpose || "",
+    business_id: selectedBusinessId
   });
 
-  const activeTab = useMemo(() => {
-    const urlTab = searchParams.get('tab');
-    if (urlTab) return urlTab;
-    if (window.__businessPageNavState?.initialTab) return window.__businessPageNavState.initialTab;
-    if (window.history.state?.usr?.initialTab) return window.history.state.usr.initialTab;
-    if (hasPmfAccess) return "executive";
-    if (hasInsightAccess || hasStrategicAccess) return "advanced";
-    if (hasProjectAccess) return "bets";
-    return "advanced";
-  }, [searchParams, hasPmfAccess, hasInsightAccess, hasStrategicAccess, hasProjectAccess]);
+  // Sync businessData in useBusinessSetup when currentBusiness changes
+  useEffect(() => {
+    if (currentBusiness) {
+      setBusinessData({
+        name: currentBusiness.business_name || "",
+        purpose: currentBusiness.business_purpose || "",
+        business_id: currentBusiness._id || currentBusiness.id || selectedBusinessId
+      });
+    }
+  }, [currentBusiness, selectedBusinessId]);
+
+  // Initialize Projects tab visibility from UI Store (scoped per business)
+  useEffect(() => {
+    if (!selectedBusinessId) return;
+    const storedVisibility = getBusinessSetting(selectedBusinessId, 'showProjectsTab');
+    // Only restore the tab if the user has project access on their current plan
+    if (storedVisibility === true && hasProjectAccess) {
+      setShowProjectsTab(true);
+    } else {
+      setShowProjectsTab(false);
+    }
+  }, [selectedBusinessId, hasProjectAccess, getBusinessSetting]);
+
+  // Ensure Projects tab button appears once projects is active (only if user has project access)
+  useEffect(() => {
+    if ((activeTab === 'bets' || activeTab === 'ranking' || activeTab === 'decision-logs') && !showProjectsTab && hasProjectAccess) {
+      setShowProjectsTab(true);
+      if (selectedBusinessId) {
+        setBusinessSetting(selectedBusinessId, 'showProjectsTab', true);
+      }
+    }
+  }, [activeTab, showProjectsTab, selectedBusinessId, hasProjectAccess, setBusinessSetting]);
+
+  // Automatically show Projects tab if this business already has projects
+  // Skip this check when on the projects tab itself (handled by ProjectsSection) or if already visible
+  useEffect(() => {
+    if (showProjectsTab || !selectedBusinessId || activeTab === 'bets' || activeTab === 'ranking' || activeTab === 'decision-logs') return;
+
+    const fetchProjectsForBusiness = async () => {
+      try {
+        // Use the synchronized store method which handles promise caching
+        const data = await useProjectStore.getState().fetchProjects(selectedBusinessId, { silent: true });
+        const hasProjects = (data?.projects || []).length > 0;
+
+        if (hasProjects && hasProjectAccess) {
+          setShowProjectsTab(true);
+          setBusinessSetting(selectedBusinessId, 'showProjectsTab', true);
+        }
+      } catch (err) {
+        console.error('Failed to check existing projects for business:', err);
+      }
+    };
+
+    fetchProjectsForBusiness();
+  }, [selectedBusinessId, hasProjectAccess, activeTab, showProjectsTab, setBusinessSetting]);
+
+  
+  useEffect(() => {
+    if (!searchParams.get('tab') && activeTab) {
+      setSearchParams(prev => {
+        const next = new URLSearchParams(prev);
+        next.set('tab', activeTab);
+        return next;
+      }, { replace: true });
+    }
+  }, [activeTab, searchParams, setSearchParams]);
 
   const setActiveTab = useCallback((newTab) => {
     setSearchParams(prev => {
@@ -343,20 +411,41 @@ export const useBusinessSetup = () => {
     }
   }, [location.state?.business, selectedBusinessId, setSelectedBusinessId]);
 
+  const lastBusinessId = useRef(selectedBusinessId);
+
   useEffect(() => {
     if (selectedBusinessId) {
+      // Clear document state if business changed
+      if (lastBusinessId.current !== selectedBusinessId) {
+        setDocumentInfo(null);
+        setHasUploadedDocument(false);
+        lastBusinessId.current = selectedBusinessId;
+      }
+
+      // Clear analysis keys for the new business
       fetchedAnalysisKeys.current.clear();
+      
+      // The store now has guards (isAnalysisLoading/isInitialLoading),
+      // so these calls are safe even if triggered multiple times by React.
       fetchAnalysisData(selectedBusinessId);
-      fetchInitialSetupData(selectedBusinessId).then(result => {
+      
+      // Optimize: only fetch financial document if on Brief (advanced) or Insights tabs
+      const skipFinancial = activeTab !== 'advanced' && activeTab !== 'insights';
+      // Optimize: only fetch questions if on Brief (advanced) tab
+      const skipQuestions = activeTab !== 'advanced';
+      
+      fetchInitialSetupData(selectedBusinessId, { skipFinancial, skipQuestions }).then(result => {
         if (result?.docInfo) {
           setDocumentInfo(result.docInfo);
           setHasUploadedDocument(true);
-        } else {
+        } else if (!skipFinancial) {
+          // Only clear if we explicitly tried to fetch and found nothing
           setHasUploadedDocument(false);
+          setDocumentInfo(null);
         }
       });
     }
-  }, [selectedBusinessId, fetchAnalysisData, fetchInitialSetupData]);
+  }, [selectedBusinessId, activeTab]); // Include activeTab to re-fetch if we enter a tab that needs it
 
   const isArchived = (currentBusiness?.access_mode === 'archived' || currentBusiness?.access_mode === 'hidden');
 
@@ -404,46 +493,37 @@ export const useBusinessSetup = () => {
       // Force recalculate phase to handle newly applied AI answers
       const unlocked = getUnlockedFeatures(state.questions, state.userAnswers, state.completedQuestions, hasUploadedDocument);
       const targetPhase = unlocked.advancedPhase ? 'advanced' : (unlocked.essentialPhase ? 'essential' : 'initial');
-
-      console.log('DEBUG: handleRegenerateAllAnalysis called with options:', options);
-      console.log('DEBUG: Unlocked features:', unlocked);
-      console.log('DEBUG: targetPhase detected:', targetPhase);
-
+ 
       // Collect unique types based on the detected targetPhase
       const typesToRun = new Set();
       
       // Use the specific configuration for the detected phase
-      if (PHASE_API_CONFIG[targetPhase]) {
-          console.log(`DEBUG: Adding types for phase: ${targetPhase}`);
+      if (PHASE_API_CONFIG[targetPhase]) { 
           PHASE_API_CONFIG[targetPhase].forEach(t => typesToRun.add(t));
       }
       
       // Optionally add financial types if doc exists and requested
       if ((options.includeFinancial || options.onlyFinancial) && hasUploadedDocument && !options.skipFinancial) {
-          console.log(`DEBUG: Adding financial phase types`);
           PHASE_API_CONFIG.financial.forEach(t => typesToRun.add(t));
       }
 
       const typesArray = Array.from(typesToRun);
-      console.log('DEBUG: Triggering phase-specific regeneration for types:', typesArray);
 
       // Execute bulk regeneration
       await state.regenerateCustomTypes(typesArray, state.questions, state.userAnswers, selectedBusinessId, showToastMessage);
 
       // 3. Regenerate Strategic Analysis (which encompasses multiple pillars)
       if (options.alsoRegenerateStrategic !== false) {
-        console.log('DEBUG: Triggering Strategic Analysis regeneration...');
         await regenerateIndividualAnalysis('strategic', state.questions, state.userAnswers, selectedBusinessId, showToastMessage);
       }
       
-      console.log('DEBUG: handleRegenerateAllAnalysis completed.');
     };
 
     if (options?.skipConfirmation) perform();
     else triggerConfirmation(t("Regenerate All Analysis?"), t("This will regenerate everything."), perform);
   };
 
-  const commonProps = {
+  const commonProps = useMemo(() => ({
     activeTab, setActiveTab,
     isMobile, setIsMobile,
     isAnalysisExpanded, setIsAnalysisExpanded,
@@ -529,7 +609,38 @@ export const useBusinessSetup = () => {
         competitiveLandscapeRef, coreAdjacencyRef,
         currentPhase
     }
-  };
+  }), [
+    activeTab, setActiveTab, isMobile, setIsMobile, isAnalysisExpanded, setIsAnalysisExpanded,
+    isSliding, setIsSliding, currentBusiness, selectedBusinessId, businessData,
+    showConfirmModal, setShowConfirmModal, confirmConfig, triggerConfirmation,
+    activeNavDropdown, setActiveNavDropdown, navDropdownRef, showToast, setShowToast,
+    showToastMessage, showDropdown, setShowDropdown, highlightedMissingQuestions,
+    setHighlightedMissingQuestions, showPMFOnboarding, setShowPMFOnboarding,
+    isPmfOnboardingComplete, setIsPmfOnboardingComplete, documentInfo, setDocumentInfo,
+    hasUploadedDocument, setHasUploadedDocument, isAnalysisRegenerating,
+    isStrategicRegenerating, isStoreLoading, fullSwotData, competitiveAdvantageData,
+    expandedCapabilityData, strategicRadarData, productivityData, maturityData,
+    profitabilityData, growthTrackerData, liquidityEfficiencyData,
+    investmentPerformanceData, leverageRiskData, strategicData, accessModalMessage,
+    accessModalSubMessage, setUserAnswer, handleRegeneratePhase,
+    regenerateIndividualAnalysis, questions, userAnswers, handleRegenerateAllAnalysis,
+    questionsLoaded, completedQuestions, apiService, phaseManager, t, swotRef,
+    purchaseCriteriaRef, loyaltyNpsRef, portersRef, pestelRef, fullSwotRef,
+    competitiveAdvantageRef, expandedCapabilityRef, strategicRadarRef, productivityRef,
+    maturityScoreRef, profitabilityRef, growthTrackerRef, liquidityEfficiencyRef,
+    investmentPerformanceRef, leverageRiskRef, competitiveLandscapeRef, coreAdjacencyRef,
+    highlightedCard, setHighlightedCard, expandedCards, setExpandedCards,
+    collapsedCategories, setCollapsedCategories, selectedDropdownValue,
+    setSelectedDropdownValue, handleOptionClick, handleScrollToSection,
+    handleExecutiveTabClick, handlePrioritiesTabClick, handleBriefTabClick,
+    handleAnalysisTabClick, handleStrategicTabClick, handleProjectCountChange,
+    handleKickstartSuccess, handleStayOnPriorities, handleBack, showProjectsTab,
+    hasPmfAccess, hasInsightAccess, hasStrategicAccess, hasProjectAccess, isArchived,
+    openModal, closeModal, isModalOpen, pmfRefreshTrigger, setPmfRefreshTrigger,
+    isFinancialRegenerating, isEssentialPhaseGenerating, isTypeRegenerating,
+    unlockedFeatures, companyAdminIds, phaseAnalysisArray, currentPhase,
+    setUploadedFileForAnalysis, setBusinessData, handleRedirectToBrief
+  ]);
 
   return commonProps;
 };
