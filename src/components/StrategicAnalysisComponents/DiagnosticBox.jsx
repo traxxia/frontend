@@ -6,9 +6,9 @@ const DiagnosticBox = ({ diagnostic }) => {
   const { t } = useTranslation();
   if (!diagnostic || diagnostic === 'N/A') return null;
   return (
-    <div className="DiagnosticBox strategic-analysis--s2">
-      <Info size={16} className="strategic-analysis--s3" /> {t("diagnostic")}:
-      <div className="DiagnosticBox-right strategic-analysis--s4">
+    <div className="DiagnosticBox diagnostic-box">
+      <Info size={16} className="diagnostic-icon" /> {t("diagnostic")}:
+      <div className="DiagnosticBox-right diagnostic-text">
         {diagnostic}
       </div>
     </div>

@@ -568,9 +568,8 @@
 }
 
 .category-description {
-  font-size: var(--font-size-lg);
-  color: var(--color-text-secondary);
-  margin-bottom: var(--spacing-3xl);
+  font-size: var(--font-size-md);
+  color: var(--color-text-secondary); 
 }
 
 .category-articles-grid {

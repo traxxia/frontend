@@ -266,14 +266,14 @@
 }
 
 .modern-card-text h3 {
-  font-size: 1rem;
+  font-size: 1.2rem;
   font-weight: 600;
   color: #1e293b;
   margin: 0 0 0.25rem 0;
 }
 
 .modern-card-text p {
-  font-size: 0.85rem;
+  font-size: 0.95rem;
   color: #64748b;
   margin: 0;
   line-height: 1.4;
@@ -800,7 +800,7 @@
 }
 
 .category-title {
-  font-size: 1.25rem !important;
+  font-size: 1.5rem !important;
   font-weight: 600 !important;
   color: #1f2937;
   margin: 0;
@@ -1150,4 +1150,15 @@ tbody{
 .business-setup-page--s1 {
   z-index: 1000;
   position: relative;
+}
+
+.modern-card-content h1,
+.modern-card-content h2,
+.modern-card-content h3,
+.modern-card-content h4,
+.modern-card-content h5 {
+  font-size: 1.05rem !important;
+  font-weight: 600 !important;
+  margin: 15px 0 10px 0 !important;
+  color: #1e293b !important;
 }

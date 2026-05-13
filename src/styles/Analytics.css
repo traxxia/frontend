@@ -5927,7 +5927,7 @@
    align-items: center;
    justify-content: space-between;
    gap: 12px;
-   margin-bottom: 24px;
+   margin-bottom: 0px;
    padding: 12px 20px;
    border-bottom: 2px solid #e2e8f0;
  }

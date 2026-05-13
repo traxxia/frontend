@@ -19,7 +19,7 @@ const StrategyPillar = ({
   return (
     <div className="pillar-container">
       <div className="pillar-card strategy-card">
-        <div className="pillar-header strategy-header strategic-analysis--s5" onClick={onToggle}>
+        <div className="pillar-header strategy-header clickable-header" onClick={onToggle}>
           <Target size={22} className="strategy-icon" />
           <h3 className="pillar-title">{t("strategy_where_to_compete")}</h3>
           {isExpanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
