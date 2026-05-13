@@ -95,7 +95,7 @@
 .status-badge {
   padding: 2px 10px;
   border-radius: 16px;
-  font-size: 13px; 
+  font-size: 13px;
   display: inline-block;
   color: #000;
 }
@@ -254,7 +254,7 @@
 
 /* [data-theme="dark"] span { */
   {
-  color: #989899 !important;
+  color: #6060cb !important;
 }
 
 [data-theme="dark"] .container,
@@ -334,7 +334,7 @@
 /* Status badges dim */
 [data-theme="dark"] span[style*="background-color"] {
   filter: brightness(0.8);
-  color: #1a1d23 !important;
+  color: #383333 !important;
 }
 
 

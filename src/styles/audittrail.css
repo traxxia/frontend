@@ -1052,13 +1052,13 @@
 
 [data-theme="dark"] .section-container,
 [data-theme="dark"] .table-container {
-  background: #1a1d27 !important;
+  background: #21273a !important;
   border: none !important;
 }
 
 [data-theme="dark"] .cs-header,
 [data-theme="dark"] .section-header {
-  background: #181c24 !important;
+  background: #1f2740 !important;
   color: #fff !important;
 }
 

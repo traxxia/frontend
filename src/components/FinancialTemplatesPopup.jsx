@@ -2,6 +2,7 @@ import React, { useRef, useState } from 'react';
 import { X, Download, Upload, FileText, ChevronDown, ChevronUp, Check } from 'lucide-react';
 import { Accordion } from 'react-bootstrap';
 import { useTranslation } from "../hooks/useTranslation";
+import '../styles/FinancialTemplatesPopup.css';
 
 const FinancialTemplatesPopup = ({
   isOpen,
@@ -131,75 +132,19 @@ const FinancialTemplatesPopup = ({
   if (!isOpen) return null;
 
   return (
-    <div
-      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
-      style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        backgroundColor: 'rgba(0, 0, 0, 0.5)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 9999,
-        padding: '16px'
-      }}
-    >
-      <div
-        className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto"
-        style={{
-          backgroundColor: 'white',
-          borderRadius: '8px',
-          maxWidth: '896px',
-          width: '100%',
-          maxHeight: '90vh',
-          overflowY: 'auto',
-          boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)'
-        }}
-      >
+    <div className="ftp-backdrop">
+      <div className="ftp-modal">
         {/* Header */}
-        <div
-          className="flex items-center justify-between p-6 border-b border-gray-200"
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            padding: '24px',
-            borderBottom: '1px solid #e5e7eb'
-          }}
-        >
+        <div className="ftp-header">
           <div>
-            <h2
-              className="text-xl font-bold text-gray-900"
-              style={{ fontSize: '20px', fontWeight: 'bold', color: '#111827', margin: 0 }}
-            >
+            <h2 className="ftp-title">
               {readOnly ? t("financial_data_templates") : t("financial_data_upload")}
             </h2>
-            <p
-              className="text-gray-600 text-sm mt-1"
-              style={{ color: '#4b5563', fontSize: '14px', marginTop: '4px', margin: 0 }}
-            >
+            <p className="ftp-subtitle">
               {readOnly ? t("download_sample_templates") : t("download_templates_upload_data")}
             </p>
           </div>
-          <button
-            onClick={onClose}
-            style={{
-              backgroundColor: 'transparent',
-              border: 'none',
-              color: '#9ca3af',
-              cursor: 'pointer',
-              padding: '8px',
-              borderRadius: '4px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}
-            onMouseEnter={(e) => e.target.style.color = '#4b5563'}
-            onMouseLeave={(e) => e.target.style.color = '#9ca3af'}
-          >
+          <button onClick={onClose} className="ftp-close-btn">
             <X size={24} />
           </button>
         </div>
@@ -215,126 +160,67 @@ const FinancialTemplatesPopup = ({
           />
         )}
 
-        <div style={{ padding: '24px' }}>
+        <div className="ftp-body">
           {/* Download Templates Section */}
-          <div style={{ marginBottom: '32px' }}>
+          <div className="ftp-section">
             <Accordion defaultActiveKey={null}>
               <Accordion.Item eventKey="0">
                 <Accordion.Header>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <Download size={20} />
-                    <span style={{ fontSize: '18px', fontWeight: '600', color: '#111827' }}>
-              {t("download_sample_templates")}
+                  <div className="ftp-accordion-header-content">
+                    <Download size={20} />
+                    <span className="ftp-accordion-title">
+                      {t("download_sample_templates")}
                     </span>
                   </div>
-            </Accordion.Header>
+                </Accordion.Header>
 
                 <Accordion.Body>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              {templates.map((template) => (
-                <div
-                  key={template.id}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    padding: '16px',
-                    border: '1px solid #e5e7eb',
-                    borderRadius: '8px',
-                    transition: 'border-color 0.2s'
-                  }}
-                  onMouseEnter={(e) => (e.target.style.borderColor = '#d1d5db')}
-                  onMouseLeave={(e) => (e.target.style.borderColor = '#e5e7eb')}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <span style={{ fontSize: '32px' }}>{template.icon}</span>
-                    <div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                        <h4 style={{ fontWeight: '500', color: '#111827', margin: 0 }}>
-                          {template.name}
-                        </h4>
-                        {template.recommended && (
-                          <span
-                            style={{
-                              backgroundColor: '#dbeafe',
-                              color: '#1e40af',
-                              fontSize: '12px',
-                              padding: '2px 8px',
-                              borderRadius: '9999px'
-                            }}
-                          >
-                            Recommended
-                          </span>
-                        )}
-                      </div>
-                      <p style={{ fontSize: '14px', color: '#4b5563', margin: 0 }}>
-                        {template.description}
-                      </p>
-                    </div>
-                  </div>
+                  <div className="ftp-template-list">
+                    {templates.map((template) => (
+                      <div key={template.id} className="ftp-template-item">
+                        <div className="ftp-template-info">
+                          <span className="ftp-template-icon">{template.icon}</span>
+                          <div>
+                            <div className="ftp-template-name-row">
+                              <h4 className="ftp-template-name">
+                                {template.name}
+                              </h4>
+                              {template.recommended && (
+                                <span className="ftp-recommended-badge">
+                                  Recommended
+                                </span>
+                              )}
+                            </div>
+                            <p className="ftp-template-desc">
+                              {template.description}
+                            </p>
+                          </div>
+                        </div>
 
-                    <button
-                      onClick={() => handleDownload(template)}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '6px',
-                        padding: '8px 12px',
-                        backgroundColor: '#2563eb',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '6px',
-                        cursor: 'pointer',
-                        fontSize: '13px',
-                        fontWeight: '500',
-                        transition: 'background-color 0.2s'
-                      }}
-                      onMouseEnter={(e) =>(e.target.style.backgroundColor = '#1d4ed8')}
-                      onMouseLeave={(e) =>(e.target.style.backgroundColor = '#2563eb')}
-                    >
-                      <Download size={14} />
-                      <span>Download</span>
-                    </button>
-                  </div>
+                        <button
+                          onClick={() => handleDownload(template)}
+                          className="ftp-download-btn"
+                        >
+                          <Download size={14} />
+                          <span>Download</span>
+                        </button>
+                      </div>
                     ))}
-                </div>
+                  </div>
                 </Accordion.Body>
               </Accordion.Item>
             </Accordion>
           </div>
 
           {/* Template Comparison Section */}
-          <div style={{ marginBottom: '32px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
-              <h3
-                style={{
-                  fontSize: '18px',
-                  fontWeight: '600',
-                  color: '#111827',
-                  margin: 0,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px'
-                }}
-              >
+          <div className="ftp-section">
+            <div className="ftp-comp-header">
+              <h3 className="ftp-comp-title">
                 📋 {t("all_template_comparison")}
               </h3>
               <button
                 onClick={() => setShowComparison(!showComparison)}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  padding: '8px 12px',
-                  backgroundColor: 'transparent',
-                  color: '#2563eb',
-                  border: '1px solid #2563eb',
-                  borderRadius: '6px',
-                  cursor: 'pointer',
-                  fontSize: '13px',
-                  fontWeight: '500',
-                  transition: 'all 0.2s'
-                }}
+                className="ftp-view-comp-btn"
               >
                 {showComparison ? (
                   <>
@@ -351,28 +237,14 @@ const FinancialTemplatesPopup = ({
             </div>
 
             {showComparison && (
-
-              <div style={{
-                backgroundColor: 'white',
-                borderRadius: '8px',
-                border: '1px solid #e5e7eb',
-                overflow: 'hidden'
-              }}>
-                <table style={{ width: '100%', fontSize: '13px' }}>
+              <div className="ftp-table-container">
+                <table className="ftp-table">
                   <thead>
-                    <tr style={{ backgroundColor: '#f8fafc' }}>
-                      <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#374151' }}>
-                        Metric
-                      </th>
-                      <th style={{ padding: '12px', textAlign: 'center', fontWeight: '600', color: '#374151' }}>
-                        Simplified
-                      </th>
-                      <th style={{ padding: '12px', textAlign: 'center', fontWeight: '600', color: '#374151' }}>
-                        Standard
-                      </th>
-                      <th style={{ padding: '12px', textAlign: 'center', fontWeight: '600', color: '#374151' }}>
-                        Detailed
-                      </th>
+                    <tr>
+                      <th>Metric</th>
+                      <th className="center">Simplified</th>
+                      <th className="center">Standard</th>
+                      <th className="center">Detailed</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -397,28 +269,25 @@ const FinancialTemplatesPopup = ({
                       };
 
                       return allMetrics.map((metric, index) => (
-                        <tr key={metric.key} style={{
-                          borderTop: index > 0 ? '1px solid #e5e7eb' : 'none',
-                          backgroundColor: index % 2 === 0 ? 'white' : '#f9fafb'
-                        }}>
-                          <td style={{ padding: '10px 12px', fontWeight: '500', color: '#374151' }}>
+                        <tr key={metric.key} className={index % 2 === 0 ? 'even' : 'odd'}>
+                          <td>
                             {metric.name}
                           </td>
-                          <td style={{ padding: '10px 12px', textAlign: 'center' }}>
+                          <td className="center">
                             {isMetricRequired(metric.key, 'simplified') ? (
                               <Check size={16} style={{ color: '#059669', margin: '0 auto', display: 'block' }} />
                             ) : (
                               <X size={16} style={{ color: '#d1d5db', margin: '0 auto', display: 'block' }} />
                             )}
                           </td>
-                          <td style={{ padding: '10px 12px', textAlign: 'center' }}>
+                          <td className="center">
                             {isMetricRequired(metric.key, 'standard') ? (
                               <Check size={16} style={{ color: '#059669', margin: '0 auto', display: 'block' }} />
                             ) : (
                               <X size={16} style={{ color: '#d1d5db', margin: '0 auto', display: 'block' }} />
                             )}
                           </td>
-                          <td style={{ padding: '10px 12px', textAlign: 'center' }}>
+                          <td className="center">
                             {isMetricRequired(metric.key, 'detailed') ? (
                               <Check size={16} style={{ color: '#059669', margin: '0 auto', display: 'block' }} />
                             ) : (
@@ -438,82 +307,35 @@ const FinancialTemplatesPopup = ({
           {!readOnly && (
             <>
               {/* Divider */}
-              <div style={{ position: 'relative', marginBottom: '32px' }}>
-                <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center' }}>
-                  <div style={{ width: '100%', borderTop: '1px solid #e5e7eb' }} />
+              <div className="ftp-divider">
+                <div className="ftp-divider-line-container">
+                  <div className="ftp-divider-line" />
                 </div>
-                <div style={{ position: 'relative', display: 'flex', justifyContent: 'center', fontSize: '14px' }}>
-                  <span style={{ padding: '0 16px', backgroundColor: 'white', color: '#6b7280' }}>OR</span>
+                <div className="ftp-divider-text-container">
+                  <span className="ftp-divider-text">OR</span>
                 </div>
               </div>
 
               {/* General Upload Section */}
-              <div>
-                <h3
-                  style={{
-                    fontSize: '18px',
-                    fontWeight: '600',
-                    color: '#111827',
-                    marginBottom: '16px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px'
-                  }}
-                >
+              <div className="ftp-section">
+                <h3 className="ftp-upload-section-title">
                   <Upload size={20} />
                   {t("upload_any_template_file")}
                 </h3>
 
-                <div
-                  style={{
-                    border: '2px dashed #d1d5db',
-                    borderRadius: '8px',
-                    padding: '32px',
-                    textAlign: 'center',
-                    transition: 'border-color 0.2s'
-                  }}
-                  onMouseEnter={(e) => e.target.style.borderColor = '#9ca3af'}
-                  onMouseLeave={(e) => e.target.style.borderColor = '#d1d5db'}
-                >
-                  <FileText
-                    size={48}
-                    style={{
-                      margin: '0 auto 16px auto',
-                      color: '#9ca3af',
-                      display: 'block'
-                    }}
-                  />
-                  <h4 style={{ fontSize: '18px', fontWeight: '500', color: '#111827', marginBottom: '8px' }}>
+                <div className="ftp-dropzone">
+                  <FileText size={48} className="ftp-dropzone-icon" />
+                  <h4 className="ftp-dropzone-title">
                     {t("auto_detect_template_type")}
                   </h4>
-                  <p style={{ color: '#4b5563', marginBottom: '24px' }}>
+                  <p className="ftp-dropzone-text">
                     {t("upload_any_template_auto_detect")}
                   </p>
 
                   <button
                     onClick={() => triggerFileUpload()}
                     disabled={isFileUploading}
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '12px',
-                      backgroundColor: '#059669',
-                      color: 'white',
-                      padding: '12px 24px',
-                      border: 'none',
-                      borderRadius: '8px',
-                      cursor: isFileUploading ? 'not-allowed' : 'pointer',
-                      fontSize: '16px',
-                      fontWeight: '500',
-                      opacity: isFileUploading ? 0.5 : 1,
-                      transition: 'background-color 0.2s'
-                    }}
-                    onMouseEnter={(e) => {
-                      if (!isFileUploading) e.target.style.backgroundColor = '#047857';
-                    }}
-                    onMouseLeave={(e) => {
-                      if (!isFileUploading) e.target.style.backgroundColor = '#059669';
-                    }}
+                    className="ftp-upload-btn"
                   >
                     {isFileUploading ? (
                       <>
@@ -537,7 +359,7 @@ const FinancialTemplatesPopup = ({
                     )}
                   </button>
 
-                  <p style={{ fontSize: '12px', color: '#6b7280', marginTop: '12px' }}>
+                  <p className="ftp-supported-formats">
                     {t("supported_formats_excel_csv")}
                   </p>
                 </div>
@@ -546,33 +368,26 @@ const FinancialTemplatesPopup = ({
           )}
 
           {/* Instructions */}
-          <div
-            style={{
-              marginTop: '32px',
-              backgroundColor: '#eff6ff',
-              borderRadius: '8px',
-              padding: '16px'
-            }}
-          >
-           <h4 style={{ fontWeight: '500', color: '#1e3a8a', marginBottom: '8px' }}>
-  {readOnly ? t("template_information") : t("how_it_works")}
-</h4>
+          <div className="ftp-info-banner">
+            <h4 className="ftp-info-title">
+              {readOnly ? t("template_information") : t("how_it_works")}
+            </h4>
 
-{readOnly ? (
-  <ul style={{ fontSize: '14px', color: '#1e40af', margin: 0, paddingLeft: '16px' }}>
-    <li style={{ marginBottom: '4px' }}>{t("templates_used_financial_analysis")}</li>
-    <li style={{ marginBottom: '4px' }}>{t("download_structure_format_requirements")}</li>
-    <li style={{ marginBottom: '4px' }}>{t("use_reference_future_uploads")}</li>
-    <li>{t("contact_support_template_help")}</li>
-  </ul>
-) : (
-  <ol style={{ fontSize: '14px', color: '#1e40af', margin: 0, paddingLeft: '16px' }}>
-    <li style={{ marginBottom: '4px' }}>{t("download_template_that_fits")}</li>
-    <li style={{ marginBottom: '4px' }}>{t("fill_template_financial_data")}</li>
-    <li style={{ marginBottom: '4px' }}>{t("upload_this_exact_validation")}</li>
-    <li>{t("get_ai_powered_insights")}</li>
-  </ol>
-)}
+            {readOnly ? (
+              <ul className="ftp-info-list">
+                <li>{t("templates_used_financial_analysis")}</li>
+                <li>{t("download_structure_format_requirements")}</li>
+                <li>{t("use_reference_future_uploads")}</li>
+                <li>{t("contact_support_template_help")}</li>
+              </ul>
+            ) : (
+              <ol className="ftp-info-list">
+                <li>{t("download_template_that_fits")}</li>
+                <li>{t("fill_template_financial_data")}</li>
+                <li>{t("upload_this_exact_validation")}</li>
+                <li>{t("get_ai_powered_insights")}</li>
+              </ol>
+            )}
           </div>
         </div>
       </div>

@@ -26,7 +26,7 @@
    border-radius: 16px;
    box-shadow: none;
    padding: 0px;
-   transition: none; 
+   transition: none;
  }
 
  .modern-card-content-inner {
@@ -288,10 +288,10 @@
  }
 
  [data-theme="dark"] .channel-heatmap .ch-metric-blue,
-[data-theme="dark"] .customer-segmentation .cs-metric-blue,
-[data-theme="dark"] .purchase-criteria .pc-metric-blue {
-  background: #1a1d23 !important;
-}
+ [data-theme="dark"] .customer-segmentation .cs-metric-blue,
+ [data-theme="dark"] .purchase-criteria .pc-metric-blue {
+   background: #1a1d23 !important;
+ }
 
  .channel-heatmap .ch-metric-green,
  .customer-segmentation .cs-metric-green,
@@ -299,11 +299,11 @@
    background-color: #d1fae5;
  }
 
-[data-theme="dark"] .channel-heatmap .ch-metric-green,
-[data-theme="dark"] .customer-segmentation .cs-metric-green,
-[data-theme="dark"] .purchase-criteria .pc-metric-green {
-  background: #1a1d23 !important;
-}
+ [data-theme="dark"] .channel-heatmap .ch-metric-green,
+ [data-theme="dark"] .customer-segmentation .cs-metric-green,
+ [data-theme="dark"] .purchase-criteria .pc-metric-green {
+   background: #1a1d23 !important;
+ }
 
  .channel-heatmap .ch-metric-purple,
  .customer-segmentation .cs-metric-purple,
@@ -312,10 +312,10 @@
  }
 
  [data-theme="dark"] .channel-heatmap .ch-metric-purple,
-[data-theme="dark"] .customer-segmentation .cs-metric-purple,
-[data-theme="dark"] .purchase-criteria .pc-metric-purple {
-  background: #1a1d23 !important;
-}
+ [data-theme="dark"] .customer-segmentation .cs-metric-purple,
+ [data-theme="dark"] .purchase-criteria .pc-metric-purple {
+   background: #1a1d23 !important;
+ }
 
  /* Loyalty NPS specific */
  .ln-metric-primary {
@@ -582,13 +582,19 @@
    margin: 0px;
  }
 
+ [data-theme="dark"] .ch-section-title,
+ [data-theme="dark"] .ln-section-title,
+ [data-theme="dark"] .pc-chart-title {
+   color: #f3f4f6 !important;
+ }
+
  .pc-chart-title {
    margin: 0px;
  }
 
- [data-theme="dark"]  .pc-chart-title{
-    color: #ffffff !important;
-}
+ [data-theme="dark"] .pc-chart-title {
+   color: #ffffff !important;
+ }
 
  .ch-main-content {
    margin-bottom: 32px;
@@ -1172,11 +1178,11 @@
  }
 
 
-  [data-theme="dark"] .cs-chart-container,
-[data-theme="dark"] .pc-chart-container,
-[data-theme="dark"] .ln-chart-container {
-  background: #1a1d23 !important;
-}
+ [data-theme="dark"] .cs-chart-container,
+ [data-theme="dark"] .pc-chart-container,
+ [data-theme="dark"] .ln-chart-container {
+   background: #1a1d23 !important;
+ }
 
  .ln-chart-container {
    text-align: center;
@@ -1710,9 +1716,9 @@
    padding: 0px;
  }
 
- [data-theme="dark"]  .criteria-bar-item{
-    background: #1a1d23 !important;
-}
+ [data-theme="dark"] .criteria-bar-item {
+   background: #1a1d23 !important;
+ }
 
 
  .criteria-bar-header {
@@ -1783,10 +1789,10 @@
    color: #059669;
  }
 
- 
-[data-theme="dark"]  .gap-indicator.positive{
-    color: #1a1d23 !important;
-}
+
+ [data-theme="dark"] .gap-indicator.positive {
+   color: #1a1d23 !important;
+ }
 
  .gap-indicator.negative {
    background-color: #fee2e2;
@@ -1794,8 +1800,8 @@
  }
 
  [data-theme="dark"] .gap-indicator.negative {
-    color: #1a1d23 !important;
-}
+   color: #1a1d23 !important;
+ }
 
  .pc-analysis {
    margin-bottom: 32px;
@@ -2871,6 +2877,10 @@
    text-align: center;
  }
 
+ [data-theme="dark"] .ln-scale-info .ln-section-title {
+   color: #0c0c0c !important;
+ }
+
  .ln-scale-zones {
    display: flex;
    justify-content: space-between;
@@ -3121,6 +3131,7 @@
      font-size: 6.5px;
    }
  }
+
  .pestel-loading,
  .pestel-error,
  .pestel-empty {
@@ -3918,8 +3929,7 @@
    margin-bottom: 1rem;
  }
 
- @keyframes spin {
- }
+ @keyframes spin {}
 
  .competitive-advantage-loading h3 {
    margin: 0 0 0.5rem 0;
@@ -4235,10 +4245,10 @@
    fill: #374151;
  }
 
-  [data-theme="dark"]  .radar-label{
-    fill: #ffffff;
-    font-weight: 400;
-}
+ [data-theme="dark"] .radar-label {
+   fill: #ffffff;
+   font-weight: 400;
+ }
 
  /* Differentiators List */
  .differentiators-list {
@@ -4519,8 +4529,7 @@
    margin-bottom: 1rem;
  }
 
- @keyframes spin {
- }
+ @keyframes spin {}
 
  .full-swot-loading h3 {
    margin: 0 0 0.5rem 0;
@@ -4795,8 +4804,7 @@
    margin-bottom: 16px;
  }
 
- @keyframes spin {
- }
+ @keyframes spin {}
 
  .empty-icon {
    color: #9ca3af;
@@ -4949,8 +4957,7 @@
    animation: spin 1s linear infinite;
  }
 
- @keyframes spin {
- }
+ @keyframes spin {}
 
  /* Loading and Empty States */
  .loading-state,
@@ -6638,8 +6645,7 @@
  }
 
  /* Animations */
- @keyframes spin {
- }
+ @keyframes spin {}
 
  @keyframes shimmer {
    0% {
@@ -6816,8 +6822,7 @@
    animation: spin 1s linear infinite;
  }
 
- @keyframes spin {
- }
+ @keyframes spin {}
 
  .table-section {
    background: white;
@@ -6851,9 +6856,9 @@
    color: #374151;
  }
 
- [data-theme="dark"]  .section-title {
-    color: #ffffff !important;
-}
+ [data-theme="dark"] .section-title {
+   color: #ffffff !important;
+ }
 
 
  .section-title svg {
@@ -7328,9 +7333,9 @@
    font-size: 0.8rem;
  }
 
- [data-theme="dark"]  .score-badge {
-    background-color: #1a1d23 !important;
-}
+ [data-theme="dark"] .score-badge {
+   background-color: #1a1d23 !important;
+ }
 
  /* Force Name */
  .force-name {
@@ -7353,7 +7358,7 @@
  .factors-cell {
    max-width: 350px;
  }
- 
+
 
  .factor-item {
    margin-bottom: 0px;
@@ -7372,9 +7377,9 @@
    text-transform: uppercase;
  }
 
- [data-theme="dark"] .factor-impact  {
-    color: #1a1d23 !important;
-}
+ [data-theme="dark"] .factor-impact {
+   color: #1a1d23 !important;
+ }
 
  .factor-impact.high {
    background: #ffebee;
@@ -7409,8 +7414,8 @@
 
  [data-theme="dark"] .timeline-badge,
  .frequency-badge {
-    color: #1a1d23 !important;
-}
+   color: #1a1d23 !important;
+ }
 
  /* Thresholds */
  .thresholds {
@@ -7516,8 +7521,7 @@
    color: #3f51b5;
  }
 
- @keyframes spin {
- }
+ @keyframes spin {}
 
  .empty-icon {
    color: #bdbdbd;
@@ -7715,7 +7719,7 @@
    .data-table tbody tr:hover {
      background-color: #f5f5f5;
    }
-  
+
 
    .factor-item {
      background: #ffffff;
@@ -7724,15 +7728,17 @@
  }
 
  [data-theme="dark"] .factor-item {
-    background-color: #23263a !important;
-}
-
- .factors-cell .strong-text{
-  color: black !important;
+   background-color: #23263a !important;
  }
-  [data-theme="dark"] .factors-cell .strong-text {
-    color: #ffffff !important;
-}
+
+ .factors-cell .strong-text {
+   color: black !important;
+ }
+
+ [data-theme="dark"] .factors-cell .strong-text {
+   color: #ffffff !important;
+ }
+
  .section-container {
    background: #ffffff;
    border-radius: 12px;
@@ -7770,9 +7776,7 @@
  }
 
  /* Profitability Analysis Styles */
- .profitability-analysis {
-   /* Main container styles will be inherited from parent */
- }
+
 
  .profitability-metrics-grid {
    display: grid;
@@ -7882,9 +7886,7 @@
    gap: 16px;
  }
 
- .profitability-explanation-item {
-   /* Container for each explanation item */
- }
+
 
  .profitability-explanation-label {
    color: #1f2937;
@@ -8022,9 +8024,7 @@
  /* LiquidityEfficiency Component Styles */
 
  /* Main container */
- .liquidity-efficiency {
-   /* Additional container-specific styles if needed */
- }
+
 
  /* Warning message */
  .liquidity-efficiency__warning {
@@ -8327,8 +8327,7 @@
    animation: spin 1s linear infinite;
  }
 
- @keyframes spin {
- }
+ @keyframes spin {}
 
  /* Error State */
  .investment-error-state {
@@ -8893,8 +8892,7 @@
    animation: fadeInUp 0.6s ease-out;
  }
 
- @keyframes fadeInUp {
- }
+ @keyframes fadeInUp {}
 
  /* Traffic light indicator hover effects */
  .traffic-light-indicator:hover {
@@ -9166,8 +9164,7 @@
    animation: spin 1s linear infinite;
  }
 
- @keyframes spin {
- }
+ @keyframes spin {}
 
  .loading-state {
    display: flex;
@@ -9269,7 +9266,7 @@
    color: #ffffff !important;
  }
 
- [data-theme="dark"] .force-tag  {
+ [data-theme="dark"] .force-tag {
    color: #1a1d23 !important;
  }
 
@@ -9285,9 +9282,9 @@
  }
 
  .insight-list {
-    color: black !important;
-}
+   color: black !important;
+ }
 
- [data-theme="dark"]  .insight-list {
+ [data-theme="dark"] .insight-list {
    color: #ffffff !important;
  }

@@ -330,7 +330,8 @@
 /* ----------------------------- */
 
 [data-theme="dark"] .rank-panel-container {
-  background-color: #0f172a !important; /* Deep navy panel */
+  background-color: #0f172a !important;
+  /* Deep navy panel */
   border-color: #1e293b !important;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
 }

@@ -2639,7 +2639,7 @@ const StrategicAnalysis = ({
     );
   };
 
-  if (isRegenerating || isLoading) { 
+  if (isRegenerating || isLoading) {
     return (
       <div className="strategic-analysis-container">
         <div className="loading-state">

@@ -1,0 +1,511 @@
+/* FinancialTemplatesPopup.css */
+
+.ftp-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    padding: 16px;
+}
+
+.ftp-modal {
+    background-color: white;
+    border-radius: 8px;
+    max-width: 896px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+.ftp-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 24px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.ftp-title {
+    font-size: 20px;
+    font-weight: bold;
+    color: #111827;
+    margin: 0;
+}
+
+.ftp-subtitle {
+    color: #4b5563;
+    font-size: 14px;
+    margin-top: 4px;
+    margin: 0;
+}
+
+.ftp-close-btn {
+    background-color: transparent;
+    border: none;
+    color: #9ca3af;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.ftp-close-btn:hover {
+    color: #4b5563;
+    background-color: #f3f4f6;
+}
+
+.ftp-body {
+    padding: 24px;
+}
+
+.ftp-section {
+    margin-bottom: 32px;
+}
+
+.ftp-accordion-header-content {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.ftp-accordion-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: #111827;
+}
+
+.ftp-template-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.ftp-template-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    transition: all 0.2s;
+}
+
+.ftp-template-item:hover {
+    border-color: #d1d5db;
+    background-color: #f9fafb;
+}
+
+.ftp-template-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.ftp-template-icon {
+    font-size: 32px;
+}
+
+.ftp-template-name-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 4px;
+}
+
+.ftp-template-name {
+    font-weight: 500;
+    color: #111827;
+    margin: 0;
+}
+
+.ftp-recommended-badge {
+    background-color: #dbeafe;
+    color: #1e40af;
+    font-size: 12px;
+    padding: 2px 8px;
+    border-radius: 9999px;
+}
+
+.ftp-template-desc {
+    font-size: 14px;
+    color: #4b5563;
+    margin: 0;
+}
+
+.ftp-download-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 12px;
+    background-color: #2563eb;
+    color: white !important;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    transition: background-color 0.2s;
+}
+
+.ftp-download-btn:hover {
+    background-color: #1d4ed8;
+}
+
+.ftp-comp-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+}
+
+.ftp-comp-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: #111827;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.ftp-view-comp-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 12px;
+    background-color: transparent;
+    color: #2563eb;
+    border: 1px solid #2563eb;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+
+.ftp-view-comp-btn:hover {
+    background-color: rgba(37, 99, 235, 0.05);
+}
+
+.ftp-table-container {
+    background-color: white;
+    border-radius: 8px;
+    border: 1px solid #e5e7eb;
+    overflow: hidden;
+}
+
+.ftp-table {
+    width: 100%;
+    font-size: 13px;
+    border-collapse: collapse;
+}
+
+.ftp-table thead tr {
+    background-color: #f8fafc;
+}
+
+.ftp-table th {
+    padding: 12px;
+    text-align: left;
+    font-weight: 600;
+    color: #374151;
+}
+
+.ftp-table th.center {
+    text-align: center;
+}
+
+.ftp-table tr.even {
+    background-color: white;
+}
+
+.ftp-table tr.odd {
+    background-color: #f9fafb;
+}
+
+.ftp-table td {
+    padding: 10px 12px;
+    font-weight: 500;
+    color: #374151;
+    border-top: 1px solid #e5e7eb;
+}
+
+.ftp-table td.center {
+    text-align: center;
+}
+
+.ftp-divider {
+    position: relative;
+    margin-bottom: 32px;
+    margin-top: 16px;
+}
+
+.ftp-divider-line-container {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+}
+
+.ftp-divider-line {
+    width: 100%;
+    border-top: 1px solid #e5e7eb;
+}
+
+.ftp-divider-text-container {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    font-size: 14px;
+}
+
+.ftp-divider-text {
+    padding: 0 16px;
+    background-color: white;
+    color: #6b7280;
+}
+
+.ftp-upload-section-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: #111827;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.ftp-dropzone {
+    border: 2px dashed #d1d5db;
+    border-radius: 8px;
+    padding: 32px;
+    text-align: center;
+    transition: all 0.2s;
+}
+
+.ftp-dropzone:hover {
+    border-color: #9ca3af;
+    background-color: #f9fafb;
+}
+
+.ftp-dropzone-icon {
+    margin: 0 auto 16px auto;
+    color: #9ca3af;
+    display: block;
+}
+
+.ftp-dropzone-title {
+    font-size: 18px;
+    font-weight: 500;
+    color: #111827;
+    margin-bottom: 8px;
+}
+
+.ftp-dropzone-text {
+    color: #4b5563;
+    margin-bottom: 24px;
+}
+
+.ftp-upload-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    background-color: #059669;
+    color: white !important;
+    padding: 12px 24px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 500;
+    transition: background-color 0.2s;
+}
+
+.ftp-upload-btn:hover:not(:disabled) {
+    background-color: #047857;
+}
+
+.ftp-upload-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.ftp-supported-formats {
+    font-size: 12px;
+    color: #6b7280;
+    margin-top: 12px;
+}
+
+.ftp-info-banner {
+    margin-top: 32px;
+    background-color: #eff6ff;
+    border-radius: 8px;
+    padding: 16px;
+}
+
+.ftp-info-title {
+    font-weight: 500;
+    color: #1e3a8a;
+    margin-bottom: 8px;
+}
+
+.ftp-info-list {
+    font-size: 14px;
+    color: #1e40af;
+    margin: 0;
+    padding-left: 16px;
+}
+
+.ftp-info-list li {
+    margin-bottom: 4px;
+}
+
+/* ══════════════════════════════════════════════════
+   DARK MODE OVERRIDES
+   ══════════════════════════════════════════════════ */
+[data-theme="dark"] .ftp-modal {
+    background-color: #1e293b;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.4), 0 10px 10px -5px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="dark"] .ftp-header {
+    border-bottom-color: #334155;
+}
+
+[data-theme="dark"] .ftp-title,
+[data-theme="dark"] .ftp-accordion-title,
+[data-theme="dark"] .ftp-template-name,
+[data-theme="dark"] .ftp-comp-title,
+[data-theme="dark"] .ftp-upload-section-title,
+[data-theme="dark"] .ftp-dropzone-title {
+    color: #ffffff;
+}
+
+[data-theme="dark"] .ftp-subtitle,
+[data-theme="dark"] .ftp-template-desc,
+[data-theme="dark"] .ftp-dropzone-text,
+[data-theme="dark"] .ftp-supported-formats {
+    color: #9ca3af;
+}
+
+[data-theme="dark"] .ftp-close-btn:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+    color: #ffffff;
+}
+
+[data-theme="dark"] .ftp-template-item {
+    background-color: rgba(255, 255, 255, 0.02);
+    border-color: #334155;
+}
+
+[data-theme="dark"] .ftp-template-item:hover {
+    border-color: #4b5563;
+    background-color: rgba(255, 255, 255, 0.04);
+}
+
+[data-theme="dark"] .ftp-recommended-badge {
+    background-color: rgba(30, 64, 175, 0.2);
+    color: #93c5fd;
+}
+
+[data-theme="dark"] .ftp-table-container {
+    background-color: #111827;
+    border-color: #334155;
+}
+
+[data-theme="dark"] .ftp-table thead tr {
+    background-color: #1a1d23;
+}
+
+[data-theme="dark"] .ftp-table th {
+    color: #e5e7eb;
+}
+
+[data-theme="dark"] .ftp-table td {
+    color: #9ca3af;
+    border-top-color: #334155;
+}
+
+[data-theme="dark"] .ftp-table tr.even {
+    background-color: transparent;
+}
+
+[data-theme="dark"] .ftp-table tr.odd {
+    background-color: rgba(255, 255, 255, 0.02);
+}
+
+[data-theme="dark"] .ftp-divider-line {
+    border-top-color: #334155;
+}
+
+[data-theme="dark"] .ftp-divider-text {
+    background-color: #1e293b;
+    color: #6b7280;
+}
+
+[data-theme="dark"] .ftp-dropzone {
+    border-color: #334155;
+    background-color: rgba(255, 255, 255, 0.01);
+}
+
+[data-theme="dark"] .ftp-dropzone:hover {
+    border-color: #4b5563;
+    background-color: rgba(255, 255, 255, 0.03);
+}
+
+[data-theme="dark"] .ftp-info-banner {
+    background-color: rgba(30, 58, 138, 0.1);
+}
+
+[data-theme="dark"] .ftp-info-title {
+    color: #93c5fd;
+}
+
+[data-theme="dark"] .ftp-info-list {
+    color: #bfdbfe;
+}
+
+[data-theme="dark"] .ftp-view-comp-btn {
+    border-color: #818cf8;
+    color: #818cf8;
+}
+
+[data-theme="dark"] .ftp-view-comp-btn:hover {
+    background-color: rgba(129, 140, 248, 0.1);
+}
+
+/* Accordion Dark Mode Fixes */
+[data-theme="dark"] .accordion-item {
+    background-color: transparent !important;
+    border-color: #334155 !important;
+}
+
+[data-theme="dark"] .accordion-button {
+    background-color: #1e293b !important;
+    color: #ffffff !important;
+}
+
+[data-theme="dark"] .accordion-button:not(.collapsed) {
+    background-color: rgba(255, 255, 255, 0.05) !important;
+    color: #ffffff !important;
+    box-shadow: none !important;
+}
+
+[data-theme="dark"] .accordion-button::after {
+    filter: invert(1) brightness(2);
+}
+
+[data-theme="dark"] .accordion-body {
+    background-color: transparent !important;
+    color: #e5e7eb !important;
+}

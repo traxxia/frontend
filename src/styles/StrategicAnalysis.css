@@ -875,9 +875,21 @@ body.pdf-export-active .StreamingRow {
   padding: 0px;
 }
 
+.category-description {
+  font-size: 12px;
+  color: #000000;
+  margin: 3px 0 0 0;
+  font-weight: 500;
+}
+
+[data-theme="dark"] .category-description {
+  color: #ffffff !important;
+}
+
+
 /* Dark Mode Support */
 [data-theme="dark"] .strategic-analysis-container {
-  background-color: #0f172a;
+  background-color: #1f1f1f;
 }
 
 [data-theme="dark"] .loading-state {
@@ -980,4 +992,25 @@ body.pdf-export-active .StreamingRow {
   background-color: #1e293b;
   border-color: #334155;
   color: #f1f5f9;
-}
+}
+
+[data-theme="dark"] .category-header {
+  background-color: #1e2235 !important;
+  border: 1px solid #2d324d !important;
+}
+
+[data-theme="dark"] .category-header:hover {
+  background-color: #262b45 !important;
+}
+
+[data-theme="dark"] .category-title {
+  color: #ffffff !important;
+}
+
+[data-theme="dark"] .category-toggle {
+  color: #ffffff !important;
+}
+
+[data-theme="dark"] .category-icon {
+  color: #63b3ed !important;
+}

@@ -26,7 +26,7 @@ const StrategicPositioningRadar = ({
 }) => {
     const { t } = useTranslation();
     const token = useAuthStore(state => state.token);
-    
+
     const {
         strategicRadarData: storeStrategicRadarData,
         isRegenerating: isTypeRegenerating,
@@ -266,10 +266,10 @@ const StrategicPositioningRadar = ({
     const { dimensions, overallPosition } = strategicRadar;
 
     let currentRowIndex = 0;
-    const executiveIndices = overallPosition ? { 
-        currentAverage: currentRowIndex++, 
-        targetAverage: currentRowIndex++, 
-        improvementGap: currentRowIndex++ 
+    const executiveIndices = overallPosition ? {
+        currentAverage: currentRowIndex++,
+        targetAverage: currentRowIndex++,
+        improvementGap: currentRowIndex++
     } : {};
     const dimensionIndices = dimensions?.map(() => currentRowIndex++) || [];
 
@@ -279,85 +279,85 @@ const StrategicPositioningRadar = ({
     return (
         <div className="strategic-radar-container">
             <div className="competitive-advantage-content">
-                    <div className="overview-content">
-                        {overallPosition && (
-                            <div className="section-container">
-                                <div className="section-header" onClick={() => toggleSection('executive')}>
-                                    <h3>{t("strategic_card1")}</h3>
-                                    {expandedSections.executive ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
-                                </div>
-                                <div className={`radar-section-content ${expandedSections.executive === true ? 'expanded' : 'collapsed'}`}>
-                                    <div className="table-container">
-                                        <table className="data-table">
-                                            <thead><tr><th>{t("strategic_card1_head1")}</th><th>{t("strategic_card1_head2")}</th><th>{t("strategic_card1_head3")}</th></tr></thead>
-                                            <tbody>
-                                                <StreamingRow isVisible={executiveIndices.currentAverage < visibleRows} isLast={executiveIndices.currentAverage === visibleRows - 1 && isStreaming} lastRowRef={lastRowRef} isStreaming={isStreaming}>
-                                                    <td><div className="force-name">{hasStreamed ? 'Current Average Score' : (typingTexts[`${executiveIndices.currentAverage}-label`] || 'Current Average Score')}</div></td>
-                                                    <td>{hasStreamed ? overallPosition.currentAverage : (typingTexts[`${executiveIndices.currentAverage}-value`] || overallPosition.currentAverage)}</td>
-                                                    <td style={{ opacity: executiveIndices.currentAverage < visibleRows ? 1 : 0, transition: !isStreaming ? 'none' : 'opacity 0.3s 0.4s' }}>
-                                                        <span className={`status-badge ${getScoreClass(overallPosition.currentAverage)}`}>
-                                                            {overallPosition.currentAverage >= 8 ? 'Excellent' : overallPosition.currentAverage >= 6 ? 'Good' : overallPosition.currentAverage >= 4 ? 'Average' : 'Poor'}
-                                                        </span>
-                                                    </td>
-                                                </StreamingRow>
-                                                <StreamingRow isVisible={executiveIndices.targetAverage < visibleRows} isLast={executiveIndices.targetAverage === visibleRows - 1 && isStreaming} lastRowRef={lastRowRef} isStreaming={isStreaming}>
-                                                    <td><div className="force-name">{hasStreamed ? 'Target Average Score' : (typingTexts[`${executiveIndices.targetAverage}-label`] || 'Target Average Score')}</div></td>
-                                                    <td>{hasStreamed ? overallPosition.targetAverage : (typingTexts[`${executiveIndices.targetAverage}-value`] || overallPosition.targetAverage)}</td>
-                                                    <td style={{ opacity: executiveIndices.targetAverage < visibleRows ? 1 : 0, transition: !isStreaming ? 'none' : 'opacity 0.3s 0.4s' }}>
-                                                        <span className={`status-badge ${getScoreClass(overallPosition.targetAverage)}`}>
-                                                            {overallPosition.targetAverage >= 8 ? 'Excellent' : overallPosition.targetAverage >= 6 ? 'Good' : overallPosition.targetAverage >= 4 ? 'Average' : 'Poor'}
-                                                        </span>
-                                                    </td>
-                                                </StreamingRow>
-                                                <StreamingRow isVisible={executiveIndices.improvementGap < visibleRows} isLast={executiveIndices.improvementGap === visibleRows - 1 && isStreaming} lastRowRef={lastRowRef} isStreaming={isStreaming}>
-                                                    <td><div className="force-name">{hasStreamed ? 'Improvement Gap' : (typingTexts[`${executiveIndices.improvementGap}-label`] || 'Improvement Gap')}</div></td>
-                                                    <td>{hasStreamed ? (overallPosition.targetAverage - overallPosition.currentAverage).toFixed(1) : (typingTexts[`${executiveIndices.improvementGap}-value`] || (overallPosition.targetAverage - overallPosition.currentAverage).toFixed(1))}</td>
-                                                    <td style={{ opacity: executiveIndices.improvementGap < visibleRows ? 1 : 0, transition: !isStreaming ? 'none' : 'opacity 0.3s 0.4s' }}>
-                                                        <span className={`status-badge ${getPerformanceStatusClass(overallPosition.currentAverage, overallPosition.targetAverage)}`}>{getPerformanceStatus(overallPosition.currentAverage, overallPosition.targetAverage)}</span>
-                                                    </td>
-                                                </StreamingRow>
-                                            </tbody>
-                                        </table>
-                                        {overallPosition.strengthAreas && (
-                                            <div className="subsection"><h4>{t("strategic_card1_head4")}</h4><div className="forces-tags">{overallPosition.strengthAreas.map((area, index) => (<span key={index} className="force-tag">{area}</span>))}</div></div>
-                                        )}
-                                        {overallPosition.improvementAreas && (
-                                            <div className="subsection"><h4>{t("strategic_card1_head5")}</h4><div className="forces-tags">{overallPosition.improvementAreas.map((area, index) => (<span key={index} className="force-tag">{area}</span>))}</div></div>
-                                        )}
-                                    </div>
+                <div className="overview-content">
+                    {overallPosition && (
+                        <div className="section-container">
+                            <div className="section-header" onClick={() => toggleSection('executive')}>
+                                <h3>{t("strategic_card1")}</h3>
+                                {expandedSections.executive ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
+                            </div>
+                            <div className={`radar-section-content ${expandedSections.executive === true ? 'expanded' : 'collapsed'}`}>
+                                <div className="table-container">
+                                    <table className="data-table">
+                                        <thead><tr><th>{t("strategic_card1_head1")}</th><th>{t("strategic_card1_head2")}</th><th>{t("strategic_card1_head3")}</th></tr></thead>
+                                        <tbody>
+                                            <StreamingRow isVisible={executiveIndices.currentAverage < visibleRows} isLast={executiveIndices.currentAverage === visibleRows - 1 && isStreaming} lastRowRef={lastRowRef} isStreaming={isStreaming}>
+                                                <td><div className="force-name">{hasStreamed ? 'Current Average Score' : (typingTexts[`${executiveIndices.currentAverage}-label`] || 'Current Average Score')}</div></td>
+                                                <td>{hasStreamed ? overallPosition.currentAverage : (typingTexts[`${executiveIndices.currentAverage}-value`] || overallPosition.currentAverage)}</td>
+                                                <td style={{ opacity: executiveIndices.currentAverage < visibleRows ? 1 : 0, transition: !isStreaming ? 'none' : 'opacity 0.3s 0.4s' }}>
+                                                    <span className={`status-badge ${getScoreClass(overallPosition.currentAverage)}`}>
+                                                        {overallPosition.currentAverage >= 8 ? 'Excellent' : overallPosition.currentAverage >= 6 ? 'Good' : overallPosition.currentAverage >= 4 ? 'Average' : 'Poor'}
+                                                    </span>
+                                                </td>
+                                            </StreamingRow>
+                                            <StreamingRow isVisible={executiveIndices.targetAverage < visibleRows} isLast={executiveIndices.targetAverage === visibleRows - 1 && isStreaming} lastRowRef={lastRowRef} isStreaming={isStreaming}>
+                                                <td><div className="force-name">{hasStreamed ? 'Target Average Score' : (typingTexts[`${executiveIndices.targetAverage}-label`] || 'Target Average Score')}</div></td>
+                                                <td>{hasStreamed ? overallPosition.targetAverage : (typingTexts[`${executiveIndices.targetAverage}-value`] || overallPosition.targetAverage)}</td>
+                                                <td style={{ opacity: executiveIndices.targetAverage < visibleRows ? 1 : 0, transition: !isStreaming ? 'none' : 'opacity 0.3s 0.4s' }}>
+                                                    <span className={`status-badge ${getScoreClass(overallPosition.targetAverage)}`}>
+                                                        {overallPosition.targetAverage >= 8 ? 'Excellent' : overallPosition.targetAverage >= 6 ? 'Good' : overallPosition.targetAverage >= 4 ? 'Average' : 'Poor'}
+                                                    </span>
+                                                </td>
+                                            </StreamingRow>
+                                            <StreamingRow isVisible={executiveIndices.improvementGap < visibleRows} isLast={executiveIndices.improvementGap === visibleRows - 1 && isStreaming} lastRowRef={lastRowRef} isStreaming={isStreaming}>
+                                                <td><div className="force-name">{hasStreamed ? 'Improvement Gap' : (typingTexts[`${executiveIndices.improvementGap}-label`] || 'Improvement Gap')}</div></td>
+                                                <td>{hasStreamed ? (overallPosition.targetAverage - overallPosition.currentAverage).toFixed(1) : (typingTexts[`${executiveIndices.improvementGap}-value`] || (overallPosition.targetAverage - overallPosition.currentAverage).toFixed(1))}</td>
+                                                <td style={{ opacity: executiveIndices.improvementGap < visibleRows ? 1 : 0, transition: !isStreaming ? 'none' : 'opacity 0.3s 0.4s' }}>
+                                                    <span className={`status-badge ${getPerformanceStatusClass(overallPosition.currentAverage, overallPosition.targetAverage)}`}>{getPerformanceStatus(overallPosition.currentAverage, overallPosition.targetAverage)}</span>
+                                                </td>
+                                            </StreamingRow>
+                                        </tbody>
+                                    </table>
+                                    {overallPosition.strengthAreas && (
+                                        <div className="subsection"><h4>{t("strategic_card1_head4")}</h4><div className="forces-tags">{overallPosition.strengthAreas.map((area, index) => (<span key={index} className="force-tag">{area}</span>))}</div></div>
+                                    )}
+                                    {overallPosition.improvementAreas && (
+                                        <div className="subsection"><h4>{t("strategic_card1_head5")}</h4><div className="forces-tags">{overallPosition.improvementAreas.map((area, index) => (<span key={index} className="force-tag">{area}</span>))}</div></div>
+                                    )}
                                 </div>
                             </div>
-                        )}
-                        {dimensions && (
-                            <div className="section-container">
-                                <div className="section-header" onClick={() => toggleSection('dimensions')}>
-                                    <h3>{t("strategic_card2")}</h3>
-                                    {expandedSections.dimensions ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
-                                </div>
-                                <div className={`radar-section-content ${expandedSections.dimensions === true ? 'expanded' : 'collapsed'}`}>
-                                    <div className="table-container">
-                                        <table className="data-table">
-                                            <thead><tr><th>{t("strategic_card2_head1")}</th><th>{t("strategic_card2_head2")}</th><th>{t("strategic_card2_head3")}</th><th>{t("strategic_card2_head4")}</th></tr></thead>
-                                            <tbody>
-                                                {dimensions.map((dimension, index) => {
-                                                    const rowIndex = dimensionIndices[index];
-                                                    const isVisible = rowIndex < visibleRows;
-                                                    return (
-                                                        <StreamingRow key={index} isVisible={isVisible} isLast={rowIndex === visibleRows - 1 && isStreaming} lastRowRef={lastRowRef} isStreaming={isStreaming}>
-                                                            <td><div className="force-name">{hasStreamed ? dimension.name : (typingTexts[`${rowIndex}-name`] || dimension.name)}</div></td>
-                                                            <td style={{ opacity: isVisible ? 1 : 0, transition: !isStreaming ? 'none' : 'opacity 0.3s 0.4s' }}><span className="score-badge" style={{ backgroundColor: getScoreColor(dimension.currentScore) }}>{hasStreamed ? dimension.currentScore : (typingTexts[`${rowIndex}-current`] || dimension.currentScore)}</span></td>
-                                                            <td style={{ opacity: isVisible ? 1 : 0, transition: !isStreaming ? 'none' : 'opacity 0.3s 0.5s' }}><span className="score-badge" style={{ backgroundColor: getScoreColor(dimension.targetScore), opacity: 0.8 }}>{dimension.targetScore}</span></td>
-                                                            <td style={{ opacity: isVisible ? 1 : 0, transition: !isStreaming ? 'none' : 'opacity 0.3s 0.6s' }}><span className="score-badge" style={{ backgroundColor: '#9ca3af' }}>{dimension.industryAverage}</span></td>
-                                                        </StreamingRow>
-                                                    );
-                                                })}
-                                            </tbody>
-                                        </table>
-                                    </div>
+                        </div>
+                    )}
+                    {dimensions && (
+                        <div className="section-container">
+                            <div className="section-header" onClick={() => toggleSection('dimensions')}>
+                                <h3>{t("strategic_card2")}</h3>
+                                {expandedSections.dimensions ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
+                            </div>
+                            <div className={`radar-section-content ${expandedSections.dimensions === true ? 'expanded' : 'collapsed'}`}>
+                                <div className="table-container">
+                                    <table className="data-table">
+                                        <thead><tr><th>{t("strategic_card2_head1")}</th><th>{t("strategic_card2_head2")}</th><th>{t("strategic_card2_head3")}</th><th>{t("strategic_card2_head4")}</th></tr></thead>
+                                        <tbody>
+                                            {dimensions.map((dimension, index) => {
+                                                const rowIndex = dimensionIndices[index];
+                                                const isVisible = rowIndex < visibleRows;
+                                                return (
+                                                    <StreamingRow key={index} isVisible={isVisible} isLast={rowIndex === visibleRows - 1 && isStreaming} lastRowRef={lastRowRef} isStreaming={isStreaming}>
+                                                        <td><div className="force-name">{hasStreamed ? dimension.name : (typingTexts[`${rowIndex}-name`] || dimension.name)}</div></td>
+                                                        <td style={{ opacity: isVisible ? 1 : 0, transition: !isStreaming ? 'none' : 'opacity 0.3s 0.4s' }}><span className="score-badge" style={{ backgroundColor: getScoreColor(dimension.currentScore) }}>{hasStreamed ? dimension.currentScore : (typingTexts[`${rowIndex}-current`] || dimension.currentScore)}</span></td>
+                                                        <td style={{ opacity: isVisible ? 1 : 0, transition: !isStreaming ? 'none' : 'opacity 0.3s 0.5s' }}><span className="score-badge" style={{ backgroundColor: getScoreColor(dimension.targetScore), opacity: 0.8 }}>{dimension.targetScore}</span></td>
+                                                        <td style={{ opacity: isVisible ? 1 : 0, transition: !isStreaming ? 'none' : 'opacity 0.3s 0.6s' }}><span className="score-badge" style={{ backgroundColor: '#9ca3af' }}>{dimension.industryAverage}</span></td>
+                                                    </StreamingRow>
+                                                );
+                                            })}
+                                        </tbody>
+                                    </table>
                                 </div>
                             </div>
-                        )}
-                    </div>
+                        </div>
+                    )}
+                </div>
             </div>
         </div>
     );

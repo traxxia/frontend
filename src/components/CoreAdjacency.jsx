@@ -404,8 +404,8 @@ const CoreAdjacency = ({
                     <div className={`section-container ${expandedSections.coreBusinessDefinition === true ? 'expanded' : 'collapsed'}`}>
                         <div className="table-container">
                             {data.coreBusinessDefinition.description && (
-                                <div className="coreBusinessDefinition" style={{ padding: '1rem', background: '#f8f9fa', borderRadius: '8px', marginBottom: '1rem' }}>
-                                    <p style={{ margin: 0, lineHeight: '1.6' }}>{data.coreBusinessDefinition.description}</p>
+                                <div className="core-definition-container">
+                                    <p>{data.coreBusinessDefinition.description}</p>
                                 </div>
                             )}
                             <table className="data-table">
@@ -455,7 +455,7 @@ const CoreAdjacency = ({
                             ].map(conf => (
                                 data.growthOpportunities[conf.key]?.length > 0 && (
                                     <React.Fragment key={conf.key}>
-                                        <h6 style={{ margin: '1rem 0 0.5rem 0', color: '#2c5282' }}>{t(conf.label)}</h6>
+                                        <h6 className="opportunity-type-header">{t(conf.label)}</h6>
                                         <table className="data-table">
                                             <tbody>
                                                 {data.growthOpportunities[conf.key].map((item, idx) => {
