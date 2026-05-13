@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { User, Building, Loader, ChevronUp, ChevronDown, Search, ChevronLeft, ChevronRight } from 'lucide-react';
+import { User, Building, Loader, ChevronUp, ChevronDown, Search, ChevronLeft, ChevronRight, Check, X } from 'lucide-react';
 import PricingPlanCard from './PricingPlanCard';
 
 const CompanyStep = ({
@@ -217,10 +217,64 @@ const CompanyStep = ({
                 className="pricing-section full-width-field"
               >
                 <label className="section-label">{t("chooseStrategyPlan")} <span className="required">*</span></label>
-                <div className="plans-grid">
-                  {plans.map((p) => (
-                    <PricingPlanCard key={p._id} plan={p} isSelected={selectedPlanId === p._id} onSelect={setSelectedPlanId} />
-                  ))}
+                <div className="st-plans-table-container">
+                  <table className="st-plans-table">
+                    <thead>
+                      <tr>
+                        <th>{t("Features")}</th>
+                        {plans.map(p => (
+                          <th key={p._id} className="st-table-plan-header">
+                            <div className="st-table-plan-name">{t(p.name)}</div>
+                            <div className="st-table-plan-price">
+                              ${p.price}<span className="st-table-plan-period">/{p.period === "year" ? t("yr") : t("mo")}</span>
+                            </div>
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {[
+                        { label: t("Workspaces"), key: "workspaces" },
+                        { label: t("Collaborators"), key: "collaborators" },
+                        { label: t("Viewers"), key: "viewers" },
+                        { label: t("Users"), key: "users" },
+                        { label: t("Projects"), key: "project", isBool: true },
+                        { label: t("Insight Access"), key: "insight", isBool: true },
+                        { label: t("Strategic Access"), key: "strategic", isBool: true },
+                        { label: t("PMF Access"), key: "pmf", isBool: true },
+                      ].map(feat => (
+                        <tr key={feat.key}>
+                          <td>{feat.label}</td>
+                          {plans.map(p => {
+                            const val = p.limits?.[feat.key];
+                            return (
+                              <td key={p._id} className="st-table-feature-cell">
+                                {feat.isBool ? (
+                                  val ? <Check size={18} className="st-table-check-on" /> : <X size={18} className="st-table-check-off" />
+                                ) : (
+                                  val || 0
+                                )}
+                              </td>
+                            );
+                          })}
+                        </tr>
+                      ))}
+                      <tr>
+                        <td></td>
+                        {plans.map(p => (
+                          <td key={p._id} className="st-table-action-cell">
+                            <button 
+                              type="button"
+                              className={`st-table-btn-select ${selectedPlanId === p._id ? 'selected' : ''}`}
+                              onClick={() => setSelectedPlanId(p._id)}
+                            >
+                              {selectedPlanId === p._id ? t("Selected") : t("Select_Plan")}
+                            </button>
+                          </td>
+                        ))}
+                      </tr>
+                    </tbody>
+                  </table>
                 </div>
                 <div ref={plansErrorRef}>
                   {errors.selectedPlanId && <div className="error-message">{errors.selectedPlanId}</div>}

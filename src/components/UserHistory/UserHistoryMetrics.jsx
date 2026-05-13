@@ -9,32 +9,32 @@ const UserHistoryMetrics = ({ users }) => {
 
   const metrics = [
     {
-      title: t('Total Users'),
+      label: t('Total Users'),
       value: users.length,
-      icon: <Users size={20} />,
-      variant: 'primary'
+      icon: Users,
+      iconColor: 'blue'
     },
     {
-      title: t('Admins'),
+      label: t('Admins'),
       value: users.filter(u => ['super_admin', 'company_admin'].includes(u.role_name || u.role)).length,
-      icon: <User size={20} />,
-      variant: 'success'
+      icon: User,
+      iconColor: 'green'
     },
     {
-      title: t('Companies'),
+      label: t('Companies'),
       value: new Set(users.map(u => u.company_id).filter(Boolean)).size,
-      icon: <Building2 size={20} />,
-      variant: 'info'
+      icon: Building2,
+      iconColor: 'indigo'
     },
     {
-      title: t('Active Today'),
+      label: t('Active Today'),
       value: users.filter(u => {
         const lastActive = new Date(u.updated_at || u.created_at);
         const today = new Date();
         return lastActive.toDateString() === today.toDateString();
       }).length,
-      icon: <Activity size={20} />,
-      variant: 'warning'
+      icon: Activity,
+      iconColor: 'orange'
     }
   ];
 

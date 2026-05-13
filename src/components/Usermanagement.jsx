@@ -37,7 +37,7 @@ const UserManagement = ({ onToast }) => {
   };
 
   return (
-    <div className="usermanagement-container p-4">
+    <div className="usermanagement-container">
       <div className="d-flex justify-content-between align-items-center mb-4">
         <h2 className="section-title mb-0">{t('Team Management')}</h2>
       </div>
