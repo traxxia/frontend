@@ -141,8 +141,43 @@ const UpgradeModalContent = ({
                                 </div>
                             </Alert>}
 
-                        <div className="plans-grid mb-4">
-                            {plans.map(plan => <PricingPlanCard key={plan._id} plan={plan} isSelected={selectedPlanId === plan._id} onSelect={setSelectedPlanId} />)}
+                        <div className="selected-plan-summary mb-4">
+                            <h6 className="fw-bold mb-3">{t("Plan Summary")}</h6>
+                            {selectedPlan ? (
+                                <div className="p-3 border rounded shadow-sm bg-light">
+                                    <div className="d-flex justify-content-between align-items-center mb-3">
+                                        <div>
+                                            <div className="fw-bold text-primary h5 mb-1">{t(selectedPlan.name)}</div>
+                                            <div className="text-muted small">{t(selectedPlan.description)}</div>
+                                        </div>
+                                        <div className="text-end">
+                                            <div className="h4 fw-bold mb-0">${selectedPlan.price || selectedPlan.price_usd}</div>
+                                            <div className="text-muted small">/{selectedPlan.period === 'year' ? t('yr') : t('mo')}</div>
+                                        </div>
+                                    </div>
+                                    {selectedPlan.features && selectedPlan.features.length > 0 && (
+                                        <div className="border-top pt-3">
+                                            <div className="small fw-bold mb-2 text-uppercase text-muted" style={{ fontSize: '0.65rem', letterSpacing: '0.05em' }}>
+                                                {t("What's included")}:
+                                            </div>
+                                            <Row className="g-2">
+                                                {selectedPlan.features.map((feat, i) => (
+                                                    <Col xs={6} key={i}>
+                                                        <div className="d-flex align-items-center small">
+                                                            <Check size={12} className="text-success me-2 flex-shrink-0" strokeWidth={3} />
+                                                            <span className="text-truncate">{t(feat)}</span>
+                                                        </div>
+                                                    </Col>
+                                                ))}
+                                            </Row>
+                                        </div>
+                                    )}
+                                </div>
+                            ) : (
+                                <div className="p-3 border rounded text-center text-muted italic">
+                                    {t("No plan selected")}
+                                </div>
+                            )}
                         </div>
 
                         {}

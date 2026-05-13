@@ -579,34 +579,68 @@ const SubscriptionTab = ({
           <div>
             <div className="st-card-title">Available Plans</div>
             <div className="st-card-subtitle">
-              Choose the right plan for your business
+              Compare features and choose the right plan for your business
             </div>
           </div>
         </div>
-        <div className="st-plans-grid">
-          {available_plans.map(p => {
-          return <div key={p._id} className="st-plan-card" onClick={() => handleSelectPlan(p._id)}>
-                <div className="st-pc-header">
-                  <div className="st-pc-name subscription-tab--s1">
-                    {p.name}
-                  </div>
-                  <div className="st-pc-price">
-                    <span className="st-pc-amt">${p.price}</span>
-                    <span className="st-pc-mo">
-                      /{p.period === "year" ? "yr" : "mo"}
-                    </span>
-                  </div>
-                </div>
-                <p className="st-pc-desc">{p.description}</p>
-                <div className="st-pc-divider" />
-                <ul className="st-pc-feats">
-                  {buildFeatureRows(p.limits).map((f, i) => <FeatureRow key={i} label={f.label} active={f.active} />)}
-                </ul>
-                <div className="st-pc-action">
-                  <button className="st-pc-btn-select">Select Plan</button>
-                </div>
-              </div>;
-        })}
+        
+        <div className="st-plans-table-container">
+          <table className="st-plans-table">
+            <thead>
+              <tr>
+                <th>Features</th>
+                {available_plans.map(p => (
+                  <th key={p._id} className="st-table-plan-header">
+                    <div className="st-table-plan-name">{p.name}</div>
+                    <div className="st-table-plan-price">
+                      ${p.price}<span className="st-table-plan-period">/{p.period === "year" ? "yr" : "mo"}</span>
+                    </div>
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {[
+                { label: "Workspaces", key: "workspaces" },
+                { label: "Collaborators", key: "collaborators" },
+                { label: "Viewers", key: "viewers" },
+                { label: "Users", key: "users" },
+                { label: "Projects", key: "project", isBool: true },
+                { label: "Insight Access", key: "insight", isBool: true },
+                { label: "Strategic Access", key: "strategic", isBool: true },
+                { label: "PMF Access", key: "pmf", isBool: true },
+              ].map(feat => (
+                <tr key={feat.key}>
+                  <td>{feat.label}</td>
+                  {available_plans.map(p => {
+                    const val = p.limits?.[feat.key];
+                    return (
+                      <td key={p._id} className="st-table-feature-cell">
+                        {feat.isBool ? (
+                          val ? <Check size={18} className="st-table-check-on" /> : <X size={18} className="st-table-check-off" />
+                        ) : (
+                          val || 0
+                        )}
+                      </td>
+                    );
+                  })}
+                </tr>
+              ))}
+              <tr>
+                <td></td>
+                {available_plans.map(p => (
+                  <td key={p._id} className="st-table-action-cell">
+                    <button 
+                      className="st-table-btn-select"
+                      onClick={() => handleSelectPlan(p._id)}
+                    >
+                      Select Plan
+                    </button>
+                  </td>
+                ))}
+              </tr>
+            </tbody>
+          </table>
         </div>
       </div>
 

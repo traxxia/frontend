@@ -839,3 +839,124 @@
 .subscription-tab--s4 {
   margin-bottom: 1rem;
 }
+
+/* Plans Table */
+.st-plans-table-container {
+    width: 100%;
+    overflow-x: auto;
+    margin-top: 8px;
+    border-radius: 12px;
+    border: 1px solid #e5e7eb;
+}
+
+.st-plans-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 0.875rem;
+}
+
+.st-plans-table th, 
+.st-plans-table td {
+    padding: 16px 20px;
+    border-bottom: 1px solid #f3f4f6;
+    text-align: left;
+}
+
+.st-plans-table th {
+    background: #f9fafb;
+    font-weight: 700;
+    color: #374151;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 0.05em;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.st-plans-table th:first-child,
+.st-plans-table td:first-child {
+    position: sticky;
+    left: 0;
+    z-index: 20;
+    box-shadow: 4px 0 8px rgba(0, 0, 0, 0.04);
+}
+
+.st-plans-table th:first-child {
+    background: #f9fafb;
+    z-index: 30; /* Higher than other sticky headers */
+}
+
+.st-plans-table td:first-child {
+    font-weight: 600;
+    color: #4b5563;
+    background: #fdfdfd;
+    width: 250px;
+    border-right: 1px solid #f3f4f6;
+}
+
+.st-plans-table tr:hover td {
+    background-color: #f9fafb;
+}
+
+.st-plans-table .st-table-plan-header {
+    text-align: center;
+    background: #fff;
+    min-width: 180px;
+}
+
+.st-plans-table .st-table-plan-name {
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: #4f46e5;
+    margin-bottom: 4px;
+}
+
+.st-plans-table .st-table-plan-price {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: #111827;
+}
+
+.st-plans-table .st-table-plan-period {
+    font-size: 0.75rem;
+    color: #6b7280;
+    font-weight: 500;
+}
+
+.st-plans-table .st-table-feature-cell {
+    text-align: center;
+}
+
+.st-plans-table .st-table-check-on {
+    color: #10b981;
+}
+
+.st-plans-table .st-table-check-off {
+    color: #d1d5db;
+}
+
+.st-plans-table .st-table-action-cell {
+    text-align: center;
+    padding: 24px 20px;
+}
+
+.st-plans-table .st-table-btn-select {
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 0.81rem;
+    font-weight: 700;
+    background: #f5f3ff;
+    color: #4f46e5;
+    border: 1.5px solid #e0e7ff;
+    transition: all 0.2s;
+    cursor: pointer;
+    width: 100%;
+}
+
+.st-plans-table .st-table-btn-select:hover {
+    background: #4f46e5;
+    color: #fff;
+    border-color: #4f46e5;
+}
