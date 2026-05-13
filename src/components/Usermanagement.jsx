@@ -14,7 +14,7 @@ import { OverlayTrigger, Tooltip } from "react-bootstrap";
 import { useAuthStore, useProjectStore } from "../store";
 import { usePlanDetails, useCompanies, useAdminUsers, useBusinesses, useProjects, useCompanyCollaborators } from "../hooks/useQueries";
 import { useQueryClient } from "@tanstack/react-query";
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 const CustomToggle = React.forwardRef(({
   onClick,
   disabled

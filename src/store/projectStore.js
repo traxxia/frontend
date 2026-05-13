@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import axios from 'axios';
 import { useAuthStore } from './authStore';
 
-const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
+const API_BASE_URL = import.meta.env.VITE_BACKEND_URL;
 
 const checkAllAccessCache = new Map();
 const teamRankingsCache = new Map();
@@ -495,7 +495,7 @@ export const useProjectStore = create((set, get) => ({
   },
 
   callMLRankingAPI: async (projects) => {
-    const ML_API_BASE_URL = process.env.REACT_APP_ML_BACKEND_URL;
+    const ML_API_BASE_URL = import.meta.env.VITE_ML_BACKEND_URL;
     try {
       const projectList = projects.map(project => ({
         name: project.project_name,

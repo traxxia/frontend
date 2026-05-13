@@ -15,7 +15,7 @@ import { useTranslation } from '../hooks/useTranslation';
 import { useAuthStore } from '../store';
 import { answerService } from '../services/answerService';
 const ITEMS_PER_PAGE = 10;
-const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
+const API_BASE_URL = import.meta.env.VITE_BACKEND_URL;
 const getAuthToken = () => useAuthStore.getState().token;
 const getUserInfo = () => ({
   id: useAuthStore.getState().userId,

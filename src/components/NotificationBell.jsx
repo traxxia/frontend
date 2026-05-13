@@ -17,7 +17,7 @@ const NotificationBell = () => {
   const {
     setSelectedBusinessId
   } = useBusinessStore();
-  const REACT_APP_BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+  const VITE_BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const {
@@ -50,7 +50,7 @@ const NotificationBell = () => {
           const businessName = nameMatch[1].trim();
           try {
             const token = useAuthStore.getState().token;
-            const res = await fetch(`${REACT_APP_BACKEND_URL}/api/businesses`, {
+            const res = await fetch(`${VITE_BACKEND_URL}/api/businesses`, {
               headers: {
                 'Authorization': `Bearer ${token}`
               }
@@ -64,9 +64,7 @@ const NotificationBell = () => {
               if (found) {
                 const foundId = found._id || found.id;
                 targetBusinessId = foundId;
-              } else {
-                console.log("Could not find a business matching the name:", businessName);
-              }
+              }  
             }
           } catch (e) {
             console.error("Failed to resolve business name to ID", e);

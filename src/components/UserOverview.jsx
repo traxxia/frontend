@@ -29,7 +29,7 @@ const UserOverview = ({
     password: ''
   });
   const [currentPage, setCurrentPage] = useState(1);
-  const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
+  const API_BASE_URL = import.meta.env.VITE_BACKEND_URL;
   const token = useAuthStore(state => state.token);
   const queryClient = useQueryClient();
   const {

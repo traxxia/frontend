@@ -34,8 +34,8 @@ export const useBusinessSetup = () => {
   const { t } = useTranslation();
   const { pmf: hasPmfAccess, insight: hasInsightAccess, strategic: hasStrategicAccess, project: hasProjectAccess } = getUserLimits();
 
-  const ML_API_BASE_URL = process.env.REACT_APP_ML_BACKEND_URL || 'http://127.0.0.1:8000';
-  const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
+  const ML_API_BASE_URL = import.meta.env.VITE_ML_BACKEND_URL || 'http://127.0.0.1:8000';
+  const API_BASE_URL = import.meta.env.VITE_BACKEND_URL;
   const swotRef = useRef(null);
   const purchaseCriteriaRef = useRef(null);
   const loyaltyNpsRef = useRef(null);

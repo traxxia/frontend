@@ -3,7 +3,7 @@ import axios from 'axios';
 import MenuBar from '../components/MenuBar';
 import '../styles/observatory.css';
 import { Telescope, BarChart3, MessageSquare, Globe, TrendingUp, ChevronDown, ChevronRight, Clock, Cpu, Zap, ExternalLink, Search, X } from 'lucide-react';
-const API = process.env.REACT_APP_BACKEND_URL;
+const API = import.meta.env.VITE_BACKEND_URL;
 function getAuthHeaders() {
   try {
     const raw = sessionStorage.getItem('auth-storage') || localStorage.getItem('auth-storage') || '{}';
@@ -191,8 +191,7 @@ function CostBadge({
   usage
 }) {
   const cost = calculateCost(model, usage);
-  if (cost === null) {
-    console.log(`[Observatory] Cost calculation returned null for model: ${model}`);
+  if (cost === null) { 
     return null;
   }
   if (cost === 0 && (usage?.prompt_tokens > 0 || usage?.completion_tokens > 0)) {

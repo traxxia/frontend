@@ -1,15 +1,16 @@
-import { useLanguageStore } from '../store/languageStore';
+import { useTranslation as useI18nTranslation } from 'react-i18next';
+import { useCallback } from 'react';
 
 export const useTranslation = () => {
-  const currentLanguage = useLanguageStore(state => state.currentLanguage);
-  const translations = useLanguageStore(state => state.translations);
-  const t = useLanguageStore(state => state.t);
-  const setLanguage = useLanguageStore(state => state.setLanguage);
+  const { t, i18n } = useI18nTranslation();
+
+  const changeLanguage = useCallback((lang) => {
+    i18n.changeLanguage(lang);
+  }, [i18n]);
 
   return {
     t,
-    currentLanguage,
-    translations,
-    changeLanguage: setLanguage,
+    currentLanguage: i18n.language,
+    changeLanguage,
   };
 };

@@ -29,7 +29,7 @@ const QuestionManagement = ({
   const [collapsedPhases, setCollapsedPhases] = useState({});
   const [draggedItem, setDraggedItem] = useState(null);
   const [isReordering, setIsReordering] = useState(false);
-  const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
+  const API_BASE_URL = import.meta.env.VITE_BACKEND_URL;
   const getAuthToken = () => useAuthStore.getState().token;
   const phases = ['initial', 'essential', 'advanced'];
   const questionsByPhase = React.useMemo(() => {

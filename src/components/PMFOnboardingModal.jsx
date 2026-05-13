@@ -5,7 +5,6 @@ import Select from "react-select";
 import { useTranslation } from '../hooks/useTranslation';
 import { COUNTRIES, INDUSTRIES_BY_CATEGORY, STRATEGIC_OBJECTIVES, KEY_CHALLENGES, DIFFERENTIATION_OPTIONS, USAGE_CONTEXT_OPTIONS, TOTAL_STEPS, FIELD_DESCRIPTIONS } from '../config/pmfOnboardingConfig';
 import { useNavigate } from "react-router-dom";
-import { PMF_ONBOARDING_CONFIG } from "../config/pmfOnboardingConfig";
 import { AnalysisApiService } from "../services/analysisApiService";
 import '../styles/pmf-onboarding.css';
 import { useAuthStore } from '../store/authStore';
@@ -23,8 +22,8 @@ const PMFOnboardingModal = ({
   } = useTranslation();
   const modalBodyRef = useRef(null);
   const errorRef = useRef(null);
-  const ML_API_BASE_URL = process.env.REACT_APP_ML_BACKEND_URL;
-  const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
+  const ML_API_BASE_URL = import.meta.env.VITE_ML_BACKEND_URL;
+  const API_BASE_URL = import.meta.env.VITE_BACKEND_URL;
   const getAuthToken = () => useAuthStore.getState().token;
   const analysisService = new AnalysisApiService(ML_API_BASE_URL, API_BASE_URL, getAuthToken);
   const [currentStep, setCurrentStep] = useState(1);

@@ -1,42 +1,19 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import { staticTranslations, initializeTranslations } from '../utils/translations';
+import i18n from '../i18n';
 
 export const useLanguageStore = create(
   persist(
-    (set, get) => ({
+    (set) => ({
       currentLanguage: 'en',
-      translations: staticTranslations['en'] || {},
 
       setLanguage: async (lang) => {
-        if (!window.appTranslations) {
-          initializeTranslations();
-        }
-        const translations = window.appTranslations?.[lang] || staticTranslations[lang] || {};
-        set({ currentLanguage: lang, translations });
-        window.dispatchEvent(new CustomEvent('languageChanged', {
-          detail: { language: lang }
-        }));
+        await i18n.changeLanguage(lang);
+        set({ currentLanguage: lang });
       },
 
       t: (key, params = {}) => {
-        const state = get();
-        let text = state.translations[key] ||
-                   staticTranslations[state.currentLanguage]?.[key] ||
-                   key;
-
-        Object.keys(params).forEach(pKey => {
-          text = text.replace(new RegExp('{{' + pKey + '}}', 'g'), params[pKey]);
-        });
-        return text;
-      },
-
-      loadTranslations: (lang) => {
-        if (!window.appTranslations) {
-          initializeTranslations();
-        }
-        const translations = window.appTranslations?.[lang] || staticTranslations[lang] || {};
-        set({ translations });
+        return i18n.t(key, params);
       },
     }),
     {

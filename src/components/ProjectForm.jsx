@@ -310,7 +310,7 @@ const ProjectForm = ({
         }
         const fetchPromise = (async () => {
           try {
-            const response = await fetch(`${process.env.REACT_APP_BACKEND_URL || "http://localhost:5000"}/api/businesses/${selectedBusinessId}/eligible-owners`, {
+            const response = await fetch(`${import.meta.env.VITE_BACKEND_URL || "http://localhost:5000"}/api/businesses/${selectedBusinessId}/eligible-owners`, {
               headers: {
                 "Authorization": `Bearer ${useAuthStore.getState().token}`
               }

@@ -21,8 +21,8 @@ const PMFInsightsTab = ({
   const [overwrittenBy, setOverwrittenBy] = useState("");
   const userRole = (useAuthStore.getState().userRole || useAuthStore.getState().userRole || "").toLowerCase();
   const isViewer = userRole === "viewer";
-  const ML_API_BASE_URL = process.env.REACT_APP_ML_BACKEND_URL;
-  const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
+  const ML_API_BASE_URL = import.meta.env.VITE_ML_BACKEND_URL;
+  const API_BASE_URL = import.meta.env.VITE_BACKEND_URL;
   const getAuthToken = () => useAuthStore.getState().token;
   const analysisService = new AnalysisApiService(ML_API_BASE_URL, API_BASE_URL, getAuthToken);
   useEffect(() => {

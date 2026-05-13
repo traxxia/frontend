@@ -3,8 +3,8 @@ import { useAuthStore } from './authStore';
 import { AnalysisApiService, PHASE_API_CONFIG } from '../services/analysisApiService';
 import { useUIStore } from './uiStore';
 
-const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
-const ML_API_BASE_URL = process.env.REACT_APP_ML_BACKEND_URL;
+const API_BASE_URL = import.meta.env.VITE_BACKEND_URL;
+const ML_API_BASE_URL = import.meta.env.VITE_ML_BACKEND_URL;
 const initialState = {
   questions: [],
   questionsLoaded: false,

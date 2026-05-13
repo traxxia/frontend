@@ -53,7 +53,7 @@ const Aiassistant = ({ businessId: propBusinessId, projectId, pageContext, isDis
 
     try {
       const response = await axios.get(
-        `${process.env.REACT_APP_BACKEND_URL}/api/companies/ai-usage/${businessId}`,
+        `${import.meta.env.VITE_BACKEND_URL}/api/companies/ai-usage/${businessId}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       if (response.data) {
@@ -81,7 +81,7 @@ const Aiassistant = ({ businessId: propBusinessId, projectId, pageContext, isDis
         try {
           const resolvedProjectId = projectId || 'global';
           const response = await axios.get(
-            `${process.env.REACT_APP_BACKEND_URL}/ai-chat/history/${resolvedProjectId}`,
+            `${import.meta.env.VITE_BACKEND_URL}/ai-chat/history/${resolvedProjectId}`,
             { headers: { Authorization: `Bearer ${token}` } }
           );
           const introMessage = {
@@ -116,7 +116,7 @@ const Aiassistant = ({ businessId: propBusinessId, projectId, pageContext, isDis
       if (projectId) body.project_id = projectId;
 
       await axios.post(
-        `${process.env.REACT_APP_BACKEND_URL}/ai-chat/history`,
+        `${import.meta.env.VITE_BACKEND_URL}/ai-chat/history`,
         body,
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -136,7 +136,7 @@ const Aiassistant = ({ businessId: propBusinessId, projectId, pageContext, isDis
     try {
       const resolvedProjectId = projectId || 'global';
       await axios.delete(
-        `${process.env.REACT_APP_BACKEND_URL}/ai-chat/history/${resolvedProjectId}`,
+        `${import.meta.env.VITE_BACKEND_URL}/ai-chat/history/${resolvedProjectId}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setMessages([{ role: "assistant", text: "Hi! How can I help you today? 👋" }]);
@@ -164,7 +164,7 @@ const Aiassistant = ({ businessId: propBusinessId, projectId, pageContext, isDis
 
     try {
       const usageResponse = await axios.get(
-        `${process.env.REACT_APP_BACKEND_URL}/api/companies/ai-usage/${businessId}`,
+        `${import.meta.env.VITE_BACKEND_URL}/api/companies/ai-usage/${businessId}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
@@ -198,7 +198,7 @@ const Aiassistant = ({ businessId: propBusinessId, projectId, pageContext, isDis
         }
       }
 
-      const response = await fetch(process.env.REACT_APP_AI_CHAT_URL, {
+      const response = await fetch(import.meta.env.VITE_AI_CHAT_URL, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -223,12 +223,12 @@ const Aiassistant = ({ businessId: propBusinessId, projectId, pageContext, isDis
         if (tokensUsed > 0) {
           try {
             await axios.post(
-              `${process.env.REACT_APP_BACKEND_URL}/api/companies/update-ai-usage`,
+              `${import.meta.env.VITE_BACKEND_URL}/api/companies/update-ai-usage`,
               { business_id: businessId, tokens_used: tokensUsed },
               { headers: { Authorization: `Bearer ${token}` } }
             );
             const updatedUsageResp = await axios.get(
-              `${process.env.REACT_APP_BACKEND_URL}/api/companies/ai-usage/${businessId}`,
+              `${import.meta.env.VITE_BACKEND_URL}/api/companies/ai-usage/${businessId}`,
               { headers: { Authorization: `Bearer ${token}` } }
             );
 
@@ -253,7 +253,7 @@ const Aiassistant = ({ businessId: propBusinessId, projectId, pageContext, isDis
         setMessages((prev) => [...prev, { role: "assistant", text: assistantText }]);
         await saveMessageToHistory("assistant", assistantText);
         axios.post(
-          `${process.env.REACT_APP_BACKEND_URL}/ai-chat/log-turn`,
+          `${import.meta.env.VITE_BACKEND_URL}/ai-chat/log-turn`,
           {
             user_input: userText,
             system_prompt: responseData?.systemPrompt || null,

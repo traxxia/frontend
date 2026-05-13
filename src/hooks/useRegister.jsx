@@ -7,7 +7,7 @@ import { usePlans, useCompanies } from './useQueries';
 export const useRegister = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
+  const API_BASE_URL = import.meta.env.VITE_BACKEND_URL;
 
   const [activeTab, setActiveTab] = useState(1);
   const [form, setForm] = useState({

@@ -26,7 +26,7 @@ const CapabilityHeatmap = ({
   const {
     t
   } = useTranslation();
-  const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
+  const API_BASE_URL = import.meta.env.VITE_BACKEND_URL;
   const getAuthToken = () => useAuthStore.getState().token;
   const extractCapabilityData = data => {
     if (!data) return null;

@@ -68,7 +68,7 @@ const UserTour = () => {
 
   const tourCompleted = useAuthStore(state => state.tourCompleted);
   const userRole = useAuthStore(state => state.userRole);
-  const API_BASE_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5000';
+  const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
   useEffect(() => {
     const handleForceComplete = (e) => {
       const explicitStatus = e.detail;

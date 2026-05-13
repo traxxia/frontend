@@ -8,7 +8,7 @@ import axios from "axios";
 import "../styles/RankProjectsPanel.css";
 import { validateRationale } from "../utils/validation";
 import ConfirmationModal from "./ConfirmationModal";
-import { Checkbox } from "lucide-react";
+
 const isLaunched = p => {
   const ls = p?.launch_status?.toLowerCase();
   return ls === 'launched' || ls === 'pending_launch';

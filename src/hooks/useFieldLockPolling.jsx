@@ -25,7 +25,7 @@ export const useFieldLockPolling = (projectId, enabled = true) => {
     const fetchPromise = (async () => {
       try {
         const res = await axios.get(
-          `${process.env.REACT_APP_BACKEND_URL}/api/project-field-locks/${projectId}/lock`,
+          `${import.meta.env.VITE_BACKEND_URL}/api/project-field-locks/${projectId}/lock`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
         const data = res.data;

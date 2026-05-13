@@ -49,7 +49,7 @@ const AuditTrail = ({
     phaseAnalysisArray: []
   });
   const [selectedEntry, setSelectedEntry] = useState(null);
-  const REACT_APP_BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+  const VITE_BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
   const closeModal = () => {
     setModalData({
       isOpen: false,
@@ -204,7 +204,7 @@ const AuditTrail = ({
           [entry._id]: true
         }));
         const token = useAuthStore.getState().token;
-        const response = await fetch(`${REACT_APP_BACKEND_URL}/api/admin/audit-trail/${entry._id}/analysis-data`, {
+        const response = await fetch(`${VITE_BACKEND_URL}/api/admin/audit-trail/${entry._id}/analysis-data`, {
           headers: {
             'Authorization': `Bearer ${token}`
           }

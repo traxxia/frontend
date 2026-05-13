@@ -12,7 +12,7 @@ const MenuBar = () => {
   const {
     t
   } = useTranslation();
-  const REACT_APP_BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+  const VITE_BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
   const isAdmin = useAuthStore(state => state.isAdmin);
   const isSuperAdmin = useAuthStore(state => state.isSuperAdmin());
   const isObservatory = useAuthStore(state => state.isObservatory);
@@ -26,7 +26,7 @@ const MenuBar = () => {
     try {
       const token = useAuthStore.getState().token;
       if (token) {
-        await fetch(`${REACT_APP_BACKEND_URL}/api/logout`, {
+        await fetch(`${VITE_BACKEND_URL}/api/logout`, {
           method: "POST",
           headers: {
             Authorization: `Bearer ${token}`,
@@ -55,7 +55,7 @@ const MenuBar = () => {
           {}
           <div className="navbar-left">
             {companyLogo && <div className="company-logo-container" onClick={() => navigate("/dashboard")}>
-                <img src={companyLogo && companyLogo.startsWith("/") ? `${REACT_APP_BACKEND_URL}${companyLogo}` : companyLogo} alt={companyName ? `${companyName} Logo` : t("company_logo_alt") || "Company Logo"} className="header-company-logo" onError={e => {
+                <img src={companyLogo && companyLogo.startsWith("/") ? `${VITE_BACKEND_URL}${companyLogo}` : companyLogo} alt={companyName ? `${companyName} Logo` : t("company_logo_alt") || "Company Logo"} className="header-company-logo" onError={e => {
               e.target.style.display = "none";
             }} />
               </div>}

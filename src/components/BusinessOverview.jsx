@@ -8,7 +8,7 @@ import "../styles/AdminTableStyles.css";
 import { useAuthStore } from '../store/authStore';
 import { useAdminBusinesses } from '../hooks/useQueries';
 import { useQueryClient } from '@tanstack/react-query';
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 const BusinessOverview = ({
   onToast
 }) => {

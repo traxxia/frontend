@@ -17,13 +17,8 @@ const preprocessAlerts = (markdown) => {
     // Replace each alert type
     for (const [marker, config] of Object.entries(alertTypes)) {
         const regex = new RegExp(`^>\\s*${marker.replace('[', '\\[').replace(']', '\\]')}\\s*\\n((?:>.*\\n?)*)`, 'gm');
-        console.log(`Testing marker: ${marker}`);
-        console.log(`Regex: ${regex}`);
-        console.log(`Initial match: ${processed.match(regex)}`);
 
-        processed = processed.replace(regex, (match, content) => {
-            console.log(`Found match: "${match}"`);
-            console.log(`Content: "${content}"`);
+        processed = processed.replace(regex, (match, content) => { 
             // Extract content from blockquote lines
             const lines = content.split('\\n')
                 .map(line => line.replace(/^>\\s?/, '').trim())
@@ -48,9 +43,5 @@ ${lines}
 
     return processed;
 };
-
-console.log('=== INPUT ===');
-console.log(testMarkdown);
-console.log('\\n=== OUTPUT ===');
-const result = preprocessAlerts(testMarkdown);
-console.log(result);
+ 
+const result = preprocessAlerts(testMarkdown); 

@@ -220,7 +220,7 @@ const UpgradeModal = ({
     if (!show) return null;
     const [stripeJs, reactStripeJs] = await Promise.all([import('@stripe/stripe-js'), import('@stripe/react-stripe-js')]);
     setStripeComponents(reactStripeJs);
-    return stripeJs.loadStripe(process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY);
+    return stripeJs.loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
   }, [show]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -230,7 +230,7 @@ const UpgradeModal = ({
   const [selectedPlanId, setSelectedPlanId] = useState(null);
   const [showConfigurationModal, setShowConfigurationModal] = useState(false);
   const [configurationData, setConfigurationData] = useState(null);
-  const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
+  const API_BASE_URL = import.meta.env.VITE_BACKEND_URL;
   useEffect(() => {
     if (show) {
       fetchData();

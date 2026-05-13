@@ -32,7 +32,7 @@ const AcademyFeedback = ({
       console.warn('Could not read userId from authStore', e);
     }
     try {
-      const baseUrl = process.env.REACT_APP_BACKEND_URL || '';
+      const baseUrl = import.meta.env.VITE_BACKEND_URL || '';
       const response = await fetch(`${baseUrl}/api/academy-feedback`, {
         method: 'POST',
         headers: {

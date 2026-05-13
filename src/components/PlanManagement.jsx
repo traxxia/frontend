@@ -8,7 +8,7 @@ import { useAuthStore } from '../store/authStore';
 import { usePlans } from '../hooks/useQueries';
 import { useQueryClient } from '@tanstack/react-query';
 import '../styles/PlanManagement.css';
-const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
+const API_BASE_URL = import.meta.env.VITE_BACKEND_URL;
 const PlanModal = ({
   show,
   plan,

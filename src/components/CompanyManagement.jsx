@@ -24,7 +24,7 @@ const CompanyEditModal = ({
   const [isSaving, setIsSaving] = useState(false);
   const [errors, setErrors] = useState({});
   const fileInputRef = useRef(null);
-  const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
+  const API_BASE_URL = import.meta.env.VITE_BACKEND_URL;
   const token = useAuthStore(state => state.token);
   const handleFileChange = e => {
     const file = e.target.files[0];
@@ -248,7 +248,7 @@ const CompanyManagement = ({
   const pageSize = 10;
   const isSuperAdmin = userRole === 'super_admin';
   const isCompanyAdmin = userRole === 'company_admin';
-  const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
+  const API_BASE_URL = import.meta.env.VITE_BACKEND_URL;
   const initializedRef = useRef(false);
   const loadCompanies = async () => {
     try {

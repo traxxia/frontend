@@ -47,7 +47,7 @@ const Register = () => {
         import('@stripe/react-stripe-js')
       ]);
       setStripeComponents(reactStripeJs);
-      return stripeJs.loadStripe(process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY);
+      return stripeJs.loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
     }
     return null;
   }, [activeTab, isNewCompany]);

@@ -35,8 +35,8 @@ const ExcelAnalysisManager = ({
     t
   } = useTranslation();
   const userRole = useAuthStore(state => state.userRole);
-  const ML_API_BASE_URL = process.env.REACT_APP_ML_BACKEND_URL || 'http://127.0.0.1:8000';
-  const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
+  const ML_API_BASE_URL = import.meta.env.VITE_ML_BACKEND_URL || 'http://127.0.0.1:8000';
+  const API_BASE_URL = import.meta.env.VITE_BACKEND_URL;
   const getAuthToken = () => useAuthStore.getState().token;
   const excelAnalysisService = new ExcelAnalysisService(ML_API_BASE_URL, getAuthToken, (endpoint, loading) => {
     if (endpoint === 'excel-analysis') {

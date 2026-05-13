@@ -222,7 +222,7 @@ const StrategicAnalysis = ({
         };
 
         try {
-          await axios.post(`${process.env.REACT_APP_BACKEND_URL}/api/projects`, payload, {
+          await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/projects`, payload, {
             headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" }
           });
         } catch (postErr) {
@@ -286,8 +286,7 @@ const StrategicAnalysis = ({
 
   const renderStrategicContent = () => {
     const analysisData = localStrategicData?.strategic_analysis || localStrategicData;
-    const recommendations = analysisData?.strategic_recommendations;
-    console.log("StrategicAnalysis recommendations:", recommendations);
+    const recommendations = analysisData?.strategic_recommendations; 
     if (!recommendations) return null;
 
     return (
