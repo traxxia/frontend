@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { useGlobalQuestions, useConversations } from '../../../hooks/useQueries';
-import { useAuthStore } from '../../../store/authStore';
+import { useGlobalQuestions, useConversations } from '@/hooks/useQueries';
+import { useAuthStore } from '@/store/authStore';
 
 export const useChatManager = (selectedBusinessId, {
   onNewAnswer,

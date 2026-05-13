@@ -4,13 +4,13 @@ import { useTranslation } from "../hooks/useTranslation";
 import FinancialTemplatesPopup from './FinancialTemplatesPopup';
 
 // Hooks
-import { useChatManager } from './Chat/hooks/useChatManager';
-import { useChatFile } from './Chat/hooks/useChatFile';
+import { useChatManager } from '@/components/Chat/hooks/useChatManager';
+import { useChatFile } from '@/components/Chat/hooks/useChatFile';
 
 // Components
-import ChatMessages from './Chat/ChatMessages';
-import ChatInput from './Chat/ChatInput';
-import ChatStatus from './Chat/ChatStatus';
+import ChatMessages from '@/components/Chat/ChatMessages';
+import ChatInput from '@/components/Chat/ChatInput';
+import ChatStatus from '@/components/Chat/ChatStatus';
 
 import "../styles/ChatComponent.css";
 

@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
-import { useAuthStore } from '../store';
+import { useAuthStore } from '@/store';
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 

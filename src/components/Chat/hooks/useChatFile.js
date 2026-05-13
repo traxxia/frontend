@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { detectTemplateType, validateAgainstTemplate } from '../../../utils/templateValidator';
-import { useAuthStore } from '../../../store/authStore';
+import { detectTemplateType, validateAgainstTemplate } from '@/utils/templateValidator';
+import { useAuthStore } from '@/store/authStore';
 
 export const useChatFile = (selectedBusinessId, { onFileUploaded }) => {
   const [isFileUploading, setIsFileUploading] = useState(false);
