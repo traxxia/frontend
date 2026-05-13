@@ -154,7 +154,7 @@ export const useAnalysisStore = create((set, get) => ({
 
   resetAnalysis: () => set(initialState),
 
-  fetchAnalysisData: async (businessId, skipLoadingFlag = false, forceRefresh = false) => {
+  fetchAnalysisData: async (businessId, skipLoadingFlag = false, forceRefresh = false, skipReset = false) => {
     if (!businessId) return;
     const { token } = useAuthStore.getState();
     if (!token) return;
@@ -163,23 +163,26 @@ export const useAnalysisStore = create((set, get) => ({
     
     // Always reset the analysis-related state when fetching for a potentially different business
     // or when forcing a refresh. This prevents data "bleeding" between different business contexts.
-    const resetData = {
-      swotAnalysis: null, purchaseCriteria: null, loyaltyNPS: null,
-      portersData: null, pestelData: null, fullSwotData: null,
-      competitiveAdvantage: null, strategicData: null,
-      expandedCapability: null, strategicRadar: null,
-      productivityData: null, maturityData: null,
-      competitiveLandscape: null, coreAdjacency: null,
-      profitabilityData: null, growthTrackerData: null,
-      liquidityEfficiencyData: null, investmentPerformanceData: null,
-      leverageRiskData: null,
-      financialBalanceData: null, costEfficiencyData: null,
-      operationalEfficiencyData: null, financialPerformanceData: null,
-      channelEffectivenessData: null, channelHeatmapData: null,
-      customerSegmentationData: null, cultureProfileData: null,
-      strategicGoalsData: null,
-    };
-    set(resetData);
+    // However, skip it if skipReset is explicitly true (e.g. when switching tabs for the same business)
+    if (!skipReset) {
+      const resetData = {
+        swotAnalysis: null, purchaseCriteria: null, loyaltyNPS: null,
+        portersData: null, pestelData: null, fullSwotData: null,
+        competitiveAdvantage: null, strategicData: null,
+        expandedCapability: null, strategicRadar: null,
+        productivityData: null, maturityData: null,
+        competitiveLandscape: null, coreAdjacency: null,
+        profitabilityData: null, growthTrackerData: null,
+        liquidityEfficiencyData: null, investmentPerformanceData: null,
+        leverageRiskData: null,
+        financialBalanceData: null, costEfficiencyData: null,
+        operationalEfficiencyData: null, financialPerformanceData: null,
+        channelEffectivenessData: null, channelHeatmapData: null,
+        customerSegmentationData: null, cultureProfileData: null,
+        strategicGoalsData: null,
+      };
+      set(resetData);
+    }
 
     try {
       const apiService = getApiService();

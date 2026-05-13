@@ -13,6 +13,7 @@ import { useAccessControl } from "../hooks/useAccessControl";
 import RankProjectsPanel from "./RankProjectsPanel";
 import TeamRankingsView from "./TeamRankingsView";
 import ToastNotifications from "./ToastNotifications";
+import { AI_PAGE_CONTEXTS } from "../utils/aiContexts";
 import "../styles/ProjectsSection.css";
 
 const RankingSection = ({ isArchived, companyAdminIds, setActiveTab }) => {
@@ -52,6 +53,14 @@ const RankingSection = ({ isArchived, companyAdminIds, setActiveTab }) => {
 
   // Sync isArchived prop
   useEffect(() => { setApiIsArchived(isArchived); }, [isArchived]);
+
+  useEffect(() => {
+    window.dispatchEvent(
+      new CustomEvent("ai_context_changed", {
+        detail: { pageContext: AI_PAGE_CONTEXTS.RANKING }
+      })
+    );
+  }, []);
 
   // ─── Rank / AI rank maps ─────────────────────────────────────────────────────
   const normalizeId = (id) => (id ? String(id) : "");

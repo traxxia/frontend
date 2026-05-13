@@ -22,13 +22,13 @@ const isPhaseCompleted = (phase, questions, userAnswers, completedQuestions) => 
     if (mandatoryQuestions.length === 0) return false;
 
     return mandatoryQuestions.every((q) => {
-        const questionId = q._id;
+        const questionId = q._id || q.id || q.question_id;
         return (userAnswers[questionId] && userAnswers[questionId].trim()) ||
             checkHas(completedQuestions, questionId);
     });
 };
 
-const getUnlockedFeatures = (questions, userAnswers, completedQuestions, hasUploadedDocument) => {
+export const getUnlockedFeatures = (questions, userAnswers, completedQuestions, hasUploadedDocument) => {
     if (!questions || !questions.length) return {
         advanced: true,
         analysis: false,
@@ -52,7 +52,8 @@ const getUnlockedFeatures = (questions, userAnswers, completedQuestions, hasUplo
         const lowerPhase = phaseName.toLowerCase();
         return questions.some(q => {
             const qPhase = (q.phase || 'initial').toLowerCase();
-            return qPhase === lowerPhase && hasAnswer(q._id);
+            const qId = q._id || q.id || q.question_id;
+            return qPhase === lowerPhase && hasAnswer(qId);
         });
     };
 
@@ -210,15 +211,13 @@ const PhaseManager = ({
                     }
                 }
             }
-        } catch (error) {
-            console.error(`Error in simplified phase completion for ${phase}:`, error);
         } finally {
             isRegeneratingRef.current = false;
         }
     };
 
     const getQuestionPhase = (questionId) => {
-        const question = questions.find(q => q._id === questionId);
+        const question = questions.find(q => (q._id || q.id || q.question_id) === questionId);
         return question ? question.phase : null;
     };
 
@@ -244,7 +243,7 @@ const PhaseManager = ({
             }
         } else if (questionPhase === 'essential') {
             const essentialQuestions = questions.filter(q => q.phase === PHASES.ESSENTIAL);
-            const completedEssentialQuestions = essentialQuestions.filter(q => newCompletedSet.has(q._id));
+            const completedEssentialQuestions = essentialQuestions.filter(q => newCompletedSet.has(q._id || q.id || q.question_id));
             const isEssentialCompleted = essentialQuestions.length > 0 && completedEssentialQuestions.length === essentialQuestions.length;
 
             if (isEssentialCompleted && !completedPhases.has('essential')) {
@@ -252,7 +251,7 @@ const PhaseManager = ({
             }
         } else if (questionPhase === 'advanced') {
             const advancedQuestions = questions.filter(q => q.phase === PHASES.ADVANCED);
-            const completedAdvancedQuestions = advancedQuestions.filter(q => newCompletedSet.has(q._id));
+            const completedAdvancedQuestions = advancedQuestions.filter(q => newCompletedSet.has(q._id || q.id || q.question_id));
             const isAdvancedCompleted = advancedQuestions.length > 0 && completedAdvancedQuestions.length === advancedQuestions.length;
 
             if (isAdvancedCompleted && !completedPhases.has('advanced')) {
@@ -298,13 +297,13 @@ const PhaseManager = ({
 
     const canGenerateFullSwot = () => {
         const essentialQuestions = questions.filter(q => q.phase === PHASES.ESSENTIAL);
-        const completedEssentialQuestions = essentialQuestions.filter(q => checkHas(completedQuestions, q._id));
+        const completedEssentialQuestions = essentialQuestions.filter(q => checkHas(completedQuestions, q._id || q.id || q.question_id));
         return essentialQuestions.length > 0 && completedEssentialQuestions.length === essentialQuestions.length;
     };
 
     const canGenerateAdvancedPhase = () => {
         const advancedQuestions = questions.filter(q => q.phase === PHASES.ADVANCED);
-        const completedAdvancedQuestions = advancedQuestions.filter(q => checkHas(completedQuestions, q._id));
+        const completedAdvancedQuestions = advancedQuestions.filter(q => checkHas(completedQuestions, q._id || q.id || q.question_id));
         return advancedQuestions.length > 0 && completedAdvancedQuestions.length === advancedQuestions.length;
     };
 
