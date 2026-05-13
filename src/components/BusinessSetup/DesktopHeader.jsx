@@ -138,7 +138,7 @@ const DesktopHeader = () => {
           </div>
 
           {}
-          {(hasPmfAccess || hasProjectAccess) && (
+          {(hasPmfAccess || (hasProjectAccess && showProjectsTab)) && (
             <div className={`nav-dropdown-wrapper ${activeNavDropdown === 'execution' ? 'open' : ''}`}>
               <button
                 className={`nav-dropdown-trigger ${['priorities', 'bets', 'ranking', 'decision-logs'].includes(activeTab) ? 'active' : ''}`}
@@ -165,7 +165,7 @@ const DesktopHeader = () => {
                       <span>{t("Priorities")}</span>
                     </button>
                   )}
-                  {hasProjectAccess && (
+                  {hasProjectAccess && showProjectsTab && (
                     <>
                       <div className="dropdown-section-label">{t("Projects")}</div>
                       <button

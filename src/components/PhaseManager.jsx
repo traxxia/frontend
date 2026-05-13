@@ -62,6 +62,15 @@ export const getUnlockedFeatures = (questions, userAnswers, completedQuestions, 
     const hasAnyAdvanced = checkPhase('advanced');
     const hasDoc = !!hasUploadedDocument;
 
+    console.log('DEBUG [getUnlockedFeatures]:', {
+        hasAnyInitial,
+        hasAnyEssential,
+        hasAnyAdvanced,
+        hasDoc,
+        userAnswersCount: Object.keys(userAnswers || {}).length,
+        completedQuestionsCount: (completedQuestions || []).length || (completedQuestions?.size || 0)
+    });
+
     return {
         advanced: true,
         analysis: hasAnyInitial || hasAnyEssential || hasAnyAdvanced || hasDoc,

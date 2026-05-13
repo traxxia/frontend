@@ -296,8 +296,9 @@ const MobileHeader = () => {
                 </div>
               </div>
 
-              <div className="mobile-nav-group mt-4">
-                <div className="mobile-nav-group-header">{t("Projects")}</div>
+              {(hasPmfAccess || (hasProjectAccess && showProjectsTab)) && (
+                <div className="mobile-nav-group mt-4">
+                  <div className="mobile-nav-group-header">{t("Projects")}</div>
                 {hasPmfAccess && (
                   <button
                     className={`mobile-menu-item ${activeTab === "priorities" ? "active" : ""}`}
@@ -307,49 +308,50 @@ const MobileHeader = () => {
                     <span>{t("Priorities")}</span>
                   </button>
                 )}
-                {hasProjectAccess && (
-                  <div className="mobile-nav-sub-group mt-3">
-                    <div className="mobile-nav-sub-group-header">{t("Projects")}</div>
-                    <button
-                      className={`mobile-menu-item ${activeTab === 'bets' && useProjectStore.getState().viewMode === 'projects' ? 'active' : ''}`}
-                      onClick={() => {
-                        useProjectStore.getState().setViewMode('projects');
-                        setActiveTab('bets');
-                        closeModal('mobileMenu');
-                      }}
-                    >
-                      <Briefcase size={18} />
-                      <span>{t("Bets")}</span>
-                    </button>
+                  {hasProjectAccess && showProjectsTab && (
+                    <div className="mobile-nav-sub-group mt-3">
+                      <div className="mobile-nav-sub-group-header">{t("Projects")}</div>
+                      <button
+                        className={`mobile-menu-item ${activeTab === 'bets' && useProjectStore.getState().viewMode === 'projects' ? 'active' : ''}`}
+                        onClick={() => {
+                          useProjectStore.getState().setViewMode('projects');
+                          setActiveTab('bets');
+                          closeModal('mobileMenu');
+                        }}
+                      >
+                        <Briefcase size={18} />
+                        <span>{t("Bets")}</span>
+                      </button>
 
-                    <button
-                      className={`mobile-menu-item ${activeTab === 'ranking' ? 'active' : ''}`}
-                      onClick={() => {
-                        useProjectStore.getState().setViewMode('ranking');
-                        useProjectStore.getState().clearCache(businessData.business_id);
-                        setActiveTab('ranking');
-                        closeModal('mobileMenu');
-                      }}
-                    >
-                      <BarChart4 size={18} />
-                      <span>{t("Ranking")}</span>
-                    </button>
+                      <button
+                        className={`mobile-menu-item ${activeTab === 'ranking' ? 'active' : ''}`}
+                        onClick={() => {
+                          useProjectStore.getState().setViewMode('ranking');
+                          useProjectStore.getState().clearCache(businessData.business_id);
+                          setActiveTab('ranking');
+                          closeModal('mobileMenu');
+                        }}
+                      >
+                        <BarChart4 size={18} />
+                        <span>{t("Ranking")}</span>
+                      </button>
 
-                    <button
-                      className={`mobile-menu-item ${activeTab === 'decision-logs' ? 'active' : ''}`}
-                      onClick={() => {
-                        setActiveTab('decision-logs');
-                        closeModal('mobileMenu');
-                      }}
-                    >
-                      <FileText size={18} />
-                      <span>{t("Decision_Logs") || "Decision Logs"}</span>
-                    </button>
-                  </div>
-                )}
+                      <button
+                        className={`mobile-menu-item ${activeTab === 'decision-logs' ? 'active' : ''}`}
+                        onClick={() => {
+                          setActiveTab('decision-logs');
+                          closeModal('mobileMenu');
+                        }}
+                      >
+                        <FileText size={18} />
+                        <span>{t("Decision_Logs") || "Decision Logs"}</span>
+                      </button>
+                    </div>
+                  )}
               </div>
-            </div>
+            )}
           </div>
+        </div>
         </div>
       )}
     </>

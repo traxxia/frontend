@@ -102,11 +102,11 @@ const BusinessSetupContent = () => {
                         <ListTodo size={16} />
                         <span>{t("Priorities")}</span>
                       </button>}
-                    {hasProjectAccess && <button className={`desktop-tab ${activeTab === "bets" ? "active" : ""}`} onClick={() => setActiveTab("bets")}>
+                    {(hasProjectAccess && showProjectsTab) && <button className={`desktop-tab ${activeTab === "bets" ? "active" : ""}`} onClick={() => setActiveTab("bets")}>
                         <Briefcase size={16} />
                         <span>{t("Bets")}</span>
                       </button>}
-                    {hasProjectAccess && <button className={`desktop-tab ${activeTab === "decision-logs" ? "active" : ""}`} onClick={() => setActiveTab("decision-logs")}>
+                    {(hasProjectAccess && showProjectsTab) && <button className={`desktop-tab ${activeTab === "decision-logs" ? "active" : ""}`} onClick={() => setActiveTab("decision-logs")}>
                         <FileText size={16} />
                         <span>{t("Decision_Logs") || "Decision Logs"}</span>
                       </button>}

@@ -2,9 +2,9 @@ import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from "./useTranslation";
 import { useAuthStore, useBusinessStore, useUIStore, useAnalysisStore, useProjectStore } from "../store";
-import { AnalysisApiService } from '../services/analysisApiService';
+import { AnalysisApiService, PHASE_API_CONFIG } from '../services/analysisApiService';
 import { getUserLimits } from '../utils/authUtils';
-import PhaseManager from "../components/PhaseManager";
+import PhaseManager, { getUnlockedFeatures } from "../components/PhaseManager";
 
 const CARD_ID_MAP = {
   "swot_analysis": "swot",
@@ -400,9 +400,45 @@ export const useBusinessSetup = () => {
   const handleRegenerateAllAnalysis = async (options = {}) => {
     const perform = async () => {
       const state = useAnalysisStore.getState();
-      await state.regeneratePhase(getCurrentPhase(), state.questions, state.userAnswers, selectedBusinessId, showToastMessage);
-      await regenerateIndividualAnalysis('strategic', state.questions, state.userAnswers, selectedBusinessId, showToastMessage);
+      
+      // Force recalculate phase to handle newly applied AI answers
+      const unlocked = getUnlockedFeatures(state.questions, state.userAnswers, state.completedQuestions, hasUploadedDocument);
+      const targetPhase = unlocked.advancedPhase ? 'advanced' : (unlocked.essentialPhase ? 'essential' : 'initial');
+
+      console.log('DEBUG: handleRegenerateAllAnalysis called with options:', options);
+      console.log('DEBUG: Unlocked features:', unlocked);
+      console.log('DEBUG: targetPhase detected:', targetPhase);
+
+      // Collect unique types based on the detected targetPhase
+      const typesToRun = new Set();
+      
+      // Use the specific configuration for the detected phase
+      if (PHASE_API_CONFIG[targetPhase]) {
+          console.log(`DEBUG: Adding types for phase: ${targetPhase}`);
+          PHASE_API_CONFIG[targetPhase].forEach(t => typesToRun.add(t));
+      }
+      
+      // Optionally add financial types if doc exists and requested
+      if ((options.includeFinancial || options.onlyFinancial) && hasUploadedDocument && !options.skipFinancial) {
+          console.log(`DEBUG: Adding financial phase types`);
+          PHASE_API_CONFIG.financial.forEach(t => typesToRun.add(t));
+      }
+
+      const typesArray = Array.from(typesToRun);
+      console.log('DEBUG: Triggering phase-specific regeneration for types:', typesArray);
+
+      // Execute bulk regeneration
+      await state.regenerateCustomTypes(typesArray, state.questions, state.userAnswers, selectedBusinessId, showToastMessage);
+
+      // 3. Regenerate Strategic Analysis (which encompasses multiple pillars)
+      if (options.alsoRegenerateStrategic !== false) {
+        console.log('DEBUG: Triggering Strategic Analysis regeneration...');
+        await regenerateIndividualAnalysis('strategic', state.questions, state.userAnswers, selectedBusinessId, showToastMessage);
+      }
+      
+      console.log('DEBUG: handleRegenerateAllAnalysis completed.');
     };
+
     if (options?.skipConfirmation) perform();
     else triggerConfirmation(t("Regenerate All Analysis?"), t("This will regenerate everything."), perform);
   };

@@ -275,6 +275,11 @@ export const useAnalysisStore = create((set, get) => ({
     const regenerationUpdates = { [phase]: true };
     phaseTypes.forEach(type => { regenerationUpdates[type] = true; });
 
+    console.log(`DEBUG [analysisStore]: Regenerating phase: ${phase}`, {
+        phaseTypes,
+        businessId
+    });
+
     set((state) => ({
       regenerating: { ...state.regenerating, ...regenerationUpdates }
     }));
@@ -317,6 +322,59 @@ export const useAnalysisStore = create((set, get) => ({
       const phaseTypes = PHASE_API_CONFIG[phase] || [];
       const completionUpdates = { [phase]: false };
       phaseTypes.forEach(type => { completionUpdates[type] = false; });
+
+      set((state) => ({
+        regenerating: { ...state.regenerating, ...completionUpdates }
+      }));
+    }
+  },
+
+  regenerateCustomTypes: async (types, questions, userAnswers, businessId, onToast) => {
+    if (!businessId || !types || types.length === 0) return;
+    
+    const regenerationUpdates = {};
+    types.forEach(type => { regenerationUpdates[type] = true; });
+
+    console.log(`DEBUG [analysisStore]: Regenerating custom types:`, types);
+
+    set((state) => ({
+      regenerating: { ...state.regenerating, ...regenerationUpdates }
+    }));
+
+    try {
+      const apiService = getApiService();
+      const stateSetters = {};
+      const allPossibleTypes = [
+        'swot', 'purchaseCriteria', 'loyaltyNPS', 'porters', 'pestel',
+        'fullSwot', 'competitiveAdvantage', 'strategic', 'expandedCapability',
+        'strategicRadar', 'productivityMetrics', 'maturityScore', 'competitiveLandscape',
+        'coreAdjacency', 'profitabilityAnalysis', 'growthTracker', 'liquidityEfficiency',
+        'investmentPerformance', 'leverageRisk'
+      ];
+
+      allPossibleTypes.forEach(type => {
+        const setterName = apiService.getStateSetterName(type);
+        if (setterName) {
+          stateSetters[setterName] = (data) => get().setAnalysisData(type, data);
+        }
+      });
+
+      stateSetters.setRegenerating = (type, isRegenerating) => get().setRegenerating(type, isRegenerating);
+
+      await apiService.handleCustomTypesCompletion(
+        types,
+        questions,
+        userAnswers,
+        businessId,
+        stateSetters,
+        onToast
+      );
+    } catch (err) {
+      console.error(`Failed to regenerate custom types:`, err);
+      onToast?.(`Failed to regenerate insights.`, "error");
+    } finally {
+      const completionUpdates = {};
+      types.forEach(type => { completionUpdates[type] = false; });
 
       set((state) => ({
         regenerating: { ...state.regenerating, ...completionUpdates }

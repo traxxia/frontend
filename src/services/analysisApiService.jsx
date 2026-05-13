@@ -451,20 +451,15 @@ export class AnalysisApiService {
       return;
     }
 
+    console.log(`DEBUG [AnalysisApiService]: handlePhaseCompletion starting for phase "${phase}"`, {
+      analysisTypes,
+      businessId: selectedBusinessId
+    });
+
     this.clearPhaseData(phase, stateSetters);
 
     try {
       const { freshAnswers } = await this.getFreshAnswersData(selectedBusinessId);
-
-      const payload = {
-        questions,
-        userAnswers: { ...userAnswers, ...freshAnswers },
-        selectedBusinessId,
-        phase,
-        stateSetters,
-      };
-
-      this.excelAnalysisCache = null;
 
       const status = { completed: 0 };
       const total = analysisTypes.length;
@@ -473,11 +468,17 @@ export class AnalysisApiService {
       const processItem = (analysisType) => {
         const displayName = this.getDisplayName(analysisType);
 
-        return this
-          .callAnalysisAPIWithSave(analysisType, payload, stateSetters, selectedBusinessId)
+        // Pass freshAnswers into generateAnalysis to avoid redundant fetching
+        return this.generateAnalysis(analysisType, questions, userAnswers, selectedBusinessId, { freshAnswers })
           .then((res) => {
             status.completed++;
             stateSetters.setRegenerating?.(analysisType, false);
+            
+            const setterName = this.getStateSetterName(analysisType);
+            if (stateSetters[setterName]) {
+                stateSetters[setterName](res);
+            }
+
             showToastMessage(
               `${status.completed}/${total} analyses — "${displayName}" completed successfully`,
               "info",
@@ -517,6 +518,92 @@ export class AnalysisApiService {
         { duration: 4000 }
       );
 
+      throw error;
+    }
+  }
+
+  async handleCustomTypesCompletion(
+    types,
+    questions,
+    userAnswers,
+    selectedBusinessId,
+    stateSetters,
+    showToastMessage
+  ) {
+    if (!types || types.length === 0) return;
+
+    console.log(`DEBUG [AnalysisApiService]: handleCustomTypesCompletion starting`, {
+      types,
+      businessId: selectedBusinessId
+    });
+
+    // Clear existing data for these types
+    types.forEach(analysisType => {
+      const setterName = this.getStateSetterName(analysisType);
+      const setter = stateSetters[setterName];
+      if (setter) setter(null);
+    });
+
+    try {
+      const { freshAnswers } = await this.getFreshAnswersData(selectedBusinessId);
+
+      const status = { completed: 0 };
+      const total = types.length;
+      const results = [];
+
+      const processItem = (analysisType) => {
+        const displayName = this.getDisplayName(analysisType);
+
+        // Pass freshAnswers into generateAnalysis to avoid redundant fetching
+        return this.generateAnalysis(analysisType, questions, userAnswers, selectedBusinessId, { freshAnswers })
+          .then((res) => {
+            status.completed++;
+            stateSetters.setRegenerating?.(analysisType, false);
+            
+            // Map the result back to the store using the stateSetters
+            const setterName = this.getStateSetterName(analysisType);
+            if (stateSetters[setterName]) {
+                stateSetters[setterName](res);
+            }
+
+            showToastMessage(
+              `${status.completed}/${total} analyses — "${displayName}" completed successfully`,
+              "info",
+              { duration: 5000 }
+            );
+
+            return { status: "fulfilled", analysisType, value: res };
+          })
+          .catch((err) => {
+            status.completed++;
+            stateSetters.setRegenerating?.(analysisType, false);
+
+            console.error(`Error with ${analysisType} analysis:`, err);
+            showToastMessage(
+              `${status.completed}/${total} analyses — "${displayName}" failed`,
+              "warning",
+              { duration: 5000 }
+            );
+
+            return { status: "rejected", analysisType, reason: err };
+          });
+      };
+
+      const batchSize = 2;
+      for (let i = 0; i < types.length; i += batchSize) {
+        const batch = types.slice(i, i + batchSize);
+        const batchResults = await Promise.all(batch.map(processItem));
+        results.push(...batchResults);
+      }
+
+      return { success: true, results };
+    } catch (error) {
+      console.error(`Error in handleCustomTypesCompletion:`, error);
+      showToastMessage(
+        `Failed to generate some analyses. Please try again.`,
+        "error",
+        { duration: 4000 }
+      );
       throw error;
     }
   }
@@ -906,8 +993,8 @@ export class AnalysisApiService {
       if (!endpoint) throw new Error(`Unknown analysis type: ${analysisType}`);
 
       // 1. Prepare Data
-      let freshAnswers = {};
-      if (selectedBusinessId) {
+      let freshAnswers = options.freshAnswers;
+      if (!freshAnswers && selectedBusinessId) {
         const freshData = await this.getFreshAnswersData(selectedBusinessId);
         freshAnswers = freshData.freshAnswers;
       }
