@@ -222,8 +222,7 @@
 
 .form-group input {
   width: 100%;
-  padding: 0.9rem 1rem;
-  padding-right: 3rem;
+  padding: 0.9rem 1rem; 
 
   border-radius: var(--border-radius-lg);
   border: 1px solid var(--color-email-border);
@@ -573,6 +572,7 @@
   padding: 5px;
   display: flex;
   align-items: center;
+  color: gray;
   justify-content: center;
 }
 
@@ -774,4 +774,152 @@
 .login--s2 {
   color: #8F9098;
   font-size: 20px;
+}
+
+/* OTP Input Styles */
+.otp-container {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin: 15px 0;
+  width: 100%;
+}
+
+.otp-box {
+  width: 38px;
+  height: 45px;
+  border: 1px solid var(--color-email-border);
+  border-radius: 10px;
+  text-align: center;
+  font-size: 18px;
+  font-weight: 600;
+  background-color: var(--color-bg-primary);
+  color: var(--color-text-primary);
+  transition: all 0.2s ease;
+  padding: 0;
+  margin: 0;
+  box-sizing: border-box;
+}
+
+.otp-box:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px rgba(72, 100, 161, 0.2);
+}
+
+[data-theme="dark"] .otp-box {
+  background-color: var(--color-bg-light);
+  border-color: var(--color-email-border);
+}
+
+.otp-box.error {
+  border-color: var(--color-danger) !important;
+  background-color: rgba(220, 53, 69, 0.05) !important;
+}
+
+@media (max-width: 480px) {
+  .otp-container {
+    gap: 6px;
+  }
+  
+  .otp-box {
+    width: 34px;
+    height: 40px;
+    font-size: 16px;
+    border-radius: 8px;
+  }
+}
+
+.success-message-compact {
+  font-size: 14px;
+  padding: 10px 15px !important;
+  margin-bottom: 15px !important;
+}
+
+/* Status Modal Styles */
+.status-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  backdrop-filter: blur(4px);
+}
+
+.status-modal-content {
+  background: var(--color-bg-primary);
+  padding: var(--spacing-2xl);
+  border-radius: var(--border-radius-xl);
+  width: 90%;
+  max-width: 400px;
+  text-align: center;
+  box-shadow: var(--shadow-2xl);
+  animation: modalScaleUp 0.3s ease-out;
+}
+
+@keyframes modalScaleUp {
+  from { transform: scale(0.8); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+.status-modal-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto var(--spacing-lg);
+}
+
+.status-modal-icon.success {
+  background: rgba(16, 185, 129, 0.1);
+  color: #10b981;
+}
+
+.status-modal-icon.error {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+}
+
+.status-modal-title {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
+  margin-bottom: var(--spacing-sm);
+  color: var(--color-text-primary);
+}
+
+.status-modal-message {
+  color: var(--color-text-secondary);
+  margin-bottom: var(--spacing-xl);
+  line-height: 1.5;
+}
+
+.status-modal-button {
+  padding: 0.8rem 2rem;
+  border-radius: var(--border-radius-lg);
+  border: none;
+  font-weight: var(--font-weight-semibold);
+  cursor: pointer;
+  transition: var(--transition-normal);
+}
+
+.status-modal-button.success {
+  background: #10b981;
+  color: white;
+}
+
+.status-modal-button.error {
+  background: #ef4444;
+  color: white;
+}
+
+.status-modal-button:hover {
+  filter: brightness(0.9);
+  transform: translateY(-2px);
 }

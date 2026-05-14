@@ -1,28 +1,65 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import axios from "axios";
 import { useNavigate, Link } from "react-router-dom";
 import "../styles/Login.css";
 import logo from '../assets/traxxia-logo.png';
-import { Sun, Moon, ArrowLeft, Eye, EyeOff } from "lucide-react";
+import { Sun, Moon, ArrowLeft, Eye, EyeOff, CheckCircle, XCircle } from "lucide-react";
 import { useUIStore } from "../store/uiStore";
 import { useTranslation } from "../hooks/useTranslation";
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState("");
-  const [otp, setOtp] = useState("");
+  const [otpArray, setOtpArray] = useState(['', '', '', '', '', '']);
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [step, setStep] = useState(1); // 1: Email, 2: OTP, 3: New Password
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   
+  // Status Modal State
+  const [showStatusModal, setShowStatusModal] = useState(false);
+  const [statusConfig, setStatusConfig] = useState({ title: '', message: '', type: 'success' });
+
+  const otpInputs = useRef([]);
   const navigate = useNavigate();
   const theme = useUIStore(state => state.theme);
   const toggleTheme = useUIStore(state => state.toggleTheme);
   const API_BASE_URL = import.meta.env.VITE_BACKEND_URL;
   const { t } = useTranslation();
+
+  const handleOtpChange = (index, value) => {
+    if (isNaN(value)) return;
+    const newOtp = [...otpArray];
+    newOtp[index] = value.slice(-1);
+    setOtpArray(newOtp);
+
+    // Focus next input
+    if (value && index < 5) {
+      otpInputs.current[index + 1].focus();
+    }
+  };
+
+  const handleOtpKeyDown = (index, e) => {
+    if (e.key === 'Backspace' && !otpArray[index] && index > 0) {
+      otpInputs.current[index - 1].focus();
+    }
+  };
+
+  const handleOtpPaste = (e) => {
+    e.preventDefault();
+    const pasteData = e.clipboardData.getData('text').slice(0, 6).split('');
+    const newOtp = [...otpArray];
+    pasteData.forEach((char, i) => {
+      if (i < 6 && !isNaN(char)) newOtp[i] = char;
+    });
+    setOtpArray(newOtp);
+    // Focus last box or the next empty one
+    const nextIndex = pasteData.length < 6 ? pasteData.length : 5;
+    otpInputs.current[nextIndex].focus();
+  };
 
   const handleSendOtp = async (e) => {
     e.preventDefault();
@@ -45,20 +82,44 @@ const ForgotPassword = () => {
 
   const handleVerifyOtp = async (e) => {
     e.preventDefault();
-    if (!otp) {
-      setError("OTP is required");
+    const otpString = otpArray.join('');
+    if (otpString.length < 6) {
+      setError("Please enter the full 6-digit OTP");
       return;
     }
     setIsLoading(true);
     setError("");
     try {
-      await axios.post(`${API_BASE_URL}/api/verify-otp`, { email, otp });
-      setStep(3);
+      await axios.post(`${API_BASE_URL}/api/verify-otp`, { email, otp: otpString });
+      setStatusConfig({
+        title: "OTP Verified",
+        message: "Your OTP has been successfully verified. You can now reset your password.",
+        type: 'success'
+      });
+      setShowStatusModal(true);
       setError("");
     } catch (err) {
-      setError(err.response?.data?.error || "Invalid or expired OTP.");
+      const errMsg = err.response?.data?.error || "Invalid or expired OTP.";
+      setError(errMsg);
+      setStatusConfig({
+        title: "Verification Failed",
+        message: errMsg,
+        type: 'error'
+      });
+      setShowStatusModal(true);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleModalClose = () => {
+    setShowStatusModal(false);
+    if (statusConfig.type === 'success') {
+      if (step === 2) {
+        setStep(3);
+      } else if (step === 3) {
+        navigate("/login");
+      }
     }
   };
 
@@ -75,11 +136,23 @@ const ForgotPassword = () => {
     setIsLoading(true);
     setError("");
     try {
-      const res = await axios.post(`${API_BASE_URL}/api/reset-password`, { email, otp, password });
-      setMessage(res.data.message);
-      setTimeout(() => navigate("/login"), 3000);
+      const otpString = otpArray.join('');
+      const res = await axios.post(`${API_BASE_URL}/api/reset-password`, { email, otp: otpString, password });
+      setStatusConfig({
+        title: "Success!",
+        message: res.data.message || "Your password has been reset successfully.",
+        type: 'success'
+      });
+      setShowStatusModal(true);
     } catch (err) {
-      setError(err.response?.data?.error || "Failed to reset password.");
+      const errMsg = err.response?.data?.error || "Failed to reset password.";
+      setError(errMsg);
+      setStatusConfig({
+        title: "Reset Failed",
+        message: errMsg,
+        type: 'error'
+      });
+      setShowStatusModal(true);
     } finally {
       setIsLoading(false);
     }
@@ -119,7 +192,7 @@ const ForgotPassword = () => {
           </p>
 
           {message && step !== 3 && (
-            <div className="success-message" style={{ color: '#10b981', backgroundColor: 'rgba(16, 185, 129, 0.1)', padding: '15px', borderRadius: '8px', marginBottom: '20px', border: '1px solid #10b981' }}>
+            <div className={`success-message ${step === 2 ? 'success-message-compact' : ''}`} style={{ color: '#10b981', backgroundColor: 'rgba(16, 185, 129, 0.1)', padding: '15px', borderRadius: '8px', marginBottom: '20px', border: '1px solid #10b981' }}>
               {message}
             </div>
           )}
@@ -151,21 +224,23 @@ const ForgotPassword = () => {
           {step === 2 && (
             <form onSubmit={handleVerifyOtp} noValidate>
               <div className="form-group">
-                <div className="input-container">
-                  <input 
-                    type="text" 
-                    className={error ? "error" : ""} 
-                    value={otp} 
-                    onChange={e => {
-                      setOtp(e.target.value);
-                      if (error) setError("");
-                    }} 
-                    placeholder="Enter 6-digit OTP" 
-                    maxLength={6}
-                    disabled={isLoading} 
-                  />
+                <div className="otp-container">
+                  {otpArray.map((digit, index) => (
+                    <input
+                      key={index}
+                      type="text"
+                      ref={el => otpInputs.current[index] = el}
+                      className={`otp-box ${error ? "error" : ""}`}
+                      value={digit}
+                      onChange={e => handleOtpChange(index, e.target.value)}
+                      onKeyDown={e => handleOtpKeyDown(index, e)}
+                      onPaste={handleOtpPaste}
+                      maxLength={1}
+                      disabled={isLoading}
+                    />
+                  ))}
                 </div>
-                {error && <span className="error-message">{error}</span>}
+                {error && <span className="error-message" style={{ textAlign: 'center' }}>{error}</span>}
               </div>
               <button type="submit" className={`login-button ${isLoading ? "loading" : ""}`} disabled={isLoading}>
                 {isLoading ? "Verifying..." : "Verify OTP"}
@@ -199,7 +274,7 @@ const ForgotPassword = () => {
               <div className="form-group">
                 <div className="input-container">
                   <input 
-                    type={showPassword ? "text" : "password"} 
+                    type={showConfirmPassword ? "text" : "password"} 
                     className={error && confirmPassword ? "error" : ""} 
                     value={confirmPassword} 
                     onChange={e => {
@@ -209,6 +284,9 @@ const ForgotPassword = () => {
                     placeholder="Confirm New Password" 
                     disabled={isLoading} 
                   />
+                  <button type="button" className="toggle-password" onClick={() => setShowConfirmPassword(!showConfirmPassword)} disabled={isLoading}>
+                    {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
                 </div>
                 {error && <span className="error-message">{error}</span>}
               </div>
@@ -223,6 +301,25 @@ const ForgotPassword = () => {
           </div>
         </div>
       </div>
+
+      {/* Status Modal */}
+      {showStatusModal && (
+        <div className="status-modal-overlay">
+          <div className="status-modal-content">
+            <div className={`status-modal-icon ${statusConfig.type}`}>
+              {statusConfig.type === 'success' ? <CheckCircle size={40} /> : <XCircle size={40} />}
+            </div>
+            <h3 className="status-modal-title">{statusConfig.title}</h3>
+            <p className="status-modal-message">{statusConfig.message}</p>
+            <button 
+              className={`status-modal-button ${statusConfig.type}`}
+              onClick={handleModalClose}
+            >
+              {statusConfig.type === 'success' ? 'Continue' : 'Try Again'}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

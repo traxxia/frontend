@@ -3,7 +3,7 @@ import axios from "axios";
 import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import "../styles/Login.css";
 import logo from '../assets/traxxia-logo.png';
-import { Sun, Moon, Eye, EyeOff } from "lucide-react";
+import { Sun, Moon, Eye, EyeOff, CheckCircle, XCircle } from "lucide-react";
 import { useUIStore } from "../store/uiStore";
 import { useTranslation } from "../hooks/useTranslation";
 
@@ -12,8 +12,13 @@ const ResetPassword = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  
+  // Status Modal State
+  const [showStatusModal, setShowStatusModal] = useState(false);
+  const [statusConfig, setStatusConfig] = useState({ title: '', message: '', type: 'success' });
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const theme = useUIStore(state => state.theme);
@@ -43,12 +48,30 @@ const ResetPassword = () => {
 
     try {
       const res = await axios.post(`${API_BASE_URL}/api/reset-password`, { token, password });
-      setMessage(res.data.message);
-      setTimeout(() => navigate("/login"), 3000);
+      setStatusConfig({
+        title: "Success!",
+        message: res.data.message || "Your password has been reset successfully.",
+        type: 'success'
+      });
+      setShowStatusModal(true);
     } catch (err) {
-      setError(err.response?.data?.error || "Failed to reset password. The link may have expired.");
+      const errMsg = err.response?.data?.error || "Failed to reset password. The link may have expired.";
+      setError(errMsg);
+      setStatusConfig({
+        title: "Reset Failed",
+        message: errMsg,
+        type: 'error'
+      });
+      setShowStatusModal(true);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleModalClose = () => {
+    setShowStatusModal(false);
+    if (statusConfig.type === 'success') {
+      navigate("/login");
     }
   };
 
@@ -105,7 +128,7 @@ const ResetPassword = () => {
               <div className="form-group">
                 <div className="input-container">
                   <input 
-                    type={showPassword ? "text" : "password"} 
+                    type={showConfirmPassword ? "text" : "password"} 
                     className={error && confirmPassword ? "error" : ""} 
                     value={confirmPassword} 
                     onChange={e => {
@@ -115,6 +138,9 @@ const ResetPassword = () => {
                     placeholder={t("confirm_new_password") || "Confirm New Password"} 
                     disabled={isLoading} 
                   />
+                  <button type="button" className="toggle-password" onClick={() => setShowConfirmPassword(!showConfirmPassword)} disabled={isLoading}>
+                    {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
                 </div>
                 {error && <span className="error-message">{error}</span>}
               </div>
@@ -130,6 +156,25 @@ const ResetPassword = () => {
           </div>
         </div>
       </div>
+
+      {/* Status Modal */}
+      {showStatusModal && (
+        <div className="status-modal-overlay">
+          <div className="status-modal-content">
+            <div className={`status-modal-icon ${statusConfig.type}`}>
+              {statusConfig.type === 'success' ? <CheckCircle size={40} /> : <XCircle size={40} />}
+            </div>
+            <h3 className="status-modal-title">{statusConfig.title}</h3>
+            <p className="status-modal-message">{statusConfig.message}</p>
+            <button 
+              className={`status-modal-button ${statusConfig.type}`}
+              onClick={handleModalClose}
+            >
+              {statusConfig.type === 'success' ? 'Continue' : 'Try Again'}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
