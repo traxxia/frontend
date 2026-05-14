@@ -252,7 +252,7 @@ const CompetitiveLandscape = ({
   }
   const isStreaming = streamingManager?.shouldStream(cardId);
   const hasStreamed = streamingManager?.hasStreamed(cardId);
-  return <div className="porters-container full-swot-container" data-analysis-type="competitiveLandscape" data-analysis-name="Competitive Landscape" data-analysis-order="9">
+  return <div className="porters-container full-swot-container" data-analysis-type="competitiveLandscape" data-analysis-name="Competitive Landscape" data-analysis-order="9" data-component="competitive-landscape">
 
             {}
             {ourDifferentiators.length > 0 && <div className="section-container">
@@ -263,7 +263,7 @@ const CompetitiveLandscape = ({
                         </div>
                         {expandedSections['differentiators'] ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
                     </div>
-                    {expandedSections['differentiators'] && <div className="table-container">
+                    <div className={`table-container ${expandedSections['differentiators'] ? 'expanded' : 'collapsed'}`}>
                             <table className="data-table">
                                 <thead>
                                     <tr>
@@ -302,7 +302,7 @@ const CompetitiveLandscape = ({
             })}
                                 </tbody>
                             </table>
-                        </div>}
+                        </div>
                 </div>}
 
             {}
@@ -317,7 +317,7 @@ const CompetitiveLandscape = ({
                             </div>
                             {expandedSections[competitor] ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
                         </div>
-                        {expandedSections[competitor] && <div className="table-container">
+                        <div className={`table-container ${expandedSections[competitor] ? 'expanded' : 'collapsed'}`}>
                                 <table className="data-table">
                                     <thead>
                                         <tr><th>{t('Category')}</th><th>{t('Analysis')}</th></tr>
@@ -347,7 +347,7 @@ const CompetitiveLandscape = ({
               })}
                                     </tbody>
                                 </table>
-                            </div>}
+                            </div>
                     </div>;
     })}
         </div>;

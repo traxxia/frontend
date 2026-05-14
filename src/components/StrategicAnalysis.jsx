@@ -289,10 +289,10 @@ const StrategicAnalysis = ({
     });
   };
 
-  const CategorySection = ({ id, title, icon: IconComponent, children, description }) => {
+  const CategorySection = ({ id, title, icon: IconComponent, children, description, dataComponent }) => {
     const isCollapsed = collapsedCategories.has(id);
     return (
-      <div className="analysis-category">
+      <div className="analysis-category" data-component={dataComponent}>
         <div className="category-header" onClick={() => toggleCategory(id)}>
           <div className="category-header-left">
             <IconComponent size={24} className="category-icon" />
@@ -319,7 +319,7 @@ const StrategicAnalysis = ({
 
     return (
       <div className="strategic-content">
-        <CategorySection id="strategy-block" title={t("strategy_block_title")} icon={Target} description={t("strategy_desc")}>
+        <CategorySection id="strategy-block" dataComponent="strategic-direction" title={t("strategy_block_title")} icon={Target} description={t("strategy_desc")}>
           {!hasStrategicAccess ? (
             <div className="restricted-access-placeholder">
               <Lock size={32} className="restricted-icon" />
@@ -364,7 +364,7 @@ const StrategicAnalysis = ({
           )}
         </CategorySection>
 
-        <CategorySection id="execution-block" title={t("execution_block_title")} icon={CheckCircle} description={t("execution_desc")}>
+        <CategorySection id="execution-block" dataComponent="strategic-execution" title={t("execution_block_title")} icon={CheckCircle} description={t("execution_desc")}>
           {!hasStrategicAccess ? (
             <div className="restricted-access-placeholder">
               <Lock size={32} className="restricted-icon" />
@@ -379,7 +379,7 @@ const StrategicAnalysis = ({
           )}
         </CategorySection>
 
-        <CategorySection id="sustainability-block" title={t("sustainability-block_title")} icon={Shield} description={t("sustainability_desc")}>
+        <CategorySection id="sustainability-block" dataComponent="strategic-sustainability" title={t("sustainability-block_title")} icon={Shield} description={t("sustainability_desc")}>
           {!hasStrategicAccess ? (
             <div className="restricted-access-placeholder">
               <Lock size={32} className="restricted-icon" />

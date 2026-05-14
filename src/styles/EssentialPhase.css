@@ -4676,3 +4676,29 @@
   height: 100%;
   transition: width 0.3s ease-in-out;
 }
+
+/* ── PDF Export Styles ── */
+.table-container.collapsed,
+.section-container.collapsed {
+  display: none;
+}
+
+.table-container.expanded,
+.section-container.expanded {
+  display: block;
+}
+
+body.generating-pdf .table-container.collapsed,
+body.generating-pdf .section-container.collapsed {
+  display: block !important;
+  max-height: none !important;
+  height: auto !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  overflow: visible !important;
+}
+
+body.generating-pdf .section-container {
+  margin-bottom: 20px !important;
+  page-break-inside: avoid;
+}

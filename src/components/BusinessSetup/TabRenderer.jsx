@@ -79,12 +79,6 @@ const TabRenderer = () => {
       )}
       {activeTab === "advanced" && (
         <div className="brief-section">
-          {!unlockedFeatures.analysis && completedQuestions && completedQuestions.length > 0 && (
-            <div className="unlock-hint">
-              <h4>🔒 {t("unlockBusinessAnalysis")}</h4>
-              <p>{t("completePhaseMessage")}</p>
-            </div>
-          )}
           <EditableBriefSection
             selectedBusinessId={selectedBusinessId}
             questions={questions}

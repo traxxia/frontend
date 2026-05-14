@@ -63,6 +63,7 @@ export const useBusinessSetup = () => {
 
   const token = useAuthStore(state => state.token);
   const userRole = useAuthStore(state => state.userRole);
+  const isArchived = (currentBusiness?.access_mode === 'archived' || currentBusiness?.access_mode === 'hidden');
   const getAuthToken = useCallback(() => token, [token]);
 
   const [documentInfo, setDocumentInfo] = useState(null);
@@ -130,18 +131,25 @@ export const useBusinessSetup = () => {
   const regenerateIndividualAnalysis = useAnalysisStore(state => state.regenerateIndividualAnalysis);
   const isTypeRegenerating = useAnalysisStore(state => state.isRegenerating);
   const resetAnalysis = useAnalysisStore(state => state.resetAnalysis);
-  const fullSwotData = useAnalysisStore(state => state.fullSwot);
+  const swotAnalysisResult = useAnalysisStore(state => state.swotAnalysis);
+  const purchaseCriteriaData = useAnalysisStore(state => state.purchaseCriteria);
+  const loyaltyNPSData = useAnalysisStore(state => state.loyaltyNPS);
+  const portersData = useAnalysisStore(state => state.portersData);
+  const pestelData = useAnalysisStore(state => state.pestelData);
+  const fullSwotData = useAnalysisStore(state => state.fullSwotData);
   const competitiveAdvantageData = useAnalysisStore(state => state.competitiveAdvantage);
+  const strategicData = useAnalysisStore(state => state.strategicData);
   const expandedCapabilityData = useAnalysisStore(state => state.expandedCapability);
   const strategicRadarData = useAnalysisStore(state => state.strategicRadar);
-  const productivityData = useAnalysisStore(state => state.productivity);
-  const maturityData = useAnalysisStore(state => state.maturity);
-  const profitabilityData = useAnalysisStore(state => state.profitability);
-  const growthTrackerData = useAnalysisStore(state => state.growth);
-  const liquidityEfficiencyData = useAnalysisStore(state => state.liquidity);
-  const investmentPerformanceData = useAnalysisStore(state => state.investment);
-  const leverageRiskData = useAnalysisStore(state => state.leverage);
-  const strategicData = useAnalysisStore(state => state.strategic);
+  const productivityData = useAnalysisStore(state => state.productivityData);
+  const maturityData = useAnalysisStore(state => state.maturityData);
+  const competitiveLandscapeData = useAnalysisStore(state => state.competitiveLandscape);
+  const coreAdjacencyData = useAnalysisStore(state => state.coreAdjacency);
+  const profitabilityData = useAnalysisStore(state => state.profitabilityData);
+  const growthTrackerData = useAnalysisStore(state => state.growthTrackerData);
+  const liquidityEfficiencyData = useAnalysisStore(state => state.liquidityEfficiencyData);
+  const investmentPerformanceData = useAnalysisStore(state => state.investmentPerformanceData);
+  const leverageRiskData = useAnalysisStore(state => state.leverageRiskData);
 
   const isAnalysisRegenerating = isTypeRegenerating('swot') || isTypeRegenerating('purchaseCriteria') || isTypeRegenerating('loyaltyNPS') || isTypeRegenerating('porters') || isTypeRegenerating('pestel') || isTypeRegenerating('initial') || isTypeRegenerating('essential') || isTypeRegenerating('advanced');
   const isStrategicRegenerating = isTypeRegenerating('strategic');
@@ -189,6 +197,10 @@ export const useBusinessSetup = () => {
   });
 
   const unlockedFeatures = phaseManager.getUnlockedFeatures();
+
+  const isViewer = (userRole || "").toLowerCase() === "viewer";
+  const readOnly = isArchived || isViewer;
+  const canRegenerate = !isArchived && !isViewer && unlockedFeatures?.analysis;
   const companyAdminIds = currentBusiness?.company_admin_ids || [];
 
   const [highlightedMissingQuestions, setHighlightedMissingQuestions] = useState(null);
@@ -429,10 +441,10 @@ export const useBusinessSetup = () => {
       // so these calls are safe even if triggered multiple times by React.
       fetchAnalysisData(selectedBusinessId);
       
-      // Optimize: only fetch financial document if on Brief (advanced) or Insights tabs
-      const skipFinancial = activeTab !== 'advanced' && activeTab !== 'insights';
-      // Optimize: only fetch questions if on Brief (advanced) tab
-      const skipQuestions = activeTab !== 'advanced';
+      // Optimize: only fetch financial document/questions if on onboarding/analysis tabs
+      // These tabs need this data to calculate unlocked status via PhaseManager
+      const skipFinancial = ['bets', 'ranking', 'decision-logs'].includes(activeTab);
+      const skipQuestions = ['bets', 'ranking', 'decision-logs'].includes(activeTab);
       
       fetchInitialSetupData(selectedBusinessId, { skipFinancial, skipQuestions }).then(result => {
         if (result?.docInfo) {
@@ -447,7 +459,6 @@ export const useBusinessSetup = () => {
     }
   }, [selectedBusinessId, activeTab]); // Include activeTab to re-fetch if we enter a tab that needs it
 
-  const isArchived = (currentBusiness?.access_mode === 'archived' || currentBusiness?.access_mode === 'hidden');
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth <= 768);
@@ -554,6 +565,25 @@ export const useBusinessSetup = () => {
     investmentPerformanceData,
     leverageRiskData,
     strategicData,
+    swotAnalysisResult,
+    purchaseCriteriaData,
+    loyaltyNPSData,
+    portersData,
+    pestelData,
+    competitiveLandscapeData,
+    coreAdjacencyData,
+    isViewer,
+    readOnly,
+    canRegenerate,
+    hideImproveButton: readOnly,
+    showImproveButton: !readOnly,
+    setPurchaseCriteriaData: stateSetters.setPurchaseCriteriaData,
+    setLoyaltyNPSData: stateSetters.setLoyaltyNPSData,
+    uploadedFileForAnalysis,
+    onRedirectToChat: (businessId) => {
+        setActiveTab('advanced');
+        // Additional logic if needed to focus on chat
+    },
     accessModalMessage, accessModalSubMessage,
     handleAnswerUpdate: (qId, ans) => setUserAnswer(qId, ans),
     handleRegeneratePhase,
@@ -607,7 +637,26 @@ export const useBusinessSetup = () => {
         productivityRef, maturityScoreRef, profitabilityRef, growthTrackerRef,
         liquidityEfficiencyRef, investmentPerformanceRef, leverageRiskRef,
         competitiveLandscapeRef, coreAdjacencyRef,
-        currentPhase
+        currentPhase,
+        swotAnalysisResult,
+        purchaseCriteriaData,
+        loyaltyNPSData,
+        portersData,
+        pestelData,
+        fullSwotData,
+        competitiveAdvantageData,
+        expandedCapabilityData,
+        strategicRadarData,
+        productivityData,
+        maturityData,
+        competitiveLandscapeData,
+        coreAdjacencyData,
+        profitabilityData,
+        growthTrackerData,
+        liquidityEfficiencyData,
+        investmentPerformanceData,
+        leverageRiskData,
+        strategicData
     }
   }), [
     activeTab, setActiveTab, isMobile, setIsMobile, isAnalysisExpanded, setIsAnalysisExpanded,

@@ -742,8 +742,8 @@
   display: block;
 }
 
-body.pdf-export-active .pillar-content.collapsed,
-body.pdf-export-active .category-content.collapsed {
+body.generating-pdf .pillar-content.collapsed,
+body.generating-pdf .category-content.collapsed {
   display: block !important;
   max-height: none !important;
   height: auto !important;
@@ -752,17 +752,17 @@ body.pdf-export-active .category-content.collapsed {
   opacity: 1 !important;
 }
 
-body.pdf-export-active .analysis-category {
+body.generating-pdf .analysis-category {
   margin-bottom: 30px !important;
   page-break-inside: avoid;
 }
 
-body.pdf-export-active .pillar-container {
+body.generating-pdf .pillar-container {
   margin-bottom: 20px !important;
   page-break-inside: avoid;
 }
 
-body.pdf-export-active .StreamingRow {
+body.generating-pdf .StreamingRow {
   display: table-row !important;
   opacity: 1 !important;
   visibility: visible !important;

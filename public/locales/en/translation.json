@@ -776,6 +776,7 @@
   "analysis_complete_text": "Analysis complete",
   "analysis_error_occurred": "An error occurred while generating the analysis",
   "please_try_again": "Please try again",
+  "preparing_analysis": "Preparing Analysis...",
   "analysis_loading_text": "Loading analysis data...",
   "analysis_unavailable": "Analysis temporarily unavailable",
   "create_user": "Create user",

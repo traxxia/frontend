@@ -467,6 +467,7 @@
   "analysis_complete_text": "Análisis completo",
   "analysis_error_occurred": "Ocurrió un error al generar el análisis",
   "please_try_again": "Por favor intenta de nuevo",
+  "preparing_analysis": "Preparando Análisis...",
   "analysis_loading_text": "Cargando datos del análisis...",
   "analysis_unavailable": "Análisis temporalmente no disponible",
   "unsaved_changes": "Cambios sin guardar",
