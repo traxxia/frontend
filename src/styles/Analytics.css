@@ -5887,7 +5887,7 @@
  .gauge-content {
    position: absolute;
    top: 50%;
-   left: 50%;
+   left: 75%;
    transform: translate(-50%, -20%);
    text-align: center;
    width: 100%;

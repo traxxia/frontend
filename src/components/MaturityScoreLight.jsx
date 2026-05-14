@@ -46,14 +46,45 @@ const MaturityScore = ({
   const {
     lastRowRef
   } = useAutoScroll(streamingManager, cardId, isExpanded, visibleRows);
+  const unwrapMaturityScore = useCallback((raw) => {
+    if (!raw) return null;
+    let scoreData = raw;
+    if (scoreData?.maturityScore?.maturityScoring) {
+      return scoreData.maturityScore.maturityScoring;
+    }
+    if (scoreData?.maturityScore?.maturity_scoring) {
+      return scoreData.maturityScore.maturity_scoring;
+    }
+    if (scoreData?.maturityScore) {
+      scoreData = scoreData.maturityScore;
+      if (scoreData?.maturityScoring) {
+        return scoreData.maturityScoring;
+      }
+      return scoreData;
+    }
+    if (scoreData?.maturityScoring) {
+      return scoreData.maturityScoring;
+    }
+    if (scoreData?.maturity_score) {
+      return scoreData.maturity_score;
+    }
+    if (scoreData?.MaturityScore) {
+      return scoreData.MaturityScore;
+    }
+    if (scoreData?.dimensions || scoreData?.overallMaturity) {
+      return scoreData;
+    }
+    return null;
+  }, []);
+
   const data = useMemo(() => {
-    if (!rawMaturityData) return null;
-    const scoreData = rawMaturityData.maturityScore || rawMaturityData.maturity_score || rawMaturityData.MaturityScore || rawMaturityData.maturityScoring || (rawMaturityData.dimensions || rawMaturityData.overallMaturity ? rawMaturityData : null);
-    if (!scoreData || !scoreData.dimensions && !scoreData.overallMaturity) return null;
+    const unwrapped = unwrapMaturityScore(rawMaturityData);
+    if (!unwrapped || (!unwrapped.dimensions && !unwrapped.overallMaturity)) return null;
     return {
-      maturityScore: scoreData
+      maturityScore: unwrapped
     };
-  }, [rawMaturityData]);
+  }, [rawMaturityData, unwrapMaturityScore]);
+
   const handleRedirectToBrief = useCallback((missingQuestionsData = null) => {
     if (onRedirectToBrief) {
       onRedirectToBrief(missingQuestionsData);
@@ -75,15 +106,15 @@ const MaturityScore = ({
       await regenerateIndividualAnalysis('maturityScore', questions, userAnswers, selectedBusinessId);
     }
   }, [onRegenerate, streamingManager, cardId, regenerateIndividualAnalysis, questions, userAnswers, selectedBusinessId]);
-  const isMaturityDataIncomplete = useCallback(data => {
-    if (!data) return true;
-    const scoreData = data.maturityScore || data.maturity_score || data.MaturityScore || data.maturityScoring || (data.dimensions || data.overallMaturity ? data : null);
-    if (!scoreData) return true;
-    const hasOverallMaturity = scoreData.overallMaturity && scoreData.overallMaturity > 0;
-    const hasDimensions = scoreData.dimensions && scoreData.dimensions.length > 0;
-    const hasMaturityLevel = scoreData.maturityLevel && scoreData.maturityLevel !== '';
+  const isMaturityDataIncomplete = useCallback(targetData => {
+    if (!targetData) return true;
+    const unwrapped = unwrapMaturityScore(targetData?.maturityScore || targetData);
+    if (!unwrapped) return true;
+    const hasOverallMaturity = unwrapped.overallMaturity && unwrapped.overallMaturity > 0;
+    const hasDimensions = unwrapped.dimensions && unwrapped.dimensions.length > 0;
+    const hasMaturityLevel = unwrapped.maturityLevel && unwrapped.maturityLevel !== '';
     return !hasOverallMaturity && !hasDimensions && !hasMaturityLevel;
-  }, []);
+  }, [unwrapMaturityScore]);
   const getTransformedData = useCallback(sourceData => {
     if (!sourceData?.maturityScore) return null;
     const scoreData = sourceData.maturityScore;
