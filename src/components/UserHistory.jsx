@@ -1,88 +1,1679 @@
-import React, { useState } from 'react';
-import { Card, Form, InputGroup } from 'react-bootstrap';
-import { Search } from 'lucide-react';
-import { useTranslation } from '../hooks/useTranslation';
-
-// Sub-components
-import UserHistoryMetrics from '@/components/UserHistory/UserHistoryMetrics';
-import UserHistoryTable from '@/components/UserHistory/UserHistoryTable';
-import UserHistoryModal from '@/components/UserHistory/UserHistoryModal';
-
-// Hooks
-import { useUserHistory } from '@/components/UserHistory/hooks/useUserHistory';
-
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import 'bootstrap/dist/css/bootstrap.min.css';
+import 'bootstrap/dist/js/bootstrap.bundle.min.js';
+import { Table, Badge, Spinner, Form, Button, Modal, Card } from "react-bootstrap";
+import {
+  Search,
+  Loader,
+  ChevronDown,
+  ChevronRight,
+  ChevronLeft,
+  Building2,
+  User,
+  X,
+  FileText,
+  Target,
+  TrendingUp,
+  History,
+  Activity,
+  Users
+} from 'lucide-react';
+import { formatDate } from '../utils/dateUtils';
+import StrategicAnalysis from '../components/StrategicAnalysis';
+import AnalysisContentManager from '../components/AnalysisContentManager';
+import AdminTable from "./AdminTable";
+import MetricCard from "./MetricCard";
+import PDFExportButton from './PDFExportButton';
 import '../styles/UserHistory.css';
+import '../styles/AdminTableStyles.css';
+import { useTranslation } from '../hooks/useTranslation';
+import { answerService } from '../services/answerService';
+import { useAuthStore } from '../store';
 
-const UserHistory = () => {
+// Constants
+const ITEMS_PER_PAGE = 10;
+const API_BASE_URL = import.meta.env.VITE_BACKEND_URL;
+
+// Utility functions
+const getAuthToken = () => useAuthStore.getState().token;
+const getUserInfo = () => { const s = useAuthStore.getState(); return { role: s.userRole, name: s.userName }; };
+
+const transformUser = (user) => ({
+  _id: user._id,
+  name: user.name,
+  email: user.email,
+  created_at: user.created_at,
+  role_name: user.role_name || 'user',
+  company_name: user.company_name || 'No Company',
+  activity_summary: { has_activity: true, total_answers: 0 }
+});
+
+// Main Component
+const UserHistory = ({ onToast }) => {
   const { t } = useTranslation();
-  const {
-    users,
-    isLoading,
-    searchTerm,
-    setSearchTerm,
-    selectedRole,
-    setSelectedRole,
-    refresh
-  } = useUserHistory();
-
+  const [selectedRole, setSelectedRole] = useState("All Roles");
+  const [users, setUsers] = useState([]);
+  const [filteredUsers, setFilteredUsers] = useState([]);
+  const [companies, setCompanies] = useState([]);
+  const [selectedCompany, setSelectedCompany] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
   const [selectedUser, setSelectedUser] = useState(null);
-  const [showModal, setShowModal] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [isLoading, setIsLoading] = useState(true);
+  const [userRole, setUserRole] = useState('');
+  const [isInitialized, setIsInitialized] = useState(false);
+  const [userDetails, setUserDetails] = useState({});
+  const [isLoadingDetails, setIsLoadingDetails] = useState(false);
+  const [globalQuestions, setGlobalQuestions] = useState([]);
 
-  const handleSelectUser = (user) => {
-    setSelectedUser(user);
-    setShowModal(true);
+  const handleRoleChange = (e) => {
+    const value = e.target.value;
+    setSelectedRole(value);
+    setCurrentPage(1);
+    applyFilters(searchTerm, value);
   };
 
+
+  const initializedRef = useRef(false);
+
+  // Load Initial Data
+  useEffect(() => {
+    if (initializedRef.current) return;
+    initializedRef.current = true;
+
+    const init = async () => {
+      const userInfo = getUserInfo();
+      setUserRole(userInfo.role || '');
+
+      const token = getAuthToken();
+      try {
+        const companiesResponse = await fetch(`${API_BASE_URL}/api/admin/companies`, {
+          headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
+        });
+        if (companiesResponse.ok) {
+          const data = await companiesResponse.json();
+          setCompanies(data.companies || []);
+        }
+        await loadGlobalQuestions();
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setIsInitialized(true);
+      }
+    };
+    init();
+  }, []);
+
+  const loadGlobalQuestions = async () => {
+    try {
+      const token = getAuthToken();
+      const response = await fetch(`${API_BASE_URL}/api/questions`, {
+        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setGlobalQuestions(data.questions || []);
+      }
+    } catch (error) {
+      console.error('Error loading questions:', error);
+    }
+  };
+
+  const loadUsers = async (companyId = '') => {
+    try {
+      setIsLoading(true);
+      const token = getAuthToken();
+      let url = `${API_BASE_URL}/api/admin/users`;
+      if (companyId) url += `?company_id=${companyId}`;
+
+      const response = await fetch(url, {
+        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const allowedRoles = ['super_admin', 'company_admin', 'user', 'admin'];
+        const filteredRawUsers = (data.users || []).filter(u => {
+          const role = (u.role_name || u.role || '').toLowerCase();
+          return allowedRoles.includes(role);
+        });
+        const transformed = filteredRawUsers.map(transformUser);
+        setUsers(transformed);
+        setFilteredUsers(transformed);
+      }
+    } catch (error) {
+      onToast('Error loading users', 'error');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const lastFetchRef = useRef(null);
+  useEffect(() => {
+    const fetchKey = `${selectedCompany}_${isInitialized}`;
+    if (isInitialized && lastFetchRef.current !== fetchKey) {
+      lastFetchRef.current = fetchKey;
+      loadUsers(selectedCompany);
+    }
+  }, [selectedCompany, isInitialized]);
+
+  const applyFilters = (searchValue, roleValue) => {
+    const search = searchValue.toLowerCase();
+
+    let filtered = users.filter(u =>
+      u.name?.toLowerCase().includes(search) ||
+      u.email?.toLowerCase().includes(search) ||
+      u.company_name?.toLowerCase().includes(search)
+    );
+
+    if (roleValue !== "All Roles") {
+      filtered = filtered.filter(
+        u => formatRoleName(u.role_name) === roleValue
+      );
+    }
+
+    setFilteredUsers(filtered);
+  };
+
+  const handleSearch = (value) => {
+    setSearchTerm(value);
+    applyFilters(value, selectedRole);
+  };
+
+  const loadUserHistory = async (userId, businessId = null) => {
+    const cacheKey = businessId ? `${userId}_${businessId}` : userId;
+    if (userDetails[cacheKey]) return;
+
+    try {
+      setIsLoadingDetails(true);
+      const token = getAuthToken();
+      let url = `${API_BASE_URL}/api/admin/user-data/${userId}`;
+      if (businessId) url += `?business_id=${businessId}`;
+
+      const response = await fetch(url, {
+        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+
+        // Enhance with direct answers from answers API
+        if (businessId) {
+          try {
+            const answersResponse = await answerService.getAnswersByBusiness(businessId);
+            if (answersResponse && answersResponse.data) {
+              data.rawAnswers = answersResponse.data;
+            }
+          } catch (answerError) {
+            console.warn('Could not fetch raw answers:', answerError);
+          }
+        }
+
+        setUserDetails(prev => ({ ...prev, [cacheKey]: data }));
+      }
+    } catch (error) {
+      onToast('Error loading details', 'error');
+    } finally {
+      setIsLoadingDetails(false);
+    }
+  };
+
+  const handleUserSelect = async (userId) => {
+    setSelectedUser(userId);
+    await loadUserHistory(userId);
+  };
+
+  const handleExport = () => {
+    const user = users.find(u => u._id === selectedUser);
+    const details = userDetails[selectedUser];
+    exportUserData(user, details, onToast);
+  };
+
+  const formatRoleName = (roleName) => {
+    switch (roleName?.toLowerCase()) {
+      case "company_admin": return "Org Admin";
+      case "collaborator": return "Collaborator";
+      case "user": return "User";
+      case "viewer": return "Viewer";
+      default: return roleName ? roleName.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ') : 'User';
+    }
+  };
+
+  const columns = [
+    {
+      key: 'user',
+      label: t('user'),
+      render: (_, row) => (
+        <div>
+          <div className="admin-cell-primary">{row.name}</div>
+          <div className="admin-cell-secondary">{row.email}</div>
+        </div>
+      )
+    },
+    {
+      key: 'role_name',
+      label: t('role'),
+      render: (val) => <span className="admin-status-badge active" style={{ fontSize: '0.72rem' }}>{formatRoleName(val)}</span>
+    },
+    {
+      key: 'company',
+      label: t('company'),
+      render: (_, row) => <span className="admin-cell-secondary">{row.company_name}</span>
+    },
+    {
+      key: 'joined',
+      label: t('joined'),
+      render: (_, row) => <span className="admin-cell-secondary">{formatDate(row.created_at)}</span>
+    },
+    {
+      key: 'actions',
+      label: t('actions'),
+      render: (_, row) => (
+        <>
+          <Button variant="outline-primary" size="sm" onClick={() => handleUserSelect(row._id)} style={{ borderRadius: '8px', fontSize: '0.8rem', padding: '0.3rem 0.8rem' }}>
+            {t('view_history')}
+          </Button>
+        </>
+      )
+    }
+  ];
+
+  const totalPages = Math.ceil(filteredUsers.length / ITEMS_PER_PAGE);
+  // Visual clamping: if current page is out of bounds due to filters, show the last page
+  // but keep the state variable high so it restores when filter is cleared.
+  const displayPage = Math.max(1, Math.min(currentPage, totalPages || 1));
+  const paginatedUsers = filteredUsers.slice((displayPage - 1) * ITEMS_PER_PAGE, displayPage * ITEMS_PER_PAGE);
+
   return (
-    <div className="user-history-container p-4">
-      <div className="d-flex justify-content-between align-items-center mb-4">
-        <h2 className="section-title mb-0">{t('User History & Activity')}</h2>
-      </div>
+    <div className="user-history-redesign">
+      {/* ---- Toolbar ---- */}
 
-      <UserHistoryMetrics users={users} />
-
-      <Card className="border-0 shadow-sm rounded-4 overflow-hidden">
-        <Card.Body className="p-0">
-          <div className="p-4 border-bottom bg-light d-flex flex-column flex-md-row gap-3">
-            <InputGroup className="search-group">
-              <InputGroup.Text className="bg-white border-end-0">
-                <Search size={18} className="text-muted" />
-              </InputGroup.Text>
-              <Form.Control
-                placeholder={t('Search users by name or email...')}
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="border-start-0"
-              />
-            </InputGroup>
-
-            <Form.Select 
-              value={selectedRole}
-              onChange={(e) => setSelectedRole(e.target.value)}
-              className="role-select"
-            >
-              <option value="All Roles">{t('All Roles')}</option>
-              <option value="super_admin">{t('Super Admin')}</option>
-              <option value="company_admin">{t('Company Admin')}</option>
-              <option value="user">{t('Regular User')}</option>
-            </Form.Select>
-          </div>
-
-          <UserHistoryTable 
-            users={users} 
-            isLoading={isLoading} 
-            onSelectUser={handleSelectUser}
-          />
-        </Card.Body>
-      </Card>
-
-      <UserHistoryModal 
-        show={showModal} 
-        user={selectedUser} 
-        onHide={() => setShowModal(false)} 
+      <AdminTable
+        title={t('user_history_and_chat_records')}
+        count={filteredUsers.length}
+        countLabel={t('records')}
+        columns={columns}
+        data={paginatedUsers}
+        searchTerm={searchTerm}
+        onSearchChange={handleSearch}
+        searchPlaceholder={t('search_by_name_email_company')}
+        searchTooltip={t('search_user_history_tooltip')}
+        currentPage={displayPage}
+        totalPages={totalPages}
+        onPageChange={setCurrentPage}
+        totalItems={filteredUsers.length}
+        itemsPerPage={ITEMS_PER_PAGE}
+        loading={isLoading}
+        toolbarContent={
+          <Form.Select
+            className="role-select"
+            style={{ width: '210px' }}
+            value={selectedRole}
+            onChange={handleRoleChange}
+          >
+            <option value="All Roles">{t("All_Roles")}</option>
+            <option value="Org Admin">{t("Org_Admin")}</option>
+            <option value="User">{t("User")}</option>
+          </Form.Select>
+        }
       />
+
+      {selectedUser && (
+        <UserHistoryModal
+          user={users.find(u => u._id === selectedUser)}
+          userDetails={userDetails}
+          isLoading={isLoadingDetails}
+          onClose={() => setSelectedUser(null)}
+          onExport={handleExport}
+          onToast={onToast}
+          loadUserHistory={loadUserHistory}
+          globalQuestions={globalQuestions}
+        />
+      )}
     </div>
   );
 };
+
+// Sorting and filtering utilities
+const parseAnalysisData = (userDetails, user, globalQuestions = []) => {
+  if (!userDetails) return null;
+
+  const analysisData = {
+    // Initial Phase Components
+    swot: null,
+    purchaseCriteria: null,
+    channelHeatmap: null,
+    loyaltyNPS: null,
+    capabilityHeatmap: null,
+    porters: null,
+    pestel: null,
+    strategic: null,
+
+    // Essential Phase Components
+    fullSwot: null,
+    customerSegmentation: null,
+    competitiveAdvantage: null,
+    channelEffectiveness: null,
+    expandedCapability: null,
+    strategicGoals: null,
+    strategicRadar: null,
+    cultureProfile: null,
+    productivityMetrics: null,
+    maturityScore: null,
+
+    // Good Phase Components - Financial analyses
+    costEfficiency: null,
+    financialPerformance: null,
+    financialBalance: null,
+    operationalEfficiency: null,
+    profitabilityData: null,
+    growthTrackerData: null,
+    liquidityEfficiencyData: null,
+    investmentPerformanceData: null,
+    leverageRiskData: null,
+
+    businessName: user?.name || 'Business',
+    userAnswers: {},
+    questions: [],
+    phaseAnalysisArray: userDetails.system || []
+  };
+
+  // Process conversation data
+  if (userDetails.conversation?.length > 0) {
+    userDetails.conversation.forEach(phase => {
+      phase.questions?.forEach(qa => {
+        const questionId = qa.question_id || qa.question || `q_${Math.random()}`;
+        analysisData.questions.push({
+          _id: questionId,
+          question_id: questionId,
+          question: qa.question, // UI expects 'question'
+          question_text: qa.question,
+          answer: qa.answer, // UI expects 'answer'
+          phase: phase.phase,
+          severity: phase.severity,
+          order: qa.order || 0,
+          conversation_flow: qa.conversation_flow
+        });
+        analysisData.userAnswers[questionId] = qa.answer;
+      });
+    });
+  }
+
+  // Inject raw answers from Advanced Tab (mapped to question text)
+  if (userDetails.rawAnswers?.length > 0 && globalQuestions.length > 0) {
+    const questionMap = new Map(globalQuestions.map(q => [q._id.toString(), q]));
+
+    // Create a virtual phase for Advanced Tab answers if they aren't already represented
+    const advancedPhaseData = {
+      phase: 'Advanced Tab Edits',
+      severity: 'mandatory',
+      questions: []
+    };
+
+    userDetails.rawAnswers.forEach(ans => {
+      const qId = ans.question_id?.toString();
+      const questionObj = questionMap.get(qId);
+
+      if (questionObj) {
+        // Update userAnswers map
+        analysisData.userAnswers[qId] = ans.answer;
+
+        // Add to questions list for history view if not already there
+        const existingQuestion = analysisData.questions.find(q => q.question_id === qId);
+        if (!existingQuestion) {
+          analysisData.questions.push({
+            _id: qId,
+            question_id: qId,
+            question: questionObj.question_text, // UI expects 'question'
+            question_text: questionObj.question_text,
+            answer: ans.answer, // UI expects 'answer'
+            phase: questionObj.phase || 'advanced',
+            severity: questionObj.severity || 'mandatory',
+            order: questionObj.order || 99,
+            last_updated: ans.updated_at
+          });
+        } else {
+          // Update the answer of the existing question to reflect Advanced Tab edit
+          existingQuestion.answer = ans.answer;
+          existingQuestion.last_updated = ans.updated_at;
+
+          // Ensure 'question' field is populated for UI components
+          if (!existingQuestion.question) {
+            existingQuestion.question = existingQuestion.question_text || questionObj.question_text;
+          }
+        }
+      }
+    });
+
+    if (advancedPhaseData.questions.length > 0) {
+      // Ensure we have a place for them in conversation structure if needed
+      // but parseAnalysisData's conversation processing is mostly for the questions[] array
+    }
+  }
+
+  // Process ALL analysis types from system data - SIMPLIFIED LOGIC
+  userDetails.system?.forEach(result => {
+    try {
+      const analysisResult = typeof result.analysis_result === 'string'
+        ? JSON.parse(result.analysis_result)
+        : result.analysis_result;
+
+      const analysisType = result.analysis_type?.toLowerCase() ||
+        result.name?.toLowerCase() ||
+        result.normalized_type?.toLowerCase() || '';
+
+      // Enhanced analysis type mapping - Same as AnalysisContentManager
+      switch (analysisType) {
+        // Initial Phase Analysis Types
+        case 'swot':
+          analysisData.swot = analysisResult;
+          break;
+        case 'purchasecriteria':
+        case 'purchase_criteria':
+          analysisData.purchaseCriteria = analysisResult;
+          break;
+        case 'channelheatmap':
+        case 'channel_heatmap':
+          analysisData.channelHeatmap = analysisResult;
+          break;
+        case 'loyaltynps':
+        case 'loyalty_nps':
+        case 'loyalty_metrics':
+          analysisData.loyaltyNPS = analysisResult;
+          break;
+        case 'capabilityheatmap':
+        case 'capability_heatmap':
+          analysisData.capabilityHeatmap = analysisResult;
+          break;
+        case 'porters':
+        case 'porter_analysis':
+        case 'porters_five_forces':
+          analysisData.porters = analysisResult;
+          break;
+        case 'pestel':
+        case 'pestel_analysis':
+          analysisData.pestel = analysisResult;
+          break;
+        case 'strategic':
+        case 'strategic_analysis':
+          analysisData.strategic = analysisResult;
+          break;
+
+        // Essential Phase Analysis Types
+        case 'fullswot':
+        case 'full_swot':
+        case 'full_swot_portfolio':
+          analysisData.fullSwot = analysisResult;
+          break;
+        case 'customersegmentation':
+        case 'customer_segmentation':
+          analysisData.customerSegmentation = analysisResult;
+          break;
+        case 'competitiveadvantage':
+        case 'competitive_advantage':
+        case 'competitive_advantage_matrix':
+          analysisData.competitiveAdvantage = analysisResult;
+          break;
+        case 'channeleffectiveness':
+        case 'channel_effectiveness':
+        case 'channel_effectiveness_map':
+          analysisData.channelEffectiveness = analysisResult;
+          break;
+        case 'expandedcapability':
+        case 'expanded_capability':
+        case 'expanded_capability_heatmap':
+          analysisData.expandedCapability = analysisResult;
+          break;
+        case 'strategicgoals':
+        case 'strategic_goals':
+          analysisData.strategicGoals = analysisResult;
+          break;
+        case 'strategicradar':
+        case 'strategic_radar':
+        case 'strategic_positioning_radar':
+          analysisData.strategicRadar = analysisResult;
+          break;
+        case 'cultureprofile':
+        case 'culture_profile':
+        case 'organizational_culture_profile':
+          analysisData.cultureProfile = analysisResult;
+          break;
+        case 'productivitymetrics':
+        case 'productivity_metrics':
+          analysisData.productivityMetrics = analysisResult;
+          break;
+        case 'maturityscore':
+        case 'maturity_score':
+        case 'maturity_scoring':
+          analysisData.maturityScore = analysisResult;
+          break;
+
+        case 'competitivelandscape':
+        case 'competitive landscape':
+        case 'competitive_landscape':
+          analysisData.competitiveLandscapeData = analysisResult;
+          break;
+
+        case 'coreadjacency':
+        case 'core adjacency':
+        case 'core_adjacency':
+        case 'core_adjacency_matrix':
+          analysisData.coreAdjacencyData = analysisResult;
+          break;
+
+        // Financial Analysis Types - SIMPLIFIED: Just check if data exists
+        case 'profitabilityanalysis':
+        case 'profitability_analysis':
+        case 'profitability':
+          analysisData.profitabilityData = analysisResult;
+          break;
+        case 'growthtracker':
+        case 'growth_tracker':
+        case 'growth':
+          analysisData.growthTrackerData = analysisResult;
+          break;
+        case 'liquidityefficiency':
+        case 'liquidity_efficiency':
+        case 'liquidity':
+          analysisData.liquidityEfficiencyData = analysisResult;
+          break;
+        case 'investmentperformance':
+        case 'investment_performance':
+        case 'investment':
+          analysisData.investmentPerformanceData = analysisResult;
+          break;
+        case 'leveragerisk':
+        case 'leverage_risk':
+        case 'leverage':
+          analysisData.leverageRiskData = analysisResult;
+          break;
+        case 'costefficiency':
+        case 'cost_efficiency':
+          analysisData.costEfficiency = analysisResult;
+          break;
+        case 'financialperformance':
+        case 'financial_performance':
+          analysisData.financialPerformance = analysisResult;
+          break;
+        case 'financialbalance':
+        case 'financial_balance':
+        case 'financial_health':
+          analysisData.financialBalance = analysisResult;
+          break;
+        case 'operationalefficiency':
+        case 'operational_efficiency':
+          analysisData.operationalEfficiency = analysisResult;
+          break;
+
+        default:
+          // Fallback detection for financial analyses based on is_financial_analysis flag
+          if (result.is_financial_analysis) {
+            if (analysisType.includes('profitab')) {
+              analysisData.profitabilityData = analysisResult;
+            } else if (analysisType.includes('growth')) {
+              analysisData.growthTrackerData = analysisResult;
+            } else if (analysisType.includes('liquidity')) {
+              analysisData.liquidityEfficiencyData = analysisResult;
+            } else if (analysisType.includes('investment')) {
+              analysisData.investmentPerformanceData = analysisResult;
+            } else if (analysisType.includes('leverage')) {
+              analysisData.leverageRiskData = analysisResult;
+            }
+          }
+          break;
+      }
+    } catch (error) {
+      console.error('Error parsing analysis result:', error, result);
+    }
+  });
+
+  // Create a clean, normalized array for phase-based components
+  const normalizedSystemResults = (userDetails.system || []).map(result => {
+    try {
+      const parsedData = typeof result.analysis_result === 'string'
+        ? JSON.parse(result.analysis_result)
+        : result.analysis_result;
+
+      let type = (result.analysis_type || result.name || result.normalized_type || '').toLowerCase();
+      // Standardize types
+      if (['porters', 'porter_analysis', 'porters_five_forces'].includes(type)) type = 'porters';
+      if (['pestel', 'pestel_analysis'].includes(type)) type = 'pestel';
+      if (['swot'].includes(type)) type = 'swot';
+      if (['strategic', 'strategic_analysis'].includes(type)) type = 'strategic';
+
+      return {
+        ...result,
+        analysis_type: type,
+        analysis_data: parsedData,
+        analysis_result: parsedData // keep both for compatibility
+      };
+    } catch (e) {
+      return result;
+    }
+  });
+
+  return {
+    ...analysisData,
+    phaseAnalysisArray: normalizedSystemResults
+  };
+};
+
+// Check if analysis data exists
+const hasAnalysisData = (analysisData) => {
+  if (!analysisData) return false;
+
+  // Check if any analysis exists
+  return !!(
+    analysisData.swot || analysisData.purchaseCriteria ||
+    analysisData.channelHeatmap || analysisData.loyaltyNPS ||
+    analysisData.capabilityHeatmap || analysisData.porters ||
+    analysisData.pestel || analysisData.strategic ||
+    analysisData.fullSwot || analysisData.customerSegmentation ||
+    analysisData.competitiveAdvantage || analysisData.channelEffectiveness ||
+    analysisData.expandedCapability || analysisData.strategicGoals ||
+    analysisData.strategicRadar || analysisData.cultureProfile ||
+    analysisData.productivityMetrics || analysisData.maturityScore ||
+    analysisData.costEfficiency || analysisData.financialPerformance ||
+    analysisData.financialBalance || analysisData.operationalEfficiency ||
+    analysisData.competitiveLandscapeData || analysisData.coreAdjacencyData ||
+    analysisData.profitabilityData || analysisData.growthTrackerData ||
+    analysisData.liquidityEfficiencyData || analysisData.investmentPerformanceData ||
+    analysisData.leverageRiskData
+  );
+};
+const createSimplePhaseManager = (analysisData, userDetails) => {
+  // Simplified logic - similar to AnalysisContentManager
+  const hasInitial = !!(
+    analysisData?.swot ||
+    analysisData?.purchaseCriteria ||
+    analysisData?.loyaltyNPS ||
+    analysisData?.porters ||
+    analysisData?.pestel
+  );
+
+  const hasEssential = !!(
+    analysisData?.fullSwot ||
+    analysisData?.competitiveAdvantage ||
+    analysisData?.expandedCapability ||
+    analysisData?.strategicRadar ||
+    analysisData?.productivityMetrics ||
+    analysisData?.maturityScore ||
+    analysisData?.competitiveLandscapeData ||
+    analysisData?.coreAdjacencyData
+  );
+
+  const hasAnyFinancialData = !!(
+    analysisData?.profitabilityData ||
+    analysisData?.growthTrackerData ||
+    analysisData?.liquidityEfficiencyData ||
+    analysisData?.investmentPerformanceData ||
+    analysisData?.leverageRiskData
+  );
+
+  // Determine if a document is present from userDetails or data
+  const hasDocumentInSystemResults = userDetails?.system?.some(result =>
+    result.business_context?.has_document === true ||
+    result.business_context?.document_exists === true
+  );
+
+  const hasDocument = hasAnyFinancialData || !!userDetails?.document_info?.has_document || hasDocumentInSystemResults;
+
+  // Determine phases reached
+  const isAdvancedReached = hasAnyFinancialData || hasDocument;
+  const isEssentialReached = hasEssential || isAdvancedReached;
+  const isInitialReached = hasInitial || isEssentialReached;
+
+  return {
+    getUnlockedFeatures: () => ({
+      analysis: true,
+      initialPhase: isInitialReached,
+      essentialPhase: isEssentialReached,
+      advancedPhase: isAdvancedReached,
+      hasDocument: hasDocument,
+      // Legacy flags
+      fullSwot: hasEssential,
+      goodPhase: isAdvancedReached
+    })
+  };
+};
+
+// Export utility
+const exportUserData = async (user, userDetails, onToast) => {
+  try {
+    if (!userDetails) {
+      onToast('Please view the user details first before exporting', 'warning');
+      return;
+    }
+
+    const exportData = {
+      exportInfo: {
+        userName: user.name,
+        userId: user._id,
+        exportDate: new Date().toISOString(),
+        exportedBy: getUserInfo()?.name || 'Admin'
+      },
+      userProfile: {
+        name: user.name,
+        email: user.email,
+        role: user.role_name,
+        company: user.company_name,
+        joinedDate: user.created_at
+      },
+      conversationData: {
+        totalPhases: userDetails.conversation?.length || 0,
+        phases: userDetails.conversation || []
+      },
+      analysisResults: {
+        totalAnalyses: userDetails.system?.length || 0,
+        analyses: userDetails.system || []
+      },
+      questionsAndAnswers: []
+    };
+
+    userDetails.conversation?.forEach((phase, phaseIndex) => {
+      phase.questions?.forEach((qa, qaIndex) => {
+        exportData.questionsAndAnswers.push({
+          phaseNumber: phaseIndex + 1,
+          phaseName: phase.phase,
+          phaseSeverity: phase.severity,
+          questionNumber: qaIndex + 1,
+          question: qa.question,
+          answer: qa.answer
+        });
+      });
+    });
+
+    exportData.summary = {
+      totalQuestions: exportData.questionsAndAnswers.length,
+      totalAnalyses: userDetails.system?.length || 0,
+      phases: userDetails.conversation?.map(p => p.phase) || []
+    };
+
+    const jsonString = JSON.stringify(exportData, null, 2);
+    const blob = new Blob([jsonString], { type: 'application/json' });
+    const url = window.URL.createObjectURL(blob);
+
+    const a = document.createElement('a');
+    a.style.display = 'none';
+    a.href = url;
+    a.download = `${user.name.replace(/\s+/g, '_')}_analysis_${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+
+    onToast(`Exported analysis data for ${user.name}`, 'success');
+  } catch (error) {
+    console.error('Error exporting user data:', error);
+    onToast('Error exporting user data', 'error');
+  }
+};
+
+const UserHistoryModal = ({ user, userDetails, isLoading, onClose, onExport, onToast, loadUserHistory, globalQuestions }) => {
+  useEffect(() => {
+    // Lock body scroll
+    document.body.style.overflow = 'hidden';
+
+    // Restore body scroll on unmount
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, []);
+
+  return (
+    <div className="user-details-modal">
+      <div className="modal-overlayas" onClick={onClose} />
+      <div className="modal-content">
+        <UserDetailsPanel
+          user={user}
+          userDetails={userDetails}
+          isLoading={isLoading}
+          onClose={onClose}
+          onExport={onExport}
+          onToast={onToast}
+          loadUserHistory={loadUserHistory}
+          globalQuestions={globalQuestions}
+        />
+      </div>
+    </div>
+  );
+};
+
+// Enhanced UserDetailsPanel with Strategic Analysis Tab
+const UserDetailsPanel = ({ user, userDetails, isLoading, onClose, onExport, onToast, loadUserHistory, globalQuestions }) => {
+  const [activeTab, setActiveTab] = useState('businesses');
+  const [selectedBusiness, setSelectedBusiness] = useState('');
+  const [isLoadingBusiness, setIsLoadingBusiness] = useState(false);
+
+  const allUserDetails = userDetails[user?._id] || {};
+  const businesses = allUserDetails.businesses || [];
+
+  useEffect(() => {
+    if (businesses.length > 0 && !selectedBusiness) {
+      const firstBusinessId = businesses[0]._id;
+      setSelectedBusiness(firstBusinessId);
+      handleBusinessChange(firstBusinessId);
+    }
+  }, [businesses, selectedBusiness]);
+
+  const getCurrentUserDetails = () => {
+    if (!selectedBusiness) return allUserDetails;
+    const businessCacheKey = `${user._id}_${selectedBusiness}`;
+    return userDetails[businessCacheKey] || {};
+  };
+
+  const handleBusinessChange = async (businessId) => {
+    if (!businessId) return;
+
+    setSelectedBusiness(businessId);
+    setIsLoadingBusiness(true);
+
+    try {
+      await loadUserHistory(user._id, businessId);
+    } catch (error) {
+      console.error('Error loading business data:', error);
+      onToast('Error loading business data', 'error');
+    } finally {
+      setIsLoadingBusiness(false);
+    }
+  };
+
+  const currentUserDetails = getCurrentUserDetails();
+  const analysisData = parseAnalysisData(currentUserDetails, user, globalQuestions);
+  const phaseManager = createSimplePhaseManager(analysisData, currentUserDetails);
+
+  if (businesses.length === 0 && !isLoading) {
+    return <EmptyBusinessState user={user} onClose={onClose} />;
+  }
+
+  return (
+    <div className="user-details-panel">
+      <PanelHeader user={user} currentUserDetails={currentUserDetails} onClose={onClose} onExport={onExport} />
+
+      {selectedBusiness && (
+        <>
+          <TabNavigation
+            activeTab={activeTab}
+            onTabChange={setActiveTab}
+            businesses={businesses}
+          />
+
+          <div className="tab-content tab-content-user-history">
+            {isLoadingBusiness ? (
+              <LoadingState message="Loading business data..." />
+            ) : (
+              <TabContent
+                activeTab={activeTab}
+                businesses={businesses}
+                currentUserDetails={currentUserDetails}
+                analysisData={analysisData}
+                selectedBusiness={selectedBusiness}
+                selectedBusinessId={selectedBusiness}
+                onBusinessChange={handleBusinessChange}
+                isLoadingBusiness={isLoadingBusiness}
+                userDetails={currentUserDetails}
+                phaseManager={phaseManager}
+                onToast={onToast}
+              />
+            )}
+          </div>
+        </>
+      )}
+    </div>
+  );
+};
+
+const EmptyBusinessState = ({ user, onClose }) => {
+  const { t } = useTranslation();
+  return (
+    <div className="user-details-panel">
+      <div className="panel-header">
+        <div className="user-header-info">
+          <div>
+            <h3>{user?.name}</h3>
+            <p>{user?.email}</p>
+          </div>
+        </div>
+        <div className="panel-actions">
+          <button onClick={onClose} className="close-button">
+            <X size={20} />
+          </button>
+        </div>
+      </div>
+      <div className="empty-state">
+        <Building2 size={48} />
+        <p className="empty-title">
+          {t("no_businesses_found") || "No businesses found"}
+        </p>
+
+        <p className="empty-subtitle">
+          {t("user_hasnt_created_businesses") || "This user hasn't created any businesses yet"}
+        </p>
+      </div>
+    </div>
+  );
+};
+
+const PanelHeader = ({ user, currentUserDetails, onClose, onExport }) => {
+  const { t } = useTranslation();
+  return (
+    <div className="panel-header">
+      <div className="header-row">
+        <div className="header-left">
+          <h3 className="user-name-header">{t("User Name")}: {user?.name}</h3>
+        </div>
+        <div className="header-right">
+          <button onClick={onClose} className="close-button">
+            <X size={20} />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const TabNavigation = ({
+  activeTab,
+  onTabChange,
+  businesses
+}) => {
+  const { t } = useTranslation();
+  return (
+    <div className="admin-nav">
+      <button
+        onClick={() => onTabChange('businesses')}
+        className={`nav-tab ${activeTab === 'businesses' ? 'active' : ''}`}
+      >
+        <Building2 size={16} />
+        <span>{t('businesses')}</span>
+        <span className="tab-badge">{businesses.length}</span>
+      </button>
+      <button
+        onClick={() => onTabChange('conversation')}
+        className={`nav-tab ${activeTab === 'conversation' ? 'active' : ''}`}
+      >
+        <FileText size={16} />
+        <span>{t('conversation')}</span>
+      </button>
+      <button
+        onClick={() => onTabChange('insights')}
+        className={`nav-tab ${activeTab === 'insights' ? 'active' : ''}`}
+      >
+        <Target size={16} />
+        <span>{t('insights')}</span>
+      </button>
+      <button
+        onClick={() => onTabChange('strategic')}
+        className={`nav-tab ${activeTab === 'strategic' ? 'active' : ''}`}
+      >
+        <TrendingUp size={16} />
+        <span>{t('strategic')}</span>
+      </button>
+    </div>
+  );
+};
+
+const LoadingState = ({ message }) => {
+  const { t } = useTranslation();
+  return (
+    <div className="loading-details">
+      <Loader size={24} className="loading-spinner" />
+      <span>{t(message) || message}</span>
+    </div>
+  );
+};
+
+const TabContent = ({
+  activeTab,
+  businesses,
+  currentUserDetails,
+  analysisData,
+  selectedBusiness,
+  selectedBusinessId,
+  onBusinessChange,
+  isLoadingBusiness,
+  userDetails,
+  phaseManager,
+  onToast
+}) => {
+  const getSelectedBusinessName = () => {
+    if (!selectedBusiness) return 'Select a Business';
+    const business = businesses.find(b => b._id === selectedBusiness);
+    return business?.business_name || 'Unknown Business';
+  };
+
+  switch (activeTab) {
+    case 'businesses':
+      return <BusinessesTab businesses={businesses} />;
+    case 'conversation':
+      return (
+        <ConversationTab
+          conversation={currentUserDetails?.conversation || []}
+          enrichedQuestions={analysisData?.questions || []}
+          totalQuestions={currentUserDetails?.stats?.total_questions || 0}
+          completedQuestions={currentUserDetails?.stats?.completed_questions || 0}
+          selectedBusiness={getSelectedBusinessName()}
+          businesses={businesses}
+          selectedBusinessId={selectedBusinessId}
+          onBusinessChange={onBusinessChange}
+          isLoadingBusiness={isLoadingBusiness}
+        />
+      );
+    case 'insights':
+      return (
+        <AnalysisTab
+          analysisData={analysisData}
+          selectedBusiness={getSelectedBusinessName()}
+          businesses={businesses}
+          selectedBusinessId={selectedBusinessId}
+          onBusinessChange={onBusinessChange}
+          isLoadingBusiness={isLoadingBusiness}
+          totalQuestions={currentUserDetails?.stats?.total_questions || 0}
+          completedQuestions={currentUserDetails?.stats?.completed_questions || 0}
+          conversationCount={currentUserDetails?.conversation?.length || 0}
+          userDetails={userDetails}
+          phaseManager={phaseManager}
+        />
+      );
+    case 'strategic':
+      return (
+        <StrategicTab
+          analysisData={analysisData}
+          selectedBusiness={getSelectedBusinessName()}
+          businesses={businesses}
+          selectedBusinessId={selectedBusinessId}
+          onBusinessChange={onBusinessChange}
+          isLoadingBusiness={isLoadingBusiness}
+          totalQuestions={currentUserDetails?.stats?.total_questions || 0}
+          completedQuestions={currentUserDetails?.stats?.completed_questions || 0}
+          conversationCount={currentUserDetails?.conversation?.length || 0}
+          phaseManager={phaseManager}
+          onToast={onToast}
+        />
+      );
+    default:
+      return null;
+  }
+};
+
+// BusinessesTab Component
+const BusinessesTab = ({ businesses }) => {
+  const { t } = useTranslation();
+  if (businesses.length === 0) {
+    return (
+      <div className="empty-state">
+        <Building2 size={48} />
+        <p className="empty-title">{t('no_businesses')}</p>
+        <p className="empty-subtitle">{t('no_businesses_found')}</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="businesses-tab">
+      <div className="history-businesses-list">
+        {businesses.map((business, index) => (
+          <BusinessCard key={index} business={business} />
+        ))}
+      </div>
+    </div>
+  );
+};
+
+const BusinessCard = ({ business }) => {
+  const { t } = useTranslation();
+
+  return (
+    <div className="history-business-card">
+      <div className="history-business-header">
+        <h5 className="history-business-name"><strong>{t('business_name')}:</strong> {business.business_name}</h5>
+        <span className="history-business-date">{formatDate(business.created_at)}</span>
+      </div>
+      <div className="history-business-purpose">
+        <strong>{t('Purpose')}:</strong> {business.business_purpose}
+      </div>
+      {business.description && (
+        <div className="history-business-description">
+          <strong>{t('description')}:</strong> {business.description}
+        </div>
+      )}
+      {business.question_statistics && (
+        <BusinessStats stats={business.question_statistics} />
+      )}
+    </div>
+  );
+};
+
+const BusinessStats = ({ stats }) => {
+  const { t } = useTranslation();
+  return (
+    <div className="history-business-stats">
+      <div className="history-stat-item">
+        <span className="history-stat-label">{t('progress')}</span>
+        <span className="history-stat-value">{stats.progress_percentage}%</span>
+      </div>
+      <div className="history-stat-item">
+        <span className="history-stat-label">{t('completed')}</span>
+        <span className="history-stat-value">{stats.completed_questions}</span>
+      </div>
+      <div className="history-stat-item">
+        <span className="history-stat-label">{t('total')}</span>
+        <span className="history-stat-value">{stats.total_questions}</span>
+      </div>
+    </div>
+  );
+};
+
+// BusinessFilter Component (reusable)
+const BusinessFilter = ({ businesses, selectedBusinessId, onBusinessChange, isLoadingBusiness }) => {
+  const { t } = useTranslation();
+  return (
+    <div className="business-filter-inline">
+      <label htmlFor="business-select" className="business-filter-label">
+        {t('business')}:
+      </label>
+      <select
+        id="business-select"
+        value={selectedBusinessId}
+        onChange={(e) => onBusinessChange(e.target.value)}
+        className="business-filter-select"
+        disabled={isLoadingBusiness}
+      >
+        {businesses.map(business => (
+          <option key={business._id} value={business._id}>
+            {business.business_name}
+          </option>
+        ))}
+      </select>
+      {isLoadingBusiness && (
+        <div className="business-loading">
+          <Loader size={16} className="loading-spinner" />
+        </div>
+      )}
+    </div>
+  );
+};
+
+// StatsRow Component (reusable) - Updated to support strategic PDF download
+const StatsRow = ({
+  businesses,
+  selectedBusinessId,
+  onBusinessChange,
+  isLoadingBusiness,
+  stats,
+  showPDFExport,
+  analysisData,
+  selectedBusiness,
+  isStrategicTab = false,
+  onToast
+}) => {
+  const { t } = useTranslation();
+  return (
+    <div className="user-history-stats-container">
+      <div className="user-history-stats-row">
+        {businesses.length > 0 && (
+          <div className="business-filter-inline">
+            <label htmlFor="business-select" className="business-filter-label">
+              {t('business')}:
+            </label>
+            <select
+              id="business-select"
+              value={selectedBusinessId}
+              onChange={(e) => onBusinessChange(e.target.value)}
+              className="business-filter-select"
+              disabled={isLoadingBusiness}
+            >
+              {businesses.map(business => (
+                <option key={business._id} value={business._id}>
+                  {business.business_name}
+                </option>
+              ))}
+            </select>
+            {isLoadingBusiness && (
+              <div className="business-loading">
+                <Loader size={16} className="loading-spinner" />
+              </div>
+            )}
+          </div>
+        )}
+
+        <div className="stats-group">
+          <div className="stat-card">
+            <div className="stat-number">{stats.completed}</div>
+            <div className="stat-label">{t('Completed_Questions') || 'Completed Questions'}</div>
+          </div>
+          <div className="stat-card">
+            <div className="stat-number">{stats.progress}%</div>
+            <div className="stat-label">{t('progress')}</div>
+          </div>
+        </div>
+
+        {showPDFExport && analysisData && (
+          <div className="pdf-export-container">
+            {isStrategicTab ? (
+              <PDFExportButton
+                businessName={selectedBusiness}
+                onToastMessage={onToast}
+                exportType="strategic"
+                strategicData={analysisData.strategic}
+                showText={true}
+              />
+            ) : (
+              <PDFExportButton
+                businessName={selectedBusiness}
+                onToastMessage={onToast}
+                exportType="insights"
+                unlockedFeatures={analysisData.unlockedFeatures || { analysis: true, advancedPhase: true }} // Fallback for admin view context
+                showText={true}
+                {...analysisData} // Spread analysis data props
+              />
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+const ConversationTab = ({
+  conversation,
+  enrichedQuestions = [],
+  totalQuestions = 0,
+  completedQuestions = 0,
+  selectedBusiness = 'Select a Business',
+  businesses = [],
+  selectedBusinessId = '',
+  onBusinessChange,
+  isLoadingBusiness = false
+}) => {
+  const { t } = useTranslation();
+  // Flatten all questions from all phases into a single array
+  const allQuestions = enrichedQuestions.length > 0
+    ? [...enrichedQuestions].sort((a, b) => (a.order || 0) - (b.order || 0))
+    : conversation.reduce((questions, phase) => {
+      const phaseQuestions = phase.questions?.map(qa => ({
+        ...qa,
+        phase: phase.phase,
+        severity: phase.severity
+      })) || [];
+      return [...questions, ...phaseQuestions];
+    }, []).sort((a, b) => (a.order || 0) - (b.order || 0));
+
+  const totalCompletedQuestions = allQuestions.length;
+
+  const stats = {
+    completed: totalCompletedQuestions,
+    phases: conversation.length,
+    progress: totalQuestions > 0 ? Math.round((totalCompletedQuestions / totalQuestions) * 100) : 0
+  };
+
+  if (allQuestions.length === 0) {
+    return (
+      <div className="conversation-tab">
+        <StatsRow
+          businesses={businesses}
+          selectedBusinessId={selectedBusinessId}
+          onBusinessChange={onBusinessChange}
+          isLoadingBusiness={isLoadingBusiness}
+          stats={stats}
+        />
+        <div className="empty-state">
+          <FileText size={48} />
+          <p className="empty-title">{t('no_chat_records')}</p>
+          <p className="empty-subtitle">
+            {t('no_completed_questions_found', { business: selectedBusiness })}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="conversation-tab">
+      <StatsRow
+        businesses={businesses}
+        selectedBusinessId={selectedBusinessId}
+        onBusinessChange={onBusinessChange}
+        isLoadingBusiness={isLoadingBusiness}
+        stats={stats}
+      />
+      <div className="questions-list">
+        {allQuestions.map((question, index) => (
+          <QuestionItem key={index} question={question} questionNumber={index + 1} />
+        ))}
+      </div>
+    </div>
+  );
+};
+
+const QuestionItem = ({ question, questionNumber }) => {
+  const { t } = useTranslation();
+  const hasFlow = question.conversation_flow && question.conversation_flow.length > 0;
+
+  return (
+    <div className="question-item">
+      {/* Main Question - Always shown as the anchor */}
+      <div className="flow-turn main-question">
+        <div className="turn-label">Q{questionNumber}:</div>
+        <div className="turn-content">{question.question}</div>
+      </div>
+
+      <div className="conversation-turns">
+        {hasFlow ? (
+          question.conversation_flow.map((turn, idx) => {
+            // Skip the first turn if it's identical to the main question to avoid redundancy
+            if (idx === 0 && turn.type === 'question' && turn.text === question.question) {
+              return null;
+            }
+            return (
+              <div key={idx} className={`flow-turn ${turn.type} ${turn.is_followup ? 'followup' : ''}`}>
+                <div className="turn-label">{turn.type === 'question' ? 'FQ:' : 'A:'}</div>
+                <div className="turn-content">{turn.text}</div>
+              </div>
+            );
+          })
+        ) : (
+          <div className="flow-turn answer">
+            <div className="turn-label">A:</div>
+            <div className="turn-content">{question.answer}</div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+const AnalysisTab = ({
+  analysisData,
+  selectedBusiness = 'Select a Business',
+  businesses = [],
+  selectedBusinessId = '',
+  onBusinessChange,
+  isLoadingBusiness = false,
+  totalQuestions = 0,
+  completedQuestions = 0,
+  conversationCount = 0,
+  userDetails = {},
+  phaseManager
+}) => {
+  const { t } = useTranslation();
+  const [expandedCards, setExpandedCards] = useState(new Set());
+  const [collapsedCategories, setCollapsedCategories] = useState(new Set());
+  const totalCompletedQuestions = userDetails?.conversation?.reduce((sum, phase) => sum + (phase.questions?.length || 0), 0) || completedQuestions;
+
+  const stats = {
+    completed: totalCompletedQuestions,
+    phases: conversationCount,
+    progress: totalQuestions > 0 ? Math.round((totalCompletedQuestions / totalQuestions) * 100) : 0,
+  };
+
+  // Create a fallback phase manager if none is provided
+  const safePhaseManager = phaseManager || createSimplePhaseManager(analysisData);
+
+  if (!analysisData || !hasAnalysisData(analysisData)) {
+    return (
+      <div className="analysis-tab">
+        <StatsRow
+          businesses={businesses}
+          selectedBusinessId={selectedBusinessId}
+          onBusinessChange={onBusinessChange}
+          isLoadingBusiness={isLoadingBusiness}
+          stats={stats}
+          showPDFExport={false}
+        />
+        <div className="empty-state">
+          <Target size={48} />
+          <p className="empty-title">{t('no_analysis_available', { business: selectedBusiness })}</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="analysis-tab">
+      <StatsRow
+        businesses={businesses}
+        selectedBusinessId={selectedBusinessId}
+        onBusinessChange={onBusinessChange}
+        isLoadingBusiness={isLoadingBusiness}
+        stats={stats}
+        showPDFExport={true}
+        analysisData={analysisData}
+        selectedBusiness={selectedBusiness}
+      />
+
+      <div className="analysis-components">
+        <AnalysisContentManager
+          phaseManager={safePhaseManager}
+          businessData={{ name: analysisData.businessName }}
+          questions={analysisData.questions}
+          userAnswers={analysisData.userAnswers}
+          selectedBusinessId={selectedBusinessId}
+          swotAnalysisResult={analysisData.swot}
+          hasInsightAccess={true}
+          customerSegmentationData={analysisData.customerSegmentation}
+          purchaseCriteriaData={analysisData.purchaseCriteria}
+          channelHeatmapData={analysisData.channelHeatmap}
+          loyaltyNPSData={analysisData.loyaltyNPS}
+          capabilityHeatmapData={analysisData.capabilityHeatmap}
+          strategicData={analysisData.strategic}
+          portersData={analysisData.porters}
+          pestelData={analysisData.pestel}
+          fullSwotData={analysisData.fullSwot}
+          competitiveAdvantageData={analysisData.competitiveAdvantage}
+          channelEffectivenessData={analysisData.channelEffectiveness}
+          expandedCapabilityData={analysisData.expandedCapability}
+          strategicGoalsData={analysisData.strategicGoals}
+          strategicRadarData={analysisData.strategicRadar}
+          cultureProfileData={analysisData.cultureProfile}
+          productivityData={analysisData.productivityMetrics}
+          maturityData={analysisData.maturityScore}
+          costEfficiencyData={analysisData.costEfficiency}
+          financialPerformanceData={analysisData.financialPerformance}
+          financialBalanceData={analysisData.financialBalance}
+          operationalEfficiencyData={analysisData.operationalEfficiency}
+          profitabilityData={analysisData.profitabilityData}
+          growthTrackerData={analysisData.growthTrackerData}
+          liquidityEfficiencyData={analysisData.liquidityEfficiencyData}
+          investmentPerformanceData={analysisData.investmentPerformanceData}
+          leverageRiskData={analysisData.leverageRiskData}
+          competitiveLandscapeData={analysisData.competitiveLandscapeData}
+          coreAdjacencyData={analysisData.coreAdjacencyData}
+          setSwotAnalysisResult={() => { }}
+          setCustomerSegmentationData={() => { }}
+          setPurchaseCriteriaData={() => { }}
+          setChannelHeatmapData={() => { }}
+          setLoyaltyNPSData={() => { }}
+          setCapabilityHeatmapData={() => { }}
+          setPortersData={() => { }}
+          setPestelData={() => { }}
+          setFullSwotData={() => { }}
+          setCompetitiveAdvantageData={() => { }}
+          setChannelEffectivenessData={() => { }}
+          setExpandedCapabilityData={() => { }}
+          setStrategicGoalsData={() => { }}
+          setStrategicRadarData={() => { }}
+          setCultureProfileData={() => { }}
+          setProductivityData={() => { }}
+          setMaturityData={() => { }}
+          setCostEfficiencyData={() => { }}
+          setFinancialPerformanceData={() => { }}
+          setFinancialBalanceData={() => { }}
+          setOperationalEfficiencyData={() => { }}
+          setProfitabilityData={() => { }}
+          setGrowthTrackerData={() => { }}
+          setLiquidityEfficiencyData={() => { }}
+          setInvestmentPerformanceData={() => { }}
+          setLeverageRiskData={() => { }}
+          isSwotAnalysisRegenerating={false}
+          isCustomerSegmentationRegenerating={false}
+          isPurchaseCriteriaRegenerating={false}
+          isChannelHeatmapRegenerating={false}
+          isLoyaltyNPSRegenerating={false}
+          isCapabilityHeatmapRegenerating={false}
+          isPortersRegenerating={false}
+          isPestelRegenerating={false}
+          isFullSwotRegenerating={false}
+          isCompetitiveAdvantageRegenerating={false}
+          isChannelEffectivenessRegenerating={false}
+          isExpandedCapabilityRegenerating={false}
+          isStrategicGoalsRegenerating={false}
+          isStrategicRadarRegenerating={false}
+          isCultureProfileRegenerating={false}
+          isProductivityRegenerating={false}
+          isMaturityRegenerating={false}
+          isCostEfficiencyRegenerating={false}
+          isFinancialPerformanceRegenerating={false}
+          isFinancialBalanceRegenerating={false}
+          isOperationalEfficiencyRegenerating={false}
+          isProfitabilityRegenerating={false}
+          isGrowthTrackerRegenerating={false}
+          isLiquidityEfficiencyRegenerating={false}
+          isInvestmentPerformanceRegenerating={false}
+          isLeverageRiskRegenerating={false}
+          isAnalysisRegenerating={false}
+          isChannelHeatmapReady={true}
+          setIsChannelHeatmapReady={() => { }}
+          isCapabilityHeatmapReady={true}
+          setIsCapabilityHeatmapReady={() => { }}
+          apiLoadingStates={{}}
+          swotRef={{ current: null }}
+          customerSegmentationRef={{ current: null }}
+          purchaseCriteriaRef={{ current: null }}
+          channelHeatmapRef={{ current: null }}
+          loyaltyNpsRef={{ current: null }}
+          capabilityHeatmapRef={{ current: null }}
+          portersRef={{ current: null }}
+          pestelRef={{ current: null }}
+          fullSwotRef={{ current: null }}
+          competitiveAdvantageRef={{ current: null }}
+          channelEffectivenessRef={{ current: null }}
+          expandedCapabilityRef={{ current: null }}
+          strategicGoalsRef={{ current: null }}
+          strategicRadarRef={{ current: null }}
+          cultureProfileRef={{ current: null }}
+          productivityRef={{ current: null }}
+          maturityScoreRef={{ current: null }}
+          costEfficiencyRef={{ current: null }}
+          financialPerformanceRef={{ current: null }}
+          financialBalanceRef={{ current: null }}
+          operationalEfficiencyRef={{ current: null }}
+          profitabilityRef={{ current: null }}
+          growthTrackerRef={{ current: null }}
+          liquidityEfficiencyRef={{ current: null }}
+          investmentPerformanceRef={{ current: null }}
+          leverageRiskRef={{ current: null }}
+          handleRedirectToBrief={() => { }}
+          showToastMessage={() => { }}
+          apiService={null}
+          createSimpleRegenerationHandler={() => () => { }}
+          uploadedFileForAnalysis={null}
+          collapsedCategories={collapsedCategories}
+          setCollapsedCategories={setCollapsedCategories}
+          highlightedCard={null}
+          expandedCards={expandedCards}
+          setExpandedCards={setExpandedCards}
+          onRedirectToChat={() => { }}
+          isMobile={false}
+          setActiveTab={() => { }}
+          hasUploadedDocument={safePhaseManager.getUnlockedFeatures().hasDocument}
+          documentInfo={userDetails?.document_info}
+          hideRegenerateButtons={true}
+          readOnly={true}
+          hideImproveButton={true}
+          showImproveButton={false}
+          questionsLoaded={true}
+        />
+      </div>
+    </div>
+  );
+};
+
+const StrategicTab = ({
+  analysisData,
+  selectedBusiness = 'Select a Business',
+  businesses = [],
+  selectedBusinessId = '',
+  onBusinessChange,
+  isLoadingBusiness = false,
+  totalQuestions = 0,
+  completedQuestions = 0,
+  conversationCount = 0,
+  phaseManager,
+  onToast
+}) => {
+  const { t } = useTranslation();
+  const totalCompletedQuestions = analysisData?.conversation?.reduce((sum, phase) => sum + phase.questions.length, 0) || completedQuestions;
+
+  const stats = {
+    completed: totalCompletedQuestions,
+    phases: conversationCount,
+    progress: totalQuestions > 0 ? Math.round((totalCompletedQuestions / totalQuestions) * 100) : 0,
+  };
+
+  // Create a fallback phase manager if none is provided
+  const safePhaseManager = phaseManager || createSimplePhaseManager(analysisData);
+
+  if (!analysisData || !analysisData.strategic) {
+    return (
+      <div className="strategic-tab">
+        <StatsRow
+          businesses={businesses}
+          selectedBusinessId={selectedBusinessId}
+          onBusinessChange={onBusinessChange}
+          isLoadingBusiness={isLoadingBusiness}
+          stats={stats}
+          showPDFExport={false}
+          isStrategicTab={true}
+          onToast={onToast}
+        />
+        <div className="empty-state">
+          <TrendingUp size={48} />
+          <p className="empty-title">{t('no_strategic_analysis_available') || 'No strategic analysis available'}</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="strategic-tab">
+      <StatsRow
+        businesses={businesses}
+        selectedBusinessId={selectedBusinessId}
+        onBusinessChange={onBusinessChange}
+        isLoadingBusiness={isLoadingBusiness}
+        stats={stats}
+        showPDFExport={true}
+        analysisData={analysisData}
+        selectedBusiness={selectedBusiness}
+        isStrategicTab={true}
+        onToast={onToast}
+      />
+
+      <div className="strategic-analysis-container">
+        <StrategicAnalysis
+          questions={analysisData.questions}
+          userAnswers={analysisData.userAnswers}
+          businessName={analysisData.businessName}
+          strategicData={analysisData.strategic}
+          portersData={analysisData.porters}
+          pestelData={analysisData.pestel}
+          selectedBusinessId={selectedBusinessId}
+          phaseAnalysisArray={analysisData.phaseAnalysisArray || []}
+          onRegenerate={null}
+          isRegenerating={false}
+          canRegenerate={false}
+          phaseManager={safePhaseManager}
+          hideDownload={true}
+          hideImproveButton={true}
+          hideKickstart={true}
+          isExpanded={true}
+          questionsLoaded={true}
+        />
+      </div>
+    </div>
+  );
+};
+
 
 export default UserHistory;

@@ -6,7 +6,7 @@ import LoyaltyNPS from "./LoyaltyNPS";
 import PortersFiveForces from "./PortersFiveForces";
 import PestelAnalysis from "./PestelAnalysis";
 import FullSWOTPortfolio from "./FullSWOTPortfolio";
-import { useBusinessSetupContext } from "../context/BusinessSetupContext";
+import { BusinessSetupContext } from "../context/BusinessSetupContext";
 import CompetitiveAdvantageMatrix from "./CompetitiveAdvantageMatrix";
 import ExpandedCapabilityHeatmap from "./ExpandedCapabilityHeatmap";
 import StrategicPositioningRadar from "./StrategicPositioningRadar";
@@ -124,11 +124,12 @@ const CategorySection = React.memo(({
   return prevProps.id === nextProps.id && prevProps.isCollapsed === nextProps.isCollapsed && prevProps.children === nextProps.children;
 });
 CategorySection.displayName = 'CategorySection';
-const AnalysisContentManager = () => {
+const AnalysisContentManager = (props) => {
   const {
     t
   } = useTranslation();
-  const context = useBusinessSetupContext();
+  const contextFromProvider = React.useContext(BusinessSetupContext) || {};
+  const context = { ...contextFromProvider, ...props };
   const CATEGORIES = useMemo(() => [{
     id: 'current-strategy',
     title: t('Current Strategy'),

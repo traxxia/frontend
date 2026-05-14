@@ -1,7 +1,7 @@
 import React, { createContext, useContext } from 'react';
 import { useBusinessSetup } from '../hooks/useBusinessSetup';
 
-const BusinessSetupContext = createContext(null);
+export const BusinessSetupContext = createContext(null);
 
 export const BusinessSetupProvider = ({ children }) => {
   const setup = useBusinessSetup();
