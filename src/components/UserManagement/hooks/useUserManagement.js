@@ -92,7 +92,7 @@ export const useUserManagement = () => {
       queryClient.invalidateQueries({ queryKey: ["planDetails"] });
       return { success: true };
     } catch (error) {
-      return { success: false, error: error.response?.data?.message || "Failed to add user" };
+      return { success: false, error: error.response?.data?.error || error.response?.data?.message || "Failed to add user" };
     } finally {
       setIsSubmitting(false);
     }
@@ -108,7 +108,7 @@ export const useUserManagement = () => {
       queryClient.invalidateQueries({ queryKey: ["collaborators", businessId] });
       return { success: true };
     } catch (error) {
-      return { success: false, error: error.response?.data?.message || "Failed to assign user" };
+      return { success: false, error: error.response?.data?.error || error.response?.data?.message || "Failed to assign user" };
     }
   }, [token, queryClient]);
 

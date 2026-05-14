@@ -346,7 +346,7 @@ const ProjectDetails = ({
                 </div>
 
                 {}
-                <div className="field-row project-details--s14">
+                {/* <div className="field-row project-details--s14">
                     {canEdit && !["completed", "scaled", "killed"].includes(project.status?.toLowerCase()) && <button className="btn-edit project-details--s15" onClick={() => onEdit(project)}>
                             <Edit2 size={14} /> {t("Edit")}
                         </button>}
@@ -358,7 +358,7 @@ const ProjectDetails = ({
                                 <Edit3 size={14} /> {t("Ad_Hoc_Update")}
                             </button>
                         </>}
-                </div>
+                </div> */}
             </div>
 
             {}
