@@ -34,7 +34,8 @@ export class BaseApiService {
   }
 
   async request(endpoint, options = {}) {
-    const url = endpoint.startsWith('http') ? endpoint : `${this.baseUrl}${endpoint}`;
+    const baseUrl = (this.baseUrl && this.baseUrl !== 'undefined') ? this.baseUrl : (import.meta.env.VITE_BACKEND_URL || '');
+    const url = endpoint.startsWith('http') ? endpoint : `${baseUrl}${endpoint}`;
     const headers = this.getCommonHeaders(options.headers);
     
     const response = await fetch(url, {

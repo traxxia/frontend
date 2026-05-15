@@ -5,6 +5,7 @@ import { useAuthStore, useBusinessStore, useUIStore, useAnalysisStore, useProjec
 import { AnalysisApiService, PHASE_API_CONFIG } from '../services/analysisApiService';
 import { getUserLimits } from '../utils/authUtils';
 import PhaseManager, { getUnlockedFeatures } from "../components/PhaseManager";
+import { AI_PAGE_CONTEXTS } from "../utils/aiContexts";
 
 const CARD_ID_MAP = {
   "swot_analysis": "swot",
@@ -65,6 +66,37 @@ export const useBusinessSetup = () => {
   const userRole = useAuthStore(state => state.userRole);
   const isArchived = (currentBusiness?.access_mode === 'archived' || currentBusiness?.access_mode === 'hidden');
   const getAuthToken = useCallback(() => token, [token]);
+
+  // AI Context Synchronization
+  useEffect(() => {
+    let pageContext = null;
+    if (activeTab === "executive") pageContext = AI_PAGE_CONTEXTS.EXECUTIVE_SUMMARY;
+    else if (activeTab === "priorities") pageContext = AI_PAGE_CONTEXTS.PRIORITIES;
+    else if (activeTab === "advanced") pageContext = AI_PAGE_CONTEXTS.ADVANCED;
+    else if (activeTab === "insights") pageContext = AI_PAGE_CONTEXTS.INSIGHTS;
+    else if (activeTab === "strategic") pageContext = AI_PAGE_CONTEXTS.STRATEGIC;
+    else if (activeTab === "decision-logs" || activeTab === "bets") pageContext = AI_PAGE_CONTEXTS.PROJECTS;
+    else if (activeTab === "ranking") pageContext = AI_PAGE_CONTEXTS.RANKING;
+
+    let contextPayload = { ...pageContext };
+
+    if (activeTab === "advanced" && questions && questions.length > 0) {
+      const qaData = questions.map(q => ({
+        question: q.question_text,
+        answer: userAnswers[q._id || q.question_id] || "Not Answered"
+      }));
+      contextPayload.page_content = qaData;
+    }
+
+    const isStrategicTab = ["executive", "priorities"].includes(activeTab);
+    const isDisabled = isStrategicTab && !isPmfOnboardingComplete;
+
+    window.dispatchEvent(
+      new CustomEvent("ai_context_changed", {
+        detail: { pageContext: contextPayload, isArchived, isDisabled }
+      })
+    );
+  }, [activeTab, questions, userAnswers, isArchived, isPmfOnboardingComplete]);
 
   const [documentInfo, setDocumentInfo] = useState(null);
   const [phaseAnalysisArray, setPhaseAnalysisArray] = useState([]);

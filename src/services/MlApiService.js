@@ -13,7 +13,8 @@ export class MlApiService extends BaseApiService {
       headers['deep_search'] = 'true';
     }
 
-    const response = await fetch(`${this.baseUrl}/${endpoint}?stream=true`, {
+    const baseUrl = (this.baseUrl && this.baseUrl !== 'undefined') ? this.baseUrl : (import.meta.env.VITE_ML_BACKEND_URL || '');
+    const response = await fetch(`${baseUrl}/${endpoint}?stream=true`, {
       method: 'POST',
       headers,
       body: JSON.stringify(payload)

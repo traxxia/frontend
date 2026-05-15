@@ -1,7 +1,7 @@
 import axios from "axios";
 import { useAuthStore } from "../store";
 
-const API_BASE = `${import.meta.env.VITE_BACKEND_URL}/api/decision-logs`;
+const API_BASE = `${import.meta.env.VITE_BACKEND_URL || ''}/api/decision-logs`;
 
 const getAuthHeaders = () => {
   const token = useAuthStore.getState().token;

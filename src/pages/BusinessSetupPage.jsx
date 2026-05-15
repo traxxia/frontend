@@ -47,6 +47,7 @@ import { answerService } from "../services/answerService";
 import { AI_PAGE_CONTEXTS } from "../utils/aiContexts";
 import { getUserLimits } from '../utils/authUtils';
 import CustomTooltip from "../components/CustomTooltip";
+import { BusinessSetupContext } from "../context/BusinessSetupContext";
 import PlanLimitModal from "../components/PlanLimitModal";
 
 const CARD_TO_CATEGORY_MAP = {
@@ -1242,8 +1243,41 @@ const BusinessSetupPage = () => {
     } catch { }
   }, [selectedBusinessId, setBusinessSetting]);
 
+  const setupValue = useMemo(() => ({
+    selectedBusinessId,
+    currentBusiness,
+    isArchived,
+    openModal,
+    closeModal,
+    isModalOpen,
+    pmfRefreshTrigger,
+    t,
+    apiService,
+    setActiveTab,
+    hasPmfAccess,
+    hasInsightAccess,
+    hasStrategicAccess,
+    hasProjectAccess
+  }), [
+    selectedBusinessId,
+    currentBusiness,
+    isArchived,
+    openModal,
+    closeModal,
+    isModalOpen,
+    pmfRefreshTrigger,
+    t,
+    apiService,
+    setActiveTab,
+    hasPmfAccess,
+    hasInsightAccess,
+    hasStrategicAccess,
+    hasProjectAccess
+  ]);
+
   return (
-    <div className={`business-setup-container ${isArchived ? 'is-archived' : ''}`}>
+    <BusinessSetupContext.Provider value={setupValue}>
+      <div className={`business-setup-container ${isArchived ? 'is-archived' : ''}`}>
       <MenuBar />
 
       {/* Read-Only Banner for Archived Workspaces */}
@@ -2379,6 +2413,7 @@ const BusinessSetupPage = () => {
         isAdmin={['super_admin', 'company_admin', 'org_admin'].includes(userRole?.toLowerCase())}
       />
     </div>
+    </BusinessSetupContext.Provider>
   );
 };
 

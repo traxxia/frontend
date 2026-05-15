@@ -93,13 +93,16 @@ const financialDocumentCache = new Map();
 
 export class AnalysisApiService {
   constructor(ML_API_BASE_URL, API_BASE_URL, getAuthToken, setApiLoading = null) {
-    this.businessService = new BusinessService(API_BASE_URL);
-    this.projectService = new ProjectService(API_BASE_URL);
-    this.pmfService = new PmfService(API_BASE_URL);
-    this.mlService = new MlApiService(ML_API_BASE_URL);
+    const backendUrl = (API_BASE_URL && API_BASE_URL !== 'undefined') ? API_BASE_URL : (import.meta.env.VITE_BACKEND_URL || '');
+    const mlUrl = (ML_API_BASE_URL && ML_API_BASE_URL !== 'undefined') ? ML_API_BASE_URL : (import.meta.env.VITE_ML_BACKEND_URL || '');
 
-    this.ML_API_BASE_URL = ML_API_BASE_URL;
-    this.API_BASE_URL = API_BASE_URL;
+    this.businessService = new BusinessService(backendUrl);
+    this.projectService = new ProjectService(backendUrl);
+    this.pmfService = new PmfService(backendUrl);
+    this.mlService = new MlApiService(mlUrl);
+
+    this.ML_API_BASE_URL = mlUrl;
+    this.API_BASE_URL = backendUrl;
     this.getAuthToken = getAuthToken;
     this.setApiLoading = setApiLoading;
     this.excelAnalysisCache = null;
