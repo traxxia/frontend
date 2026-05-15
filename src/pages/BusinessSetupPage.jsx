@@ -2390,7 +2390,7 @@ const BusinessSetupPage = () => {
           onToastMessage={showToastMessage}
           onSubmit={() => {
             closeModal('pmfOnboarding');
-            setActiveTab("executive");
+            handleExecutiveTabClick();
             setPmfRefreshTrigger(prev => prev + 1);
           }}
         />

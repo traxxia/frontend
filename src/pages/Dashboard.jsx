@@ -352,7 +352,7 @@ const Dashboard = () => {
             </Modal.Body>
           </Modal>
 
-          <PMFOnboardingModal show={isModalOpen('pmfOnboarding')} onHide={() => closeModal('pmfOnboarding')} onComplete={() => {
+          <PMFOnboardingModal show={isModalOpen('pmfOnboarding')} onHide={() => closeModal('pmfOnboarding')} onSubmit={() => {
         closeModal('pmfOnboarding');
         openModal('insights');
       }} businessId={newlyCreatedBusinessId} />

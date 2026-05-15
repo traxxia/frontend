@@ -13,6 +13,7 @@ const PMFOnboardingModal = ({
   show,
   onHide,
   onSubmit,
+  onComplete,
   businessId,
   onToastMessage
 }) => {
@@ -404,6 +405,10 @@ const PMFOnboardingModal = ({
       if (onSubmit) {
         onSubmit(formData);
       }
+      if (onComplete) {
+        onComplete(formData);
+      }
+      setIsSubmitting(false);
       handleClose();
     } catch (error) {
       console.error("Error during PMF onboarding submission:", error);
