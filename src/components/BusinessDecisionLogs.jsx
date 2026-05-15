@@ -29,45 +29,53 @@ function humanizeLogType(logType) {
   if (!logType) return "-";
   return logType.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
 }
-function LogTypeBadge({
-  logType
-}) {
+
+function LogTypeBadge({ logType }) {
+  const { theme } = useUIStore();
+  const isDark = theme === "dark";
+
   const colorMap = {
     status_change: {
-      bg: "#dbeafe",
-      color: "#1e40af"
+      bg: isDark ? "#1e3a8a" : "var(--color-status-completed-bg, #dbeafe)",
+      color: isDark ? "#bfdbfe" : "var(--color-status-completed-text, #1e40af)"
     },
     cadence_review: {
-      bg: "#d1fae5",
-      color: "#065f46"
+      bg: isDark ? "#064e3b" : "var(--color-status-active-bg, #d1fae5)",
+      color: isDark ? "#d1fae5" : "var(--color-status-active-text, #065f46)"
     },
     no_change_review: {
-      bg: "#f3f4f6",
-      color: "#374151"
+      bg: isDark ? "#374151" : "var(--color-bg-light, #f3f4f6)",
+      color: isDark ? "#f3f4f6" : "var(--color-text-secondary, #374151)"
     },
     adhoc_update: {
-      bg: "#fef3c7",
-      color: "#92400e"
+      bg: isDark ? "#78350f" : "var(--color-status-paused-bg, #fef3c7)",
+      color: isDark ? "#fef3c7" : "var(--color-status-paused-text, #92400e)"
     },
     manual: {
-      bg: "#ede9fe",
-      color: "#5b21b6"
+      bg: isDark ? "#4c1d95" : "var(--color-status-scaled-bg, #ede9fe)",
+      color: isDark ? "#ede9fe" : "var(--color-status-scaled-text, #5b21b6)"
     },
     project_update: {
-      bg: "#fee2e2",
-      color: "#991b1b"
-    }
+      bg: isDark ? "#7f1d1d" : "var(--color-status-killed-bg, #fee2e2)",
+      color: isDark ? "#fee2e2" : "var(--color-status-killed-text, #991b1b)"
+    },
   };
-  const style = colorMap[logType] || {
-    bg: "#f3f4f6",
-    color: "#374151"
-  };
-  return <span className="admin-status-badge business-decision-logs--s1" style={{
-    backgroundColor: style.bg,
-    color: style.color
-  }}>
+
+  const style = colorMap[logType] || (isDark ? { bg: "#374151", color: "#f3f4f6" } : { bg: "#f3f4f6", color: "#374151" });
+
+  return (
+    <span
+      className="admin-status-badge"
+      style={{
+        backgroundColor: style.bg,
+        color: style.color,
+        fontSize: "11px",
+        border: isDark ? "1px solid rgba(255, 255, 255, 0.1)" : "1px solid transparent"
+      }}
+    >
       {humanizeLogType(logType)}
-    </span>;
+    </span>
+  );
 }
 const BusinessDecisionLogs = ({
   businessId

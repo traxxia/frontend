@@ -114,6 +114,6 @@
 [data-theme="dark"] .porters-container,
 [data-theme="dark"] .competitive-advantage-container,
 [data-theme="dark"] .full-swot-container {
-  background: #1a1d23 !important;
+  background: transparent !important;
   color: #ffffff;
 }

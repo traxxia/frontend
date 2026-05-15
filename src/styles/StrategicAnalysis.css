@@ -164,7 +164,7 @@
 }
 
 [data-theme="dark"] .pillar-card {
-    background-color: #1a1d23 !important;
+  background-color: #1a1d23 !important;
 }
 
 .pillar-header {
@@ -183,14 +183,15 @@
 }
 
 [data-theme="dark"] .pillar-title {
-    color: #ffffff !important;
+  color: #ffffff !important;
 }
+
 [data-theme="dark"] .DiagnosticBox {
-    background-color: #212432 !important;
+  background-color: #212432 !important;
 }
 
 [data-theme="dark"] .DiagnosticBox-right {
-    color: #ffffff !important;
+  color: #ffffff !important;
 }
 
 .strategy-card {
@@ -400,7 +401,7 @@
 }
 
 [data-theme="dark"] .info-box.resources {
-    background-color: #1a1d23 !important;
+  background-color: #1a1d23 !important;
 }
 
 .info-box.governance {
@@ -419,7 +420,7 @@
 }
 
 [data-theme="dark"] .info-box.execution {
-    background-color: #1a1d23 !important;
+  background-color: #1a1d23 !important;
 }
 
 .info-box-title {
@@ -565,7 +566,7 @@
 }
 
 [data-theme="dark"] .cultural-shift-card {
-    background-color: #1a1d23 !important;
+  background-color: #1a1d23 !important;
 }
 
 .cultural-shift-content {
@@ -671,11 +672,11 @@
 }
 
 [data-theme="dark"] .section-headers {
-    background-color: #272d3e !important;
+  background-color: #272d3e !important;
 }
 
 [data-theme="dark"] .table-value-text {
-    color: #ffffff !important;
+  color: #ffffff !important;
 }
 
 .section-headers h4 {
@@ -1178,3 +1179,144 @@ body.generating-pdf .StreamingRow {
   line-height: 1.6;
 }
 
+
+
+.category-description {
+  font-size: 12px;
+  color: #000000;
+  margin: 3px 0 0 0;
+  font-weight: 500;
+}
+
+[data-theme="dark"] .category-description {
+  color: #ffffff !important;
+}
+
+
+/* Dark Mode Support */
+[data-theme="dark"] .strategic-analysis-container {
+  background-color: #1f1f1f;
+}
+
+[data-theme="dark"] .loading-state {
+  color: #f1f5f9;
+}
+
+[data-theme="dark"] .loading-text {
+  color: #94a3b8;
+}
+
+[data-theme="dark"] .loading-title {
+  color: #ffffff;
+}
+
+[data-theme="dark"] .category-header {
+  background-color: #1e293b;
+  border-color: #334155;
+}
+
+[data-theme="dark"] .category-header:hover {
+  background-color: #334155;
+}
+
+[data-theme="dark"] .category-title {
+  color: #f1f5f9;
+}
+
+[data-theme="dark"] .category-toggle {
+  color: #f1f5f9;
+}
+
+[data-theme="dark"] .modern-locked-state {
+  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%) !important;
+  border: 1px dashed #334155 !important;
+  padding: 60px 20px;
+  text-align: center;
+  border-radius: 16px;
+  margin: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+[data-theme="dark"] .modern-locked-state h3 {
+  color: #f1f5f9 !important;
+}
+
+[data-theme="dark"] .modern-locked-state p {
+  color: #94a3b8 !important;
+}
+
+[data-theme="dark"] .modern-locked-icon {
+  color: #3b82f6 !important;
+}
+
+[data-theme="dark"] .subsection-title {
+  color: #f1f5f9;
+}
+
+[data-theme="dark"] .subsection-list-item {
+  color: #cbd5e1;
+}
+
+[data-theme="dark"] .data-table thead tr {
+  background-color: #1e293b;
+  border-bottom-color: #334155;
+}
+
+[data-theme="dark"] .data-table th {
+  color: #f1f5f9;
+}
+
+[data-theme="dark"] .data-table tbody tr {
+  border-bottom-color: #334155;
+}
+
+[data-theme="dark"] .data-table tbody tr:hover {
+  background-color: #1e293b;
+}
+
+[data-theme="dark"] .data-table .table-value {
+  color: #cbd5e1;
+}
+
+[data-theme="dark"] .info-box-text.resources,
+[data-theme="dark"] .horizon-subtitle,
+[data-theme="dark"] .horizon-list-item,
+[data-theme="dark"] .governance-description,
+[data-theme="dark"] .cultural-shift-value,
+[data-theme="dark"] .strategic-linkages-description {
+  color: #cbd5e1 !important;
+}
+
+[data-theme="dark"] .governance-select-label {
+  color: #94a3b8;
+}
+
+[data-theme="dark"] .governance-select {
+  background-color: #1e293b;
+  border-color: #334155;
+  color: #f1f5f9;
+}
+
+[data-theme="dark"] .category-header {
+  background-color: #1e2235 !important;
+  border: 1px solid #2d324d !important;
+}
+
+[data-theme="dark"] .category-header:hover {
+  background-color: #262b45 !important;
+}
+
+[data-theme="dark"] .category-title {
+  color: #ffffff !important;
+}
+
+[data-theme="dark"] .category-toggle {
+  color: #ffffff !important;
+}
+
+[data-theme="dark"] .category-icon {
+  color: #63b3ed !important;
+}

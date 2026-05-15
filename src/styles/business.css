@@ -4,6 +4,10 @@
   padding: 10px;
 }
 
+[data-theme="dark"] .modern-analysis-container {
+  background: #0f172a;
+}
+
 .modern-analysis-content {
   max-width: 99%;
   margin: 10px auto;
@@ -422,7 +426,7 @@
 }
 
 [data-theme="dark"] .modern-expand-btn {
-    color: #ffffff !important;
+  color: #ffffff !important;
 }
 
 .modern-expand-btn:hover {
@@ -702,7 +706,7 @@
 
 @media (prefers-color-scheme: dark) {
   .modern-analysis-container {
-    background: #fff;
+    background: #0f172a;
   }
 
   .modern-phase-section {
@@ -712,46 +716,58 @@
 
   .modern-analysis-card {
     background: #1e293b;
-
   }
 
   .modern-phase-header,
   .modern-card-header {
-
-    background-color: white;
+    background-color: #1e293b;
   }
 
   .modern-phase-header:hover,
   .modern-card-header:hover {
-    background: rgba(255, 255, 255, 0.993);
+    background: #232d42;
   }
 
   .modern-phase-info h2,
   .modern-card-text h3 {
-    color: #000000;
+    color: #f1f5f9;
   }
 
   .modern-phase-info p,
   .modern-card-text p,
   .modern-progress-text {
-    color: #494949;
+    color: #94a3b8;
   }
 
   .modern-locked-state {
     background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
   }
+}
 
-  .modern-locked-state h3 {
-    color: #f1f5f9;
-  }
+/* Dark Mode Support (Class-based) */
+[data-theme="dark"] .modern-analysis-card {
+  background: #1e293b;
+}
 
-  .modern-locked-state p {
-    color: #94a3b8;
-  }
+[data-theme="dark"] .modern-locked-state {
+  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+  border: 1px solid #334155;
+}
 
-  .modern-progress-bar {
-    background: #334155;
-  }
+[data-theme="dark"] .modern-locked-state h3 {
+  color: #f1f5f9;
+}
+
+[data-theme="dark"] .modern-locked-state p {
+  color: #94a3b8;
+}
+
+[data-theme="dark"] .modern-locked-icon {
+  color: #3b82f6;
+}
+
+[data-theme="dark"] .modern-progress-bar {
+  background: #334155;
 }
 
 .categorized-analysis {
@@ -821,7 +837,7 @@
 }
 
 [data-theme="dark"] .category-toggle {
-    color: #ffffff !important;
+  color: #ffffff !important;
 }
 
 .category-content {
@@ -1043,7 +1059,7 @@
   padding: 20px 24px;
   margin: 10px;
   border: 1px solid #e2e8f0;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .six-cs-framework-overview .overview-header {
@@ -1138,11 +1154,11 @@
   color: #94a3b8 !important;
 }
 
-tbody{
-    border-color: inherit;
-    border-style: solid;
-    border-width: 0;
-    background-color: white !important;
+tbody {
+  border-color: inherit;
+  border-style: solid;
+  border-width: 0;
+  background-color: white !important;
 }
 
 
@@ -1161,4 +1177,7 @@ tbody{
   font-weight: 600 !important;
   margin: 15px 0 10px 0 !important;
   color: #1e293b !important;
+}
+[data-theme="dark"] tbody {
+  background-color: transparent !important;
 }

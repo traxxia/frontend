@@ -142,7 +142,6 @@
   }
 
   .businesses-container {
-    background: white;
     border-radius: 16px;
     border: 1px solid #e5e7eb;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
@@ -1972,7 +1971,139 @@
   }
 
   [data-theme="dark"] .welcome-title {
-    color: #e2dede !important;
+    color: var(--color-text-primary) !important;
+  }
+
+  [data-theme="dark"] .welcome-description {
+    color: var(--color-text-secondary) !important;
+  }
+
+  [data-theme="dark"] .businesses-container {
+    background-color: var(--color-bg-card);
+    border-color: var(--color-border-light);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  }
+
+  [data-theme="dark"] .businesses-header {
+    background-color: rgba(255, 255, 255, 0.03);
+    border-bottom-color: var(--color-border-light);
+  }
+
+  [data-theme="dark"] .businesses-header h2 {
+    color: var(--color-text-muted);
+  }
+
+  [data-theme="dark"] .status-filter-btn {
+    background-color: var(--color-bg-secondary);
+    border-color: var(--color-border-light);
+  }
+
+  [data-theme="dark"] .status-filter-btn:hover {
+    background-color: var(--color-bg-light);
+    border-color: var(--color-border-medium);
+  }
+
+  [data-theme="dark"] .filter-label {
+    color: var(--color-text-muted);
+  }
+
+  [data-theme="dark"] .filter-value {
+    color: var(--color-primary-light);
+  }
+
+  [data-theme="dark"] .businesses-table th {
+    background-color: rgba(255, 255, 255, 0.02);
+    color: var(--color-text-muted);
+    border-bottom-color: var(--color-border-light);
+  }
+
+  [data-theme="dark"] .businesses-table td {
+    border-bottom-color: var(--color-border-light);
+    color: var(--color-text-secondary);
+  }
+
+  [data-theme="dark"] .businesses-table tr:hover {
+    background-color: rgba(255, 255, 255, 0.02);
+  }
+
+  [data-theme="dark"] .business-name-cell {
+    color: var(--color-text-primary);
+  }
+
+  [data-theme="dark"] .date-cell {
+    color: var(--color-text-muted);
+  }
+
+  [data-theme="dark"] .stats-cell {
+    color: var(--color-text-primary);
+  }
+
+  [data-theme="dark"] .btn-how-it-works {
+    background-color: var(--color-bg-secondary);
+    color: var(--color-text-primary);
+    border: 1px solid var(--color-border-light);
+  }
+
+  [data-theme="dark"] .btn-how-it-works:hover {
+    background-color: var(--color-bg-light);
+  }
+
+  [data-theme="dark"] .status-dropdown {
+    background-color: var(--color-bg-card);
+    border-color: var(--color-border-light);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+  }
+
+  [data-theme="dark"] .status-name {
+    color: var(--color-text-primary);
+  }
+
+  [data-theme="dark"] .status-count {
+    color: var(--color-text-muted);
+  }
+
+  [data-theme="dark"] .dropdown-item:hover {
+    background-color: var(--color-bg-secondary);
+  }
+
+  [data-theme="dark"] .custom-checkbox {
+    border-color: var(--color-border-medium);
+  }
+
+  [data-theme="dark"] .state-execution {
+    background-color: var(--color-status-active-bg);
+    color: var(--color-status-active-text);
+    border-color: var(--color-status-active-border);
+  }
+
+  [data-theme="dark"] .state-created {
+    background-color: var(--color-status-draft-bg);
+    color: var(--color-status-draft-text);
+    border-color: var(--color-status-draft-border);
+  }
+
+  [data-theme="dark"] .state-deleted {
+    background-color: var(--color-status-killed-bg);
+    color: var(--color-status-killed-text);
+    border-color: var(--color-status-killed-border);
+  }
+
+  [data-theme="dark"] .status-active {
+    background-color: var(--color-status-active-bg);
+    color: var(--color-status-active-text);
+    border-color: var(--color-status-active-border);
+  }
+
+  [data-theme="dark"] .status-deleted {
+    background-color: var(--color-status-killed-bg);
+    color: var(--color-status-killed-text);
+    border-color: var(--color-status-killed-border);
+  }
+
+  [data-theme="dark"] .status-archived {
+    background-color: var(--color-status-draft-bg);
+    color: var(--color-status-draft-text);
+    border-color: var(--color-status-draft-border);
   }
 
   [data-theme='dark'] .span {
@@ -2097,21 +2228,21 @@
   }
 
   .status-active {
-    background-color: #d1fae5;
-    color: #059669;
-    border-color: rgba(5, 150, 105, 0.18);
+    background-color: var(--color-status-active-bg);
+    color: var(--color-status-active-text);
+    border-color: var(--color-status-active-border);
   }
 
   .status-deleted {
-    background-color: #fee2e2;
-    color: #dc2626;
-    border-color: rgba(220, 38, 38, 0.18);
+    background-color: var(--color-status-killed-bg);
+    color: var(--color-status-killed-text);
+    border-color: var(--color-status-killed-border);
   }
 
   .status-archived {
-    background-color: #e5e7eb;
-    color: #374151;
-    border-color: rgba(55, 65, 81, 0.15);
+    background-color: var(--color-status-draft-bg);
+    color: var(--color-status-draft-text);
+    border-color: var(--color-status-draft-border);
   }
 
   .delete-btn-simple {
@@ -2143,3 +2274,76 @@
   font-size: 20px;
   line-height: 1;
 }
+
+/* PDF Export Loader */
+.pdf-export-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+}
+
+.pdf-export-loader {
+  background-color: white;
+  border-radius: 12px;
+  padding: 30px;
+  text-align: center;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+  min-width: 320px;
+}
+
+.pdf-loader-spinner {
+  color: #1a73e8;
+  animation: spin 1.5s linear infinite;
+  margin-bottom: 15px;
+}
+
+.pdf-export-loader h3 {
+  margin: 0 0 10px 0;
+  fontSize: 18px;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.pdf-export-loader .section-name {
+  margin: 0;
+  font-size: 14px;
+  color: #666;
+}
+
+.pdf-export-loader .progress-counter {
+  margin-top: 15px;
+  font-size: 16px;
+  color: #1a73e8;
+  font-weight: bold;
+}
+
+/* Dark Mode PDF Export Loader */
+[data-theme="dark"] .pdf-export-loader {
+  background-color: #1e293b;
+  border: 1px solid #334155;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.8);
+}
+
+[data-theme="dark"] .pdf-export-loader h3 {
+  color: #f1f5f9;
+}
+
+[data-theme="dark"] .pdf-export-loader .section-name {
+  color: #94a3b8;
+}
+
+[data-theme="dark"] .pdf-export-loader .progress-counter {
+  color: #3b82f6;
+}
+
+[data-theme="dark"] .pdf-loader-spinner {
+  color: #3b82f6;
+}
+

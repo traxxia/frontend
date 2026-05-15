@@ -233,7 +233,7 @@
 }
 
 [data-theme="dark"] .status-badge {
-  color: #1a1d23 !important;
+  color: #3e72d6 !important;
 }
 
 [data-theme="dark"] .porters-container .forces-tags .forces-tag {
@@ -457,4 +457,50 @@
 
 .priorities-projects--s8 {
   transition: stroke-dasharray 0.5s ease 0s;
+}
+
+
+/* Empty state styling */
+.empty-state-container,
+.bg-light.py-5.text-center.rounded-4 {
+  background-color: #f8f9fa;
+  border-color: #e2e8f0 !important;
+}
+
+[data-theme="dark"] .empty-state-container,
+[data-theme="dark"] .bg-light.py-5.text-center.rounded-4 {
+  background-color: var(--color-bg-secondary) !important;
+  border-color: var(--color-border-light) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
+}
+
+[data-theme="dark"] .empty-state-container h3,
+[data-theme="dark"] .bg-light.py-5.text-center.rounded-4 h3 {
+  color: var(--color-text-primary);
+}
+
+[data-theme="dark"] .empty-state-container .text-muted,
+[data-theme="dark"] .bg-light.py-5.text-center.rounded-4 .text-muted {
+  color: var(--color-text-secondary) !important;
+}
+
+[data-theme="dark"] .granular-header .text-dark {
+  color: var(--color-text-primary) !important;
+}
+
+[data-theme="dark"] .granular-header .text-muted {
+  color: var(--color-text-secondary) !important;
+}
+
+[data-theme="dark"] .footer-note {
+  background-color: rgba(59, 130, 246, 0.05);
+  border-color: var(--color-border-light);
+}
+
+[data-theme="dark"] .footer-note .text-muted {
+  color: var(--color-text-secondary) !important;
+}
+
+[data-theme="dark"] .warning-icon-wrapper {
+  background: rgba(245, 158, 11, 0.2);
 }

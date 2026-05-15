@@ -1860,16 +1860,13 @@
 }
 
 [data-theme="dark"] .section-header {
-  background-color: #181c24;
-
-  margin-bottom: 20px;
-  padding: 1rem 1.25rem;
+  background-color: #181c24; 
+  padding: 10px 1.25rem;
   border-radius: 8px 8px 0 0;
 }
 
 [data-theme="dark"] .section-header h2 {
   color: #ffffff;
-
   font-size: 24px;
   font-weight: 700;
 }

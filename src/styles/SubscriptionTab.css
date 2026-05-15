@@ -79,7 +79,7 @@
     text-transform: uppercase;
     letter-spacing: 0.1em;
     color: rgba(167, 139, 250, 1);
-    background: rgba(255,255,255, 0.10);
+    background: rgba(255, 255, 255, 0.10);
     padding: 3px 10px 3px 8px;
     border-radius: 99px;
     margin-bottom: 10px;
@@ -97,8 +97,15 @@
 }
 
 @keyframes st-pulse {
-    0%, 100% { box-shadow: 0 0 0 3px rgba(52, 211, 153, 0.3); }
-    50%       { box-shadow: 0 0 0 6px rgba(52, 211, 153, 0.1); }
+
+    0%,
+    100% {
+        box-shadow: 0 0 0 3px rgba(52, 211, 153, 0.3);
+    }
+
+    50% {
+        box-shadow: 0 0 0 6px rgba(52, 211, 153, 0.1);
+    }
 }
 
 .st-header-title {
@@ -176,7 +183,7 @@
     align-items: center;
     gap: 5px;
     font-size: 0.72rem;
-    color: rgba(255,255,255,0.5);
+    color: rgba(255, 255, 255, 0.5);
 }
 
 .st-body-grid {
@@ -237,9 +244,17 @@
     color: #374151;
 }
 
-.st-u-icon        { color: #6b7280; }
-.st-icon-primary { color: #6366f1; }
-.st-fill-primary { background: #6366f1; }
+.st-u-icon {
+    color: #6b7280;
+}
+
+.st-icon-primary {
+    color: #6366f1;
+}
+
+.st-fill-primary {
+    background: #6366f1;
+}
 
 .st-access-list {
     display: flex;
@@ -740,7 +755,7 @@
 .st-pm-busy-overlay {
     position: absolute;
     inset: 0;
-    background: rgba(255,255,255, 0.5);
+    background: rgba(255, 255, 255, 0.5);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -856,9 +871,14 @@
     font-size: 0.875rem;
 }
 
-.st-plans-table th, 
+.st-plans-table th{
+    padding: 0px 20px;
+    border-bottom: 1px solid #f3f4f6;
+    text-align: left;
+}
+
 .st-plans-table td {
-    padding: 16px 20px;
+    padding: 10px 20px;
     border-bottom: 1px solid #f3f4f6;
     text-align: left;
 }
@@ -910,7 +930,7 @@
     font-size: 1.1rem;
     font-weight: 800;
     color: #4f46e5;
-    margin-bottom: 4px;
+    margin-bottom: 0px;
 }
 
 .st-plans-table .st-table-plan-price {
@@ -939,7 +959,7 @@
 
 .st-plans-table .st-table-action-cell {
     text-align: center;
-    padding: 24px 20px;
+    padding: 15px 20px;
 }
 
 .st-plans-table .st-table-btn-select {
@@ -959,4 +979,222 @@
     background: #4f46e5;
     color: #fff;
     border-color: #4f46e5;
+}
+
+
+/* ══════════════════════════════════════════════════
+   DARK MODE OVERRIDES
+   ══════════════════════════════════════════════════ */
+[data-theme="dark"] .st-root {
+    color: #e5e7eb;
+}
+
+/* --- Container & Cards --- */
+[data-theme="dark"] .st-header-clean,
+[data-theme="dark"] .st-card,
+[data-theme="dark"] .st-plan-card,
+[data-theme="dark"] .st-pm-item {
+    background: #1e293b;
+    border-color: #334155;
+}
+
+[data-theme="dark"] .st-header-clean {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* --- Text Colors --- */
+[data-theme="dark"] .st-header-title,
+[data-theme="dark"] .st-h-value,
+[data-theme="dark"] .st-card-title,
+[data-theme="dark"] .st-ai-label,
+[data-theme="dark"] .st-ps-limit-val,
+[data-theme="dark"] .st-ps-pm-brand,
+[data-theme="dark"] .st-pc-amt,
+[data-theme="dark"] .st-pm-number,
+[data-theme="dark"] .admin-cell-primary {
+    color: #ffffff !important;
+}
+
+[data-theme="dark"] .st-header-sub,
+[data-theme="dark"] .st-h-label,
+[data-theme="dark"] .st-card-subtitle,
+[data-theme="dark"] .st-ai-desc,
+[data-theme="dark"] .st-ps-mo,
+[data-theme="dark"] .st-ps-desc,
+[data-theme="dark"] .st-ps-limit-label,
+[data-theme="dark"] .st-pc-mo,
+[data-theme="dark"] .st-pc-desc,
+[data-theme="dark"] .st-feat-row,
+[data-theme="dark"] .st-ps-pm-num,
+[data-theme="dark"] .st-ps-pm-exp,
+[data-theme="dark"] .st-pm-meta,
+[data-theme="dark"] .st-loader,
+[data-theme="dark"] .admin-cell-secondary {
+    color: #fff !important;
+}
+
+[data-theme="dark"] .st-u-label {
+    color: #e5e7eb;
+}
+
+/* --- Badges --- */
+[data-theme="dark"] .st-header-badge {
+    background: rgba(16, 185, 129, 0.1);
+    color: #34d399;
+    border-color: rgba(16, 185, 129, 0.2);
+}
+
+/* --- Access Items --- */
+[data-theme="dark"] .st-access-item.st-ai-on {
+    background: rgba(52, 211, 153, 0.05);
+    border-color: rgba(52, 211, 153, 0.2);
+}
+
+[data-theme="dark"] .st-access-item.st-ai-off {
+    background: rgba(255, 255, 255, 0.02);
+    border-color: #334155;
+    opacity: 0.6;
+}
+
+[data-theme="dark"] .st-ai-icon-on {
+    background: rgba(52, 211, 153, 0.15);
+    color: #34d399;
+}
+
+[data-theme="dark"] .st-ai-icon-off {
+    background: rgba(255, 255, 255, 0.05);
+    color: #6b7280;
+}
+
+[data-theme="dark"] .st-ais-on {
+    background: rgba(52, 211, 153, 0.1);
+    color: #34d399;
+}
+
+[data-theme="dark"] .st-ais-off {
+    background: rgba(255, 255, 255, 0.05);
+    color: #9ca3af;
+}
+
+/* --- Plan Summary Specifics --- */
+[data-theme="dark"] .st-ps-amount {
+    color: #818cf8;
+}
+
+[data-theme="dark"] .st-ps-limit-item {
+    background: rgba(255, 255, 255, 0.03);
+    border-color: #334155;
+}
+
+[data-theme="dark"] .st-ps-payment {
+    background: rgba(79, 70, 229, 0.1) !important;
+    border-color: rgba(79, 70, 229, 0.2) !important;
+}
+
+[data-theme="dark"] .st-ps-pm-icon {
+    color: #818cf8;
+}
+
+/* --- Available Plans Specifics --- */
+[data-theme="dark"] .st-pc-name {
+    color: #818cf8;
+}
+
+[data-theme="dark"] .st-pc-divider {
+    background: #334155;
+}
+
+[data-theme="dark"] .st-feat-check-on {
+    background: rgba(16, 185, 129, 0.1);
+    color: #34d399;
+}
+
+[data-theme="dark"] .st-feat-check-off {
+    background: rgba(255, 255, 255, 0.05);
+    color: #6b7280;
+}
+
+[data-theme="dark"] .st-pc-btn-select {
+    background: rgba(79, 70, 229, 0.1);
+    color: #818cf8;
+    border-color: rgba(79, 70, 229, 0.2);
+}
+
+[data-theme="dark"] .st-plan-card:hover .st-pc-btn-select {
+    background: #4f46e5;
+    color: #ffffff;
+    border-color: #4f46e5;
+}
+
+[data-theme="dark"] .st-plan-card:hover {
+    border-color: #4f46e5;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+    transform: translateY(-4px);
+}
+
+/* --- Payment Methods Specifics --- */
+[data-theme="dark"] .st-pm-active {
+    border-color: #4f46e5;
+    background: rgba(79, 70, 229, 0.08);
+}
+
+[data-theme="dark"] .st-pm-icon {
+    background: #2a2f38;
+    color: #9ca3af;
+}
+
+[data-theme="dark"] .st-pm-active .st-pm-icon {
+    background: rgba(79, 70, 229, 0.15);
+    color: #818cf8;
+}
+
+[data-theme="dark"] .st-pm-brand {
+    color: #e5e7eb;
+}
+
+[data-theme="dark"] .st-pm-item:hover {
+    background: #242f42;
+    border-color: #4b5563;
+}
+
+[data-theme="dark"] .st-add-card-btn {
+    background: transparent;
+    color: #818cf8;
+    border-color: rgba(79, 70, 229, 0.4);
+}
+
+[data-theme="dark"] .st-add-card-btn:hover {
+    background: rgba(79, 70, 229, 0.1);
+    border-color: #818cf8;
+}
+
+[data-theme="dark"] .st-pm-empty {
+    border-color: #334155;
+    color: #9ca3af;
+    background: rgba(255, 255, 255, 0.02);
+}
+
+/* --- Disclaimer Banner (Overriding Inline Styles) --- */
+[data-theme="dark"] .st-disclaimer-banner .alert {
+    background: rgba(59, 130, 246, 0.1) !important;
+    color: #93c5fd !important;
+    border: 1px solid rgba(59, 130, 246, 0.2) !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+}
+
+[data-theme="dark"] .st-disclaimer-banner .alert-circle {
+    color: #60a5fa !important;
+}
+
+/* --- Progress Bars --- */
+[data-theme="dark"] .st-u-track {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+[data-theme="dark"] .st-u-fill {
+    box-shadow: 0 0 10px rgba(99, 102, 241, 0.3);
+}
+
+[data-theme="dark"] .st-u-limit {
+    color: #6b7280;
 }

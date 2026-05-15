@@ -280,16 +280,16 @@ const CoreAdjacency = ({
   };
   if (isRegenerating) {
     return <div className="porters-container">
-                <div className="loading-state">
-                    <Loader size={24} className="loading-spinner" />
-                    <span>Regenerating Core vs. Adjacency Analysis...</span>
-                </div>
-            </div>;
+      <div className="loading-state">
+        <Loader size={24} className="loading-spinner" />
+        <span>Regenerating Core vs. Adjacency Analysis...</span>
+      </div>
+    </div>;
   }
   if (!data || isCoreAdjacencyDataIncomplete(rawCoreAdjacencyData)) {
     return <div className="porters-container">
-                <AnalysisEmptyState analysisType="coreAdjacency" analysisDisplayName="Core vs. Adjacency Analysis" icon={Target} onImproveAnswers={handleMissingQuestionsCheck} onRegenerate={handleRegenerate} isRegenerating={isRegenerating} canRegenerate={canRegenerate} userAnswers={userAnswers} minimumAnswersRequired={3} showImproveButton={false} showRegenerateButton={false} />
-            </div>;
+      <AnalysisEmptyState analysisType="coreAdjacency" analysisDisplayName="Core vs. Adjacency Analysis" icon={Target} onImproveAnswers={handleMissingQuestionsCheck} onRegenerate={handleRegenerate} isRegenerating={isRegenerating} canRegenerate={canRegenerate} userAnswers={userAnswers} minimumAnswersRequired={3} showImproveButton={false} showRegenerateButton={false} />
+    </div>;
   }
   let currentRowIndex = 0;
   const indices = {
@@ -343,19 +343,19 @@ const CoreAdjacency = ({
     return 'priority-badge';
   };
   return <div className="porters-container full-swot-container" data-component="core-adjacency" data-analysis-type="coreAdjacency" data-analysis-name="Core vs. Adjacency" data-analysis-order="10">
-            {data.coreBusinessDefinition && <div className="section-container">
-                    <div className="section-header" onClick={() => toggleSection('coreBusinessDefinition')}>
-                        <h5><Shield size={20} className="core-adjacency--s1" />{t('Core_Business_Definition')}</h5>
-                        {expandedSections.coreBusinessDefinition ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
-                    </div>
-                    <div className={`section-container ${expandedSections.coreBusinessDefinition === true ? 'expanded' : 'collapsed'}`}>
-                        <div className="table-container">
-                            {data.coreBusinessDefinition.description && <div className="coreBusinessDefinition core-adjacency--s2">
-                                    <p className="core-adjacency--s3">{data.coreBusinessDefinition.description}</p>
-                                </div>}
-                            <table className="data-table">
-                                <tbody>
-                                    {[{
+    {data.coreBusinessDefinition && <div className="section-container">
+      <div className="section-header" onClick={() => toggleSection('coreBusinessDefinition')}>
+        <h5><Shield size={20} className="core-adjacency--s1" />{t('Core_Business_Definition')}</h5>
+        {expandedSections.coreBusinessDefinition ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
+      </div>
+      <div className={`section-container ${expandedSections.coreBusinessDefinition === true ? 'expanded' : 'collapsed'}`}>
+        <div className="table-container">
+          {data.coreBusinessDefinition.description && <div className="coreBusinessDefinition core-adjacency--s2">
+            <p className="core-adjacency--s3">{data.coreBusinessDefinition.description}</p>
+          </div>}
+          <table className="data-table">
+            <tbody>
+              {[{
                 key: 'keySegments',
                 label: 'Key_Segments'
               }, {
@@ -365,35 +365,35 @@ const CoreAdjacency = ({
                 key: 'profitDrivers',
                 label: 'Profit_Drivers'
               }].map(conf => data.coreBusinessDefinition[conf.key]?.length > 0 && <tr key={conf.key}>
-                                                <td className="core-adjacency--s4"><span className="status-badge high-intensity">{t(conf.label)}</span></td>
-                                                <td>
-                                                    <ul className="core-adjacency--s5">
-                                                        {data.coreBusinessDefinition[conf.key].map((item, idx) => {
+                <td className="core-adjacency--s4"><span className="status-badge high-intensity">{t(conf.label)}</span></td>
+                <td>
+                  <ul className="core-adjacency--s5">
+                    {data.coreBusinessDefinition[conf.key].map((item, idx) => {
                       const rIdx = indices[conf.key][idx];
                       return <li key={idx} ref={rIdx === visibleRows - 1 && isStreaming ? lastRowRef : null} style={{
                         opacity: rIdx < visibleRows ? 1 : 0,
                         transition: !isStreaming ? 'none' : 'opacity 0.3s'
                       }}>
-                                                                    {hasStreamed ? item : typingTexts[`${rIdx}-content`] || item}
-                                                                </li>;
+                        {hasStreamed ? item : typingTexts[`${rIdx}-content`] || item}
+                      </li>;
                     })}
-                                                    </ul>
-                                                </td>
-                                            </tr>)}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>}
+                  </ul>
+                </td>
+              </tr>)}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>}
 
-            {data.growthOpportunities && <div className="section-container">
-                    <div className="section-header" onClick={() => toggleSection('growthOpportunities')}>
-                        <h5><TrendingUp size={20} className="core-adjacency--s1" />{t('Growth_Opportunities')}</h5>
-                        {expandedSections.growthOpportunities ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
-                    </div>
-                    <div className={`section-container ${expandedSections.growthOpportunities === true ? 'expanded' : 'collapsed'}`}>
-                        <div className="table-container">
-                            {[{
+    {data.growthOpportunities && <div className="section-container">
+      <div className="section-header" onClick={() => toggleSection('growthOpportunities')}>
+        <h5><TrendingUp size={20} className="core-adjacency--s1" />{t('Growth_Opportunities')}</h5>
+        {expandedSections.growthOpportunities ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
+      </div>
+      <div className={`section-container ${expandedSections.growthOpportunities === true ? 'expanded' : 'collapsed'}`}>
+        <div className="table-container">
+          {[{
             key: 'withinCore',
             label: 'Within_Core'
           }, {
@@ -403,51 +403,51 @@ const CoreAdjacency = ({
             key: 'nonAdjacent',
             label: 'Non-Adjacent'
           }].map(conf => data.growthOpportunities[conf.key]?.length > 0 && <React.Fragment key={conf.key}>
-                                        <h6 className="core-adjacency--s6">{t(conf.label)}</h6>
-                                        <table className="data-table">
-                                            <tbody>
-                                                {data.growthOpportunities[conf.key].map((item, idx) => {
+            <h6 className="core-adjacency--s6">{t(conf.label)}</h6>
+            <table className="data-table">
+              <tbody>
+                {data.growthOpportunities[conf.key].map((item, idx) => {
                   const rIdx = indices[conf.key][idx];
                   const opp = typeof item === 'string' ? item : item.opportunity || item.description || '';
                   const rat = typeof item === 'object' ? item.rationale : '';
                   return <StreamingRow key={idx} isVisible={rIdx < visibleRows} isLast={rIdx === visibleRows - 1 && isStreaming} lastRowRef={lastRowRef} isStreaming={isStreaming}>
-                                                            <td>
-                                                                <div className="core-adjacency--s7">{hasStreamed ? opp : typingTexts[`${rIdx}-opportunity`] || opp}</div>
-                                                                {typeof item === 'object' && <div className="item-meta core-adjacency--s8">
-                                                                        {item.proximityToCore && <span className={`${getBadgeClass(item.proximityToCore)}`}>{t('Proximity')}: {item.proximityToCore}</span>}
-                                                                        {item.profitPoolSize && <span className={`${getBadgeClass(item.profitPoolSize)}`}>{t('Profit_Pool')}: {item.profitPoolSize}</span>}
-                                                                        {item.competitiveness && <span className={`${getBadgeClass(item.competitiveness)}`}>{t('Competitiveness')}: {item.competitiveness}</span>}
-                                                                    </div>}
-                                                            </td>
-                                                            {rat && <td style={{
+                    <td>
+                      <div className="core-adjacency--s7">{hasStreamed ? opp : typingTexts[`${rIdx}-opportunity`] || opp}</div>
+                      {typeof item === 'object' && <div className="item-meta core-adjacency--s8">
+                        {item.proximityToCore && <span className={`${getBadgeClass(item.proximityToCore)}`}>{t('Proximity')}: {item.proximityToCore}</span>}
+                        {item.profitPoolSize && <span className={`${getBadgeClass(item.profitPoolSize)}`}>{t('Profit_Pool')}: {item.profitPoolSize}</span>}
+                        {item.competitiveness && <span className={`${getBadgeClass(item.competitiveness)}`}>{t('Competitiveness')}: {item.competitiveness}</span>}
+                      </div>}
+                    </td>
+                    {rat && <td style={{
                       opacity: rIdx < visibleRows ? 1 : 0,
                       transition: !isStreaming ? 'none' : 'opacity 0.3s 0.2s'
                     }}>{hasStreamed ? rat : typingTexts[`${rIdx}-rationale`] || rat}</td>}
-                                                        </StreamingRow>;
+                  </StreamingRow>;
                 })}
-                                            </tbody>
-                                        </table>
-                                    </React.Fragment>)}
-                        </div>
-                    </div>
-                </div>}
+              </tbody>
+            </table>
+          </React.Fragment>)}
+        </div>
+      </div>
+    </div>}
 
-            {data.growthVectorCategorization && Object.keys(data.growthVectorCategorization).length > 0 && <div className="section-container">
-                    <div className="section-header" onClick={() => toggleSection('growthVectorCategorization')}>
-                        <h5><Target size={20} className="core-adjacency--s1" />{t('Growth_Vector_Categorization')}</h5>
-                        {expandedSections.growthVectorCategorization ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
-                    </div>
-                    <div className={`section-container ${expandedSections.growthVectorCategorization === true ? 'expanded' : 'collapsed'}`}>
-                        <div className="table-container">
-                            <table className="data-table">
-                                <tbody>
-                                    {Object.entries(data.growthVectorCategorization).map(([cat, items]) => {
+    {data.growthVectorCategorization && Object.keys(data.growthVectorCategorization).length > 0 && <div className="section-container">
+      <div className="section-header" onClick={() => toggleSection('growthVectorCategorization')}>
+        <h5><Target size={20} className="core-adjacency--s1" />{t('Growth_Vector_Categorization')}</h5>
+        {expandedSections.growthVectorCategorization ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
+      </div>
+      <div className={`section-container ${expandedSections.growthVectorCategorization === true ? 'expanded' : 'collapsed'}`}>
+        <div className="table-container">
+          <table className="data-table">
+            <tbody>
+              {Object.entries(data.growthVectorCategorization).map(([cat, items]) => {
                 if (!items?.length) return null;
                 return <tr key={cat}>
-                                                <td className="core-adjacency--s4"><span className="status-badge high-intensity">{formatLabel(cat)}</span></td>
-                                                <td>
-                                                    <ul className="core-adjacency--s5">
-                                                        {items.map((item, idx) => {
+                  <td className="core-adjacency--s4"><span className="status-badge high-intensity">{formatLabel(cat)}</span></td>
+                  <td>
+                    <ul className="core-adjacency--s5">
+                      {items.map((item, idx) => {
                         const rIdx = indices.vectors[cat][idx];
                         const vec = typeof item === 'string' ? item : item.vector || '';
                         const desc = typeof item === 'object' ? item.description : '';
@@ -455,23 +455,23 @@ const CoreAdjacency = ({
                           opacity: rIdx < visibleRows ? 1 : 0,
                           transition: !isStreaming ? 'none' : 'opacity 0.3s'
                         }}>
-                                                                    <strong>{hasStreamed ? resolveOpportunity(vec) : typingTexts[`${rIdx}-vector`] || resolveOpportunity(vec)}</strong>
-                                                                    {desc && <span className="core-adjacency--s9">
-                                                                            {hasStreamed ? desc : typingTexts[`${rIdx}-description`] || desc}
-                                                                        </span>}
-                                                                </li>;
+                          <span>{hasStreamed ? resolveOpportunity(vec) : typingTexts[`${rIdx}-vector`] || resolveOpportunity(vec)}</span>
+                          {desc && <span className="core-adjacency--s9">
+                            {hasStreamed ? desc : typingTexts[`${rIdx}-description`] || desc}
+                          </span>}
+                        </li>;
                       })}
-                                                    </ul>
-                                                </td>
-                                            </tr>;
+                    </ul>
+                  </td>
+                </tr>;
               })}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>}
 
-            {[{
+    {[{
       key: 'missingInformation',
       label: 'Missing_Information',
       icon: AlertTriangle,
@@ -482,22 +482,22 @@ const CoreAdjacency = ({
       icon: Lightbulb,
       iKey: 'nextSteps'
     }].map(conf => data[conf.key] && (Array.isArray(data[conf.key]) ? data[conf.key].length > 0 : Object.values(data[conf.key]).some(arr => arr?.length > 0)) && <div className="section-container" key={conf.key}>
-                        <div className="section-header" onClick={() => toggleSection(conf.key)}>
-                            <h5><conf.icon size={20} className="core-adjacency--s1" />{t(conf.label)}</h5>
-                            {expandedSections[conf.key] ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
-                        </div>
-                        <div className={`section-container ${expandedSections[conf.key] === true ? 'expanded' : 'collapsed'}`}>
-                            <div className="table-container">
-                                <table className="data-table">
-                                    <tbody>
-                                        {(() => {
+      <div className="section-header" onClick={() => toggleSection(conf.key)}>
+        <h5><conf.icon size={20} className="core-adjacency--s1" />{t(conf.label)}</h5>
+        {expandedSections[conf.key] ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
+      </div>
+      <div className={`section-container ${expandedSections[conf.key] === true ? 'expanded' : 'collapsed'}`}>
+        <div className="table-container">
+          <table className="data-table">
+            <tbody>
+              {(() => {
                 const items = [];
                 if (Array.isArray(data[conf.key])) {
                   data[conf.key].forEach((item, idx) => {
                     const rIdx = indices[conf.iKey][idx];
                     items.push(<StreamingRow key={idx} isVisible={rIdx < visibleRows} isLast={rIdx === visibleRows - 1 && isStreaming} lastRowRef={lastRowRef} isStreaming={isStreaming}>
-                                                            <td>{hasStreamed ? item : typingTexts[`${rIdx}-content`] || item}</td>
-                                                        </StreamingRow>);
+                      <td>{hasStreamed ? item : typingTexts[`${rIdx}-content`] || item}</td>
+                    </StreamingRow>);
                   });
                 } else if (typeof data[conf.key] === 'object') {
                   let offset = 0;
@@ -506,8 +506,8 @@ const CoreAdjacency = ({
                       catItems.forEach((item, idx) => {
                         const rIdx = indices[conf.iKey][offset + idx];
                         items.push(<StreamingRow key={`${cat}-${idx}`} isVisible={rIdx < visibleRows} isLast={rIdx === visibleRows - 1 && isStreaming} lastRowRef={lastRowRef} isStreaming={isStreaming}>
-                                                                    <td><strong>{formatLabel(cat)}:</strong> {hasStreamed ? item : typingTexts[`${rIdx}-content`] || item}</td>
-                                                                </StreamingRow>);
+                          <td><strong>{formatLabel(cat)}:</strong> {hasStreamed ? item : typingTexts[`${rIdx}-content`] || item}</td>
+                        </StreamingRow>);
                       });
                       offset += catItems.length;
                     }
@@ -515,11 +515,11 @@ const CoreAdjacency = ({
                 }
                 return items;
               })()}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>)}
-        </div>;
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>)}
+  </div>;
 };
 export default CoreAdjacency;

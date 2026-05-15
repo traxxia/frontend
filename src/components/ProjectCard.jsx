@@ -82,10 +82,12 @@ const ProjectCard = ({
           </h3>
 
           {}
-          {userCanReview && project.launch_status === 'launched' && !isTerminal && (project.is_stale || project.next_review_date && new Date(project.next_review_date).setHours(0, 0, 0, 0) < new Date().setHours(0, 0, 0, 0) ? <span className="footer-status-premium project-card--s2" onClick={e => {
+          {project.launch_status === 'launched' && !isTerminal && (project.is_stale || project.next_review_date && new Date(project.next_review_date).setHours(0, 0, 0, 0) < new Date().setHours(0, 0, 0, 0) ? <span className="footer-status-premium project-card--s2" style={{
+          cursor: userCanReview ? 'pointer' : 'default'
+        }} onClick={userCanReview ? e => {
           e.stopPropagation();
           onPerformReview(project);
-        }}>
+        } : undefined}>
               <AlertTriangle size={10} /> {t("Stale")}
             </span> : project.next_review_date && (() => {
           const nextDate = new Date(project.next_review_date);
@@ -94,10 +96,12 @@ const ProjectCard = ({
           today.setHours(0, 0, 0, 0);
           const diffDays = Math.round((nextDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
           if (diffDays >= 0 && diffDays <= 3) {
-            return <span className="footer-status-premium project-card--s3" onClick={e => {
+            return <span className="footer-status-premium project-card--s3" style={{
+              cursor: userCanReview ? 'pointer' : 'default'
+            }} onClick={userCanReview ? e => {
               e.stopPropagation();
               onPerformReview(project);
-            }}>
+            } : undefined}>
                       <Clock size={10} /> {t("Due")}
                     </span>;
           }

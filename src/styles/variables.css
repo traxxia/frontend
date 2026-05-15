@@ -194,8 +194,37 @@
   --breakpoint-lg: 992px;
   --breakpoint-xl: 1200px;
   --breakpoint-xxl: 1400px;
+  /* Status Colors (Light Theme) */
+  --color-status-active-bg: #dcfce7;
+  --color-status-active-text: #166534;
+  --color-status-active-border: #10b98140;
+
+  --color-status-killed-bg: #fee2e2;
+  --color-status-killed-text: #991b1b;
+  --color-status-killed-border: #ef444440;
+
+  --color-status-paused-bg: #fef3c7;
+  --color-status-paused-text: #b45309;
+  --color-status-paused-border: #f59e0b40;
+
+  --color-status-risk-bg: #f5bfe3;
+  --color-status-risk-text: #bf0280;
+  --color-status-risk-border: #ed1aa7;
+
+  --color-status-completed-bg: #c7dced;
+  --color-status-completed-text: #158ced;
+  --color-status-completed-border: #50a2e6;
+
+  --color-status-scaled-bg: #ddd0f7;
+  --color-status-scaled-text: #482c82;
+  --color-status-scaled-border: #b8a7db;
+
+  --color-status-draft-bg: #f3f4f6;
+  --color-status-draft-text: #4b5563;
+  --color-status-draft-border: #6b728033;
 }
 
+/* Dark theme variables */
 [data-theme="dark"] {
 
   --color-form-control: #212529;
@@ -297,7 +326,35 @@
   --gradient-secondary: linear-gradient(135deg, #e67e22, #d35400);
 
   --gradient-register: linear-gradient(to right, var(--color-register-primary), var(--color-register-secondary));
+  /* From Register.css circle-1 */
+  /* Status Colors (Dark Theme) */
+  --color-status-active-bg: rgba(22, 163, 74, 0.2);
+  --color-status-active-text: #4ade80;
+  --color-status-active-border: rgba(74, 222, 128, 0.3);
 
+  --color-status-killed-bg: rgba(220, 38, 38, 0.2);
+  --color-status-killed-text: #f87171;
+  --color-status-killed-border: rgba(248, 113, 113, 0.3);
+
+  --color-status-paused-bg: rgba(217, 119, 6, 0.2);
+  --color-status-paused-text: #fbbf24;
+  --color-status-paused-border: rgba(251, 191, 36, 0.3);
+
+  --color-status-risk-bg: rgba(191, 2, 128, 0.2);
+  --color-status-risk-text: #f472b6;
+  --color-status-risk-border: rgba(244, 114, 182, 0.3);
+
+  --color-status-completed-bg: rgba(37, 99, 235, 0.2);
+  --color-status-completed-text: #60a5fa;
+  --color-status-completed-border: rgba(96, 165, 250, 0.3);
+
+  --color-status-scaled-bg: rgba(139, 92, 246, 0.2);
+  --color-status-scaled-text: #a78bfa;
+  --color-status-scaled-border: rgba(167, 139, 250, 0.3);
+
+  --color-status-draft-bg: rgba(75, 85, 99, 0.2);
+  --color-status-draft-text: #9ca3af;
+  --color-status-draft-border: rgba(156, 163, 175, 0.3);
 }
 
 * {

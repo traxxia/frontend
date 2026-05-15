@@ -27,6 +27,7 @@
    box-shadow: none;
    padding: 0px;
    transition: none;
+   transition: none;
  }
 
  .modern-card-content-inner {
@@ -286,10 +287,10 @@
  }
 
  [data-theme="dark"] .channel-heatmap .ch-metric-blue,
-[data-theme="dark"] .customer-segmentation .cs-metric-blue,
-[data-theme="dark"] .purchase-criteria .pc-metric-blue {
-  background: #1a1d23 !important;
-}
+ [data-theme="dark"] .customer-segmentation .cs-metric-blue,
+ [data-theme="dark"] .purchase-criteria .pc-metric-blue {
+   background: #1a1d23 !important;
+ }
 
  .channel-heatmap .ch-metric-green,
  .customer-segmentation .cs-metric-green,
@@ -297,11 +298,11 @@
    background-color: #d1fae5;
  }
 
-[data-theme="dark"] .channel-heatmap .ch-metric-green,
-[data-theme="dark"] .customer-segmentation .cs-metric-green,
-[data-theme="dark"] .purchase-criteria .pc-metric-green {
-  background: #1a1d23 !important;
-}
+ [data-theme="dark"] .channel-heatmap .ch-metric-green,
+ [data-theme="dark"] .customer-segmentation .cs-metric-green,
+ [data-theme="dark"] .purchase-criteria .pc-metric-green {
+   background: #1a1d23 !important;
+ }
 
  .channel-heatmap .ch-metric-purple,
  .customer-segmentation .cs-metric-purple,
@@ -310,10 +311,10 @@
  }
 
  [data-theme="dark"] .channel-heatmap .ch-metric-purple,
-[data-theme="dark"] .customer-segmentation .cs-metric-purple,
-[data-theme="dark"] .purchase-criteria .pc-metric-purple {
-  background: #1a1d23 !important;
-}
+ [data-theme="dark"] .customer-segmentation .cs-metric-purple,
+ [data-theme="dark"] .purchase-criteria .pc-metric-purple {
+   background: #1a1d23 !important;
+ }
 
  .ln-metric-primary {
    background: linear-gradient(135deg, #fce7f3 0%, #fdf2f8 100%);
@@ -576,13 +577,19 @@
    margin: 0px;
  }
 
+ [data-theme="dark"] .ch-section-title,
+ [data-theme="dark"] .ln-section-title,
+ [data-theme="dark"] .pc-chart-title {
+   color: #f3f4f6 !important;
+ }
+
  .pc-chart-title {
    margin: 0px;
  }
 
- [data-theme="dark"]  .pc-chart-title{
-    color: #ffffff !important;
-}
+ [data-theme="dark"] .pc-chart-title {
+   color: #ffffff !important;
+ }
 
  .ch-main-content {
    margin-bottom: 32px;
@@ -1165,11 +1172,11 @@
    transition: box-shadow 0.3s ease, transform 0.2s ease;
  }
 
-  [data-theme="dark"] .cs-chart-container,
-[data-theme="dark"] .pc-chart-container,
-[data-theme="dark"] .ln-chart-container {
-  background: #1a1d23 !important;
-}
+ [data-theme="dark"] .cs-chart-container,
+ [data-theme="dark"] .pc-chart-container,
+ [data-theme="dark"] .ln-chart-container {
+   background: #1a1d23 !important;
+ }
 
  .ln-chart-container {
    text-align: center;
@@ -1785,8 +1792,8 @@
  }
 
  [data-theme="dark"] .gap-indicator.negative {
-    color: #1a1d23 !important;
-}
+   color: #1a1d23 !important;
+ }
 
  .pc-analysis {
    margin-bottom: 32px;
@@ -2861,6 +2868,10 @@
    text-align: center;
  }
 
+ [data-theme="dark"] .ln-scale-info .ln-section-title {
+   color: #0c0c0c !important;
+ }
+
  .ln-scale-zones {
    display: flex;
    justify-content: space-between;
@@ -3110,6 +3121,7 @@
      font-size: 6.5px;
    }
  }
+
  .pestel-loading,
  .pestel-error,
  .pestel-empty {
@@ -3907,8 +3919,7 @@
    margin-bottom: 1rem;
  }
 
- @keyframes spin {
- }
+ @keyframes spin {}
 
  .competitive-advantage-loading h3 {
    margin: 0 0 0.5rem 0;
@@ -4217,10 +4228,10 @@
    fill: #374151;
  }
 
-  [data-theme="dark"]  .radar-label{
-    fill: #ffffff;
-    font-weight: 400;
-}
+ [data-theme="dark"] .radar-label {
+   fill: #ffffff;
+   font-weight: 400;
+ }
 
  .differentiators-list {
    margin-top: 0px;
@@ -4497,8 +4508,7 @@
    margin-bottom: 1rem;
  }
 
- @keyframes spin {
- }
+ @keyframes spin {}
 
  .full-swot-loading h3 {
    margin: 0 0 0.5rem 0;
@@ -4766,8 +4776,7 @@
    margin-bottom: 16px;
  }
 
- @keyframes spin {
- }
+ @keyframes spin {}
 
  .empty-icon {
    color: #9ca3af;
@@ -4911,8 +4920,7 @@
    animation: spin 1s linear infinite;
  }
 
- @keyframes spin {
- }
+ @keyframes spin {}
 
  .loading-state,
  .empty-state,
@@ -6731,8 +6739,7 @@
    animation: spin 1s linear infinite;
  }
 
- @keyframes spin {
- }
+ @keyframes spin {}
 
  .table-section {
    background: white;
@@ -7222,15 +7229,14 @@
    font-size: 0.8rem;
  }
 
- [data-theme="dark"]  .score-badge {
-    background-color: #1a1d23 !important;
-}
+ [data-theme="dark"] .score-badge {
+   background-color: #1a1d23 !important;
+ }
 
  .force-name {
    display: flex;
    align-items: center;
-   gap: 8px;
-   font-weight: 600;
+   gap: 8px; 
  }
 
  .force-name svg {
@@ -7263,9 +7269,9 @@
    text-transform: uppercase;
  }
 
- [data-theme="dark"] .factor-impact  {
-    color: #1a1d23 !important;
-}
+ [data-theme="dark"] .factor-impact {
+   color: #1a1d23 !important;
+ }
 
  .factor-impact.high {
    background: #ffebee;
@@ -7299,8 +7305,8 @@
 
  [data-theme="dark"] .timeline-badge,
  .frequency-badge {
-    color: #1a1d23 !important;
-}
+   color: #1a1d23 !important;
+ }
 
  .thresholds {
    display: flex;
@@ -7353,10 +7359,9 @@
  .force-tag {
    padding: 3px 7px;
    background: #e8eaf6;
-   color: #3f51b5;
+   color: #000;
    border-radius: 10px;
-   font-size: 0.85rem;
-   font-weight: 500;
+   font-size: 0.85rem; 
  }
 
  .implications-list {
@@ -7400,8 +7405,7 @@
    color: #3f51b5;
  }
 
- @keyframes spin {
- }
+ @keyframes spin {}
 
  .empty-icon {
    color: #bdbdbd;
@@ -7601,15 +7605,17 @@
  }
 
  [data-theme="dark"] .factor-item {
-    background-color: #23263a !important;
-}
-
- .factors-cell .strong-text{
-  color: black !important;
+   background-color: #23263a !important;
  }
-  [data-theme="dark"] .factors-cell .strong-text {
-    color: #ffffff !important;
-}
+
+ .factors-cell .strong-text {
+   color: black !important;
+ }
+
+ [data-theme="dark"] .factors-cell .strong-text {
+   color: #ffffff !important;
+ }
+
  .section-container {
    background: #ffffff;
    border-radius: 12px;
@@ -7643,12 +7649,13 @@
  .section-container .table-container {
    border: none !important;
    background: #ffffff !important;
-
  }
-
- .profitability-analysis {
-
+ [data-theme="dark"]  .section-container .table-container {
+   border: none !important;
+   background: transparent !important;
  }
+ /* Profitability Analysis Styles */
+
 
  .profitability-metrics-grid {
    display: grid;
@@ -7758,9 +7765,7 @@
    gap: 16px;
  }
 
- .profitability-explanation-item {
 
- }
 
  .profitability-explanation-label {
    color: #1f2937;
@@ -7892,9 +7897,10 @@
    color: #6b7280;
  }
 
- .liquidity-efficiency {
+ /* LiquidityEfficiency Component Styles */
 
- }
+ /* Main container */
+
 
  .liquidity-efficiency__warning {
    background-color: #fef3c7;
@@ -8187,8 +8193,7 @@
    animation: spin 1s linear infinite;
  }
 
- @keyframes spin {
- }
+ @keyframes spin {}
 
  .investment-error-state {
    display: flex;
@@ -8738,8 +8743,7 @@
    animation: fadeInUp 0.6s ease-out;
  }
 
- @keyframes fadeInUp {
- }
+ @keyframes fadeInUp {}
 
  .traffic-light-indicator:hover {
    transform: translateY(-2px);
@@ -9004,8 +9008,7 @@
    animation: spin 1s linear infinite;
  }
 
- @keyframes spin {
- }
+ @keyframes spin {}
 
  .loading-state {
    display: flex;
@@ -9085,7 +9088,7 @@
  }
 
  [data-theme="dark"] .modern-card-content-inner {
-   background: #23263a !important;
+   background: transparent !important;
    color: #e5e7eb !important;
    border-radius: 0px;
    box-shadow: none;
@@ -9105,7 +9108,7 @@
    color: #ffffff !important;
  }
 
- [data-theme="dark"] .force-tag  {
+ [data-theme="dark"] .force-tag {
    color: #1a1d23 !important;
  }
 
@@ -9118,10 +9121,10 @@
  }
 
  .insight-list {
-    color: black !important;
-}
+   color: black !important;
+ }
 
- [data-theme="dark"]  .insight-list {
+ [data-theme="dark"] .insight-list {
    color: #ffffff !important;
  }
 

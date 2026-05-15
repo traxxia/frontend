@@ -275,12 +275,12 @@ body {
 }
 
 [data-theme="dark"] .back-button {
-  background-color: var(--color-bg-secondary) !important;
+  background-color: transparent !important;
   color: var(--color-text-dark) !important;
 }
 
 [data-theme="dark"] .business-header-container {
-  background-color: var(--color-bg-secondary);
+  background-color: transparent;
 }
 
 [data-theme="dark"] .breadcrumb-separator {
@@ -419,6 +419,15 @@ body {
   border-bottom-color: #2563eb;
 }
 
+[data-theme="dark"] .nav-dropdown-trigger {
+  color: #e0e5ec;
+}
+
+[data-theme="dark"] .nav-dropdown-trigger.active {
+  color: #fff;
+  border-bottom-color: #fff;
+}
+
 .chevron-icon {
   transition: transform 0.2s ease;
   color: #9ca3af;
@@ -451,6 +460,12 @@ body {
   right: 0;
 }
 
+[data-theme="dark"] .nav-dropdown-menu {
+  background-color: #1a1d23 !important;
+  border-color: #334155 !important;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4) !important;
+}
+
 @keyframes dropdownFade {
   from {
     opacity: 0;
@@ -476,6 +491,7 @@ body {
 [data-theme="dark"] .dropdown-main-header {
   border-bottom-color: #334155;
   background: rgba(59, 130, 246, 0.1) !important;
+  color: #fff !important;
 }
 
 [data-theme="dark"] .business-decision-logs-page {
@@ -497,6 +513,10 @@ body {
   text-transform: uppercase;
   letter-spacing: 0.05em;
   padding: 0.5rem 0.75rem 0.25rem;
+}
+
+[data-theme="dark"] .dropdown-section-label {
+  color: #64748b !important;
 }
 
 .dropdown-item {
@@ -538,6 +558,21 @@ body {
   color: #2563eb;
 }
 
+[data-theme="dark"] .dropdown-item {
+  color: #e2e8f0 !important;
+}
+
+[data-theme="dark"] .dropdown-item:hover {
+  background-color: #2d3748 !important;
+  color: #60a5fa !important;
+}
+
+[data-theme="dark"] .dropdown-item.active {
+  background-color: rgba(37, 99, 235, 0.2) !important;
+  color: #60a5fa !important;
+}
+
+/* Mobile Nav Groups */
 .mobile-nav-groups {
   display: flex;
   flex-direction: column;
@@ -1040,7 +1075,6 @@ body {
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
   overscroll-behavior-y: contain;
-  vertical-align: top;
   box-sizing: border-box;
   display: block;
   width: 100%;
@@ -1954,10 +1988,6 @@ body {
     border-color: #cbd5e1;
   }
 
-  .swot-analysis,
-  .analysis-content:not(.analysis-content-wrapper) {
-
-  }
 
   .analysis-header {
     flex-direction: column;

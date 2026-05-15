@@ -2,6 +2,8 @@ import React, { useRef, useState } from 'react';
 import { X, Download, Upload, FileText, ChevronDown, ChevronUp, Check } from 'lucide-react';
 import { Accordion } from 'react-bootstrap';
 import { useTranslation } from "../hooks/useTranslation";
+import '../styles/FinancialTemplatesPopup.css';
+
 const FinancialTemplatesPopup = ({
   isOpen,
   onClose,
@@ -232,7 +234,7 @@ const FinancialTemplatesPopup = ({
               {t("download_sample_templates")}
                     </span>
                   </div>
-            </Accordion.Header>
+                </Accordion.Header>
 
                 <Accordion.Body>
             <div className="financial-templates-popup--s12">

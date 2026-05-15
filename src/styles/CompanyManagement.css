@@ -1267,7 +1267,15 @@ body.modal-open {
   margin-bottom: 12px;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
 }
-
+[data-theme="dark"] .logo-upload-card {
+ background:transparent;
+}
+[data-theme="dark"] .logo-preview-container-refined{
+ background: transparent;
+}
+[data-theme="dark"] .logo-icon-wrapper{
+  background: transparent;
+}
 .logo-upload-header {
   display: flex;
   align-items: center;
@@ -1561,6 +1569,14 @@ body.modal-open {
   opacity: 0.85;
 }
 
+[data-theme="dark"] .editable-brief-section--s21 {
+  font-size: 11.5px;
+  color: #fff;
+  margin-bottom: 12px;
+  line-height: 1.4;
+  padding-left: 10px;
+  opacity: 0.85;
+}
 .editable-brief-section--s22 {
   text-align: center;
   font-size: 11px;

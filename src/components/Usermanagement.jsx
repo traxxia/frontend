@@ -258,10 +258,10 @@ const UserManagement = ({ onToast }) => {
             <Button className="admin-primary-btn" onClick={handleOpenAddModal}>
               <Plus size={16} className="me-2" /> {t("Add_User")}
             </Button>
-            <Button className="admin-secondary-btn" onClick={() => setShowAssignModal(true)}>
+            <Button className="admin-primary-btn" onClick={() => setShowAssignModal(true)}>
               <UserCog size={16} className="me-2" /> {t("Assign_Business_Access")}
             </Button>
-            <Button className="admin-secondary-btn" onClick={() => setShowProjectAccessModal(true)}>
+            <Button className="admin-primary-btn" onClick={() => setShowProjectAccessModal(true)}>
               <ShieldCheck size={16} className="me-2" /> {t("Project_Access")}
             </Button>
           </>

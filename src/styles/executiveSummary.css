@@ -8,7 +8,29 @@
 }
 
 [data-theme="dark"] .exc-executive-summary-container {
+  background-color: #0f172a !important;
+}
+
+[data-theme="dark"] .exc-loading-container {
+  background-color: #0f172a;
+  min-height: 100vh;
+}
+
+[data-theme="dark"] .exc-loading-container .text-muted {
+  color: #94a3b8 !important;
+}
+
+[data-theme="dark"] .exc-no-data-container {
   background-color: #1a1d23 !important;
+  border-color: #334155 !important;
+}
+
+[data-theme="dark"] .exc-no-data-container h3 {
+  color: #ffffff !important;
+}
+
+[data-theme="dark"] .exc-no-data-container .text-muted {
+  color: #94a3b8 !important;
 }
 
 .exc-executive-content {
@@ -147,7 +169,7 @@
 }
 
 [data-theme="dark"] .exc-section-header {
-  background-color: #333946 !important;
+  background-color: #171e2d !important;
 }
 
 .exc-section-title-wrapper {
@@ -371,8 +393,9 @@
 }
 
 [data-theme="dark"] .exc-option-block {
-  background-color: #363b46 !important;
-  padding: 1rem;
+    background-color: transparent;
+    padding: 1rem;
+    border: 1px solid;
 }
 
 .exc-option-title {
@@ -406,7 +429,7 @@
 }
 
 [data-theme="dark"] .exc-differentiation-inner {
-  background-color: #363b46 !important;
+  background-color: transparent;
 }
 
 .exc-alternative-levers {
@@ -418,7 +441,7 @@
 }
 
 [data-theme="dark"] .exc-alternative-levers {
-  background-color: #3d3a33 !important;
+  background-color: transparent;
   border-color: #4d4639 !important;
 }
 
