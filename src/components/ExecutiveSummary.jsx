@@ -60,9 +60,11 @@ const ExecutiveSummary = () => {
     
     setLoading(true);
     try {
+      // Use refreshTrigger > 0 as a signal to bypass cache
+      const forceRefresh = force || refreshTrigger > 0;
       const [summaryResult, ahaResult] = await Promise.all([
-        analysisService.getPMFExecutiveSummary(businessId), 
-        analysisService.getPMFAnalysis(businessId)
+        analysisService.getPMFExecutiveSummary(businessId, forceRefresh), 
+        analysisService.getPMFAnalysis(businessId, forceRefresh)
       ]);
       
       let summaryContent = summaryResult?.summary || summaryResult;
@@ -74,7 +76,7 @@ const ExecutiveSummary = () => {
       }
       setData(summaryContent);
       setAhaData(ahaResult);
-      await fetchKickstartData(businessId, false);
+      await fetchKickstartData(businessId, forceRefresh);
       await fetchProjects(businessId);
     } catch (error) {
       console.error("Error fetching data:", error);

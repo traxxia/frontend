@@ -434,6 +434,7 @@ const AnalysisContentManager = (props) => {
     competitiveLandscapeRef,
     coreAdjacencyRef
   } = context;
+
   const {
     swotAnalysis,
     purchaseCriteria,
@@ -609,8 +610,14 @@ const AnalysisContentManager = (props) => {
     } else if (unlockedFeatures.initialPhase) {
       sets.initial.forEach(a => activeAnalyses.add(a));
     }
+    // Fallback: If no phases are unlocked but we have data, default to showing the advanced set
+    // This ensures data is visible even if the questions API call was skipped.
+    if (activeAnalyses.size === 0 && (swotAnalysis || portersData || pestelData || strategicData || competitiveAdvantage || fullSwotData)) {
+      sets.advanced.forEach(a => activeAnalyses.add(a));
+    }
+
     return Array.from(activeAnalyses);
-  }, [unlockedFeatures]);
+  }, [unlockedFeatures, swotAnalysis, portersData, pestelData, strategicData, competitiveAdvantage, fullSwotData]);
   const categorizedAnalyses = useMemo(() => {
     const result = {};
     CATEGORIES.forEach(cat => {
@@ -631,7 +638,8 @@ const AnalysisContentManager = (props) => {
         <p>{t("We're gathering the latest data to build your insights.")}</p>
       </div>;
   }
-  if (!unlockedFeatures.analysis) {
+  const hasAnyData = swotAnalysis || portersData || pestelData || strategicData || competitiveAdvantage || fullSwotData;
+  if (!unlockedFeatures.analysis && !hasAnyData) {
     return <div className="modern-locked-state">
         <Lock size={60} className="modern-locked-icon" />
         <h3>{t("Analysis Locked")}</h3>
@@ -645,7 +653,14 @@ const AnalysisContentManager = (props) => {
       {(isFinancialRegenerating || isMainAnalysisRegenerating) && <div className="analysis-regenerating-banner analysis-content-manager--s5">
           <Loader size={16} className="antigravity-rotating" />
           <span>
-            {isMainAnalysisRegenerating && isFinancialRegenerating ? t("Generating all Insights...") : isFinancialRegenerating ? t("Regenerating financial insights like profitability, growth tracker, liquidity, investment performance, leverage and risk insight...") : isAnalysisRegenerating && isStrategicRegenerating ? t("Generating all Insights...") : isStrategicRegenerating && !isAnalysisRegenerating ? t("Generating Strategic Analysis...") : t("Generating Insight...")}
+            {isMainAnalysisRegenerating && isFinancialRegenerating ? t("Generating all Insights...") : 
+             isFinancialRegenerating ? t("Regenerating financial insights...") : 
+             isAnalysisRegenerating && isStrategicRegenerating ? t("Generating all Insights...") : 
+             (isStrategicRegenerating && !isAnalysisRegenerating) ? 
+                (regenerationStatus === 'insights' ? t("regeneration_step_insights") : 
+                 regenerationStatus === 'strategic' ? t("regeneration_step_strategic") : 
+                 t("Generating Strategic Analysis...")) : 
+             t("Generating Insight...")}
           </span>
         </div>}
       <div className="six-cs-framework-overview">

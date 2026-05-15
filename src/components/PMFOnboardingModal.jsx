@@ -59,7 +59,14 @@ const PMFOnboardingModal = ({
   const [errors, setErrors] = useState({});
   const [apiError, setApiError] = useState(null);
   const [loadingMessageIndex, setLoadingMessageIndex] = useState(0);
-  const loadingMessages = [t("Analyzing market conditions...") || "Analyzing market conditions...", t("Getting business information...") || "Getting business information...", t("Checking industry trends...") || "Checking industry trends...", t("Identifying growth opportunities...") || "Identifying growth opportunities...", t("Structuring your strategy...") || "Structuring your strategy...", t("Finalizing your customized insights...") || "Finalizing your customized insights..."];
+  const loadingMessages = [
+    t("loading_analyzing_market") || "Analyzing market conditions...",
+    t("loading_getting_info") || "Getting business information...",
+    t("loading_checking_trends") || "Checking industry trends...",
+    t("loading_identifying_growth") || "Identifying growth opportunities...",
+    t("loading_structuring_strategy") || "Structuring your strategy...",
+    t("loading_finalizing_customized") || "Finalizing your customized insights..."
+  ];
   useEffect(() => {
     let interval;
     if (isSubmitting && submissionStep === 2) {
@@ -142,11 +149,11 @@ const PMFOnboardingModal = ({
     if (!companyName) {
       newErrors.companyName = t('company_name_required') || 'Company name is required';
     } else if (!/^[A-Za-z]/.test(companyName)) {
-      newErrors.companyName = 'Company name must start with a letter';
+      newErrors.companyName = t('company_name_start_letter') || 'Company name must start with a letter';
     } else if (!/[A-Za-z]{2,}/.test(companyName)) {
-      newErrors.companyName = 'Company name must contain meaningful letters';
+      newErrors.companyName = t('company_name_meaningful') || 'Company name must contain meaningful letters';
     } else if (!/^[A-Za-z][A-Za-z0-9&.,()'’\- ]{1,100}$/.test(companyName)) {
-      newErrors.companyName = 'Company name contains invalid characters';
+      newErrors.companyName = t('company_name_invalid_chars') || 'Company name contains invalid characters';
     }
     if (formData.website.trim()) {
       const urlRegex = /^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([/\w .-]*)*\/?$/;
@@ -178,7 +185,7 @@ const PMFOnboardingModal = ({
     }
     if (formData.primaryIndustry === 'Other') {
       if (!formData.primaryIndustryOther.trim()) {
-        newErrors.primaryIndustryOther = t('Please specify');
+        newErrors.primaryIndustryOther = t('please_specify') || 'Please specify';
       } else {
         const nameRegex = /^[a-zA-Z\s]+$/;
         if (!nameRegex.test(formData.primaryIndustryOther.trim())) {
@@ -216,11 +223,11 @@ const PMFOnboardingModal = ({
   const validateStep6 = () => {
     const newErrors = {};
     if (!formData.strategicObjective) {
-      newErrors.strategicObjective = t('Please select an objective');
+      newErrors.strategicObjective = t('strategic_objective_required') || 'Please select an objective';
     }
     if (formData.strategicObjective === 'Other') {
       if (!formData.strategicObjectiveOther.trim()) {
-        newErrors.strategicObjectiveOther = t('Please specify');
+        newErrors.strategicObjectiveOther = t('please_specify') || 'Please specify';
       } else {
         const nameRegex = /^[a-zA-Z\s]+$/;
         if (!nameRegex.test(formData.strategicObjectiveOther.trim())) {
@@ -234,11 +241,11 @@ const PMFOnboardingModal = ({
   const validateStep7 = () => {
     const newErrors = {};
     if (!formData.keyChallenge) {
-      newErrors.keyChallenge = t('Please select a challenge');
+      newErrors.keyChallenge = t('key_challenge_required') || 'Please select a challenge';
     }
     if (formData.keyChallenge === 'Other') {
       if (!formData.keyChallengeOther.trim()) {
-        newErrors.keyChallengeOther = t('Please specify');
+        newErrors.keyChallengeOther = t('please_specify') || 'Please specify';
       } else {
         const nameRegex = /^[a-zA-Z\s]+$/;
         if (!nameRegex.test(formData.keyChallengeOther.trim())) {
@@ -252,11 +259,11 @@ const PMFOnboardingModal = ({
   const validateStep8 = () => {
     const newErrors = {};
     if (formData.differentiation.length === 0) {
-      newErrors.differentiation = t('Select at least one option');
+      newErrors.differentiation = t('differentiation_required') || 'Select at least one option';
     }
     if (formData.differentiation.includes('Other')) {
       if (!formData.differentiationOther.trim()) {
-        newErrors.differentiation = t('Please specify for Other');
+        newErrors.differentiation = t('please_specify_other') || 'Please specify for Other';
       } else {
         const nameRegex = /^[a-zA-Z\s]+$/;
         if (!nameRegex.test(formData.differentiationOther.trim())) {
@@ -270,7 +277,7 @@ const PMFOnboardingModal = ({
   const validateStep9 = () => {
     const newErrors = {};
     if (!formData.usageContext) {
-      newErrors.usageContext = t('Please select one option');
+      newErrors.usageContext = t('usage_context_required') || 'Please select one option';
     }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -349,7 +356,15 @@ const PMFOnboardingModal = ({
         ...formData,
         primaryIndustry: formData.primaryIndustry === "Other" ? formData.primaryIndustryOther : formData.primaryIndustry
       };
-      await analysisService.savePMFOnboardingData(businessId, dataToSave);
+      try {
+        await analysisService.savePMFOnboardingData(businessId, dataToSave);
+      } catch (error) {
+        const errorData = error.response?.data?.error || error.message || "";
+        if (!errorData.toLowerCase().includes("already started pmf")) {
+          throw error;
+        }
+        console.info("PMF Onboarding already exists, continuing with insights generation");
+      }
       setSubmissionStep(2);
       const rawPayload = {
         company: {
@@ -363,9 +378,9 @@ const PMFOnboardingModal = ({
           geographies: [formData.geography1, formData.geography2, formData.geography3].filter(Boolean),
           profits: {
             source: {
-              [t("Segments")]: [formData.customerSegment1, formData.customerSegment2, formData.customerSegment3].filter(Boolean),
-              [t("Products")]: [formData.productService1, formData.productService2, formData.productService3].filter(Boolean),
-              [t("Channels")]: [formData.channel1, formData.channel2, formData.channel3].filter(Boolean)
+              "Segments": [formData.customerSegment1, formData.customerSegment2, formData.customerSegment3].filter(Boolean),
+              "Products": [formData.productService1, formData.productService2, formData.productService3].filter(Boolean),
+              "Channels": [formData.channel1, formData.channel2, formData.channel3].filter(Boolean)
             }
           },
           objective: formData.strategicObjective === "Other" ? formData.strategicObjectiveOther : formData.strategicObjective,
@@ -441,7 +456,7 @@ const PMFOnboardingModal = ({
     const description = FIELD_DESCRIPTIONS[fieldKey];
     if (!description) return null;
     return <OverlayTrigger placement="right" trigger={['hover', 'focus', 'click']} animation={false} overlay={<Tooltip id={`tooltip-${fieldKey}`} className="pmf-tooltip">
-            {description}
+            {t(description)}
           </Tooltip>}>
         <span className="pmf-tooltip-icon ms-1">
           <HelpCircle size={16} />
@@ -633,21 +648,21 @@ const PMFOnboardingModal = ({
             </p>
 
             <Form.Group className="mb-3">
-              <Form.Control type="text" name="geography1" value={formData.geography1} onChange={handleInputChange} placeholder={`${t('geography') || 'Geography'} 1`} className="pmf-form-control" isInvalid={!!errors.geography1} />
+              <Form.Control type="text" name="geography1" value={formData.geography1} onChange={handleInputChange} placeholder={t('geography_1') || "Geography 1"} className="pmf-form-control" isInvalid={!!errors.geography1} />
               {errors.geography1 && <Form.Text className="text-danger d-block mt-1">
                   {errors.geography1}
                 </Form.Text>}
             </Form.Group>
 
             <Form.Group className="mb-3">
-              <Form.Control type="text" name="geography2" value={formData.geography2} onChange={handleInputChange} placeholder={`${t('geography') || 'Geography'} 2`} className="pmf-form-control" isInvalid={!!errors.geography2} />
+              <Form.Control type="text" name="geography2" value={formData.geography2} onChange={handleInputChange} placeholder={t('geography_2') || "Geography 2"} className="pmf-form-control" isInvalid={!!errors.geography2} />
               {errors.geography2 && <Form.Text className="text-danger d-block mt-1">
                   {errors.geography2}
                 </Form.Text>}
             </Form.Group>
 
             <Form.Group className="mb-4">
-              <Form.Control type="text" name="geography3" value={formData.geography3} onChange={handleInputChange} placeholder={`${t('geography') || 'Geography'} 3`} className="pmf-form-control" isInvalid={!!errors.geography3} />
+              <Form.Control type="text" name="geography3" value={formData.geography3} onChange={handleInputChange} placeholder={t('geography_3') || "Geography 3"} className="pmf-form-control" isInvalid={!!errors.geography3} />
               {errors.geography3 && <Form.Text className="text-danger d-block mt-1">
                   {errors.geography3}
                 </Form.Text>}
@@ -677,21 +692,21 @@ const PMFOnboardingModal = ({
               </p>
 
               <Form.Group className="mb-3">
-                <Form.Control type="text" name="customerSegment1" value={formData.customerSegment1} onChange={handleInputChange} placeholder={`${t('segment') || 'Segment'} 1`} className="pmf-form-control" isInvalid={!!errors.customerSegment1} />
+                <Form.Control type="text" name="customerSegment1" value={formData.customerSegment1} onChange={handleInputChange} placeholder={t('segment_1') || 'Segment 1'} className="pmf-form-control" isInvalid={!!errors.customerSegment1} />
                 {errors.customerSegment1 && <Form.Text className="text-danger d-block mt-1">
                     {errors.customerSegment1}
                   </Form.Text>}
               </Form.Group>
 
               <Form.Group className="mb-3">
-                <Form.Control type="text" name="customerSegment2" value={formData.customerSegment2} onChange={handleInputChange} placeholder={`${t('segment') || 'Segment'} 2`} className="pmf-form-control" isInvalid={!!errors.customerSegment2} />
+                <Form.Control type="text" name="customerSegment2" value={formData.customerSegment2} onChange={handleInputChange} placeholder={t('segment_2') || 'Segment 2'} className="pmf-form-control" isInvalid={!!errors.customerSegment2} />
                 {errors.customerSegment2 && <Form.Text className="text-danger d-block mt-1">
                     {errors.customerSegment2}
                   </Form.Text>}
               </Form.Group>
 
               <Form.Group className="mb-4">
-                <Form.Control type="text" name="customerSegment3" value={formData.customerSegment3} onChange={handleInputChange} placeholder={`${t('segment') || 'Segment'} 3`} className="pmf-form-control" isInvalid={!!errors.customerSegment3} />
+                <Form.Control type="text" name="customerSegment3" value={formData.customerSegment3} onChange={handleInputChange} placeholder={t('segment_3') || 'Segment 3'} className="pmf-form-control" isInvalid={!!errors.customerSegment3} />
                 {errors.customerSegment3 && <Form.Text className="text-danger d-block mt-1">
                     {errors.customerSegment3}
                   </Form.Text>}
@@ -710,21 +725,21 @@ const PMFOnboardingModal = ({
               </p>
 
               <Form.Group className="mb-3">
-                <Form.Control type="text" name="productService1" value={formData.productService1} onChange={handleInputChange} placeholder={(t('product service') || 'Product/Service') + ' 1'} className="pmf-form-control" isInvalid={!!errors.productService1} />
+                <Form.Control type="text" name="productService1" value={formData.productService1} onChange={handleInputChange} placeholder={t('product_service_1') || 'Product/Service 1'} className="pmf-form-control" isInvalid={!!errors.productService1} />
                 {errors.productService1 && <Form.Text className="text-danger d-block mt-1">
                     {errors.productService1}
                   </Form.Text>}
               </Form.Group>
 
               <Form.Group className="mb-3">
-                <Form.Control type="text" name="productService2" value={formData.productService2} onChange={handleInputChange} placeholder={`${t('product service') || 'Product/Service'} 2`} className="pmf-form-control" isInvalid={!!errors.productService2} />
+                <Form.Control type="text" name="productService2" value={formData.productService2} onChange={handleInputChange} placeholder={t('product_service_2') || 'Product/Service 2'} className="pmf-form-control" isInvalid={!!errors.productService2} />
                 {errors.productService2 && <Form.Text className="text-danger d-block mt-1">
                     {errors.productService2}
                   </Form.Text>}
               </Form.Group>
 
               <Form.Group className="mb-4">
-                <Form.Control type="text" name="productService3" value={formData.productService3} onChange={handleInputChange} placeholder={`${t('product service') || 'Product/Service'} 3`} className="pmf-form-control" isInvalid={!!errors.productService3} />
+                <Form.Control type="text" name="productService3" value={formData.productService3} onChange={handleInputChange} placeholder={t('product_service_3') || 'Product/Service 3'} className="pmf-form-control" isInvalid={!!errors.productService3} />
                 {errors.productService3 && <Form.Text className="text-danger d-block mt-1">
                     {errors.productService3}
                   </Form.Text>}
@@ -741,21 +756,21 @@ const PMFOnboardingModal = ({
               </p>
 
               <Form.Group className="mb-3">
-                <Form.Control type="text" name="channel1" value={formData.channel1} onChange={handleInputChange} placeholder={t("Channel 1")} className="pmf-form-control" isInvalid={!!errors.channel1} />
+                <Form.Control type="text" name="channel1" value={formData.channel1} onChange={handleInputChange} placeholder={t("channel_1") || "Channel 1"} className="pmf-form-control" isInvalid={!!errors.channel1} />
                 {errors.channel1 && <Form.Text className="text-danger d-block mt-1">
                     {errors.channel1}
                   </Form.Text>}
               </Form.Group>
 
               <Form.Group className="mb-3">
-                <Form.Control type="text" name="channel2" value={formData.channel2} onChange={handleInputChange} placeholder={t("Channel 2")} className="pmf-form-control" isInvalid={!!errors.channel2} />
+                <Form.Control type="text" name="channel2" value={formData.channel2} onChange={handleInputChange} placeholder={t("channel_2") || "Channel 2"} className="pmf-form-control" isInvalid={!!errors.channel2} />
                 {errors.channel2 && <Form.Text className="text-danger d-block mt-1">
                     {errors.channel2}
                   </Form.Text>}
               </Form.Group>
 
               <Form.Group className="mb-4">
-                <Form.Control type="text" name="channel3" value={formData.channel3} onChange={handleInputChange} placeholder={t("Channel 3")} className="pmf-form-control" isInvalid={!!errors.channel3} />
+                <Form.Control type="text" name="channel3" value={formData.channel3} onChange={handleInputChange} placeholder={t("channel_3") || "Channel 3"} className="pmf-form-control" isInvalid={!!errors.channel3} />
                 {errors.channel3 && <Form.Text className="text-danger d-block mt-1">
                     {errors.channel3}
                   </Form.Text>}
@@ -779,7 +794,7 @@ const PMFOnboardingModal = ({
               </div>)}
 
             {formData.strategicObjective === 'Other' && <Form.Group className="mt-3">
-                <Form.Control type="text" placeholder={t("Please specify")} value={formData.strategicObjectiveOther} onChange={e => setFormData(prev => ({
+                <Form.Control type="text" placeholder={t("please_specify") || "Please specify"} value={formData.strategicObjectiveOther} onChange={e => setFormData(prev => ({
               ...prev,
               strategicObjectiveOther: e.target.value
             }))} className="pmf-form-control" isInvalid={!!errors.strategicObjectiveOther} />
@@ -806,7 +821,7 @@ const PMFOnboardingModal = ({
               </div>)}
 
             {formData.keyChallenge === 'Other' && <Form.Group className="mt-3">
-                <Form.Control type="text" placeholder={t("Please specify")} value={formData.keyChallengeOther} onChange={e => {
+                <Form.Control type="text" placeholder={t("please_specify") || "Please specify"} value={formData.keyChallengeOther} onChange={e => {
               const val = e.target.value;
               setFormData(prev => ({
                 ...prev,
@@ -844,7 +859,7 @@ const PMFOnboardingModal = ({
             {DIFFERENTIATION_OPTIONS.map(option => <div key={option} className={`pmf-checkbox-card ${formData.differentiation.includes(option) ? 'selected' : ''}`} onClick={() => handleDifferentiationChange(option)}>
                 <Form.Check type="checkbox" id={`differentiation-${option.replace(/\s+/g, '-').toLowerCase()}`} label={t(option)} checked={formData.differentiation.includes(option)} onChange={() => {}} className="pmf-checkbox-input" />
 
-                {option === 'Other' && formData.differentiation.includes('Other') && <Form.Control type="text" placeholder={t("Please specify")} value={formData.differentiationOther} onClick={e => e.stopPropagation()} onChange={e => {
+                {option === 'Other' && formData.differentiation.includes('Other') && <Form.Control type="text" placeholder={t("please_specify") || "Please specify"} value={formData.differentiationOther} onClick={e => e.stopPropagation()} onChange={e => {
               const val = e.target.value;
               setFormData(prev => ({
                 ...prev,
@@ -930,12 +945,12 @@ const PMFOnboardingModal = ({
             <div className="pmf-loader-minimal">
               <div className="spinner-border text-primary mb-3" role="status" />
               <div className="pmf-loader-text">
-                {submissionStep === 1 && "Saving your data..."}
-                {submissionStep === 2 && "Analyzing market (60–90s)..."}
-                {submissionStep === 3 && "Finalizing insights..."}
+                {submissionStep === 1 && (t("saving_your_data") || "Saving your data...")}
+                {submissionStep === 2 && (t("analyzing_market_60_90s") || "Analyzing market (60–90s)...")}
+                {submissionStep === 3 && (t("finalizing_insights") || "Finalizing insights...")}
               </div>
               <small className="text-muted">
-                Please wait while we generate insights
+                {t("wait_generate_insights") || "Please wait while we generate insights"}
               </small>
             </div>
           </div>}
@@ -953,9 +968,9 @@ const PMFOnboardingModal = ({
               <div className="d-flex align-items-start mb-1 text-center">
                 <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
                 <span className="p-m-f-onboarding-modal--s1">
-                  {submissionStep === 1 && (t("Saving data...") || "Saving data...")}
+                  {submissionStep === 1 && (t("saving_your_data") || "Saving data...")}
                   {submissionStep === 2 && loadingMessages[loadingMessageIndex]}
-                  {submissionStep === 3 && (t("Finalizing...") || "Finalizing...")}
+                  {submissionStep === 3 && (t("finalizing_insights") || "Finalizing...")}
                 </span>
               </div>
             </div> : <>

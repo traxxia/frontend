@@ -58,6 +58,7 @@ const TabRenderer = () => {
     t,
     streamingManager,
     triggerConfirmation,
+    regenerationStatus,
     strategicData,
     phaseAnalysisArray
   } = useBusinessSetupContext();
@@ -119,7 +120,7 @@ const TabRenderer = () => {
         <div className="strategic-section">
           <StrategicAnalysis
             onRegenerate={handleStrategicAnalysisRegenerate}
-            isRegenerating={isStrategicRegenerating || isTypeRegenerating('strategic')}
+            isRegenerating={isStrategicRegenerating || isAnalysisRegenerating}
             canRegenerate={canShowRegenerateButtons && !isAnalysisRegenerating && unlockedFeatures.analysis}
             selectedBusinessId={selectedBusinessId}
             phaseManager={phaseManager}
@@ -133,6 +134,7 @@ const TabRenderer = () => {
             hasStrategicAccess={hasStrategicAccess}
             isAnalysisRegenerating={isAnalysisRegenerating}
             isStrategicRegenerating={isStrategicRegenerating}
+            regenerationStatus={regenerationStatus}
             questionsLoaded={questionsLoaded}
             questions={questions}
             userAnswers={userAnswers}

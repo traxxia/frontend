@@ -232,27 +232,7 @@ const LoyaltyNPS = ({
     );
   }
 
-  if (!data && Object.keys(userAnswers).length > 0) {
-    return (
-      <div className="loyalty-nps">
-        <AnalysisEmptyState
-          analysisType="loyaltyNPS"
-          analysisDisplayName="Loyalty & NPS Analysis"
-          icon={Heart}
-          onImproveAnswers={handleMissingQuestionsCheck}
-          onRegenerate={handleRegenerate}
-          isRegenerating={isRegenerating}
-          canRegenerate={canRegenerate}
-          userAnswers={userAnswers}
-          minimumAnswersRequired={3}
-          showImproveButton={false}
-          showRegenerateButton={false}
-        />
-      </div>
-    );
-  }
-
-  if (!dataRaw || isLoyaltyNPSDataIncomplete(dataRaw)) {
+  if (!data || !dataRaw || isLoyaltyNPSDataIncomplete(dataRaw)) {
     return (
       <div className="loyalty-nps">
         <AnalysisEmptyState

@@ -196,7 +196,7 @@ const SwotAnalysis = ({
     );
   }
 
-  if (errorMessage || (isSwotDataIncomplete(analysisResult) && Object.keys(userAnswers).length > 0)) {
+  if (errorMessage || isSwotDataIncomplete(analysisResult)) {
     return (
       <div className="porters-container">
         <AnalysisEmptyState

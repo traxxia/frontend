@@ -46,14 +46,35 @@ const StrategicAnalysis = ({
   isExportActive = () => false
 }) => {
   const { token, userId } = useAuthStore();
-  const { strategicData: storeStrategicData, pestelData: storePestelData, portersData: storePortersData, isRegenerating: isTypeRegenerating } = useAnalysisStore();
+  const { 
+    strategicData: storeStrategicData, 
+    pestelData: storePestelData, 
+    portersData: storePortersData, 
+    isRegenerating: isTypeRegenerating,
+    isAnalysisLoading: isStoreLoading,
+    isInitialLoading: isStoreInitialLoading 
+  } = useAnalysisStore();
   
-  const displayStrategicData = propsStrategicData || storeStrategicData;
+  const rawStrategicData = propsStrategicData || storeStrategicData;
+  const displayStrategicData = useMemo(() => {
+    if (!rawStrategicData) return null;
+    if (typeof rawStrategicData === 'string') {
+      try {
+        return JSON.parse(rawStrategicData);
+      } catch (e) {
+        console.error("Failed to parse strategic data string:", e);
+        return null;
+      }
+    }
+    return rawStrategicData;
+  }, [rawStrategicData]);
+
   const pestelData = propsPestelData || storePestelData;
   const portersData = propsPortersData || storePortersData;
   
   const [localStrategicData, setLocalStrategicData] = useState(displayStrategicData);
   const isRegenerating = propsIsRegenerating || isTypeRegenerating('strategic');
+  const isLoadingData = (isStoreLoading && !displayStrategicData) || isStoreInitialLoading;
   const { t } = useTranslation();
   const ENABLE_PMF = getUserLimits().pmf;
   const hasStrategicAccess = getUserLimits().strategic;
@@ -313,7 +334,7 @@ const StrategicAnalysis = ({
   };
 
   const renderStrategicContent = () => {
-    const analysisData = localStrategicData?.strategic_analysis || localStrategicData;
+    const analysisData = displayStrategicData?.strategic_analysis || displayStrategicData;
     const recommendations = analysisData?.strategic_recommendations; 
     if (!recommendations) return null;
 
@@ -321,10 +342,10 @@ const StrategicAnalysis = ({
       <div className="strategic-content">
         <CategorySection id="strategy-block" dataComponent="strategic-direction" title={t("strategy_block_title")} icon={Target} description={t("strategy_desc")}>
           {!hasStrategicAccess ? (
-            <div className="restricted-access-placeholder">
-              <Lock size={32} className="restricted-icon" />
-              <p className="restricted-title">{t("Action Restricted")}</p>
-              <p className="restricted-text">{t("execution_upgrade_msg")}</p>
+            <div className="modern-locked-state" style={{ margin: '20px', padding: '40px' }}>
+              <Lock size={32} className="modern-locked-icon" />
+              <h3 style={{ fontSize: '1.2rem' }}>{t("Access Restricted")}</h3>
+              <p>{t("You do not have permission to view or regenerate this insight please upgrade your plan.")}</p>
             </div>
           ) : (
             <>
@@ -366,9 +387,10 @@ const StrategicAnalysis = ({
 
         <CategorySection id="execution-block" dataComponent="strategic-execution" title={t("execution_block_title")} icon={CheckCircle} description={t("execution_desc")}>
           {!hasStrategicAccess ? (
-            <div className="restricted-access-placeholder">
-              <Lock size={32} className="restricted-icon" />
-              <p className="restricted-title">{t("Action Restricted")}</p>
+            <div className="modern-locked-state" style={{ margin: '20px', padding: '40px' }}>
+              <Lock size={32} className="modern-locked-icon" />
+              <h3 style={{ fontSize: '1.2rem' }}>{t("Access Restricted")}</h3>
+              <p>{t("You do not have permission to view or regenerate this insight please upgrade your plan.")}</p>
             </div>
           ) : (
             <>
@@ -381,9 +403,10 @@ const StrategicAnalysis = ({
 
         <CategorySection id="sustainability-block" dataComponent="strategic-sustainability" title={t("sustainability-block_title")} icon={Shield} description={t("sustainability_desc")}>
           {!hasStrategicAccess ? (
-            <div className="restricted-access-placeholder">
-              <Lock size={32} className="restricted-icon" />
-              <p className="restricted-title">{t("Action Restricted")}</p>
+            <div className="modern-locked-state" style={{ margin: '20px', padding: '40px' }}>
+              <Lock size={32} className="modern-locked-icon" />
+              <h3 style={{ fontSize: '1.2rem' }}>{t("Access Restricted")}</h3>
+              <p>{t("You do not have permission to view or regenerate this insight please upgrade your plan.")}</p>
             </div>
           ) : (
             <>
@@ -397,8 +420,16 @@ const StrategicAnalysis = ({
     );
   };
 
-  if (isRegenerating || isLoading) {
-    return <div className="strategic-analysis-container"><div className="loading-state"><Loader className="animate-spin" size={24} /><span>{t("generating_analysis")}</span></div></div>;
+  if (isRegenerating || isLoading || isLoadingData) {
+    return (
+      <div className="strategic-analysis-container">
+        <div className="modern-locked-state">
+          <Loader size={60} className="modern-locked-icon antigravity-rotating" />
+          <h3>{t("Preparing Analysis...")}</h3>
+          <p>{t("We're gathering the latest data to build your insights.")}</p>
+        </div>
+      </div>
+    );
   }
 
   if (errorMessage) {
@@ -419,23 +450,23 @@ const StrategicAnalysis = ({
   if (!questionsLoaded) {
     return (
       <div className="strategic-analysis-container">
-        <div className="locked-state-card">
-          <Loader size={60} className="locked-state-icon antigravity-rotating" />
-          <h3 className="locked-state-title">{t("preparing_analysis") || "Preparing Analysis..."}</h3>
-          <p className="locked-state-text">{t("analysis_loading_text")}</p>
+        <div className="modern-locked-state">
+          <Loader size={60} className="modern-locked-icon antigravity-rotating" />
+          <h3>{t("Preparing Analysis...")}</h3>
+          <p>{t("We're gathering the latest data to build your insights.")}</p>
         </div>
       </div>
     );
   }
 
   const unlockedFeatures = phaseManager?.getUnlockedFeatures?.() || {};
-  if (!unlockedFeatures.analysis) {
+  if (!unlockedFeatures.analysis && !displayStrategicData) {
     return (
       <div className="strategic-analysis-container">
-        <div className="locked-state-card">
-          <Lock size={60} className="locked-state-icon" />
-          <h3 className="locked-state-title">{t("Action Restricted")}</h3>
-          <p className="locked-state-text">{t("complete_questions_to_unlock")}</p>
+        <div className="modern-locked-state">
+          <Lock size={60} className="modern-locked-icon" />
+          <h3>{t("Analysis Locked")}</h3>
+          <p>{t("Start answering questions in the business brief to unlock your comprehensive business analysis.")}</p>
         </div>
       </div>
     );
@@ -449,7 +480,7 @@ const StrategicAnalysis = ({
 
       {kickstartError && <div className="kickstart-error-message">{kickstartError}</div>}
       <div className="dashboard-container">
-        {isStrategicDataIncomplete(localStrategicData) ? (
+        {isStrategicDataIncomplete(displayStrategicData) ? (
           <AnalysisEmptyState
             analysisType="strategic"
             analysisDisplayName={t("STRATEGIC_LABEL") || "S.T.R.A.T.E.G.I.C."}

@@ -159,8 +159,16 @@ export const useAnalysisStore = create((set, get) => ({
   fetchAnalysisData: async (businessId, skipLoadingFlag = false, forceRefresh = false, skipReset = false) => {
     if (!businessId) return;
     
-    // Guard against duplicate concurrent requests
-    if (get().isAnalysisLoading && get().lastFetchedBusinessId === businessId && !forceRefresh) {
+    // Guard against duplicate concurrent requests or redundant fetches
+    const state = get();
+    if (state.lastFetchedBusinessId === businessId && !forceRefresh) {
+      // If we already have some data and questions are loaded, skip
+      if (state.questionsLoaded && (state.swotAnalysis || state.portersData || state.strategicData)) {
+        return;
+      }
+    }
+
+    if (state.isAnalysisLoading && state.lastFetchedBusinessId === businessId && !forceRefresh) {
       return;
     }
 
@@ -248,15 +256,28 @@ export const useAnalysisStore = create((set, get) => ({
   fetchInitialSetupData: async (businessId, options = {}) => {
     if (!businessId) return;
     
-    const { isInitialLoading, lastFetchedBusinessId, lastSkipFinancial, lastSkipQuestions } = get();
+    const { isInitialLoading, lastFetchedBusinessId, lastSkipFinancial, lastSkipQuestions, questions, questionsLoaded } = get();
     
     // Only skip if we are already loading the same business with compatible skip options
-    if (isInitialLoading && lastFetchedBusinessId === businessId) {
-      const financialCompatible = lastSkipFinancial === options.skipFinancial || (!lastSkipFinancial && options.skipFinancial);
-      const questionsCompatible = lastSkipQuestions === options.skipQuestions || (!lastSkipQuestions && options.skipQuestions);
+    // OR if we already have the data and aren't forcing a refresh
+    if (lastFetchedBusinessId === businessId && !options.forceRefresh) {
+      const hasQuestions = questions.length > 0 || questionsLoaded;
+      const hasAnswers = Object.keys(get().userAnswers).length > 0;
       
-      if (financialCompatible && questionsCompatible) {
-        return;
+      if (hasQuestions && hasAnswers) {
+        // If we also need financial and already have it (or it's skipped), we can skip
+        if (options.skipFinancial || get().documentInfo) {
+          return;
+        }
+      }
+
+      if (isInitialLoading) {
+        const financialCompatible = lastSkipFinancial === options.skipFinancial || (!lastSkipFinancial && options.skipFinancial);
+        const questionsCompatible = lastSkipQuestions === options.skipQuestions || (!lastSkipQuestions && options.skipQuestions);
+        
+        if (financialCompatible && questionsCompatible) {
+          return;
+        }
       }
     }
 

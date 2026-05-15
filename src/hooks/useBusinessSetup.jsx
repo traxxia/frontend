@@ -94,6 +94,12 @@ export const useBusinessSetup = () => {
   );
 
   const [pmfRefreshTrigger, setPmfRefreshTrigger] = useState(0);
+
+  // Reset refresh trigger when business changes to avoid stale force-refresh state
+  useEffect(() => {
+    setPmfRefreshTrigger(0);
+  }, [selectedBusinessId]);
+
   const [answerIds, setAnswerIds] = useState({});
   const [isPmfOnboardingComplete, setIsPmfOnboardingComplete] = useState(true);
 
@@ -153,6 +159,7 @@ export const useBusinessSetup = () => {
 
   const isAnalysisRegenerating = isTypeRegenerating('swot') || isTypeRegenerating('purchaseCriteria') || isTypeRegenerating('loyaltyNPS') || isTypeRegenerating('porters') || isTypeRegenerating('pestel') || isTypeRegenerating('initial') || isTypeRegenerating('essential') || isTypeRegenerating('advanced');
   const isStrategicRegenerating = isTypeRegenerating('strategic');
+  const [regenerationStatus, setRegenerationStatus] = useState(null);
   const isFinancialRegenerating = isTypeRegenerating('financial') || isTypeRegenerating('profitability') || isTypeRegenerating('growth') || isTypeRegenerating('liquidity') || isTypeRegenerating('investment') || isTypeRegenerating('leverage');
   const isEssentialPhaseGenerating = isTypeRegenerating('initial') || isTypeRegenerating('essential') || isTypeRegenerating('advanced') || isTypeRegenerating('fullSwot') || isTypeRegenerating('competitiveAdvantage') || isTypeRegenerating('expandedCapability') || isTypeRegenerating('strategicRadar') || isTypeRegenerating('productivity') || isTypeRegenerating('maturity');
   const [showToast, setShowToast] = useState({ show: false, message: "", type: "success" });
@@ -437,25 +444,28 @@ export const useBusinessSetup = () => {
       // Clear analysis keys for the new business
       fetchedAnalysisKeys.current.clear();
       
-      // The store now has guards (isAnalysisLoading/isInitialLoading),
-      // so these calls are safe even if triggered multiple times by React.
-      fetchAnalysisData(selectedBusinessId);
+      // OPTIMIZATION: Only fetch legacy analysis data if on analysis-heavy tabs
+      const needsLegacyAnalysis = ['insights', 'strategic'].includes(activeTab);
+      if (needsLegacyAnalysis) {
+        fetchAnalysisData(selectedBusinessId);
+      }
       
-      // Optimize: only fetch financial document/questions if on onboarding/analysis tabs
-      // These tabs need this data to calculate unlocked status via PhaseManager
-      const skipFinancial = ['bets', 'ranking', 'decision-logs'].includes(activeTab);
-      const skipQuestions = ['bets', 'ranking', 'decision-logs'].includes(activeTab);
+      // OPTIMIZATION: Only fetch financial document/questions if on onboarding/analysis tabs
+      // These tabs no longer trigger these calls to reduce unwanted network traffic.
+      const skipFinancial = ['executive', 'priorities', 'bets', 'ranking', 'decision-logs', 'strategic', 'insights'].includes(activeTab);
+      const skipQuestions = ['executive', 'priorities', 'bets', 'ranking', 'decision-logs', 'strategic', 'insights'].includes(activeTab);
       
-      fetchInitialSetupData(selectedBusinessId, { skipFinancial, skipQuestions }).then(result => {
-        if (result?.docInfo) {
-          setDocumentInfo(result.docInfo);
-          setHasUploadedDocument(true);
-        } else if (!skipFinancial) {
-          // Only clear if we explicitly tried to fetch and found nothing
-          setHasUploadedDocument(false);
-          setDocumentInfo(null);
-        }
-      });
+      if (!skipFinancial || !skipQuestions) {
+        fetchInitialSetupData(selectedBusinessId, { skipFinancial, skipQuestions }).then(result => {
+          if (result?.docInfo) {
+            setDocumentInfo(result.docInfo);
+            setHasUploadedDocument(true);
+          } else if (!skipFinancial) {
+            setHasUploadedDocument(false);
+            setDocumentInfo(null);
+          }
+        });
+      }
     }
   }, [selectedBusinessId, activeTab]); // Include activeTab to re-fetch if we enter a tab that needs it
 
@@ -489,9 +499,17 @@ export const useBusinessSetup = () => {
     const targetPhase = phaseOverride || getCurrentPhase();
     const skipConfirmation = options?.skipConfirmation || false;
     const perform = async () => {
-      const state = useAnalysisStore.getState();
-      await state.regeneratePhase(targetPhase, state.questions, state.userAnswers, selectedBusinessId, showToastMessage);
-      if (alsoRegenerateStrategic) await regenerateIndividualAnalysis('strategic', state.questions, state.userAnswers, selectedBusinessId, showToastMessage);
+      try {
+        setRegenerationStatus('insights');
+        const state = useAnalysisStore.getState();
+        await state.regeneratePhase(targetPhase, state.questions, state.userAnswers, selectedBusinessId, showToastMessage);
+        if (alsoRegenerateStrategic) {
+          setRegenerationStatus('strategic');
+          await regenerateIndividualAnalysis('strategic', state.questions, state.userAnswers, selectedBusinessId, showToastMessage);
+        }
+      } finally {
+        setRegenerationStatus(null);
+      }
     };
     if (skipConfirmation) perform();
     else triggerConfirmation(t("Regenerate Phase Analysis?"), t("Are you sure?"), perform);
@@ -499,35 +517,41 @@ export const useBusinessSetup = () => {
 
   const handleRegenerateAllAnalysis = async (options = {}) => {
     const perform = async () => {
-      const state = useAnalysisStore.getState();
-      
-      // Force recalculate phase to handle newly applied AI answers
-      const unlocked = getUnlockedFeatures(state.questions, state.userAnswers, state.completedQuestions, hasUploadedDocument);
-      const targetPhase = unlocked.advancedPhase ? 'advanced' : (unlocked.essentialPhase ? 'essential' : 'initial');
- 
-      // Collect unique types based on the detected targetPhase
-      const typesToRun = new Set();
-      
-      // Use the specific configuration for the detected phase
-      if (PHASE_API_CONFIG[targetPhase]) { 
-          PHASE_API_CONFIG[targetPhase].forEach(t => typesToRun.add(t));
+      try {
+        const state = useAnalysisStore.getState();
+        
+        // Force recalculate phase to handle newly applied AI answers
+        const unlocked = getUnlockedFeatures(state.questions, state.userAnswers, state.completedQuestions, hasUploadedDocument);
+        const targetPhase = unlocked.advancedPhase ? 'advanced' : (unlocked.essentialPhase ? 'essential' : 'initial');
+  
+        // Collect unique types based on the detected targetPhase
+        const typesToRun = new Set();
+        
+        // Use the specific configuration for the detected phase
+        if (PHASE_API_CONFIG[targetPhase]) { 
+            PHASE_API_CONFIG[targetPhase].forEach(t => typesToRun.add(t));
+        }
+        
+        // Optionally add financial types if doc exists and requested
+        if ((options.includeFinancial || options.onlyFinancial) && hasUploadedDocument && !options.skipFinancial) {
+            PHASE_API_CONFIG.financial.forEach(t => typesToRun.add(t));
+        }
+  
+        const typesArray = Array.from(typesToRun);
+  
+        // 1. Step 1: Bulk Insights
+        setRegenerationStatus('insights');
+        // Execute bulk regeneration
+        await state.regenerateCustomTypes(typesArray, state.questions, state.userAnswers, selectedBusinessId, showToastMessage);
+  
+        // 2. Step 2: Strategic Analysis (which encompasses multiple pillars)
+        if (options.alsoRegenerateStrategic !== false) {
+          setRegenerationStatus('strategic');
+          await regenerateIndividualAnalysis('strategic', state.questions, state.userAnswers, selectedBusinessId, showToastMessage);
+        }
+      } finally {
+        setRegenerationStatus(null);
       }
-      
-      // Optionally add financial types if doc exists and requested
-      if ((options.includeFinancial || options.onlyFinancial) && hasUploadedDocument && !options.skipFinancial) {
-          PHASE_API_CONFIG.financial.forEach(t => typesToRun.add(t));
-      }
-
-      const typesArray = Array.from(typesToRun);
-
-      // Execute bulk regeneration
-      await state.regenerateCustomTypes(typesArray, state.questions, state.userAnswers, selectedBusinessId, showToastMessage);
-
-      // 3. Regenerate Strategic Analysis (which encompasses multiple pillars)
-      if (options.alsoRegenerateStrategic !== false) {
-        await regenerateIndividualAnalysis('strategic', state.questions, state.userAnswers, selectedBusinessId, showToastMessage);
-      }
-      
     };
 
     if (options?.skipConfirmation) perform();
@@ -667,7 +691,7 @@ export const useBusinessSetup = () => {
     setHighlightedMissingQuestions, showPMFOnboarding, setShowPMFOnboarding,
     isPmfOnboardingComplete, setIsPmfOnboardingComplete, documentInfo, setDocumentInfo,
     hasUploadedDocument, setHasUploadedDocument, isAnalysisRegenerating,
-    isStrategicRegenerating, isStoreLoading, fullSwotData, competitiveAdvantageData,
+    isStrategicRegenerating, regenerationStatus, isStoreLoading, fullSwotData, competitiveAdvantageData,
     expandedCapabilityData, strategicRadarData, productivityData, maturityData,
     profitabilityData, growthTrackerData, liquidityEfficiencyData,
     investmentPerformanceData, leverageRiskData, strategicData, accessModalMessage,

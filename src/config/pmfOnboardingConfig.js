@@ -153,17 +153,17 @@ export const FIELD_HINTS = {
   channel: 'e.g., Convenience stores, Direct sales'
 };
 export const FIELD_DESCRIPTIONS = {
-  companyName: 'The official name of the company or the specific client you are analyzing.',
-  website: 'The primary URL of the business. This helps in identifying the industry and online presence.',
-  country: 'The primary country where the business is registered or has its main operations.',
-  city: 'The specific city of the main office or headquarters.',
-  primaryIndustry: 'Select the industry that best represents the core of the business activities.',
-  geographies: 'List the key geographic markets where the business currently operates or plans to operate.',
-  customerSegments: 'Define the different groups of people or organizations the business aims to reach and serve.',
-  productServices: 'Specify the key products or services the business offers to its customers.',
-  channels: 'The methods used to deliver and sell the products or services to customers (e.g., retail, online, direct sales).',
-  strategicObjective: 'The primary long-term goal the business is currently focused on achieving.',
-  keyChallenges: 'Identify the main obstacles or constraints currently hindering business growth or performance.',
-  differentiation: 'Select the key factors that provide the business with a competitive advantage in the market.',
-  usageContext: 'Specify whether you are creating this strategy for your own company or for a client.'
+  companyName: 'desc_company_name',
+  website: 'desc_website',
+  country: 'desc_country',
+  city: 'desc_city',
+  primaryIndustry: 'desc_primary_industry',
+  geographies: 'desc_geographies',
+  customerSegments: 'desc_customer_segments',
+  productServices: 'desc_product_services',
+  channels: 'desc_channels',
+  strategicObjective: 'desc_strategic_objective',
+  keyChallenges: 'desc_key_challenges',
+  differentiation: 'desc_differentiation',
+  usageContext: 'desc_usage_context'
 };

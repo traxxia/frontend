@@ -132,19 +132,60 @@ export class AnalysisApiService {
   }
 
   async getPMFAnalysis(businessId) {
-    return this.pmfService.getPMFAnalysis(businessId);
+    if (!businessId) return null;
+    const cacheKey = `pmf-${businessId}`;
+    if (pmfAnalysisCache.has(cacheKey)) return await pmfAnalysisCache.get(cacheKey);
+
+    const promise = (async () => {
+      try {
+        return await this.pmfService.getPMFAnalysis(businessId);
+      } catch (err) {
+        pmfAnalysisCache.delete(cacheKey);
+        throw err;
+      }
+    })();
+    pmfAnalysisCache.set(cacheKey, promise);
+    return promise;
   }
 
   async savePMFExecutiveSummary(businessId, summary) {
-    return this.pmfService.savePMFExecutiveSummary(businessId, summary);
+    const res = await this.pmfService.savePMFExecutiveSummary(businessId, summary);
+    pmfExecutiveSummaryCache.delete(`exec-${businessId}`);
+    return res;
   }
 
   async getPMFExecutiveSummary(businessId) {
-    return this.pmfService.getPMFExecutiveSummary(businessId);
+    if (!businessId) return null;
+    const cacheKey = `exec-${businessId}`;
+    if (pmfExecutiveSummaryCache.has(cacheKey)) return await pmfExecutiveSummaryCache.get(cacheKey);
+
+    const promise = (async () => {
+      try {
+        return await this.pmfService.getPMFExecutiveSummary(businessId);
+      } catch (err) {
+        pmfExecutiveSummaryCache.delete(cacheKey);
+        throw err;
+      }
+    })();
+    pmfExecutiveSummaryCache.set(cacheKey, promise);
+    return promise;
   }
 
   async getProjects(businessId) {
-    return this.projectService.getProjects(businessId);
+    if (!businessId) return [];
+    const cacheKey = `projects-${businessId}`;
+    if (projectsCache.has(cacheKey)) return await projectsCache.get(cacheKey);
+
+    const promise = (async () => {
+      try {
+        return await this.projectService.getProjects(businessId);
+      } catch (err) {
+        projectsCache.delete(cacheKey);
+        throw err;
+      }
+    })();
+    projectsCache.set(cacheKey, promise);
+    return promise;
   }
 
   async savePMFInsights(businessId, insights) {
@@ -202,7 +243,20 @@ export class AnalysisApiService {
     return DEEP_SEARCH_ENDPOINTS.includes(endpoint);
   }
   async fetchFinancialDocument(businessId) {
-    return this.businessService.fetchFinancialDocument(businessId);
+    if (!businessId) return null;
+    const cacheKey = `doc-${businessId}`;
+    if (financialDocumentCache.has(cacheKey)) return await financialDocumentCache.get(cacheKey);
+
+    const promise = (async () => {
+      try {
+        return await this.businessService.fetchFinancialDocument(businessId);
+      } catch (err) {
+        financialDocumentCache.delete(cacheKey);
+        throw err;
+      }
+    })();
+    financialDocumentCache.set(cacheKey, promise);
+    return promise;
   }
   async downloadFinancialDocument(businessId) {
     return this.businessService.downloadFinancialDocument(businessId);

@@ -269,7 +269,7 @@ const PortersFiveForces = ({
 
   const parsedData = parsePortersData(portersAnalysisData);
 
-  if (error || ((!parsedData || isPortersDataIncomplete(parsedData)) && Object.keys(userAnswers).length > 0)) {
+  if (error || !parsedData || isPortersDataIncomplete(parsedData)) {
     return (
       <div className="porters-container">
         <AnalysisEmptyState

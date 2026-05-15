@@ -1,7 +1,6 @@
 .projects-table-container {
   background: transparent;
   box-shadow: none;
-  box-shadow: none;
   overflow-x: auto;
   overflow-y: hidden;
   -webkit-overflow-scrolling: touch;
@@ -25,11 +24,6 @@
   left: 50%;
   transform: translateX(-50%);
   margin-top: 12px;
-}
-
-[data-theme="dark"] .score-formula-tooltip {
-  background: var(--color-bg-card, #1e293b);
-  border-color: var(--color-border-light, #334155);
 }
 
 [data-theme="dark"] .score-formula-tooltip {
@@ -437,52 +431,9 @@
   color: var(--color-text-primary, #f1f5f9);
 }
 
-/* Dark Mode Overrides */
-[data-theme="dark"] .premium-table th {
-  background-color: var(--color-bg-light, #1e293b);
-  color: var(--color-text-muted, #94a3b8);
-  border-bottom-color: var(--color-border-light, #334155);
-}
 
-[data-theme="dark"] .premium-table td {
-  border-bottom-color: var(--color-border-light, #1e293b);
-  color: var(--color-text-primary, #f1f5f9);
-}
-
-[data-theme="dark"] .premium-table tr:hover td {
-  background-color: var(--color-bg-hover, #1e293b);
-}
-
-[data-theme="dark"] .index-badge {
-  background-color: var(--color-bg-light, #334155);
-  color: var(--color-text-secondary, #cbd5e1);
-}
-
-[data-theme="dark"] .col-score {
-  color: var(--color-text-primary, #f1f5f9);
-}
-
-[data-theme="dark"] .actions-dropdown-btn {
-  background-color: var(--color-bg-card, #1e293b);
-  border-color: var(--color-border-light, #334155);
-  color: var(--color-text-secondary, #cbd5e1);
-}
-
-[data-theme="dark"] .actions-dropdown-btn:hover {
-  background-color: var(--color-bg-hover, #334155);
-}
-
-[data-theme="dark"] .col-owner {
-  color: var(--color-text-muted, #94a3b8);
-}
-
-[data-theme="dark"] .tooltip-formula {
-  background-color: var(--color-bg-card, #0f172a);
-  color: var(--color-text-primary, #f1f5f9);
-}
 
 @media (max-width: 1024px) {
-  .projects-table-container {
   .projects-table-container {
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
@@ -553,16 +504,44 @@
   vertical-align: middle;
 }
 
-.footer-status-premium {
+.bet-name-wrapper {
   display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  padding: 4px 0;
+}
+
+.bet-name-text {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text-primary, #1e293b);
+  line-height: 1.4;
+}
+
+.footer-status-premium {
+  display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: 11px;
-  font-weight: 700;
+  font-size: 10px;
+  font-weight: 800;
   text-transform: uppercase;
-  padding: 3px 8px;
+  padding: 2px 6px;
   border-radius: 4px;
   white-space: nowrap;
+  letter-spacing: 0.02em;
+}
+
+.footer-status-premium.stale-badge {
+  background: #e83d31;
+  color: #ffffff;
+  border: none;
+}
+
+.footer-status-premium.due-badge {
+  background: #f59e0b;
+  color: #ffffff;
+  border: none;
 }
 
 .footer-status-premium svg {

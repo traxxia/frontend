@@ -195,7 +195,7 @@ const PurchaseCriteria = ({
     );
   }
 
-  if (error || (isCriteriaDataIncomplete(normalizedData) && Object.keys(userAnswers).length > 0)) {
+  if (error || isCriteriaDataIncomplete(normalizedData)) {
     return (
       <div className="purchase-criteria">
         <AnalysisEmptyState

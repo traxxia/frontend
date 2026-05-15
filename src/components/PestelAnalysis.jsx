@@ -203,7 +203,7 @@ const PestelAnalysis = ({
     );
   }
 
-  if ((!pestelData || Array.isArray(pestelData) || isPestelDataIncomplete(pestelData)) && Object.keys(userAnswers).length > 0) {
+  if (!pestelData || Array.isArray(pestelData) || isPestelDataIncomplete(pestelData)) {
     return (
       <div className="porters-container">
         <AnalysisEmptyState

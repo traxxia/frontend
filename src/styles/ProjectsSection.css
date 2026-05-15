@@ -507,17 +507,6 @@
   padding-top: 4px;
 }
 
-.footer-status-premium {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 12px;
-  font-weight: 700;
-  text-transform: uppercase;
-  padding: 3px 6px;
-  border-radius: 4px;
-}
-
 .footer-date-premium {
   font-size: 12px;
   color: var(--color-text-muted);

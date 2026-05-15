@@ -35,7 +35,7 @@ const PMFInsightsTab = ({
       }
       try {
         setLoading(prev => data ? false : true);
-        const result = await analysisService.getPMFAnalysis(businessId);
+        const result = await analysisService.getPMFAnalysis(businessId, refreshTrigger > 0);
         if (!cancelled) {
           setData(result);
           if (result && result.user_id) {
@@ -61,9 +61,9 @@ const PMFInsightsTab = ({
                   const eligibleRes = await analysisService.getEligibleOwners(bId);
                   const users = eligibleRes.eligible_owners || [];
                   const updater = users.find(u => getStrId(u._id || u.id) === dbUserId);
-                  setOverwrittenBy(updater ? updater.name || updater.email : t("another user"));
+                  setOverwrittenBy(updater ? updater.name || updater.email : t("another_user") || "another user");
                 } catch (e) {
-                  setOverwrittenBy(t("another user"));
+                  setOverwrittenBy(t("another_user") || "another user");
                 }
                 setShowOverwriteModal(true);
               }
@@ -214,7 +214,7 @@ const PMFInsightsTab = ({
                 </Card>
               </Col>;
         }) : <Col xs={12}>
-              <p className="text-center text-muted">No specific insights found in the data structure.</p>
+              <p className="text-center text-muted">{t("no_specific_insights_found") || "No specific insights found in the data structure."}</p>
             </Col>}
         </Row>
       </Container>

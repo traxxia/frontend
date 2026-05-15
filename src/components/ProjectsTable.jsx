@@ -116,41 +116,38 @@ const ProjectsTable = ({
                   <div className="index-badge">{displayRank || "-"}</div>
                 </td>
                 <td className="col-bets">
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <span>{project.project_name}</span>
-                    {project.launch_status === 'launched' && !isTerminal && ((project.is_stale || (project.next_review_date && new Date(project.next_review_date).setHours(0, 0, 0, 0) < new Date().setHours(0, 0, 0, 0))) ? <span className="footer-status-premium" style={{
-                background: '#fef2f2',
-                color: '#dc2626',
-                cursor: userCanReview ? 'pointer' : 'default',
-                fontSize: '11px',
-                display: 'inline-flex'
-              }} onClick={userCanReview ? e => {
-                e.stopPropagation();
-                onPerformReview(project);
-              } : undefined}>
-                        <AlertTriangle size={10} /> {t("Stale")}
-                      </span> : project.next_review_date && (() => {
-                const nextDate = new Date(project.next_review_date);
-                nextDate.setHours(0, 0, 0, 0);
-                const today = new Date();
-                today.setHours(0, 0, 0, 0);
-                const diffDays = Math.round((nextDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-                if (diffDays >= 0 && diffDays <= 3) {
-                  return <span className="footer-status-premium" style={{
-                    background: '#fffbeb',
-                    color: '#d97706',
-                    cursor: userCanReview ? 'pointer' : 'default',
-                    fontSize: '11px',
-                    display: 'inline-flex'
-                  }} onClick={userCanReview ? e => {
+                  <div className="bet-name-wrapper">
+                    {project.launch_status === 'launched' && !isTerminal && (() => {
+                const isStale = project.is_stale || (project.next_review_date && new Date(project.next_review_date).setHours(0, 0, 0, 0) < new Date().setHours(0, 0, 0, 0));
+                
+                if (isStale) {
+                  return <span className="footer-status-premium stale-badge" onClick={userCanReview ? e => {
                     e.stopPropagation();
                     onPerformReview(project);
-                  } : undefined}>
-                            <Clock size={10} /> {t("Due")}
+                  } : undefined} style={{ cursor: userCanReview ? 'pointer' : 'default' }}>
+                            <AlertTriangle size={10} /> {t("Stale")}
                           </span>;
                 }
+
+                if (project.next_review_date) {
+                  const nextDate = new Date(project.next_review_date);
+                  nextDate.setHours(0, 0, 0, 0);
+                  const today = new Date();
+                  today.setHours(0, 0, 0, 0);
+                  const diffDays = Math.round((nextDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+                  
+                  if (diffDays >= 0 && diffDays <= 3) {
+                    return <span className="footer-status-premium due-badge" onClick={userCanReview ? e => {
+                      e.stopPropagation();
+                      onPerformReview(project);
+                    } : undefined} style={{ cursor: userCanReview ? 'pointer' : 'default' }}>
+                              <Clock size={10} /> {t("Due")}
+                            </span>;
+                  }
+                }
                 return null;
-              })())}
+              })()}
+                    <span className="bet-name-text">{project.project_name}</span>
                   </div>
                 </td>
                 <td>

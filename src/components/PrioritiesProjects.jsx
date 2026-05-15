@@ -69,7 +69,7 @@ const PrioritiesProjects = ({
       if (!selectedBusinessId) return;
       setLoading(true);
       try {
-        await fetchKickstartData(selectedBusinessId, false);
+        await fetchKickstartData(selectedBusinessId, refreshTrigger > 0);
       } catch (error) {
         console.error("Error fetching kickstart data:", error);
       } finally {

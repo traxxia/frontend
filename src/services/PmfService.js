@@ -17,10 +17,10 @@ export class PmfService extends BaseApiService {
     });
   }
 
-  async getPMFAnalysis(businessId) {
+  async getPMFAnalysis(businessId, force = false) {
     if (!businessId) return null;
     const cacheKey = `pmf-${businessId}`;
-    if (pmfCache.has(cacheKey)) return pmfCache.get(cacheKey);
+    if (!force && pmfCache.has(cacheKey)) return pmfCache.get(cacheKey);
 
     const fetchPromise = (async () => {
       try {
@@ -44,10 +44,10 @@ export class PmfService extends BaseApiService {
     });
   }
 
-  async getPMFExecutiveSummary(businessId) {
+  async getPMFExecutiveSummary(businessId, force = false) {
     if (!businessId) return null;
     const cacheKey = `exec-${businessId}`;
-    if (pmfCache.has(cacheKey)) return pmfCache.get(cacheKey);
+    if (!force && pmfCache.has(cacheKey)) return pmfCache.get(cacheKey);
 
     const fetchPromise = (async () => {
       try {
