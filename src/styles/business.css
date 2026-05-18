@@ -1,5 +1,5 @@
 .modern-analysis-container {
-  background: #fff;
+  background: #fff !important;
   min-height: 100vh;
   padding: 10px;
 }
@@ -701,46 +701,6 @@
   .modern-phase-controls .regenerate-btn {
     padding: 0.5rem 0.75rem;
     font-size: 0.75rem;
-  }
-}
-
-@media (prefers-color-scheme: dark) {
-  .modern-analysis-container {
-    background: #0f172a;
-  }
-
-  .modern-phase-section {
-    background: #1e293b;
-    border-color: #334155;
-  }
-
-  .modern-analysis-card {
-    background: #1e293b;
-  }
-
-  .modern-phase-header,
-  .modern-card-header {
-    background-color: #1e293b;
-  }
-
-  .modern-phase-header:hover,
-  .modern-card-header:hover {
-    background: #232d42;
-  }
-
-  .modern-phase-info h2,
-  .modern-card-text h3 {
-    color: #f1f5f9;
-  }
-
-  .modern-phase-info p,
-  .modern-card-text p,
-  .modern-progress-text {
-    color: #94a3b8;
-  }
-
-  .modern-locked-state {
-    background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
   }
 }
 

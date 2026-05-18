@@ -1470,10 +1470,12 @@
   color: #9ca3af;
 }
 
-.business-decision-logs--s26 {
-  color: #374151 !important;
+.business-decision-logs--s26, 
+[data-theme="dark"] .business-decision-logs--s26 {
+  background-color: #6366f1 !important;
+  color: #fff !important;
 }
-
+ 
 .business-decision-logs--s27 {
   margin-top: 0;
   padding: 16px;
