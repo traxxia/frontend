@@ -1,6 +1,4 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import 'bootstrap/dist/css/bootstrap.min.css';
-import 'bootstrap/dist/js/bootstrap.bundle.min.js';
 import { Table, Badge, Spinner, Form, Button, Modal, Card } from "react-bootstrap";
 import {
   Search,

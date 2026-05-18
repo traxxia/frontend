@@ -32,6 +32,7 @@ export default defineConfig({
   build: {
     outDir: 'build',
     sourcemap: true,
+    cssCodeSplit: false,
   },
   define: {
     'process.env': {}, // For backward compatibility if any lib still uses process.env
