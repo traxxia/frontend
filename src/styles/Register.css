@@ -484,8 +484,7 @@
 .modal-text-break {
   white-space: pre-wrap;
   text-align: left;
-  line-height: 1.6;
-  padding: 1.5rem;
+  line-height: 1.6; 
   color: var(--color-text-secondary);
   font-size: var(--font-size-sm);
 }

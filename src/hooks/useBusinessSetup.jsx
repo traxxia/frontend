@@ -3,6 +3,7 @@ import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from "./useTranslation";
 import { useAuthStore, useBusinessStore, useUIStore, useAnalysisStore, useProjectStore } from "../store";
 import { AnalysisApiService, PHASE_API_CONFIG } from '../services/analysisApiService';
+import { useQueryClient } from "@tanstack/react-query";
 import { getUserLimits } from '../utils/authUtils';
 import PhaseManager, { getUnlockedFeatures } from "../components/PhaseManager";
 import { AI_PAGE_CONTEXTS } from "../utils/aiContexts";
@@ -34,6 +35,7 @@ export const useBusinessSetup = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const { t } = useTranslation();
   const { pmf: hasPmfAccess, insight: hasInsightAccess, strategic: hasStrategicAccess, project: hasProjectAccess } = getUserLimits();
+  const queryClient = useQueryClient();
 
   const ML_API_BASE_URL = import.meta.env.VITE_ML_BACKEND_URL || 'http://127.0.0.1:8000';
   const API_BASE_URL = import.meta.env.VITE_BACKEND_URL;
@@ -431,10 +433,19 @@ export const useBusinessSetup = () => {
   const handleKickstartSuccess = useCallback(() => {
     const clearProjectCache = useProjectStore.getState().clearCache;
     clearProjectCache(selectedBusinessId);
+    queryClient.invalidateQueries({
+      queryKey: ["projects", selectedBusinessId]
+    });
+    queryClient.invalidateQueries({
+      queryKey: ["rankingsSummary", selectedBusinessId]
+    });
+    queryClient.invalidateQueries({
+      queryKey: ["teamRankings", selectedBusinessId]
+    });
     useProjectStore.getState().setViewMode('projects');
     setShowProjectsTab(true);
     setActiveTab("bets");
-  }, [selectedBusinessId]);
+  }, [selectedBusinessId, queryClient]);
 
   const handleStayOnPriorities = useCallback(() => {
     setShowProjectsTab(true);

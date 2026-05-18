@@ -10,6 +10,7 @@ import { useProjectStore } from '../store/projectStore';
 import { useUIStore } from '../store/uiStore';
 import { useAnalysisStore } from "../store/analysisStore";
 import { useBusinessSetupContext } from "../context/BusinessSetupContext";
+import { useQueryClient } from "@tanstack/react-query";
 const ExecutiveSummary = () => {
   const {
     selectedBusinessId: businessId,
@@ -17,9 +18,12 @@ const ExecutiveSummary = () => {
     pmfRefreshTrigger: refreshTrigger,
     t,
     apiService: analysisService,
-    setActiveTab
+    setActiveTab,
+    handleKickstartSuccess,
+    handleStayOnPriorities
   } = useBusinessSetupContext();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [expandedSections, setExpandedSections] = useState({
@@ -139,6 +143,21 @@ const ExecutiveSummary = () => {
       });
       useProjectStore.getState().clearCache(businessId);
       await fetchProjects(businessId);
+      
+      // Invalidate the react-query cache and unlock the tab visibility
+      if (typeof handleStayOnPriorities === 'function') {
+        handleStayOnPriorities();
+      }
+      queryClient.invalidateQueries({
+        queryKey: ["projects", businessId]
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["rankingsSummary", businessId]
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["teamRankings", businessId]
+      });
+
       setShowConfirmModal(false);
       setShowSuccessModal(true);
     } catch (error) {
@@ -153,8 +172,12 @@ const ExecutiveSummary = () => {
   };
   const handleRedirectToProjects = () => {
     setShowSuccessModal(false);
-    useProjectStore.getState().setViewMode('projects');
-    setActiveTab('bets');
+    if (typeof handleKickstartSuccess === 'function') {
+      handleKickstartSuccess();
+    } else {
+      useProjectStore.getState().setViewMode('projects');
+      setActiveTab('bets');
+    }
   };
   if (loading) {
     return <div className="d-flex justify-content-center align-items-center py-5">

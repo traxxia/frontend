@@ -135,15 +135,21 @@ const UserManagementTable = ({
           <Dropdown>
             <Dropdown.Toggle as={CustomToggle} />
             <Dropdown.Menu align="end">
-              <Dropdown.Item onClick={() => onRoleUpdate(row._id, 'collaborator', row.name)}>
-                <UserCog size={16} className="me-2" /> {t('Collaborator')}
-              </Dropdown.Item>
-              <Dropdown.Item onClick={() => onRoleUpdate(row._id, 'viewer', row.name)}>
-                <User size={16} className="me-2" /> {t('Viewer')}
-              </Dropdown.Item>
-              <Dropdown.Item onClick={() => onRoleUpdate(row._id, 'user', row.name)}>
-                <ShieldCheck size={16} className="me-2" /> {t('User')}
-              </Dropdown.Item>
+              {roleName !== 'collaborator' && (
+                <Dropdown.Item onClick={() => onRoleUpdate(row._id, 'collaborator', row.name)}>
+                  <UserCog size={16} className="me-2" /> {t('Collaborator')}
+                </Dropdown.Item>
+              )}
+              {roleName !== 'viewer' && (
+                <Dropdown.Item onClick={() => onRoleUpdate(row._id, 'viewer', row.name)}>
+                  <User size={16} className="me-2" /> {t('Viewer')}
+                </Dropdown.Item>
+              )}
+              {roleName !== 'user' && (
+                <Dropdown.Item onClick={() => onRoleUpdate(row._id, 'user', row.name)}>
+                  <ShieldCheck size={16} className="me-2" /> {t('User')}
+                </Dropdown.Item>
+              )}
             </Dropdown.Menu>
           </Dropdown>
         );

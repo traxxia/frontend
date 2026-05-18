@@ -21,6 +21,7 @@ import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from "../hooks/useTranslation";
 import { useAuthStore, useBusinessStore, useUIStore, useAnalysisStore, useProjectStore } from "../store";
 import { useShallow } from 'zustand/shallow';
+import { useQueryClient } from "@tanstack/react-query";
 
 import MenuBar from "../components/MenuBar";
 import EditableBriefSection from "../components/EditableBriefSection";
@@ -103,6 +104,7 @@ const BusinessSetupPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const { t } = useTranslation();
   const { pmf: hasPmfAccess, insight: hasInsightAccess, strategic: hasStrategicAccess, project: hasProjectAccess } = getUserLimits();
+  const queryClient = useQueryClient();
 
   // State management for business context
   const {
@@ -1084,6 +1086,18 @@ const BusinessSetupPage = () => {
   const handleKickstartSuccess = () => {
     // Clear project-store caches so the Projects page fetches fresh data
     clearProjectCache(selectedBusinessId);
+    
+    // Invalidate React Query projects and rankings cache so the Projects page fetches fresh data immediately
+    queryClient.invalidateQueries({
+      queryKey: ["projects", selectedBusinessId]
+    });
+    queryClient.invalidateQueries({
+      queryKey: ["rankingsSummary", selectedBusinessId]
+    });
+    queryClient.invalidateQueries({
+      queryKey: ["teamRankings", selectedBusinessId]
+    });
+
     useProjectStore.getState().setViewMode('projects');
     setShowProjectsTab(true);
     setActiveTab("bets");
@@ -1257,7 +1271,10 @@ const BusinessSetupPage = () => {
     hasPmfAccess,
     hasInsightAccess,
     hasStrategicAccess,
-    hasProjectAccess
+    hasProjectAccess,
+    handleKickstartSuccess,
+    handleStayOnPriorities,
+    showProjectsTab
   }), [
     selectedBusinessId,
     currentBusiness,
@@ -1272,7 +1289,10 @@ const BusinessSetupPage = () => {
     hasPmfAccess,
     hasInsightAccess,
     hasStrategicAccess,
-    hasProjectAccess
+    hasProjectAccess,
+    handleKickstartSuccess,
+    handleStayOnPriorities,
+    showProjectsTab
   ]);
 
   return (
