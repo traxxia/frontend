@@ -282,19 +282,40 @@
 
 .admin-table-scroll {
     overflow-x: auto;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    width: 100%;
+    position: relative;
+    margin-bottom: 20px;
+}
+
+.admin-table-scroll .admin-data-table {
+    min-width: 1000px;
+    width: 100%;
 }
 
 .admin-table-scroll::-webkit-scrollbar {
-    height: 4px;
+    height: 10px;
 }
 
 .admin-table-scroll::-webkit-scrollbar-track {
-    background: #f1f1f1;
+    background: var(--color-bg-secondary, #f1f5f9);
+    border-radius: 10px;
 }
 
 .admin-table-scroll::-webkit-scrollbar-thumb {
-    background: #e5e7eb;
+    background: var(--color-border-dark, #cbd5e1);
     border-radius: 10px;
+    border: 2px solid var(--color-bg-secondary, #f1f5f9);
+}
+
+[data-theme="dark"] .admin-table-scroll::-webkit-scrollbar-track {
+    background: #1a1d23;
+}
+
+[data-theme="dark"] .admin-table-scroll::-webkit-scrollbar-thumb {
+    background: #475569;
+    border-color: #1a1d23;
 }
 
 .admin-data-table {

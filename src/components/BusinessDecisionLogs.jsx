@@ -8,6 +8,7 @@ import { getDecisionLogActorName } from "../utils/decisionLogUtils";
 import { useProjectStore } from "../store/projectStore";
 import { useUIStore } from "../store/uiStore";
 import "../styles/AdminTableStyles.css";
+import "../styles/ProjectsTable.css";
 const ITEMS_PER_PAGE = 10;
 function formatDateOnly(dateVal) {
   if (!dateVal) return "-";
@@ -365,8 +366,8 @@ const BusinessDecisionLogs = ({
               <h3>
                 {hasActiveFilters ? t("No_logs_match_filters") : t("No_decision_logs_available")}
               </h3>
-            </div> : <div className="table-responsive admin-table-scroll">
-              <table className="table admin-data-table">
+            </div> : <div className="projects-table-container">
+              <table className="premium-table">
                 <thead className="table-head-color">
                   <tr>
                     <th>{t("Date")}</th>

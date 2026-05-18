@@ -227,10 +227,9 @@
 [data-theme="dark"] h5,
 [data-theme="dark"] p,
 [data-theme="dark"] label,
-[data-theme="dark"] small
-
-  {
+[data-theme="dark"] small {
   color: #fff !important;
+  background-color: transparent;
 }
 
 [data-theme="dark"] .container,
@@ -296,8 +295,10 @@
   color: #e5e7eb !important;
 }
 
-[data-theme="dark"] .history-stat-value,[data-theme="dark"] .flow-turn.main-question .turn-content,
-[data-theme="dark"] .flow-turn.main-question .turn-label, [data-theme="dark"] .turn-content { 
+[data-theme="dark"] .history-stat-value,
+[data-theme="dark"] .flow-turn.main-question .turn-content,
+[data-theme="dark"] .flow-turn.main-question .turn-label,
+[data-theme="dark"] .turn-content {
   color: #fff !important;
 }
 

@@ -6,6 +6,7 @@ import { useTranslation } from "../hooks/useTranslation";
 import { useAllDecisionLogsQuery } from "../hooks/useQueries";
 import MenuBar from "./MenuBar";
 import "../styles/AdminTableStyles.css";
+import "../styles/ProjectsTable.css";
 const LOG_TYPES = [{
   value: "",
   label: "All Types"
@@ -265,8 +266,8 @@ const AllDecisionLogs = () => {
               <h3>
                 {hasActiveFilters ? t("No_logs_match_filters") : t("No_decision_logs_available")}
               </h3>
-            </div> : <div className="admin-table-scroll">
-              <table className="admin-data-table">
+            </div> : <div className="projects-table-container">
+              <table className="premium-table">
                 <thead>
                   <tr>
                     <th>{t("Date")}</th>

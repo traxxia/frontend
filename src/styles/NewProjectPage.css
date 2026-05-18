@@ -279,6 +279,7 @@
 
 .sf-option:hover {
   background: var(--color-bg-hover, #f7fafc);
+  color: #000000;
 }
 
 .sf-option:active {

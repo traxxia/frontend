@@ -31,9 +31,7 @@
 }
 
 .st-header-info {
-  flex-grow:  1;
-  flex-shrink: 1;
-  flex-basis:  1;
+    flex: 1 1 1;
 }
 
 .st-header-badge {

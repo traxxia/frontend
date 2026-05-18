@@ -3,7 +3,7 @@ import { Dropdown } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 import { Bell, BellOff, X } from 'lucide-react';
 import { useTranslation } from '../hooks/useTranslation';
-import { useAuthStore, useBusinessStore, useNotificationStore, useProjectStore } from '../store';
+import { useAuthStore, useBusinessStore, useNotificationStore, useProjectStore, useUIStore } from '../store';
 import { useQueryClient } from '@tanstack/react-query';
 const NotificationBell = () => {
   const {
@@ -17,6 +17,8 @@ const NotificationBell = () => {
   const {
     setSelectedBusinessId
   } = useBusinessStore();
+  const { theme } = useUIStore();
+  const isDark = theme === 'dark';
   const VITE_BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -167,7 +169,7 @@ const NotificationBell = () => {
   return <Dropdown className="me-3">
       <Dropdown.Toggle variant="link" id="dropdown-notifications" className="notification-menu p-0 border-0 shadow-none d-flex align-items-center notification-bell--s1">
         <div className={`position-relative notification-bell-container ${unreadCount > 0 ? 'notification-bell-active' : ''}`}>
-          <Bell size={22} className="navbar_icon text-dark" />
+          <Bell size={22} className={`navbar_icon ${isDark ? 'text-light' : 'text-dark'}`} />
           {unreadCount > 0 && <span className="position-absolute badge rounded-pill bg-danger border border-white border-2 notification-badge-blink notification-bell--s2">
               {unreadCount > 9 ? '9+' : unreadCount}
             </span>}
@@ -175,21 +177,18 @@ const NotificationBell = () => {
       </Dropdown.Toggle>
       <Dropdown.Menu align="end" className="traxia-dropdown shadow notification-bell--s3">
         <Dropdown.Header className="d-flex justify-content-between align-items-center">
-          <span className="fw-bold text-dark">{t('notifications') || 'Notifications'}</span>
+          <span className={`fw-bold notif-dropdown-title ${isDark ? 'text-white' : 'text-dark'}`}>{t('notifications') || 'Notifications'}</span>
           {unreadCount > 0 && <span className="text-primary small notification-bell--s4" onClick={handleMarkAllRead}>
               {t('mark_all_read') || 'Mark all as read'}
             </span>}
         </Dropdown.Header>
         <Dropdown.Divider className="my-1" />
         <div className="notification-bell--s5">
-          {notifications.length > 0 ? notifications.map(notif => <Dropdown.Item key={notif._id} className={`d-flex flex-column align-items-start py-2 px-3 border-bottom text-wrap ${!notif.is_read ? 'bg-white' : 'bg-light'} notification-bell--s6`} style={{
+          {notifications.length > 0 ? notifications.map(notif => <Dropdown.Item key={notif._id} className={`d-flex flex-column align-items-start py-2 px-3 border-bottom text-wrap notification-item ${!notif.is_read ? 'unread' : 'read'} notification-bell--s6`} style={{
           opacity: notif.is_read ? 0.85 : 1
         }} onClick={() => handleNotificationClick(notif)}>
                 <div className="d-flex justify-content-between align-items-start w-100 mb-1">
-                  <strong style={{
-              fontWeight: !notif.is_read ? '700' : '500',
-              color: !notif.is_read ? '#212529' : '#6c757d'
-            }} className="notification-bell--s7">{notif.title}</strong>
+                  <strong className="notification-title notification-bell--s7">{notif.title}</strong>
                   <div className="d-flex align-items-center">
                     {!notif.is_read && <span className="badge bg-primary rounded-pill me-2 px-2 py-1 notification-bell--s8">New</span>}
                     <div className="text-muted opacity-50 pe-auto notification-bell--s9" onClick={e => handleDeleteNotification(e, notif._id)} onMouseOver={e => {
@@ -203,11 +202,11 @@ const NotificationBell = () => {
                     </div>
                   </div>
                 </div>
-                <small className={`${!notif.is_read ? "text-dark" : "text-muted"} notification-bell--s10`}>{notif.message}</small>
+                <small className="notification-msg notification-bell--s10">{notif.message}</small>
                 <small className="text-muted mt-1 notification-bell--s8">{new Date(notif.created_at).toLocaleDateString()}</small>
               </Dropdown.Item>) : <div className="p-4 d-flex flex-column align-items-center justify-content-center text-muted">
-              <div className="notification-empty-bell mb-2 p-3 bg-light rounded-circle d-flex align-items-center justify-content-center notification-bell--s11">
-                <BellOff size={28} className="text-secondary opacity-75" />
+              <div className="notification-empty-bell mb-2 p-3 rounded-circle d-flex align-items-center justify-content-center notification-bell--s11">
+                <BellOff size={28} className="notification-empty-icon" />
               </div>
             </div>}
         </div>
