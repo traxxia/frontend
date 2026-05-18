@@ -293,7 +293,7 @@ const CompanyStep = ({
                 </a>{" "}
                 {t("and")}{" "}
                 <a href="#privacy" onClick={(e) => { e.preventDefault(); setShowPrivacyModal(true); }}>
-                  {t("privacy")}
+                  {t("privacy_policy")}
                 </a>
               </label>
             </div>

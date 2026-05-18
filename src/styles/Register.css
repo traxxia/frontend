@@ -261,6 +261,21 @@
   box-shadow: 0 0 0 2px rgba(72, 100, 161, 0.5);
 }
 
+.register-form input.error,
+.register-form input.input-error,
+.register-form select.error,
+.register-form select.input-error {
+  border-color: var(--color-danger) !important;
+  box-shadow: 0 0 0 2px rgba(239, 71, 111, 0.2) !important;
+}
+
+.register-form input.error:focus,
+.register-form input.input-error:focus,
+.register-form select.error:focus,
+.register-form select.input-error:focus {
+  box-shadow: 0 0 0 3px rgba(239, 71, 111, 0.3) !important;
+}
+
 .input-with-icon {
   position: relative;
   display: flex;
@@ -453,14 +468,17 @@
 
 
 .terms-modal {
-  background: var(--color-bg-primary);
-  padding: 0rem;
-  border-radius: var(--border-radius-xl);
-  height: fit-content;
-  width: 90%;
-  max-width: 900px;
-  text-align: center;
-  box-shadow: var(--shadow-2xl);
+  max-width: 900px !important;
+  width: 90% !important;
+  margin: 1.75rem auto !important;
+}
+
+.terms-modal .modal-content {
+  background: var(--color-bg-primary) !important;
+  border: none !important;
+  border-radius: var(--border-radius-xl) !important;
+  box-shadow: var(--shadow-2xl) !important;
+  overflow: hidden !important;
 }
 
 .modal-text-break {

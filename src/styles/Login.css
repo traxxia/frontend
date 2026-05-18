@@ -504,19 +504,13 @@
   z-index: var(--z-index-modal);
 }
 
-.terms-modal {
-  background: var(--color-bg-primary);
+.terms-modal { 
   border-radius: var(--border-radius-lg);
   padding: 10px;
-  width: auto;
-  box-shadow: var(--shadow-2xl);
+  width: auto; 
   animation: fadeIn 0.2s ease-in-out;
 }
-
-[data-theme="dark"] .terms-modal {
-  background: var(--color-bg-primary);
-}
-
+ 
 .terms-modal h3 {
   margin-bottom: var(--spacing-lg);
   font-size: var(--font-size-lg);

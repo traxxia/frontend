@@ -171,14 +171,14 @@ const Register = () => {
         </Modal.Body>
       </Modal>
 
-      <Modal show={showTermsModal} onHide={() => setShowTermsModal(false)} size="lg" centered className="terms-modal">
-        <Modal.Header closeButton><Modal.Title>{t('terms_and_conditions')}</Modal.Title></Modal.Header>
-        <Modal.Body className="terms-content"><p>Terms and Conditions...</p></Modal.Body>
+      <Modal show={showTermsModal} onHide={() => setShowTermsModal(false)} size="lg" centered dialogClassName="terms-modal">
+        <Modal.Header closeButton><Modal.Title>{t('terms_conditions')}</Modal.Title></Modal.Header>
+        <Modal.Body className="terms-content"><p className="modal-text-break">{t('terms_content')}</p></Modal.Body>
       </Modal>
 
-      <Modal show={showPrivacyModal} onHide={() => setShowPrivacyModal(false)} size="lg" centered className="terms-modal">
+      <Modal show={showPrivacyModal} onHide={() => setShowPrivacyModal(false)} size="lg" centered dialogClassName="terms-modal">
         <Modal.Header closeButton><Modal.Title>{t('privacy_policy')}</Modal.Title></Modal.Header>
-        <Modal.Body className="terms-content"><p>Privacy Policy...</p></Modal.Body>
+        <Modal.Body className="terms-content"><p className="modal-text-break">{t('privacy_content')}</p></Modal.Body>
       </Modal>
     </>
   );
