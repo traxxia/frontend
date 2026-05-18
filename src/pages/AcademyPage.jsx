@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { Menu } from 'lucide-react';
 import AcademyNavigation from '../components/AcademyNavigation';
 import MarkdownRenderer from '../components/MarkdownRenderer';
 import AcademyFeedback from '../components/AcademyFeedback';
@@ -10,18 +9,9 @@ import { useAcademyArticle } from '../hooks/useQueries';
 import * as LucideIcons from 'lucide-react';
 import '../styles/academy.css';
 
-/**
- * AcademyPage Component
- * 
- * Main page for Traxxia Academy documentation
- * - Displays markdown content for selected articles
- * - Shows welcome page when no article selected
- * - Includes breadcrumb navigation
- * - Mobile responsive with hamburger menu
- */
 const AcademyPage = () => {
     const { category, article } = useParams();
-    const navigate = useNavigate(); // Hook for navigation
+    const navigate = useNavigate();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [currentArticle, setCurrentArticle] = useState(null);
     const [searchQuery, setSearchQuery] = useState('');
@@ -37,15 +27,10 @@ const AcademyPage = () => {
     useEffect(() => {
         window.scrollTo(0, 0);
     }, [category, article]);
-
-
-    // Reset search when navigating
     useEffect(() => {
         setSearchQuery('');
         setSearchResults([]);
     }, [category, article]);
-
-    // Search Logic
     useEffect(() => {
         if (!searchQuery.trim()) {
             setSearchResults([]);
@@ -80,8 +65,6 @@ const AcademyPage = () => {
         const articleDataObj = findArticleById(article);
         if (articleDataObj) {
             setCurrentArticle(articleDataObj);
-
-            // Find next and previous articles globally across all categories
             const allArticles = academyStructure.categories.flatMap(cat =>
                 cat.articles.map(art => ({ ...art, categoryId: cat.id }))
             );
@@ -97,8 +80,6 @@ const AcademyPage = () => {
             setNextArticle(null);
         }
     }, [category, article]);
-
-    // Handle internal link clicks to use React Router instead of page reload
     useEffect(() => {
         const handleLinkClick = (e) => {
             const target = e.target.closest('a');
@@ -107,12 +88,8 @@ const AcademyPage = () => {
             const href = target.getAttribute('href');
             const isInternal = target.classList.contains('academy-internal-link') ||
                 target.classList.contains('academy-next-step-card');
-
-            // Check if it's an internal academy link
             if (href && (href.startsWith('/academy/') || isInternal)) {
                 e.preventDefault();
-
-                // Use resolveAcademyPath to standardize the link
                 const finalPath = resolveAcademyPath(href, category);
                 navigate(finalPath);
             }
@@ -124,7 +101,7 @@ const AcademyPage = () => {
             contentDiv.addEventListener('click', handleLinkClick);
             return () => contentDiv.removeEventListener('click', handleLinkClick);
         }
-    }, [content, category, navigate]); // Re-attach when content or category changes
+    }, [content, category, navigate]);
 
     const breadcrumbs = getBreadcrumbs(category, article);
 
@@ -171,8 +148,6 @@ const AcademyPage = () => {
 
     const renderWelcomePage = () => {
         const categoryData = category ? findCategoryById(category) : null;
-
-        // Search Interface for Home Page
         const renderSearchHeader = () => (
             <div className="welcome-header">
                 <h1>Welcome to Traxxia Academy</h1>
@@ -193,7 +168,6 @@ const AcademyPage = () => {
         );
 
         if (!category) {
-            // Main academy home
             return (
                 <div className="academy-welcome">
                     {renderSearchHeader()}
@@ -217,8 +191,6 @@ const AcademyPage = () => {
                 </div>
             );
         }
-
-        // Category page (no specific article selected)
         if (categoryData) {
             return (
                 <div className="academy-category-page">
@@ -300,7 +272,7 @@ const AcademyPage = () => {
             />
 
             <main className="academy-content">
-                {/* Search Bar for Article Pages (Optional, maybe in header?) - Keeping it simple for now */}
+                {}
 
                 {breadcrumbs.length > 1 && (
                     <nav className="academy-breadcrumbs">
@@ -342,7 +314,7 @@ const AcademyPage = () => {
 
                             {currentArticle && (
                                 <div className="article-header">
-                                    {/* Only show page H1 if markdown doesn't provide its own H1 */}
+                                    {}
                                     {!content.trim().startsWith('# ') && <h1>{currentArticle.title}</h1>}
                                     <div className="article-meta">
                                         {currentArticle.roles.includes('all') ? (
@@ -360,7 +332,7 @@ const AcademyPage = () => {
 
                             <AcademyFeedback articleId={currentArticle?.title || article} />
 
-                            {/* Bottom Pagination */}
+                            {}
                             {(prevArticle || nextArticle) && (
                                 <div className="article-pagination-bottom">
                                     {prevArticle ? (
@@ -390,8 +362,6 @@ const AcademyPage = () => {
                                     ) : <div className="pagination-spacer"></div>}
                                 </div>
                             )}
-
-
 
                             {renderRelatedArticles()}
                         </>

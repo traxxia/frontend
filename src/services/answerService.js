@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { useAuthStore } from '../store/authStore';
 
-const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
+const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || '';
 
 const getAuthHeaders = () => {
     const token = useAuthStore.getState().token;
@@ -12,12 +12,7 @@ const getAuthHeaders = () => {
 };
 
 export const answerService = {
-    /**
-     * Creates a new answer for a business and question.
-     * @param {string} business_id 
-     * @param {string} question_id 
-     * @param {string} answer 
-     */
+
     async createAnswer(business_id, question_id, answer) {
         try {
             const response = await axios.post(`${API_BASE_URL}/api/answers`, {
@@ -34,10 +29,6 @@ export const answerService = {
         }
     },
 
-    /**
-     * Gets a specific answer by its ID.
-     * @param {string} id 
-     */
     async getAnswerById(id) {
         try {
             const response = await axios.get(`${API_BASE_URL}/api/answers/${id}`, {
@@ -50,10 +41,6 @@ export const answerService = {
         }
     },
 
-    /**
-     * Retrieves all answers for a specific business.
-     * @param {string} business_id 
-     */
     async getAnswersByBusiness(business_id) {
         try {
             const response = await axios.get(`${API_BASE_URL}/api/answers/business/${business_id}`, {
@@ -66,11 +53,6 @@ export const answerService = {
         }
     },
 
-    /**
-     * Updates an existing answer.
-     * @param {string} id 
-     * @param {string} answer 
-     */
     async updateAnswer(id, answer) {
         try {
             const response = await axios.put(`${API_BASE_URL}/api/answers/${id}`, {
@@ -85,11 +67,6 @@ export const answerService = {
         }
     },
 
-    /**
-     * Batch creates multiple answers.
-     * @param {string} business_id 
-     * @param {Array} answers - Array of { question_id, answer }
-     */
     async bulkCreateAnswers(business_id, answers) {
         try {
             const response = await axios.post(`${API_BASE_URL}/api/answers/bulk`, {
@@ -105,11 +82,6 @@ export const answerService = {
         }
     },
 
-    /**
-     * Batch updates multiple answers.
-     * @param {string} business_id 
-     * @param {Array} answers - Array of { answer_id, answer }
-     */
     async bulkUpdateAnswers(business_id, answers) {
         try {
             const response = await axios.put(`${API_BASE_URL}/api/answers/bulk`, {

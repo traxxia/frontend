@@ -14,10 +14,9 @@
   background-color: var(--color-bg-primary);
 }
 
-/* Left Section - Branding */
 .register-left-section {
   flex: 1;
-  background: url('../assets/71d46d88977b8f5269d03ea65a25e6dff7c73d30.png');
+  background: url('../assets/login-background.png');
   background-size: cover;
   color: var(--color-text-white);
   display: flex;
@@ -28,7 +27,7 @@
 }
 
 [data-theme="dark"] .register-left-section {
-  background: linear-gradient(135deg, rgba(50, 50, 50, 0.9), rgba(30, 30, 30, 0.9)), url('../assets/71d46d88977b8f5269d03ea65a25e6dff7c73d30.png');
+  background: linear-gradient(135deg, rgba(50, 50, 50, 0.9), rgba(30, 30, 30, 0.9)), url('../assets/login-background.png');
   background-size: cover;
 }
 
@@ -92,7 +91,6 @@
   transform: rotate(45deg);
 }
 
-/* Right Section - Register Form */
 .register-right-section {
   flex: 1;
   display: flex;
@@ -107,12 +105,10 @@
 
 .register-box {
   width: 100%;
-  max-width: 600px;
-  /* Increased for registration form */
+  max-width: 900px;
+
   padding: var(--spacing-2xl);
 }
-
-
 
 .register-header {
   text-align: center;
@@ -143,7 +139,6 @@
   object-fit: contain;
 }
 
-/* Step Indicator */
 .register-steps-container {
   display: flex;
   align-items: center;
@@ -198,7 +193,7 @@
   height: 2px;
   background: var(--color-border-medium);
   margin-bottom: 24px;
-  /* Align with circles */
+
 }
 
 .step-item.completed+.step-line {
@@ -218,7 +213,6 @@
   color: var(--color-text-primary);
 }
 
-/* Form Layout */
 .register-form-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -267,6 +261,21 @@
   box-shadow: 0 0 0 2px rgba(72, 100, 161, 0.5);
 }
 
+.register-form input.error,
+.register-form input.input-error,
+.register-form select.error,
+.register-form select.input-error {
+  border-color: var(--color-danger) !important;
+  box-shadow: 0 0 0 2px rgba(239, 71, 111, 0.2) !important;
+}
+
+.register-form input.error:focus,
+.register-form input.input-error:focus,
+.register-form select.error:focus,
+.register-form select.input-error:focus {
+  box-shadow: 0 0 0 3px rgba(239, 71, 111, 0.3) !important;
+}
+
 .input-with-icon {
   position: relative;
   display: flex;
@@ -307,9 +316,6 @@
   color: var(--color-primary);
 }
 
-
-
-/* Action Type Selection */
 .selection-header {
   display: flex;
   flex-direction: column;
@@ -323,7 +329,7 @@
   padding: 4px;
   border-radius: var(--border-radius-md);
   gap: 0;
-  /* Gap handled by padding if needed, but 0 is better for sliding */
+
   position: relative;
   border: 1px solid var(--color-border-light);
 }
@@ -375,7 +381,6 @@
   margin-top: 0px !important;
 }
 
-/* Checkbox */
 .checkbox-group {
   margin: 0;
 }
@@ -403,7 +408,6 @@
   font-weight: var(--font-weight-semibold);
 }
 
-/* Navigation Buttons */
 .tab-navigation {
   display: flex;
   justify-content: space-between;
@@ -449,7 +453,6 @@
   transform: translateY(-1px);
 }
 
-/* Modals */
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -463,16 +466,19 @@
   z-index: var(--z-index-modal);
 }
 
-.success-modal,
+
 .terms-modal {
-  background: var(--color-bg-primary);
-  padding: 0rem;
-  border-radius: var(--border-radius-xl);
-  height: fit-content;
-  width: 90%;
-  max-width: 600px;
-  text-align: center;
-  box-shadow: var(--shadow-2xl);
+  max-width: 900px !important;
+  width: 90% !important;
+  margin: 1.75rem auto !important;
+}
+
+.terms-modal .modal-content {
+  background: var(--color-bg-primary) !important;
+  border: none !important;
+  border-radius: var(--border-radius-xl) !important;
+  box-shadow: var(--shadow-2xl) !important;
+  overflow: hidden !important;
 }
 
 .modal-text-break {
@@ -548,7 +554,6 @@
   background: var(--color-danger);
 }
 
-/* Responsive */
 @media (max-width: 1024px) {
   .register-left-section {
     display: none;
@@ -643,7 +648,6 @@
   width: 100% !important;
 }
 
-/* Payment UI Redesign */
 .payment-methods-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -665,9 +669,9 @@
   position: relative;
   background: var(--color-bg-primary);
   text-align: center;
-  /* Ensure text is centered */
+
   justify-content: center;
-  /* Reinforce centering */
+
 }
 
 .payment-method-card:hover:not(.disabled) {
@@ -774,7 +778,6 @@
   }
 }
 
-/* Visual Card Preview */
 .visual-card-wrapper {
   display: flex;
   justify-content: center;
@@ -870,7 +873,6 @@
   text-shadow: 0 1px 1px rgba(0, 0, 0, 0.3);
 }
 
-/* Compact Success Modal (Toast Style) */
 .compact-success-modal {
   max-width: 350px !important;
   width: 100% !important;
@@ -923,7 +925,6 @@
   padding: 0 !important;
 }
 
-/* Ensure no footer extra space if it exists */
 .compact-success-modal .modal-footer {
   padding: 0.75rem !important;
   margin-top: 0 !important;
@@ -954,7 +955,6 @@
   }
 }
 
-/* Visual Card Preview */
 .visual-card-wrapper {
   display: flex;
   justify-content: center;
@@ -1050,7 +1050,6 @@
   text-shadow: 0 1px 1px rgba(0, 0, 0, 0.3);
 }
 
-/* Compact Success Modal (Toast Style) */
 .compact-success-modal {
   max-width: 350px !important;
   width: 100% !important;
@@ -1103,14 +1102,12 @@
   padding: 0 !important;
 }
 
-/* Ensure no footer extra space if it exists */
 .compact-success-modal .modal-footer {
   padding: 0.75rem !important;
   margin-top: 0 !important;
   border-top: 1px solid var(--color-border-light) !important;
 }
 
-/* Custom Searchable Dropdown */
 .custom-select-container {
   position: relative;
   width: 100%;
@@ -1250,7 +1247,6 @@
   text-align: center;
 }
 
-/* Custom Scrollbar for Dropdown */
 .options-list::-webkit-scrollbar {
   width: 10px;
 }
@@ -1272,7 +1268,6 @@
   background: #444;
 }
 
-/* Registration Inline Error Box */
 .registration-error-box {
   background: #fff5f5;
   border: 1px solid #feb2b2;
@@ -1346,3 +1341,216 @@
   opacity: 1;
 }
 
+
+/* ── Extracted inline styles ── */
+.payment-form--s1 {
+  border: none;
+  padding: 0;
+}
+
+.payment-form--s2 {
+  overflow: hidden;
+}
+
+.payment-form--s3 {
+  width: 100%;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 16px;
+  padding: 0;
+  margin: 0;
+  box-shadow: none;
+  border-radius: 0;
+}
+
+/* Plans Table - Shared with Subscription Page */
+.st-plans-table-container {
+    width: 100%;
+    overflow-x: auto;
+    margin-top: 8px;
+    border-radius: 12px;
+    border: 1px solid #e5e7eb;
+    background: #fff;
+}
+
+.st-plans-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 0.875rem;
+}
+
+.st-plans-table th, 
+.st-plans-table td {
+    padding: 16px 20px;
+    border-bottom: 1px solid #f3f4f6;
+    text-align: left;
+}
+
+.st-plans-table th {
+    background: #f9fafb;
+    font-weight: 700;
+    color: #374151;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 0.05em;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.st-plans-table th:first-child,
+.st-plans-table td:first-child {
+    position: sticky;
+    left: 0;
+    z-index: 20;
+    box-shadow: 4px 0 8px rgba(0, 0, 0, 0.04);
+}
+
+.st-plans-table th:first-child {
+    background: #f9fafb;
+    z-index: 30;
+}
+
+.st-plans-table td:first-child {
+    font-weight: 600;
+    color: #4b5563;
+    background: #fdfdfd;
+    width: 200px;
+    border-right: 1px solid #f3f4f6;
+}
+
+.st-plans-table tr:hover td {
+    background-color: #f9fafb;
+}
+
+.st-plans-table .st-table-plan-header {
+    text-align: center;
+    background: #fff;
+    min-width: 150px;
+}
+
+.st-plans-table .st-table-plan-name {
+    font-size: 1rem;
+    font-weight: 800;
+    color: #4f46e5;
+    margin-bottom: 4px;
+}
+
+.st-plans-table .st-table-plan-price {
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: #111827;
+}
+
+.st-plans-table .st-table-plan-period {
+    font-size: 0.7rem;
+    color: #6b7280;
+    font-weight: 500;
+}
+
+.st-plans-table .st-table-feature-cell {
+    text-align: center;
+}
+
+.st-plans-table .st-table-check-on {
+    color: #10b981;
+}
+
+.st-plans-table .st-table-check-off {
+    color: #d1d5db;
+}
+
+.st-plans-table .st-table-action-cell {
+    text-align: center;
+    padding: 16px 12px;
+}
+
+.st-plans-table .st-table-btn-select {
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    background: #f5f3ff;
+    color: #4f46e5;
+    border: 1.5px solid #e0e7ff;
+    transition: all 0.2s;
+    cursor: pointer;
+    width: 100%;
+}
+
+.st-plans-table .st-table-btn-select:hover {
+    background: #4f46e5;
+    color: #fff;
+    border-color: #4f46e5;
+}
+
+.st-plans-table .st-table-btn-select.selected {
+    background: #4f46e5;
+    color: #fff;
+    border-color: #4f46e5;
+    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.2);
+}
+
+/* Success Modal Styles */
+.success-modal .modal-content {
+    border: none;
+    border-radius: 24px;
+    padding: 2rem;
+    text-align: center;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.15);
+}
+
+.modal-status-icon {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1.5rem;
+    animation: icon-pop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+.modal-status-icon.success {
+    background: #ecfdf5;
+    color: #10b981;
+}
+
+.modal-status-icon.error {
+    background: #fef2f2;
+    color: #ef4444;
+}
+
+.success-modal h3 {
+    font-weight: 800;
+    color: #111827;
+    margin-bottom: 0.5rem;
+}
+
+.success-modal p {
+    color: #6b7280;
+    font-size: 1rem;
+    margin-bottom: 2rem;
+}
+
+.success-modal .btn-primary {
+    padding: 12px 32px;
+    border-radius: 12px;
+    font-weight: 700;
+    background: #4f46e5;
+    border: none;
+    transition: all 0.2s;
+}
+
+.success-modal .btn-primary:hover {
+    background: #4338ca;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(79, 70, 229, 0.2);
+}
+
+@keyframes icon-pop {
+    from { transform: scale(0.5); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}

@@ -6,11 +6,7 @@ import { useTranslation } from "../hooks/useTranslation";
 import FinancialTemplatesPopup from './FinancialTemplatesPopup';
 import { detectTemplateType, validateAgainstTemplate } from '../utils/templateValidator';
 import '../styles/CompanyManagement.css';
-
-
-
 import { useAuthStore } from '../store/authStore';
-
 const EditableField = ({
   field,
   editingField,
@@ -33,252 +29,107 @@ const EditableField = ({
   handleAutoSave,
   isLastField
 }) => {
-  const { t } = useTranslation();
+  const {
+    t
+  } = useTranslation();
   const isEditing = editingField === field.key;
   const isEdited = editedFields.has(field.key);
   const isHighlighted = isQuestionHighlighted(field.questionId);
-
-
-  return (
-    <div
-      ref={el => fieldRefs.current[field.key] = el}
-      className={`brief-item ${isEdited ? 'edited' : ''}`}
-      data-component="advanced-brief"
-      style={{
-        border: isHighlighted ? '2px solid #f59e0b' : '1px solid #e5e7eb',
-        backgroundColor: isHighlighted ? '#fef3c7' : 'white',
-        borderRadius: '8px',
-        padding: isHighlighted ? '12px' : '8px',
-        margin: (isEditing && isLastField) ? '8px 0 80px 0' : '8px 0',
-        transition: 'all 0.3s ease',
-        position: 'relative'
-      }}
-    >
-      {isHighlighted && (
-        <div style={{
-          position: 'absolute',
-          top: '8px',
-          right: '8px'
-        }}>
-          <AlertCircle size={16} style={{ color: '#f59e0b' }} />
-        </div>
-      )}
+  return <div ref={el => fieldRefs.current[field.key] = el} className={`brief-item ${isEdited ? 'edited' : ''} editable-brief-section--s1`} data-component="advanced-brief" style={{
+    border: isHighlighted ? '2px solid #f59e0b' : '1px solid #e5e7eb',
+    backgroundColor: isHighlighted ? '#fef3c7' : 'white',
+    padding: isHighlighted ? '12px' : '8px',
+    margin: isEditing && isLastField ? '8px 0 80px 0' : '8px 0'
+  }}>
+      {isHighlighted && <div className="editable-brief-section--s2">
+          <AlertCircle size={16} className="editable-brief-section--s3" />
+        </div>}
 
       <div className="item-row">
-        <div className="item-label" style={{
-          color: isHighlighted ? '#92400e' : 'inherit',
-          fontWeight: isHighlighted ? '600' : '500',
-          display: 'flex',
-          alignItems: 'flex-start',
-          flexWrap: 'wrap',
-          gap: '8px'
-        }}>
-          <span style={{
-            fontSize: '14px',
-            fontWeight: 'bold',
-            padding: '2px 6px',
-            borderRadius: '4px',
-            backgroundColor: '#f3f4f6',
-            color: '#374151',
-            flexShrink: 0,
-            marginTop: '2px'
-          }}>
+        <div className="item-label editable-brief-section--s4" style={{
+        color: isHighlighted ? '#92400e' : 'inherit',
+        fontWeight: isHighlighted ? '600' : '500'
+      }}>
+          <span className="editable-brief-section--s5">
             {field.sequentialNumber}.
           </span>
-          <span style={{ flex: 1, wordBreak: 'break-word' }}>
+          <span className="editable-brief-section--s6">
             {field.label}
           </span>
 
-          {field.phase && (
-              <span
-                className='edit-batch'
-                 style={{
-                   fontSize: '10px',
-                   fontWeight: '600',
-                   textTransform: 'uppercase',
-                   borderRadius: '4px',
-                   backgroundColor:
-                   field.phase.toLowerCase() === 'initial' ? '#dbeafe' :
-                   field.phase.toLowerCase() === 'essential' ? '#dcfce7' :
-                   field.phase.toLowerCase() === 'advanced' ? '#f3e8ff' : '#f3f4f6',
-                  color:
-                  field.phase.toLowerCase() === 'initial' ? '#1e40af' :
-                  field.phase.toLowerCase() === 'essential' ? '#166534' :
-                  field.phase.toLowerCase() === 'advanced' ? '#6b21a8' : '#374151',
-                  letterSpacing: '0.025em',
-                  flexShrink: 0,
-                  padding: '2px 8px',
-                  whiteSpace: 'nowrap',
-                  marginLeft: 'auto'
-                }}
-               >
+          {field.phase && <span className="edit-batch editable-brief-section--s7" style={{
+          backgroundColor: field.phase.toLowerCase() === 'initial' ? '#dbeafe' : field.phase.toLowerCase() === 'essential' ? '#dcfce7' : field.phase.toLowerCase() === 'advanced' ? '#f3e8ff' : '#f3f4f6',
+          color: field.phase.toLowerCase() === 'initial' ? '#1e40af' : field.phase.toLowerCase() === 'essential' ? '#166534' : field.phase.toLowerCase() === 'advanced' ? '#6b21a8' : '#374151'
+        }}>
              {t(field.phase)}
-            </span>
-           )}
+            </span>}
 
-          {isHighlighted && (
-            <span style={{
-              fontSize: '12px',
-              color: '#dc2626',
-              fontWeight: '500'
-            }}>
+          {isHighlighted && <span className="editable-brief-section--s8">
               (Required for analysis)
-            </span>
-          )}
+            </span>}
         </div>
-        {!isEditing && canEdit && (
-          <button
-            className="edit-button prominent"
-            onClick={() => handleEdit(field)}
-            type="button"
-            disabled={isAnalysisRegenerating || isStrategicRegenerating || isSaving || isEssentialPhaseGenerating || isEnriching || isApplyingEnrichment}
-            title="Edit answer"
-            style={{
-              marginTop: '0',
-              background: '#f3f4f6',
-              border: '1px solid #e5e7eb',
-              borderRadius: '6px',
-              padding: '4px 8px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '4px',
-              transition: 'all 0.2s ease',
-              color: '#374151',
-              fontSize: '12px',
-              fontWeight: '500'
-            }}
-          >
+        {!isEditing && canEdit && <button className="edit-button prominent editable-brief-section--s9" onClick={() => handleEdit(field)} type="button" disabled={isAnalysisRegenerating || isStrategicRegenerating || isSaving || isEssentialPhaseGenerating || isEnriching || isApplyingEnrichment} title="Edit answer">
             <Edit3 size={14} />
             {t('Edit') || 'Edit'}
-          </button>
-        )}
+          </button>}
       </div>
 
-      {isEditing && canEdit ? (
-        <div className="edit-container" style={{
-          marginTop: '10px',
-          padding: '12px',
-          backgroundColor: '#f9fafb',
-          borderRadius: '8px',
-          border: '1px solid #e5e7eb',
-          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'
-        }}>
+      {isEditing && canEdit ? <div className="edit-container editable-brief-section--s10">
 
-          <textarea
-            ref={el => inputRefs.current[field.key] = el}
-            className="edit-textarea"
-            defaultValue={field.value === '[Question Skipped]' ? '' : field.value}
-            disabled={isAnalysisRegenerating || isStrategicRegenerating || isSaving || isEssentialPhaseGenerating || isEnriching || isApplyingEnrichment}
-            style={{ minHeight: '100px', resize: 'vertical' }}
-            placeholder={`Enter your answer for: ${field.label}`}
-            onChange={(e) => handleAutoSave(field, e.target.value)}
-          />
-          <div className="edit-actions" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '12px' }}>
-            <div className="auto-save-status" style={{ fontSize: '12px', color: '#6b7280', display: 'flex', alignItems: 'center', gap: '4px' }}>
-              {isSaving ? (
-                <>
+          <textarea ref={el => inputRefs.current[field.key] = el} className="edit-textarea editable-brief-section--s11" defaultValue={field.value === '[Question Skipped]' ? '' : field.value} disabled={isAnalysisRegenerating || isStrategicRegenerating || isSaving || isEssentialPhaseGenerating || isEnriching || isApplyingEnrichment} placeholder={`Enter your answer for: ${field.label}`} onChange={e => handleAutoSave(field, e.target.value)} />
+          <div className="edit-actions editable-brief-section--s12">
+            <div className="auto-save-status editable-brief-section--s13">
+              {isSaving ? <>
                   <Loader size={12} className="antigravity-rotating" />
                   Saving...
-                </>
-              ) : isEdited ? (
-                <span style={{ color: '#10b981', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                </> : isEdited ? <span className="editable-brief-section--s14">
                   <Check size={12} />
                   Changes saved
-                </span>
-              ) : null}
+                </span> : null}
             </div>
-            <div style={{ display: 'flex', gap: '8px' }}>
-              <button
-                onClick={handleCancel}
-                disabled={isSaving || isEssentialPhaseGenerating || isEnriching || isApplyingEnrichment}
-                className="cancel-button enhanced"
-                title="Cancel changes"
-                style={{
-                  padding: '6px 12px',
-                  fontSize: '13px',
-                  height: '32px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px', 
-                  color: '#374151',
-                  border: '1px solid #d1d5db',
-                  borderRadius: '6px',
-                  cursor: (isSaving || isEssentialPhaseGenerating || isEnriching || isApplyingEnrichment) ? 'not-allowed' : 'pointer',
-                  fontWeight: '500',
-                  transition: 'all 0.2s'
-                }}
-                onMouseEnter={(e) => {
-                  if (!e.target.disabled) {
-                    e.target.style.backgroundColor = '#f9fafb';
-                    e.target.style.borderColor = '#9ca3af';
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (!e.target.disabled) {
-                    e.target.style.backgroundColor = 'white';
-                    e.target.style.borderColor = '#d1d5db';
-                  }
-                }}
-              >
+            <div className="editable-brief-section--s15">
+              <button onClick={handleCancel} disabled={isSaving || isEssentialPhaseGenerating || isEnriching || isApplyingEnrichment} className="cancel-button enhanced editable-brief-section--s16" title="Cancel changes" style={{
+            cursor: isSaving || isEssentialPhaseGenerating || isEnriching || isApplyingEnrichment ? 'not-allowed' : 'pointer'
+          }} onMouseEnter={e => {
+            if (!e.target.disabled) {
+              e.target.style.backgroundColor = '#f9fafb';
+              e.target.style.borderColor = '#9ca3af';
+            }
+          }} onMouseLeave={e => {
+            if (!e.target.disabled) {
+              e.target.style.backgroundColor = 'white';
+              e.target.style.borderColor = '#d1d5db';
+            }
+          }}>
                 <X size={14} />
                 {t("Cancel")}
               </button>
-              <button
-                onClick={() => handleSave(field)}
-                disabled={isSaving || isEssentialPhaseGenerating || isEnriching || isApplyingEnrichment}
-                className="save-button enhanced"
-                title="Save changes"
-                style={{
-                  padding: '6px 16px',
-                  fontSize: '13px',
-                  height: '32px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  backgroundColor: '#2563eb',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '6px',
-                  cursor: isSaving ? 'not-allowed' : 'pointer',
-                  fontWeight: '500',
-                  transition: 'all 0.2s',
-                  boxShadow: '0 1px 2px rgba(0, 0, 0, 0.05)'
-                }}
-                onMouseEnter={(e) => {
-                  if (!e.target.disabled) {
-                    e.target.style.backgroundColor = '#1d4ed8';
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (!e.target.disabled) {
-                    e.target.style.backgroundColor = '#2563eb';
-                  }
-                }}
-              >
+              <button onClick={() => handleSave(field)} disabled={isSaving || isEssentialPhaseGenerating || isEnriching || isApplyingEnrichment} className="save-button enhanced editable-brief-section--s17" title="Save changes" style={{
+            cursor: isSaving ? 'not-allowed' : 'pointer'
+          }} onMouseEnter={e => {
+            if (!e.target.disabled) {
+              e.target.style.backgroundColor = '#1d4ed8';
+            }
+          }} onMouseLeave={e => {
+            if (!e.target.disabled) {
+              e.target.style.backgroundColor = '#2563eb';
+            }
+          }}>
                 {isSaving ? <Loader size={14} className="antigravity-rotating" /> : <Check size={14} />}
                 {t("Save")}
               </button>
             </div>
           </div>
 
-        </div>
-      ) : (
-        <div
-          className="item-text"
-          onClick={() => canEdit && !(isSaving || isEssentialPhaseGenerating || isEnriching || isApplyingEnrichment) && handleEdit(field)}
-          style={{
-            cursor: (!canEdit || isSaving || isEssentialPhaseGenerating || isEnriching || isApplyingEnrichment) ? 'default' : 'pointer',
-            color: !field.value ? '#9ca3af' : '#302d2d',
-            fontStyle: !field.value ? 'italic' : 'normal'
-          }}
-        >
+        </div> : <div className="item-text" onClick={() => canEdit && !(isSaving || isEssentialPhaseGenerating || isEnriching || isApplyingEnrichment) && handleEdit(field)} style={{
+      cursor: !canEdit || isSaving || isEssentialPhaseGenerating || isEnriching || isApplyingEnrichment ? 'default' : 'pointer',
+      color: !field.value ? '#9ca3af' : '#302d2d',
+      fontStyle: !field.value ? 'italic' : 'normal'
+    }}>
           {field.value || t('No specific data available') || 'No specific data available'}
-        </div>
-      )}
-    </div>
-  );
+        </div>}
+    </div>;
 };
-
 const FinancialUploadBlock = ({
   hasUploadedDocument,
   uploadedFileInfo,
@@ -287,12 +138,13 @@ const FinancialUploadBlock = ({
   isAnalysisRegenerating,
   isStrategicRegenerating
 }) => {
-  const { t } = useTranslation();
+  const {
+    t
+  } = useTranslation();
   const styles = {
     container: {
       flex: 1,
-      padding: '16px 20px',
-      background: 'linear-gradient(135deg, #f0fdf4 0%, #e1faf1 100%)',
+      padding: '16px 20px', 
       borderRadius: '16px',
       border: '1px solid #bbf7d0',
       boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)',
@@ -337,7 +189,9 @@ const FinancialUploadBlock = ({
       justifyContent: 'space-between',
       marginTop: 'auto'
     },
-    fileIcon: { color: '#059669' },
+    fileIcon: {
+      color: '#059669'
+    },
     fileName: {
       fontWeight: '600',
       fontSize: '13px',
@@ -356,12 +210,12 @@ const FinancialUploadBlock = ({
       border: '1px solid #bbf7d0',
       padding: '4px 10px',
       borderRadius: '6px',
-      cursor: (isAnalysisRegenerating || isStrategicRegenerating) ? 'not-allowed' : 'pointer',
+      cursor: isAnalysisRegenerating || isStrategicRegenerating ? 'not-allowed' : 'pointer',
       display: 'flex',
       alignItems: 'center',
       gap: '4px',
       transition: 'all 0.2s',
-      opacity: (isAnalysisRegenerating || isStrategicRegenerating) ? 0.7 : 1
+      opacity: isAnalysisRegenerating || isStrategicRegenerating ? 0.7 : 1
     },
     uploadBtn: {
       backgroundColor: '#059669',
@@ -371,19 +225,17 @@ const FinancialUploadBlock = ({
       borderRadius: '10px',
       fontSize: '13px',
       fontWeight: '600',
-      cursor: (isAnalysisRegenerating || isStrategicRegenerating) ? 'not-allowed' : 'pointer',
+      cursor: isAnalysisRegenerating || isStrategicRegenerating ? 'not-allowed' : 'pointer',
       display: 'flex',
       alignItems: 'center',
       gap: '8px',
       transition: 'all 0.2s',
       boxShadow: '0 4px 12px rgba(5, 150, 105, 0.2)',
       marginTop: 'auto',
-      opacity: (isAnalysisRegenerating || isStrategicRegenerating) ? 0.7 : 1
+      opacity: isAnalysisRegenerating || isStrategicRegenerating ? 0.7 : 1
     }
   };
-
-  return (
-    <div className="financial-upload-block feature-card" style={styles.container}>
+  return <div className="financial-upload-block feature-card" style={styles.container}>
       <div style={styles.header}>
         <div style={styles.iconWrapper}>
           <Database size={24} />
@@ -394,9 +246,8 @@ const FinancialUploadBlock = ({
         </div>
       </div>
 
-      {hasUploadedDocument && uploadedFileInfo ? (
-        <div style={styles.card}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+      {hasUploadedDocument && uploadedFileInfo ? <div style={styles.card}>
+          <div className="editable-brief-section--s18">
             <div style={styles.fileIcon}>
               <FileText size={20} />
             </div>
@@ -407,47 +258,28 @@ const FinancialUploadBlock = ({
               </div>
             </div>
           </div>
-          {canEdit && (
-            <button
-              onClick={onOpenManagement}
-              style={styles.actionBtn}
-              disabled={isAnalysisRegenerating || isStrategicRegenerating}
-            >
+          {canEdit && <button onClick={onOpenManagement} style={styles.actionBtn} disabled={isAnalysisRegenerating || isStrategicRegenerating}>
               <RefreshCw size={12} className={isAnalysisRegenerating || isStrategicRegenerating ? "antigravity-rotating" : ""} />
               {t("Replace") || "Replace"}
-            </button>
-          )}
-        </div>
-      ) : (
-        <div style={{ display: 'flex', justifyContent: 'center' }}>
-          {canEdit && (
-            <button
-              onClick={onOpenManagement}
-              style={styles.uploadBtn}
-              disabled={isAnalysisRegenerating || isStrategicRegenerating}
-              onMouseEnter={(e) => {
-                if (!isAnalysisRegenerating && !isStrategicRegenerating) {
-                  e.currentTarget.style.backgroundColor = '#047857';
-                  e.currentTarget.style.transform = 'translateY(-1px)';
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (!isAnalysisRegenerating && !isStrategicRegenerating) {
-                  e.currentTarget.style.backgroundColor = '#059669';
-                  e.currentTarget.style.transform = 'translateY(0)';
-                }
-              }}
-            >
+            </button>}
+        </div> : <div className="editable-brief-section--s19">
+          {canEdit && <button onClick={onOpenManagement} style={styles.uploadBtn} disabled={isAnalysisRegenerating || isStrategicRegenerating} onMouseEnter={e => {
+        if (!isAnalysisRegenerating && !isStrategicRegenerating) {
+          e.currentTarget.style.backgroundColor = '#047857';
+          e.currentTarget.style.transform = 'translateY(-1px)';
+        }
+      }} onMouseLeave={e => {
+        if (!isAnalysisRegenerating && !isStrategicRegenerating) {
+          e.currentTarget.style.backgroundColor = '#059669';
+          e.currentTarget.style.transform = 'translateY(0)';
+        }
+      }}>
               <Upload size={16} />
               {t("get_started")}
-            </button>
-          )}
-        </div>
-      )}
-    </div>
-  );
+            </button>}
+        </div>}
+    </div>;
 };
-
 const AIAnswerSupportBlock = ({
   onGenerateEnrichment,
   isEnriching,
@@ -457,12 +289,13 @@ const AIAnswerSupportBlock = ({
   isSaving,
   canEnrich
 }) => {
-  const { t } = useTranslation();
+  const {
+    t
+  } = useTranslation();
   const styles = {
     container: {
       flex: 1,
-      padding: '16px 20px',
-      background: 'linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%)',
+      padding: '16px 20px', 
       borderRadius: '16px',
       border: '1px solid #ddd6fe',
       boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)',
@@ -512,22 +345,20 @@ const AIAnswerSupportBlock = ({
       borderRadius: '12px',
       fontSize: '13px',
       fontWeight: '600',
-      cursor: (isEnriching || !canEnrich || isAnalysisRegenerating || isStrategicRegenerating) ? 'not-allowed' : 'pointer',
+      cursor: isEnriching || !canEnrich || isAnalysisRegenerating || isStrategicRegenerating ? 'not-allowed' : 'pointer',
       transition: 'all 0.2s ease',
-      opacity: (!canEnrich || isAnalysisRegenerating || isStrategicRegenerating) ? 0.6 : 1,
+      opacity: !canEnrich || isAnalysisRegenerating || isStrategicRegenerating ? 0.6 : 1,
       boxShadow: '0 4px 12px rgba(124, 58, 237, 0.3)',
       marginTop: '8px'
     }
   };
-
-  return (
-    <div className="ai-support-block feature-card" style={styles.container}>
+  return <div className="ai-support-block feature-card" style={styles.container}>
       <div style={styles.header}>
         <div style={styles.iconWrapper}>
           <Sparkles size={24} />
         </div>
         <div>
-          <div style={{ display: 'flex', flexDirection: 'column' }}>
+          <div className="editable-brief-section--s20">
             <h3 style={styles.title}>{t("ai_answer_support")}</h3>
             <p style={styles.subtitle}>
              {t("professional_answers_based_on_onboarding")}
@@ -535,49 +366,31 @@ const AIAnswerSupportBlock = ({
           </div>
         </div>
       </div>
-      
-      <div style={{ 
-        fontSize: '11.5px', 
-        color: '#5b21b6', 
-        marginBottom: '12px', 
-        lineHeight: '1.4', 
-        paddingLeft: '10px',  
-        opacity: 0.85
-      }}>
+
+      <div className="editable-brief-section--s21">
         {t("ai_refinement_helper") || "Traxxia will start from your INITIAL answers, propose refined versions, and label them AI‑REFINED. You can edit or revert to INITIAL at any time."}
       </div>
 
-      <button
-        onClick={onGenerateEnrichment}
-        disabled={isEnriching || isApplyingEnrichment || isAnalysisRegenerating || isStrategicRegenerating || isSaving || !canEnrich}
-        style={styles.enrichBtn}
-        onMouseEnter={(e) => {
-          if (!e.currentTarget.disabled) {
-            e.currentTarget.style.backgroundColor = '#6d28d9';
-            e.currentTarget.style.transform = 'translateY(-1px)';
-          }
-        }}
-        onMouseLeave={(e) => {
-          if (!e.currentTarget.disabled) {
-            e.currentTarget.style.backgroundColor = '#7c3aed';
-            e.currentTarget.style.transform = 'translateY(0)';
-          }
-        }}
-      >
+      <button onClick={onGenerateEnrichment} disabled={isEnriching || isApplyingEnrichment || isAnalysisRegenerating || isStrategicRegenerating || isSaving || !canEnrich} style={styles.enrichBtn} onMouseEnter={e => {
+      if (!e.currentTarget.disabled) {
+        e.currentTarget.style.backgroundColor = '#6d28d9';
+        e.currentTarget.style.transform = 'translateY(-1px)';
+      }
+    }} onMouseLeave={e => {
+      if (!e.currentTarget.disabled) {
+        e.currentTarget.style.backgroundColor = '#7c3aed';
+        e.currentTarget.style.transform = 'translateY(0)';
+      }
+    }}>
         {isEnriching ? <Loader size={18} className="antigravity-rotating" /> : <Wand2 size={18} />}
        {isEnriching ? t("generating_suggestions") : t("generate_ai_answers")}
       </button>
-      
-      {isEnriching && (
-        <div style={{ textAlign: 'center', fontSize: '11px', color: '#6d28d9', marginTop: '8px', fontWeight: '600' }}>
+
+      {isEnriching && <div className="editable-brief-section--s22">
           {t("estimated_time_30_60") || "Estimated time: 30 - 60 sec"}
-        </div>
-      )}
-    </div>
-  );
+        </div>}
+    </div>;
 };
-
-
 const EditableBriefSection = ({
   questions = [],
   userAnswers = {},
@@ -602,7 +415,11 @@ const EditableBriefSection = ({
   const [editingField, setEditingField] = useState(null);
   const [briefFields, setBriefFields] = useState([]);
   const [editedFields, setEditedFields] = useState(new Set());
-  const [showToast, setShowToast] = useState({ show: false, message: '', type: 'success' });
+  const [showToast, setShowToast] = useState({
+    show: false,
+    message: '',
+    type: 'success'
+  });
   const [isSaving, setIsSaving] = useState(false);
   const [isEnriching, setIsEnriching] = useState(false);
   const [enrichedAnswers, setEnrichedAnswers] = useState(null);
@@ -612,7 +429,6 @@ const EditableBriefSection = ({
   const [hasUploadedDocument, setHasUploadedDocument] = useState(false);
   const [uploadedFileInfo, setUploadedFileInfo] = useState(null);
   const [isFinancialRegenerating, setIsFinancialRegenerating] = useState(false);
-
   useEffect(() => {
     if (isFinancialRegeneratingProp) {
       setIsFinancialRegenerating(true);
@@ -620,36 +436,30 @@ const EditableBriefSection = ({
       setIsFinancialRegenerating(false);
     }
   }, [isFinancialRegeneratingProp, isAnalysisRegenerating, isStrategicRegenerating]);
-
-  const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
+  const API_BASE_URL = import.meta.env.VITE_BACKEND_URL;
   const getAuthToken = () => useAuthStore.getState().token;
-  const ML_API_BASE_URL = process.env.REACT_APP_ML_BACKEND_URL;
+  const ML_API_BASE_URL = import.meta.env.VITE_ML_BACKEND_URL;
   const analysisService = useRef(new AnalysisApiService(ML_API_BASE_URL, API_BASE_URL, getAuthToken)).current;
-
   const inputRefs = useRef({});
   const fieldRefs = useRef({});
   const autoSaveTimeoutRef = useRef(null);
   const fileInputRef = useRef(null);
-  const { t } = useTranslation();
+  const {
+    t
+  } = useTranslation();
   const [userRole, setUserRole] = useState("");
-
   useEffect(() => {
     const role = (useAuthStore.getState().userRole || useAuthStore.getState().userRole || "").toLowerCase();
     setUserRole(role);
   }, []);
-
   const isViewer = userRole === "viewer";
   const canEdit = !isViewer;
   const canEnrich = !isViewer;
-
   useEffect(() => {
     if (questions && questions.length > 0) {
       generateBriefFields();
     }
   }, [questions, userAnswers]);
-
-  // Removed redundant document info fetch as it is now handled and passed down by BusinessSetupPage
-
   useEffect(() => {
     if (documentInfo) {
       if (documentInfo.filename || documentInfo.id || documentInfo.has_document || documentInfo.file_size) {
@@ -657,21 +467,17 @@ const EditableBriefSection = ({
         setUploadedFileInfo({
           name: documentInfo.filename || 'Financial Document',
           size: documentInfo.file_size || documentInfo.size || 0,
-          uploadDate: documentInfo.upload_date ?
-            new Date(documentInfo.upload_date).toLocaleDateString() :
-            'Previously uploaded'
+          uploadDate: documentInfo.upload_date ? new Date(documentInfo.upload_date).toLocaleDateString() : 'Previously uploaded'
         });
       } else {
         setHasUploadedDocument(false);
         setUploadedFileInfo(null);
       }
     } else if (documentInfo === null && !selectedBusinessId) {
-      // Clear if both are null
       setHasUploadedDocument(false);
       setUploadedFileInfo(null);
     }
   }, [documentInfo, selectedBusinessId]);
-
   const loadDocumentInfo = async () => {
     try {
       const doc = await analysisService.fetchFinancialDocument(selectedBusinessId);
@@ -680,9 +486,7 @@ const EditableBriefSection = ({
         setUploadedFileInfo({
           name: doc.filename || 'Financial Document',
           size: doc.file_size || 0,
-          uploadDate: doc.upload_date ?
-            new Date(doc.upload_date).toLocaleDateString() :
-            'Previously uploaded'
+          uploadDate: doc.upload_date ? new Date(doc.upload_date).toLocaleDateString() : 'Previously uploaded'
         });
       } else {
         setHasUploadedDocument(false);
@@ -692,8 +496,6 @@ const EditableBriefSection = ({
       console.error('Error loading document info:', error);
     }
   };
-
-
   useEffect(() => {
     return () => {
       if (autoSaveTimeoutRef.current) {
@@ -701,101 +503,54 @@ const EditableBriefSection = ({
       }
     };
   }, []);
-
-  const isQuestionHighlighted = (questionId) => {
+  const isQuestionHighlighted = questionId => {
     if (!highlightedMissingQuestions?.missing_questions) return false;
-
     const question = questions.find(q => (q._id || q.question_id) === questionId);
     if (!question) return false;
-
     return highlightedMissingQuestions.missing_questions.some(q => q.order === question.order);
   };
-
   const renderMissingQuestionsBanner = () => {
     if (!highlightedMissingQuestions || highlightedMissingQuestions.missing_count === 0) {
       return null;
     }
-
     const isExtendedHighlight = highlightedMissingQuestions.keepHighlightLonger;
-
-    return (
-      <div style={{
-        background: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)',
-        border: '1px solid #f59e0b',
-        borderRadius: '8px',
-        padding: '12px',
-        margin: '16px 0',
-        fontSize: '13px',
-        color: '#92400e'
-      }}>
-        <div style={{
-          fontWeight: '600',
-          marginBottom: '8px',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '8px'
-        }}>
+    return <div className="editable-brief-section--s23">
+        <div className="editable-brief-section--s24">
           <AlertCircle size={16} />
           {isExtendedHighlight ? 'Answers Need More Detail' : 'Analysis Requires Additional Information'}
-          {onClearHighlight && (
-            <button
-              onClick={onClearHighlight}
-              style={{
-                background: 'none',
-                border: 'none',
-                cursor: 'pointer',
-                marginLeft: 'auto',
-                padding: '2px',
-                color: '#92400e'
-              }}
-            >
+          {onClearHighlight && <button onClick={onClearHighlight} className="editable-brief-section--s25">
               <X size={14} />
-            </button>
-          )}
+            </button>}
         </div>
         <div>
-          {highlightedMissingQuestions.message ||
-            `To generate <strong>${highlightedMissingQuestions.analysis_type}</strong> analysis, 
+          {highlightedMissingQuestions.message || `To generate <strong>${highlightedMissingQuestions.analysis_type}</strong> analysis,
             please answer the highlighted questions below.`}
         </div>
-        <div style={{ fontSize: '12px', color: '#78350f', marginTop: '4px' }}>
+        <div className="editable-brief-section--s26">
           Questions highlighted: {highlightedMissingQuestions.missing_questions.map(q => q.order).join(', ')}
         </div>
-      </div>
-    );
+      </div>;
   };
-
   const generateBriefFields = () => {
     const fields = [];
-
-    // Order: initial (1), essential (2), advanced (3)
     const phaseOrderMap = {
       'initial': 1,
       'essential': 2,
       'advanced': 3
     };
-
-    const filteredQuestions = questions.filter(q =>
-      q.phase && !['good'].includes(q.phase.toLowerCase())
-    );
-
+    const filteredQuestions = questions.filter(q => q.phase && !['good'].includes(q.phase.toLowerCase()));
     const sortedQuestions = [...filteredQuestions].sort((a, b) => {
       const phaseA = phaseOrderMap[a.phase?.toLowerCase()] || 4;
       const phaseB = phaseOrderMap[b.phase?.toLowerCase()] || 4;
-
       if (phaseA !== phaseB) {
         return phaseA - phaseB;
       }
-
       return (a.order || 0) - (b.order || 0);
     });
-
-    let sequentialNumber = 1; // Add sequential counter
-
+    let sequentialNumber = 1;
     sortedQuestions.forEach(question => {
       const qId = question._id || question.question_id;
-      const answer = userAnswers[qId] || ''; // Include even if empty
-
+      const answer = userAnswers[qId] || '';
       fields.push({
         key: `question_${qId}`,
         label: question.question_text,
@@ -804,75 +559,48 @@ const EditableBriefSection = ({
         phase: question.phase,
         severity: question.severity,
         order: question.order,
-        sequentialNumber: sequentialNumber++ // Use sequential number instead of question.order
+        sequentialNumber: sequentialNumber++
       });
     });
-
     setBriefFields(fields);
   };
-
-
   const showToastMessage = (message, type = 'success') => {
-    setShowToast({ show: true, message, type });
-    setTimeout(() => setShowToast({ show: false, message: '', type: 'success' }), 5000);
+    setShowToast({
+      show: true,
+      message,
+      type
+    });
+    setTimeout(() => setShowToast({
+      show: false,
+      message: '',
+      type: 'success'
+    }), 5000);
   };
-
   const updateConversationAnswer = async (field, newAnswer) => {
     try {
       setIsSaving(true);
       const token = getAuthToken();
-
       const question = questions.find(q => {
         const qId = q._id || q.question_id;
         return String(qId) === String(field.questionId);
       });
-
       if (!question) throw new Error('Question not found');
-
       const questionId = String(question._id || question.question_id);
       const existingAnswerId = answerIds[questionId];
-
       let response;
       if (existingAnswerId) {
-        // Update existing answer 
         response = await answerService.updateAnswer(existingAnswerId, newAnswer);
       } else {
-        // Create new answer 
         response = await answerService.createAnswer(selectedBusinessId, questionId, newAnswer);
         if (response && response.data && response.data._id) {
           if (setAnswerIds) {
-            setAnswerIds(prev => ({ ...prev, [questionId]: response.data._id }));
+            setAnswerIds(prev => ({
+              ...prev,
+              [questionId]: response.data._id
+            }));
           }
         }
       }
-
-      /* 
-      // Sync with legacy conversation collection for backward compatibility
-      try {
-        await fetch(`${API_BASE_URL}/api/conversations`, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            question_id: questionId,
-            answer_text: newAnswer.trim(),
-            is_followup: false,
-            business_id: selectedBusinessId || null,
-            is_complete: true,
-            metadata: {
-              from_editable_brief: true,
-              timestamp: new Date().toISOString(),
-              is_edit: true
-            }
-          })
-        });
-      } catch (convError) {
-        console.warn('Legacy conversation update failed, but answer was saved:', convError);
-      }
-      */
-
       return response;
     } catch (error) {
       throw error;
@@ -880,12 +608,10 @@ const EditableBriefSection = ({
       setIsSaving(false);
     }
   };
-
   const handleAutoSave = (field, value) => {
     if (autoSaveTimeoutRef.current) {
       clearTimeout(autoSaveTimeoutRef.current);
     }
-
     autoSaveTimeoutRef.current = setTimeout(async () => {
       if (value.trim() && value.trim() !== field.value) {
         try {
@@ -899,68 +625,50 @@ const EditableBriefSection = ({
           showToastMessage('Auto-save failed', 'error');
         }
       }
-    }, 3000); // Auto-save after 3 seconds of no typing
+    }, 3000);
   };
-
-  const handleEdit = (field) => {
-  setEditingField(field.key);
-
-  setTimeout(() => {
-    const fieldElement = fieldRefs.current[field.key];
-
-    if (fieldElement) {
-      const yOffset = -250; // adjust how high it scrolls
-      const y =
-        fieldElement.getBoundingClientRect().top +
-        window.pageYOffset +
-        yOffset;
-
-      window.scrollTo({
-        top: y,
-        behavior: "smooth"
-      });
-    }
-
-    const input = inputRefs.current[field.key];
-
-    if (input) {
-      input.focus();
-      input.setSelectionRange(input.value.length, input.value.length);
-    }
-  }, 120);
-};
-
-  const handleSave = async (field) => {
+  const handleEdit = field => {
+    setEditingField(field.key);
+    setTimeout(() => {
+      const fieldElement = fieldRefs.current[field.key];
+      if (fieldElement) {
+        const yOffset = -250;
+        const y = fieldElement.getBoundingClientRect().top + window.pageYOffset + yOffset;
+        window.scrollTo({
+          top: y,
+          behavior: "smooth"
+        });
+      }
+      const input = inputRefs.current[field.key];
+      if (input) {
+        input.focus();
+        input.setSelectionRange(input.value.length, input.value.length);
+      }
+    }, 120);
+  };
+  const handleSave = async field => {
     const input = inputRefs.current[field.key];
     const newValue = input?.value || '';
-
     try {
       if (autoSaveTimeoutRef.current) {
         clearTimeout(autoSaveTimeoutRef.current);
         autoSaveTimeoutRef.current = null;
       }
-
       await updateConversationAnswer(field, newValue.trim());
-
       if (onAnswerUpdate) {
         onAnswerUpdate(field.questionId, newValue.trim());
       }
-
       setEditedFields(prev => new Set([...prev, field.key]));
-
       if (newValue.trim()) {
         showToastMessage('Answer updated and saved!', 'success');
       } else {
         showToastMessage('Answer cleared and saved!', 'success');
       }
-
     } catch (error) {
       showToastMessage('Failed to update answer', 'error');
     }
-
     setEditingField(null);
   };
-
   const handleCancel = () => {
     if (autoSaveTimeoutRef.current) {
       clearTimeout(autoSaveTimeoutRef.current);
@@ -968,35 +676,25 @@ const EditableBriefSection = ({
     }
     setEditingField(null);
   };
-
   const totalQuestions = questions.length;
   const answeredQuestions = Object.keys(userAnswers).filter(key => userAnswers[key] && userAnswers[key].trim()).length;
-  const progressPercentage = totalQuestions > 0
-    ? Math.round((answeredQuestions / totalQuestions) * 100)
-    : 0;
-
+  const progressPercentage = totalQuestions > 0 ? Math.round(answeredQuestions / totalQuestions * 100) : 0;
   const initialQuestions = questions.filter(q => q.phase === 'initial' && q.severity === 'mandatory');
   const essentialQuestions = questions.filter(q => q.phase === 'essential');
-
   const completedInitialQuestions = initialQuestions.filter(q => {
     const qId = q._id || q.question_id;
     return userAnswers[qId] && userAnswers[qId].trim();
   });
-
   const completedEssentialQuestions = essentialQuestions.filter(q => {
     const qId = q._id || q.question_id;
     return userAnswers[qId] && userAnswers[qId].trim();
   });
-
   const isInitialPhaseComplete = completedInitialQuestions.length === initialQuestions.length && initialQuestions.length > 0;
   const isEssentialPhaseComplete = completedEssentialQuestions.length === essentialQuestions.length && essentialQuestions.length > 0;
-
   const handleGenerateEnrichment = async () => {
     try {
       setIsEnriching(true);
       setEnrichedAnswers(null);
-
-      // 1. Fetch real onboarding data for this business
       let onboardingData = null;
       try {
         const analysisResult = await analysisService.getPMFAnalysis(selectedBusinessId);
@@ -1004,27 +702,20 @@ const EditableBriefSection = ({
       } catch (err) {
         console.warn("Could not fetch onboarding data:", err);
       }
-
-      // Check if onboarding data is missing
       if (!onboardingData || Object.keys(onboardingData).length === 0) {
         showToastMessage(t("completeOnboardingPrompt") || "Please complete the PMF Onboarding to see answers here.", 'error');
         setIsEnriching(false);
         return;
       }
-
-      // Find company name from current brief fields/user answers as backup
       const companyNameField = briefFields.find(f => f.label.toLowerCase().includes('company') || f.label.toLowerCase().includes('name'));
       const companyName = onboardingData?.companyName || companyNameField?.value || "";
-
-      // 2. Construct the rich payload for the ML enrichment API
-      // We follow the same structure as the executive summary payload in PMFOnboardingModal
       const rawPayload = {
         company: {
           name: companyName || "N/A",
           website: onboardingData?.website || "N/A",
           location: {
             city: onboardingData?.city || "N/A",
-            country: onboardingData?.country || "N/A",
+            country: onboardingData?.country || "N/A"
           },
           industry: onboardingData?.primaryIndustry || "N/A",
           geographies: [onboardingData?.geography1, onboardingData?.geography2, onboardingData?.geography3].filter(Boolean),
@@ -1032,29 +723,17 @@ const EditableBriefSection = ({
             source: {
               [t("Segments")]: [onboardingData?.customerSegment1, onboardingData?.customerSegment2, onboardingData?.customerSegment3].filter(Boolean),
               [t("Products")]: [onboardingData?.productService1, onboardingData?.productService2, onboardingData?.productService3].filter(Boolean),
-              [t("Channels")]: [onboardingData?.channel1, onboardingData?.channel2, onboardingData?.channel3].filter(Boolean),
+              [t("Channels")]: [onboardingData?.channel1, onboardingData?.channel2, onboardingData?.channel3].filter(Boolean)
             }
           },
           objective: onboardingData?.strategicObjective === "Other" ? onboardingData?.strategicObjectiveOther : onboardingData?.strategicObjective || "N/A",
           constraint: {
-            primary: onboardingData?.keyChallenge === "Other" ? onboardingData?.keyChallengeOther : onboardingData?.keyChallenge || "N/A",
+            primary: onboardingData?.keyChallenge === "Other" ? onboardingData?.keyChallengeOther : onboardingData?.keyChallenge || "N/A"
           },
-          usp: onboardingData?.differentiation ? [...onboardingData.differentiation.filter(d => d !== 'Other'), onboardingData.differentiationOther].filter(Boolean) : [],
-        },
+          usp: onboardingData?.differentiation ? [...onboardingData.differentiation.filter(d => d !== 'Other'), onboardingData.differentiationOther].filter(Boolean) : []
+        }
       };
-
-      const result = await analysisService.makeAPICall(
-        'answer-questions-with-enrichment',
-        null,
-        null,
-        selectedBusinessId,
-        null,
-        null,
-        null,
-        companyName,
-        rawPayload
-      );
-
+      const result = await analysisService.makeAPICall('answer-questions-with-enrichment', null, null, selectedBusinessId, null, null, null, companyName, rawPayload);
       if (Array.isArray(result)) {
         setEnrichedAnswers(result);
         showToastMessage('Enrichment suggestions generated!', 'success');
@@ -1068,74 +747,58 @@ const EditableBriefSection = ({
       setIsEnriching(false);
     }
   };
-
   const saveFileToDatabase = async (file, validationResult) => {
     try {
       const token = getAuthToken();
       if (!token) throw new Error('Authentication token not found');
       if (!selectedBusinessId) throw new Error('No business selected');
-
       const formData = new FormData();
       formData.append('document', file);
-
       const templateComplexityMap = {
         'simplified': 'simple',
         'standard': 'medium',
         'detailed': 'medium'
       };
-
       const backendTemplateType = templateComplexityMap[validationResult.templateType] || 'simple';
       formData.append('template_type', backendTemplateType);
       formData.append('template_name', validationResult.templateName || '');
       formData.append('validation_confidence', validationResult.confidence || 'high');
       formData.append('upload_mode', validationResult.uploadMode || 'auto-detect');
-
       const response = await fetch(`${API_BASE_URL}/api/businesses/${selectedBusinessId}/financial-document`, {
         method: 'PUT',
-        headers: { 'Authorization': `Bearer ${token}` },
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
         body: formData
       });
-
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || 'Failed to save file to database');
-
       return result;
     } catch (error) {
       console.error('Database save error:', error);
       throw error;
     }
   };
-
-  const handleFileUpload = async (event) => {
+  const handleFileUpload = async event => {
     const file = event.target.files[0];
     if (!file) return;
-
-    const allowedTypes = [
-      'application/vnd.ms-excel',
-      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-      'text/csv'
-    ];
-
+    const allowedTypes = ['application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'text/csv'];
     if (!allowedTypes.includes(file.type)) {
       showToastMessage('Please upload Excel (.xlsx, .xls) or CSV files only.', 'error');
       return;
     }
-
     try {
       setIsFileUploading(true);
       const detection = await detectTemplateType(file);
-
       if (detection.confidence === 'none' || detection.score < 0.3) {
         throw new Error(`Unable to identify template type. Please ensure your file is based on one of our template files.`);
       }
-
       const validation = await validateAgainstTemplate(file, detection.type);
       if (!validation.isValid) {
         let errorMessage = `Your file doesn't match the ${validation.templateName} format:\n\n`;
         validation.errors.forEach(error => errorMessage += `• ${error}\n`);
         throw new Error(errorMessage);
       }
-
       const validationResult = {
         templateType: detection.type,
         templateName: validation.templateName,
@@ -1143,26 +806,23 @@ const EditableBriefSection = ({
         confidence: detection.confidence,
         uploadMode: 'auto-detect'
       };
-
       await saveFileToDatabase(file, validationResult);
-
       setHasUploadedDocument(true);
       setUploadedFileInfo({
         name: file.name,
         size: file.size,
         uploadDate: new Date().toLocaleDateString()
       });
-
-      //showToastMessage(`✅ File uploaded successfully! Detected as ${validation.templateName}. Running financial analysis...`, 'success');
-
-      // Also notify parent to refresh display
       if (onUploadedFileUpdate) {
         onUploadedFileUpdate(file);
       }
-
       if (onAnalysisRegenerate) {
         setIsFinancialRegenerating(true);
-        onAnalysisRegenerate({ onlyFinancial: true, uploadedFile: file, skipConfirmation: true });
+        onAnalysisRegenerate({
+          onlyFinancial: true,
+          uploadedFile: file,
+          skipConfirmation: true
+        });
       }
     } catch (error) {
       console.error('File upload/validation error:', error);
@@ -1174,13 +834,10 @@ const EditableBriefSection = ({
       }
     }
   };
-
   const handleApplyEnrichedAnswers = async () => {
     if (!enrichedAnswers || enrichedAnswers.length === 0) return;
-
     try {
       setIsApplyingEnrichment(true);
-
       const updatedQuestionIds = [];
       const answersToSave = enrichedAnswers.map(enriched => {
         const field = briefFields.find(f => f.label === enriched.question);
@@ -1193,37 +850,34 @@ const EditableBriefSection = ({
         }
         return null;
       }).filter(Boolean);
-
       if (answersToSave.length === 0) {
         showToastMessage('No matching questions found to apply', 'warning');
         return;
       }
-
-      // 1. Save to the new answers collection (using bulk create for new answers)
-      const newAnswerIds = { ...answerIds };
+      const newAnswerIds = {
+        ...answerIds
+      };
       let idsUpdated = false;
-
       const toCreate = [];
       const toUpdate = [];
-
       answersToSave.forEach(item => {
         const qIdStr = String(item.question_id);
         const existingId = answerIds[qIdStr];
         if (existingId) {
-          toUpdate.push({ id: existingId, ...item });
+          toUpdate.push({
+            id: existingId,
+            ...item
+          });
         } else {
           toCreate.push(item);
         }
       });
-
-      // Handle bulk create for new answers
       if (toCreate.length > 0) {
-        try { 
+        try {
           const bulkRes = await answerService.bulkCreateAnswers(selectedBusinessId, toCreate.map(item => ({
             question_id: item.question_id,
             answer: item.answer_text
           })));
-
           if (bulkRes && bulkRes.data && bulkRes.data.insertedIds) {
             toCreate.forEach((item, index) => {
               const newId = bulkRes.data.insertedIds[index];
@@ -1237,10 +891,8 @@ const EditableBriefSection = ({
           console.error('Failed to bulk create answers:', err);
         }
       }
-
-      // Handle bulk updates for existing answers
       if (toUpdate.length > 0) {
-        try { 
+        try {
           await answerService.bulkUpdateAnswers(selectedBusinessId, toUpdate.map(item => ({
             answer_id: item.id,
             answer: item.answer_text
@@ -1249,15 +901,9 @@ const EditableBriefSection = ({
           console.error('Failed to bulk update answers:', err);
         }
       }
-
       if (idsUpdated && setAnswerIds) {
         setAnswerIds(newAnswerIds);
       }
-
-      // 2. Legacy bulk update for conversations and side effects
-      // await analysisService.bulkUpdateConversations(selectedBusinessId, answersToSave);
-
-      // Update local state for immediate UI feedback
       const newlyEdited = new Set(editedFields);
       answersToSave.forEach(item => {
         if (onAnswerUpdate) {
@@ -1266,17 +912,14 @@ const EditableBriefSection = ({
         newlyEdited.add(`question_${item.question_id}`);
       });
       setEditedFields(newlyEdited);
-
       setEnrichedAnswers(null);
       showToastMessage('Enriched answers applied and saved!', 'success');
-
-      // Trigger auto-regeneration of Insights 6'Cs and Strategic Tab
       if (onAnalysisRegenerate) {
-        onAnalysisRegenerate({ 
-          updatedQuestionIds, 
-          alsoRegenerateStrategic: true, 
+        onAnalysisRegenerate({
+          updatedQuestionIds,
+          alsoRegenerateStrategic: true,
           skipConfirmation: true,
-          skipFinancial: true 
+          skipFinancial: true
         });
       }
     } catch (error) {
@@ -1286,249 +929,84 @@ const EditableBriefSection = ({
       setIsApplyingEnrichment(false);
     }
   };
-
-  return (
-    <div className="editable-brief-section">
-      {showToast.show && (
-        <div className={`simple-toast ${showToast.type}`}>
+  return <div className="editable-brief-section">
+      {showToast.show && <div className={`simple-toast ${showToast.type}`}>
           {showToast.message}
-        </div>
-      )}
+        </div>}
 
       {renderMissingQuestionsBanner()}
 
-
-      {enrichedAnswers && (
-        <div className="enrichment-preview" style={{
-          backgroundColor: '#f0f9ff',
-          border: '1px solid #bae6fd',
-          borderRadius: '12px',
-          padding: '20px',
-          marginBottom: '24px',
-          animation: 'fadeIn 0.3s ease-in'
-        }}>
-          <div style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            marginBottom: '16px'
-          }}>
-            <h5 style={{ margin: 0, color: '#0369a1', fontSize: '15px', fontWeight: '600' }}>
+      {enrichedAnswers && <div className="enrichment-preview editable-brief-section--s27">
+          <div className="editable-brief-section--s28">
+            <h5 className="editable-brief-section--s29">
               AI Enrichment Suggestions
             </h5>
-            <div style={{ display: 'flex', gap: '10px' }}>
-              <button
-                onClick={() => setEnrichedAnswers(null)}
-                style={{
-                  padding: '6px 12px',
-                  backgroundColor: 'white',
-                  border: '1px solid #bae6fd',
-                  borderRadius: '6px',
-                  fontSize: '13px',
-                  color: '#64748b',
-                  cursor: 'pointer'
-                }}
-              >
+            <div className="editable-brief-section--s30">
+              <button onClick={() => setEnrichedAnswers(null)} className="editable-brief-section--s31">
                 Discard
               </button>
-              <button
-                onClick={handleApplyEnrichedAnswers}
-                disabled={isApplyingEnrichment}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  padding: '6px 16px',
-                  backgroundColor: '#0284c7',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '6px',
-                  fontSize: '13px',
-                  fontWeight: '600',
-                  cursor: isApplyingEnrichment ? 'not-allowed' : 'pointer'
-                }}
-              >
+              <button onClick={handleApplyEnrichedAnswers} disabled={isApplyingEnrichment} style={{
+            cursor: isApplyingEnrichment ? 'not-allowed' : 'pointer'
+          }} className="editable-brief-section--s32">
                 {isApplyingEnrichment ? <Loader size={14} className="antigravity-rotating" /> : <Check size={14} />}
                 Apply All Answers
               </button>
             </div>
           </div>
-          <div style={{
-            maxHeight: '300px',
-            overflowY: 'auto',
-            paddingRight: '10px'
-          }}>
-            {enrichedAnswers.map((item, idx) => (
-              <div key={idx} style={{
-                backgroundColor: 'white',
-                padding: '12px',
-                borderRadius: '8px',
-                marginBottom: '10px',
-                border: '1px solid #e0f2fe'
-              }}>
-                <div style={{ fontWeight: '600', fontSize: '13px', color: '#0c4a6e', marginBottom: '4px' }}>
+          <div className="editable-brief-section--s33">
+            {enrichedAnswers.map((item, idx) => <div key={idx} className="editable-brief-section--s34">
+                <div className="editable-brief-section--s35">
                   {item.question}
                 </div>
-                <div style={{ fontSize: '13px', color: '#334155', lineHeight: '1.5' }}>
+                <div className="editable-brief-section--s36">
                   {item.answer}
                 </div>
-              </div>
-            ))}
+              </div>)}
           </div>
-        </div>
-      )}
+        </div>}
 
-      {(isAnalysisRegenerating || isStrategicRegenerating || isSaving || isEssentialPhaseGenerating || isApplyingEnrichment || isFileUploading) && (
-        <div className="analysis-regenerating-banner">
+      {(isAnalysisRegenerating || isStrategicRegenerating || isSaving || isEssentialPhaseGenerating || isApplyingEnrichment || isFileUploading) && <div className="analysis-regenerating-banner">
           <Loader size={16} className="antigravity-rotating" />
           <span>
-            {isApplyingEnrichment ? 'Generating AI answers and regenerating insights...' :
-              (isFileUploading || isFinancialRegenerating) ? 'Regenerating financial insights like profitability, growth tracker, liquidity, investment performance, leverage and risk insight...' :
-                isSaving ? 'Saving changes...' :
-                  (isAnalysisRegenerating || isStrategicRegenerating) ? 'Generating all Insights & STRATEGIC analysis...' :
-                    isEssentialPhaseGenerating ? 'Generating Insight...' : ''}
+            {isApplyingEnrichment ? 'Generating AI answers and regenerating insights...' : isFileUploading || isFinancialRegenerating ? 'Regenerating financial insights like profitability, growth tracker, liquidity, investment performance, leverage and risk insight...' : isSaving ? 'Saving changes...' : isAnalysisRegenerating || isStrategicRegenerating ? 'Generating all Insights & STRATEGIC analysis...' : isEssentialPhaseGenerating ? 'Generating Insight...' : ''}
           </span>
-        </div>
-      )}
+        </div>}
 
-      {/* <div className="brief-progress">
-        <div className="progress-info">
-          {isLoading ? (
-            <span className="progress-text">
-              <Loader size={16} className="antigravity-rotating" style={{ display: 'inline', marginRight: '8px' }} />
-              Loading progress...
-            </span>
-          ) : (
-            <>
-              {answeredQuestions > 0 && (
-                <span className="progress-text">
-                  Progress: {progressPercentage}% completed
-                </span>
-              )}
-            </>
-          )}
-        </div>
-
-        {!isLoading && answeredQuestions > 0 && (
-          <div className="progress-bar-container" style={{
-            width: '100%',
-            height: '8px',
-            backgroundColor: '#e5e7eb',
-            borderRadius: '4px',
-            marginTop: '8px',
-            overflow: 'hidden'
-          }}>
-            <div
-              className="progress-bar-fill"
-              style={{
-                width: `${(answeredQuestions / totalQuestions) * 100}%`,
-                height: '100%',
-                backgroundColor: isInitialPhaseComplete ? '#10b981' : '#3b82f6',
-                borderRadius: '4px',
-                transition: 'width 0.3s ease-in-out'
-              }}
-            />
-          </div>
-        )}
-      </div> */}
+      {}
 
       <div className="brief-content">
         <div className="brief-list">
-          {isLoading ? (
-            <div className="loading-state" style={{ textAlign: 'center', padding: '2rem' }}>
+          {isLoading ? <div className="loading-state editable-brief-section--s37">
               <Loader size={24} className="antigravity-rotating" />
               <p>Loading your business information...</p>
-            </div>
-          ) : briefFields.length > 0 ? (
-            (() => {
-              const rows = [];
+            </div> : briefFields.length > 0 ? (() => {
+          const rows = [];
+          rows.push(<div key="feature-blocks-row" className="editable-brief-section--s38">
+                  {hasPmfAccess && <AIAnswerSupportBlock onGenerateEnrichment={handleGenerateEnrichment} isEnriching={isEnriching} isApplyingEnrichment={isApplyingEnrichment} isAnalysisRegenerating={isAnalysisRegenerating} isStrategicRegenerating={isStrategicRegenerating} isSaving={isSaving} canEnrich={canEnrich} />}
 
-              // Insert Feature Row at the top
-              rows.push(
-                <div key="feature-blocks-row" style={{
-                  display: 'flex',
-                  gap: '20px',
-                  marginBottom: '10px',
-                  flexWrap: 'wrap'
-                }}>
-                  {hasPmfAccess && (
-                    <AIAnswerSupportBlock
-                      onGenerateEnrichment={handleGenerateEnrichment}
-                      isEnriching={isEnriching}
-                      isApplyingEnrichment={isApplyingEnrichment}
-                      isAnalysisRegenerating={isAnalysisRegenerating}
-                      isStrategicRegenerating={isStrategicRegenerating}
-                      isSaving={isSaving}
-                      canEnrich={canEnrich}
-                    />
-                  )}
-
-                  <FinancialUploadBlock
-                    hasUploadedDocument={hasUploadedDocument}
-                    uploadedFileInfo={uploadedFileInfo}
-                    onOpenManagement={() => setShowTemplatesPopup(true)}
-                    canEdit={canEdit}
-                    isAnalysisRegenerating={isAnalysisRegenerating}
-                    isStrategicRegenerating={isStrategicRegenerating}
-                  />
-                </div>
-              );
-
-              briefFields.forEach((field, index) => {
-                rows.push(
-                  <EditableField
-                    key={field.key}
-                    field={field}
-                    editingField={editingField}
-                    editedFields={editedFields}
-                    isQuestionHighlighted={isQuestionHighlighted}
-                    canEdit={canEdit}
-                    handleEdit={handleEdit}
-                    isAnalysisRegenerating={isAnalysisRegenerating}
-                    isStrategicRegenerating={isStrategicRegenerating}
-                    isSaving={isSaving}
-                    isEssentialPhaseGenerating={isEssentialPhaseGenerating}
-                    isEnriching={isEnriching}
-                    isApplyingEnrichment={isApplyingEnrichment}
-                    isLaunchedStatus={isLaunchedStatus}
-                    inputRefs={inputRefs}
-                    fieldRefs={fieldRefs}
-                    handleSave={handleSave}
-                    handleCancel={handleCancel}
-                    handleAutoSave={handleAutoSave}
-                    isLastField={index === briefFields.length - 1}
-                  />
-                );
-              });
-
-              return rows;
-            })()
-          ) : (
-            <div className="no-data">
+                  <FinancialUploadBlock hasUploadedDocument={hasUploadedDocument} uploadedFileInfo={uploadedFileInfo} onOpenManagement={() => setShowTemplatesPopup(true)} canEdit={canEdit} isAnalysisRegenerating={isAnalysisRegenerating} isStrategicRegenerating={isStrategicRegenerating} />
+                </div>);
+          briefFields.forEach((field, index) => {
+            rows.push(<EditableField key={field.key} field={field} editingField={editingField} editedFields={editedFields} isQuestionHighlighted={isQuestionHighlighted} canEdit={canEdit} handleEdit={handleEdit} isAnalysisRegenerating={isAnalysisRegenerating} isStrategicRegenerating={isStrategicRegenerating} isSaving={isSaving} isEssentialPhaseGenerating={isEssentialPhaseGenerating} isEnriching={isEnriching} isApplyingEnrichment={isApplyingEnrichment} isLaunchedStatus={isLaunchedStatus} inputRefs={inputRefs} fieldRefs={fieldRefs} handleSave={handleSave} handleCancel={handleCancel} handleAutoSave={handleAutoSave} isLastField={index === briefFields.length - 1} />);
+          });
+          return rows;
+        })() : <div className="no-data">
               <p>{t('businessInfoMessage') || 'Your business info will show here once you answer questions.'}</p>
-              {questions.length > 0 && Object.keys(userAnswers).length === 0 && (
-                <p className="help-text">
+              {questions.length > 0 && Object.keys(userAnswers).length === 0 && <p className="help-text">
                   Complete questions in the Assistant tab to see your business information here.
-                </p>
-              )}
-            </div>
-          )}
+                </p>}
+            </div>}
         </div>
       </div>
-      {showTemplatesPopup && (
-        <FinancialTemplatesPopup
-          isOpen={showTemplatesPopup}
-          onClose={() => setShowTemplatesPopup(false)}
-          isFileUploading={isFileUploading}
-          onFileUploaded={(file, validation) => {
-            const mockEvent = { target: { files: [file] } };
-            handleFileUpload(mockEvent);
-            setShowTemplatesPopup(false);
-          }}
-        />
-      )}
-    </div>
-  );
+      {showTemplatesPopup && <FinancialTemplatesPopup isOpen={showTemplatesPopup} onClose={() => setShowTemplatesPopup(false)} isFileUploading={isFileUploading} onFileUploaded={(file, validation) => {
+      const mockEvent = {
+        target: {
+          files: [file]
+        }
+      };
+      handleFileUpload(mockEvent);
+      setShowTemplatesPopup(false);
+    }} />}
+    </div>;
 };
-
 export default EditableBriefSection;

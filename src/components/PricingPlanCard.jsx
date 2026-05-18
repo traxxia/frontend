@@ -1,5 +1,5 @@
 import React from 'react';
-import { FaCheckCircle } from 'react-icons/fa';
+import { CheckCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useTranslation } from "../hooks/useTranslation";
 
@@ -26,7 +26,7 @@ const PricingPlanCard = ({ plan, isSelected, onSelect }) => {
             <ul className="plan-features">
                 {features.map((feature, idx) => (
                     <li key={idx}>
-                        <FaCheckCircle className="check-icon" />
+                        <CheckCircle size={16} className="check-icon" />
                         {t(feature)}
                     </li>
                 ))}

@@ -1,7 +1,6 @@
 import React from 'react';
-import { X, Download } from 'lucide-react';
+import { X } from 'lucide-react';
 import '../styles/AnalysisEmptyState.css';
-
 
 import SwotAnalysis from './SwotAnalysis';
 import CustomerSegmentation from './CustomerSegmentation';
@@ -28,7 +27,6 @@ import InvestmentPerformance from './InvestmentPerformance';
 import LeverageRisk from './LeverageRisk';
 import CoreAdjacency from './CoreAdjacency';
 import CompetitiveLandscape from './CompetitiveLandscape';
-import MissingMetricsDisplay from './MissingMetricsDisplay'; // Added import for MissingMetricsDisplay
 
 const AnalysisDataModal = ({
   isOpen,
@@ -38,25 +36,10 @@ const AnalysisDataModal = ({
   analysisName,
   businessName = "Business",
   auditId,
-  documentInfo = null, // Added new prop for document information
-  phaseAnalysisArray = [] // Added phaseAnalysisArray prop
+  documentInfo = null,
+  phaseAnalysisArray = []
 }) => {
   if (!isOpen) return null;
-
-  const downloadAnalysisData = () => {
-    const dataStr = JSON.stringify(analysisData, null, 2);
-    const blob = new Blob([dataStr], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `${analysisType}_analysis_${auditId}.json`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-  };
-
-  // Determine if this is a financial analysis type
   const financialAnalysisTypes = [
     'profitabilityAnalysis',
     'growthTracker',
@@ -65,14 +48,10 @@ const AnalysisDataModal = ({
     'leverageRisk'
   ];
   const isFinancialAnalysis = financialAnalysisTypes.includes(analysisType);
-
-  // Determine if a document is uploaded based on documentInfo
   const hasDocumentUploaded = documentInfo && documentInfo.has_document;
-
-  // Create effective document info if needed for financial analyses
   const effectiveDocumentInfo = isFinancialAnalysis
     ? (documentInfo || {
-      has_document: hasDocumentUploaded || true, // Assume true for financial if not specified
+      has_document: hasDocumentUploaded || true,
       filename: documentInfo?.filename || 'Financial Document',
       template_name: documentInfo?.template_name || 'Standard',
       upload_date: documentInfo?.upload_date || new Date().toISOString()
@@ -80,7 +59,6 @@ const AnalysisDataModal = ({
     : documentInfo;
 
   const renderAnalysisComponent = () => {
-    // Mock props for read-only display
     const mockProps = {
       questions: [],
       userAnswers: {},
@@ -96,7 +74,6 @@ const AnalysisDataModal = ({
       setActiveTab: () => { },
       hasUploadedDocument: hasDocumentUploaded,
       uploadedFile: null,
-      // Disable all interactive features
       readOnly: true,
       hideControls: true,
       questionsLoaded: true
@@ -267,8 +244,6 @@ const AnalysisDataModal = ({
             maturityData={analysisData}
           />
         );
-
-      // Added missing financial analysis components
       case 'profitabilityAnalysis':
         return (
           <ProfitabilityAnalysis
@@ -310,7 +285,6 @@ const AnalysisDataModal = ({
         );
 
       default:
-        // Fallback for unknown analysis types - show raw JSON
         return (
           <div className="analysis-modal-fallback">
             <h3>Raw Analysis Data</h3>
@@ -323,7 +297,6 @@ const AnalysisDataModal = ({
   };
 
   const handleOverlayClick = (e) => {
-    // Only close if clicking the overlay, not the modal content
     if (e.target === e.currentTarget) {
       onClose();
     }
@@ -332,7 +305,7 @@ const AnalysisDataModal = ({
   return (
     <div className="analysis-modal-overlay" onClick={handleOverlayClick}>
       <div className="analysis-modal-content">
-        {/* Close Button - Top Right */}
+        {}
         <button
           className="analysis-modal-close"
           onClick={onClose}
@@ -341,7 +314,7 @@ const AnalysisDataModal = ({
           <X size={20} />
         </button>
 
-        {/* Modal Header */}
+        {}
         <div className="analysis-modal-header">
           <div>
             <h2 className="analysis-modal-title">
@@ -353,22 +326,16 @@ const AnalysisDataModal = ({
           </div>
         </div>
 
-        {/* Modal Body */}
+        {}
         <div className="analysis-modal-body">
           <div className="analysis-modal-content-wrapper">
             {(() => {
-              // Helper to check if data is actually valid/useful
               const hasValidData = (data) => {
                 if (!data) return false;
                 if (typeof data === 'string') return data.trim().length > 0;
                 if (typeof data !== 'object') return false;
-
-                // For financial analyses, check for actual numeric metrics
                 if (isFinancialAnalysis) {
-                  // Check for error properties
                   if (data.error || data.message === "Analysis failed") return false;
-
-                  // Recursively check for at least one numeric value or non-empty strings that aren't metadata
                   const checkDeep = (obj) => {
                     return Object.entries(obj).some(([key, value]) => {
                       if (key === 'citations' || key === 'analysis_metadata' || key.includes('threshold')) return false;
@@ -381,8 +348,6 @@ const AnalysisDataModal = ({
                   };
                   return checkDeep(data);
                 }
-
-                // For non-financial, standard check
                 return Object.keys(data).length > 0;
               };
 

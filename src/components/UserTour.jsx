@@ -9,21 +9,19 @@ const CustomTooltip = ({ index, step, backProps, primaryProps, skipProps, toolti
 
   const handlePrimaryClick = (e) => {
     if (primaryProps.onClick) primaryProps.onClick(e);
-    // Force completion if this is the last step
-    if (isLastStep) { 
+    if (isLastStep) {
       window.dispatchEvent(new CustomEvent('force-tour-complete', { detail: 'finished' }));
     }
   };
 
   const handleSkipClick = (e) => {
     if (skipProps.onClick) skipProps.onClick(e);
-    // Force completion on skip 
     window.dispatchEvent(new CustomEvent('force-tour-complete', { detail: 'skipped' }));
   };
 
   return (
     <div {...tooltipProps} className={`tooltip-container ${isWelcome ? 'welcome-modal' : ''}`}>
-      {/* Hide progress bar on Welcome Modal */}
+      {}
       {!isWelcome && (
         <div className="tooltip-progress-bar">
           {Array.from({ length: size }).map((_, i) => (
@@ -66,31 +64,24 @@ const CustomTooltip = ({ index, step, backProps, primaryProps, skipProps, toolti
 const UserTour = () => {
   const [run, setRun] = useState(false);
   const [steps, setSteps] = useState([]);
-  const [completedStatus, setCompletedStatus] = useState(null); // 'finished' or 'skipped'
-  
+  const [completedStatus, setCompletedStatus] = useState(null);
+
   const tourCompleted = useAuthStore(state => state.tourCompleted);
   const userRole = useAuthStore(state => state.userRole);
-
-  // Defensive check for backend URL
-  const API_BASE_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5000';
-
-  // Set up custom event listener to completely bypass react-joyride bugs
+  const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
   useEffect(() => {
     const handleForceComplete = (e) => {
-      const explicitStatus = e.detail; 
+      const explicitStatus = e.detail;
       setCompletedStatus(explicitStatus);
     };
 
     window.addEventListener('force-tour-complete', handleForceComplete);
     return () => window.removeEventListener('force-tour-complete', handleForceComplete);
   }, []);
-
-  // Effect to perform the backend completion API call
-  // This is decoupled from the Joyride lifecycle to ensure it always finishes.
   useEffect(() => {
     const performCompletion = async () => {
       if (!completedStatus) return;
- 
+
       useAuthStore.getState().updateUser({ tourCompleted: true });
 
       try {
@@ -100,7 +91,7 @@ const UserTour = () => {
         if (token) {
           const res = await axios.post(finalUrl, {}, {
             headers: { Authorization: `Bearer ${token}` }
-          }); 
+          });
         } else {
           console.warn("[UserTour] No token in sessionStorage available.");
         }
@@ -108,7 +99,7 @@ const UserTour = () => {
         console.error('[UserTour] Backend update FAILED:', err.response?.data || err.message);
       } finally {
         setRun(false);
-        setCompletedStatus(null); 
+        setCompletedStatus(null);
       }
     };
 
@@ -116,19 +107,12 @@ const UserTour = () => {
   }, [completedStatus, API_BASE_URL]);
 
   useEffect(() => {
-    // If it's explicitly false, we run the tour. If it's true, undefined, or null, we don't.
-    // Since only new users get false.
     if (tourCompleted === false) {
       const role = userRole?.toLowerCase() || 'user';
       let tourSteps = [];
-      
-      // New Dashboard layout selectors
       const howItWorksSelector = '.btn-how-it-works';
       const createBusinessSelector = '.btn-create-business';
       const businessesTableSelector = '.businesses-table-wrapper';
-
-      // "user" and "company_admin" share the same primary creation interface.
-      // super_admin has a different layout and doesn't hit UserTour
       if (['company_admin', 'user'].includes(role)) {
         tourSteps = [
           {
@@ -206,7 +190,6 @@ const UserTour = () => {
           }
         ];
       } else {
-        // Fallback for viewer or any other edge case
         tourSteps = [
           {
             target: 'body',
@@ -241,7 +224,6 @@ const UserTour = () => {
 
       if (steps.length === 0) {
         setSteps(tourSteps);
-        // add a small delay to ensure DOM is ready
         setTimeout(() => setRun(true), 500);
       }
     }
@@ -253,7 +235,7 @@ const UserTour = () => {
     const isFinished = status === 'finished' || status === 'completed' || status === STATUS.FINISHED;
     const isSkipped = status === 'skipped' || status === STATUS.SKIPPED;
 
-    if (isFinished || isSkipped) { 
+    if (isFinished || isSkipped) {
       setCompletedStatus(status);
     } else if (status === 'error') {
        console.error(`[UserTour] Joyride Error Event:`, data);

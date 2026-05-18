@@ -1,8 +1,7 @@
-// src/store/notificationStore.js
 import { create } from 'zustand';
 import { useAuthStore } from './authStore';
 
-const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
+const API_BASE_URL = import.meta.env.VITE_BACKEND_URL;
 
 export const useNotificationStore = create((set, get) => ({
   notifications: [],
@@ -44,10 +43,9 @@ export const useNotificationStore = create((set, get) => ({
     if (!token) return;
 
     try {
-      // Optimistic update
       const { notifications, unreadCount } = get();
       const notif = notifications.find(n => n._id === notifId);
-      
+
       if (notif && !notif.is_read) {
         set({
           notifications: notifications.map(n => n._id === notifId ? { ...n, is_read: true } : n),
@@ -93,7 +91,6 @@ export const useNotificationStore = create((set, get) => ({
     if (!token) return;
 
     try {
-      // Optimistic update
       set({
         notifications: get().notifications.map(n => ({ ...n, is_read: true })),
         unreadCount: 0
@@ -105,7 +102,6 @@ export const useNotificationStore = create((set, get) => ({
       });
     } catch (err) {
       console.error('Error marking all as read', err);
-      // Optional: rollback if needed, but usually not necessary for mark all read
     }
   }
 }));

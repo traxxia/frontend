@@ -3,7 +3,6 @@ import { Dropdown, OverlayTrigger } from "react-bootstrap";
 import { ChevronDown, Info, AlertTriangle, Clock, Eye, Edit2, Trash2, CheckCircle } from "lucide-react";
 import { useTranslation } from "../hooks/useTranslation";
 import "../styles/ProjectsTable.css";
-
 const ProjectsTable = ({
   projects,
   rankMap,
@@ -21,11 +20,12 @@ const ProjectsTable = ({
   isViewer,
   canReviewProject,
   canEditProject,
-  myUserId,
+  myUserId
 }) => {
-  const { t } = useTranslation();
-
-  const getStatusBadgeClass = (status) => {
+  const {
+    t
+  } = useTranslation();
+  const getStatusBadgeClass = status => {
     const s = (status || "Draft").toLowerCase().trim();
     if (s === "active") return "badge-active";
     if (s === "killed") return "badge-killed";
@@ -35,23 +35,19 @@ const ProjectsTable = ({
     if (s === "at risk" || s === "at_risk") return "badge-at-risk";
     return "badge-draft";
   };
-
-  const getLearningBadgeClass = (state) => {
+  const getLearningBadgeClass = state => {
     const s = (state || "Testing").toLowerCase().trim();
     if (s === "testing") return "badge-testing";
     if (s === "invalidated") return "badge-invalidated";
     if (s === "validated") return "badge-validated";
     return "badge-testing";
   };
-
   const getAttributePillClass = (attr, value) => {
     let v = (value || "").toLowerCase().trim();
     if (!v) return "pill-na";
     return `pill-${attr}-${v}`;
   };
-
-  return (
-    <div className={`projects-table-container ${showMenuId ? 'menu-open' : ''}`}>
+  return <div className={`projects-table-container ${showMenuId ? 'menu-open' : ''}`}>
       <table className="premium-table">
         <thead>
           <tr>
@@ -64,11 +60,7 @@ const ProjectsTable = ({
               <div className="score-header-content">
                 {t("Score")}
                 <div className="score-info-icon-wrapper">
-                  <OverlayTrigger
-                    placement="bottom"
-                    animation={false}
-                    overlay={
-                      <div className="score-formula-tooltip portal-tooltip">
+                  <OverlayTrigger placement="bottom" animation={false} overlay={<div className="score-formula-tooltip portal-tooltip">
                         <div className="tooltip-section">
                           <h4 className="tooltip-title">{t("PRIORITY SCORE FORMULA")}</h4>
                           <p className="tooltip-formula">
@@ -88,19 +80,14 @@ const ProjectsTable = ({
                             {t("Raw range is [-9, +5]: worst case is -9 (low impact, large effort, high risk); best case is +5 (high impact, small effort, low risk).")}
                           </p>
                         </div>
-                      </div>
-                    }
-                    popperConfig={{
-                      strategy: 'fixed',
-                      modifiers: [
-                        {
-                          name: 'flip',
-                          enabled: false,
-                        },
-                      ],
-                    }}
-                  >
-                    <span className="score-info-icon-trigger" style={{ display: 'inline-flex', cursor: 'help', verticalAlign: 'middle' }}>
+                      </div>} popperConfig={{
+                  strategy: 'fixed',
+                  modifiers: [{
+                    name: 'flip',
+                    enabled: false
+                  }]
+                }}>
+                    <span className="score-info-icon-trigger projects-table--s1">
                       <Info size={12} className="score-info-icon" />
                     </span>
                   </OverlayTrigger>
@@ -116,30 +103,52 @@ const ProjectsTable = ({
         </thead>
         <tbody>
           {projects.map((project, index) => {
-            const displayRank = rankMap?.[String(project?._id)] ?? project.rank ?? project.ai_rank;
-            const userCanReview = canReviewProject ? canReviewProject(project, isAdmin, myUserId, isArchived) : false;
-            const isLastTwoRows = projects.length > 2 && index >= projects.length - 2;
-            const statusLower = project.status?.toLowerCase();
-            const isTerminal = ["completed", "scaled", "killed"].includes(statusLower);
-
-
-            return (
-              <tr key={project._id} className={isLastTwoRows ? "last-two-rows" : ""}>
+          const displayRank = rankMap?.[String(project?._id)] ?? project.rank ?? project.ai_rank;
+          const userCanReview = canReviewProject ? canReviewProject(project, isAdmin, myUserId, isArchived) : false;
+          const isLastTwoRows = projects.length > 2 && index >= projects.length - 2;
+          const statusLower = project.status?.toLowerCase();
+          const isTerminal = ["completed", "scaled", "killed"].includes(statusLower);
+          return <tr key={project._id} className={isLastTwoRows ? "last-two-rows" : ""}>
                 <td className="col-selection">
-                  {isAdmin && !isArchived && !isTerminal && project.launch_status !== 'launched' && (
-                    <input
-                      type="checkbox"
-                      checked={selectedProjectIds.includes(project._id)}
-                      onChange={() => onToggleSelection(project._id)}
-                      onClick={(e) => e.stopPropagation()}
-                    />
-                  )}
+                  {isAdmin && !isArchived && !isTerminal && project.launch_status !== 'launched' && <input type="checkbox" checked={selectedProjectIds.includes(project._id)} onChange={() => onToggleSelection(project._id)} onClick={e => e.stopPropagation()} />}
                 </td>
                 <td className="col-index">
                   <div className="index-badge">{displayRank || "-"}</div>
                 </td>
                 <td className="col-bets">
-                  <span>{project.project_name}</span>
+                  <div className="bet-name-wrapper">
+                    {project.launch_status === 'launched' && !isTerminal && (() => {
+                const isStale = project.is_stale || (project.next_review_date && new Date(project.next_review_date).setHours(0, 0, 0, 0) < new Date().setHours(0, 0, 0, 0));
+                
+                if (isStale) {
+                  return <span className="footer-status-premium stale-badge" onClick={userCanReview ? e => {
+                    e.stopPropagation();
+                    onPerformReview(project);
+                  } : undefined} style={{ cursor: userCanReview ? 'pointer' : 'default' }}>
+                            <AlertTriangle size={10} /> {t("Stale")}
+                          </span>;
+                }
+
+                if (project.next_review_date) {
+                  const nextDate = new Date(project.next_review_date);
+                  nextDate.setHours(0, 0, 0, 0);
+                  const today = new Date();
+                  today.setHours(0, 0, 0, 0);
+                  const diffDays = Math.round((nextDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+                  
+                  if (diffDays >= 0 && diffDays <= 3) {
+                    return <span className="footer-status-premium due-badge" onClick={userCanReview ? e => {
+                      e.stopPropagation();
+                      onPerformReview(project);
+                    } : undefined} style={{ cursor: userCanReview ? 'pointer' : 'default' }}>
+                              <Clock size={10} /> {t("Due")}
+                            </span>;
+                  }
+                }
+                return null;
+              })()}
+                    <span className="bet-name-text">{project.project_name}</span>
+                  </div>
                 </td>
                 <td>
                   <span className={`table-badge ${getStatusBadgeClass(project.status)}`}>
@@ -152,9 +161,8 @@ const ProjectsTable = ({
                   </span>
                 </td>
                 <td className="col-score">
-                  {/* Use backend-calculated score, or ai_score if present */}
-                  {project.score !== undefined ? Number(project.score).toFixed(1) :
-                    (project.ai_score ? (Number(project.ai_score) * 10).toFixed(1) : "0.0")}
+                  {}
+                  {project.score !== undefined ? Number(project.score).toFixed(1) : project.ai_score ? (Number(project.ai_score) * 10).toFixed(1) : "0.0"}
                 </td>
                 <td>
                   <span className={`pill-attribute ${getAttributePillClass("impact", project.impact)}`}>
@@ -180,36 +188,22 @@ const ProjectsTable = ({
                       {t("Actions")} <ChevronDown size={14} />
                     </Dropdown.Toggle>
 
-                    <Dropdown.Menu 
-                      className="menu-dropdown"
-                      popperConfig={{ strategy: 'fixed' }}
-                    >
-                      {isTerminal ? (
-                        <Dropdown.Item onClick={() => onView(project)} className="menu-item"><Eye size={14} /> {t("view")}</Dropdown.Item>
-                      ) : (canEditProject && canEditProject(project)) ? (
-                        <Dropdown.Item onClick={() => onEdit(project)} className="menu-item"><Edit2 size={14} /> {t("edit")}</Dropdown.Item>
-                      ) : (
-                        <Dropdown.Item onClick={() => onView(project)} className="menu-item"><Eye size={14} /> {t("view")}</Dropdown.Item>
-                      )}
-                      {!isViewer && !isArchived && isAdmin && !isTerminal && (
-                        <Dropdown.Item onClick={() => onDelete(project._id)} className="menu-item delete"><Trash2 size={14} /> {t("delete")}</Dropdown.Item>
-                      )}
-                      {userCanReview && !isArchived && !isTerminal && (
-                        <>
+                    <Dropdown.Menu className="menu-dropdown" popperConfig={{
+                  strategy: 'fixed'
+                }}>
+                      {isTerminal ? <Dropdown.Item onClick={() => onView(project)} className="menu-item"><Eye size={14} /> {t("view")}</Dropdown.Item> : canEditProject && canEditProject(project) ? <Dropdown.Item onClick={() => onEdit(project)} className="menu-item"><Edit2 size={14} /> {t("edit")}</Dropdown.Item> : <Dropdown.Item onClick={() => onView(project)} className="menu-item"><Eye size={14} /> {t("view")}</Dropdown.Item>}
+                      {!isViewer && !isArchived && isAdmin && !isTerminal && <Dropdown.Item onClick={() => onDelete(project._id)} className="menu-item delete"><Trash2 size={14} /> {t("delete")}</Dropdown.Item>}
+                      {userCanReview && !isArchived && !isTerminal && <>
                           <Dropdown.Item onClick={() => onPerformReview(project)} className="menu-item"><CheckCircle size={14} /> {t("Perform_Review")}</Dropdown.Item>
                           <Dropdown.Item onClick={() => onAdhocUpdate(project)} className="menu-item"><Edit2 size={14} /> {t("Ad_Hoc_Update")}</Dropdown.Item>
-                        </>
-                      )}
+                        </>}
                     </Dropdown.Menu>
                   </Dropdown>
                 </td>
-              </tr>
-            );
-          })}
+              </tr>;
+        })}
         </tbody>
       </table>
-    </div>
-  );
+    </div>;
 };
-
 export default ProjectsTable;

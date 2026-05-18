@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Target, TrendingUp, Star, Calendar, Loader, BarChart3, Zap, RefreshCw } from 'lucide-react';
-import '../styles/Analytics.css';
+import '../styles/PurchaseCriteria.css';
 import { useTranslation } from "../hooks/useTranslation";
 import { useAuthStore, useAnalysisStore } from "../store";
 import AnalysisEmptyState from './AnalysisEmptyState';
@@ -21,7 +21,7 @@ const PurchaseCriteria = ({
 }) => {
   const { t } = useTranslation();
   const token = useAuthStore(state => state.token);
-  
+
   const {
     purchaseCriteriaData: storePurchaseCriteriaData,
     isRegenerating: isTypeRegenerating,
@@ -195,7 +195,7 @@ const PurchaseCriteria = ({
     );
   }
 
-  if (error || (isCriteriaDataIncomplete(normalizedData) && Object.keys(userAnswers).length > 0)) {
+  if (error || isCriteriaDataIncomplete(normalizedData)) {
     return (
       <div className="purchase-criteria">
         <AnalysisEmptyState
@@ -333,4 +333,4 @@ const PurchaseCriteria = ({
   );
 };
 
-export default PurchaseCriteria;
+export default PurchaseCriteria;

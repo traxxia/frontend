@@ -1,16 +1,15 @@
-import React, { useState, useContext } from "react";
+import React, { useState } from "react";
 import axios from "axios";
-import { useNavigate, useLocation, Link } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import "../styles/Login.css";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faEye, faEyeSlash } from "@fortawesome/free-solid-svg-icons";
-import logo from "../assets/01a2750def81a5872ec67b2b5ec01ff5e9d69d0e.png";
+import { Eye, EyeOff, Sun, Moon } from "lucide-react";
+import logo from '../assets/traxxia-logo.png';
 import LanguageTranslator from "../components/LanguageTranslator";
 import { useTranslation } from "../hooks/useTranslation";
-import { faSun, faMoon } from "@fortawesome/free-solid-svg-icons";
 import ErrorModal from "../components/ErrorModal";
 import { useAuthStore } from "../store/authStore";
 import { useUIStore } from "../store/uiStore";
+
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -20,49 +19,29 @@ const Login = () => {
   const [showErrorModal, setShowErrorModal] = useState(false);
   const [modalMessage, setModalMessage] = useState("");
   const navigate = useNavigate();
-  const theme = useUIStore((state) => state.theme);
-  const toggleTheme = useUIStore((state) => state.toggleTheme);
-  const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
+  const theme = useUIStore(state => state.theme);
+  const toggleTheme = useUIStore(state => state.toggleTheme);
+  const API_BASE_URL = import.meta.env.VITE_BACKEND_URL;
   const { t } = useTranslation();
 
   const validate = () => {
     const newErrors = {};
-    if (!email.trim()) {
-      newErrors.email = t("login_email_required");
-    }
-    if (!password.trim()) {
-      newErrors.password = t("login_password_required");
-    }
+    if (!email.trim()) newErrors.email = t("login_email_required");
+    if (!password.trim()) newErrors.password = t("login_password_required");
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async e => {
     e.preventDefault();
-
     if (!validate()) return;
-
     setIsLoading(true);
-
     try {
-      const res = await axios.post(`${API_BASE_URL}/api/login`, {
-        email,
-        password,
-      });
-
-      // Use Zustand auth store instead of sessionStorage
+      const res = await axios.post(`${API_BASE_URL}/api/login`, { email, password });
       const setAuth = useAuthStore.getState().setAuth;
       setAuth(res.data);
-
-      const currentLang = window.getCurrentLanguage
-        ? window.getCurrentLanguage()
-        : "en";
-
-      if (res.data.user.role === "super_admin") {
-        navigate("/super-admin");
-      } else {
-        navigate("/dashboard");
-      }
+      if (res.data.user.role === "super_admin") navigate("/super-admin");
+      else navigate("/dashboard");
     } catch (err) {
       console.error(err.response?.data || err.message);
       const errorData = err.response?.data;
@@ -80,14 +59,11 @@ const Login = () => {
     }
   };
 
-  const togglePasswordVisibility = () => {
-    setShowPassword(!showPassword);
-  };
+  const togglePasswordVisibility = () => setShowPassword(!showPassword);
 
   return (
     <div className="login-container">
       <LanguageTranslator disabled={isLoading} />
-
       <div className="login-left-section">
         <div className="company-branding">
           <div className="logo-container">
@@ -104,10 +80,7 @@ const Login = () => {
       <div className="login-right-section">
         <div className="theme-icon-toggle">
           <button onClick={toggleTheme} className="theme-toggle-button" disabled={isLoading}>
-            <FontAwesomeIcon
-              icon={theme === "dark" ? faSun : faMoon}
-              style={{ fontSize: "20px" }}
-            />
+            {theme === "dark" ? <Sun size={20} className="login--s1" /> : <Moon size={20} className="login--s1" />}
           </button>
         </div>
         <div className="login-box">
@@ -117,87 +90,60 @@ const Login = () => {
           <form onSubmit={handleSubmit} noValidate>
             <div className="form-group">
               <div className="input-container">
-                <input
-                  type="email"
-                  className={errors.email ? "error" : ""}
-                  value={email}
-                  onChange={(e) => {
+                <input 
+                  type="email" 
+                  className={errors.email ? "error" : ""} 
+                  value={email} 
+                  onChange={e => {
                     setEmail(e.target.value);
-                    if (errors.email)
-                      setErrors((prev) => ({ ...prev, email: "" }));
-                  }}
-                  placeholder={t("email_address")}
-                  disabled={isLoading}
+                    if (errors.email) setErrors(prev => ({ ...prev, email: "" }));
+                  }} 
+                  placeholder={t("email_address")} 
+                  disabled={isLoading} 
                 />
               </div>
-              {errors.email && (
-                <span className="error-message">{errors.email}</span>
-              )}
+              {errors.email && <span className="error-message">{errors.email}</span>}
             </div>
 
             <div className="form-group">
               <div className="input-container">
-                <input
-                  type={showPassword ? "text" : "password"}
-                  className={errors.password ? "error" : ""}
-                  value={password}
-                  onChange={(e) => {
+                <input 
+                  type={showPassword ? "text" : "password"} 
+                  className={errors.password ? "error" : ""} 
+                  value={password} 
+                  onChange={e => {
                     setPassword(e.target.value);
-                    if (errors.password)
-                      setErrors((prev) => ({ ...prev, password: "" }));
-                  }}
-                  placeholder={t("password")}
-                  disabled={isLoading}
+                    if (errors.password) setErrors(prev => ({ ...prev, password: "" }));
+                  }} 
+                  placeholder={t("password")} 
+                  disabled={isLoading} 
                 />
-                <button
-                  type="button"
-                  className="toggle-password"
-                  onClick={togglePasswordVisibility}
-                  disabled={isLoading}
-                  aria-label={
-                    showPassword ? t("hide_password") : t("show_password")
-                  }
-                >
-                  <FontAwesomeIcon
-                    icon={showPassword ? faEye : faEyeSlash}
-                    className="eye-icon"
-                    style={{ color: "#8F9098", fontSize: "20px" }}
-                  />
+                <button type="button" className="toggle-password" onClick={togglePasswordVisibility} disabled={isLoading} aria-label={showPassword ? t("hide_password") : t("show_password")}>
+                  {showPassword ? <EyeOff size={18} className="eye-icon login--s2" /> : <Eye size={18} className="eye-icon login--s2" />}
                 </button>
               </div>
-              {errors.password && (
-                <span className="error-message">{errors.password}</span>
-              )}
+              {errors.password && <span className="error-message">{errors.password}</span>}
+              <div className="forgot-password-link" style={{ textAlign: 'right', marginTop: '8px' }}>
+                <Link to="/forgot-password" style={{ fontSize: '14px', color: 'var(--primary-color)', textDecoration: 'none' }}>
+                  {t("forgot_password_link") || "Forgot Password?"}
+                </Link>
+              </div>
             </div>
 
-            <button
-              type="submit"
-              className={`login-button ${isLoading ? "loading" : ""}`}
-              disabled={isLoading}
-            >
+            <button type="submit" className={`login-button ${isLoading ? "loading" : ""}`} disabled={isLoading}>
               {isLoading ? t("signing_in") : t("login")}
             </button>
           </form>
 
           <div className="login-footer">
-            <p>
-              {t("not_member")} <a href="/register" className={isLoading ? "disabled-link" : ""} onClick={(e) => isLoading && e.preventDefault()}>{t("register_now")}</a>
-            </p>
+            <p>{t("not_member")} <a href="/register" className={isLoading ? "disabled-link" : ""} onClick={e => isLoading && e.preventDefault()}>{t("register_now")}</a></p>
             <hr className="divider" />
-            <p>
-              <Link to="/academy" className={isLoading ? "disabled-link" : ""} onClick={(e) => isLoading && e.preventDefault()}>📚 {t("explore_traxxia_academy")}</Link>
-            </p>
+            <p><Link to="/academy" className={isLoading ? "disabled-link" : ""} onClick={e => isLoading && e.preventDefault()}>📚 {t("explore_traxxia_academy")}</Link></p>
           </div>
         </div>
       </div>
 
-      <ErrorModal
-        show={showErrorModal}
-        handleClose={() => setShowErrorModal(false)}
-        title={t("login_failed_title")}
-        message={modalMessage}
-        buttonText={t("try_again")}
-      />
+      <ErrorModal show={showErrorModal} handleClose={() => setShowErrorModal(false)} title={t("login_failed_title")} message={modalMessage} buttonText={t("try_again")} />
     </div>
   );
 };

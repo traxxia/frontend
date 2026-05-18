@@ -1,9 +1,7 @@
-/* Page container */
 .priorities-container {
   max-width: 100%;
 }
 
-/* Header */
 .priorities-title {
   font-weight: 700;
 }
@@ -12,8 +10,6 @@
   color: #6c757d;
 }
 
-
-/* Kickstart card */
 .kickstart-card {
   background: #f0fdf4;
   border: 1px solid #bdf2d5;
@@ -39,7 +35,6 @@
   border-color: #16a34a !important;
 }
 
-/* Priority cards */
 .priority-card {
   border: 1px solid #e2e8f0;
   border-radius: 12px;
@@ -87,7 +82,6 @@
   color: #ffffff;
 }
 
-/* Meta info */
 .priority-meta {
   display: flex;
   align-items: center;
@@ -108,7 +102,6 @@
   color: #4ade80 !important;
 }
 
-/* Card refinements */
 .priority-card {
   border: 1px solid #e2e8f0;
   border-radius: 10px;
@@ -133,7 +126,6 @@
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
-/* Individual project row updates */
 .project-row {
   border-radius: 6px;
   margin-bottom: 6px;
@@ -146,7 +138,6 @@
   border-color: #e2e8f0;
 }
 
-/* Success Modal */
 .kickstart-success-modal .modal-content {
   border: none;
   border-radius: 16px;
@@ -189,31 +180,25 @@
   background-color: rgba(30, 41, 59, 0.5);
 }
 
-/* granular-header */
 [data-theme="dark"] .granular-header {
   background: rgba(59, 130, 246, 0.1) !important;
 }
 
-
-/* Footer note */
 .footer-note {
   background: #f1f7ff;
   border: 1px solid #cfe2ff;
   border-radius: 8px;
 }
 
-/* Expand click area */
 .expand-trigger {
   cursor: pointer;
 }
 
-/* Chevron rotate */
 .rotate {
   transform: rotate(90deg);
   transition: transform 0.2s ease;
 }
 
-/* Expanded projects */
 .projects-section {
   border-top: 1px solid #e9ecef;
   padding-top: 12px;
@@ -224,7 +209,6 @@
   font-weight: 600;
 }
 
-/* Individual project row */
 .project-row {
   display: flex;
   justify-content: space-between;
@@ -236,12 +220,10 @@
   font-size: 0.9rem;
 }
 
-/* Projects header icon */
 .projects-icon {
   color: #6c757d;
 }
 
-/* Status badge (Not Started) */
 .status-badge {
   font-size: 0.75rem;
   font-weight: 500;
@@ -251,31 +233,25 @@
 }
 
 [data-theme="dark"] .status-badge {
-  color: #1a1d23 !important;
+  color: #3e72d6 !important;
 }
 
 [data-theme="dark"] .porters-container .forces-tags .forces-tag {
   color: #1a1d23 !important;
 }
 
-/* Not started state */
 .not-started {
   background-color: #f1f3f5;
   color: #495057;
   border: 1px solid #dee2e6;
 }
 
-/* =========================
-   Mobile Responsive Styles
-   ========================= */
 @media (max-width: 768px) {
 
-  /* Page padding */
   .priorities-container {
     padding: 0 12px;
   }
 
-  /* Header */
   .priorities-title {
     font-size: 1.1rem;
   }
@@ -284,7 +260,6 @@
     font-size: 0.85rem;
   }
 
-  /* Kickstart card */
   .kickstart-card .card-body {
     flex-direction: column;
     align-items: flex-start;
@@ -295,23 +270,19 @@
     width: 100%;
   }
 
-  /* Priority card body */
   .priority-card .card-body {
     padding: 12px;
   }
 
-  /* Header row stacking */
   .priority-card .row {
     flex-wrap: nowrap;
     align-items: center;
   }
 
-  /* Checkbox spacing */
   .priority-card .form-check {
     margin-top: 4px;
   }
 
-  /* Priority title */
   .priority-title {
     font-size: 0.95rem;
   }
@@ -320,47 +291,38 @@
     font-size: 0.8rem;
   }
 
-  /* Expand trigger */
   .expand-trigger {
     padding: 4px;
   }
 
-  /* Count badge */
   .priority-count {
     font-size: 0.7rem;
     padding: 4px 8px;
   }
 
-  /* Chevron */
   .expand-trigger svg {
     width: 18px;
     height: 18px;
   }
 
-  /* Expanded projects */
   .projects-section {
     padding-top: 10px;
   }
 
-  /* Project row */
   .project-row {
     flex-direction: column;
     align-items: flex-start;
     gap: 6px;
   }
 
-  /* Status badge */
   .status-badge {
     align-self: flex-start;
   }
 
-  /* Footer note */
   .footer-note {
     font-size: 0.8rem;
   }
 }
-
-
 
 .priority-card {
   border: 1px solid #e2e8f0;
@@ -380,7 +342,6 @@
   gap: 12px;
 }
 
-/* Top section */
 .priority-top {
   display: flex;
   align-items: center;
@@ -458,4 +419,88 @@
   .priority-card {
     padding: 14px;
   }
+}
+
+
+/* ── Extracted inline styles ── */
+.priorities-projects--s1 {
+  max-width: 600px;
+}
+
+.priorities-projects--s2 {
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+}
+
+.priorities-projects--s3 {
+  font-size: 0.62rem;
+  letter-spacing: 0.5px;
+}
+
+.priorities-projects--s4 {
+  font-size: 1rem;
+  line-height: 1.2;
+}
+
+.priorities-projects--s5 {
+  font-size: 0.8rem;
+}
+
+.priorities-projects--s6 {
+  width: 48px;
+  height: 48px;
+}
+
+.priorities-projects--s7 {
+  width: 100%;
+  height: 100%;
+}
+
+.priorities-projects--s8 {
+  transition: stroke-dasharray 0.5s ease 0s;
+}
+
+
+/* Empty state styling */
+.empty-state-container,
+.bg-light.py-5.text-center.rounded-4 {
+  background-color: #f8f9fa;
+  border-color: #e2e8f0 !important;
+}
+
+[data-theme="dark"] .empty-state-container,
+[data-theme="dark"] .bg-light.py-5.text-center.rounded-4 {
+  background-color: var(--color-bg-secondary) !important;
+  border-color: var(--color-border-light) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
+}
+
+[data-theme="dark"] .empty-state-container h3,
+[data-theme="dark"] .bg-light.py-5.text-center.rounded-4 h3 {
+  color: var(--color-text-primary);
+}
+
+[data-theme="dark"] .empty-state-container .text-muted,
+[data-theme="dark"] .bg-light.py-5.text-center.rounded-4 .text-muted {
+  color: var(--color-text-secondary) !important;
+}
+
+[data-theme="dark"] .granular-header .text-dark {
+  color: var(--color-text-primary) !important;
+}
+
+[data-theme="dark"] .granular-header .text-muted {
+  color: var(--color-text-secondary) !important;
+}
+
+[data-theme="dark"] .footer-note {
+  background-color: rgba(59, 130, 246, 0.05);
+  border-color: var(--color-border-light);
+}
+
+[data-theme="dark"] .footer-note .text-muted {
+  color: var(--color-text-secondary) !important;
+}
+
+[data-theme="dark"] .warning-icon-wrapper {
+  background: rgba(245, 158, 11, 0.2);
 }

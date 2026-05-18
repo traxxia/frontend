@@ -143,3 +143,9 @@
     text-transform: uppercase;
     letter-spacing: 0.05em;
 }
+
+
+/* ── Extracted inline styles ── */
+.financial-empty-state--s1 {
+  padding: 0px;
+}

@@ -1,4 +1,4 @@
-  .dashboard-layout {
+.dashboard-layout {
     min-height: 100vh;
     display: flex;
     flex-direction: column;
@@ -16,7 +16,7 @@
   .create-button {
     background-color: #217aff !important;
     border-radius: 8px !important;
-    /* padding: 10px 16px !important; */
+
     font-weight: 600 !important;
   }
 
@@ -26,7 +26,6 @@
     border-radius: 8px !important;
     padding: 10px 16px !important;
     font-weight: 600 !important;
-
 
   }
 
@@ -53,9 +52,9 @@
     box-shadow: none;
     background: var(--color-bg-primary);
     overflow-x: hidden;
-    /* Add this */
+
     max-width: 100vw;
-    /* Add this */
+
   }
 
   .desktop-view-card {
@@ -66,7 +65,7 @@
     box-shadow: none;
     background: var(--color-bg-primary);
     overflow-x: hidden;
-    /* Add this */
+
   }
 
   .welcome-section {
@@ -87,7 +86,7 @@
 
   .welcome-title span {
     color: #6366f1;
-    /* Indigo/Purple from image */
+
   }
 
   .welcome-description {
@@ -142,9 +141,7 @@
     transform: translateY(-1px);
   }
 
-  /* Business Table Card */
   .businesses-container {
-    background: white;
     border-radius: 16px;
     border: 1px solid #e5e7eb;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
@@ -170,7 +167,6 @@
     margin: 0;
   }
 
-  /* Status Filter Styles */
   .status-filter-wrapper {
     position: relative;
   }
@@ -459,7 +455,6 @@
     margin-bottom: var(--spacing-3xl);
   }
 
-  /* Business List */
   .business-list.mobile {
     max-height: none;
     overflow: visible !important;
@@ -537,7 +532,6 @@
     line-height: var(--line-height-normal);
   }
 
-  /* Progress Circle */
   .progress-circle {
     width: 50px;
     height: 50px;
@@ -559,7 +553,6 @@
     font-size: var(--font-size-sm);
   }
 
-  /* Create Business Button */
   .create-business-btn {
     background: var(--gradient-primary);
     border: none;
@@ -578,7 +571,6 @@
     color: var(--color-text-white);
   }
 
-  /* Mobile Responsive Redesign */
   @media (max-width: 768px) {
     .welcome-section {
       padding: 40px 20px;
@@ -617,9 +609,7 @@
       font-size: 14px;
     }
 
-    /* Hide less important columns on very small screens */
     @media (max-width: 600px) {
-
 
       .businesses-table {
         min-width: 0;
@@ -642,7 +632,6 @@
     }
   }
 
-  /* Original Mobile Responsive styles below - keeping some for other parts of dashboard if any */
   @media (max-width: 767px) {
     .responsive-view-container {
       min-height: calc(100vh - 60px);
@@ -656,7 +645,7 @@
       padding: 0;
       min-height: auto;
       display: block;
-      /* Changed from flex for better scrolling */
+
       margin-left: 20px;
     }
 
@@ -744,16 +733,15 @@
 
     .welcome-section {
       min-height: auto;
-      /* Allow natural height on mobile */
+
       padding: var(--spacing-3xl) var(--spacing-xl);
     }
 
     .businesses-section {
       min-height: auto;
-      /* Allow natural height on mobile */
+
       padding: var(--spacing-3xl) var(--spacing-xl);
     }
-
 
     .blue-triangle-container {
       width: 100%;
@@ -767,7 +755,6 @@
       flex-wrap: wrap;
     }
 
-
     .margin-analysis,
     .linkages-analysis {
       flex: 1 1 48%;
@@ -779,7 +766,6 @@
       transform: none !important;
     }
 
-    /* Mobile Carousel Captions */
     .carousel-external-caption {
       min-height: 30px;
       padding: 0 15px;
@@ -797,7 +783,6 @@
     }
   }
 
-  /* Desktop screens */
   @media (min-width: 768px) {
     .responsive-view-container {
       min-height: calc(100vh - 60px);
@@ -809,7 +794,7 @@
 
     .desktop-view-card .card-body {
       min-height: calc(100vh - 120px);
-      /* Account for header */
+
     }
 
     .desktop-view-card .row {
@@ -826,7 +811,6 @@
     }
   }
 
-  /* Large Desktop screens */
   @media (min-width: 1200px) {
     .welcome-section {
       padding: var(--spacing-2xl);
@@ -850,13 +834,12 @@
     }
   }
 
-  /* Analysis Section Styles */
   .analysis-section {
     max-width: 100%;
     margin: 0 auto;
     font-family: var(--font-primary);
     padding: 0px;
-    /* Add padding for better spacing */
+
   }
 
   .analysis-section h5 {
@@ -916,13 +899,12 @@
     font-family: var(--font-primary);
   }
 
-  /* Step Indicator Styles */
   .step-indicator-container {
     display: flex;
     justify-content: center;
     margin-bottom: var(--spacing-4xl);
     padding-top: var(--spacing-2xl);
-    /* Add top padding */
+
   }
 
   .step-indicator {
@@ -968,7 +950,6 @@
     background: var(--color-border-light);
   }
 
-  /* Glass Card Effect */
   .glass-card {
     background: rgba(255, 255, 255, 0.95);
     backdrop-filter: var(--backdrop-blur);
@@ -977,10 +958,9 @@
     box-shadow: var(--shadow-3xl);
     padding: var(--spacing-3xl);
     margin: var(--spacing-2xl);
-    /* Add margin for better spacing */
+
   }
 
-  /* Button Styles */
   .btn-back {
     background: var(--color-secondary);
     border: none;
@@ -999,7 +979,6 @@
     color: var(--color-text-white);
   }
 
-  /* Scrollbar Styling */
   .business-list::-webkit-scrollbar,
   .businesses-section::-webkit-scrollbar,
   .main-content::-webkit-scrollbar {
@@ -1025,12 +1004,10 @@
     background: var(--color-border-dark);
   }
 
-  /* Toast Styles */
   .z-index-1050 {
     z-index: var(--z-index-modal);
   }
 
-  /* Modal styles */
   .modern-modal .modal-header {
     border-bottom: 1px solid var(--color-border-light);
     padding: var(--spacing-xl);
@@ -1048,7 +1025,6 @@
     font-family: var(--font-primary);
   }
 
-  /* Toast customization */
   .toast {
     font-family: var(--font-primary);
   }
@@ -1064,25 +1040,22 @@
     border-radius: 0;
   }
 
-  /* Additional fixes for proper scrolling */
   .container-fluid {
     padding: 0 !important;
     margin: 0;
-    /* Add this */
+
     max-width: 100vw;
-    /* Add this to prevent horizontal overflow */
+
     overflow-x: visible;
-    /* Add this */
+
   }
 
-  /* Fix for business detail component scrolling */
   .business-detail-container {
     min-height: calc(100vh - 60px);
     overflow: auto;
     scroll-behavior: smooth;
   }
 
-  /* Enhanced Carousel Styles */
   .carousel {
     position: relative;
     border-radius: 12px;
@@ -1102,7 +1075,6 @@
     width: 100%;
   }
 
-  /* Enhanced Navigation Arrows */
   .carousel-control-prev,
   .carousel-control-next {
     width: 60px;
@@ -1132,7 +1104,6 @@
     transform: translateY(-50%) scale(1.1);
   }
 
-  /* Custom Arrow Icons */
   .carousel-control-prev-icon,
   .carousel-control-next-icon {
     width: 24px;
@@ -1149,9 +1120,8 @@
     background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='white'%3e%3cpath d='m12.14 8.753-5.482 4.796c-.646.566-1.658.106-1.658-.753V3.204a1 1 0 0 1 1.659-.753l5.48 4.796a1 1 0 0 1 0 1.506z'/%3e%3c/svg%3e");
   }
 
-  /* Enhanced Indicators */
   .carousel-indicators {
-    /* bottom: 20px; */
+
     margin-bottom: 3px;
   }
 
@@ -1178,7 +1148,6 @@
     opacity: 1;
   }
 
-  /* Carousel Captions */
   .carousel-caption {
     bottom: 0;
     left: 0;
@@ -1194,11 +1163,10 @@
     text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
   }
 
-  /* External Carousel Captions */
   .carousel-external-caption {
     padding: 0 20px;
     min-height: 60px;
-    /* Ensure space for 2 lines */
+
   }
 
   .carousel-external-caption h5 {
@@ -1216,7 +1184,6 @@
     margin: 0 auto;
   }
 
-  /* Modal Popup Enhancements */
   .popup-overlay {
     position: fixed;
     top: 0;
@@ -1256,7 +1223,6 @@
     margin-bottom: 25px;
   }
 
-  /* Close Button for Modal */
   .close-button {
     position: absolute;
     top: 15px;
@@ -1287,10 +1253,6 @@
     outline-offset: 2px;
   }
 
-  /* ==============================
-   BUSINESS ACCORDION – DESKTOP
-   ============================== */
-
   .businesses-section .accordion {
     border-radius: 12px;
     overflow: hidden;
@@ -1300,9 +1262,8 @@
     margin: 10px 0px;
   }
 
-  /* Individual accordion item */
   .businesses-section .accordion-item {
-    /* border: 1px solid #e6e6e6; */
+
     border-radius: 10px;
     margin-bottom: 12px;
     overflow: hidden;
@@ -1313,18 +1274,15 @@
     background-color: #1a1d23 !important;
   }
 
-  /* Remove double borders */
   .businesses-section .accordion-item:not(:first-of-type) {
     border-top: 1px solid #e6e6e6;
   }
 
-  /* Header */
   .businesses-section .accordion-header {
     font-size: 15px;
     font-weight: 600;
   }
 
-  /* Accordion button */
   .businesses-section .accordion-button {
     background-color: #4864a1 !important;
     color: #ffffff;
@@ -1334,29 +1292,24 @@
     transition: background-color 0.2s ease;
   }
 
-  /* Expanded state */
   .businesses-section .accordion-button:not(.collapsed) {
     background-color: #4864a1;
     color: #ffffff;
     font-weight: 600;
   }
 
-  /* Hover effect */
   .businesses-section .accordion-button:hover {
     background-color: #4864a1;
   }
 
-  /* Remove default focus outline */
   .businesses-section .accordion-button:focus {
     box-shadow: none;
   }
 
-  /* Chevron Icon color fix for dark backgrounds */
   .businesses-section .accordion-button::after {
     filter: brightness(0) invert(1);
   }
 
-  /* Body */
   .businesses-section .accordion-body {
     padding: 10px;
     background-color: #ffffff;
@@ -1366,61 +1319,53 @@
     background-color: #1a1d23 !important;
   }
 
-  /* Business list spacing inside accordion */
   .businesses-section .accordion-body>*:not(:last-child) {
     margin-bottom: 12px;
   }
 
-  /* Smooth animation */
   .businesses-section .accordion-collapse {
     transition: height 0.25s ease;
   }
 
-  /* Chevron icon smooth rotation */
   .businesses-section .accordion-button::after {
     transition: transform 0.2s ease;
   }
 
-  /* Header content layout */
   .accordion-header-content {
     display: flex;
     align-items: center;
     width: 100%;
     padding-right: 12px;
-    /* space before chevron */
+
   }
 
-  /* Title text */
   .accordion-title-text {
     font-size: 14px;
     font-weight: 500;
     color: #111827;
-    /* dashboard dark */
+
   }
 
-  /* Subtle count pill */
   .accordion-count-pill {
     margin-left: auto;
     font-size: 12px;
     font-weight: 500;
     color: #6b7280;
-    /* gray-500 */
+
     background-color: #f3f4f6;
-    /* gray-100 */
+
     padding: 2px 8px;
     border-radius: 999px;
     line-height: 1.2;
   }
 
-
   [data-theme="dark"] .businesses-section .accordion-body {
     color: #1a1d23 !important;
   }
 
-  /* Active accordion */
   .accordion-button:not(.collapsed) .accordion-count-pill {
     background-color: #e5e7eb;
-    /* gray-200 */
+
     color: #374151;
   }
 
@@ -1428,12 +1373,10 @@
     color: #1a1d23 !important;
   }
 
-  /* Active accordion color tweak */
   .accordion-button:not(.collapsed) .accordion-count {
     background-color: #c7d2fe;
   }
 
-  /* Mobile safety */
   @media (max-width: 768px) {
     .businesses-section .accordion-button {
       padding: 12px 14px;
@@ -1444,11 +1387,6 @@
       padding: 14px;
     }
 
-    /* ==============================
-   BUSINESS ACCORDION – MOBILE
-   Same as Desktop
-   ============================== */
-
     .accordion-button {
       background-color: #217aff;
       color: #ffffff;
@@ -1458,7 +1396,7 @@
 
     .accordion-button:not(.collapsed) {
       background-color: #1a62cc;
-      /* Slightly darker shade for active state */
+
       color: #ffffff;
       font-weight: 600;
     }
@@ -1471,12 +1409,10 @@
       box-shadow: none;
     }
 
-    /* Chevron Icon color fix for dark backgrounds */
     .accordion-button::after {
       filter: brightness(0) invert(1);
     }
 
-    /* Header content layout */
     .accordion-header-content {
       display: flex;
       align-items: center;
@@ -1484,14 +1420,12 @@
       padding-right: 12px;
     }
 
-    /* Title text */
     .accordion-title-text {
       font-size: 14px;
       font-weight: 500;
       color: #111827;
     }
 
-    /* Count pill */
     .accordion-count-pill {
       margin-left: auto;
       font-size: 12px;
@@ -1503,7 +1437,6 @@
       line-height: 1.2;
     }
 
-    /* Active count */
     .accordion-button:not(.collapsed) .accordion-count-pill {
       background-color: #e5e7eb;
       color: #374151;
@@ -1511,8 +1444,6 @@
 
   }
 
-
-  /* Animations */
   @keyframes fadeIn {
     from {
       opacity: 0;
@@ -1535,7 +1466,6 @@
     }
   }
 
-  /* Responsive Design */
   @media (max-width: 768px) {
 
     .carousel-control-prev,
@@ -1648,7 +1578,6 @@
     }
   }
 
-  /* Focus states for accessibility */
   .carousel-control-prev:focus,
   .carousel-control-next:focus {
     outline: 3px solid #007bff;
@@ -1660,7 +1589,6 @@
     outline-offset: 2px;
   }
 
-  /* Button spacing fix */
   .create-business-btn {
     margin-right: 10px;
   }
@@ -1668,8 +1596,6 @@
   .create-business-btn:last-child {
     margin-right: 0;
   }
-
-  /* Success Popup Styles - Add this to your dashboard.css file */
 
   .success-popup-overlay {
     position: fixed !important;
@@ -2045,7 +1971,139 @@
   }
 
   [data-theme="dark"] .welcome-title {
-    color: #e2dede !important;
+    color: var(--color-text-primary) !important;
+  }
+
+  [data-theme="dark"] .welcome-description {
+    color: var(--color-text-secondary) !important;
+  }
+
+  [data-theme="dark"] .businesses-container {
+    background-color: var(--color-bg-card);
+    border-color: var(--color-border-light);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  }
+
+  [data-theme="dark"] .businesses-header {
+    background-color: rgba(255, 255, 255, 0.03);
+    border-bottom-color: var(--color-border-light);
+  }
+
+  [data-theme="dark"] .businesses-header h2 {
+    color: var(--color-text-muted);
+  }
+
+  [data-theme="dark"] .status-filter-btn {
+    background-color: var(--color-bg-secondary);
+    border-color: var(--color-border-light);
+  }
+
+  [data-theme="dark"] .status-filter-btn:hover {
+    background-color: var(--color-bg-light);
+    border-color: var(--color-border-medium);
+  }
+
+  [data-theme="dark"] .filter-label {
+    color: var(--color-text-muted);
+  }
+
+  [data-theme="dark"] .filter-value {
+    color: var(--color-primary-light);
+  }
+
+  [data-theme="dark"] .businesses-table th {
+    background-color: rgba(255, 255, 255, 0.02);
+    color: var(--color-text-muted);
+    border-bottom-color: var(--color-border-light);
+  }
+
+  [data-theme="dark"] .businesses-table td {
+    border-bottom-color: var(--color-border-light);
+    color: var(--color-text-secondary);
+  }
+
+  [data-theme="dark"] .businesses-table tr:hover {
+    background-color: rgba(255, 255, 255, 0.02);
+  }
+
+  [data-theme="dark"] .business-name-cell {
+    color: var(--color-text-primary);
+  }
+
+  [data-theme="dark"] .date-cell {
+    color: var(--color-text-muted);
+  }
+
+  [data-theme="dark"] .stats-cell {
+    color: var(--color-text-primary);
+  }
+
+  [data-theme="dark"] .btn-how-it-works {
+    background-color: var(--color-bg-secondary);
+    color: var(--color-text-primary);
+    border: 1px solid var(--color-border-light);
+  }
+
+  [data-theme="dark"] .btn-how-it-works:hover {
+    background-color: var(--color-bg-light);
+  }
+
+  [data-theme="dark"] .status-dropdown {
+    background-color: var(--color-bg-card);
+    border-color: var(--color-border-light);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+  }
+
+  [data-theme="dark"] .status-name {
+    color: var(--color-text-primary);
+  }
+
+  [data-theme="dark"] .status-count {
+    color: var(--color-text-muted);
+  }
+
+  [data-theme="dark"] .dropdown-item:hover {
+    background-color: var(--color-bg-secondary);
+  }
+
+  [data-theme="dark"] .custom-checkbox {
+    border-color: var(--color-border-medium);
+  }
+
+  [data-theme="dark"] .state-execution {
+    background-color: var(--color-status-active-bg);
+    color: var(--color-status-active-text);
+    border-color: var(--color-status-active-border);
+  }
+
+  [data-theme="dark"] .state-created {
+    background-color: var(--color-status-draft-bg);
+    color: var(--color-status-draft-text);
+    border-color: var(--color-status-draft-border);
+  }
+
+  [data-theme="dark"] .state-deleted {
+    background-color: var(--color-status-killed-bg);
+    color: var(--color-status-killed-text);
+    border-color: var(--color-status-killed-border);
+  }
+
+  [data-theme="dark"] .status-active {
+    background-color: var(--color-status-active-bg);
+    color: var(--color-status-active-text);
+    border-color: var(--color-status-active-border);
+  }
+
+  [data-theme="dark"] .status-deleted {
+    background-color: var(--color-status-killed-bg);
+    color: var(--color-status-killed-text);
+    border-color: var(--color-status-killed-border);
+  }
+
+  [data-theme="dark"] .status-archived {
+    background-color: var(--color-status-draft-bg);
+    color: var(--color-status-draft-text);
+    border-color: var(--color-status-draft-border);
   }
 
   [data-theme='dark'] .span {
@@ -2125,7 +2183,6 @@
     color: #6c757d !important;
   }
 
-  /* Gradient Accordion Header */
   .businesses-section .accordion-button,
   .mobile-view-card .accordion-button {
     background: var(--gradient-primary) !important;
@@ -2170,28 +2227,24 @@
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
   }
 
-  /* ACTIVE */
   .status-active {
-    background-color: #d1fae5;
-    color: #059669;
-    border-color: rgba(5, 150, 105, 0.18);
+    background-color: var(--color-status-active-bg);
+    color: var(--color-status-active-text);
+    border-color: var(--color-status-active-border);
   }
 
-  /* DELETED */
   .status-deleted {
-    background-color: #fee2e2;
-    color: #dc2626;
-    border-color: rgba(220, 38, 38, 0.18);
+    background-color: var(--color-status-killed-bg);
+    color: var(--color-status-killed-text);
+    border-color: var(--color-status-killed-border);
   }
 
-  /* ARCHIVED */
   .status-archived {
-    background-color: #e5e7eb;
-    color: #374151;
-    border-color: rgba(55, 65, 81, 0.15);
+    background-color: var(--color-status-draft-bg);
+    color: var(--color-status-draft-text);
+    border-color: var(--color-status-draft-border);
   }
 
-  /* Delete button */
   .delete-btn-simple {
     background-color: #fee2e2 !important;
     color: #dc2626 !important;
@@ -2214,3 +2267,83 @@
   .delete-btn-simple:focus {
     outline: none !important;
   }
+
+
+/* ── Extracted inline styles ── */
+.dashboard--s1 {
+  font-size: 20px;
+  line-height: 1;
+}
+
+/* PDF Export Loader */
+.pdf-export-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+}
+
+.pdf-export-loader {
+  background-color: white;
+  border-radius: 12px;
+  padding: 30px;
+  text-align: center;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+  min-width: 320px;
+}
+
+.pdf-loader-spinner {
+  color: #1a73e8;
+  animation: spin 1.5s linear infinite;
+  margin-bottom: 15px;
+}
+
+.pdf-export-loader h3 {
+  margin: 0 0 10px 0;
+  fontSize: 18px;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.pdf-export-loader .section-name {
+  margin: 0;
+  font-size: 14px;
+  color: #666;
+}
+
+.pdf-export-loader .progress-counter {
+  margin-top: 15px;
+  font-size: 16px;
+  color: #1a73e8;
+  font-weight: bold;
+}
+
+/* Dark Mode PDF Export Loader */
+[data-theme="dark"] .pdf-export-loader {
+  background-color: #1e293b;
+  border: 1px solid #334155;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.8);
+}
+
+[data-theme="dark"] .pdf-export-loader h3 {
+  color: #f1f5f9;
+}
+
+[data-theme="dark"] .pdf-export-loader .section-name {
+  color: #94a3b8;
+}
+
+[data-theme="dark"] .pdf-export-loader .progress-counter {
+  color: #3b82f6;
+}
+
+[data-theme="dark"] .pdf-loader-spinner {
+  color: #3b82f6;
+}
+

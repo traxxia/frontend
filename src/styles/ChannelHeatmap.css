@@ -1,0 +1,177 @@
+/* ChannelHeatmap.css */
+@import './AnalysisBase.css';
+
+.ch-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  border-bottom: 1px solid #e5e7eb;
+  padding-bottom: 5px;
+  margin-bottom: 5px;
+}
+
+.ch-title-section {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.ch-icon {
+  color: #2563eb;
+}
+
+.ch-title {
+  font-size: 24px;
+  font-weight: 700;
+  color: #1f2937;
+  margin: 0;
+}
+
+.ch-subtitle {
+  color: #6b7280;
+  margin: 0;
+}
+
+.channel-heatmap .loading-spinner {
+  color: #2563eb;
+  filter: drop-shadow(0 2px 4px rgba(37, 99, 235, 0.3));
+}
+
+.channel-heatmap .empty-icon {
+  color: #9ca3af;
+}
+
+.channel-heatmap .retry-button,
+.channel-heatmap .generate-button {
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.3);
+}
+
+.channel-heatmap .retry-button:hover,
+.channel-heatmap .generate-button:hover {
+  background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+  box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.4);
+  transform: translateY(-2px);
+}
+
+.ch-metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 10px;
+  margin-bottom: 5px;
+}
+
+.ch-metric-card {
+  padding: 5px 20px;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
+    0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  transition: box-shadow 0.3s ease, transform 0.2s ease;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.ch-metric-blue { background: #dbeafe; }
+.ch-metric-green { background: #d1fae5; }
+.ch-metric-purple { background: #e9d5ff; }
+
+.ch-metric-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.ch-metric-blue .ch-metric-header { color: #1e40af; }
+.ch-metric-green .ch-metric-header { color: #059669; }
+.ch-metric-purple .ch-metric-header { color: #7c3aed; }
+
+.ch-metric-value {
+  font-size: 16px;
+  font-weight: 700;
+  margin: 0;
+}
+
+.ch-metric-blue .ch-metric-value { color: #1e3a8a; }
+.ch-metric-green .ch-metric-value { color: #064e3b; }
+.ch-metric-purple .ch-metric-value { color: #581c87; }
+
+.ch-view-toggle {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 24px;
+  background: #f3f4f6;
+  padding: 4px;
+  border-radius: 12px;
+  width: fit-content;
+}
+
+.ch-toggle-btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background: transparent;
+  color: #6b7280;
+}
+
+.ch-toggle-btn.active {
+  background: white;
+  color: #7c3aed;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.ch-heatmap-wrapper {
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  padding: 24px;
+  border-radius: 16px;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.ch-heatmap {
+  display: flex;
+  flex-direction: column;
+  min-width: 700px;
+}
+
+.ch-cell {
+  min-width: 120px;
+  min-height: 80px;
+  border: 1px solid #e5e7eb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.ch-cell-data {
+  cursor: pointer;
+  border-radius: 4px;
+  margin: 1px;
+}
+
+.ch-cell-data:hover,
+.ch-cell-data.selected {
+  border: 2px solid #2563eb;
+}
+
+.ch-cell-value {
+  font-size: 16px;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.ch-tooltip {
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-100%);
+  background: rgba(0, 0, 0, 0.9);
+  color: white;
+  padding: 12px;
+  border-radius: 8px;
+  z-index: 1000;
+}

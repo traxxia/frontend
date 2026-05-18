@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap/dist/js/bootstrap.bundle.min.js';
 import { Table, Badge, Spinner, Form, Button, Modal, Card } from "react-bootstrap";
@@ -27,21 +27,16 @@ import PDFExportButton from './PDFExportButton';
 import '../styles/UserHistory.css';
 import '../styles/AdminTableStyles.css';
 import { useTranslation } from '../hooks/useTranslation';
-import { useAuthStore } from '../store';
 import { answerService } from '../services/answerService';
+import { useAuthStore } from '../store';
 
 // Constants
 const ITEMS_PER_PAGE = 10;
-const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
+const API_BASE_URL = import.meta.env.VITE_BACKEND_URL;
 
 // Utility functions
 const getAuthToken = () => useAuthStore.getState().token;
-const getUserInfo = () => ({
-  id: useAuthStore.getState().userId,
-  name: useAuthStore.getState().userName,
-  email: useAuthStore.getState().userEmail,
-  role: useAuthStore.getState().userRole
-});
+const getUserInfo = () => { const s = useAuthStore.getState(); return { role: s.userRole, name: s.userName }; };
 
 const transformUser = (user) => ({
   _id: user._id,
@@ -74,11 +69,40 @@ const UserHistory = ({ onToast }) => {
   const handleRoleChange = (e) => {
     const value = e.target.value;
     setSelectedRole(value);
+    setCurrentPage(1);
     applyFilters(searchTerm, value);
   };
 
 
   const initializedRef = useRef(false);
+
+  // Load Initial Data
+  useEffect(() => {
+    if (initializedRef.current) return;
+    initializedRef.current = true;
+
+    const init = async () => {
+      const userInfo = getUserInfo();
+      setUserRole(userInfo.role || '');
+
+      const token = getAuthToken();
+      try {
+        const companiesResponse = await fetch(`${API_BASE_URL}/api/admin/companies`, {
+          headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
+        });
+        if (companiesResponse.ok) {
+          const data = await companiesResponse.json();
+          setCompanies(data.companies || []);
+        }
+        await loadGlobalQuestions();
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setIsInitialized(true);
+      }
+    };
+    init();
+  }, []);
 
   const loadGlobalQuestions = async () => {
     try {
@@ -124,35 +148,6 @@ const UserHistory = ({ onToast }) => {
     }
   };
 
-  // Load Initial Data
-  useEffect(() => {
-    if (initializedRef.current) return;
-    initializedRef.current = true;
-
-    const init = async () => {
-      const userInfo = getUserInfo();
-      setUserRole(userInfo.role || '');
-
-      const token = getAuthToken();
-      try {
-        const companiesResponse = await fetch(`${API_BASE_URL}/api/admin/companies`, {
-          headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
-        });
-        if (companiesResponse.ok) {
-          const data = await companiesResponse.json();
-          setCompanies(data.companies || []);
-        }
-        // Removed: await loadUsers(); // Now handled by the useEffect below to prevent double calls
-        await loadGlobalQuestions();
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setIsInitialized(true);
-      }
-    };
-    init();
-  }, []);
-
   const lastFetchRef = useRef(null);
   useEffect(() => {
     const fetchKey = `${selectedCompany}_${isInitialized}`;
@@ -162,7 +157,7 @@ const UserHistory = ({ onToast }) => {
     }
   }, [selectedCompany, isInitialized]);
 
-  const applyFilters = useCallback((searchValue, roleValue) => {
+  const applyFilters = (searchValue, roleValue) => {
     const search = searchValue.toLowerCase();
 
     let filtered = users.filter(u =>
@@ -178,7 +173,7 @@ const UserHistory = ({ onToast }) => {
     }
 
     setFilteredUsers(filtered);
-  }, [users]);
+  };
 
   const handleSearch = (value) => {
     setSearchTerm(value);
@@ -309,21 +304,6 @@ const UserHistory = ({ onToast }) => {
         totalItems={filteredUsers.length}
         itemsPerPage={ITEMS_PER_PAGE}
         loading={isLoading}
-        // toolbarContent={
-        //   companies.length > 0 && userRole === 'super_admin' && (
-        //     <Form.Select
-        //       className="role-select"
-        //       style={{ width: '220px' }}
-        //       value={selectedCompany}
-        //       onChange={(e) => setSelectedCompany(e.target.value)}
-        //     >
-        //       <option value="">{t('all_companies')}</option>
-        //       {companies.map(c => (
-        //         <option key={c._id} value={c._id}>{c.company_name}</option>
-        //       ))}
-        //     </Form.Select>
-        //   )
-        // }
         toolbarContent={
           <Form.Select
             className="role-select"
@@ -1285,25 +1265,7 @@ const StatsRow = ({
                 exportType="insights"
                 unlockedFeatures={analysisData.unlockedFeatures || { analysis: true, advancedPhase: true }} // Fallback for admin view context
                 showText={true}
-                swotAnalysis={analysisData.swot}
-                purchaseCriteria={analysisData.purchaseCriteria}
-                loyaltyNPS={analysisData.loyaltyNPS}
-                portersData={analysisData.porters}
-                pestelData={analysisData.pestel}
-                fullSwotData={analysisData.fullSwot}
-                competitiveAdvantage={analysisData.competitiveAdvantage}
-                strategicData={analysisData.strategic}
-                expandedCapability={analysisData.expandedCapability}
-                strategicRadar={analysisData.strategicRadar}
-                productivityData={analysisData.productivityMetrics}
-                maturityData={analysisData.maturityScore}
-                competitiveLandscape={analysisData.competitiveLandscapeData}
-                coreAdjacency={analysisData.coreAdjacencyData}
-                profitabilityData={analysisData.profitabilityData}
-                growthTrackerData={analysisData.growthTrackerData}
-                liquidityEfficiencyData={analysisData.liquidityEfficiencyData}
-                investmentPerformanceData={analysisData.investmentPerformanceData}
-                leverageRiskData={analysisData.leverageRiskData}
+                {...analysisData} // Spread analysis data props
               />
             )}
           </div>
@@ -1517,7 +1479,6 @@ const AnalysisTab = ({
           leverageRiskData={analysisData.leverageRiskData}
           competitiveLandscapeData={analysisData.competitiveLandscapeData}
           coreAdjacencyData={analysisData.coreAdjacencyData}
-          questionsLoaded={true}
           setSwotAnalysisResult={() => { }}
           setCustomerSegmentationData={() => { }}
           setPurchaseCriteriaData={() => { }}
@@ -1621,6 +1582,7 @@ const AnalysisTab = ({
           readOnly={true}
           hideImproveButton={true}
           showImproveButton={false}
+          questionsLoaded={true}
         />
       </div>
     </div>

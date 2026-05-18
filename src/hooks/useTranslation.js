@@ -1,20 +1,16 @@
-// src/hooks/useTranslation.js
-import { useLanguageStore } from '../store/languageStore';
+import { useTranslation as useI18nTranslation } from 'react-i18next';
+import { useCallback } from 'react';
 
-/**
- * useTranslation - Hook for consuming the global language store
- * Replaces the legacy window-based and local-state-based translation logic.
- */
 export const useTranslation = () => {
-  const currentLanguage = useLanguageStore(state => state.currentLanguage);
-  const translations = useLanguageStore(state => state.translations);
-  const t = useLanguageStore(state => state.t);
-  const setLanguage = useLanguageStore(state => state.setLanguage);
+  const { t, i18n } = useI18nTranslation();
+
+  const changeLanguage = useCallback((lang) => {
+    i18n.changeLanguage(lang);
+  }, [i18n]);
 
   return {
     t,
-    currentLanguage,
-    translations, // Provided for cases where raw translation object is needed
-    changeLanguage: setLanguage,
+    currentLanguage: i18n.language,
+    changeLanguage,
   };
 };

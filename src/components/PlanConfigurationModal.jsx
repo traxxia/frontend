@@ -2,73 +2,70 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Modal, Button, Alert, Card, Form, Row, Col, Badge, Spinner } from 'react-bootstrap';
 import { AlertTriangle, UserCheck, Shield, ChevronRight } from 'lucide-react';
 import { useTranslation } from '../hooks/useTranslation';
-
-const PlanConfigurationModal = ({ show, onHide, data, onConfirm, submitting, externalError }) => {
-    const { t } = useTranslation();
-    const [selections, setSelections] = useState({});
-    const [error, setError] = useState(null);
-
-    // Initialize selections with currently active items
-    useEffect(() => {
-        if (show && data?.configurable_features) {
-            const initial = {};
-            data.configurable_features.forEach(feat => {
-                // Initialize with active items up to the limit
-                initial[feat.id] = feat.active_items.slice(0, feat.limit).map(i => i._id);
-            });
-            setSelections(initial);
-            setError(null);
-        } else if (!show) {
-            setSelections({});
-            setError(null);
-        }
-    }, [show, data]);
-
-    const handleToggle = useCallback((featureId, itemId, limit, featureTitle) => {
-        setSelections(prev => {
-            const currentList = prev[featureId] || [];
-            
-            // If already selected, deselect
-            if (currentList.includes(itemId)) {
-                setError(null);
-                return { ...prev, [featureId]: currentList.filter(id => id !== itemId) };
-            }
-            
-            // If trying to select more than limit
-            if (currentList.length >= limit) {
-                setError(`${t("You can only select up to")} ${limit} ${t("active")} ${t(featureTitle)}.`);
-                return prev;
-            }
-
-            // Can select
-            setError(null);
-            return { ...prev, [featureId]: [...currentList, itemId] };
-        });
-    }, [t]);
-
-    const handleConfirm = useCallback(() => {
-        if (!data?.configurable_features) return;
-
-        // Final validation
-        for (const feat of data.configurable_features) {
-            const selectedCount = selections[feat.id]?.length || 0;
-            if (selectedCount > feat.limit) {
-                setError(`${t("You have selected too many")} ${t(feat.title)}. ${t("Maximum allowed is")} ${feat.limit}.`);
-                return;
-            }
-        }
-
-        onConfirm({
-            plan_id: data.plan_id,
-            selections: selections
-        });
-    }, [data, selections, onConfirm, t]);
-
-    const errorMessage = externalError || error;
-    const isOverLimit = data?.configurable_features?.some(feat => (selections[feat.id]?.length || 0) > feat.limit);
-
-    return (
-        <Modal show={show} onHide={onHide} size="lg" backdrop="static" keyboard={false} centered scrollable>
+const PlanConfigurationModal = ({
+  show,
+  onHide,
+  data,
+  onConfirm,
+  submitting,
+  externalError
+}) => {
+  const {
+    t
+  } = useTranslation();
+  const [selections, setSelections] = useState({});
+  const [error, setError] = useState(null);
+  useEffect(() => {
+    if (show && data?.configurable_features) {
+      const initial = {};
+      data.configurable_features.forEach(feat => {
+        initial[feat.id] = feat.active_items.slice(0, feat.limit).map(i => i._id);
+      });
+      setSelections(initial);
+      setError(null);
+    } else if (!show) {
+      setSelections({});
+      setError(null);
+    }
+  }, [show, data]);
+  const handleToggle = useCallback((featureId, itemId, limit, featureTitle) => {
+    setSelections(prev => {
+      const currentList = prev[featureId] || [];
+      if (currentList.includes(itemId)) {
+        setError(null);
+        return {
+          ...prev,
+          [featureId]: currentList.filter(id => id !== itemId)
+        };
+      }
+      if (currentList.length >= limit) {
+        setError(`${t("You can only select up to")} ${limit} ${t("active")} ${t(featureTitle)}.`);
+        return prev;
+      }
+      setError(null);
+      return {
+        ...prev,
+        [featureId]: [...currentList, itemId]
+      };
+    });
+  }, [t]);
+  const handleConfirm = useCallback(() => {
+    if (!data?.configurable_features) return;
+    for (const feat of data.configurable_features) {
+      const selectedCount = selections[feat.id]?.length || 0;
+      if (selectedCount > feat.limit) {
+        setError(`${t("You have selected too many")} ${t(feat.title)}. ${t("Maximum allowed is")} ${feat.limit}.`);
+        return;
+      }
+    }
+    onConfirm({
+      plan_id: data.plan_id,
+      selections: selections
+    });
+  }, [data, selections, onConfirm, t]);
+  const errorMessage = externalError || error;
+  const isOverLimit = data?.configurable_features?.some(feat => (selections[feat.id]?.length || 0) > feat.limit);
+  return <Modal show={show} onHide={onHide} size="lg" backdrop="static" keyboard={false} centered scrollable>
             <Modal.Header className="bg-light border-bottom border-secondary-subtle">
                 <Modal.Title className="fw-bold d-flex align-items-center">
                     <Shield className="text-primary me-2" size={24} />
@@ -76,7 +73,7 @@ const PlanConfigurationModal = ({ show, onHide, data, onConfirm, submitting, ext
                 </Modal.Title>
             </Modal.Header>
 
-            <Modal.Body className="p-4 bg-white" style={{ maxHeight: '70vh', overflowY: 'auto' }}>
+            <Modal.Body className="p-4 bg-white plan-configuration-modal--s1">
                 <Alert variant="info" className="mb-4 border-0 shadow-sm d-flex align-items-start bg-light-blue text-primary-emphasis">
                     <Shield className="me-3 flex-shrink-0 mt-1" size={22} />
                     <div>
@@ -89,15 +86,12 @@ const PlanConfigurationModal = ({ show, onHide, data, onConfirm, submitting, ext
                     </div>
                 </Alert>
 
-                {errorMessage && (
-                    <Alert variant="danger" className="d-flex align-items-center mb-4 border-0 shadow-sm">
+                {errorMessage && <Alert variant="danger" className="d-flex align-items-center mb-4 border-0 shadow-sm">
                         <AlertTriangle className="me-2 flex-shrink-0" size={18} />
                         <div>{t(errorMessage)}</div>
-                    </Alert>
-                )}
+                    </Alert>}
 
-                {data?.configurable_features?.map((feature) => (
-                    <div key={feature.id} className="mb-4 bg-light p-3 rounded border">
+                {data?.configurable_features?.map(feature => <div key={feature.id} className="mb-4 bg-light p-3 rounded border">
                         <div className="d-flex justify-content-between align-items-center mb-3">
                             <div>
                                 <h6 className="fw-bold mb-1 text-primary">{t(feature.title)}</h6>
@@ -114,23 +108,12 @@ const PlanConfigurationModal = ({ show, onHide, data, onConfirm, submitting, ext
 
                         <Row xs={1} md={2} className="g-3">
                             {[...feature.active_items, ...feature.archived_items].map(item => {
-                                const isSelected = selections[feature.id]?.includes(item._id);
-                                const isActive = feature.active_items.some(i => i._id === item._id);
-                                
-                                return (
-                                    <Col key={item._id}>
-                                        <Card 
-                                            className={`h-100 cursor-pointer selection-card transition-all ${isSelected ? 'selected bg-light-blue border-primary shadow-sm' : 'border-light-subtle'}`}
-                                            onClick={() => handleToggle(feature.id, item._id, feature.limit, feature.title)}
-                                            style={{ transition: 'all 0.2s ease-in-out' }}
-                                        >
+            const isSelected = selections[feature.id]?.includes(item._id);
+            const isActive = feature.active_items.some(i => i._id === item._id);
+            return <Col key={item._id}>
+                                        <Card className={`h-100 cursor-pointer selection-card transition-all ${isSelected ? 'selected bg-light-blue border-primary shadow-sm' : 'border-light-subtle'} plan-configuration-modal--s2`} onClick={() => handleToggle(feature.id, item._id, feature.limit, feature.title)}>
                                             <Card.Body className="p-3 d-flex align-items-center">
-                                                <Form.Check
-                                                    type="checkbox"
-                                                    checked={isSelected}
-                                                    onChange={() => { }} // Handled by onClick on the Card
-                                                    className="me-2 cursor-pointer"
-                                                />
+                                                <Form.Check type="checkbox" checked={isSelected} onChange={() => {}} className="me-2 cursor-pointer" />
                                                 <div className="flex-grow-1 overflow-hidden me-2">
                                                     <div className="fw-bold text-truncate" title={item.name || item.business_name}>
                                                         {item.name || item.business_name}
@@ -142,38 +125,25 @@ const PlanConfigurationModal = ({ show, onHide, data, onConfirm, submitting, ext
                                                 </Badge>
                                             </Card.Body>
                                         </Card>
-                                    </Col>
-                                );
-                            })}
+                                    </Col>;
+          })}
                         </Row>
-                        {feature.active_items.length === 0 && feature.archived_items.length === 0 && (
-                            <div className="text-center text-muted small py-2">{t("No items found.")}</div>
-                        )}
-                    </div>
-                ))}
+                        {feature.active_items.length === 0 && feature.archived_items.length === 0 && <div className="text-center text-muted small py-2">{t("No items found.")}</div>}
+                    </div>)}
             </Modal.Body>
 
             <Modal.Footer className="bg-light border-top border-secondary-subtle px-4 py-3 pb-4">
                 <Button variant="outline-secondary" onClick={onHide} disabled={submitting} className="fw-bold px-4">
                     {t("Cancel")}
                 </Button>
-                <Button
-                    variant="primary"
-                    onClick={handleConfirm}
-                    disabled={submitting || isOverLimit}
-                    className="fw-bold px-4 d-flex align-items-center bg-gradient-primary border-0 shadow-sm"
-                >
-                    {submitting ? (
-                        <>
+                <Button variant="primary" onClick={handleConfirm} disabled={submitting || isOverLimit} className="fw-bold px-4 d-flex align-items-center bg-gradient-primary border-0 shadow-sm">
+                    {submitting ? <>
                             <Spinner as="span" animation="border" size="sm" role="status" aria-hidden="true" className="me-2" />
                             {t("Processing...")}
-                        </>
-                    ) : (
-                        <>
+                        </> : <>
                             {t("Confirm Configuration")}
                             <ChevronRight size={18} className="ms-1" />
-                        </>
-                    )}
+                        </>}
                 </Button>
             </Modal.Footer>
 
@@ -183,8 +153,6 @@ const PlanConfigurationModal = ({ show, onHide, data, onConfirm, submitting, ext
                     .selection-card:hover { transform: translateY(-2px); box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
                 `}
             </style>
-        </Modal>
-    );
+        </Modal>;
 };
-
 export default PlanConfigurationModal;

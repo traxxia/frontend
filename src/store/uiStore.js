@@ -1,4 +1,3 @@
-// src/store/uiStore.js
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 
@@ -67,9 +66,9 @@ export const useUIStore = create(
     {
       name: 'ui-storage',
       storage: createJSONStorage(() => localStorage),
-      partialize: (state) => ({ 
+      partialize: (state) => ({
         theme: state.theme,
-        businessSettings: state.businessSettings 
+        businessSettings: state.businessSettings
       }),
     }
   )

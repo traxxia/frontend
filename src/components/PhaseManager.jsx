@@ -60,7 +60,7 @@ export const getUnlockedFeatures = (questions, userAnswers, completedQuestions, 
     const hasAnyInitial = checkPhase('initial');
     const hasAnyEssential = checkPhase('essential');
     const hasAnyAdvanced = checkPhase('advanced');
-    const hasDoc = !!hasUploadedDocument;
+    const hasDoc = !!hasUploadedDocument; 
 
     return {
         advanced: true,
@@ -90,14 +90,13 @@ const loadCompletedQuestionsFromAPI = (conversations) => {
                 .filter(text => text.length > 0 && text !== '[Question Skipped]')
             : [];
 
-
         if (allAnswers.length > 0) {
-            answersMap[questionId] = allAnswers.join('\n\n'); 
+            answersMap[questionId] = allAnswers.join('\n\n');
         } else {
             if (conversation.completion_status === 'skipped' || conversation.is_skipped) {
                 answersMap[questionId] = '[Question Skipped]';
             } else if (conversation.completion_status === 'complete') {
-                answersMap[questionId] = ''; 
+                answersMap[questionId] = '';
             }
         }
     });
@@ -133,8 +132,6 @@ const PhaseManager = ({
     const [showUnlockToast, setShowUnlockToast] = useState(false);
     const allPhasesCelebratedRef = useRef(false);
 
-
-
     const loadExistingAnalysis = async () => {
         try {
             const token = getAuthToken();
@@ -167,9 +164,8 @@ const PhaseManager = ({
             }
 
             const analysisArray = [];
-            
+
             try {
-                // Use the centralized apiService which has common promise-caching logic
                 const newAnalysisData = await apiService.fetchAnalysisDataThroughBackend(selectedBusinessId);
                 if (newAnalysisData && Array.isArray(newAnalysisData)) {
                     analysisArray.push(...newAnalysisData);
@@ -290,7 +286,6 @@ const PhaseManager = ({
         }
     }, [completedPhases, showToastMessage]);
 
-
     const canRegenerateAnalysis = () => {
         return Object.values(userAnswers).some(answer => answer && String(answer).trim().length > 0);
     };
@@ -348,30 +343,12 @@ const PhaseManager = ({
     };
 
     const loadAnalysisByPhase = async (phase) => {
-        /*
-        try {
-            const token = getAuthToken();
-            const data = await AnalysisService.getAnalysisByPhase(API_BASE_URL, token, selectedBusinessId, phase);
-            return data;
-        } catch (error) {
-            console.error(`Error loading analysis for phase ${phase}:`, error);
-            return [];
-        }
-        */
+
         return [];
     };
 
     const loadAnalysisByFilter = async (filter) => {
-        /*
-        try {
-            const token = getAuthToken();
-            const data = await AnalysisService.getAnalysisByFilter(API_BASE_URL, token, selectedBusinessId, filter);
-            return data;
-        } catch (error) {
-            console.error(`Error loading analysis by filter:`, error);
-            return [];
-        }
-        */
+
         return [];
     };
     return {
@@ -392,9 +369,8 @@ const PhaseManager = ({
         unlockedPhase,
         showUnlockToast,
         setShowUnlockToast,
-        loadCompletedQuestionsFromAPI // Adding to return object if needed elsewhere
+        loadCompletedQuestionsFromAPI
     };
 };
 
 export default PhaseManager;
-
