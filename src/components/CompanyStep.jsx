@@ -159,11 +159,12 @@ const CompanyStep = ({
                   </motion.div>
                 )}
               </AnimatePresence>
-            </div>
-            
+              
             <div ref={companyErrorRef}>
               {(errors.company_name || errors.company_id) && <div className="error-message">{errors.company_name || errors.company_id}</div>}
             </div>
+            </div>
+            
 
             {!isNewCompany && (
               <div className="form-group-custom full-width-field mt-3">
@@ -268,7 +269,7 @@ const CompanyStep = ({
                               className={`st-table-btn-select ${selectedPlanId === p._id ? 'selected' : ''}`}
                               onClick={() => setSelectedPlanId(p._id)}
                             >
-                              {selectedPlanId === p._id ? t("Selected") : t("Select_Plan")}
+                              {selectedPlanId === p._id ? t("Selected") : t("select_plan")}
                             </button>
                           </td>
                         ))}

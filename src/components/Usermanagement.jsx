@@ -463,15 +463,23 @@ const UserManagement = ({ onToast }) => {
                 {(() => {
                   const biz = launchedBusinesses.find(b => b._id === accessBusinessId);
                   const filtered = collaborators.filter(c => {
-                    const isOwner = c._id === biz?.user_id;
+                    const isOwner = String(c._id) === String(biz?.user_id);
                     const role = c.role_name?.toLowerCase();
                     if (!isOwner && (role === 'viewer' || role === 'company_admin' || role === 'super_admin')) return false;
                     
                     if (accessType === "reRanking") {
-                      return !(biz?.allowed_ranking_collaborators || []).includes(c._id);
+                      const alreadyHas = (biz?.allowed_ranking_collaborators || []).some(item => {
+                        const id = typeof item === 'object' && item !== null ? (item._id || item.id) : item;
+                        return String(id) === String(c._id);
+                      });
+                      return !alreadyHas;
                     } else {
                       const proj = projects.find(p => p._id === selectedProjectId);
-                      return !(proj?.allowed_collaborators || []).includes(c._id);
+                      const alreadyHas = (proj?.allowed_collaborators || []).some(item => {
+                        const id = typeof item === 'object' && item !== null ? (item._id || item.id) : item;
+                        return String(id) === String(c._id);
+                      });
+                      return !alreadyHas;
                     }
                   });
                   return filtered.length > 0 ? filtered.map(c => (

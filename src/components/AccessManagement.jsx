@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Form, Button, Modal } from "react-bootstrap";
-import { ListOrdered, FileEdit, ShieldOff, FolderX, UserMinus } from "lucide-react";
+import { ListOrdered, FileEdit, ShieldOff, FolderX, UserMinus, Folder } from "lucide-react";
 import { useTranslation } from "../hooks/useTranslation";
 import AdminTable from "./AdminTable";
 import "../styles/AdminTableStyles.css";
@@ -93,14 +93,18 @@ const AccessManagement = ({
     render: (_, row) => {
       const projects = row.projects_with_access || [];
       if (projects.length === 0) return <span className="admin-cell-secondary">—</span>;
-      return <div className="access-management--s3">
-                        {projects.slice(0, 2).map((p, idx) => <span key={idx} title={p.project_name} className="admin-status-badge archived access-management--s4">
+      return <ul className="project-access-list">
+                        {projects.slice(0, 2).map((p, idx) => (
+                            <li key={idx} title={p.project_name} className="project-access-item">
                                 {p.project_name}
-                            </span>)}
-                        {projects.length > 2 && <span className="admin-status-badge archived access-management--s5">
-                                +{projects.length - 2}
-                            </span>}
-                    </div>;
+                            </li>
+                        ))}
+                        {projects.length > 2 && (
+                            <li className="project-access-more-item">
+                                +{projects.length - 2} More
+                            </li>
+                        )}
+                    </ul>;
     }
   }, {
     key: "actions",
@@ -112,7 +116,7 @@ const AccessManagement = ({
                     {row.has_project_edit_access && <Button variant="outline-danger" size="sm" title="Revoke Edit Access" onClick={() => handleOpenRevokeModal(row, "project_edit")} disabled={revoking}>
                             <FolderX size={14} />
                         </Button>}
-                    {(row.has_rerank_access || row.has_project_edit_access) && <Button variant="outline-secondary" size="sm" className="d-flex align-items-center gap-1" title="Revoke All Access" onClick={() => handleOpenRevokeModal(row, "all")} disabled={revoking}>
+                    {(row.has_rerank_access && row.has_project_edit_access) && <Button variant="outline-secondary" size="sm" className="d-flex align-items-center gap-1" title="Revoke All Access" onClick={() => handleOpenRevokeModal(row, "all")} disabled={revoking}>
                             <UserMinus size={14} /> {t("Revoke All")}
                         </Button>}
                 </>

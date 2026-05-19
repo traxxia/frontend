@@ -6,6 +6,7 @@ import '../styles/Register.css';
 
 const STRIPE_STYLE = {
   base: {
+    fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
     fontSize: '16px',
     color: '#424770',
     '::placeholder': {
