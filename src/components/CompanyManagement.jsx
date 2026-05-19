@@ -322,14 +322,14 @@ const CompanyManagement = ({
     key: 'company_name',
     label: t('company_name'),
     render: val => <span className="admin-cell-primary">{val}</span>
-  }, ...(isSuperAdmin ? [{
+  }, {
     key: 'admin',
-    label: t('administrator') || 'Administrator',
+    label: t('email') || 'Email',
     render: (_, row) => <div>
               <div className="admin-cell-primary">{row.admin_name}</div>
               <div className="admin-cell-secondary">{row.admin_email}</div>
             </div>
-  }] : []), {
+  }, {
     key: 'industry',
     label: t('industry'),
     render: val => <span className="admin-cell-primary">{val || '-'}</span>
