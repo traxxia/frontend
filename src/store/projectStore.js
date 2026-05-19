@@ -161,6 +161,8 @@ export const useProjectStore = create((set, get) => ({
       const response = await axios.post(API_BASE_URL + '/api/projects', payload, {
         headers: { Authorization: 'Bearer ' + token }
       });
+      const bizId = payload.business_id || response.data.project?.business_id || response.data.project?.businessId;
+      if (bizId) get().clearCache(bizId);
       set((state) => ({ projects: [...state.projects, response.data.project], isLoading: false }));
       return { success: true, project: response.data.project };
     } catch (err) {
@@ -177,6 +179,8 @@ export const useProjectStore = create((set, get) => ({
       const response = await axios.patch(API_BASE_URL + '/api/projects/' + projectId, payload, {
         headers: { Authorization: 'Bearer ' + token }
       });
+      const bizId = response.data.project?.business_id || response.data.project?.businessId || payload.business_id;
+      if (bizId) get().clearCache(bizId);
       set((state) => ({
         projects: state.projects.map(p =>
           (p._id === projectId || p.id === projectId)
@@ -198,9 +202,12 @@ export const useProjectStore = create((set, get) => ({
     if (!token) return;
     set({ isLoading: true });
     try {
+      const project = get().projects.find(p => p._id === projectId || p.id === projectId);
+      const bizId = project?.business_id || project?.businessId;
       await axios.delete(API_BASE_URL + '/api/projects/' + projectId, {
         headers: { Authorization: 'Bearer ' + token }
       });
+      if (bizId) get().clearCache(bizId);
       set((state) => ({
         projects: state.projects.filter(p => p._id !== projectId && p.id !== projectId),
         isLoading: false,
@@ -221,6 +228,8 @@ export const useProjectStore = create((set, get) => ({
         headers: { Authorization: 'Bearer ' + token }
       });
       if (response.data.projects) {
+        const bizId = response.data.projects[0]?.business_id || response.data.projects[0]?.businessId;
+        if (bizId) get().clearCache(bizId);
         set((state) => ({
           projects: response.data.projects.map(newProj => {
             const existingProj = state.projects.find(p => String(p._id) === String(newProj._id));
@@ -334,6 +343,8 @@ export const useProjectStore = create((set, get) => ({
       const response = await axios.post(`${API_BASE_URL}/api/projects/${projectId}/review`, data, {
         headers: { Authorization: `Bearer ${token}` }
       });
+      const bizId = response.data.project?.business_id || response.data.project?.businessId;
+      if (bizId) get().clearCache(bizId);
       set((state) => ({
         projects: state.projects.map(p =>
           (p._id === projectId || p.id === projectId)
@@ -357,6 +368,8 @@ export const useProjectStore = create((set, get) => ({
       const response = await axios.patch(`${API_BASE_URL}/api/projects/${projectId}/adhoc-update`, data, {
         headers: { Authorization: `Bearer ${token}` }
       });
+      const bizId = response.data.project?.business_id || response.data.project?.businessId;
+      if (bizId) get().clearCache(bizId);
       set((state) => ({
         projects: state.projects.map(p =>
           (p._id === projectId || p.id === projectId)
@@ -401,6 +414,7 @@ export const useProjectStore = create((set, get) => ({
       }, {
         headers: { Authorization: `Bearer ${token}` }
       });
+      get().clearCache(businessId);
       set({ isLoading: false });
       return { success: true, data: response.data };
     } catch (err) {
@@ -417,6 +431,7 @@ export const useProjectStore = create((set, get) => ({
         { scope, business_id: businessId },
         { headers: { Authorization: `Bearer ${token}` } }
       );
+      get().clearCache(businessId);
       return { success: true, data: response.data };
     } catch (err) {
       return { success: false, error: err.response?.data?.error || err.message };
@@ -431,6 +446,7 @@ export const useProjectStore = create((set, get) => ({
         { collaborator_ids: collaboratorIds },
         { headers: { Authorization: `Bearer ${token}` } }
       );
+      get().clearCache(businessId);
       return { success: true, data: response.data };
     } catch (err) {
       return { success: false, error: err.response?.data?.error || err.message };
@@ -445,6 +461,7 @@ export const useProjectStore = create((set, get) => ({
         { collaborator_ids: collaboratorIds },
         { headers: { Authorization: `Bearer ${token}` } }
       );
+      get().clearCache(businessId);
       return { success: true, data: response.data };
     } catch (err) {
       return { success: false, error: err.response?.data?.error || err.message };
