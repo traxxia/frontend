@@ -7,11 +7,6 @@ const DEFAULT_LIMITS = {
   project: false,
 };
 
-/**
- * Reads the plan feature-flags from the `userLimits` in useAuthStore.
- *
- * @returns {{ insight: boolean, strategic: boolean, pmf: boolean, project: boolean }}
- */
 export function getUserLimits() {
   try {
     const limits = useAuthStore.getState().userLimits;

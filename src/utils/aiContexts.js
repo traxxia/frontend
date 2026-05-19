@@ -40,4 +40,3 @@ export const AI_PAGE_CONTEXTS = {
         page_description: "The Ranking Dashboard is where the team collaboratively prioritizes projects. It allows team members to submit their individual rankings, view the AI's suggested priority, and see a real-time consensus view (Team Ranking) to make final strategic decisions on which projects to launch."
     }
 };
-

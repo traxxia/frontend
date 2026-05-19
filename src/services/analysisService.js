@@ -1,13 +1,7 @@
 const analysisRequestCache = new Map();
 
 export const AnalysisService = {
-    /**
-     * Upsert analysis data (Create or Update)
-     * @param {string} apiBaseUrl - Backend API base URL
-     * @param {string} token - Auth token
-     * @param {object} data - Analysis data { business_id, phase, analysis_type, analysis_name, analysis_data }
-     * @returns {Promise<object>} - Response data
-     */
+
     async upsertAnalysis(apiBaseUrl, token, data) {
         const response = await fetch(`${apiBaseUrl}/api/analysis`, {
             method: "POST",
@@ -26,13 +20,6 @@ export const AnalysisService = {
         return await response.json();
     },
 
-    /**
-     * Get all analysis for a business
-     * @param {string} apiBaseUrl 
-     * @param {string} token 
-     * @param {string} businessId 
-     * @returns {Promise<Array>}
-     */
     async getAnalysis(apiBaseUrl, token, businessId, forceRefresh = false) {
         if (!businessId) return [];
 
@@ -66,14 +53,6 @@ export const AnalysisService = {
         return fetchPromise;
     },
 
-    /**
-     * Get analysis by phase
-     * @param {string} apiBaseUrl 
-     * @param {string} token 
-     * @param {string} businessId 
-     * @param {string} phase 
-     * @returns {Promise<Array>}
-     */
     async getAnalysisByPhase(apiBaseUrl, token, businessId, phase) {
         const response = await fetch(`${apiBaseUrl}/api/analysis/business/${businessId}/phase/${phase}`, {
             headers: {
@@ -89,14 +68,6 @@ export const AnalysisService = {
         return result.data || [];
     },
 
-    /**
-     * Get analysis by filter
-     * @param {string} apiBaseUrl 
-     * @param {string} token 
-     * @param {string} businessId 
-     * @param {object} filter - { type, name }
-     * @returns {Promise<Array>}
-     */
     async getAnalysisByFilter(apiBaseUrl, token, businessId, filter) {
         const queryParams = new URLSearchParams(filter).toString();
         const response = await fetch(`${apiBaseUrl}/api/analysis/business/${businessId}/filter?${queryParams}`, {

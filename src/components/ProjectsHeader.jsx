@@ -1,44 +1,30 @@
 import React from "react";
 import { useTranslation } from "../hooks/useTranslation";
-
 const ProjectsHeader = ({
   totalProjects,
-  isLoading,
+  isLoading
 }) => {
-  const { t } = useTranslation();
-  return (
-    <div className="projects-header-container">
+  const {
+    t
+  } = useTranslation();
+  return <div className="projects-header-container">
       <div className="projects-header-row">
         <div className="d-flex align-items-center gap-3">
           <h6 className="projects-small-title mb-0">{t("Projects")}</h6>
-          <div
-            className="d-flex align-items-center gap-2 px-3 py-2"
-            style={{
-              backgroundColor: '#f8f9fa',
-              borderRadius: '8px',
-              border: '1px solid rgb(26, 115, 232)',
-              minWidth: '120px'
-            }}
-          >
-            {isLoading ? (
-              <span className="fw-bold" style={{ color: '#2563eb', fontSize: '14px' }}>
+          <div className="d-flex align-items-center gap-2 px-3 py-2 projects-header--s1">
+            {isLoading ? <span className="fw-bold projects-header--s2">
                 {t("loading")}
-              </span>
-            ) : (
-              <>
-                <span className="fw-bold" style={{ color: '#2563eb', fontSize: '18px' }}>
+              </span> : <>
+                <span className="fw-bold projects-header--s3">
                   {totalProjects}
                 </span>
-                <span className="" style={{ color: '#2563eb', fontSize: '14px', fontWeight: '500' }}>
+                <span className="projects-header--s4">
                   {totalProjects === 1 ? t("project") : t("total_projects")}
                 </span>
-              </>
-            )}
+              </>}
           </div>
         </div>
       </div>
-    </div>
-  );
+    </div>;
 };
-
 export default ProjectsHeader;

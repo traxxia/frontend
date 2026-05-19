@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
-import { Loader, Users, TrendingUp, Target, BarChart3, ChevronDown, ChevronRight } from 'lucide-react'; 
+import { Loader, Users, TrendingUp, Target, BarChart3, ChevronDown, ChevronRight } from 'lucide-react';
 import AnalysisEmptyState from './AnalysisEmptyState';
 import AnalysisError from './AnalysisError';
 import { useAnalysisStore } from '../store';
@@ -18,17 +18,13 @@ const OrganizationalCultureProfile = ({
   onRedirectToBrief
 }) => {
   const { t } = useTranslation();
-  
-  // Use Zustand store
-  const { 
+  const {
     cultureProfileData: storeCultureProfileData,
     isRegenerating: isTypeRegenerating,
-    regenerateIndividualAnalysis 
+    regenerateIndividualAnalysis
   } = useAnalysisStore();
 
   const isRegenerating = propIsRegenerating || isTypeRegenerating('cultureProfile');
-
-  // Normalize data from store or props
   const cultureProfile = useMemo(() => {
     const rawData = propCultureProfileData || storeCultureProfileData;
     if (!rawData) return null;
@@ -56,9 +52,9 @@ const OrganizationalCultureProfile = ({
       displayName: 'Organizational Culture Profile Analysis',
       customMessage: 'Answer more questions to unlock detailed organizational culture profile analysis'
     };
-    
+
     await checkMissingQuestionsAndRedirect(
-      'cultureProfile', 
+      'cultureProfile',
       selectedBusinessId,
       handleRedirectToBrief,
       {
@@ -193,7 +189,7 @@ const OrganizationalCultureProfile = ({
   const renderContent = () => {
     if (error) {
       return (
-        <AnalysisError 
+        <AnalysisError
           error={error}
           onRetry={handleRegenerate}
           title="Organizational Culture Profile Analysis Error"
@@ -213,13 +209,13 @@ const OrganizationalCultureProfile = ({
           canRegenerate={canRegenerate}
           userAnswers={userAnswers}
           minimumAnswersRequired={3}
-        /> 
+        />
       );
     }
 
     return (
-      <div className="porters-container"> 
-        {/* Word Cloud Section */}
+      <div className="porters-container">
+        {}
         {(cultureProfile.values?.length > 0 || cultureProfile.behaviors?.length > 0) && (
           <div className="section-container">
             <div className="section-header" onClick={() => toggleSection('wordcloud')}>
@@ -234,7 +230,7 @@ const OrganizationalCultureProfile = ({
           </div>
         )}
 
-        {/* Culture Map Section */}
+        {}
         {cultureProfile.cultureType && (
           <div className="section-container">
             <div className="section-header" onClick={() => toggleSection('culturemap')}>
@@ -249,7 +245,7 @@ const OrganizationalCultureProfile = ({
           </div>
         )}
 
-        {/* Culture Overview Table */}
+        {}
         <div className="section-container">
           <div className="section-header" onClick={() => toggleSection('overview')}>
             <h3>Culture Overview</h3>
@@ -280,7 +276,7 @@ const OrganizationalCultureProfile = ({
           </div>
         </div>
 
-        {/* Work Style Analysis Table */}
+        {}
         {cultureProfile.workStyle && Object.keys(cultureProfile.workStyle).length > 0 && (
           <div className="section-container">
             <div className="section-header" onClick={() => toggleSection('workstyle')}>
@@ -306,7 +302,7 @@ const OrganizationalCultureProfile = ({
           </div>
         )}
 
-        {/* Employee Metrics Table */}
+        {}
         {cultureProfile.employeeMetrics && Object.keys(cultureProfile.employeeMetrics).length > 0 && (
           <div className="section-container">
             <div className="section-header" onClick={() => toggleSection('metrics')}>
@@ -336,7 +332,7 @@ const OrganizationalCultureProfile = ({
   };
 
   return (
-    <div className="porters-container"> 
+    <div className="porters-container">
       {renderContent()}
     </div>
   );

@@ -1,0 +1,73 @@
+/* StrategicPositioningRadar.css */
+@import './AnalysisBase.css';
+
+.strategic-radar-container {
+  padding: 10px 20px;
+}
+
+.radar-chart-wrapper {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 40px;
+}
+
+.radar-dimensions-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 20px;
+}
+
+.radar-dimension-card {
+  padding: 20px;
+  border-radius: 12px;
+  background: white;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.radar-dimension-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.radar-dimension-name {
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.radar-score-badge {
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 700;
+  color: white;
+}
+
+.radar-dimension-description {
+  font-size: 12px;
+  color: #6b7280;
+  line-height: 1.5;
+}
+
+.radar-overall-position {
+  margin-top: 40px;
+  padding: 25px;
+  background: #eff6ff;
+  border-radius: 16px;
+  border: 1px solid #bfdbfe;
+}
+
+.radar-overall-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 15px;
+}
+
+.radar-overall-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #1e40af;
+}

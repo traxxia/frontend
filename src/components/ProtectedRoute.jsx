@@ -12,23 +12,15 @@ const ProtectedRoute = ({
   const userRole = useAuthStore((state) => state.userRole);
   const isAdmin = useAuthStore((state) => state.isAdmin);
   const isObservatory = useAuthStore((state) => state.isObservatory);
-
-  // Check authentication
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
   }
-
-  // Check observatory access
   if (observatoryOnly && !isObservatory) {
     return <Navigate to="/dashboard" replace />;
   }
-
-  // Check super admin access
   if (superAdminOnly && userRole !== "super_admin") {
     return <Navigate to="/dashboard" replace />;
   }
-
-  // Check admin access (for regular admin routes)
   if (adminOnly && !isAdmin && userRole !== "super_admin") {
     return <Navigate to="/dashboard" replace />;
   }

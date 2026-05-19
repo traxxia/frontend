@@ -32,36 +32,46 @@ const Aiassistant = ({ businessId: propBusinessId, projectId, pageContext, isDis
   const getBusinessId = () => propBusinessId || selectedBusinessId;
 
   const getToken = () => useAuthStore.getState().token;
-
-  // Auto-scroll to bottom on new messages
   useEffect(() => {
     if (open) chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, open, isLoading]);
 
   const historyFetchedRef = useRef(false);
-
-  // Reset fetching flag when project changes to allow fresh fetch for new context
   useEffect(() => {
     historyFetchedRef.current = false;
   }, [projectId]);
-
-  // Clear input when panel is closed
   useEffect(() => {
     if (!open) {
       setQuery("");
     }
   }, [open]);
 
-  // Check quota status and fetch history when panel is opened (lazy — not on mount)
+  const checkQuota = React.useCallback(async () => {
+    const businessId = propBusinessId || selectedBusinessId;
+    const token = getToken();
+    if (!token || !businessId) return;
+
+    try {
+      const response = await axios.get(
+        `${import.meta.env.VITE_BACKEND_URL}/api/companies/ai-usage/${businessId}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      if (response.data) {
+        setQuotaStatus({
+          exceeded: response.data.quotaExceed,
+          resetAt: response.data.quotaResetAt,
+          usedTokens: response.data.ai_token_usage || 0,
+          limit: response.data.ai_limit || 3000000
+        });
+      }
+    } catch (error) {
+      console.error("Error checking AI quota:", error);
+    }
+  }, [propBusinessId, selectedBusinessId]);
   useEffect(() => {
     if (!open) {
-      // Reset fetch ref when closed so it refetches next time it's opened if needed,
-      // or we can keep it here. But definitely reset on projectId change.
       return;
     }
-
-    // If projectId changes while open, we should typically refetch.
-    // The dependency array handles the trigger.
 
     if (!historyFetchedRef.current) {
       historyFetchedRef.current = true;
@@ -71,7 +81,7 @@ const Aiassistant = ({ businessId: propBusinessId, projectId, pageContext, isDis
         try {
           const resolvedProjectId = projectId || 'global';
           const response = await axios.get(
-            `${process.env.REACT_APP_BACKEND_URL}/ai-chat/history/${resolvedProjectId}`,
+            `${import.meta.env.VITE_BACKEND_URL}/ai-chat/history/${resolvedProjectId}`,
             { headers: { Authorization: `Bearer ${token}` } }
           );
           const introMessage = {
@@ -96,41 +106,17 @@ const Aiassistant = ({ businessId: propBusinessId, projectId, pageContext, isDis
     }
 
     checkQuota();
-  }, [open, projectId]);
-
-  const checkQuota = async () => {
-    const businessId = getBusinessId();
-    const token = getToken();
-    if (!token || !businessId) return;
-
-    try {
-      const response = await axios.get(
-        `${process.env.REACT_APP_BACKEND_URL}/api/companies/ai-usage/${businessId}`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      if (response.data) {
-        setQuotaStatus({
-          exceeded: response.data.quotaExceed,
-          resetAt: response.data.quotaResetAt,
-          usedTokens: response.data.ai_token_usage || 0,
-          limit: response.data.ai_limit || 3000000
-        });
-      }
-    } catch (error) {
-      console.error("Error checking AI quota:", error);
-    }
-  };
+  }, [open, projectId, checkQuota]);
 
   const saveMessageToHistory = async (role, text) => {
     const token = getToken();
     if (!token) return;
     try {
-      // Only include project_id if we are in a project context
       const body = { role, text };
       if (projectId) body.project_id = projectId;
 
       await axios.post(
-        `${process.env.REACT_APP_BACKEND_URL}/ai-chat/history`,
+        `${import.meta.env.VITE_BACKEND_URL}/ai-chat/history`,
         body,
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -150,7 +136,7 @@ const Aiassistant = ({ businessId: propBusinessId, projectId, pageContext, isDis
     try {
       const resolvedProjectId = projectId || 'global';
       await axios.delete(
-        `${process.env.REACT_APP_BACKEND_URL}/ai-chat/history/${resolvedProjectId}`,
+        `${import.meta.env.VITE_BACKEND_URL}/ai-chat/history/${resolvedProjectId}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setMessages([{ role: "assistant", text: "Hi! How can I help you today? 👋" }]);
@@ -173,19 +159,16 @@ const Aiassistant = ({ businessId: propBusinessId, projectId, pageContext, isDis
     let assistantText = "";
     const businessId = getBusinessId();
     const token = getToken();
-    const startTime = Date.now(); // ← track latency for Observatory logging
-    let responseData = null; // hoisted so finally block can read model/token usage
+    const startTime = Date.now();
+    let responseData = null;
 
     try {
-      // 1. Pre-check: Verify AI token status before calling AI Assistant API
       const usageResponse = await axios.get(
-        `${process.env.REACT_APP_BACKEND_URL}/api/companies/ai-usage/${businessId}`,
+        `${import.meta.env.VITE_BACKEND_URL}/api/companies/ai-usage/${businessId}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
       const usageData = usageResponse.data;
-
-      // Update local state to sync UI
       setQuotaStatus({
         exceeded: usageData?.quotaExceed || false,
         resetAt: usageData?.quotaResetAt || null,
@@ -203,8 +186,6 @@ const Aiassistant = ({ businessId: propBusinessId, projectId, pageContext, isDis
         await saveMessageToHistory("assistant", assistantText);
         return;
       }
-
-      // 2. Call AI Assistant API
       const requestBody = { message: userText };
       if (projectId) {
         requestBody.projectId = projectId;
@@ -217,7 +198,7 @@ const Aiassistant = ({ businessId: propBusinessId, projectId, pageContext, isDis
         }
       }
 
-      const response = await fetch(process.env.REACT_APP_AI_CHAT_URL, {
+      const response = await fetch(import.meta.env.VITE_AI_CHAT_URL, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -227,10 +208,9 @@ const Aiassistant = ({ businessId: propBusinessId, projectId, pageContext, isDis
       });
 
       const data = await response.json();
-      responseData = data; // make available in finally
+      responseData = data;
 
       if (!response.ok) {
-        // Handle rate limit or other API errors gracefully
         if (data?.error && data.error.toLowerCase().includes("rate limit")) {
           assistantText = "⚠️ The AI is temporarily unavailable due to rate limits. Please try again in a few minutes.";
         } else {
@@ -238,22 +218,17 @@ const Aiassistant = ({ businessId: propBusinessId, projectId, pageContext, isDis
         }
       } else {
         assistantText = data.response || data.text || "I'm sorry, I couldn't process that request.";
-
-        // 3. Post-update: Log the tokens consumed
-        // Extracting tokens_used from the AI service response
         const tokensUsed = data.usage?.totalTokens || data.usage?.total_tokens || data.tokensUsed || 0;
 
         if (tokensUsed > 0) {
           try {
             await axios.post(
-              `${process.env.REACT_APP_BACKEND_URL}/api/companies/update-ai-usage`,
+              `${import.meta.env.VITE_BACKEND_URL}/api/companies/update-ai-usage`,
               { business_id: businessId, tokens_used: tokensUsed },
               { headers: { Authorization: `Bearer ${token}` } }
             );
-
-            // Refresh usage data after update to show current count
             const updatedUsageResp = await axios.get(
-              `${process.env.REACT_APP_BACKEND_URL}/api/companies/ai-usage/${businessId}`,
+              `${import.meta.env.VITE_BACKEND_URL}/api/companies/ai-usage/${businessId}`,
               { headers: { Authorization: `Bearer ${token}` } }
             );
 
@@ -274,14 +249,11 @@ const Aiassistant = ({ businessId: propBusinessId, projectId, pageContext, isDis
       console.error("AI Assistant API Error:", error);
       assistantText = "Sorry, I encountered a network error. Please check your connection and try again.";
     } finally {
-      // Always show and save the assistant reply — even error messages
       if (assistantText) {
         setMessages((prev) => [...prev, { role: "assistant", text: assistantText }]);
         await saveMessageToHistory("assistant", assistantText);
-
-        // Observatory: fire-and-forget log-turn (server gates it for non-observatory users)
         axios.post(
-          `${process.env.REACT_APP_BACKEND_URL}/ai-chat/log-turn`,
+          `${import.meta.env.VITE_BACKEND_URL}/ai-chat/log-turn`,
           {
             user_input: userText,
             system_prompt: responseData?.systemPrompt || null,
@@ -294,13 +266,13 @@ const Aiassistant = ({ businessId: propBusinessId, projectId, pageContext, isDis
               completion_tokens: responseData?.usage?.completionTokens || responseData?.usage?.completion_tokens || 0,
               total_tokens: responseData?.usage?.totalTokens || responseData?.usage?.total_tokens || 0
             },
-            model: responseData?.model, // or whatever Mastra uses by default
+            model: responseData?.model,
             status: assistantText.startsWith('\u26a0\ufe0f') ? 'quota_exceeded' : 'success',
             latency_ms: Date.now() - startTime,
             timestamp: new Date().toISOString()
           },
           { headers: { Authorization: `Bearer ${token}`, 'x-business-id': businessId } }
-        ).catch(() => { }); // never throw — observatory logging must never affect UX
+        ).catch(() => { });
       }
       setIsLoading(false);
     }
@@ -315,7 +287,7 @@ const Aiassistant = ({ businessId: propBusinessId, projectId, pageContext, isDis
 
   return (
     <>
-      {/* Floating Trigger Button — hidden when panel is open */}
+      {}
       <button
         className={`ai-fab${open ? " ai-fab--hidden" : ""}`}
         onClick={() => !isDisabled && setOpen(true)}
@@ -325,12 +297,12 @@ const Aiassistant = ({ businessId: propBusinessId, projectId, pageContext, isDis
         <Sparkles size={22} color="#fff" />
       </button>
 
-      {/* Backdrop */}
+      {}
       {open && <div className="ai-backdrop" onClick={() => setOpen(false)} />}
 
-      {/* Panel — slides up from bottom */}
+      {}
       <div className={`ai-panel ${open ? "ai-panel--open" : ""}`}>
-        {/* Header */}
+        {}
         <div className="ai-header">
           <div className="ai-header__left">
             <div className="ai-header__icon">
@@ -392,7 +364,7 @@ const Aiassistant = ({ businessId: propBusinessId, projectId, pageContext, isDis
           </div>
         </div>
 
-        {/* Chat Messages */}
+        {}
         <div className="ai-messages">
           {messages.map((m, idx) => (
             <div key={idx} className={`ai-msg ai-msg--${m.role}`}>
@@ -420,7 +392,7 @@ const Aiassistant = ({ businessId: propBusinessId, projectId, pageContext, isDis
           <div ref={chatEndRef} />
         </div>
 
-        {/* Suggested Questions */}
+        {}
         <div className="ai-suggestions">
           <p className="ai-suggestions__label">Suggestions</p>
           <div className="ai-suggestions__list">
@@ -432,7 +404,7 @@ const Aiassistant = ({ businessId: propBusinessId, projectId, pageContext, isDis
           </div>
         </div>
 
-        {/* Input */}
+        {}
         <div className="ai-input-row">
           {quotaStatus.exceeded ? (
             <div className="ai-limit-reached">
@@ -462,7 +434,7 @@ const Aiassistant = ({ businessId: propBusinessId, projectId, pageContext, isDis
         </div>
       </div>
 
-      {/* Clear History Confirmation Modal */}
+      {}
       {showClearConfirm && (
         <div className="ai-modal-overlay">
           <div className="ai-modal">

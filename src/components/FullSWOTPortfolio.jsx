@@ -86,7 +86,7 @@ const FullSWOTPortfolio = ({
 }) => {
     const { t } = useTranslation();
     const token = useAuthStore(state => state.token);
-    
+
     const {
         fullSwotData: storeFullSwotData,
         isRegenerating: isTypeRegenerating,

@@ -21,6 +21,7 @@ import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from "../hooks/useTranslation";
 import { useAuthStore, useBusinessStore, useUIStore, useAnalysisStore, useProjectStore } from "../store";
 import { useShallow } from 'zustand/shallow';
+import { useQueryClient } from "@tanstack/react-query";
 
 import MenuBar from "../components/MenuBar";
 import EditableBriefSection from "../components/EditableBriefSection";
@@ -47,6 +48,7 @@ import { answerService } from "../services/answerService";
 import { AI_PAGE_CONTEXTS } from "../utils/aiContexts";
 import { getUserLimits } from '../utils/authUtils';
 import CustomTooltip from "../components/CustomTooltip";
+import { BusinessSetupContext } from "../context/BusinessSetupContext";
 import PlanLimitModal from "../components/PlanLimitModal";
 
 const CARD_TO_CATEGORY_MAP = {
@@ -102,6 +104,7 @@ const BusinessSetupPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const { t } = useTranslation();
   const { pmf: hasPmfAccess, insight: hasInsightAccess, strategic: hasStrategicAccess, project: hasProjectAccess } = getUserLimits();
+  const queryClient = useQueryClient();
 
   // State management for business context
   const {
@@ -331,7 +334,11 @@ const BusinessSetupPage = () => {
     if (selectedBusinessId) {
       // Clear the local fetch cache when business changes so we re-fetch everything for the new business
       fetchedAnalysisKeys.current.clear();
-      fetchAnalysisData(selectedBusinessId);
+      // Only fetch if questions are NOT going to be fetched by the question loader (optimization)
+      const tabsNeedingQuestions = ['advanced', 'insights', 'strategic'];
+      if (!tabsNeedingQuestions.includes(activeTab)) {
+        fetchAnalysisData(selectedBusinessId, false, false, false);
+      }
     }
   }, [selectedBusinessId, fetchAnalysisData]);
 
@@ -587,6 +594,9 @@ const BusinessSetupPage = () => {
           let analysisUpdates = {};
           if (Object.keys(finalAnswers).length > 0) {
             analysisUpdates = await fetchAnalysisData(selectedBusinessId, true, false, true); // skipReset = true
+            // Mark this tab as fetched to prevent the tab-change useEffect from redundant fetching
+            const fetchKey = `${selectedBusinessId}-${activeTab}`;
+            fetchedAnalysisKeys.current.add(fetchKey);
           }
 
           // 4. ATOMIC INITIALIZATION
@@ -1076,6 +1086,18 @@ const BusinessSetupPage = () => {
   const handleKickstartSuccess = () => {
     // Clear project-store caches so the Projects page fetches fresh data
     clearProjectCache(selectedBusinessId);
+    
+    // Invalidate React Query projects and rankings cache so the Projects page fetches fresh data immediately
+    queryClient.invalidateQueries({
+      queryKey: ["projects", selectedBusinessId]
+    });
+    queryClient.invalidateQueries({
+      queryKey: ["rankingsSummary", selectedBusinessId]
+    });
+    queryClient.invalidateQueries({
+      queryKey: ["teamRankings", selectedBusinessId]
+    });
+
     useProjectStore.getState().setViewMode('projects');
     setShowProjectsTab(true);
     setActiveTab("bets");
@@ -1155,20 +1177,15 @@ const BusinessSetupPage = () => {
   useEffect(() => {
     if (activeTab !== 'insights' && activeTab !== 'strategic') return;
 
-    // Check if we need to force a refresh for the strategic tab
-    const forceRefresh = activeTab === 'strategic';
-
+    // We use a local ref to track which business-tab combinations have been fetched
+    // to prevent redundant calls during the same session or on simple re-renders.
     const fetchKey = `${selectedBusinessId}-${activeTab}`;
     if (selectedBusinessId && questionsLoaded && !fetchedAnalysisKeys.current.has(fetchKey)) {
       fetchedAnalysisKeys.current.add(fetchKey);
       setTimeout(() => {
-        // Use the store's fetchAnalysisData directly with forceRefresh if needed
-        // This ensures the store is updated and the backend is hit
-        if (forceRefresh) {
-          fetchAnalysisData(selectedBusinessId, true, true);
-        } else {
-          phaseManager.loadExistingAnalysis();
-        }
+        // Use skipReset: true to prevent flickering when switching tabs
+        // and forceRefresh: false to respect the backend/service cache.
+        fetchAnalysisData(selectedBusinessId, true, false, true);
       }, 100);
     }
   }, [selectedBusinessId, questionsLoaded, activeTab, fetchAnalysisData]);
@@ -1240,8 +1257,47 @@ const BusinessSetupPage = () => {
     } catch { }
   }, [selectedBusinessId, setBusinessSetting]);
 
+  const setupValue = useMemo(() => ({
+    selectedBusinessId,
+    currentBusiness,
+    isArchived,
+    openModal,
+    closeModal,
+    isModalOpen,
+    pmfRefreshTrigger,
+    t,
+    apiService,
+    setActiveTab,
+    hasPmfAccess,
+    hasInsightAccess,
+    hasStrategicAccess,
+    hasProjectAccess,
+    handleKickstartSuccess,
+    handleStayOnPriorities,
+    showProjectsTab
+  }), [
+    selectedBusinessId,
+    currentBusiness,
+    isArchived,
+    openModal,
+    closeModal,
+    isModalOpen,
+    pmfRefreshTrigger,
+    t,
+    apiService,
+    setActiveTab,
+    hasPmfAccess,
+    hasInsightAccess,
+    hasStrategicAccess,
+    hasProjectAccess,
+    handleKickstartSuccess,
+    handleStayOnPriorities,
+    showProjectsTab
+  ]);
+
   return (
-    <div className={`business-setup-container ${isArchived ? 'is-archived' : ''}`}>
+    <BusinessSetupContext.Provider value={setupValue}>
+      <div className={`business-setup-container ${isArchived ? 'is-archived' : ''}`}>
       <MenuBar />
 
       {/* Read-Only Banner for Archived Workspaces */}
@@ -2354,7 +2410,7 @@ const BusinessSetupPage = () => {
           onToastMessage={showToastMessage}
           onSubmit={() => {
             closeModal('pmfOnboarding');
-            setActiveTab("executive");
+            handleExecutiveTabClick();
             setPmfRefreshTrigger(prev => prev + 1);
           }}
         />
@@ -2377,6 +2433,7 @@ const BusinessSetupPage = () => {
         isAdmin={['super_admin', 'company_admin', 'org_admin'].includes(userRole?.toLowerCase())}
       />
     </div>
+    </BusinessSetupContext.Provider>
   );
 };
 

@@ -1,0 +1,118 @@
+/* CustomerSegmentation.css */
+@import './AnalysisBase.css';
+
+.cs-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  border-bottom: 1px solid #e5e7eb;
+  padding-bottom: 5px;
+  margin-bottom: 5px;
+}
+
+.cs-title-section {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.cs-icon {
+  color: #2563eb;
+}
+
+.cs-title {
+  font-size: 24px;
+  font-weight: 700;
+  color: #1f2937;
+  margin: 0;
+}
+
+.cs-subtitle {
+  color: #6b7280;
+  margin: 0;
+}
+
+.customer-segmentation .loading-spinner {
+  color: #2563eb;
+  filter: drop-shadow(0 2px 4px rgba(37, 99, 235, 0.3));
+}
+
+.customer-segmentation .empty-icon {
+  color: #9ca3af;
+}
+
+.customer-segmentation .retry-button,
+.customer-segmentation .generate-button {
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.3);
+}
+
+.cs-metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 10px;
+  margin-bottom: 5px;
+}
+
+.cs-metric-card {
+  padding: 5px 20px;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.cs-metric-blue { background: #dbeafe; }
+.cs-metric-green { background: #d1fae5; }
+.cs-metric-purple { background: #e9d5ff; }
+
+.cs-metric-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  color: #1e40af;
+}
+
+.cs-metric-value {
+  font-size: 16px;
+  font-weight: 700;
+  color: #1e3a8a;
+}
+
+.cs-charts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  gap: 32px;
+  margin-bottom: 10px;
+}
+
+.cs-chart-container {
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  padding: 20px;
+  border-radius: 16px;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.cs-segments-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 20px;
+}
+
+.cs-segment-card {
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 16px;
+  padding: 24px;
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.cs-segment-name {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1f2937;
+}
