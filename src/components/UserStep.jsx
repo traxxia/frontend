@@ -1,8 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { ChevronLeft, ChevronRight, Loader, Eye, EyeOff } from 'lucide-react';
+import PasswordStrengthTooltip from './PasswordStrengthTooltip';
 
 const UserStep = ({ form, handleChange, errors, isCheckingEmail, showPassword, setShowPassword, showConfirmPassword, setShowConfirmPassword, handleNext, onBackToLogin, t }) => {
+  const [isPasswordFocused, setIsPasswordFocused] = useState(false);
+
   return (
     <motion.div
       key="user"
@@ -58,6 +61,8 @@ const UserStep = ({ form, handleChange, errors, isCheckingEmail, showPassword, s
                 placeholder={t('create_password')}
                 value={form.password}
                 onChange={handleChange}
+                onFocus={() => setIsPasswordFocused(true)}
+                onBlur={() => setIsPasswordFocused(false)}
                 className={errors.password ? 'input-error' : ''}
               />
               <button
@@ -67,6 +72,7 @@ const UserStep = ({ form, handleChange, errors, isCheckingEmail, showPassword, s
               >
                 {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
+              <PasswordStrengthTooltip password={form.password || ''} isFocused={isPasswordFocused} position="bottom" />
             </div>
             {errors.password && <span className="error-message">{errors.password}</span>}
           </div>
