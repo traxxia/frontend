@@ -12,14 +12,17 @@ const CustomTooltip = ({
       <AnimatePresence>
         {isVisible && message && <motion.div initial={{
         opacity: 0,
+        x: align === 'center' ? '-50%' : '0%',
         y: position === 'bottom' ? -8 : 8,
         scale: 0.95
       }} animate={{
         opacity: 1,
+        x: align === 'center' ? '-50%' : '0%',
         y: 0,
         scale: 1
       }} exit={{
         opacity: 0,
+        x: align === 'center' ? '-50%' : '0%',
         y: position === 'bottom' ? -8 : 8,
         scale: 0.95
       }} transition={{
