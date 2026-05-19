@@ -1692,7 +1692,8 @@
 }
 
 .form-grid {
-  display: grid; 
+  display: grid;
+  grid-template-columns: none;
   gap: 1rem;
 }
 
