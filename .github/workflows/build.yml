@@ -40,11 +40,11 @@ jobs:
 
       - name: Generate .env for Docker Build
         run: |
-          echo "REACT_APP_BACKEND_URL=${{ vars.REACT_APP_BACKEND_URL }}" >> .env
-          echo "REACT_APP_ML_BACKEND_URL=${{ vars.REACT_APP_ML_BACKEND_URL }}" >> .env
-          echo "REACT_APP_ENABLE_PMF=${{ vars.REACT_APP_ENABLE_PMF }}" >> .env
-          echo "REACT_APP_AI_CHAT_URL=${{ vars.REACT_APP_AI_CHAT_URL }}" >> .env
-          echo "REACT_APP_STRIPE_PUBLISHABLE_KEY=${{ vars.REACT_APP_STRIPE_PUBLISHABLE_KEY }}" >> .env
+          echo "VITE_BACKEND_URL=${{ vars.VITE_BACKEND_URL }}" >> .env
+          echo "VITE_ML_BACKEND_URL=${{ vars.VITE_ML_BACKEND_URL }}" >> .env
+          echo "VITE_ENABLE_PMF=${{ vars.VITE_ENABLE_PMF }}" >> .env
+          echo "VITE_AI_CHAT_URL=${{ vars.VITE_AI_CHAT_URL }}" >> .env
+          echo "VITE_STRIPE_PUBLISHABLE_KEY=${{ vars.VITE_STRIPE_PUBLISHABLE_KEY }}" >> .env
 
       - name: Build & push Docker image
         uses: docker/build-push-action@v5
