@@ -192,7 +192,7 @@ const ForgotPassword = () => {
           </p>
 
           {step > 1 && (
-            <div style={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
+            <div style={{ display: 'flex', width: '100%' }}>
               <div className="active-email-badge">
                 {email}
               </div>
