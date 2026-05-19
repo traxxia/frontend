@@ -185,11 +185,19 @@ const ForgotPassword = () => {
           </Link>
           
           <h2>{step === 1 ? (t("forgot_password_title") || "Forgot Password?") : step === 2 ? "Verify OTP" : "Reset Password"}</h2>
-          <p className="login-subtitle">
+          <p className="login-subtitle" style={{ marginBottom: step > 1 ? '12px' : '20px' }}>
             {step === 1 ? (t("forgot_password_subtitle") || "Enter your email address and we'll send you an OTP.") : 
-             step === 2 ? `Enter the 6-digit code sent to ${email}` : 
+             step === 2 ? "Enter the 6-digit verification code below." : 
              "Enter your new password below."}
           </p>
+
+          {step > 1 && (
+            <div style={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
+              <div className="active-email-badge">
+                {email}
+              </div>
+            </div>
+          )}
 
           {message && step !== 3 && (
             <div className={`success-message ${step === 2 ? 'success-message-compact' : ''}`} style={{ color: '#10b981', backgroundColor: 'rgba(16, 185, 129, 0.1)', padding: '15px', borderRadius: '8px', marginBottom: '20px', border: '1px solid #10b981' }}>
