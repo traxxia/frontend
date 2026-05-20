@@ -13,6 +13,24 @@ const getAuthHeaders = () => {
 
 export const answerService = {
 
+    async analyzeDocuments(business_id, file) {
+        try {
+            const formData = new FormData();
+            formData.append('document', file);
+            
+            const headers = getAuthHeaders();
+            delete headers['Content-Type'];
+
+            const response = await axios.post(`${API_BASE_URL}/api/businesses/${business_id}/analyze-documents`, formData, {
+                headers
+            });
+            return response.data;
+        } catch (error) {
+            console.error('Error analyzing documents:', error);
+            throw error;
+        }
+    },
+
     async createAnswer(business_id, question_id, answer) {
         try {
             const response = await axios.post(`${API_BASE_URL}/api/answers`, {

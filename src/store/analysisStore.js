@@ -9,6 +9,7 @@ const initialState = {
   questions: [],
   questionsLoaded: false,
   userAnswers: {},
+  answersDetails: {},
   completedQuestions: [],
   swotAnalysis: null,
   purchaseCriteria: null,
@@ -61,6 +62,7 @@ export const useAnalysisStore = create((set, get) => ({
   questions: [],
   questionsLoaded: false,
   userAnswers: {},
+  answersDetails: {},
   completedQuestions: [],
 
   swotAnalysis: null,
@@ -104,17 +106,23 @@ export const useAnalysisStore = create((set, get) => ({
   setQuestions: (questions) => set({ questions }),
   setQuestionsLoaded: (loaded) => set({ questionsLoaded: loaded }),
 
-  setUserAnswer: (questionId, answer) => set((state) => ({
-    userAnswers: { ...state.userAnswers, [questionId]: answer },
-    completedQuestions: answer
-      ? [...new Set([...state.completedQuestions, questionId])]
-      : state.completedQuestions.filter(id => id !== questionId),
-  })),
+  setUserAnswer: (questionId, answer) => set((state) => {
+    const newDetails = { ...state.answersDetails };
+    delete newDetails[questionId];
+    return {
+      userAnswers: { ...state.userAnswers, [questionId]: answer },
+      answersDetails: newDetails,
+      completedQuestions: answer
+        ? [...new Set([...state.completedQuestions, questionId])]
+        : state.completedQuestions.filter(id => id !== questionId),
+    };
+  }),
 
-  initializeBusinessData: ({ questions, userAnswers, completedQuestions, analysisUpdates = {}, questionsLoaded = true }) =>
+  initializeBusinessData: ({ questions, userAnswers, completedQuestions, answersDetails, analysisUpdates = {}, questionsLoaded = true }) =>
     set((state) => ({
       questions: questions !== undefined ? questions : state.questions,
       userAnswers: userAnswers !== undefined ? userAnswers : state.userAnswers,
+      answersDetails: answersDetails !== undefined ? answersDetails : state.answersDetails,
       completedQuestions: completedQuestions !== undefined ? completedQuestions : state.completedQuestions,
       ...analysisUpdates,
       questionsLoaded
@@ -315,6 +323,7 @@ export const useAnalysisStore = create((set, get) => ({
 
       set({ 
         userAnswers: answersResult.freshAnswers || {},
+        answersDetails: answersResult.freshAnswersDetails || {},
         completedQuestions: Array.from(answersResult.freshCompletedSet || []),
         questionsLoaded: true,
         isInitialLoading: false

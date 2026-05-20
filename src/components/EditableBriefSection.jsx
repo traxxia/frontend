@@ -18,39 +18,59 @@ const cleanValue = (val) => {
 };
 
 // Generates dynamic source citation metadata for each question based on active business & document details
-const getQuestionIntelligence = (field, docName) => {
-  const doc = docName || 'Strategy_Briefing.pdf';
-
-  // Dynamic hash calculated based on question ID
-  const hash = String(field.questionId).split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-
-  // Confidence level distribution
-  const confLevels = ['High', 'High', 'Medium', 'High'];
-  const conf = confLevels[hash % confLevels.length];
-  const color = conf === 'High' ? '#10b981' : '#f59e0b';
-
-  // Citation dynamic location
-  const page = (hash % 8) + 1;
-  const citation = `${doc} (Page ${page})`;
-
-  // Verbatim dynamic excerpt
-  let excerpt = `"...our core approach for ${field.label ? field.label.toLowerCase().replace(/\?$/, '') : 'strategic initiatives'} relies on optimized, high-capacity execution pipelines and automated feedback loops..."`;
-  if (field.value && field.value !== '[Question Skipped]') {
-    const cleanAnswer = field.value.replace(/^\[AI Extraction\]\s*/i, '');
-    excerpt = `"...addressing ${field.label ? field.label.toLowerCase().replace(/\?$/, '') : 'this topic'}, our strategic document states: '${cleanAnswer.slice(0, 100)}${cleanAnswer.length > 100 ? '...' : ''}'..."`;
+const getQuestionIntelligence = (field, docName, details) => {
+  if (!details) {
+    return {
+      hasCitation: false
+    };
   }
 
-  // AI-ingested baseline answer for comparison
-  const original = field.value && field.value.startsWith('[AI Extraction]')
-    ? field.value
-    : `[AI Extraction] Extracted strategic elements from ${doc}: Focuses on automated, reliable, and high-impact setup for ${field.label ? field.label.toLowerCase().replace(/\?$/, '') : 'strategic initiatives'}.`;
+  if (details.status === 'FOUND') {
+    const conf = details.confidence >= 0.7 ? 'High' : details.confidence >= 0.5 ? 'Medium' : 'Low';
+    const color = conf === 'High' ? '#10b981' : conf === 'Medium' ? '#f59e0b' : '#ef4444';
+    
+    let docCitation = docName || 'Strategic Document';
+    let excerpt = '';
+    
+    if (Array.isArray(details.evidence) && details.evidence.length > 0) {
+      const firstEv = details.evidence[0];
+      const sourceDoc = firstEv.document_name || docName || 'Strategic Document';
+      docCitation = `${sourceDoc} (Page ${firstEv.page || 1})`;
+      excerpt = firstEv.text ? `"...${firstEv.text}..."` : '';
+    }
+    
+    const original = field.value && field.value.startsWith('[AI Extraction]')
+      ? field.value
+      : `[AI Extraction] ${field.value || ''}`;
+
+    return {
+      conf,
+      color,
+      doc: docCitation,
+      excerpt,
+      original,
+      hasCitation: true
+    };
+  }
+  
+  if (details.status === 'NOT_FOUND') {
+    let docCitation = docName || 'Strategic Document';
+    if (Array.isArray(details.evidence) && details.evidence.length > 0) {
+      const firstEv = details.evidence[0];
+      docCitation = firstEv.document_name || docName || 'Strategic Document';
+    }
+    return {
+      conf: 'None',
+      color: '#9ca3af',
+      doc: docCitation,
+      excerpt: 'No relevant information found in the document.',
+      original: 'Not found',
+      hasCitation: true
+    };
+  }
 
   return {
-    conf,
-    color,
-    doc: citation,
-    excerpt,
-    original
+    hasCitation: false
   };
 };
 
@@ -78,8 +98,12 @@ const SimpleQuestionCard = ({
   const isEdited = editedFields.has(field.key);
   const isHighlighted = isQuestionHighlighted(field.questionId);
 
+  // Retrieve details from Zustand store
+  const answersDetails = useAnalysisStore(state => state.answersDetails || {});
+  const details = answersDetails[field.questionId];
+
   // Dynamic citation extraction
-  const intel = getQuestionIntelligence(field, docName);
+  const intel = getQuestionIntelligence(field, docName, details);
 
   const isAI = field.value && field.value.startsWith('[AI Extraction]');
   const hasValue = field.value && field.value !== '[Question Skipped]';
@@ -90,44 +114,27 @@ const SimpleQuestionCard = ({
       ref={el => fieldRefs.current[field.key] = el}
       className={`simple-question-card ${isHighlighted ? 'highlighted' : ''}`}
     >
+      {/* Question title + confidence badge */}
       <div className="card-header-row">
         <h5 className="simple-question-title">
           {field.sequentialNumber}. {field.label}
         </h5>
-
-        <span className="simple-bullet-badge">
-          <span className="bullet-dot" style={{ backgroundColor: intel.color }} />
-          {intel.conf} Confidence
-        </span>
-      </div>
-
-      <div className="card-action-row">
-        {hasValue && !isAI && (
-          <button
-            className="simple-text-toggle"
-            onClick={() => setShowOriginal(!showOriginal)}
-          >
-            <Sparkles size={12} />
-            {showOriginal ? 'Show Your Edited Answer' : 'Compare with original AI Ingested'}
-          </button>
+        {intel.hasCitation && (
+          <span className="simple-bullet-badge">
+            <span className="bullet-dot" style={{ backgroundColor: intel.color }} />
+            {intel.conf} Confidence
+          </span>
         )}
-
-        <button
-          className="simple-text-toggle"
-          style={{ color: '#2563eb' }}
-          onClick={() => onOpenReference({ title: field.label, ...intel })}
-        >
-          <Eye size={12} />
-          View Source Citation
-        </button>
       </div>
 
+      {/* Original AI compare view */}
       {showOriginal ? (
         <div className="original-ai-answer-box">
           <strong>Original AI Ingested:</strong> {cleanValue(intel.original)}
         </div>
       ) : null}
 
+      {/* Answer box — editing or read mode */}
       {!showOriginal && isEditing && canEdit ? (
         <div style={{ marginTop: '4px' }}>
           <textarea
@@ -143,54 +150,67 @@ const SimpleQuestionCard = ({
               {isSaving ? 'Saving...' : isEdited ? 'Changes saved' : ''}
             </div>
             <div className="save-buttons-group">
-              <button
-                onClick={handleCancel}
-                disabled={isSaving}
-                className="btn-cancel-action"
-              >
+              <button onClick={handleCancel} disabled={isSaving} className="btn-cancel-action">
                 Cancel
               </button>
-              <button
-                onClick={() => handleSave(field)}
-                disabled={isSaving}
-                className="btn-save-action"
-              >
+              <button onClick={() => handleSave(field)} disabled={isSaving} className="btn-save-action">
                 Save
               </button>
             </div>
           </div>
         </div>
       ) : !showOriginal ? (
-        <div>
-          <div
-            onClick={() => canEdit && !isSaving && handleEdit(field)}
-            className={
-              !hasValue
-                ? 'brief-answer-empty'
-                : isAI
-                  ? 'brief-answer-ai'
-                  : 'brief-answer-user'
-            }
-            style={{ cursor: canEdit ? 'pointer' : 'default' }}
-          >
-            {cleanVal || 'Click here to add your specific strategic answer...'}
-          </div>
-
-          {hasValue && (
-            <div className="badge-row">
-              {isAI ? (
-                <span className="brief-badge-ai">
-                  <Sparkles size={11} /> AI Ingested Answer
-                </span>
-              ) : (
-                <span className="brief-badge-user">
-                  <Check size={11} /> Customized User Answer
-                </span>
-              )}
-            </div>
-          )}
+        <div
+          onClick={() => canEdit && !isSaving && handleEdit(field)}
+          className={
+            !hasValue
+              ? 'brief-answer-empty'
+              : isAI
+                ? 'brief-answer-ai'
+                : 'brief-answer-user'
+          }
+          style={{ cursor: canEdit ? 'pointer' : 'default', marginTop: '8px' }}
+        >
+          {cleanVal || 'Click here to add your specific strategic answer...'}
         </div>
       ) : null}
+
+      {/* Uniform bottom action row — always below the answer */}
+      {hasValue && !isEditing && (
+        <div className="card-bottom-row">
+          {isAI ? (
+            <span className="brief-badge-ai">
+              <Sparkles size={11} /> AI
+            </span>
+          ) : (
+            <span className="brief-badge-user">
+              <Check size={11} /> Edited
+            </span>
+          )}
+
+          <div className="card-bottom-actions">
+            {!isAI && (
+              <button
+                className="simple-text-toggle"
+                onClick={() => setShowOriginal(!showOriginal)}
+              >
+                <Sparkles size={12} />
+                {showOriginal ? 'Show Edited' : 'Compare Original'}
+              </button>
+            )}
+            {intel.hasCitation && (
+              <button
+                className="simple-text-toggle"
+                style={{ color: '#2563eb' }}
+                onClick={() => onOpenReference({ title: field.label, ...intel })}
+              >
+                <Eye size={12} />
+                View Citation
+              </button>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
@@ -227,6 +247,7 @@ const EditableBriefSection = ({
   const [showTemplatesPopup, setShowTemplatesPopup] = useState(false);
   const [isFileUploading, setIsFileUploading] = useState(false);
   const [isFinancialRegenerating, setIsFinancialRegenerating] = useState(false);
+  const [isAnalyzingDocs, setIsAnalyzingDocs] = useState(false);
 
   // States for Multiple File Upload System
   const [uploadedFiles, setUploadedFiles] = useState([]);
@@ -286,7 +307,7 @@ const EditableBriefSection = ({
   useEffect(() => {
     if (documentInfo) {
       if (documentInfo.filename || documentInfo.id || documentInfo.has_document || documentInfo.file_size) {
-        const docName = documentInfo.filename || 'Strategy_Briefing.pdf';
+        const docName = documentInfo.filename || 'Financial_Statement.xlsx';
         setUploadedFiles(prev => {
           if (prev.some(f => f.name === docName)) return prev;
           return [
@@ -297,7 +318,7 @@ const EditableBriefSection = ({
               size: documentInfo.file_size || documentInfo.size || 240000,
               uploadDate: documentInfo.upload_date ? new Date(documentInfo.upload_date).toLocaleDateString() : 'Active Ingestion',
               status: 'success',
-              type: docName.endsWith('.pdf') ? 'pdf' : docName.endsWith('.docx') ? 'docx' : 'spreadsheet',
+              type: 'spreadsheet',
               progress: 100
             }
           ];
@@ -306,26 +327,7 @@ const EditableBriefSection = ({
     }
   }, [documentInfo]);
 
-  // Add the default strategic report mockup to multi-file library instantly to show active ingestion
-  useEffect(() => {
-    if (selectedBusinessId) {
-      setUploadedFiles(prev => {
-        if (prev.some(f => f.name === 'Strategy_Briefing.pdf')) return prev;
-        return [
-          ...prev,
-          {
-            id: 'mock-strategy',
-            name: 'Strategy_Briefing.pdf',
-            size: 245000,
-            uploadDate: 'Active Ingestion',
-            status: 'success',
-            type: 'pdf',
-            progress: 100
-          }
-        ];
-      });
-    }
-  }, [selectedBusinessId]);
+
 
   const isQuestionHighlighted = questionId => {
     if (!highlightedMissingQuestions?.missing_questions) return false;
@@ -592,14 +594,16 @@ const EditableBriefSection = ({
               skipConfirmation: true
             });
           }
-        } else {
-          // Strategic PDF/DOCX simulated processing
-          await new Promise(r => setTimeout(r, 1500));
-        }
 
-        clearInterval(progressInterval);
-        setUploadedFiles(prev => prev.map(f => f.id === fileId ? { ...f, progress: 100, status: 'success' } : f));
-        showToastMessage(`File "${file.name}" ingested successfully!`, 'success');
+          clearInterval(progressInterval);
+          setUploadedFiles(prev => prev.map(f => f.id === fileId ? { ...f, progress: 100, status: 'success' } : f));
+          showToastMessage(`File "${file.name}" ingested successfully!`, 'success');
+        } else {
+          // Strategic PDF/DOCX - just add to queue for later analysis
+          clearInterval(progressInterval);
+          setUploadedFiles(prev => prev.map(f => f.id === fileId ? { ...f, progress: 100, status: 'uploaded', fileObject: file } : f));
+          showToastMessage(`File "${file.name}" uploaded to queue. Click "Analyze Document" to process.`, 'success');
+        }
       } catch (error) {
         clearInterval(progressInterval);
         setUploadedFiles(prev => prev.map(f => f.id === fileId ? { ...f, status: 'failed', errorMessage: error.message } : f));
@@ -783,6 +787,175 @@ const EditableBriefSection = ({
     }
   };
 
+  // Multiple File Strategic Document Ingestion & Bulk Save Flow
+  const handleAnalyzeDocuments = async () => {
+    const filesToAnalyze = uploadedFiles.filter(
+      f => (f.type === 'pdf' || f.type === 'docx') && f.status === 'uploaded' && f.fileObject
+    );
+
+    if (filesToAnalyze.length === 0) {
+      showToastMessage('No strategic documents in the queue to analyze.', 'info');
+      return;
+    }
+
+    try {
+      setIsAnalyzingDocs(true);
+      showToastMessage(`Starting analysis on ${filesToAnalyze.length} queued document(s)...`, 'info');
+
+      // Update status of queued files to 'analyzing'
+      setUploadedFiles(prev =>
+        prev.map(f =>
+          (f.type === 'pdf' || f.type === 'docx') && f.status === 'uploaded'
+            ? { ...f, status: 'analyzing', progress: 30 }
+            : f
+        )
+      );
+
+      for (const file of filesToAnalyze) {
+        try {
+          // Call the dummy Strategic Document Ingestion API
+          const response = await answerService.analyzeDocuments(selectedBusinessId, file.fileObject);
+          
+          if (!response || !Array.isArray(response.answers)) {
+            throw new Error('Invalid response received from the analysis engine.');
+          }
+
+          const answers = response.answers;
+          
+          // Partition into bulkCreate vs bulkUpdate
+          const toCreate = [];
+          const toUpdate = [];
+          const newAnswerIds = { ...answerIds };
+          let idsUpdated = false;
+
+          answers.forEach(item => {
+            const qIdStr = String(item.question_id);
+            const existingId = answerIds[qIdStr];
+
+            if (existingId) {
+              toUpdate.push({
+                answer_id: existingId,
+                answer: item.answer,
+                confidence: item.confidence,
+                status: item.status,
+                evidence: item.evidence
+              });
+            } else {
+              toCreate.push({
+                question_id: item.question_id,
+                answer: item.answer,
+                confidence: item.confidence,
+                status: item.status,
+                evidence: item.evidence
+              });
+            }
+          });
+
+          // Call backend bulk APIs to persist details
+          if (toCreate.length > 0) {
+            const bulkRes = await answerService.bulkCreateAnswers(selectedBusinessId, toCreate);
+            if (bulkRes && bulkRes.data && Array.isArray(bulkRes.data.insertedIds)) {
+              toCreate.forEach((item, index) => {
+                const newId = bulkRes.data.insertedIds[index];
+                if (newId) {
+                  newAnswerIds[String(item.question_id)] = newId;
+                  idsUpdated = true;
+                }
+              });
+            }
+          }
+
+          if (toUpdate.length > 0) {
+            await answerService.bulkUpdateAnswers(selectedBusinessId, toUpdate);
+          }
+
+          // Update setAnswerIds prop if any were created
+          if (idsUpdated && setAnswerIds) {
+            setAnswerIds(newAnswerIds);
+          }
+
+          // Propagate answers to parent and update local highlights/edited fields
+          const newlyEdited = new Set(editedFields);
+          answers.forEach(item => {
+            if (onAnswerUpdate) {
+              onAnswerUpdate(item.question_id, item.answer);
+            }
+            newlyEdited.add(`question_${item.question_id}`);
+          });
+          setEditedFields(newlyEdited);
+
+          // Atomic Zustand state update for reactive UI updates
+          const currentAnswers = { ...useAnalysisStore.getState().userAnswers };
+          const currentDetails = { ...useAnalysisStore.getState().answersDetails };
+          const currentCompleted = [...useAnalysisStore.getState().completedQuestions];
+
+          answers.forEach(item => {
+            if (item.answer) {
+              currentAnswers[item.question_id] = item.answer;
+              if (!currentCompleted.includes(item.question_id)) {
+                currentCompleted.push(item.question_id);
+              }
+            }
+            currentDetails[item.question_id] = {
+              confidence: item.confidence,
+              status: item.status,
+              evidence: item.evidence
+            };
+          });
+
+          useAnalysisStore.setState({
+            userAnswers: currentAnswers,
+            answersDetails: currentDetails,
+            completedQuestions: currentCompleted
+          });
+
+          // Call onUploadedFileUpdate to register this file as ingested
+          if (onUploadedFileUpdate) {
+            onUploadedFileUpdate(file.fileObject);
+          }
+
+          // Set file status to success
+          setUploadedFiles(prev =>
+            prev.map(f =>
+              f.id === file.id
+                ? { ...f, status: 'success', progress: 100 }
+                : f
+            )
+          );
+
+          showToastMessage(`Document "${file.name}" analyzed successfully!`, 'success');
+
+          // Trigger AI Regeneration if needed
+          if (onAnalysisRegenerate) {
+            onAnalysisRegenerate({
+              updatedQuestionIds: answers.map(a => a.question_id),
+              alsoRegenerateStrategic: true,
+              skipConfirmation: true,
+              skipFinancial: true
+            });
+          }
+
+        } catch (fileErr) {
+          console.error(`Error analyzing file ${file.name}:`, fileErr);
+          setUploadedFiles(prev =>
+            prev.map(f =>
+              f.id === file.id
+                ? { ...f, status: 'failed', errorMessage: fileErr.message || 'Analysis failed.' }
+                : f
+            )
+          );
+          showToastMessage(`Analysis failed for "${file.name}": ${fileErr.message || 'Error occurred.'}`, 'error');
+        }
+      }
+
+    } catch (err) {
+      console.error('Document analysis queue error:', err);
+      showToastMessage('An error occurred during bulk document analysis.', 'error');
+    } finally {
+      setIsAnalyzingDocs(false);
+    }
+  };
+
   // Drawer Reference Actions
   const handleOpenReference = (data) => {
     setDrawerData(data);
@@ -804,13 +977,10 @@ const EditableBriefSection = ({
       analysisStore.profitabilityData?.profitability_analysis ||
       analysisStore.profitabilityData?.profitabilityAnalysis;
 
-    // Default dynamic fallbacks based on company ID/name hash
-    const nameHash = String(selectedBusinessId || '123').split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-
-    let revenue = `$${((10 + (nameHash % 15)) * 1000000).toLocaleString()}`;
-    let ebitda = `$${((2 + (nameHash % 4)) * 1000000).toLocaleString()}`;
-    let grossMargin = `${(65 + (nameHash % 20))}.0%`;
-    let ebitdaMargin = `${(15 + (nameHash % 15))}.0%`;
+    let revenue = 'N/A';
+    let ebitda = 'N/A';
+    let grossMargin = 'N/A';
+    let ebitdaMargin = 'N/A';
 
     if (profitability) {
       if (profitability.revenue || profitability.annual_revenue) {
@@ -844,6 +1014,7 @@ const EditableBriefSection = ({
   // Multi-file aggregate helper values
   const totalFileSizeKB = uploadedFiles.reduce((acc, f) => acc + (f.size || 0), 0) / 1024;
   const successfulIngestionCount = uploadedFiles.filter(f => f.status === 'success').length;
+  const uploadedFilesCount = uploadedFiles.filter(f => f.status === 'uploaded').length;
 
   const strategyFiles = uploadedFiles.filter(f => f.type === 'pdf' || f.type === 'docx');
   const financialFiles = uploadedFiles.filter(f => f.type === 'spreadsheet');
@@ -891,11 +1062,6 @@ const EditableBriefSection = ({
                 <p className="brief-card-description">
                   Refine and pre-populate your strategic brief answers using AI-generated suggestions compiled from your onboarding setup details.
                 </p>
-
-                <div className="refine-stats-row">
-                  <span>Ingestion Library:</span>
-                  <strong>{successfulIngestionCount} {successfulIngestionCount === 1 ? 'file' : 'files'} active</strong>
-                </div>
 
                 <button
                   onClick={handleGenerateEnrichment}
@@ -998,53 +1164,52 @@ const EditableBriefSection = ({
                 </div>
 
                 {strategyFiles.length > 0 && (
-                  <>
-                    <div className="sidebar-file-list">
-                      <div className="sidebar-list-header">Ingested Strategy Documents</div>
-                      {strategyFiles.map(file => (
-                        <div key={file.id} className="sidebar-file-item">
-                          <div className="sidebar-file-info">
-                            <FileText size={14} style={{ color: '#2563eb' }} />
-                            <span className="sidebar-file-name" title={file.name}>{file.name}</span>
-                          </div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                            <span className={`file-status-badge ${file.status}`} style={{ fontSize: '8px', padding: '1px 4px' }}>
-                              {file.status === 'uploading' ? `${file.progress}%` : file.status}
-                            </span>
-                            <button 
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleRemoveFile(file.id, file.name);
-                              }}
-                              className="sidebar-file-remove"
-                              title="Remove File"
-                            >
-                              <Trash2 size={12} />
-                            </button>
-                          </div>
+                  <div className="sidebar-file-list">
+                    <div className="sidebar-list-header">Ingested Strategy Documents</div>
+                    {strategyFiles.map(file => (
+                      <div key={file.id} className="sidebar-file-item">
+                        <div className="sidebar-file-info">
+                          <FileText size={14} style={{ color: '#2563eb' }} />
+                          <span className="sidebar-file-name" title={file.name}>{file.name}</span>
                         </div>
-                      ))}
-                    </div>
-
-                    <button
-                      onClick={handleGenerateEnrichment}
-                      disabled={isEnriching || !canEdit || successfulIngestionCount === 0}
-                      className="btn-analyze-docs"
-                    >
-                      {isEnriching ? (
-                        <>
-                          <Loader size={14} style={{ animation: 'spin 1.5s linear infinite' }} />
-                          <span>Analyzing Document...</span>
-                        </>
-                      ) : (
-                        <>
-                          <Sparkles size={14} />
-                          <span>Analyze Document</span>
-                        </>
-                      )}
-                    </button>
-                  </>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <span className={`file-status-badge ${file.status}`} style={{ fontSize: '8px', padding: '1px 4px' }}>
+                            {file.status === 'uploading' ? `${file.progress}%` : file.status}
+                          </span>
+                          <button 
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleRemoveFile(file.id, file.name);
+                            }}
+                            className="sidebar-file-remove"
+                            title="Remove File"
+                          >
+                            <Trash2 size={12} />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 )}
+
+                <button
+                  onClick={handleAnalyzeDocuments}
+                  disabled={isAnalyzingDocs || !canEdit || uploadedFilesCount === 0}
+                  className="btn-analyze-docs"
+                  style={{ marginTop: '12px', width: '100%' }}
+                >
+                  {isAnalyzingDocs ? (
+                    <>
+                      <Loader size={14} style={{ animation: 'spin 1.5s linear infinite' }} />
+                      <span>Analyzing Document...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles size={14} />
+                      <span>Analyze Document</span>
+                    </>
+                  )}
+                </button>
               </div>
             )}
           </div>

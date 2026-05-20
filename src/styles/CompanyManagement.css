@@ -2226,6 +2226,24 @@ body.modal-open {
   margin-top: 4px;
 }
 
+/* Uniform bottom action bar below each answer */
+.card-bottom-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid #f1f5f9;
+  gap: 8px;
+}
+
+.card-bottom-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
 /* Suggestion box stylings */
 .suggestions-sync-box {
   background: #f5f3ff;
@@ -2659,6 +2677,22 @@ body.modal-open {
   gap: 10px;
   margin-top: 16px;
   align-items: start;
+}
+
+/* Left column sticks in viewport while right column scrolls */
+.brief-left-column {
+  position: sticky;
+  top: 60px;
+  max-height: calc(100vh - 60px);
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: #e2e8f0 transparent;
+  align-self: start;
+}
+
+.brief-right-column {
+  min-height: 0;
 }
 
 @media (max-width: 1024px) {
@@ -3154,7 +3188,7 @@ body.modal-open {
 }
 
 .brief-left-column {
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   opacity: 1;
   visibility: visible;
 }

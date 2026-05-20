@@ -563,6 +563,7 @@ const BusinessSetupPage = () => {
           // 2. Handle Questions and Answers mapping
           let finalAnswers = {};
           let finalCompleted = [];
+          let answersDetailsMap = {};
 
           if (responseData.questions?.length > 0) {
             setQuestions(responseData.questions); // This internally sets questionsLoaded: true
@@ -575,6 +576,11 @@ const BusinessSetupPage = () => {
                 const qIdStr = String(ans.question_id);
                 answersMap[qIdStr] = ans.answer;
                 answerIdsMap[qIdStr] = ans._id;
+                answersDetailsMap[qIdStr] = {
+                  confidence: ans.confidence,
+                  status: ans.status,
+                  evidence: ans.evidence
+                };
               }
             });
 
@@ -603,6 +609,7 @@ const BusinessSetupPage = () => {
           initializeBusinessData({
             questions: responseData.questions || [],
             userAnswers: finalAnswers,
+            answersDetails: answersDetailsMap,
             completedQuestions: finalCompleted,
             analysisUpdates: analysisUpdates || {},
             questionsLoaded: true

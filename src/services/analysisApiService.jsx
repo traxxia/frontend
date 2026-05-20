@@ -1210,6 +1210,7 @@ export class AnalysisApiService {
       if (!response.ok) throw new Error('Failed to fetch fresh answers data');
       const { data } = await response.json();
       const freshAnswers = {};
+      const freshAnswersDetails = {};
       const freshCompletedSet = new Set();
       data?.forEach(answerDoc => {
         const questionId = String(answerDoc.question_id);
@@ -1217,9 +1218,14 @@ export class AnalysisApiService {
         if (answerText && answerText.trim()) {
           freshCompletedSet.add(questionId);
           freshAnswers[questionId] = answerText.trim();
+          freshAnswersDetails[questionId] = {
+            confidence: answerDoc.confidence,
+            status: answerDoc.status,
+            evidence: answerDoc.evidence
+          };
         }
       });
-      return { freshAnswers, freshCompletedSet };
+      return { freshAnswers, freshCompletedSet, freshAnswersDetails };
     } catch (error) {
       console.error('Error fetching fresh answers data:', error);
       return { freshAnswers: {}, freshCompletedSet: new Set() };
