@@ -2651,3 +2651,625 @@ body.modal-open {
 .btn-stats-action:hover {
   background: #1d4ed8;
 }
+
+/* ── Split Workspace Layout ── */
+.brief-split-layout {
+  display: grid;
+  grid-template-columns: 250px 1fr;
+  gap: 10px;
+  margin-top: 16px;
+  align-items: start;
+}
+
+@media (max-width: 1024px) {
+  .brief-split-layout {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+}
+
+/* ── Sidebar Cards styling ── */
+.brief-card {
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px; 
+  padding: 10px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02), 0 4px 12px rgba(0, 0, 0, 0.01);
+  margin-bottom: 20px;
+  box-sizing: border-box;
+}
+
+.brief-card-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+  border-bottom: 1px solid #f1f5f9;
+  padding-bottom: 12px;
+}
+
+.brief-card-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+}
+
+.brief-card-description {
+  font-size: 13px;
+  color: #64748b;
+  line-height: 1.5;
+  margin: 0 0 16px 0;
+}
+
+/* ── Refine AI Card custom rules ── */
+.refine-stats-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  color: #475569;
+  background: #f8fafc;
+  padding: 8px 12px;
+  border-radius: 8px;
+  margin-bottom: 14px;
+  border: 1px solid #f1f5f9;
+}
+
+.btn-refine-action {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%);
+  color: white;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(79, 70, 229, 0.2);
+  transition: all 0.2s ease;
+}
+
+.btn-refine-action:hover {
+  background: linear-gradient(135deg, #4338ca 0%, #3730a3 100%);
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+}
+
+.btn-refine-action:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.refine-warning-text {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: #b45309;
+  margin: 10px 0 0 0;
+}
+
+/* ── Nested Suggestions Sync Box ── */
+.nested-suggestions-box {
+  margin-top: 18px;
+  background: #faf5ff;
+  border: 1px dashed #d8b4fe;
+  border-radius: 12px;
+  padding: 16px;
+  box-sizing: border-box;
+}
+
+.nested-suggestions-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.nested-suggestions-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #6b21a8;
+}
+
+.nested-suggestions-count {
+  font-size: 11px;
+  font-weight: 600;
+  background: #f3e8ff;
+  color: #7e22ce;
+  padding: 2px 8px;
+  border-radius: 20px;
+}
+
+.nested-suggestions-desc {
+  font-size: 11px;
+  color: #6b21a8;
+  margin: 0 0 12px 0;
+  line-height: 1.4;
+  opacity: 0.85;
+}
+
+.nested-suggestions-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.btn-nested-discard {
+  flex: 1;
+  background: white;
+  border: 1px solid #e9d5ff;
+  color: #7e22ce;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.btn-nested-discard:hover {
+  background: #f3e8ff;
+}
+
+.btn-nested-sync {
+  flex: 2;
+  background: #7e22ce;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  box-shadow: 0 2px 4px rgba(126, 34, 206, 0.15);
+}
+
+.btn-nested-sync:hover {
+  background: #6b21a8;
+  box-shadow: 0 3px 8px rgba(126, 34, 206, 0.25);
+}
+
+/* ── Sidebar Drag & Drop dropzone small version ── */
+.sidebar-dropzone {
+  border: 2px dashed #cbd5e1;
+  background: #f8fafc;
+  border-radius: 12px;
+  padding: 20px 16px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.sidebar-dropzone:hover, .sidebar-dropzone.drag-active {
+  border-color: #2563eb;
+  background: #f0f7ff;
+}
+
+.sidebar-dropzone-icon {
+  background: #dbeafe;
+  color: #2563eb;
+  padding: 8px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sidebar-dropzone-text {
+  font-size: 12px;
+  font-weight: 600;
+  color: #475569;
+  margin: 0;
+}
+
+/* ── Sidebar files list ── */
+.sidebar-file-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 16px;
+  border-top: 1px solid #f1f5f9;
+  padding-top: 14px;
+}
+
+.sidebar-list-header {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #94a3b8;
+  margin-bottom: 6px;
+}
+
+.sidebar-file-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 8px 10px;
+  box-sizing: border-box;
+}
+
+.sidebar-file-item.financial-item {
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+}
+
+.sidebar-file-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow: hidden;
+  flex: 1;
+}
+
+.sidebar-file-name {
+  font-size: 12px;
+  font-weight: 600;
+  color: #334155;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sidebar-file-remove {
+  background: none;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.sidebar-file-remove:hover {
+  color: #ef4444;
+  background: #fee2e2;
+}
+
+/* ── Financial Data Card actions ── */
+.btn-financial-upload {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  background: #16a34a;
+  color: white;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(22, 163, 74, 0.15);
+  transition: all 0.2s;
+}
+
+.btn-financial-upload:hover {
+  background: #15803d;
+  box-shadow: 0 4px 10px rgba(22, 163, 74, 0.25);
+}
+
+/* ── Sidebar Ingested Ledger Indicators styling ── */
+.sidebar-ledger-summary {
+  margin-top: 18px;
+  border-top: 1px solid #f1f5f9;
+  padding-top: 14px;
+}
+
+.ledger-summary-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #475569;
+}
+
+.ledger-status-tag {
+  font-size: 9px;
+  font-weight: 800;
+  background: #cbd5e1;
+  color: #475569;
+  padding: 2px 6px;
+  border-radius: 4px;
+  letter-spacing: 0.05em;
+}
+
+.ledger-status-tag.active {
+  background: #dcfce7;
+  color: #16a34a;
+}
+
+.ledger-summary-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.summary-indicator {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.summary-indicator .indicator-lbl {
+  font-size: 9px;
+  font-weight: 700;
+  color: #94a3b8;
+  letter-spacing: 0.02em;
+}
+
+.summary-indicator .indicator-val {
+  font-size: 13px;
+  font-weight: 800;
+  color: #1e293b;
+}
+
+/* ── Phase Tabs for Questions side ── */
+.phase-tabs-container {
+  display: flex;
+  gap: 12px;
+  background: #f1f5f9;
+  padding: 6px;
+  border-radius: 14px;
+  margin-bottom: 20px;
+  box-sizing: border-box;
+}
+
+.phase-tab-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: transparent;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  outline: none;
+}
+
+.phase-tab-btn:hover {
+  background: rgba(255, 255, 255, 0.4);
+}
+
+.phase-tab-btn.active {
+  background: #2563eb;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.15);
+}
+
+.phase-tab-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #475569;
+}
+
+.phase-tab-btn.active .phase-tab-title {
+  color: white;
+}
+
+.phase-tab-badge {
+  font-size: 11px;
+  font-weight: 700;
+  background: #e2e8f0;
+  color: #475569;
+  padding: 2px 8px;
+  border-radius: 20px;
+  min-width: 28px;
+  text-align: center;
+  transition: all 0.2s;
+}
+
+.phase-tab-btn.active .phase-tab-badge {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+}
+
+.phase-tab-content-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.empty-phase-questions {
+  text-align: center;
+  padding: 40px;
+  background: white;
+  border: 1px dashed #cbd5e1;
+  border-radius: 12px;
+  color: #64748b;
+  font-style: italic;
+  font-size: 14px;
+}
+
+/* ── Analyze Document Button styling ── */
+.btn-analyze-docs {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  color: white;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.2);
+  transition: all 0.2s ease;
+  margin-top: 14px;
+}
+
+.btn-analyze-docs:hover {
+  background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+}
+
+.btn-analyze-docs:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+/* ── Collapsible Left Panel ── */
+.brief-split-layout {
+  position: relative;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.brief-split-layout.left-collapsed {
+  grid-template-columns: 0px 1fr;
+  gap: 0;
+}
+
+.brief-left-column {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  opacity: 1;
+  visibility: visible;
+}
+
+.brief-left-column.collapsed {
+  width: 0;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  opacity: 0;
+  visibility: hidden;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+/* Sleek Floating Collapse Handle */
+.left-panel-toggle-btn {
+  position: absolute;
+  left: 348px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 24px;
+  height: 24px;
+  background: white;
+  border: 1px solid #cbd5e1;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #64748b;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  z-index: 50;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  outline: none;
+}
+
+.left-panel-toggle-btn:hover {
+  color: #2563eb;
+  background: #f8fafc;
+  border-color: #94a3b8;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
+}
+
+.left-panel-toggle-btn.collapsed {
+  left: -12px;
+  top: 50%;
+  transform: translateY(-50%);
+  border-color: #cbd5e1;
+}
+
+/* Push right column to match new constraints */
+.brief-right-column {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@media (max-width: 1024px) {
+  .left-panel-toggle-btn {
+    display: none;
+  }
+}
+
+/* Accordion Header hover styles */
+.accordion-header {
+  transition: background-color 0.2s ease;
+}
+
+.accordion-header:hover {
+  background-color: #f8fafc !important;
+}
+
+/* Accordion Header collapsed states to remove unwanted border and spaces */
+.brief-card-header.collapsed {
+  margin-bottom: 0 !important;
+  padding-bottom: 0 !important;
+  border-bottom: none !important;
+}
+
+/* Responsive adjustments for narrow viewports */
+@media (max-width: 768px) {
+  .phase-tabs-container {
+    overflow-x: auto;
+    white-space: nowrap;
+    padding: 4px;
+    gap: 8px;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  .phase-tab-btn {
+    flex: 0 0 auto;
+    padding: 8px 12px;
+  }
+  
+  .phase-tab-title {
+    font-size: 13px;
+  }
+  
+  .phase-tab-badge {
+    font-size: 10px;
+    padding: 1px 6px;
+    min-width: 20px;
+  }
+  
+  /* Question card content spacing improvements on mobile */
+  .simple-question-card {
+    padding: 16px;
+  }
+  
+  .card-header-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  
+  .simple-bullet-badge {
+    margin-top: 4px;
+  }
+}

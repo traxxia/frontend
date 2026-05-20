@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { 
-  Edit3, Check, X, Loader, AlertCircle, Sparkles, Wand2, Upload, FileText, Database, RefreshCw, 
-  ChevronDown, ChevronUp, CheckCircle, FileSpreadsheet, HelpCircle, Eye, ArrowRight, BookOpen, Trash2
+import {
+  Edit3, Check, X, Loader, AlertCircle, Sparkles, Wand2, Upload, FileText, Database, RefreshCw,
+  ChevronDown, ChevronUp, ChevronLeft, ChevronRight, CheckCircle, FileSpreadsheet, HelpCircle, Eye, ArrowRight, BookOpen, Trash2
 } from 'lucide-react';
 import { AnalysisApiService } from '../services/analysisApiService';
 import { answerService } from '../services/answerService';
@@ -20,15 +20,15 @@ const cleanValue = (val) => {
 // Generates dynamic source citation metadata for each question based on active business & document details
 const getQuestionIntelligence = (field, docName) => {
   const doc = docName || 'Strategy_Briefing.pdf';
-  
+
   // Dynamic hash calculated based on question ID
   const hash = String(field.questionId).split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-  
+
   // Confidence level distribution
   const confLevels = ['High', 'High', 'Medium', 'High'];
   const conf = confLevels[hash % confLevels.length];
   const color = conf === 'High' ? '#10b981' : '#f59e0b';
-  
+
   // Citation dynamic location
   const page = (hash % 8) + 1;
   const citation = `${doc} (Page ${page})`;
@@ -41,8 +41,8 @@ const getQuestionIntelligence = (field, docName) => {
   }
 
   // AI-ingested baseline answer for comparison
-  const original = field.value && field.value.startsWith('[AI Extraction]') 
-    ? field.value 
+  const original = field.value && field.value.startsWith('[AI Extraction]')
+    ? field.value
     : `[AI Extraction] Extracted strategic elements from ${doc}: Focuses on automated, reliable, and high-impact setup for ${field.label ? field.label.toLowerCase().replace(/\?$/, '') : 'strategic initiatives'}.`;
 
   return {
@@ -77,16 +77,16 @@ const SimpleQuestionCard = ({
   const isEditing = editingField === field.key;
   const isEdited = editedFields.has(field.key);
   const isHighlighted = isQuestionHighlighted(field.questionId);
-  
+
   // Dynamic citation extraction
   const intel = getQuestionIntelligence(field, docName);
-  
+
   const isAI = field.value && field.value.startsWith('[AI Extraction]');
   const hasValue = field.value && field.value !== '[Question Skipped]';
   const cleanVal = cleanValue(field.value);
 
   return (
-    <div 
+    <div
       ref={el => fieldRefs.current[field.key] = el}
       className={`simple-question-card ${isHighlighted ? 'highlighted' : ''}`}
     >
@@ -94,7 +94,7 @@ const SimpleQuestionCard = ({
         <h5 className="simple-question-title">
           {field.sequentialNumber}. {field.label}
         </h5>
-        
+
         <span className="simple-bullet-badge">
           <span className="bullet-dot" style={{ backgroundColor: intel.color }} />
           {intel.conf} Confidence
@@ -103,7 +103,7 @@ const SimpleQuestionCard = ({
 
       <div className="card-action-row">
         {hasValue && !isAI && (
-          <button 
+          <button
             className="simple-text-toggle"
             onClick={() => setShowOriginal(!showOriginal)}
           >
@@ -112,7 +112,7 @@ const SimpleQuestionCard = ({
           </button>
         )}
 
-        <button 
+        <button
           className="simple-text-toggle"
           style={{ color: '#2563eb' }}
           onClick={() => onOpenReference({ title: field.label, ...intel })}
@@ -130,29 +130,29 @@ const SimpleQuestionCard = ({
 
       {!showOriginal && isEditing && canEdit ? (
         <div style={{ marginTop: '4px' }}>
-          <textarea 
-            ref={el => inputRefs.current[field.key] = el} 
-            className="simple-textarea" 
-            defaultValue={cleanVal} 
-            disabled={isSaving || isAnalysisRegenerating} 
-            placeholder="Write your answer..." 
-            onChange={e => handleAutoSave(field, e.target.value)} 
+          <textarea
+            ref={el => inputRefs.current[field.key] = el}
+            className="simple-textarea"
+            defaultValue={cleanVal}
+            disabled={isSaving || isAnalysisRegenerating}
+            placeholder="Write your answer..."
+            onChange={e => handleAutoSave(field, e.target.value)}
           />
           <div className="save-actions-wrapper">
             <div className="save-status-text">
               {isSaving ? 'Saving...' : isEdited ? 'Changes saved' : ''}
             </div>
             <div className="save-buttons-group">
-              <button 
-                onClick={handleCancel} 
-                disabled={isSaving} 
+              <button
+                onClick={handleCancel}
+                disabled={isSaving}
                 className="btn-cancel-action"
               >
                 Cancel
               </button>
-              <button 
-                onClick={() => handleSave(field)} 
-                disabled={isSaving} 
+              <button
+                onClick={() => handleSave(field)}
+                disabled={isSaving}
                 className="btn-save-action"
               >
                 Save
@@ -162,20 +162,20 @@ const SimpleQuestionCard = ({
         </div>
       ) : !showOriginal ? (
         <div>
-          <div 
+          <div
             onClick={() => canEdit && !isSaving && handleEdit(field)}
             className={
-              !hasValue 
-                ? 'brief-answer-empty' 
-                : isAI 
-                  ? 'brief-answer-ai' 
+              !hasValue
+                ? 'brief-answer-empty'
+                : isAI
+                  ? 'brief-answer-ai'
                   : 'brief-answer-user'
             }
             style={{ cursor: canEdit ? 'pointer' : 'default' }}
           >
             {cleanVal || 'Click here to add your specific strategic answer...'}
           </div>
-          
+
           {hasValue && (
             <div className="badge-row">
               {isAI ? (
@@ -231,6 +231,12 @@ const EditableBriefSection = ({
   // States for Multiple File Upload System
   const [uploadedFiles, setUploadedFiles] = useState([]);
   const [isDragActive, setIsDragActive] = useState(false);
+  const [activePhaseTab, setActivePhaseTab] = useState('initial');
+  const [leftPanelExpanded, setLeftPanelExpanded] = useState({
+    refineAi: true,
+    fileUpload: false,
+    financialUpload: false
+  });
 
   // Accordions default collapsed by default
   const [expandedSections, setExpandedSections] = useState({
@@ -254,13 +260,13 @@ const EditableBriefSection = ({
   const getAuthToken = () => useAuthStore.getState().token;
   const ML_API_BASE_URL = import.meta.env.VITE_ML_BACKEND_URL;
   const analysisService = useRef(new AnalysisApiService(ML_API_BASE_URL, API_BASE_URL, getAuthToken)).current;
-  
+
   const inputRefs = useRef({});
   const fieldRefs = useRef({});
   const autoSaveTimeoutRef = useRef(null);
   const fileInputRef = useRef(null);
   const { t } = useTranslation();
-  
+
   const [userRole, setUserRole] = useState("");
   useEffect(() => {
     const role = (useAuthStore.getState().userRole || "").toLowerCase();
@@ -332,7 +338,7 @@ const EditableBriefSection = ({
     const fields = [];
     const phaseOrderMap = { 'initial': 1, 'essential': 2, 'advanced': 3 };
     const filteredQuestions = questions.filter(q => q.phase && !['good'].includes(q.phase.toLowerCase()));
-    
+
     const sortedQuestions = [...filteredQuestions].sort((a, b) => {
       const phaseA = phaseOrderMap[a.phase?.toLowerCase()] || 4;
       const phaseB = phaseOrderMap[b.phase?.toLowerCase()] || 4;
@@ -446,22 +452,22 @@ const EditableBriefSection = ({
       const token = getAuthToken();
       if (!token) throw new Error('Authentication token not found');
       if (!selectedBusinessId) throw new Error('No business selected');
-      
+
       const formData = new FormData();
       formData.append('document', file);
-      
+
       const templateComplexityMap = {
         'simplified': 'simple',
         'standard': 'medium',
         'detailed': 'medium'
       };
-      
+
       const backendTemplateType = templateComplexityMap[validationResult.templateType] || 'simple';
       formData.append('template_type', backendTemplateType);
       formData.append('template_name', validationResult.templateName || '');
       formData.append('validation_confidence', validationResult.confidence || 'high');
       formData.append('upload_mode', validationResult.uploadMode || 'auto-detect');
-      
+
       const response = await fetch(`${API_BASE_URL}/api/businesses/${selectedBusinessId}/financial-document`, {
         method: 'PUT',
         headers: {
@@ -469,7 +475,7 @@ const EditableBriefSection = ({
         },
         body: formData
       });
-      
+
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || 'Failed to save file to database');
       return result;
@@ -494,7 +500,7 @@ const EditableBriefSection = ({
     e.preventDefault();
     e.stopPropagation();
     setIsDragActive(false);
-    
+
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
       const files = Array.from(e.dataTransfer.files);
       processMultipleFiles(files);
@@ -571,14 +577,14 @@ const EditableBriefSection = ({
             confidence: detection.confidence,
             uploadMode: 'auto-detect'
           };
-          
+
           // Actual backend upload
           await saveFileToDatabase(file, validationResult);
-          
+
           if (onUploadedFileUpdate) {
             onUploadedFileUpdate(file);
           }
-          
+
           if (onAnalysisRegenerate) {
             onAnalysisRegenerate({
               onlyFinancial: true,
@@ -619,13 +625,13 @@ const EditableBriefSection = ({
       } catch (err) {
         console.warn("Could not fetch onboarding data:", err);
       }
-      
+
       if (!onboardingData || Object.keys(onboardingData).length === 0) {
         showToastMessage(t("completeOnboardingPrompt") || "Please complete the PMF Onboarding to generate suggestions.", 'error');
         setIsEnriching(false);
         return;
       }
-      
+
       const companyNameField = briefFields.find(f => f.label.toLowerCase().includes('company') || f.label.toLowerCase().includes('name'));
       const companyName = onboardingData?.companyName || companyNameField?.value || "";
       const rawPayload = {
@@ -652,12 +658,12 @@ const EditableBriefSection = ({
           usp: onboardingData?.differentiation ? [...onboardingData.differentiation.filter(d => d !== 'Other'), onboardingData.differentiationOther].filter(Boolean) : []
         }
       };
-      
+
       showToastMessage('Compiling onboarding details and launching LLM pipeline...', 'info');
-      
+
       const activeDocumentNames = uploadedFiles.filter(f => f.status === 'success').map(f => f.name).join(', ') || 'strategy documents';
       const result = await analysisService.makeAPICall('answer-questions-with-enrichment', null, null, selectedBusinessId, null, null, null, companyName, rawPayload);
-      
+
       if (Array.isArray(result)) {
         // Enriched response mapping
         setEnrichedAnswers(result);
@@ -691,17 +697,17 @@ const EditableBriefSection = ({
         }
         return null;
       }).filter(Boolean);
-      
+
       if (answersToSave.length === 0) {
         showToastMessage('No matching questions found to apply', 'warning');
         return;
       }
-      
+
       const newAnswerIds = { ...answerIds };
       let idsUpdated = false;
       const toCreate = [];
       const toUpdate = [];
-      
+
       answersToSave.forEach(item => {
         const qIdStr = String(item.question_id);
         const existingId = answerIds[qIdStr];
@@ -714,7 +720,7 @@ const EditableBriefSection = ({
           toCreate.push(item);
         }
       });
-      
+
       if (toCreate.length > 0) {
         try {
           const bulkRes = await answerService.bulkCreateAnswers(selectedBusinessId, toCreate.map(item => ({
@@ -734,7 +740,7 @@ const EditableBriefSection = ({
           console.error('Failed to bulk create answers:', err);
         }
       }
-      
+
       if (toUpdate.length > 0) {
         try {
           await answerService.bulkUpdateAnswers(selectedBusinessId, toUpdate.map(item => ({
@@ -745,11 +751,11 @@ const EditableBriefSection = ({
           console.error('Failed to bulk update answers:', err);
         }
       }
-      
+
       if (idsUpdated && setAnswerIds) {
         setAnswerIds(newAnswerIds);
       }
-      
+
       const newlyEdited = new Set(editedFields);
       answersToSave.forEach(item => {
         if (onAnswerUpdate) {
@@ -760,7 +766,7 @@ const EditableBriefSection = ({
       setEditedFields(newlyEdited);
       setEnrichedAnswers(null);
       showToastMessage('AI framework suggestions synced successfully!', 'success');
-      
+
       if (onAnalysisRegenerate) {
         onAnalysisRegenerate({
           updatedQuestionIds,
@@ -794,13 +800,13 @@ const EditableBriefSection = ({
   // Dynamic spreadsheet ledger values
   const getLedgerValues = () => {
     const analysisStore = useAnalysisStore.getState();
-    const profitability = analysisStore.profitabilityData?.profitability || 
-                          analysisStore.profitabilityData?.profitability_analysis || 
-                          analysisStore.profitabilityData?.profitabilityAnalysis;
-    
+    const profitability = analysisStore.profitabilityData?.profitability ||
+      analysisStore.profitabilityData?.profitability_analysis ||
+      analysisStore.profitabilityData?.profitabilityAnalysis;
+
     // Default dynamic fallbacks based on company ID/name hash
     const nameHash = String(selectedBusinessId || '123').split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-    
+
     let revenue = `$${((10 + (nameHash % 15)) * 1000000).toLocaleString()}`;
     let ebitda = `$${((2 + (nameHash % 4)) * 1000000).toLocaleString()}`;
     let grossMargin = `${(65 + (nameHash % 20))}.0%`;
@@ -839,6 +845,19 @@ const EditableBriefSection = ({
   const totalFileSizeKB = uploadedFiles.reduce((acc, f) => acc + (f.size || 0), 0) / 1024;
   const successfulIngestionCount = uploadedFiles.filter(f => f.status === 'success').length;
 
+  const strategyFiles = uploadedFiles.filter(f => f.type === 'pdf' || f.type === 'docx');
+  const financialFiles = uploadedFiles.filter(f => f.type === 'spreadsheet');
+
+  const initialCountStr = `${initialFields.filter(f => cleanValue(f.value).trim() !== '').length}/${initialFields.length}`;
+  const essentialCountStr = `${essentialFields.filter(f => cleanValue(f.value).trim() !== '').length}/${essentialFields.length}`;
+  const advancedCountStr = `${advancedFields.filter(f => cleanValue(f.value).trim() !== '').length}/${advancedFields.length}`;
+
+  const currentTabFields = activePhaseTab === 'initial'
+    ? initialFields
+    : activePhaseTab === 'essential'
+      ? essentialFields
+      : advancedFields;
+
   return (
     <div className="simple-workspace">
       {showToast.show && (
@@ -850,316 +869,335 @@ const EditableBriefSection = ({
         </div>
       )}
 
-      {/* Fully Redesigned Multi-File Upload Drag and Drop Zone */}
-      <div 
-        className={`multi-file-dropzone ${isDragActive ? 'drag-active' : ''}`}
-        onDragEnter={handleDrag}
-        onDragOver={handleDrag}
-        onDragLeave={handleDrag}
-        onDrop={handleDrop}
-        onClick={triggerFileInput}
-      >
-        <div className="dropzone-icon-wrapper">
-          <Upload size={28} />
-        </div>
-        <p className="dropzone-text-primary">
-          Drag & drop your files here, or click to browse
-        </p>
-        <p className="dropzone-text-secondary">
-          Supports multiple files: PDF, DOCX, Excel (.xlsx, .xls) or CSV
-        </p>
-        <input 
-          type="file" 
-          multiple 
-          ref={fileInputRef} 
-          style={{ display: 'none' }} 
-          onChange={handleFileInputChange}
-          accept=".pdf,.docx,.xlsx,.xls,.csv"
-        />
-      </div>
+      <div className="brief-split-layout">
+        {/* Left Side: Uploads & AI Refinement */}
+        <div className="brief-left-column">
 
-      {/* Ingested Resource Library - list of active uploaded files */}
-      {uploadedFiles.length > 0 && (
-        <div className="uploaded-files-list">
-          {uploadedFiles.map(file => (
-            <div key={file.id} className="uploaded-file-item">
-              <div className="file-item-header">
-                <div className="file-item-info-col">
-                  <div className={`file-item-icon-box ${file.type}`}>
-                    <FileText size={18} />
+          {/* 1. Refine AI Answers Section */}
+          <div className="brief-card refine-ai-card">
+            <div 
+              className={`brief-card-header accordion-header ${!leftPanelExpanded.refineAi ? 'collapsed' : ''}`}
+              onClick={() => setLeftPanelExpanded(prev => ({ ...prev, refineAi: !prev.refineAi }))}
+              style={{ cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Sparkles size={16} style={{ color: '#4f46e5' }} />
+                <h4 className="brief-card-title">Refine AI Answers</h4>
+              </div>
+              {leftPanelExpanded.refineAi ? <ChevronUp size={16} style={{ color: '#64748b' }} /> : <ChevronDown size={16} style={{ color: '#64748b' }} />}
+            </div>
+            {leftPanelExpanded.refineAi && (
+              <div className="brief-card-body">
+                <p className="brief-card-description">
+                  Refine and pre-populate your strategic brief answers using AI-generated suggestions compiled from your onboarding setup details.
+                </p>
+
+                <div className="refine-stats-row">
+                  <span>Ingestion Library:</span>
+                  <strong>{successfulIngestionCount} {successfulIngestionCount === 1 ? 'file' : 'files'} active</strong>
+                </div>
+
+                <button
+                  onClick={handleGenerateEnrichment}
+                  disabled={isEnriching || !canEdit || successfulIngestionCount === 0}
+                  className="btn-refine-action"
+                >
+                  {isEnriching ? (
+                    <>
+                      <Loader size={14} style={{ animation: 'spin 1.5s linear infinite' }} />
+                      <span>Generating AI Insights...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles size={14} />
+                      <span>Refine Answers with AI</span>
+                    </>
+                  )}
+                </button>
+
+                {successfulIngestionCount === 0 && (
+                  <p className="refine-warning-text">
+                    <AlertCircle size={12} /> Please upload at least one strategic document to index.
+                  </p>
+                )}
+
+                {enrichedAnswers && (
+                  <div className="nested-suggestions-box">
+                    <div className="nested-suggestions-header">
+                      <div className="nested-suggestions-title">
+                        <Sparkles size={12} /> AI Suggestions Ready
+                      </div>
+                      <span className="nested-suggestions-count">{enrichedAnswers.length} items</span>
+                    </div>
+                    <p className="nested-suggestions-desc">
+                      AI has identified relevant strategic highlights from your documents. Sync them directly into the framework questions.
+                    </p>
+                    <div className="nested-suggestions-actions">
+                      <button
+                        onClick={() => setEnrichedAnswers(null)}
+                        className="btn-nested-discard"
+                        disabled={isApplyingEnrichment}
+                      >
+                        Discard
+                      </button>
+                      <button
+                        onClick={handleApplyEnrichedAnswers}
+                        disabled={isApplyingEnrichment}
+                        className="btn-nested-sync"
+                      >
+                        {isApplyingEnrichment ? 'Syncing...' : 'Sync All'}
+                      </button>
+                    </div>
                   </div>
-                  <div className="file-item-details">
-                    <span className="file-item-name">{file.name}</span>
-                    <div className="file-item-meta">
-                      <span>{(file.size / 1024).toFixed(1)} KB</span>
-                      <span className="file-item-dot-separator"></span>
-                      <span>{file.uploadDate}</span>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* 2. Multiple File Upload Section */}
+          <div className="brief-card upload-docs-card">
+            <div 
+              className={`brief-card-header accordion-header ${!leftPanelExpanded.fileUpload ? 'collapsed' : ''}`}
+              onClick={() => setLeftPanelExpanded(prev => ({ ...prev, fileUpload: !prev.fileUpload }))}
+              style={{ cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Upload size={16} style={{ color: '#2563eb' }} />
+                <h4 className="brief-card-title">Multiple File Upload</h4>
+              </div>
+              {leftPanelExpanded.fileUpload ? <ChevronUp size={16} style={{ color: '#64748b' }} /> : <ChevronDown size={16} style={{ color: '#64748b' }} />}
+            </div>
+            {leftPanelExpanded.fileUpload && (
+              <div className="brief-card-body">
+                <p className="brief-card-description">
+                  Upload PDF or DOCX strategic documents. The AI will extract answers to the strategic questions from your document.
+                </p>
+
+                <div 
+                  className={`sidebar-dropzone ${isDragActive ? 'drag-active' : ''}`}
+                  onDragEnter={handleDrag}
+                  onDragOver={handleDrag}
+                  onDragLeave={handleDrag}
+                  onDrop={handleDrop}
+                  onClick={triggerFileInput}
+                >
+                  <div className="sidebar-dropzone-icon">
+                    <Upload size={20} />
+                  </div>
+                  <p className="sidebar-dropzone-text">
+                    Drag & drop PDF/DOCX or click to browse
+                  </p>
+                  <input 
+                    type="file" 
+                    multiple 
+                    ref={fileInputRef} 
+                    style={{ display: 'none' }} 
+                    onChange={handleFileInputChange}
+                    accept=".pdf,.docx,.xlsx,.xls,.csv"
+                  />
+                </div>
+
+                {strategyFiles.length > 0 && (
+                  <>
+                    <div className="sidebar-file-list">
+                      <div className="sidebar-list-header">Ingested Strategy Documents</div>
+                      {strategyFiles.map(file => (
+                        <div key={file.id} className="sidebar-file-item">
+                          <div className="sidebar-file-info">
+                            <FileText size={14} style={{ color: '#2563eb' }} />
+                            <span className="sidebar-file-name" title={file.name}>{file.name}</span>
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <span className={`file-status-badge ${file.status}`} style={{ fontSize: '8px', padding: '1px 4px' }}>
+                              {file.status === 'uploading' ? `${file.progress}%` : file.status}
+                            </span>
+                            <button 
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleRemoveFile(file.id, file.name);
+                              }}
+                              className="sidebar-file-remove"
+                              title="Remove File"
+                            >
+                              <Trash2 size={12} />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    <button
+                      onClick={handleGenerateEnrichment}
+                      disabled={isEnriching || !canEdit || successfulIngestionCount === 0}
+                      className="btn-analyze-docs"
+                    >
+                      {isEnriching ? (
+                        <>
+                          <Loader size={14} style={{ animation: 'spin 1.5s linear infinite' }} />
+                          <span>Analyzing Document...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles size={14} />
+                          <span>Analyze Document</span>
+                        </>
+                      )}
+                    </button>
+                  </>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* 3. Financial Data Upload Section */}
+          <div className="brief-card financial-upload-card">
+            <div 
+              className={`brief-card-header accordion-header ${!leftPanelExpanded.financialUpload ? 'collapsed' : ''}`}
+              onClick={() => setLeftPanelExpanded(prev => ({ ...prev, financialUpload: !prev.financialUpload }))}
+              style={{ cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Database size={16} style={{ color: '#16a34a' }} />
+                <h4 className="brief-card-title">Financial Data Upload</h4>
+              </div>
+              {leftPanelExpanded.financialUpload ? <ChevronUp size={16} style={{ color: '#64748b' }} /> : <ChevronDown size={16} style={{ color: '#64748b' }} />}
+            </div>
+            {leftPanelExpanded.financialUpload && (
+              <div className="brief-card-body">
+                <p className="brief-card-description">
+                  Upload financial statement templates (Excel/Spreadsheet) to populate the core financial indicators.
+                </p>
+
+                <div className="financial-upload-actions">
+                  <button 
+                    onClick={() => setShowTemplatesPopup(true)}
+                    className="btn-financial-upload"
+                  >
+                    <FileSpreadsheet size={14} />
+                    <span>Verify & Upload Excel</span>
+                  </button>
+                </div>
+
+                {financialFiles.length > 0 && (
+                  <div className="sidebar-file-list">
+                    <div className="sidebar-list-header">Active Ledger Spreadsheet</div>
+                    {financialFiles.map(file => (
+                      <div key={file.id} className="sidebar-file-item financial-item">
+                        <div className="sidebar-file-info">
+                          <FileSpreadsheet size={14} style={{ color: '#16a34a' }} />
+                          <span className="sidebar-file-name" title={file.name}>{file.name}</span>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <span className={`file-status-badge ${file.status}`} style={{ fontSize: '8px', padding: '1px 4px' }}>
+                            {file.status === 'uploading' ? `${file.progress}%` : file.status}
+                          </span>
+                          <button 
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleRemoveFile(file.id, file.name);
+                            }}
+                            className="sidebar-file-remove"
+                            title="Remove File"
+                          >
+                            <Trash2 size={12} />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                <div className="sidebar-ledger-summary">
+                  <div className="ledger-summary-header">
+                    <span>Financial Ledger Indicators</span>
+                    <span className={`ledger-status-tag ${financialFiles.length > 0 ? 'active' : ''}`}>
+                      {financialFiles.length > 0 ? 'SYNC ACTIVE' : 'OFFLINE'}
+                    </span>
+                  </div>
+                  <div className="ledger-summary-grid">
+                    <div className="summary-indicator">
+                      <span className="indicator-lbl">ANNUAL REVENUE</span>
+                      <span className="indicator-val">{ledgerVals.revenue}</span>
+                    </div>
+                    <div className="summary-indicator">
+                      <span className="indicator-lbl">EBITDA</span>
+                      <span className="indicator-val">{ledgerVals.ebitda}</span>
+                    </div>
+                    <div className="summary-indicator">
+                      <span className="indicator-lbl">GROSS MARGIN</span>
+                      <span className="indicator-val">{ledgerVals.grossMargin}</span>
+                    </div>
+                    <div className="summary-indicator">
+                      <span className="indicator-lbl">EBITDA MARGIN</span>
+                      <span className="indicator-val">{ledgerVals.ebitdaMargin}</span>
                     </div>
                   </div>
                 </div>
-
-                <div className="file-item-actions">
-                  <span className={`file-status-badge ${file.status}`}>
-                    {file.status === 'uploading' ? `Processing ${file.progress}%` : file.status}
-                  </span>
-                  <button 
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleRemoveFile(file.id, file.name);
-                    }}
-                    className="btn-file-remove"
-                    title="Remove File"
-                  >
-                    <Trash2 size={14} />
-                  </button>
-                </div>
               </div>
-
-              {file.status === 'uploading' && (
-                <div className="file-progress-container">
-                  <div className="file-progress-bar-bg">
-                    <div 
-                      className="file-progress-bar-fill" 
-                      style={{ width: `${file.progress}%` }}
-                    ></div>
-                  </div>
-                  <span className="file-progress-text">{file.progress}%</span>
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* Aggregate Library Stats and Control Action Panel */}
-      {uploadedFiles.length > 0 && (
-        <div className="upload-stats-panel">
-          <div className="stats-panel-left">
-            <CheckCircle size={16} />
-            <span>
-              Ingestion Library: {successfulIngestionCount} of {uploadedFiles.length} files successfully indexed ({totalFileSizeKB.toFixed(1)} KB total)
-            </span>
+            )}
           </div>
-          <div className="stats-panel-right">
-            <button 
-              onClick={() => setShowTemplatesPopup(true)}
-              className="ingestion-btn-secondary"
-              style={{ padding: '6px 12px', fontSize: '11px' }}
+
+        </div>
+
+        {/* Right Side: Questions & Answers with 3 Tabs */}
+        <div className="brief-right-column">
+
+          <div className="phase-tabs-container">
+            <button
+              className={`phase-tab-btn ${activePhaseTab === 'initial' ? 'active' : ''}`}
+              onClick={() => setActivePhaseTab('initial')}
             >
-              Verify Template
+              <span className="phase-tab-title">Initial</span>
+              <span className="phase-tab-badge">{initialCountStr}</span>
             </button>
-            <button 
-              onClick={handleGenerateEnrichment}
-              disabled={isEnriching || !canEdit || successfulIngestionCount === 0}
-              className="btn-stats-action"
+            <button
+              className={`phase-tab-btn ${activePhaseTab === 'essential' ? 'active' : ''}`}
+              onClick={() => setActivePhaseTab('essential')}
             >
-              {isEnriching ? 'Ingesting Library...' : 'Ingest Strategy Library'}
+              <span className="phase-tab-title">Essential</span>
+              <span className="phase-tab-badge">{essentialCountStr}</span>
+            </button>
+            <button
+              className={`phase-tab-btn ${activePhaseTab === 'advanced' ? 'active' : ''}`}
+              onClick={() => setActivePhaseTab('advanced')}
+            >
+              <span className="phase-tab-title">Advanced</span>
+              <span className="phase-tab-badge">{advancedCountStr}</span>
             </button>
           </div>
-        </div>
-      )}
 
-      {enrichedAnswers && (
-        <div className="suggestions-sync-box">
-          <div className="suggestions-header">
-            <span className="suggestions-title">
-              <Sparkles size={14} /> Ingested AI Suggestions Available ({enrichedAnswers.length} items)
-            </span>
-            <div style={{ display: 'flex', gap: '8px' }}>
-              <button 
-                onClick={() => setEnrichedAnswers(null)} 
-                className="suggestions-btn-discard"
-              >
-                Discard
-              </button>
-              <button 
-                onClick={handleApplyEnrichedAnswers} 
-                disabled={isApplyingEnrichment}
-                className="suggestions-btn-sync"
-              >
-                {isApplyingEnrichment ? 'Syncing...' : 'Sync All Suggestions'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Accordion List - Grouped & Clean */}
-      
-      {/* 1. Initial Phase Accordion */}
-      <button className="simple-accordion-header" onClick={() => toggleSection('initial')}>
-        <span>Initial Phase Frameworks ({initialFields.length} Questions)</span>
-        {expandedSections.initial ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-      </button>
-      {expandedSections.initial && (
-        <div className="simple-accordion-content">
-          {initialFields.map(field => (
-            <SimpleQuestionCard 
-              key={field.key} 
-              field={field} 
-              editingField={editingField} 
-              editedFields={editedFields} 
-              isQuestionHighlighted={isQuestionHighlighted} 
-              canEdit={canEdit} 
-              handleEdit={handleEdit} 
-              isSaving={isSaving} 
-              isAnalysisRegenerating={isAnalysisRegenerating} 
-              isStrategicRegenerating={isStrategicRegenerating} 
-              inputRefs={inputRefs} 
-              fieldRefs={fieldRefs} 
-              handleSave={handleSave} 
-              handleCancel={handleCancel} 
-              handleAutoSave={handleAutoSave} 
-              onOpenReference={handleOpenReference}
-              docName={uploadedFiles.find(f => f.status === 'success')?.name}
-            />
-          ))}
-        </div>
-      )}
-
-      {/* 2. Essential Phase Accordion */}
-      <button className="simple-accordion-header" onClick={() => toggleSection('essential')}>
-        <span>Essential Phase Insights ({essentialFields.length} Questions)</span>
-        {expandedSections.essential ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-      </button>
-      {expandedSections.essential && (
-        <div className="simple-accordion-content">
-          {essentialFields.map(field => (
-            <SimpleQuestionCard 
-              key={field.key} 
-              field={field} 
-              editingField={editingField} 
-              editedFields={editedFields} 
-              isQuestionHighlighted={isQuestionHighlighted} 
-              canEdit={canEdit} 
-              handleEdit={handleEdit} 
-              isSaving={isSaving} 
-              isAnalysisRegenerating={isAnalysisRegenerating} 
-              isStrategicRegenerating={isStrategicRegenerating} 
-              inputRefs={inputRefs} 
-              fieldRefs={fieldRefs} 
-              handleSave={handleSave} 
-              handleCancel={handleCancel} 
-              handleAutoSave={handleAutoSave} 
-              onOpenReference={handleOpenReference}
-              docName={uploadedFiles.find(f => f.status === 'success')?.name}
-            />
-          ))}
-        </div>
-      )}
-
-      {/* 3. Advanced Phase Accordion */}
-      <button className="simple-accordion-header" onClick={() => toggleSection('advanced')}>
-        <span>Advanced Strategic Intelligence ({advancedFields.length} Questions)</span>
-        {expandedSections.advanced ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-      </button>
-      {expandedSections.advanced && (
-        <div className="simple-accordion-content">
-          {advancedFields.map(field => (
-            <SimpleQuestionCard 
-              key={field.key} 
-              field={field} 
-              editingField={editingField} 
-              editedFields={editedFields} 
-              isQuestionHighlighted={isQuestionHighlighted} 
-              canEdit={canEdit} 
-              handleEdit={handleEdit} 
-              isSaving={isSaving} 
-              isAnalysisRegenerating={isAnalysisRegenerating} 
-              isStrategicRegenerating={isStrategicRegenerating} 
-              inputRefs={inputRefs} 
-              fieldRefs={fieldRefs} 
-              handleSave={handleSave} 
-              handleCancel={handleCancel} 
-              handleAutoSave={handleAutoSave} 
-              onOpenReference={handleOpenReference}
-              docName={uploadedFiles.find(f => f.status === 'success')?.name}
-            />
-          ))}
-        </div>
-      )}
-
-      {/* 4. Financial Ledger Accordion */}
-      <button className="simple-accordion-header" onClick={() => toggleSection('ledger')}>
-        <span>Spreadsheet Ingested Financial Ledger (Core Ledger Sync)</span>
-        {expandedSections.ledger ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-      </button>
-      {expandedSections.ledger && (
-        <div className="simple-accordion-content" style={{ background: 'white', padding: '20px', borderRadius: '12px', border: '1px solid #e2e8f0', marginTop: '4px', boxSizing: 'border-box' }}>
-          <div className="ledger-meta-row">
-            <span className="ledger-subtitle">Pre-populated spreadsheet indicators synced directly into original financial sections</span>
-            <span className="ledger-sync-status">
-              {uploadedFiles.some(f => f.type === 'spreadsheet' && f.status === 'success') ? 'SYNC ACTIVE' : 'NO SPREADSHEET ACTIVE'}
-            </span>
+          <div className="phase-tab-content-list">
+            {currentTabFields.length === 0 ? (
+              <div className="empty-phase-questions">
+                No questions found for this phase.
+              </div>
+            ) : (
+              currentTabFields.map(field => (
+                <SimpleQuestionCard
+                  key={field.key}
+                  field={field}
+                  editingField={editingField}
+                  editedFields={editedFields}
+                  isQuestionHighlighted={isQuestionHighlighted}
+                  canEdit={canEdit}
+                  handleEdit={handleEdit}
+                  isSaving={isSaving}
+                  isAnalysisRegenerating={isAnalysisRegenerating}
+                  isStrategicRegenerating={isStrategicRegenerating}
+                  inputRefs={inputRefs}
+                  fieldRefs={fieldRefs}
+                  handleSave={handleSave}
+                  handleCancel={handleCancel}
+                  handleAutoSave={handleAutoSave}
+                  onOpenReference={handleOpenReference}
+                  docName={uploadedFiles.find(f => f.status === 'success')?.name}
+                />
+              ))
+            )}
           </div>
 
-          <div className="ledger-grid">
-            <div className="ledger-item">
-              <div className="ledger-label">ANNUAL REVENUE</div>
-              <div className="ledger-value">{ledgerVals.revenue}</div>
-              <button 
-                className="simple-text-toggle" 
-                onClick={() => handleOpenReference({ 
-                  title: 'Annual Revenue Ingestion', 
-                  doc: uploadedFiles.find(f => f.type === 'spreadsheet' && f.status === 'success')?.name || 'Financial_Statements.xlsx', 
-                  cell: 'D10', 
-                  excerpt: `Ingested base Annual Revenue: ${ledgerVals.revenue} calculated from fiscal reports.` 
-                })}
-              >
-                Source: {uploadedFiles.find(f => f.type === 'spreadsheet' && f.status === 'success')?.name || 'Financial_Statements.xlsx'}!D10
-              </button>
-            </div>
-
-            <div className="ledger-item">
-              <div className="ledger-label">EBITDA</div>
-              <div className="ledger-value">{ledgerVals.ebitda}</div>
-              <button 
-                className="simple-text-toggle" 
-                onClick={() => handleOpenReference({ 
-                  title: 'EBITDA Ingestion', 
-                  doc: uploadedFiles.find(f => f.type === 'spreadsheet' && f.status === 'success')?.name || 'Financial_Statements.xlsx', 
-                  cell: 'F14', 
-                  excerpt: `EBITDA operating profit: ${ledgerVals.ebitda} synchronized successfully.` 
-                })}
-              >
-                Source: {uploadedFiles.find(f => f.type === 'spreadsheet' && f.status === 'success')?.name || 'Financial_Statements.xlsx'}!F14
-              </button>
-            </div>
-
-            <div className="ledger-item">
-              <div className="ledger-label">GROSS MARGIN</div>
-              <div className="ledger-value">{ledgerVals.grossMargin}</div>
-              <button 
-                className="simple-text-toggle" 
-                onClick={() => handleOpenReference({ 
-                  title: 'Gross Margin Ingestion', 
-                  doc: uploadedFiles.find(f => f.type === 'spreadsheet' && f.status === 'success')?.name || 'Financial_Statements.xlsx', 
-                  cell: 'H12', 
-                  excerpt: `Gross margin percent: ${ledgerVals.grossMargin} parsed from income statements.` 
-                })}
-              >
-                Source: {uploadedFiles.find(f => f.type === 'spreadsheet' && f.status === 'success')?.name || 'Financial_Statements.xlsx'}!H12
-              </button>
-            </div>
-
-            <div className="ledger-item">
-              <div className="ledger-label">EBITDA MARGIN</div>
-              <div className="ledger-value">{ledgerVals.ebitdaMargin}</div>
-              <button 
-                className="simple-text-toggle" 
-                onClick={() => handleOpenReference({ 
-                  title: 'EBITDA Margin Ingestion', 
-                  doc: uploadedFiles.find(f => f.type === 'spreadsheet' && f.status === 'success')?.name || 'Financial_Statements.xlsx', 
-                  cell: 'F15', 
-                  excerpt: `EBITDA Margin percent: ${ledgerVals.ebitdaMargin} synchronized.` 
-                })}
-              >
-                Source: {uploadedFiles.find(f => f.type === 'spreadsheet' && f.status === 'success')?.name || 'Financial_Statements.xlsx'}!F15
-              </button>
-            </div>
-          </div>
         </div>
-      )}
+      </div>
 
       {/* Side Reference Drawer with z-index 999999 to float above sticky navigation headers */}
       <div className={`reference-drawer ${drawerOpen ? 'open' : ''}`}>
@@ -1172,7 +1210,7 @@ const EditableBriefSection = ({
             <X size={18} />
           </button>
         </div>
-        
+
         {drawerData && (
           <div className="drawer-content">
             <div className="drawer-section-title">
@@ -1209,14 +1247,14 @@ const EditableBriefSection = ({
       </div>
 
       {showTemplatesPopup && (
-        <FinancialTemplatesPopup 
-          isOpen={showTemplatesPopup} 
-          onClose={() => setShowTemplatesPopup(false)} 
-          isFileUploading={isFileUploading} 
+        <FinancialTemplatesPopup
+          isOpen={showTemplatesPopup}
+          onClose={() => setShowTemplatesPopup(false)}
+          isFileUploading={isFileUploading}
           onFileUploaded={(file, validation) => {
             processMultipleFiles([file]);
             setShowTemplatesPopup(false);
-          }} 
+          }}
           fileInputRef={fileInputRef}
         />
       )}
