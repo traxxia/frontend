@@ -916,6 +916,7 @@
   "Password_must_contain_uppercase_letter": "Password must contain an uppercase letter",
   "Password_must_contain_number": "Password must contain a number",
   "Password_must_contain_special_character": "Password contain a special character",
+  "password_rule_missing": "Password rule is missing",
   "Company_is_required": "Company is required",
   "select_collaborators_at_least_one": "Please select at least one collaborator",
   "reRanking": "Reranking",
