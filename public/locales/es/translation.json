@@ -700,6 +700,7 @@
   "Password_must_contain_uppercase_letter": "La contraseña debe contener una letra mayúscula",
   "Password_must_contain_number": "La contraseña debe contener un número",
   "Password_must_contain_special_character": "La contraseña debe contener un carácter especial",
+  "password_rule_missing": "Falta alguna regla de la contraseña",
   "Company_is_required": "La empresa es obligatoria",
   "select_collaborators_at_least_one": "Por favor, seleccione al menos un colaborador",
   "reRanking": "Re-jerarquización",

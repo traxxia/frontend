@@ -131,24 +131,14 @@ const ForgotPassword = () => {
       setError(t('password_required') || 'Password is required');
       return;
     }
-    if (password.length < 8) {
-      setError(t('password_min_length_8') || 'Password must be at least 8 characters long');
-      return;
-    }
-    if (!/(?=.*[a-z])/.test(password)) {
-      setError(t("Password_must_contain_lowercase_letter") || "Password must contain lowercase letter");
-      return;
-    }
-    if (!/(?=.*[A-Z])/.test(password)) {
-      setError(t("Password_must_contain_uppercase_letter") || "Password must contain uppercase letter");
-      return;
-    }
-    if (!/(?=.*\d)/.test(password)) {
-      setError(t("Password_must_contain_number") || "Password must contain number");
-      return;
-    }
-    if (!/(?=.*[^A-Za-z0-9])/.test(password)) {
-      setError(t("Password_must_contain_special_character") || "Password must contain special character");
+    if (
+      password.length < 8 ||
+      !/(?=.*[a-z])/.test(password) ||
+      !/(?=.*[A-Z])/.test(password) ||
+      !/(?=.*\d)/.test(password) ||
+      !/(?=.*[^A-Za-z0-9])/.test(password)
+    ) {
+      setError(t("password_rule_missing") || "Password rule is missing");
       return;
     }
     if (!confirmPassword) {

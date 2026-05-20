@@ -27,9 +27,9 @@ const PasswordStrengthTooltip = ({ password = '', isFocused = false, position = 
           className={`password-strength-tooltip position-${position}`}
         >
           {/* Header */}
-          <div className="tooltip-header">
+          {/* <div className="tooltip-header">
             <h3>{t('lets_be_safe', "Let's be safe, not sorry")}</h3>
-          </div>
+          </div> */}
 
           {/* Body */}
           <div className="tooltip-body">

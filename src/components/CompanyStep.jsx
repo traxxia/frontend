@@ -76,89 +76,77 @@ const CompanyStep = ({
             </div>
 
             <div className="selection-content">
-              <AnimatePresence mode="wait" initial={false}>
-                {isNewCompany ? (
-                  <motion.div
-                    key="create-new"
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -20 }}
-                    transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                    layout
-                    className="form-group-custom"
-                  >
-                    <label>{t("companyName")}  <span className="required">*</span></label>
-                    <input type="text" name="company_name" placeholder={t("brandNamePlaceholder")} value={form.company_name} onChange={handleChange} className={errors.company_name ? 'error' : ''} required />
-                  </motion.div>
-                ) : (
-                  <motion.div
-                    key="join-existing"
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: 20 }}
-                    transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                    layout
-                    className="form-group-custom"
-                  >
-                    <label>{t("select_company")} <span className="required">*</span></label>
-                    <div className="custom-select-container" ref={companyDropdownRef}>
-                      {loadingCompanies ? (
-                        <div className="loading-select"><Loader className="animate-spin" size={16} /> Loading...</div>
-                      ) : (
-                        <>
-                          <div
-                            className={`custom-select-header ${isCompanyDropdownOpen ? 'open' : ''} ${errors.company_id ? 'error' : ''}`}
-                            onClick={() => setIsCompanyDropdownOpen(!isCompanyDropdownOpen)}
-                          >
-                            <span>
-                              {form.company_id
-                                ? companies.find(c => c._id === form.company_id)?.company_name || t('select_a_company')
-                                : t('select_a_company')}
-                            </span>
-                            {loadingCompanies ? <Loader className="animate-spin" size={16} /> : (isCompanyDropdownOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />)}
-                          </div>
+              {isNewCompany ? (
+                <div
+                  key="create-new"
+                  className="form-group-custom"
+                >
+                  <label>{t("companyName")}  <span className="required">*</span></label>
+                  <input type="text" name="company_name" placeholder={t("brandNamePlaceholder")} value={form.company_name} onChange={handleChange} className={errors.company_name ? 'error' : ''} required />
+                </div>
+              ) : (
+                <div
+                  key="join-existing"
+                  className="form-group-custom"
+                >
+                  <label>{t("select_company")} <span className="required">*</span></label>
+                  <div className="custom-select-container" ref={companyDropdownRef}>
+                    {loadingCompanies ? (
+                      <div className="loading-select"><Loader className="animate-spin" size={16} /> Loading...</div>
+                    ) : (
+                      <>
+                        <div
+                          className={`custom-select-header ${isCompanyDropdownOpen ? 'open' : ''} ${errors.company_id ? 'error' : ''}`}
+                          onClick={() => setIsCompanyDropdownOpen(!isCompanyDropdownOpen)}
+                        >
+                          <span>
+                            {form.company_id
+                              ? companies.find(c => c._id === form.company_id)?.company_name || t('select_a_company')
+                              : t('select_a_company')}
+                          </span>
+                          {loadingCompanies ? <Loader className="animate-spin" size={16} /> : (isCompanyDropdownOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />)}
+                        </div>
 
-                          {isCompanyDropdownOpen && (
-                            <div className="custom-select-dropdown">
-                              <div className="search-box-wrapper">
-                                <input
-                                  type="text"
-                                  placeholder={t('type_a_company') || 'Type a company'}
-                                  value={companySearch}
-                                  onChange={(e) => setCompanySearch(e.target.value)}
-                                  onClick={(e) => e.stopPropagation()}
-                                  autoFocus
-                                />
-                                <Search className="search-icon" size={18} />
-                              </div>
-
-                              <div className="options-list">
-                                {filteredCompanies.length > 0 ? (
-                                  filteredCompanies.map((c) => (
-                                    <div
-                                      key={c._id}
-                                      className={`option-item ${form.company_id === c._id ? 'selected' : ''}`}
-                                      onClick={() => {
-                                        handleChange({ target: { name: 'company_id', value: c._id } });
-                                        setIsCompanyDropdownOpen(false);
-                                        setCompanySearch('');
-                                      }}
-                                    >
-                                      {c.company_name}
-                                    </div>
-                                  ))
-                                ) : (
-                                  <div className="no-options">{t('no_companies_found') || 'No companies found'}</div>
-                                )}
-                              </div>
+                        {isCompanyDropdownOpen && (
+                          <div className="custom-select-dropdown">
+                            <div className="search-box-wrapper">
+                              <input
+                                type="text"
+                                placeholder={t('type_a_company') || 'Type a company'}
+                                value={companySearch}
+                                onChange={(e) => setCompanySearch(e.target.value)}
+                                onClick={(e) => e.stopPropagation()}
+                                autoFocus
+                              />
+                              <Search className="search-icon" size={18} />
                             </div>
-                          )}
-                        </>
-                      )}
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
+
+                            <div className="options-list">
+                              {filteredCompanies.length > 0 ? (
+                                filteredCompanies.map((c) => (
+                                  <div
+                                    key={c._id}
+                                    className={`option-item ${form.company_id === c._id ? 'selected' : ''}`}
+                                    onClick={() => {
+                                      handleChange({ target: { name: 'company_id', value: c._id } });
+                                      setIsCompanyDropdownOpen(false);
+                                      setCompanySearch('');
+                                    }}
+                                  >
+                                    {c.company_name}
+                                  </div>
+                                ))
+                              ) : (
+                                <div className="no-options">{t('no_companies_found') || 'No companies found'}</div>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                      </>
+                    )}
+                  </div>
+                </div>
+              )}
               
             <div ref={companyErrorRef}>
               {(errors.company_name || errors.company_id) && <div className="error-message">{errors.company_name || errors.company_id}</div>}
