@@ -579,7 +579,10 @@ const BusinessSetupPage = () => {
                 answersDetailsMap[qIdStr] = {
                   confidence: ans.confidence,
                   status: ans.status,
-                  evidence: ans.evidence
+                  evidence: ans.evidence,
+                  ai_answer: ans.ai_answer,
+                  user_answer: ans.user_answer,
+                  previous_answer: ans.previous_answer
                 };
               }
             });
@@ -2419,6 +2422,7 @@ const BusinessSetupPage = () => {
             closeModal('pmfOnboarding');
             handleExecutiveTabClick();
             setPmfRefreshTrigger(prev => prev + 1);
+            window.dispatchEvent(new CustomEvent("pmfOnboardingCompleted"));
           }}
         />
       )}

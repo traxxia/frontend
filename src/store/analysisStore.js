@@ -108,7 +108,26 @@ export const useAnalysisStore = create((set, get) => ({
 
   setUserAnswer: (questionId, answer) => set((state) => {
     const newDetails = { ...state.answersDetails };
-    delete newDetails[questionId];
+    const currentDetail = newDetails[questionId] || {};
+    const oldAnswer = state.userAnswers[questionId] || null;
+
+    const newPreviousAnswer = answer === oldAnswer
+      ? (currentDetail.previous_answer !== undefined ? currentDetail.previous_answer : null)
+      : oldAnswer;
+
+    const newUserAnswer = answer === oldAnswer
+      ? (currentDetail.user_answer !== undefined ? currentDetail.user_answer : null)
+      : answer;
+
+    newDetails[questionId] = {
+      ...currentDetail,
+      ai_answer: currentDetail.ai_answer !== undefined && currentDetail.ai_answer !== null && currentDetail.ai_answer !== ''
+        ? currentDetail.ai_answer
+        : (oldAnswer || ''),
+      previous_answer: newPreviousAnswer,
+      user_answer: newUserAnswer
+    };
+
     return {
       userAnswers: { ...state.userAnswers, [questionId]: answer },
       answersDetails: newDetails,

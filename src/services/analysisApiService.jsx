@@ -1221,7 +1221,10 @@ export class AnalysisApiService {
           freshAnswersDetails[questionId] = {
             confidence: answerDoc.confidence,
             status: answerDoc.status,
-            evidence: answerDoc.evidence
+            evidence: answerDoc.evidence,
+            ai_answer: answerDoc.ai_answer,
+            user_answer: answerDoc.user_answer,
+            previous_answer: answerDoc.previous_answer
           };
         }
       });

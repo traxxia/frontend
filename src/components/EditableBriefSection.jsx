@@ -25,6 +25,12 @@ const getQuestionIntelligence = (field, docName, details) => {
     };
   }
 
+  const original = details.ai_answer !== undefined && details.ai_answer !== null && details.ai_answer !== ''
+    ? details.ai_answer
+    : (field.value && field.value.startsWith('[AI Extraction]')
+      ? field.value
+      : null);
+
   if (details.status === 'FOUND') {
     const conf = details.confidence >= 0.7 ? 'High' : details.confidence >= 0.5 ? 'Medium' : 'Low';
     const color = conf === 'High' ? '#10b981' : conf === 'Medium' ? '#f59e0b' : '#ef4444';
@@ -38,10 +44,6 @@ const getQuestionIntelligence = (field, docName, details) => {
       docCitation = `${sourceDoc} (Page ${firstEv.page || 1})`;
       excerpt = firstEv.text ? `"...${firstEv.text}..."` : '';
     }
-    
-    const original = field.value && field.value.startsWith('[AI Extraction]')
-      ? field.value
-      : `[AI Extraction] ${field.value || ''}`;
 
     return {
       conf,
@@ -59,17 +61,19 @@ const getQuestionIntelligence = (field, docName, details) => {
       const firstEv = details.evidence[0];
       docCitation = firstEv.document_name || docName || 'Strategic Document';
     }
+    const finalOriginal = original || 'Not found';
     return {
       conf: 'None',
       color: '#9ca3af',
       doc: docCitation,
       excerpt: 'No relevant information found in the document.',
-      original: 'Not found',
+      original: finalOriginal,
       hasCitation: true
     };
   }
 
   return {
+    original,
     hasCitation: false
   };
 };
@@ -90,13 +94,23 @@ const SimpleQuestionCard = ({
   handleCancel,
   handleAutoSave,
   onOpenReference,
-  docName
+  docName,
+  expandAll
 }) => {
   const { t } = useTranslation();
   const [showOriginal, setShowOriginal] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
   const isEditing = editingField === field.key;
   const isEdited = editedFields.has(field.key);
   const isHighlighted = isQuestionHighlighted(field.questionId);
+
+  // Synchronize local expand state with global expandAll changes
+  useEffect(() => {
+    setIsExpanded(expandAll);
+  }, [expandAll]);
+
+  // effectiveExpanded: local state, synchronized with global actions
+  const effectiveExpanded = isExpanded;
 
   // Retrieve details from Zustand store
   const answersDetails = useAnalysisStore(state => state.answersDetails || {});
@@ -105,110 +119,167 @@ const SimpleQuestionCard = ({
   // Dynamic citation extraction
   const intel = getQuestionIntelligence(field, docName, details);
 
-  const isAI = field.value && field.value.startsWith('[AI Extraction]');
+  const isAI = field.value && (field.value.startsWith('[AI Extraction]') || (!details || !details.user_answer));
   const hasValue = field.value && field.value !== '[Question Skipped]';
   const cleanVal = cleanValue(field.value);
+
+  // Compact inline preview (first 90 chars)
+  const previewText = cleanVal ? (cleanVal.length > 90 ? cleanVal.slice(0, 90) + '…' : cleanVal) : null;
+
+  // Auto-expand when editing starts
+  const handleEditClick = () => {
+    if (canEdit && !isSaving) {
+      setIsExpanded(true);
+      handleEdit(field);
+    }
+  };
 
   return (
     <div
       ref={el => fieldRefs.current[field.key] = el}
-      className={`simple-question-card ${isHighlighted ? 'highlighted' : ''}`}
+      className={`sqc-row ${isHighlighted ? 'highlighted' : ''} ${isEditing ? 'sqc-editing' : ''} ${effectiveExpanded ? 'sqc-expanded' : ''}`}
     >
-      {/* Question title + confidence badge */}
-      <div className="card-header-row">
-        <h5 className="simple-question-title">
-          {field.sequentialNumber}. {field.label}
-        </h5>
-        {intel.hasCitation && (
-          <span className="simple-bullet-badge">
-            <span className="bullet-dot" style={{ backgroundColor: intel.color }} />
-            {intel.conf} Confidence
-          </span>
-        )}
-      </div>
-
-      {/* Original AI compare view */}
-      {showOriginal ? (
-        <div className="original-ai-answer-box">
-          <strong>Original AI Ingested:</strong> {cleanValue(intel.original)}
-        </div>
-      ) : null}
-
-      {/* Answer box — editing or read mode */}
-      {!showOriginal && isEditing && canEdit ? (
-        <div style={{ marginTop: '4px' }}>
-          <textarea
-            ref={el => inputRefs.current[field.key] = el}
-            className="simple-textarea"
-            defaultValue={cleanVal}
-            disabled={isSaving || isAnalysisRegenerating}
-            placeholder="Write your answer..."
-            onChange={e => handleAutoSave(field, e.target.value)}
-          />
-          <div className="save-actions-wrapper">
-            <div className="save-status-text">
-              {isSaving ? 'Saving...' : isEdited ? 'Changes saved' : ''}
-            </div>
-            <div className="save-buttons-group">
-              <button onClick={handleCancel} disabled={isSaving} className="btn-cancel-action">
-                Cancel
-              </button>
-              <button onClick={() => handleSave(field)} disabled={isSaving} className="btn-save-action">
-                Save
-              </button>
-            </div>
-          </div>
-        </div>
-      ) : !showOriginal ? (
-        <div
-          onClick={() => canEdit && !isSaving && handleEdit(field)}
-          className={
-            !hasValue
-              ? 'brief-answer-empty'
-              : isAI
-                ? 'brief-answer-ai'
-                : 'brief-answer-user'
-          }
-          style={{ cursor: canEdit ? 'pointer' : 'default', marginTop: '8px' }}
-        >
-          {cleanVal || 'Click here to add your specific strategic answer...'}
-        </div>
-      ) : null}
-
-      {/* Uniform bottom action row — always below the answer */}
-      {hasValue && !isEditing && (
-        <div className="card-bottom-row">
-          {isAI ? (
-            <span className="brief-badge-ai">
-              <Sparkles size={11} /> AI
-            </span>
+      {/* Compact summary row — always visible */}
+      <div className="sqc-summary" onClick={() => !isEditing && setIsExpanded(prev => !prev)}>
+        {/* Left: number + status dot */}
+        <div className="sqc-left">
+          <span className="sqc-num">{field.sequentialNumber}</span>
+          {hasValue ? (
+            <span className="sqc-status-dot" style={{ backgroundColor: isAI ? '#a855f7' : '#3b82f6' }} title={isAI ? 'AI Answer' : 'Edited'} />
           ) : (
-            <span className="brief-badge-user">
-              <Check size={11} /> Edited
+            <span className="sqc-status-dot sqc-dot-empty" title="No answer yet" />
+          )}
+        </div>
+
+        {/* Center: question label + answer preview */}
+        <div className="sqc-center">
+          <span className="sqc-question-text">{field.label}</span>
+          {hasValue && !effectiveExpanded && !isEditing && (
+            <span className={`sqc-answer-preview ${isAI ? 'sqc-preview-ai' : 'sqc-preview-user'}`}>
+              {previewText}
             </span>
           )}
+          {!hasValue && !effectiveExpanded && (
+            <span className="sqc-answer-preview sqc-preview-empty">No answer yet — click to add</span>
+          )}
+        </div>
 
-          <div className="card-bottom-actions">
-            {!isAI && (
-              <button
-                className="simple-text-toggle"
-                onClick={() => setShowOriginal(!showOriginal)}
-              >
-                <Sparkles size={12} />
-                {showOriginal ? 'Show Edited' : 'Compare Original'}
+        {/* Right: confidence dot + expand chevron */}
+        <div className="sqc-right">
+          {intel.hasCitation && (
+            <span className="sqc-conf-dot" style={{ backgroundColor: intel.color }} title={`${intel.conf} Confidence`} />
+          )}
+          {isEdited && !isAI && <CheckCircle size={13} style={{ color: '#3b82f6', flexShrink: 0 }} />}
+          {!effectiveExpanded && <ChevronDown size={14} style={{ color: '#94a3b8', flexShrink: 0 }} />}
+          {effectiveExpanded && <ChevronUp size={14} style={{ color: '#6366f1', flexShrink: 0 }} />}
+        </div>
+      </div>
+
+      {/* Expanded content — full answer, edit, actions */}
+      {(effectiveExpanded || isEditing) && (
+        <div className="sqc-expanded-body">
+          {/* Original AI compare view */}
+          {showOriginal ? (
+            <div className="original-ai-answer-box">
+              {intel.original && (
+                <div style={{ marginBottom: (details && details.previous_answer) ? '8px' : '0' }}>
+                  <strong>Original AI Ingested:</strong> {cleanValue(intel.original)}
+                </div>
+              )}
+              {details && details.previous_answer && cleanValue(details.previous_answer) !== cleanValue(field.value) && (
+                <div className="sqc-previous-answer-box" style={{ marginTop: intel.original ? '8px' : '0', paddingTop: intel.original ? '8px' : '0', borderTop: intel.original ? '1px dashed #cbd5e1' : 'none', fontSize: '11px', color: '#64748b' }}>
+                  <strong>Previous Edit:</strong> {cleanValue(details.previous_answer)}
+                </div>
+              )}
+            </div>
+          ) : null}
+
+          {/* Answer box — editing or read mode */}
+          {!showOriginal && isEditing && canEdit ? (
+            <div>
+              <textarea
+                ref={el => inputRefs.current[field.key] = el}
+                className="simple-textarea"
+                defaultValue={cleanVal}
+                disabled={isSaving || isAnalysisRegenerating}
+                placeholder="Write your answer..."
+                onChange={e => handleAutoSave(field, e.target.value)}
+              />
+              <div className="save-actions-wrapper">
+                <div className="save-status-text">
+                  {isSaving ? 'Saving...' : isEdited ? 'Changes saved' : ''}
+                </div>
+                <div className="save-buttons-group">
+                  <button onClick={() => { handleCancel(); setIsExpanded(false); }} disabled={isSaving} className="btn-cancel-action">
+                    Cancel
+                  </button>
+                  <button onClick={() => handleSave(field)} disabled={isSaving} className="btn-save-action">
+                    Save
+                  </button>
+                </div>
+              </div>
+            </div>
+          ) : !showOriginal ? (
+            <div
+              onClick={handleEditClick}
+              className={
+                !hasValue
+                  ? 'brief-answer-empty sqc-full-answer'
+                  : isAI
+                    ? 'brief-answer-ai sqc-full-answer'
+                    : 'brief-answer-user sqc-full-answer'
+              }
+              style={{ cursor: canEdit ? 'pointer' : 'default' }}
+            >
+              {cleanVal || 'Click here to add your strategic answer...'}
+            </div>
+          ) : null}
+
+          {/* Bottom action row */}
+          {hasValue && !isEditing && (
+            <div className="sqc-action-row">
+              <div className="sqc-badges">
+                {isAI ? (
+                  <span className="brief-badge-ai"><Sparkles size={10} /> AI</span>
+                ) : (
+                  <span className="brief-badge-user"><Check size={10} /> Edited</span>
+                )}
+                {intel.hasCitation && (
+                  <span className="sqc-conf-badge" style={{ color: intel.color, borderColor: intel.color + '40' }}>
+                    <span className="sqc-conf-dot-sm" style={{ backgroundColor: intel.color }} />
+                    {intel.conf}
+                  </span>
+                )}
+              </div>
+              <div className="card-bottom-actions">
+                {!isAI && (
+                  <button className="simple-text-toggle" onClick={() => setShowOriginal(!showOriginal)}>
+                    <Sparkles size={11} />
+                    {showOriginal ? 'Show Edited' : 'Compare'}
+                  </button>
+                )}
+                {intel.hasCitation && (
+                  <button
+                    className="simple-text-toggle"
+                    style={{ color: '#2563eb' }}
+                    onClick={() => onOpenReference({ title: field.label, ...intel })}
+                  >
+                    <Eye size={11} /> Citation
+                  </button>
+                )}
+                <button className="simple-text-toggle sqc-edit-btn" onClick={handleEditClick}>
+                  <Edit3 size={11} /> Edit
+                </button>
+              </div>
+            </div>
+          )}
+          {!hasValue && !isEditing && (
+            <div className="sqc-action-row">
+              <button className="sqc-add-btn" onClick={handleEditClick}>
+                <Edit3 size={11} /> Add Answer
               </button>
-            )}
-            {intel.hasCitation && (
-              <button
-                className="simple-text-toggle"
-                style={{ color: '#2563eb' }}
-                onClick={() => onOpenReference({ title: field.label, ...intel })}
-              >
-                <Eye size={12} />
-                View Citation
-              </button>
-            )}
-          </div>
+            </div>
+          )}
         </div>
       )}
     </div>
@@ -233,9 +304,10 @@ const EditableBriefSection = ({
   isFinancialRegeneratingProp = false,
   answerIds = {},
   setAnswerIds,
-  isLoading = false,
   hasPmfAccess = false
 }) => {
+  const answersDetails = useAnalysisStore(state => state.answersDetails || {});
+  const lastFetchedBusinessId = useAnalysisStore(state => state.lastFetchedBusinessId);
   const [editingField, setEditingField] = useState(null);
   const [briefFields, setBriefFields] = useState([]);
   const [editedFields, setEditedFields] = useState(new Set());
@@ -268,6 +340,7 @@ const EditableBriefSection = ({
   });
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [drawerData, setDrawerData] = useState(null);
+  const [expandAll, setExpandAll] = useState(false);
 
   useEffect(() => {
     if (isFinancialRegeneratingProp) {
@@ -297,11 +370,48 @@ const EditableBriefSection = ({
   const isViewer = userRole === "viewer";
   const canEdit = !isViewer;
 
+  const [isPmfCompleted, setIsPmfCompleted] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    const checkPmfCompletion = async () => {
+      if (!selectedBusinessId) return;
+      try {
+        const result = await analysisService.getPMFAnalysis(selectedBusinessId);
+        if (!active) return;
+        const onboardingData = result?.analysis?.onboarding_data || result?.onboarding_data;
+        const hasOnboarding = onboardingData && Object.keys(onboardingData).length > 0;
+        setIsPmfCompleted(!!hasOnboarding);
+      } catch (err) {
+        console.warn("Failed to check PMF completion:", err);
+        if (active) setIsPmfCompleted(false);
+      }
+    };
+    checkPmfCompletion();
+
+    const handlePmfUpdated = () => {
+      checkPmfCompletion();
+    };
+    window.addEventListener("pmfOnboardingCompleted", handlePmfUpdated);
+    window.addEventListener("conversationUpdated", handlePmfUpdated);
+
+    return () => {
+      active = false;
+      window.removeEventListener("pmfOnboardingCompleted", handlePmfUpdated);
+      window.removeEventListener("conversationUpdated", handlePmfUpdated);
+    };
+  }, [selectedBusinessId, analysisService]);
+
   useEffect(() => {
     if (questions && questions.length > 0) {
       generateBriefFields();
     }
   }, [questions, userAnswers]);
+
+  // Reset uploaded files state when the business selection changes
+  useEffect(() => {
+    setUploadedFiles([]);
+  }, [selectedBusinessId]);
 
   // Sync initial loaded financial document into our multi-file library
   useEffect(() => {
@@ -326,6 +436,40 @@ const EditableBriefSection = ({
       }
     }
   }, [documentInfo]);
+
+  // Extract previously uploaded/indexed strategic document names from answersDetails
+  useEffect(() => {
+    if (lastFetchedBusinessId !== selectedBusinessId) return;
+    if (answersDetails && Object.keys(answersDetails).length > 0) {
+      const foundDocNames = new Set();
+      Object.values(answersDetails).forEach(detail => {
+        if (detail && Array.isArray(detail.evidence)) {
+          detail.evidence.forEach(ev => {
+            if (ev && ev.document_name && ev.document_name.trim() !== '') {
+              foundDocNames.add(ev.document_name);
+            }
+          });
+        }
+      });
+
+      setUploadedFiles(prev => {
+        // Retain only spreadsheets and temporary upload-queue files
+        const nonDbStrategic = prev.filter(f => !f.id.startsWith('db-strategic-'));
+        const dbStrategic = Array.from(foundDocNames).map(docName => ({
+          id: `db-strategic-${docName}`,
+          name: docName,
+          size: 512000,
+          uploadDate: 'Indexed',
+          status: 'success',
+          type: docName.toLowerCase().endsWith('.docx') ? 'docx' : 'pdf',
+          progress: 100
+        }));
+        return [...nonDbStrategic, ...dbStrategic];
+      });
+    } else {
+      setUploadedFiles(prev => prev.filter(f => !f.id.startsWith('db-strategic-')));
+    }
+  }, [answersDetails, lastFetchedBusinessId, selectedBusinessId]);
 
 
 
@@ -729,7 +873,13 @@ const EditableBriefSection = ({
         try {
           const bulkRes = await answerService.bulkCreateAnswers(selectedBusinessId, toCreate.map(item => ({
             question_id: item.question_id,
-            answer: item.answer_text
+            answer: item.answer_text,
+            confidence: 0.9,
+            status: 'FOUND',
+            evidence: [],
+            ai_answer: item.answer_text,
+            user_answer: null,
+            previous_answer: null
           })));
           if (bulkRes && bulkRes.data && bulkRes.data.insertedIds) {
             toCreate.forEach((item, index) => {
@@ -747,10 +897,19 @@ const EditableBriefSection = ({
 
       if (toUpdate.length > 0) {
         try {
-          await answerService.bulkUpdateAnswers(selectedBusinessId, toUpdate.map(item => ({
-            answer_id: item.id,
-            answer: item.answer_text
-          })));
+          await answerService.bulkUpdateAnswers(selectedBusinessId, toUpdate.map(item => {
+            const prevDetail = answersDetails[String(item.question_id)] || {};
+            return {
+              answer_id: item.id,
+              answer: item.answer_text,
+              confidence: 0.9,
+              status: 'FOUND',
+              evidence: prevDetail.evidence || [],
+              ai_answer: item.answer_text,
+              user_answer: null,
+              previous_answer: prevDetail.user_answer || prevDetail.previous_answer || null
+            };
+          }));
         } catch (err) {
           console.error('Failed to bulk update answers:', err);
         }
@@ -759,6 +918,36 @@ const EditableBriefSection = ({
       if (idsUpdated && setAnswerIds) {
         setAnswerIds(newAnswerIds);
       }
+
+      // Update Zustand atomic state for AI enrichment answers
+      const currentAnswers = { ...useAnalysisStore.getState().userAnswers };
+      const currentDetails = { ...useAnalysisStore.getState().answersDetails };
+      const currentCompleted = [...useAnalysisStore.getState().completedQuestions];
+
+      answersToSave.forEach(item => {
+        if (item.answer_text) {
+          currentAnswers[item.question_id] = item.answer_text;
+          if (!currentCompleted.includes(item.question_id)) {
+            currentCompleted.push(item.question_id);
+          }
+        }
+        const prevDetail = currentDetails[item.question_id] || {};
+        currentDetails[item.question_id] = {
+          ...prevDetail,
+          confidence: 0.9,
+          status: 'FOUND',
+          evidence: prevDetail.evidence || [],
+          ai_answer: item.answer_text || '',
+          user_answer: null,
+          previous_answer: prevDetail.user_answer || prevDetail.previous_answer || null
+        };
+      });
+
+      useAnalysisStore.setState({
+        userAnswers: currentAnswers,
+        answersDetails: currentDetails,
+        completedQuestions: currentCompleted
+      });
 
       const newlyEdited = new Set(editedFields);
       answersToSave.forEach(item => {
@@ -899,7 +1088,10 @@ const EditableBriefSection = ({
             currentDetails[item.question_id] = {
               confidence: item.confidence,
               status: item.status,
-              evidence: item.evidence
+              evidence: item.evidence,
+              ai_answer: item.answer || '',
+              user_answer: null,
+              previous_answer: null
             };
           });
 
@@ -1013,7 +1205,7 @@ const EditableBriefSection = ({
 
   // Multi-file aggregate helper values
   const totalFileSizeKB = uploadedFiles.reduce((acc, f) => acc + (f.size || 0), 0) / 1024;
-  const successfulIngestionCount = uploadedFiles.filter(f => f.status === 'success').length;
+  const successfulIngestionCount = uploadedFiles.filter(f => (f.type === 'pdf' || f.type === 'docx') && f.status === 'success').length;
   const uploadedFilesCount = uploadedFiles.filter(f => f.status === 'uploaded').length;
 
   const strategyFiles = uploadedFiles.filter(f => f.type === 'pdf' || f.type === 'docx');
@@ -1045,47 +1237,42 @@ const EditableBriefSection = ({
         <div className="brief-left-column">
 
           {/* 1. Refine AI Answers Section */}
-          <div className="brief-card refine-ai-card">
-            <div 
-              className={`brief-card-header accordion-header ${!leftPanelExpanded.refineAi ? 'collapsed' : ''}`}
-              onClick={() => setLeftPanelExpanded(prev => ({ ...prev, refineAi: !prev.refineAi }))}
-              style={{ cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Sparkles size={16} style={{ color: '#4f46e5' }} />
-                <h4 className="brief-card-title">Refine AI Answers</h4>
+          {isPmfCompleted && (
+            <div className="brief-card refine-ai-card">
+              <div 
+                className={`brief-card-header accordion-header ${!leftPanelExpanded.refineAi ? 'collapsed' : ''}`}
+                onClick={() => setLeftPanelExpanded(prev => ({ ...prev, refineAi: !prev.refineAi }))}
+                style={{ cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Sparkles size={16} style={{ color: '#4f46e5' }} />
+                  <h4 className="brief-card-title">Refine AI Answers</h4>
+                </div>
+                {leftPanelExpanded.refineAi ? <ChevronUp size={16} style={{ color: '#64748b' }} /> : <ChevronDown size={16} style={{ color: '#64748b' }} />}
               </div>
-              {leftPanelExpanded.refineAi ? <ChevronUp size={16} style={{ color: '#64748b' }} /> : <ChevronDown size={16} style={{ color: '#64748b' }} />}
-            </div>
-            {leftPanelExpanded.refineAi && (
-              <div className="brief-card-body">
-                <p className="brief-card-description">
-                  Refine and pre-populate your strategic brief answers using AI-generated suggestions compiled from your onboarding setup details.
-                </p>
-
-                <button
-                  onClick={handleGenerateEnrichment}
-                  disabled={isEnriching || !canEdit || successfulIngestionCount === 0}
-                  className="btn-refine-action"
-                >
-                  {isEnriching ? (
-                    <>
-                      <Loader size={14} style={{ animation: 'spin 1.5s linear infinite' }} />
-                      <span>Generating AI Insights...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Sparkles size={14} />
-                      <span>Refine Answers with AI</span>
-                    </>
-                  )}
-                </button>
-
-                {successfulIngestionCount === 0 && (
-                  <p className="refine-warning-text">
-                    <AlertCircle size={12} /> Please upload at least one strategic document to index.
+              {leftPanelExpanded.refineAi && (
+                <div className="brief-card-body">
+                  <p className="brief-card-description">
+                    Refine and pre-populate your strategic brief answers using AI-generated suggestions compiled from your onboarding setup details.
                   </p>
-                )}
+
+                  <button
+                    onClick={handleGenerateEnrichment}
+                    disabled={isEnriching || !canEdit}
+                    className="btn-refine-action"
+                  >
+                    {isEnriching ? (
+                      <>
+                        <Loader size={14} style={{ animation: 'spin 1.5s linear infinite' }} />
+                        <span>Generating AI Insights...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles size={14} />
+                        <span>Refine Answers with AI</span>
+                      </>
+                    )}
+                  </button>
 
                 {enrichedAnswers && (
                   <div className="nested-suggestions-box">
@@ -1119,6 +1306,7 @@ const EditableBriefSection = ({
               </div>
             )}
           </div>
+          )}
 
           {/* 2. Multiple File Upload Section */}
           <div className="brief-card upload-docs-card">
@@ -1307,28 +1495,48 @@ const EditableBriefSection = ({
         {/* Right Side: Questions & Answers with 3 Tabs */}
         <div className="brief-right-column">
 
-          <div className="phase-tabs-container">
-            <button
-              className={`phase-tab-btn ${activePhaseTab === 'initial' ? 'active' : ''}`}
-              onClick={() => setActivePhaseTab('initial')}
-            >
-              <span className="phase-tab-title">Initial</span>
-              <span className="phase-tab-badge">{initialCountStr}</span>
-            </button>
-            <button
-              className={`phase-tab-btn ${activePhaseTab === 'essential' ? 'active' : ''}`}
-              onClick={() => setActivePhaseTab('essential')}
-            >
-              <span className="phase-tab-title">Essential</span>
-              <span className="phase-tab-badge">{essentialCountStr}</span>
-            </button>
-            <button
-              className={`phase-tab-btn ${activePhaseTab === 'advanced' ? 'active' : ''}`}
-              onClick={() => setActivePhaseTab('advanced')}
-            >
-              <span className="phase-tab-title">Advanced</span>
-              <span className="phase-tab-badge">{advancedCountStr}</span>
-            </button>
+          <div className="sqc-header-bar">
+            <div className="phase-tabs-container">
+              <button
+                className={`phase-tab-btn ${activePhaseTab === 'initial' ? 'active' : ''}`}
+                onClick={() => { setActivePhaseTab('initial'); setExpandAll(false); }}
+              >
+                <span className="phase-tab-title">Initial</span>
+                <span className="phase-tab-badge">{initialCountStr}</span>
+              </button>
+              <button
+                className={`phase-tab-btn ${activePhaseTab === 'essential' ? 'active' : ''}`}
+                onClick={() => { setActivePhaseTab('essential'); setExpandAll(false); }}
+              >
+                <span className="phase-tab-title">Essential</span>
+                <span className="phase-tab-badge">{essentialCountStr}</span>
+              </button>
+              <button
+                className={`phase-tab-btn ${activePhaseTab === 'advanced' ? 'active' : ''}`}
+                onClick={() => { setActivePhaseTab('advanced'); setExpandAll(false); }}
+              >
+                <span className="phase-tab-title">Advanced</span>
+                <span className="phase-tab-badge">{advancedCountStr}</span>
+              </button>
+            </div>
+            <div className="sqc-meta-bar">
+              <span className="sqc-meta-count">
+                <span style={{ color: '#4f46e5', fontWeight: 700 }}>
+                  {currentTabFields.filter(f => cleanValue(f.value).trim() !== '').length}
+                </span>
+                /{currentTabFields.length} answered
+              </span>
+              <button
+                className={`sqc-expand-all-btn ${expandAll ? 'sqc-expand-all-active' : ''}`}
+                onClick={() => setExpandAll(prev => !prev)}
+                title={expandAll ? 'Collapse all rows' : 'Expand all rows'}
+              >
+                {expandAll
+                  ? <><ChevronUp size={12} /> Collapse All</>
+                  : <><ChevronDown size={12} /> Expand All</>
+                }
+              </button>
+            </div>
           </div>
 
           <div className="phase-tab-content-list">
@@ -1356,6 +1564,7 @@ const EditableBriefSection = ({
                   handleAutoSave={handleAutoSave}
                   onOpenReference={handleOpenReference}
                   docName={uploadedFiles.find(f => f.status === 'success')?.name}
+                  expandAll={expandAll}
                 />
               ))
             )}
