@@ -2700,6 +2700,13 @@ body.modal-open {
     grid-template-columns: 1fr;
     gap: 20px;
   }
+  
+  .brief-left-column {
+    position: static !important;
+    max-height: none !important;
+    overflow-y: visible !important;
+    width: 100% !important;
+  }
 }
 
 /* ── Sidebar Cards styling ── */
@@ -3589,41 +3596,79 @@ body.modal-open {
 
 /* Responsive adjustments for narrow viewports */
 @media (max-width: 768px) {
+  .simple-workspace {
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow: hidden !important;
+    padding: 0 4px !important;
+    box-sizing: border-box !important;
+  }
+
+  .brief-split-layout {
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow: hidden !important;
+    gap: 12px !important;
+    box-sizing: border-box !important;
+  }
+
+  .brief-right-column {
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow: hidden !important;
+    box-sizing: border-box !important;
+  }
+
+  .sqc-header-bar {
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    overflow: hidden !important;
+  }
+
   .phase-tabs-container {
-    overflow-x: auto;
-    white-space: nowrap;
-    padding: 4px;
-    gap: 8px;
-    -webkit-overflow-scrolling: touch;
+    overflow-x: auto !important;
+    white-space: nowrap !important;
+    padding: 4px !important;
+    gap: 8px !important;
+    -webkit-overflow-scrolling: touch !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
   }
   
+  .sqc-meta-bar {
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+  }
+
   .phase-tab-btn {
-    flex: 0 0 auto;
-    padding: 8px 12px;
+    flex: 0 0 auto !important;
+    padding: 8px 12px !important;
   }
   
   .phase-tab-title {
-    font-size: 13px;
+    font-size: 13px !important;
   }
   
   .phase-tab-badge {
-    font-size: 10px;
-    padding: 1px 6px;
-    min-width: 20px;
+    font-size: 10px !important;
+    padding: 1px 6px !important;
+    min-width: 20px !important;
   }
   
   /* Question card content spacing improvements on mobile */
   .simple-question-card {
-    padding: 16px;
+    padding: 16px !important;
   }
   
   .card-header-row {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 8px;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 8px !important;
   }
   
   .simple-bullet-badge {
-    margin-top: 4px;
+    margin-top: 4px !important;
   }
 }

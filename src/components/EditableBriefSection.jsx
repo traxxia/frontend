@@ -11,10 +11,25 @@ import { detectTemplateType, validateAgainstTemplate } from '../utils/templateVa
 import '../styles/CompanyManagement.css';
 import { useAuthStore } from '../store/authStore';
 import { useAnalysisStore } from '../store/analysisStore';
+import DOMPurify from 'dompurify';
+import RichTextEditor from './RichTextEditor';
+import { markdownToHtml } from '../utils/markdownHelper';
 
 const cleanValue = (val) => {
   if (!val || val === '[Question Skipped]') return '';
   return val.replace(/^\[AI Extraction\]\s*/i, '');
+};
+
+const stripMarkdown = (md) => {
+  if (!md) return '';
+  return md
+    .replace(/\*\*([^*]+)\*\*/g, '$1')
+    .replace(/\*([^*]+)\*/g, '$1')
+    .replace(/^#+\s+/gm, '')
+    .replace(/^-\s+/gm, '')
+    .replace(/^\d+\.\s+/gm, '')
+    .replace(/\n+/g, ' ')
+    .trim();
 };
 
 // Generates dynamic source citation metadata for each question based on active business & document details
@@ -124,7 +139,8 @@ const SimpleQuestionCard = ({
   const cleanVal = cleanValue(field.value);
 
   // Compact inline preview (first 90 chars)
-  const previewText = cleanVal ? (cleanVal.length > 90 ? cleanVal.slice(0, 90) + '…' : cleanVal) : null;
+  const cleanValPlain = stripMarkdown(cleanVal);
+  const previewText = cleanValPlain ? (cleanValPlain.length > 90 ? cleanValPlain.slice(0, 90) + '…' : cleanValPlain) : null;
 
   // Auto-expand when editing starts
   const handleEditClick = () => {
@@ -197,13 +213,12 @@ const SimpleQuestionCard = ({
           {/* Answer box — editing or read mode */}
           {!showOriginal && isEditing && canEdit ? (
             <div>
-              <textarea
+              <RichTextEditor
                 ref={el => inputRefs.current[field.key] = el}
-                className="simple-textarea"
                 defaultValue={cleanVal}
                 disabled={isSaving || isAnalysisRegenerating}
                 placeholder="Write your answer..."
-                onChange={e => handleAutoSave(field, e.target.value)}
+                onChange={value => handleAutoSave(field, value)}
               />
               <div className="save-actions-wrapper">
                 <div className="save-status-text">
@@ -230,9 +245,12 @@ const SimpleQuestionCard = ({
                     : 'brief-answer-user sqc-full-answer'
               }
               style={{ cursor: canEdit ? 'pointer' : 'default' }}
-            >
-              {cleanVal || 'Click here to add your strategic answer...'}
-            </div>
+              dangerouslySetInnerHTML={{
+                __html: cleanVal 
+                  ? DOMPurify.sanitize(markdownToHtml(cleanVal)) 
+                  : 'Click here to add your strategic answer...'
+              }}
+            />
           ) : null}
 
           {/* Bottom action row */}
