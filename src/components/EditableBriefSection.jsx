@@ -464,7 +464,11 @@ const EditableBriefSection = ({
         if (detail && Array.isArray(detail.evidence)) {
           detail.evidence.forEach(ev => {
             if (ev && ev.document_name && ev.document_name.trim() !== '') {
-              foundDocNames.add(ev.document_name);
+              // Split by comma in case it contains multiple combined names
+              const names = ev.document_name.split(',').map(name => name.trim());
+              names.forEach(name => {
+                if (name) foundDocNames.add(name);
+              });
             }
           });
         }
@@ -801,11 +805,31 @@ const EditableBriefSection = ({
 
         Object.entries(currentDetails).forEach(([qId, detail]) => {
           if (detail && Array.isArray(detail.evidence)) {
-            const hasDoc = detail.evidence.some(ev => ev.document_name === fileName);
-            if (hasDoc) {
-              const remainingEvidence = detail.evidence.filter(ev => ev.document_name !== fileName);
+            let matchesAny = false;
+            const remainingEvidence = [];
+            
+            detail.evidence.forEach(ev => {
+              if (ev && ev.document_name) {
+                const names = ev.document_name.split(',').map(n => n.trim());
+                if (names.includes(fileName)) {
+                  matchesAny = true;
+                  const newNames = names.filter(n => n !== fileName);
+                  if (newNames.length > 0) {
+                    remainingEvidence.push({
+                      ...ev,
+                      document_name: newNames.join(', ')
+                    });
+                  }
+                } else {
+                  remainingEvidence.push(ev);
+                }
+              } else {
+                remainingEvidence.push(ev);
+              }
+            });
+
+            if (matchesAny) {
               const existingId = answerIds[qId];
-              
               if (existingId) {
                 toUpdate.push({
                   answer_id: existingId,
