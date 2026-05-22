@@ -686,7 +686,23 @@ const EditableBriefSection = ({
 
   // Multiple File sequential validation and upload engine
   const processMultipleFiles = async (files) => {
+    const maxFilesLimit = parseInt(import.meta.env.VITE_MAX_FILE_UPLOAD_LIMIT, 10) || 5;
+    const maxFileSizeMB = parseInt(import.meta.env.VITE_MAX_FILE_SIZE_MB, 10) || 15;
+    const maxFileSizeBytes = maxFileSizeMB * 1024 * 1024;
+
+    const currentFilesCount = uploadedFiles.length;
+    if (currentFilesCount + files.length > maxFilesLimit) {
+      showToastMessage(`Upload limit exceeded. You can upload a maximum of ${maxFilesLimit} files.`, 'error');
+      return;
+    }
+
     for (const file of files) {
+      // Check file size
+      if (file.size > maxFileSizeBytes) {
+        showToastMessage(`File "${file.name}" exceeds the size limit of ${maxFileSizeMB}MB.`, 'error');
+        continue;
+      }
+
       // Check if file is already added to queue
       if (uploadedFiles.some(f => f.name === file.name)) {
         showToastMessage(`File "${file.name}" is already uploaded.`, 'info');
@@ -774,9 +790,89 @@ const EditableBriefSection = ({
     }
   };
 
-  const handleRemoveFile = (fileId, fileName) => {
-    setUploadedFiles(prev => prev.filter(f => f.id !== fileId));
-    showToastMessage(`Removed "${fileName}" from active framework index.`, 'info');
+  const handleRemoveFile = async (fileId, fileName) => {
+    try {
+      if (fileId.startsWith('db-strategic-')) {
+        setIsSaving(true);
+        showToastMessage(`Removing "${fileName}" references from database...`, 'info');
+
+        const toUpdate = [];
+        const currentDetails = { ...useAnalysisStore.getState().answersDetails };
+
+        Object.entries(currentDetails).forEach(([qId, detail]) => {
+          if (detail && Array.isArray(detail.evidence)) {
+            const hasDoc = detail.evidence.some(ev => ev.document_name === fileName);
+            if (hasDoc) {
+              const remainingEvidence = detail.evidence.filter(ev => ev.document_name !== fileName);
+              const existingId = answerIds[qId];
+              
+              if (existingId) {
+                toUpdate.push({
+                  answer_id: existingId,
+                  answer: detail.user_answer || detail.ai_answer || '',
+                  confidence: remainingEvidence.length > 0 ? detail.confidence : 0.0,
+                  status: remainingEvidence.length > 0 ? detail.status : 'NOT_FOUND',
+                  evidence: remainingEvidence
+                });
+              }
+            }
+          }
+        });
+
+        if (toUpdate.length > 0) {
+          await answerService.bulkUpdateAnswers(selectedBusinessId, toUpdate);
+
+          // Update Zustand store
+          toUpdate.forEach(item => {
+            const qId = Object.keys(answerIds).find(k => String(answerIds[k]) === String(item.answer_id));
+            if (qId && currentDetails[qId]) {
+              currentDetails[qId] = {
+                ...currentDetails[qId],
+                confidence: item.confidence,
+                status: item.status,
+                evidence: item.evidence
+              };
+            }
+          });
+
+          useAnalysisStore.setState({ answersDetails: currentDetails });
+          showToastMessage(`Removed "${fileName}" and cleared citations.`, 'success');
+        } else {
+          showToastMessage(`Removed "${fileName}" from view.`, 'info');
+        }
+      } else if (fileId === 'db-financial' || fileId.startsWith('db-financial')) {
+        setIsSaving(true);
+        showToastMessage(`Deleting financial document "${fileName}" from server...`, 'info');
+        
+        const token = getAuthToken();
+        const response = await fetch(`${API_BASE_URL}/api/businesses/${selectedBusinessId}/financial-document`, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        const result = await response.json();
+        if (!response.ok) {
+          throw new Error(result.error || 'Failed to delete financial document');
+        }
+
+        showToastMessage(`Financial document "${fileName}" deleted successfully.`, 'success');
+        if (onBusinessDataUpdate) {
+          onBusinessDataUpdate();
+        }
+      } else {
+        // Queue/temporary files not yet persisted
+        showToastMessage(`Removed "${fileName}" from active framework index.`, 'info');
+      }
+
+      setUploadedFiles(prev => prev.filter(f => f.id !== fileId));
+    } catch (error) {
+      console.error('Error removing file:', error);
+      showToastMessage(`Failed to remove file: ${error.message || 'Error occurred.'}`, 'error');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   // Fully dynamic AI Answer Support compiler utilizing actual onboarding details
@@ -1018,149 +1114,216 @@ const EditableBriefSection = ({
         )
       );
 
-      for (const file of filesToAnalyze) {
-        try {
-          // Call the dummy Strategic Document Ingestion API
-          const response = await answerService.analyzeDocuments(selectedBusinessId, file.fileObject);
-          
-          if (!response || !Array.isArray(response.answers)) {
-            throw new Error('Invalid response received from the analysis engine.');
-          }
+      const fileObjects = filesToAnalyze.map(f => f.fileObject);
+      const combinedFileNames = filesToAnalyze.map(f => f.name).join(', ');
 
-          const answers = response.answers;
-          
-          // Partition into bulkCreate vs bulkUpdate
-          const toCreate = [];
-          const toUpdate = [];
-          const newAnswerIds = { ...answerIds };
-          let idsUpdated = false;
+      // Call the Strategic Document Ingestion API once with all files!
+      const response = await answerService.analyzeDocuments(selectedBusinessId, fileObjects);
+      
+      if (!response || !Array.isArray(response.answers)) {
+        throw new Error('Invalid response received from the analysis engine.');
+      }
 
-          answers.forEach(item => {
-            const qIdStr = String(item.question_id);
-            const existingId = answerIds[qIdStr];
-
-            if (existingId) {
-              toUpdate.push({
-                answer_id: existingId,
-                answer: item.answer,
-                confidence: item.confidence,
-                status: item.status,
-                evidence: item.evidence
-              });
-            } else {
-              toCreate.push({
-                question_id: item.question_id,
-                answer: item.answer,
-                confidence: item.confidence,
-                status: item.status,
-                evidence: item.evidence
-              });
-            }
-          });
-
-          // Call backend bulk APIs to persist details
-          if (toCreate.length > 0) {
-            const bulkRes = await answerService.bulkCreateAnswers(selectedBusinessId, toCreate);
-            if (bulkRes && bulkRes.data && Array.isArray(bulkRes.data.insertedIds)) {
-              toCreate.forEach((item, index) => {
-                const newId = bulkRes.data.insertedIds[index];
-                if (newId) {
-                  newAnswerIds[String(item.question_id)] = newId;
-                  idsUpdated = true;
-                }
-              });
-            }
-          }
-
-          if (toUpdate.length > 0) {
-            await answerService.bulkUpdateAnswers(selectedBusinessId, toUpdate);
-          }
-
-          // Update setAnswerIds prop if any were created
-          if (idsUpdated && setAnswerIds) {
-            setAnswerIds(newAnswerIds);
-          }
-
-          // Propagate answers to parent and update local highlights/edited fields
-          const newlyEdited = new Set(editedFields);
-          answers.forEach(item => {
-            if (onAnswerUpdate) {
-              onAnswerUpdate(item.question_id, item.answer);
-            }
-            newlyEdited.add(`question_${item.question_id}`);
-          });
-          setEditedFields(newlyEdited);
-
-          // Atomic Zustand state update for reactive UI updates
-          const currentAnswers = { ...useAnalysisStore.getState().userAnswers };
-          const currentDetails = { ...useAnalysisStore.getState().answersDetails };
-          const currentCompleted = [...useAnalysisStore.getState().completedQuestions];
-
-          answers.forEach(item => {
-            if (item.answer) {
-              currentAnswers[item.question_id] = item.answer;
-              if (!currentCompleted.includes(item.question_id)) {
-                currentCompleted.push(item.question_id);
-              }
-            }
-            currentDetails[item.question_id] = {
-              confidence: item.confidence,
-              status: item.status,
-              evidence: item.evidence,
-              ai_answer: item.answer || '',
-              user_answer: null,
-              previous_answer: null
-            };
-          });
-
-          useAnalysisStore.setState({
-            userAnswers: currentAnswers,
-            answersDetails: currentDetails,
-            completedQuestions: currentCompleted
-          });
-
-          // Call onUploadedFileUpdate to register this file as ingested
-          if (onUploadedFileUpdate) {
-            onUploadedFileUpdate(file.fileObject);
-          }
-
-          // Set file status to success
-          setUploadedFiles(prev =>
-            prev.map(f =>
-              f.id === file.id
-                ? { ...f, status: 'success', progress: 100 }
-                : f
-            )
-          );
-
-          showToastMessage(`Document "${file.name}" analyzed successfully!`, 'success');
-
-          // Trigger AI Regeneration if needed
-          if (onAnalysisRegenerate) {
-            onAnalysisRegenerate({
-              updatedQuestionIds: answers.map(a => a.question_id),
-              alsoRegenerateStrategic: true,
-              skipConfirmation: true,
-              skipFinancial: true
+      const answers = response.answers;
+      
+      // Map response keys and enrich evidence metadata
+      const mappedAnswers = [];
+      
+      answers.forEach(item => {
+        let localQId = item.question_id;
+        if (typeof item.question_id === 'string' && item.question_id.startsWith('q_')) {
+          const qNum = parseInt(item.question_id.replace('q_', ''), 10);
+          let targetQuestion = questions.find(q => q.order === qNum);
+          if (!targetQuestion) {
+            // Fallback to sorted questions list
+            const phaseOrderMap = { 'initial': 1, 'essential': 2, 'advanced': 3 };
+            const sorted = [...questions].sort((a, b) => {
+              const phaseA = phaseOrderMap[a.phase?.toLowerCase()] || 4;
+              const phaseB = phaseOrderMap[b.phase?.toLowerCase()] || 4;
+              if (phaseA !== phaseB) return phaseA - phaseB;
+              return (a.order || 0) - (b.order || 0);
             });
+            targetQuestion = sorted[qNum - 1];
           }
+          if (targetQuestion) {
+            localQId = String(targetQuestion._id || targetQuestion.question_id);
+          } else {
+            console.warn(`Could not map ML API question_id ${item.question_id} to any database question`);
+            return; // skip this item
+          }
+        }
 
-        } catch (fileErr) {
-          console.error(`Error analyzing file ${file.name}:`, fileErr);
-          setUploadedFiles(prev =>
-            prev.map(f =>
-              f.id === file.id
-                ? { ...f, status: 'failed', errorMessage: fileErr.message || 'Analysis failed.' }
-                : f
-            )
-          );
-          showToastMessage(`Analysis failed for "${file.name}": ${fileErr.message || 'Error occurred.'}`, 'error');
+        // Ensure evidence contains the document name
+        let evidence = null;
+        if (item.status === 'FOUND') {
+          if (Array.isArray(item.evidence) && item.evidence.length > 0) {
+            evidence = item.evidence.map(ev => ({
+              ...ev,
+              document_name: ev.document_name || ev.filename || ev.file || combinedFileNames
+            }));
+          } else {
+            evidence = [{
+              page: 1,
+              text: item.answer || '',
+              document_name: combinedFileNames
+            }];
+          }
+        } else if (item.status === 'NOT_FOUND') {
+          evidence = [{
+            page: 1,
+            text: 'No relevant information found in the document.',
+            document_name: combinedFileNames
+          }];
+        }
+
+        mappedAnswers.push({
+          question_id: localQId,
+          answer: item.answer,
+          confidence: item.confidence,
+          status: item.status,
+          evidence: evidence
+        });
+      });
+      
+      // Partition into bulkCreate vs bulkUpdate
+      const toCreate = [];
+      const toUpdate = [];
+      const newAnswerIds = { ...answerIds };
+      let idsUpdated = false;
+
+      mappedAnswers.forEach(item => {
+        const qIdStr = String(item.question_id);
+        const existingId = answerIds[qIdStr];
+
+        if (existingId) {
+          toUpdate.push({
+            answer_id: existingId,
+            answer: item.answer || '',
+            confidence: item.confidence,
+            status: item.status,
+            evidence: item.evidence,
+            ai_answer: item.answer || '',
+            user_answer: null,
+            previous_answer: null
+          });
+        } else {
+          toCreate.push({
+            question_id: item.question_id,
+            answer: item.answer || '',
+            confidence: item.confidence,
+            status: item.status,
+            evidence: item.evidence,
+            ai_answer: item.answer || '',
+            user_answer: null,
+            previous_answer: null
+          });
+        }
+      });
+
+      // Call backend bulk APIs to persist details
+      if (toCreate.length > 0) {
+        const bulkRes = await answerService.bulkCreateAnswers(selectedBusinessId, toCreate);
+        if (bulkRes && bulkRes.data && Array.isArray(bulkRes.data.insertedIds)) {
+          toCreate.forEach((item, index) => {
+            const newId = bulkRes.data.insertedIds[index];
+            if (newId) {
+              newAnswerIds[String(item.question_id)] = newId;
+              idsUpdated = true;
+            }
+          });
         }
       }
 
+      if (toUpdate.length > 0) {
+        await answerService.bulkUpdateAnswers(selectedBusinessId, toUpdate);
+      }
+
+      // Update setAnswerIds prop if any were created
+      if (idsUpdated && setAnswerIds) {
+        setAnswerIds(newAnswerIds);
+      }
+
+      // Propagate answers to parent and update local highlights/edited fields
+      const newlyEdited = new Set(editedFields);
+      mappedAnswers.forEach(item => {
+        if (onAnswerUpdate) {
+          onAnswerUpdate(item.question_id, item.answer || '');
+        }
+        newlyEdited.add(`question_${item.question_id}`);
+      });
+      setEditedFields(newlyEdited);
+
+      // Atomic Zustand state update for reactive UI updates
+      const currentAnswers = { ...useAnalysisStore.getState().userAnswers };
+      const currentDetails = { ...useAnalysisStore.getState().answersDetails };
+      const currentCompleted = [...useAnalysisStore.getState().completedQuestions];
+
+      mappedAnswers.forEach(item => {
+        currentAnswers[item.question_id] = item.answer || '';
+        if (item.answer) {
+          if (!currentCompleted.includes(item.question_id)) {
+            currentCompleted.push(item.question_id);
+          }
+        } else {
+          const idx = currentCompleted.indexOf(item.question_id);
+          if (idx > -1) {
+            currentCompleted.splice(idx, 1);
+          }
+        }
+        currentDetails[item.question_id] = {
+          confidence: item.confidence,
+          status: item.status,
+          evidence: item.evidence,
+          ai_answer: item.answer || '',
+          user_answer: null,
+          previous_answer: null
+        };
+      });
+
+      useAnalysisStore.setState({
+        userAnswers: currentAnswers,
+        answersDetails: currentDetails,
+        completedQuestions: currentCompleted
+      });
+
+      // Call onUploadedFileUpdate to register this file as ingested
+      filesToAnalyze.forEach(file => {
+        if (onUploadedFileUpdate) {
+          onUploadedFileUpdate(file.fileObject);
+        }
+      });
+
+      // Set file status to success
+      setUploadedFiles(prev =>
+        prev.map(f =>
+          filesToAnalyze.some(fa => fa.id === f.id)
+            ? { ...f, status: 'success', progress: 100 }
+            : f
+        )
+      );
+
+      showToastMessage(`All ${filesToAnalyze.length} strategic documents analyzed successfully!`, 'success');
+
+      // Trigger AI Regeneration if needed
+      if (onAnalysisRegenerate) {
+        onAnalysisRegenerate({
+          updatedQuestionIds: mappedAnswers.map(a => a.question_id),
+          alsoRegenerateStrategic: true,
+          skipConfirmation: true,
+          skipFinancial: true
+        });
+      }
+
     } catch (err) {
-      console.error('Document analysis queue error:', err);
-      showToastMessage('An error occurred during bulk document analysis.', 'error');
+      console.error('Batch Strategic Document analysis error:', err);
+      setUploadedFiles(prev =>
+        prev.map(f =>
+          filesToAnalyze.some(fa => fa.id === f.id)
+            ? { ...f, status: 'failed', errorMessage: err.message || 'Analysis failed.' }
+            : f
+        )
+      );
+      showToastMessage(`Analysis failed: ${err.message || 'Error occurred.'}`, 'error');
     } finally {
       setIsAnalyzingDocs(false);
     }

@@ -13,16 +13,23 @@ const getAuthHeaders = () => {
 
 export const answerService = {
 
-    async analyzeDocuments(business_id, file) {
+    async analyzeDocuments(business_id, files) {
         try {
             const formData = new FormData();
-            formData.append('document', file);
+            if (Array.isArray(files)) {
+                files.forEach(file => {
+                    formData.append('files', file);
+                });
+            } else {
+                formData.append('files', files);
+            }
             
-            const headers = getAuthHeaders();
-            delete headers['Content-Type'];
-
-            const response = await axios.post(`${API_BASE_URL}/api/businesses/${business_id}/analyze-documents`, formData, {
-                headers
+            const mlUrl = import.meta.env.VITE_ML_BACKEND_URL || 'https://trax-qa1-ml-b4e6gmc4hjdncdg2.centralus-01.azurewebsites.net';
+            
+            const response = await axios.post(`${mlUrl}/document-qa`, formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data'
+                }
             });
             return response.data;
         } catch (error) {
