@@ -278,7 +278,7 @@ const SimpleQuestionCard = ({
                 )}
                 {intel.hasCitation && (
                   <button
-                    className="simple-text-toggle"
+                    className="simple-text-toggle citation-trigger"
                     style={{ color: '#2563eb' }}
                     onClick={() => onOpenReference({ title: field.label, ...intel })}
                   >
@@ -359,6 +359,21 @@ const EditableBriefSection = ({
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [drawerData, setDrawerData] = useState(null);
   const [expandAll, setExpandAll] = useState(false);
+  const drawerRef = useRef(null);
+
+  useEffect(() => {
+    const handleOutsideClick = (event) => {
+      if (drawerOpen && drawerRef.current && !drawerRef.current.contains(event.target)) {
+        if (!event.target.closest('.citation-trigger')) {
+          setDrawerOpen(false);
+        }
+      }
+    };
+    document.addEventListener('mousedown', handleOutsideClick);
+    return () => {
+      document.removeEventListener('mousedown', handleOutsideClick);
+    };
+  }, [drawerOpen]);
 
   useEffect(() => {
     if (isFinancialRegeneratingProp) {
@@ -1355,8 +1370,12 @@ const EditableBriefSection = ({
 
   // Drawer Reference Actions
   const handleOpenReference = (data) => {
-    setDrawerData(data);
-    setDrawerOpen(true);
+    if (drawerOpen && drawerData && drawerData.title === data.title) {
+      setDrawerOpen(false);
+    } else {
+      setDrawerData(data);
+      setDrawerOpen(true);
+    }
   };
 
   // Toggle Accordion Panels
@@ -1779,7 +1798,7 @@ const EditableBriefSection = ({
       </div>
 
       {/* Side Reference Drawer with z-index 999999 to float above sticky navigation headers */}
-      <div className={`reference-drawer ${drawerOpen ? 'open' : ''}`}>
+      <div ref={drawerRef} className={`reference-drawer ${drawerOpen ? 'open' : ''}`}>
         <div className="drawer-header">
           <h4 className="drawer-title">
             <BookOpen size={16} style={{ color: '#4f46e5' }} />
