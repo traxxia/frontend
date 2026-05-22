@@ -12,8 +12,6 @@ const initialState = {
   answersDetails: {},
   completedQuestions: [],
   swotAnalysis: null,
-  purchaseCriteria: null,
-  loyaltyNPS: null,
   portersData: null,
   pestelData: null,
   fullSwotData: null,
@@ -66,8 +64,6 @@ export const useAnalysisStore = create((set, get) => ({
   completedQuestions: [],
 
   swotAnalysis: null,
-  purchaseCriteria: null,
-  loyaltyNPS: null,
   portersData: null,
   pestelData: null,
   fullSwotData: null,
@@ -149,7 +145,7 @@ export const useAnalysisStore = create((set, get) => ({
 
   setAnalysisData: (type, data) => {
     const keyMap = {
-      swot: 'swotAnalysis', purchaseCriteria: 'purchaseCriteria', loyaltyNPS: 'loyaltyNPS',
+      swot: 'swotAnalysis',
       porters: 'portersData', pestel: 'pestelData', fullSwot: 'fullSwotData',
       competitiveAdvantage: 'competitiveAdvantage', strategic: 'strategicData',
       expandedCapability: 'expandedCapability', strategicRadar: 'strategicRadar',
@@ -206,7 +202,7 @@ export const useAnalysisStore = create((set, get) => ({
     if (!skipLoadingFlag) set({ questionsLoaded: false });
     if (!skipReset) {
       const resetData = {
-        swotAnalysis: null, purchaseCriteria: null, loyaltyNPS: null,
+        swotAnalysis: null,
         portersData: null, pestelData: null, fullSwotData: null,
         competitiveAdvantage: null, strategicData: null,
         expandedCapability: null, strategicRadar: null,
@@ -239,7 +235,7 @@ export const useAnalysisStore = create((set, get) => ({
 
       const updates = {};
       const keyMap = {
-        swot: 'swotAnalysis', purchaseCriteria: 'purchaseCriteria', loyaltyNPS: 'loyaltyNPS',
+        swot: 'swotAnalysis',
         porters: 'portersData', pestel: 'pestelData', fullSwot: 'fullSwotData',
         competitiveAdvantage: 'competitiveAdvantage', strategic: 'strategicData',
         expandedCapability: 'expandedCapability', strategicRadar: 'strategicRadar',
@@ -369,7 +365,7 @@ export const useAnalysisStore = create((set, get) => ({
       const apiService = getApiService();
       const stateSetters = {};
       const analysisTypes = [
-        'swot', 'purchaseCriteria', 'loyaltyNPS', 'porters', 'pestel',
+        'swot', 'porters', 'pestel',
         'fullSwot', 'competitiveAdvantage', 'strategic', 'expandedCapability',
         'strategicRadar', 'productivityMetrics', 'maturityScore', 'competitiveLandscape',
         'coreAdjacency', 'profitabilityAnalysis', 'growthTracker', 'liquidityEfficiency',
@@ -424,7 +420,7 @@ export const useAnalysisStore = create((set, get) => ({
       const apiService = getApiService();
       const stateSetters = {};
       const allPossibleTypes = [
-        'swot', 'purchaseCriteria', 'loyaltyNPS', 'porters', 'pestel',
+        'swot', 'porters', 'pestel',
         'fullSwot', 'competitiveAdvantage', 'strategic', 'expandedCapability',
         'strategicRadar', 'productivityMetrics', 'maturityScore', 'competitiveLandscape',
         'coreAdjacency', 'profitabilityAnalysis', 'growthTracker', 'liquidityEfficiency',

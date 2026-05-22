@@ -313,10 +313,7 @@ body {
   background-color: var(--color-text-light);
 }
 
-[data-theme="dark"] .loyalty-nps,
-[data-theme="dark"] .purchase-criteria {
-  background-color: #222435;
-}
+
 
 [data-theme="dark"] .item-text:hover {
   background-color: var(--color-bg-secondary);

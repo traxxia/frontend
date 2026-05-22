@@ -3,8 +3,6 @@
  .channel-heatmap,
  .customer-segmentation,
  .swot-analysis-container,
- .loyalty-nps,
- .purchase-criteria,
  .maturity-score-analysis,
  .productivity-metrics-analysis,
  .organizational-culture-analysis,
@@ -46,9 +44,7 @@
 
  .capability-heatmap:hover,
  .channel-heatmap:hover,
- .customer-segmentation:hover,
- .loyalty-nps:hover,
- .purchase-criteria:hover {
+ .customer-segmentation:hover {
    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25),
      0 0 0 1px rgba(0, 0, 0, 0.05);
    transform: translateY(-2px);

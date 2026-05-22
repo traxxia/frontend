@@ -10,8 +10,6 @@ import { AI_PAGE_CONTEXTS } from "../utils/aiContexts";
 
 const CARD_ID_MAP = {
   "swot_analysis": "swot",
-  "Purchase_Criteria": "purchase-criteria",
-  "Loyalty_&_NPS": "loyalty-nps",
   "Porters_Five_Forces": "porters",
   "PESTEL_Analysis": "pestel",
   "Full_SWOT_Portfolio": "full-swot",
@@ -40,8 +38,6 @@ export const useBusinessSetup = () => {
   const ML_API_BASE_URL = import.meta.env.VITE_ML_BACKEND_URL || 'http://127.0.0.1:8000';
   const API_BASE_URL = import.meta.env.VITE_BACKEND_URL;
   const swotRef = useRef(null);
-  const purchaseCriteriaRef = useRef(null);
-  const loyaltyNpsRef = useRef(null);
   const portersRef = useRef(null);
   const pestelRef = useRef(null);
   const fullSwotRef = useRef(null);
@@ -172,8 +168,6 @@ export const useBusinessSetup = () => {
   const isTypeRegenerating = useAnalysisStore(state => state.isRegenerating);
   const resetAnalysis = useAnalysisStore(state => state.resetAnalysis);
   const swotAnalysisResult = useAnalysisStore(state => state.swotAnalysis);
-  const purchaseCriteriaData = useAnalysisStore(state => state.purchaseCriteria);
-  const loyaltyNPSData = useAnalysisStore(state => state.loyaltyNPS);
   const portersData = useAnalysisStore(state => state.portersData);
   const pestelData = useAnalysisStore(state => state.pestelData);
   const fullSwotData = useAnalysisStore(state => state.fullSwotData);
@@ -191,7 +185,7 @@ export const useBusinessSetup = () => {
   const investmentPerformanceData = useAnalysisStore(state => state.investmentPerformanceData);
   const leverageRiskData = useAnalysisStore(state => state.leverageRiskData);
 
-  const isAnalysisRegenerating = isTypeRegenerating('swot') || isTypeRegenerating('purchaseCriteria') || isTypeRegenerating('loyaltyNPS') || isTypeRegenerating('porters') || isTypeRegenerating('pestel') || isTypeRegenerating('initial') || isTypeRegenerating('essential') || isTypeRegenerating('advanced');
+  const isAnalysisRegenerating = isTypeRegenerating('swot') || isTypeRegenerating('porters') || isTypeRegenerating('pestel') || isTypeRegenerating('initial') || isTypeRegenerating('essential') || isTypeRegenerating('advanced');
   const isStrategicRegenerating = isTypeRegenerating('strategic');
   const [regenerationStatus, setRegenerationStatus] = useState(null);
   const isFinancialRegenerating = isTypeRegenerating('financial') || isTypeRegenerating('profitability') || isTypeRegenerating('growth') || isTypeRegenerating('liquidity') || isTypeRegenerating('investment') || isTypeRegenerating('leverage');
@@ -204,8 +198,6 @@ export const useBusinessSetup = () => {
 
   const stateSetters = useMemo(() => ({
     setSwotAnalysisResult: (d) => setAnalysisData('swot', d),
-    setPurchaseCriteriaData: (d) => setAnalysisData('purchaseCriteria', d),
-    setLoyaltyNPSData: (d) => setAnalysisData('loyaltyNPS', d),
     setPortersData: (d) => setAnalysisData('porters', d),
     setPestelData: (d) => setAnalysisData('pestel', d),
     setFullSwotData: (d) => setAnalysisData('fullSwot', d),
@@ -348,8 +340,6 @@ export const useBusinessSetup = () => {
   const handleScrollToSection = useCallback((cardId) => {
     const refs = {
       swot: swotRef,
-      "purchase-criteria": purchaseCriteriaRef,
-      "loyalty-nps": loyaltyNpsRef,
       porters: portersRef,
       pestel: pestelRef,
       "full-swot": fullSwotRef,
@@ -633,8 +623,6 @@ export const useBusinessSetup = () => {
     leverageRiskData,
     strategicData,
     swotAnalysisResult,
-    purchaseCriteriaData,
-    loyaltyNPSData,
     portersData,
     pestelData,
     competitiveLandscapeData,
@@ -644,8 +632,6 @@ export const useBusinessSetup = () => {
     canRegenerate,
     hideImproveButton: readOnly,
     showImproveButton: !readOnly,
-    setPurchaseCriteriaData: stateSetters.setPurchaseCriteriaData,
-    setLoyaltyNPSData: stateSetters.setLoyaltyNPSData,
     uploadedFileForAnalysis,
     onRedirectToChat: (businessId) => {
         setActiveTab('advanced');
@@ -659,7 +645,7 @@ export const useBusinessSetup = () => {
     questions, questionsLoaded, userAnswers, completedQuestions,
     apiService, phaseManager,
     t,
-    swotRef, purchaseCriteriaRef, loyaltyNpsRef, portersRef, pestelRef,
+    swotRef, portersRef, pestelRef,
     fullSwotRef, competitiveAdvantageRef, expandedCapabilityRef, strategicRadarRef,
     productivityRef, maturityScoreRef, profitabilityRef, growthTrackerRef,
     liquidityEfficiencyRef, investmentPerformanceRef, leverageRiskRef,
@@ -699,15 +685,13 @@ export const useBusinessSetup = () => {
         isStrategicRegenerating,
         highlightedMissingQuestions,
         setHighlightedMissingQuestions,
-        swotRef, purchaseCriteriaRef, loyaltyNpsRef, portersRef, pestelRef,
+        swotRef, portersRef, pestelRef,
         fullSwotRef, competitiveAdvantageRef, expandedCapabilityRef, strategicRadarRef,
         productivityRef, maturityScoreRef, profitabilityRef, growthTrackerRef,
         liquidityEfficiencyRef, investmentPerformanceRef, leverageRiskRef,
         competitiveLandscapeRef, coreAdjacencyRef,
         currentPhase,
         swotAnalysisResult,
-        purchaseCriteriaData,
-        loyaltyNPSData,
         portersData,
         pestelData,
         fullSwotData,
@@ -741,7 +725,7 @@ export const useBusinessSetup = () => {
     accessModalSubMessage, setUserAnswer, handleRegeneratePhase,
     regenerateIndividualAnalysis, questions, userAnswers, handleRegenerateAllAnalysis,
     questionsLoaded, completedQuestions, apiService, phaseManager, t, swotRef,
-    purchaseCriteriaRef, loyaltyNpsRef, portersRef, pestelRef, fullSwotRef,
+    portersRef, pestelRef, fullSwotRef,
     competitiveAdvantageRef, expandedCapabilityRef, strategicRadarRef, productivityRef,
     maturityScoreRef, profitabilityRef, growthTrackerRef, liquidityEfficiencyRef,
     investmentPerformanceRef, leverageRiskRef, competitiveLandscapeRef, coreAdjacencyRef,

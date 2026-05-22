@@ -339,9 +339,7 @@ const parseAnalysisData = (userDetails, user, globalQuestions = []) => {
   const analysisData = {
     // Initial Phase Components
     swot: null,
-    purchaseCriteria: null,
     channelHeatmap: null,
-    loyaltyNPS: null,
     capabilityHeatmap: null,
     porters: null,
     pestel: null,
@@ -466,18 +464,9 @@ const parseAnalysisData = (userDetails, user, globalQuestions = []) => {
         case 'swot':
           analysisData.swot = analysisResult;
           break;
-        case 'purchasecriteria':
-        case 'purchase_criteria':
-          analysisData.purchaseCriteria = analysisResult;
-          break;
         case 'channelheatmap':
         case 'channel_heatmap':
           analysisData.channelHeatmap = analysisResult;
-          break;
-        case 'loyaltynps':
-        case 'loyalty_nps':
-        case 'loyalty_metrics':
-          analysisData.loyaltyNPS = analysisResult;
           break;
         case 'capabilityheatmap':
         case 'capability_heatmap':
@@ -662,8 +651,8 @@ const hasAnalysisData = (analysisData) => {
 
   // Check if any analysis exists
   return !!(
-    analysisData.swot || analysisData.purchaseCriteria ||
-    analysisData.channelHeatmap || analysisData.loyaltyNPS ||
+    analysisData.swot ||
+    analysisData.channelHeatmap ||
     analysisData.capabilityHeatmap || analysisData.porters ||
     analysisData.pestel || analysisData.strategic ||
     analysisData.fullSwot || analysisData.customerSegmentation ||
@@ -683,8 +672,6 @@ const createSimplePhaseManager = (analysisData, userDetails) => {
   // Simplified logic - similar to AnalysisContentManager
   const hasInitial = !!(
     analysisData?.swot ||
-    analysisData?.purchaseCriteria ||
-    analysisData?.loyaltyNPS ||
     analysisData?.porters ||
     analysisData?.pestel
   );
@@ -1450,9 +1437,7 @@ const AnalysisTab = ({
           swotAnalysisResult={analysisData.swot}
           hasInsightAccess={true}
           customerSegmentationData={analysisData.customerSegmentation}
-          purchaseCriteriaData={analysisData.purchaseCriteria}
           channelHeatmapData={analysisData.channelHeatmap}
-          loyaltyNPSData={analysisData.loyaltyNPS}
           capabilityHeatmapData={analysisData.capabilityHeatmap}
           strategicData={analysisData.strategic}
           portersData={analysisData.porters}
@@ -1479,9 +1464,7 @@ const AnalysisTab = ({
           coreAdjacencyData={analysisData.coreAdjacencyData}
           setSwotAnalysisResult={() => { }}
           setCustomerSegmentationData={() => { }}
-          setPurchaseCriteriaData={() => { }}
           setChannelHeatmapData={() => { }}
-          setLoyaltyNPSData={() => { }}
           setCapabilityHeatmapData={() => { }}
           setPortersData={() => { }}
           setPestelData={() => { }}
@@ -1505,9 +1488,7 @@ const AnalysisTab = ({
           setLeverageRiskData={() => { }}
           isSwotAnalysisRegenerating={false}
           isCustomerSegmentationRegenerating={false}
-          isPurchaseCriteriaRegenerating={false}
           isChannelHeatmapRegenerating={false}
-          isLoyaltyNPSRegenerating={false}
           isCapabilityHeatmapRegenerating={false}
           isPortersRegenerating={false}
           isPestelRegenerating={false}
@@ -1537,9 +1518,7 @@ const AnalysisTab = ({
           apiLoadingStates={{}}
           swotRef={{ current: null }}
           customerSegmentationRef={{ current: null }}
-          purchaseCriteriaRef={{ current: null }}
           channelHeatmapRef={{ current: null }}
-          loyaltyNpsRef={{ current: null }}
           capabilityHeatmapRef={{ current: null }}
           portersRef={{ current: null }}
           pestelRef={{ current: null }}
