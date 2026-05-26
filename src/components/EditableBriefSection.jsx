@@ -14,6 +14,7 @@ import { useAnalysisStore } from '../store/analysisStore';
 import DOMPurify from 'dompurify';
 import RichTextEditor from './RichTextEditor';
 import { markdownToHtml } from '../utils/markdownHelper';
+import ConfirmationModal from './ConfirmationModal';
 
 const cleanValue = (val) => {
   if (!val || val === '[Question Skipped]') return '';
@@ -131,10 +132,12 @@ const SimpleQuestionCard = ({
   const answersDetails = useAnalysisStore(state => state.answersDetails || {});
   const details = answersDetails[field.questionId];
 
-  // Dynamic citation extraction
-  const intel = getQuestionIntelligence(field, docName, details);
+  const isRefinedAI = !!(details && details.status === 'REFINED');
 
-  const isAI = field.value && (field.value.startsWith('[AI Extraction]') || (!details || !details.user_answer));
+  // Dynamic citation extraction
+  const intel = isRefinedAI ? { hasCitation: false } : getQuestionIntelligence(field, docName, details);
+
+  const isAI = !isRefinedAI && field.value && (field.value.startsWith('[AI Extraction]') || (!details || !details.user_answer));
   const hasValue = field.value && field.value !== '[Question Skipped]';
   const cleanVal = cleanValue(field.value);
 
@@ -161,7 +164,7 @@ const SimpleQuestionCard = ({
         <div className="sqc-left">
           <span className="sqc-num">{field.sequentialNumber}</span>
           {hasValue ? (
-            <span className="sqc-status-dot" style={{ backgroundColor: isAI ? '#a855f7' : '#3b82f6' }} title={isAI ? 'AI Answer' : 'Edited'} />
+            <span className="sqc-status-dot" style={{ backgroundColor: isAI ? '#a855f7' : (isRefinedAI ? '#475569' : '#3b82f6') }} title={isAI ? 'AI Answer' : (isRefinedAI ? 'Refined Answer' : 'Edited')} />
           ) : (
             <span className="sqc-status-dot sqc-dot-empty" title="No answer yet" />
           )}
@@ -204,7 +207,7 @@ const SimpleQuestionCard = ({
               )}
               {details && details.previous_answer && cleanValue(details.previous_answer) !== cleanValue(field.value) && (
                 <div className="sqc-previous-answer-box" style={{ marginTop: intel.original ? '8px' : '0', paddingTop: intel.original ? '8px' : '0', borderTop: intel.original ? '1px dashed #cbd5e1' : 'none', fontSize: '11px', color: '#64748b' }}>
-                  <strong>Previous Edit:</strong> {cleanValue(details.previous_answer)}
+                  <strong>Previous Version:</strong> {cleanValue(details.previous_answer)}
                 </div>
               )}
             </div>
@@ -257,12 +260,14 @@ const SimpleQuestionCard = ({
           {hasValue && !isEditing && (
             <div className="sqc-action-row">
               <div className="sqc-badges">
-                {isAI ? (
-                  <span className="brief-badge-ai"><Sparkles size={10} /> AI</span>
-                ) : (
-                  <span className="brief-badge-user"><Check size={10} /> Edited</span>
+                {!isRefinedAI && (
+                  isAI ? (
+                    <span className="brief-badge-ai"><Sparkles size={10} /> AI</span>
+                  ) : (
+                    <span className="brief-badge-user"><Check size={10} /> Edited</span>
+                  )
                 )}
-                {intel.hasCitation && (
+                {intel.hasCitation && !isRefinedAI && (
                   <span className="sqc-conf-badge" style={{ color: intel.color, borderColor: intel.color + '40' }}>
                     <span className="sqc-conf-dot-sm" style={{ backgroundColor: intel.color }} />
                     {intel.conf}
@@ -270,13 +275,13 @@ const SimpleQuestionCard = ({
                 )}
               </div>
               <div className="card-bottom-actions">
-                {!isAI && (
+                {((!isAI && !isRefinedAI) || (details && details.previous_answer && cleanValue(details.previous_answer) !== cleanValue(field.value))) && (
                   <button className="simple-text-toggle" onClick={() => setShowOriginal(!showOriginal)}>
                     <Sparkles size={11} />
-                    {showOriginal ? 'Show Edited' : 'Compare'}
+                    {showOriginal ? (isRefinedAI ? 'Show Refined' : 'Show Current') : 'Compare'}
                   </button>
                 )}
-                {intel.hasCitation && (
+                {intel.hasCitation && !isRefinedAI && (
                   <button
                     className="simple-text-toggle citation-trigger"
                     style={{ color: '#2563eb' }}
@@ -332,8 +337,9 @@ const EditableBriefSection = ({
   const [showToast, setShowToast] = useState({ show: false, message: '', type: 'success' });
   const [isSaving, setIsSaving] = useState(false);
   const [isEnriching, setIsEnriching] = useState(false);
-  const [enrichedAnswers, setEnrichedAnswers] = useState(null);
   const [isApplyingEnrichment, setIsApplyingEnrichment] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [confirmModalConfig, setConfirmModalConfig] = useState({ title: '', message: '', onConfirm: () => {} });
   const [showTemplatesPopup, setShowTemplatesPopup] = useState(false);
   const [isFileUploading, setIsFileUploading] = useState(false);
   const [isFinancialRegenerating, setIsFinancialRegenerating] = useState(false);
@@ -392,6 +398,7 @@ const EditableBriefSection = ({
   const fieldRefs = useRef({});
   const autoSaveTimeoutRef = useRef(null);
   const fileInputRef = useRef(null);
+  const analyzeBtnRef = useRef(null);
   const { t } = useTranslation();
 
   const [userRole, setUserRole] = useState("");
@@ -470,43 +477,46 @@ const EditableBriefSection = ({
     }
   }, [documentInfo]);
 
-  // Extract previously uploaded/indexed strategic document names from answersDetails
+  // Fetch strategic documents from database
   useEffect(() => {
-    if (lastFetchedBusinessId !== selectedBusinessId) return;
-    if (answersDetails && Object.keys(answersDetails).length > 0) {
-      const foundDocNames = new Set();
-      Object.values(answersDetails).forEach(detail => {
-        if (detail && Array.isArray(detail.evidence)) {
-          detail.evidence.forEach(ev => {
-            if (ev && ev.document_name && ev.document_name.trim() !== '') {
-              // Split by comma in case it contains multiple combined names
-              const names = ev.document_name.split(',').map(name => name.trim());
-              names.forEach(name => {
-                if (name) foundDocNames.add(name);
-              });
-            }
-          });
-        }
-      });
+    let active = true;
+    const loadStrategicDocs = async () => {
+      if (!selectedBusinessId) return;
+      try {
+        const token = getAuthToken();
+        const response = await fetch(`${API_BASE_URL}/api/businesses/${selectedBusinessId}/strategic-documents`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        if (!response.ok) throw new Error('Failed to fetch strategic documents');
+        const data = await response.json();
+        if (!active) return;
 
-      setUploadedFiles(prev => {
-        // Retain only spreadsheets and temporary upload-queue files
-        const nonDbStrategic = prev.filter(f => !f.id.startsWith('db-strategic-'));
-        const dbStrategic = Array.from(foundDocNames).map(docName => ({
-          id: `db-strategic-${docName}`,
-          name: docName,
-          size: 512000,
-          uploadDate: 'Indexed',
-          status: 'success',
-          type: docName.toLowerCase().endsWith('.docx') ? 'docx' : 'pdf',
-          progress: 100
-        }));
-        return [...nonDbStrategic, ...dbStrategic];
-      });
-    } else {
-      setUploadedFiles(prev => prev.filter(f => !f.id.startsWith('db-strategic-')));
-    }
-  }, [answersDetails, lastFetchedBusinessId, selectedBusinessId]);
+        setUploadedFiles(prev => {
+          // Retain only spreadsheets and temporary upload-queue files
+          const nonDbStrategic = prev.filter(f => !f.id.startsWith('db-strategic-'));
+          const dbStrategic = (data.documents || []).map(doc => ({
+            id: `db-strategic-${doc.filename}`,
+            name: doc.original_name,
+            size: doc.file_size || 512000,
+            uploadDate: doc.upload_date ? new Date(doc.upload_date).toLocaleDateString() : 'Uploaded',
+            status: 'success',
+            type: doc.original_name.toLowerCase().endsWith('.docx') ? 'docx' : 'pdf',
+            progress: 100
+          }));
+          return [...nonDbStrategic, ...dbStrategic];
+        });
+      } catch (err) {
+        console.error('Failed to load strategic documents:', err);
+      }
+    };
+
+    loadStrategicDocs();
+    return () => {
+      active = false;
+    };
+  }, [selectedBusinessId, API_BASE_URL]);
 
 
 
@@ -564,9 +574,17 @@ const EditableBriefSection = ({
       const existingAnswerId = answerIds[questionId];
       let response;
       if (existingAnswerId) {
-        response = await answerService.updateAnswer(existingAnswerId, newAnswer);
+        response = await answerService.updateAnswer(existingAnswerId, newAnswer, {
+          status: 'EDITED',
+          confidence: 0,
+          evidence: []
+        });
       } else {
-        response = await answerService.createAnswer(selectedBusinessId, questionId, newAnswer);
+        response = await answerService.createAnswer(selectedBusinessId, questionId, newAnswer, {
+          status: 'EDITED',
+          confidence: 0,
+          evidence: []
+        });
         if (response && response.data && response.data._id) {
           if (setAnswerIds) {
             setAnswerIds(prev => ({ ...prev, [questionId]: response.data._id }));
@@ -593,6 +611,20 @@ const EditableBriefSection = ({
             onAnswerUpdate(field.questionId, value.trim());
           }
           setEditedFields(prev => new Set([...prev, field.key]));
+
+          // Also update Zustand store directly to keep it in sync instantly!
+          const currentDetails = { ...useAnalysisStore.getState().answersDetails };
+          const prevDetail = currentDetails[field.questionId] || {};
+          currentDetails[field.questionId] = {
+            ...prevDetail,
+            status: 'EDITED',
+            confidence: 0,
+            evidence: [],
+            user_answer: value.trim(),
+            previous_answer: prevDetail.user_answer || prevDetail.previous_answer || null
+          };
+          useAnalysisStore.setState({ answersDetails: currentDetails });
+
           showToastMessage('Auto-saved successfully', 'success');
         } catch (error) {
           showToastMessage('Auto-save failed', 'error');
@@ -618,6 +650,20 @@ const EditableBriefSection = ({
         onAnswerUpdate(field.questionId, newValue.trim());
       }
       setEditedFields(prev => new Set([...prev, field.key]));
+
+      // Also update Zustand store directly to keep it in sync instantly!
+      const currentDetails = { ...useAnalysisStore.getState().answersDetails };
+      const prevDetail = currentDetails[field.questionId] || {};
+      currentDetails[field.questionId] = {
+        ...prevDetail,
+        status: 'EDITED',
+        confidence: 0,
+        evidence: [],
+        user_answer: newValue.trim(),
+        previous_answer: prevDetail.user_answer || prevDetail.previous_answer || null
+      };
+      useAnalysisStore.setState({ answersDetails: currentDetails });
+
       showToastMessage('Answer updated successfully!', 'success');
     } catch (error) {
       showToastMessage('Failed to update answer', 'error');
@@ -664,6 +710,32 @@ const EditableBriefSection = ({
       return result;
     } catch (error) {
       console.error('Database save error:', error);
+      throw error;
+    }
+  };
+
+  const saveStrategicFileToDatabase = async (file) => {
+    try {
+      const token = getAuthToken();
+      if (!token) throw new Error('Authentication token not found');
+      if (!selectedBusinessId) throw new Error('No business selected');
+
+      const formData = new FormData();
+      formData.append('document', file);
+
+      const response = await fetch(`${API_BASE_URL}/api/businesses/${selectedBusinessId}/strategic-document`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
+        body: formData
+      });
+
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || 'Failed to save strategic document to database');
+      return result;
+    } catch (error) {
+      console.error('Strategic database save error:', error);
       throw error;
     }
   };
@@ -796,10 +868,18 @@ const EditableBriefSection = ({
           setUploadedFiles(prev => prev.map(f => f.id === fileId ? { ...f, progress: 100, status: 'success' } : f));
           showToastMessage(`File "${file.name}" ingested successfully!`, 'success');
         } else {
-          // Strategic PDF/DOCX - just add to queue for later analysis
+          // Strategic PDF/DOCX - upload to database immediately!
+          const result = await saveStrategicFileToDatabase(file);
+          
           clearInterval(progressInterval);
-          setUploadedFiles(prev => prev.map(f => f.id === fileId ? { ...f, progress: 100, status: 'uploaded', fileObject: file } : f));
-          showToastMessage(`File "${file.name}" uploaded to queue. Click "Analyze Document" to process.`, 'success');
+          setUploadedFiles(prev => prev.map(f => f.id === fileId ? { 
+            ...f, 
+            id: `db-strategic-${result.document.filename}`,
+            progress: 100, 
+            status: 'success', 
+            fileObject: file 
+          } : f));
+          showToastMessage(`File "${file.name}" uploaded successfully! Click "Analyze Document" to process.`, 'success');
         }
       } catch (error) {
         clearInterval(progressInterval);
@@ -814,6 +894,26 @@ const EditableBriefSection = ({
       if (fileId.startsWith('db-strategic-')) {
         setIsSaving(true);
         showToastMessage(`Removing "${fileName}" references from database...`, 'info');
+
+        // Also call the backend DELETE API to delete the strategic document itself
+        const backendFilename = fileId.replace('db-strategic-', '');
+        if (backendFilename && backendFilename !== fileName) {
+          try {
+            const token = getAuthToken();
+            const response = await fetch(`${API_BASE_URL}/api/businesses/${selectedBusinessId}/strategic-document/${backendFilename}`, {
+              method: 'DELETE',
+              headers: {
+                'Authorization': `Bearer ${token}`
+              }
+            });
+            const result = await response.json();
+            if (!response.ok) {
+              console.warn('Failed to delete strategic document from database:', result.error);
+            }
+          } catch (err) {
+            console.error('Failed to delete strategic document:', err);
+          }
+        }
 
         const toUpdate = [];
         const currentDetails = { ...useAnalysisStore.getState().answersDetails };
@@ -914,11 +1014,154 @@ const EditableBriefSection = ({
     }
   };
 
-  // Fully dynamic AI Answer Support compiler utilizing actual onboarding details
+  // Fully dynamic AI Answer Support compiler utilizing actual onboarding details and applying them directly
+  const applyEnrichedAnswersDirectly = async (enrichedAnswersList) => {
+    if (!enrichedAnswersList || enrichedAnswersList.length === 0) return;
+    try {
+      setIsApplyingEnrichment(true);
+      const updatedQuestionIds = [];
+      const answersToSave = enrichedAnswersList.map(enriched => {
+        const field = briefFields.find(f => f.label === enriched.question);
+        if (field) {
+          updatedQuestionIds.push(field.questionId);
+          return {
+            question_id: field.questionId,
+            answer_text: enriched.answer
+          };
+        }
+        return null;
+      }).filter(Boolean);
+
+      if (answersToSave.length === 0) {
+        showToastMessage('No matching questions found to apply', 'warning');
+        return;
+      }
+
+      const newAnswerIds = { ...answerIds };
+      let idsUpdated = false;
+      const toCreate = [];
+      const toUpdate = [];
+
+      answersToSave.forEach(item => {
+        const qIdStr = String(item.question_id);
+        const existingId = answerIds[qIdStr];
+        if (existingId) {
+          toUpdate.push({
+            id: existingId,
+            ...item
+          });
+        } else {
+          toCreate.push(item);
+        }
+      });
+
+      if (toCreate.length > 0) {
+        try {
+          const bulkRes = await answerService.bulkCreateAnswers(selectedBusinessId, toCreate.map(item => ({
+            question_id: item.question_id,
+            answer: item.answer_text,
+            confidence: 0,
+            status: 'REFINED',
+            evidence: [],
+            ai_answer: null,
+            user_answer: item.answer_text,
+            previous_answer: null
+          })));
+          if (bulkRes && bulkRes.data && bulkRes.data.insertedIds) {
+            toCreate.forEach((item, index) => {
+              const newId = bulkRes.data.insertedIds[index];
+              if (newId) {
+                newAnswerIds[String(item.question_id)] = newId;
+                idsUpdated = true;
+              }
+            });
+          }
+        } catch (err) {
+          console.error('Failed to bulk create answers:', err);
+        }
+      }
+
+      if (toUpdate.length > 0) {
+        try {
+          await answerService.bulkUpdateAnswers(selectedBusinessId, toUpdate.map(item => {
+            const prevDetail = answersDetails[String(item.question_id)] || {};
+            const prevAnswer = prevDetail.user_answer || prevDetail.ai_answer || prevDetail.previous_answer || null;
+            return {
+              answer_id: item.id,
+              answer: item.answer_text,
+              confidence: 0,
+              status: 'REFINED',
+              evidence: [],
+              ai_answer: null,
+              user_answer: item.answer_text,
+              previous_answer: prevAnswer
+            };
+          }));
+        } catch (err) {
+          console.error('Failed to bulk update answers:', err);
+        }
+      }
+
+      if (idsUpdated && setAnswerIds) {
+        setAnswerIds(newAnswerIds);
+      }
+
+      // Update Zustand atomic state for AI enrichment answers
+      const currentAnswers = { ...useAnalysisStore.getState().userAnswers };
+      const currentDetails = { ...useAnalysisStore.getState().answersDetails };
+      const currentCompleted = [...useAnalysisStore.getState().completedQuestions];
+
+      answersToSave.forEach(item => {
+        if (item.answer_text) {
+          currentAnswers[item.question_id] = item.answer_text;
+          if (!currentCompleted.includes(item.question_id)) {
+            currentCompleted.push(item.question_id);
+          }
+        }
+        const prevDetail = currentDetails[item.question_id] || {};
+        const prevAnswer = prevDetail.user_answer || prevDetail.ai_answer || prevDetail.previous_answer || null;
+        currentDetails[item.question_id] = {
+          ...prevDetail,
+          confidence: 0,
+          status: 'REFINED',
+          evidence: [],
+          ai_answer: null,
+          user_answer: item.answer_text || '',
+          previous_answer: prevAnswer
+        };
+      });
+
+      useAnalysisStore.setState({
+        userAnswers: currentAnswers,
+        answersDetails: currentDetails,
+        completedQuestions: currentCompleted
+      });
+
+      answersToSave.forEach(item => {
+        if (onAnswerUpdate) {
+          onAnswerUpdate(item.question_id, item.answer_text);
+        }
+      });
+
+      if (onAnalysisRegenerate) {
+        onAnalysisRegenerate({
+          updatedQuestionIds,
+          alsoRegenerateStrategic: true,
+          skipConfirmation: true,
+          skipFinancial: true
+        });
+      }
+    } catch (error) {
+      console.error('Apply enrichment error:', error);
+      showToastMessage('Failed to apply enriched answers', 'error');
+    } finally {
+      setIsApplyingEnrichment(false);
+    }
+  };
+
   const handleGenerateEnrichment = async () => {
     try {
       setIsEnriching(true);
-      setEnrichedAnswers(null);
       let onboardingData = null;
       try {
         const analysisResult = await analysisService.getPMFAnalysis(selectedBusinessId);
@@ -960,15 +1203,11 @@ const EditableBriefSection = ({
         }
       };
 
-      showToastMessage('Compiling onboarding details and launching LLM pipeline...', 'info');
-
       const activeDocumentNames = uploadedFiles.filter(f => f.status === 'success').map(f => f.name).join(', ') || 'strategy documents';
       const result = await analysisService.makeAPICall('answer-questions-with-enrichment', null, null, selectedBusinessId, null, null, null, companyName, rawPayload);
 
       if (Array.isArray(result)) {
-        // Enriched response mapping
-        setEnrichedAnswers(result);
-        showToastMessage('Enrichment suggestions generated successfully!', 'success');
+        await applyEnrichedAnswersDirectly(result);
       } else {
         throw new Error('Invalid response format from enrichment API');
       }
@@ -980,159 +1219,11 @@ const EditableBriefSection = ({
     }
   };
 
-  // Fully dynamic synchronization & save handler for enriched answers in MongoDB
-  const handleApplyEnrichedAnswers = async () => {
-    if (!enrichedAnswers || enrichedAnswers.length === 0) return;
-    try {
-      setIsApplyingEnrichment(true);
-      showToastMessage('Syncing suggestions to database...', 'info');
-      const updatedQuestionIds = [];
-      const answersToSave = enrichedAnswers.map(enriched => {
-        const field = briefFields.find(f => f.label === enriched.question);
-        if (field) {
-          updatedQuestionIds.push(field.questionId);
-          return {
-            question_id: field.questionId,
-            answer_text: enriched.answer
-          };
-        }
-        return null;
-      }).filter(Boolean);
-
-      if (answersToSave.length === 0) {
-        showToastMessage('No matching questions found to apply', 'warning');
-        return;
-      }
-
-      const newAnswerIds = { ...answerIds };
-      let idsUpdated = false;
-      const toCreate = [];
-      const toUpdate = [];
-
-      answersToSave.forEach(item => {
-        const qIdStr = String(item.question_id);
-        const existingId = answerIds[qIdStr];
-        if (existingId) {
-          toUpdate.push({
-            id: existingId,
-            ...item
-          });
-        } else {
-          toCreate.push(item);
-        }
-      });
-
-      if (toCreate.length > 0) {
-        try {
-          const bulkRes = await answerService.bulkCreateAnswers(selectedBusinessId, toCreate.map(item => ({
-            question_id: item.question_id,
-            answer: item.answer_text,
-            confidence: 0.9,
-            status: 'FOUND',
-            evidence: [],
-            ai_answer: item.answer_text,
-            user_answer: null,
-            previous_answer: null
-          })));
-          if (bulkRes && bulkRes.data && bulkRes.data.insertedIds) {
-            toCreate.forEach((item, index) => {
-              const newId = bulkRes.data.insertedIds[index];
-              if (newId) {
-                newAnswerIds[String(item.question_id)] = newId;
-                idsUpdated = true;
-              }
-            });
-          }
-        } catch (err) {
-          console.error('Failed to bulk create answers:', err);
-        }
-      }
-
-      if (toUpdate.length > 0) {
-        try {
-          await answerService.bulkUpdateAnswers(selectedBusinessId, toUpdate.map(item => {
-            const prevDetail = answersDetails[String(item.question_id)] || {};
-            return {
-              answer_id: item.id,
-              answer: item.answer_text,
-              confidence: 0.9,
-              status: 'FOUND',
-              evidence: prevDetail.evidence || [],
-              ai_answer: item.answer_text,
-              user_answer: null,
-              previous_answer: prevDetail.user_answer || prevDetail.previous_answer || null
-            };
-          }));
-        } catch (err) {
-          console.error('Failed to bulk update answers:', err);
-        }
-      }
-
-      if (idsUpdated && setAnswerIds) {
-        setAnswerIds(newAnswerIds);
-      }
-
-      // Update Zustand atomic state for AI enrichment answers
-      const currentAnswers = { ...useAnalysisStore.getState().userAnswers };
-      const currentDetails = { ...useAnalysisStore.getState().answersDetails };
-      const currentCompleted = [...useAnalysisStore.getState().completedQuestions];
-
-      answersToSave.forEach(item => {
-        if (item.answer_text) {
-          currentAnswers[item.question_id] = item.answer_text;
-          if (!currentCompleted.includes(item.question_id)) {
-            currentCompleted.push(item.question_id);
-          }
-        }
-        const prevDetail = currentDetails[item.question_id] || {};
-        currentDetails[item.question_id] = {
-          ...prevDetail,
-          confidence: 0.9,
-          status: 'FOUND',
-          evidence: prevDetail.evidence || [],
-          ai_answer: item.answer_text || '',
-          user_answer: null,
-          previous_answer: prevDetail.user_answer || prevDetail.previous_answer || null
-        };
-      });
-
-      useAnalysisStore.setState({
-        userAnswers: currentAnswers,
-        answersDetails: currentDetails,
-        completedQuestions: currentCompleted
-      });
-
-      const newlyEdited = new Set(editedFields);
-      answersToSave.forEach(item => {
-        if (onAnswerUpdate) {
-          onAnswerUpdate(item.question_id, item.answer_text);
-        }
-        newlyEdited.add(`question_${item.question_id}`);
-      });
-      setEditedFields(newlyEdited);
-      setEnrichedAnswers(null);
-      showToastMessage('AI framework suggestions synced successfully!', 'success');
-
-      if (onAnalysisRegenerate) {
-        onAnalysisRegenerate({
-          updatedQuestionIds,
-          alsoRegenerateStrategic: true,
-          skipConfirmation: true,
-          skipFinancial: true
-        });
-      }
-    } catch (error) {
-      console.error('Apply enrichment error:', error);
-      showToastMessage('Failed to apply enriched answers', 'error');
-    } finally {
-      setIsApplyingEnrichment(false);
-    }
-  };
-
   // Multiple File Strategic Document Ingestion & Bulk Save Flow
   const handleAnalyzeDocuments = async () => {
+    // Find all strategic documents either loaded in memory or loaded from Azure Blob
     const filesToAnalyze = uploadedFiles.filter(
-      f => (f.type === 'pdf' || f.type === 'docx') && f.status === 'uploaded' && f.fileObject
+      f => (f.type === 'pdf' || f.type === 'docx')
     );
 
     if (filesToAnalyze.length === 0) {
@@ -1142,152 +1233,42 @@ const EditableBriefSection = ({
 
     try {
       setIsAnalyzingDocs(true);
-      showToastMessage(`Starting analysis on ${filesToAnalyze.length} queued document(s)...`, 'info');
 
       // Update status of queued files to 'analyzing'
       setUploadedFiles(prev =>
         prev.map(f =>
-          (f.type === 'pdf' || f.type === 'docx') && f.status === 'uploaded'
+          filesToAnalyze.some(fa => fa.id === f.id)
             ? { ...f, status: 'analyzing', progress: 30 }
             : f
         )
       );
 
-      const fileObjects = filesToAnalyze.map(f => f.fileObject);
-      const combinedFileNames = filesToAnalyze.map(f => f.name).join(', ');
-
-      // Call the Strategic Document Ingestion API once with all files!
-      const response = await answerService.analyzeDocuments(selectedBusinessId, fileObjects);
+      // Call the backend analysis API
+      const result = await answerService.analyzeStrategicDocumentsBackend(selectedBusinessId);
       
-      if (!response || !Array.isArray(response.answers)) {
-        throw new Error('Invalid response received from the analysis engine.');
+      if (!result || !Array.isArray(result.answers)) {
+        throw new Error(result?.error || 'Invalid response received from the analysis engine.');
       }
 
-      const answers = response.answers;
+      const mappedAnswers = result.answers;
       
-      // Map response keys and enrich evidence metadata
-      const mappedAnswers = [];
-      
-      answers.forEach(item => {
-        let localQId = item.question_id;
-        if (typeof item.question_id === 'string' && item.question_id.startsWith('q_')) {
-          const qNum = parseInt(item.question_id.replace('q_', ''), 10);
-          let targetQuestion = questions.find(q => q.order === qNum);
-          if (!targetQuestion) {
-            // Fallback to sorted questions list
-            const phaseOrderMap = { 'initial': 1, 'essential': 2, 'advanced': 3 };
-            const sorted = [...questions].sort((a, b) => {
-              const phaseA = phaseOrderMap[a.phase?.toLowerCase()] || 4;
-              const phaseB = phaseOrderMap[b.phase?.toLowerCase()] || 4;
-              if (phaseA !== phaseB) return phaseA - phaseB;
-              return (a.order || 0) - (b.order || 0);
-            });
-            targetQuestion = sorted[qNum - 1];
-          }
-          if (targetQuestion) {
-            localQId = String(targetQuestion._id || targetQuestion.question_id);
-          } else {
-            console.warn(`Could not map ML API question_id ${item.question_id} to any database question`);
-            return; // skip this item
-          }
-        }
-
-        // Ensure evidence contains the document name
-        let evidence = null;
-        if (item.status === 'FOUND') {
-          if (Array.isArray(item.evidence) && item.evidence.length > 0) {
-            evidence = item.evidence.map(ev => ({
-              ...ev,
-              document_name: ev.document_name || ev.filename || ev.file || combinedFileNames
-            }));
-          } else {
-            evidence = [{
-              page: 1,
-              text: item.answer || '',
-              document_name: combinedFileNames
-            }];
-          }
-        } else if (item.status === 'NOT_FOUND') {
-          evidence = [{
-            page: 1,
-            text: 'No relevant information found in the document.',
-            document_name: combinedFileNames
-          }];
-        }
-
-        mappedAnswers.push({
-          question_id: localQId,
-          answer: item.answer,
-          confidence: item.confidence,
-          status: item.status,
-          evidence: evidence
-        });
-      });
-      
-      // Partition into bulkCreate vs bulkUpdate
-      const toCreate = [];
-      const toUpdate = [];
-      const newAnswerIds = { ...answerIds };
-      let idsUpdated = false;
-
-      mappedAnswers.forEach(item => {
-        const qIdStr = String(item.question_id);
-        const existingId = answerIds[qIdStr];
-
-        if (existingId) {
-          toUpdate.push({
-            answer_id: existingId,
-            answer: item.answer || '',
-            confidence: item.confidence,
-            status: item.status,
-            evidence: item.evidence,
-            ai_answer: item.answer || '',
-            user_answer: null,
-            previous_answer: null
-          });
-        } else {
-          toCreate.push({
-            question_id: item.question_id,
-            answer: item.answer || '',
-            confidence: item.confidence,
-            status: item.status,
-            evidence: item.evidence,
-            ai_answer: item.answer || '',
-            user_answer: null,
-            previous_answer: null
-          });
-        }
-      });
-
-      // Call backend bulk APIs to persist details
-      if (toCreate.length > 0) {
-        const bulkRes = await answerService.bulkCreateAnswers(selectedBusinessId, toCreate);
-        if (bulkRes && bulkRes.data && Array.isArray(bulkRes.data.insertedIds)) {
-          toCreate.forEach((item, index) => {
-            const newId = bulkRes.data.insertedIds[index];
-            if (newId) {
-              newAnswerIds[String(item.question_id)] = newId;
-              idsUpdated = true;
-            }
-          });
-        }
-      }
-
-      if (toUpdate.length > 0) {
-        await answerService.bulkUpdateAnswers(selectedBusinessId, toUpdate);
-      }
-
       // Update setAnswerIds prop if any were created
-      if (idsUpdated && setAnswerIds) {
+      const newAnswerIds = { ...answerIds };
+      mappedAnswers.forEach(ans => {
+        newAnswerIds[String(ans.question_id)] = String(ans._id);
+        
+        if (onAnswerUpdate) {
+          onAnswerUpdate(ans.question_id, ans.answer || '');
+        }
+      });
+
+      if (setAnswerIds) {
         setAnswerIds(newAnswerIds);
       }
 
       // Propagate answers to parent and update local highlights/edited fields
       const newlyEdited = new Set(editedFields);
       mappedAnswers.forEach(item => {
-        if (onAnswerUpdate) {
-          onAnswerUpdate(item.question_id, item.answer || '');
-        }
         newlyEdited.add(`question_${item.question_id}`);
       });
       setEditedFields(newlyEdited);
@@ -1314,8 +1295,8 @@ const EditableBriefSection = ({
           status: item.status,
           evidence: item.evidence,
           ai_answer: item.answer || '',
-          user_answer: null,
-          previous_answer: null
+          user_answer: item.user_answer || null,
+          previous_answer: item.previous_answer || null
         };
       });
 
@@ -1327,7 +1308,7 @@ const EditableBriefSection = ({
 
       // Call onUploadedFileUpdate to register this file as ingested
       filesToAnalyze.forEach(file => {
-        if (onUploadedFileUpdate) {
+        if (onUploadedFileUpdate && file.fileObject) {
           onUploadedFileUpdate(file.fileObject);
         }
       });
@@ -1341,8 +1322,6 @@ const EditableBriefSection = ({
         )
       );
 
-      showToastMessage(`All ${filesToAnalyze.length} strategic documents analyzed successfully!`, 'success');
-
       // Trigger AI Regeneration if needed
       if (onAnalysisRegenerate) {
         onAnalysisRegenerate({
@@ -1355,14 +1334,15 @@ const EditableBriefSection = ({
 
     } catch (err) {
       console.error('Batch Strategic Document analysis error:', err);
+      const serverError = err.response?.data?.error || err.message || 'Error occurred.';
       setUploadedFiles(prev =>
         prev.map(f =>
           filesToAnalyze.some(fa => fa.id === f.id)
-            ? { ...f, status: 'failed', errorMessage: err.message || 'Analysis failed.' }
+            ? { ...f, status: 'failed', errorMessage: serverError }
             : f
         )
       );
-      showToastMessage(`Analysis failed: ${err.message || 'Error occurred.'}`, 'error');
+      showToastMessage(`Analysis failed: ${serverError}`, 'error');
     } finally {
       setIsAnalyzingDocs(false);
     }
@@ -1445,6 +1425,8 @@ const EditableBriefSection = ({
       ? essentialFields
       : advancedFields;
 
+  const isAnyApiActive = isEnriching || isApplyingEnrichment || isAnalyzingDocs;
+
   return (
     <div className="simple-workspace">
       {showToast.show && (
@@ -1465,8 +1447,8 @@ const EditableBriefSection = ({
             <div className="brief-card refine-ai-card">
               <div 
                 className={`brief-card-header accordion-header ${!leftPanelExpanded.refineAi ? 'collapsed' : ''}`}
-                onClick={() => setLeftPanelExpanded(prev => ({ ...prev, refineAi: !prev.refineAi }))}
-                style={{ cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}
+                onClick={() => { if (isAnyApiActive) return; setLeftPanelExpanded(prev => ({ ...prev, refineAi: !prev.refineAi })); }}
+                style={{ cursor: isAnyApiActive ? 'not-allowed' : 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <Sparkles size={16} style={{ color: '#4f46e5' }} />
@@ -1476,57 +1458,44 @@ const EditableBriefSection = ({
               </div>
               {leftPanelExpanded.refineAi && (
                 <div className="brief-card-body">
-                  <p className="brief-card-description">
-                    Refine and pre-populate your strategic brief answers using AI-generated suggestions compiled from your onboarding setup details.
-                  </p>
+                  {isEnriching ? (
+                    <div className="in-page-loading-wrapper" style={{ padding: '20px 10px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', textAlign: 'center' }}>
+                      <div className="spinner-container" style={{ display: 'inline-flex' }}>
+                        <Loader size={28} className="animate-spin" style={{ color: '#4f46e5' }} />
+                      </div>
+                      <div style={{ color: '#1e293b', fontWeight: '500', fontSize: '14px' }}>
+                        Generating AI answers based on PMF onboarding data...
+                      </div>
+                      <div style={{ color: '#64748b', fontSize: '12px' }}>
+                        This may take a moment as our LLM pipeline compiles your strategic insights.
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <p className="brief-card-description">
+                        Refine and pre-populate your strategic brief answers using AI-generated suggestions compiled from your onboarding setup details.
+                      </p>
 
-                  <button
-                    onClick={handleGenerateEnrichment}
-                    disabled={isEnriching || !canEdit}
-                    className="btn-refine-action"
-                  >
-                    {isEnriching ? (
-                      <>
-                        <Loader size={14} style={{ animation: 'spin 1.5s linear infinite' }} />
-                        <span>Generating AI Insights...</span>
-                      </>
-                    ) : (
-                      <>
+                      <button
+                        onClick={() => {
+                          if (!canEdit || isAnyApiActive) return;
+                          setConfirmModalConfig({
+                            title: t('Confirm AI Refinement') || 'Refine AI Answers',
+                            message: 'By doing this, this will overwrite all the existing answers and it will regenerate the insights and strategic analysis. Are you sure you want to proceed?',
+                            onConfirm: () => {
+                              handleGenerateEnrichment();
+                            }
+                          });
+                          setShowConfirmModal(true);
+                        }}
+                        disabled={isAnyApiActive || !canEdit}
+                        className="btn-refine-action"
+                      >
                         <Sparkles size={14} />
                         <span>Refine Answers with AI</span>
-                      </>
-                    )}
-                  </button>
-
-                {enrichedAnswers && (
-                  <div className="nested-suggestions-box">
-                    <div className="nested-suggestions-header">
-                      <div className="nested-suggestions-title">
-                        <Sparkles size={12} /> AI Suggestions Ready
-                      </div>
-                      <span className="nested-suggestions-count">{enrichedAnswers.length} items</span>
-                    </div>
-                    <p className="nested-suggestions-desc">
-                      AI has identified relevant strategic highlights from your documents. Sync them directly into the framework questions.
-                    </p>
-                    <div className="nested-suggestions-actions">
-                      <button
-                        onClick={() => setEnrichedAnswers(null)}
-                        className="btn-nested-discard"
-                        disabled={isApplyingEnrichment}
-                      >
-                        Discard
                       </button>
-                      <button
-                        onClick={handleApplyEnrichedAnswers}
-                        disabled={isApplyingEnrichment}
-                        className="btn-nested-sync"
-                      >
-                        {isApplyingEnrichment ? 'Syncing...' : 'Sync All'}
-                      </button>
-                    </div>
-                  </div>
-                )}
+                    </>
+                  )}
               </div>
             )}
           </div>
@@ -1536,8 +1505,8 @@ const EditableBriefSection = ({
           <div className="brief-card upload-docs-card">
             <div 
               className={`brief-card-header accordion-header ${!leftPanelExpanded.fileUpload ? 'collapsed' : ''}`}
-              onClick={() => setLeftPanelExpanded(prev => ({ ...prev, fileUpload: !prev.fileUpload }))}
-              style={{ cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}
+              onClick={() => { if (isAnyApiActive) return; setLeftPanelExpanded(prev => ({ ...prev, fileUpload: !prev.fileUpload })); }}
+              style={{ cursor: isAnyApiActive ? 'not-allowed' : 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <Upload size={16} style={{ color: '#2563eb' }} />
@@ -1547,17 +1516,34 @@ const EditableBriefSection = ({
             </div>
             {leftPanelExpanded.fileUpload && (
               <div className="brief-card-body">
+                {isAnalyzingDocs && (
+                  <div className="brief-loading-top-banner">
+                    <div className="brief-loading-top-content">
+                      <div className="brief-loading-top-icon-wrapper">
+                        <Loader className="brief-loading-top-spinner animate-spin" size={18} />
+                      </div>
+                      <div className="brief-loading-top-text">
+                        <h5 className="brief-loading-top-title">Analyzing Strategic Documents</h5>
+                        <p className="brief-loading-top-subtitle">We are getting refined AI answers based on the onboarding data...</p>
+                      </div>
+                    </div> 
+                  </div>
+                )}
                 <p className="brief-card-description">
                   Upload PDF or DOCX strategic documents. The AI will extract answers to the strategic questions from your document.
                 </p>
 
                 <div 
-                  className={`sidebar-dropzone ${isDragActive ? 'drag-active' : ''}`}
-                  onDragEnter={handleDrag}
-                  onDragOver={handleDrag}
-                  onDragLeave={handleDrag}
-                  onDrop={handleDrop}
-                  onClick={triggerFileInput}
+                  className={`sidebar-dropzone ${isDragActive ? 'drag-active' : ''} ${isAnyApiActive ? 'disabled-dropzone' : ''}`}
+                  onDragEnter={(e) => { if (isAnyApiActive || !canEdit) return; handleDrag(e); }}
+                  onDragOver={(e) => { if (isAnyApiActive || !canEdit) return; handleDrag(e); }}
+                  onDragLeave={(e) => { if (isAnyApiActive || !canEdit) return; handleDrag(e); }}
+                  onDrop={(e) => { if (isAnyApiActive || !canEdit) return; handleDrop(e); }}
+                  onClick={() => { if (isAnyApiActive || !canEdit) return; triggerFileInput(); }}
+                  style={{
+                    cursor: (isAnyApiActive || !canEdit) ? 'not-allowed' : 'pointer',
+                    opacity: (isAnyApiActive || !canEdit) ? 0.6 : 1
+                  }}
                 >
                   <div className="sidebar-dropzone-icon">
                     <Upload size={20} />
@@ -1572,6 +1558,7 @@ const EditableBriefSection = ({
                     style={{ display: 'none' }} 
                     onChange={handleFileInputChange}
                     accept=".pdf,.docx,.xlsx,.xls,.csv"
+                    disabled={isAnyApiActive || !canEdit}
                   />
                 </div>
 
@@ -1591,8 +1578,10 @@ const EditableBriefSection = ({
                           <button 
                             onClick={(e) => {
                               e.stopPropagation();
+                              if (isAnyApiActive || !canEdit) return;
                               handleRemoveFile(file.id, file.name);
                             }}
+                            disabled={isAnyApiActive || !canEdit}
                             className="sidebar-file-remove"
                             title="Remove File"
                           >
@@ -1605,8 +1594,19 @@ const EditableBriefSection = ({
                 )}
 
                 <button
-                  onClick={handleAnalyzeDocuments}
-                  disabled={isAnalyzingDocs || !canEdit || uploadedFilesCount === 0}
+                  ref={analyzeBtnRef}
+                  onClick={() => {
+                    if (!canEdit || strategyFiles.length === 0 || isAnyApiActive) return;
+                    setConfirmModalConfig({
+                      title: t('Confirm Document Analysis') || 'Analyze Strategic Documents',
+                      message: 'By doing this, this will overwrite all the existing answers and it will regenerate the insights and strategic analysis. Are you sure you want to proceed?',
+                      onConfirm: () => {
+                        handleAnalyzeDocuments();
+                      }
+                    });
+                    setShowConfirmModal(true);
+                  }}
+                  disabled={isAnyApiActive || !canEdit || strategyFiles.length === 0}
                   className="btn-analyze-docs"
                   style={{ marginTop: '12px', width: '100%' }}
                 >
@@ -1630,8 +1630,8 @@ const EditableBriefSection = ({
           <div className="brief-card financial-upload-card">
             <div 
               className={`brief-card-header accordion-header ${!leftPanelExpanded.financialUpload ? 'collapsed' : ''}`}
-              onClick={() => setLeftPanelExpanded(prev => ({ ...prev, financialUpload: !prev.financialUpload }))}
-              style={{ cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}
+              onClick={() => { if (isAnyApiActive) return; setLeftPanelExpanded(prev => ({ ...prev, financialUpload: !prev.financialUpload })); }}
+              style={{ cursor: isAnyApiActive ? 'not-allowed' : 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <Database size={16} style={{ color: '#16a34a' }} />
@@ -1647,7 +1647,8 @@ const EditableBriefSection = ({
 
                 <div className="financial-upload-actions">
                   <button 
-                    onClick={() => setShowTemplatesPopup(true)}
+                    onClick={() => { if (isAnyApiActive || !canEdit) return; setShowTemplatesPopup(true); }}
+                    disabled={isAnyApiActive || !canEdit}
                     className="btn-financial-upload"
                   >
                     <FileSpreadsheet size={14} />
@@ -1671,8 +1672,10 @@ const EditableBriefSection = ({
                           <button 
                             onClick={(e) => {
                               e.stopPropagation();
+                              if (isAnyApiActive || !canEdit) return;
                               handleRemoveFile(file.id, file.name);
                             }}
+                            disabled={isAnyApiActive || !canEdit}
                             className="sidebar-file-remove"
                             title="Remove File"
                           >
@@ -1684,7 +1687,7 @@ const EditableBriefSection = ({
                   </div>
                 )}
 
-                <div className="sidebar-ledger-summary">
+                {/* <div className="sidebar-ledger-summary">
                   <div className="ledger-summary-header">
                     <span>Financial Ledger Indicators</span>
                     <span className={`ledger-status-tag ${financialFiles.length > 0 ? 'active' : ''}`}>
@@ -1709,7 +1712,7 @@ const EditableBriefSection = ({
                       <span className="indicator-val">{ledgerVals.ebitdaMargin}</span>
                     </div>
                   </div>
-                </div>
+                </div> */}
               </div>
             )}
           </div>
@@ -1723,21 +1726,24 @@ const EditableBriefSection = ({
             <div className="phase-tabs-container">
               <button
                 className={`phase-tab-btn ${activePhaseTab === 'initial' ? 'active' : ''}`}
-                onClick={() => { setActivePhaseTab('initial'); setExpandAll(false); }}
+                disabled={isAnyApiActive}
+                onClick={() => { if (isAnyApiActive) return; setActivePhaseTab('initial'); setExpandAll(false); }}
               >
                 <span className="phase-tab-title">Initial</span>
                 <span className="phase-tab-badge">{initialCountStr}</span>
               </button>
               <button
                 className={`phase-tab-btn ${activePhaseTab === 'essential' ? 'active' : ''}`}
-                onClick={() => { setActivePhaseTab('essential'); setExpandAll(false); }}
+                disabled={isAnyApiActive}
+                onClick={() => { if (isAnyApiActive) return; setActivePhaseTab('essential'); setExpandAll(false); }}
               >
                 <span className="phase-tab-title">Essential</span>
                 <span className="phase-tab-badge">{essentialCountStr}</span>
               </button>
               <button
                 className={`phase-tab-btn ${activePhaseTab === 'advanced' ? 'active' : ''}`}
-                onClick={() => { setActivePhaseTab('advanced'); setExpandAll(false); }}
+                disabled={isAnyApiActive}
+                onClick={() => { if (isAnyApiActive) return; setActivePhaseTab('advanced'); setExpandAll(false); }}
               >
                 <span className="phase-tab-title">Advanced</span>
                 <span className="phase-tab-badge">{advancedCountStr}</span>
@@ -1752,7 +1758,8 @@ const EditableBriefSection = ({
               </span>
               <button
                 className={`sqc-expand-all-btn ${expandAll ? 'sqc-expand-all-active' : ''}`}
-                onClick={() => setExpandAll(prev => !prev)}
+                disabled={isAnyApiActive}
+                onClick={() => { if (isAnyApiActive) return; setExpandAll(prev => !prev); }}
                 title={expandAll ? 'Collapse all rows' : 'Expand all rows'}
               >
                 {expandAll
@@ -1776,7 +1783,7 @@ const EditableBriefSection = ({
                   editingField={editingField}
                   editedFields={editedFields}
                   isQuestionHighlighted={isQuestionHighlighted}
-                  canEdit={canEdit}
+                  canEdit={canEdit && !isAnyApiActive}
                   handleEdit={handleEdit}
                   isSaving={isSaving}
                   isAnalysisRegenerating={isAnalysisRegenerating}
@@ -1854,6 +1861,19 @@ const EditableBriefSection = ({
             setShowTemplatesPopup(false);
           }}
           fileInputRef={fileInputRef}
+        />
+      )}
+
+      {showConfirmModal && (
+        <ConfirmationModal
+          show={showConfirmModal}
+          onHide={() => setShowConfirmModal(false)}
+          onConfirm={confirmModalConfig.onConfirm}
+          title={confirmModalConfig.title}
+          message={confirmModalConfig.message}
+          confirmText={t('Yes, Proceed') || 'Yes, Proceed'}
+          cancelText={t('Cancel') || 'Cancel'}
+          confirmVariant="danger"
         />
       )}
     </div>

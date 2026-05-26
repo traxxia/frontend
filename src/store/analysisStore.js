@@ -115,13 +115,18 @@ export const useAnalysisStore = create((set, get) => ({
       ? (currentDetail.user_answer !== undefined ? currentDetail.user_answer : null)
       : answer;
 
+    const isDifferent = answer !== oldAnswer;
+
     newDetails[questionId] = {
       ...currentDetail,
       ai_answer: currentDetail.ai_answer !== undefined && currentDetail.ai_answer !== null && currentDetail.ai_answer !== ''
         ? currentDetail.ai_answer
         : (oldAnswer || ''),
       previous_answer: newPreviousAnswer,
-      user_answer: newUserAnswer
+      user_answer: newUserAnswer,
+      status: isDifferent ? 'EDITED' : (currentDetail.status || 'EDITED'),
+      confidence: isDifferent ? 0 : (currentDetail.confidence !== undefined ? currentDetail.confidence : 0),
+      evidence: isDifferent ? [] : (currentDetail.evidence || [])
     };
 
     return {
