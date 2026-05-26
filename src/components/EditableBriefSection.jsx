@@ -604,26 +604,33 @@ const EditableBriefSection = ({
       clearTimeout(autoSaveTimeoutRef.current);
     }
     autoSaveTimeoutRef.current = setTimeout(async () => {
-      if (value.trim() && value.trim() !== field.value) {
+      const currentStoreAnswer = useAnalysisStore.getState().userAnswers[field.questionId] || '';
+      if (value.trim() && value.trim() !== currentStoreAnswer) {
+        // Capture correct previous answer before any store updates occur
+        const currentDetails = useAnalysisStore.getState().answersDetails || {};
+        const prevDetail = currentDetails[field.questionId] || {};
+        const previousAnswerVal = prevDetail.user_answer || prevDetail.ai_answer || prevDetail.previous_answer || null;
+
         try {
           await updateConversationAnswer(field, value.trim());
           if (onAnswerUpdate) {
-            onAnswerUpdate(field.questionId, value.trim());
+            await onAnswerUpdate(field.questionId, value.trim());
           }
           setEditedFields(prev => new Set([...prev, field.key]));
 
-          // Also update Zustand store directly to keep it in sync instantly!
-          const currentDetails = { ...useAnalysisStore.getState().answersDetails };
-          const prevDetail = currentDetails[field.questionId] || {};
-          currentDetails[field.questionId] = {
-            ...prevDetail,
+          // Keep local Zustand store details in perfect sync
+          const latestDetails = { ...useAnalysisStore.getState().answersDetails };
+          const latestPrevDetail = latestDetails[field.questionId] || {};
+          latestDetails[field.questionId] = {
+            ...latestPrevDetail,
             status: 'EDITED',
             confidence: 0,
             evidence: [],
             user_answer: value.trim(),
-            previous_answer: prevDetail.user_answer || prevDetail.previous_answer || null
+            previous_answer: previousAnswerVal
           };
-          useAnalysisStore.setState({ answersDetails: currentDetails });
+
+          useAnalysisStore.setState({ answersDetails: latestDetails });
 
           showToastMessage('Auto-saved successfully', 'success');
         } catch (error) {
@@ -642,27 +649,45 @@ const EditableBriefSection = ({
   };
 
   const handleSave = async field => {
+    if (autoSaveTimeoutRef.current) {
+      clearTimeout(autoSaveTimeoutRef.current);
+      autoSaveTimeoutRef.current = null;
+    }
+
     const input = inputRefs.current[field.key];
     const newValue = input?.value || '';
+    
+    // Capture correct previous answer before any store updates occur
+    const currentDetails = useAnalysisStore.getState().answersDetails || {};
+    const prevDetail = currentDetails[field.questionId] || {};
+    const previousAnswerVal = prevDetail.user_answer || prevDetail.ai_answer || prevDetail.previous_answer || null;
+
+    const currentStoreAnswer = useAnalysisStore.getState().userAnswers[field.questionId] || '';
+    if (newValue.trim() === currentStoreAnswer.trim()) {
+      setEditingField(null);
+      return;
+    }
+
     try {
       await updateConversationAnswer(field, newValue.trim());
       if (onAnswerUpdate) {
-        onAnswerUpdate(field.questionId, newValue.trim());
+        await onAnswerUpdate(field.questionId, newValue.trim());
       }
       setEditedFields(prev => new Set([...prev, field.key]));
 
-      // Also update Zustand store directly to keep it in sync instantly!
-      const currentDetails = { ...useAnalysisStore.getState().answersDetails };
-      const prevDetail = currentDetails[field.questionId] || {};
-      currentDetails[field.questionId] = {
-        ...prevDetail,
+      // Keep local Zustand store details in perfect sync
+      const latestDetails = { ...useAnalysisStore.getState().answersDetails };
+      const latestPrevDetail = latestDetails[field.questionId] || {};
+      latestDetails[field.questionId] = {
+        ...latestPrevDetail,
         status: 'EDITED',
         confidence: 0,
         evidence: [],
         user_answer: newValue.trim(),
-        previous_answer: prevDetail.user_answer || prevDetail.previous_answer || null
+        previous_answer: previousAnswerVal
       };
-      useAnalysisStore.setState({ answersDetails: currentDetails });
+
+      useAnalysisStore.setState({ answersDetails: latestDetails });
 
       showToastMessage('Answer updated successfully!', 'success');
     } catch (error) {
@@ -672,6 +697,10 @@ const EditableBriefSection = ({
   };
 
   const handleCancel = () => {
+    if (autoSaveTimeoutRef.current) {
+      clearTimeout(autoSaveTimeoutRef.current);
+      autoSaveTimeoutRef.current = null;
+    }
     setEditingField(null);
   };
 

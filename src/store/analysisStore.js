@@ -109,7 +109,7 @@ export const useAnalysisStore = create((set, get) => ({
 
     const newPreviousAnswer = answer === oldAnswer
       ? (currentDetail.previous_answer !== undefined ? currentDetail.previous_answer : null)
-      : oldAnswer;
+      : (oldAnswer || currentDetail.ai_answer || currentDetail.previous_answer || null);
 
     const newUserAnswer = answer === oldAnswer
       ? (currentDetail.user_answer !== undefined ? currentDetail.user_answer : null)
