@@ -574,11 +574,7 @@ const EditableBriefSection = ({
       const existingAnswerId = answerIds[questionId];
       let response;
       if (existingAnswerId) {
-        response = await answerService.updateAnswer(existingAnswerId, newAnswer, {
-          status: 'EDITED',
-          confidence: 0,
-          evidence: []
-        });
+        response = await answerService.updateAnswer(existingAnswerId, newAnswer);
       } else {
         response = await answerService.createAnswer(selectedBusinessId, questionId, newAnswer, {
           status: 'EDITED',
@@ -623,9 +619,6 @@ const EditableBriefSection = ({
           const latestPrevDetail = latestDetails[field.questionId] || {};
           latestDetails[field.questionId] = {
             ...latestPrevDetail,
-            status: 'EDITED',
-            confidence: 0,
-            evidence: [],
             user_answer: value.trim(),
             previous_answer: previousAnswerVal
           };
@@ -680,9 +673,6 @@ const EditableBriefSection = ({
       const latestPrevDetail = latestDetails[field.questionId] || {};
       latestDetails[field.questionId] = {
         ...latestPrevDetail,
-        status: 'EDITED',
-        confidence: 0,
-        evidence: [],
         user_answer: newValue.trim(),
         previous_answer: previousAnswerVal
       };

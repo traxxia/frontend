@@ -124,9 +124,9 @@ export const useAnalysisStore = create((set, get) => ({
         : (oldAnswer || ''),
       previous_answer: newPreviousAnswer,
       user_answer: newUserAnswer,
-      status: isDifferent ? 'EDITED' : (currentDetail.status || 'EDITED'),
-      confidence: isDifferent ? 0 : (currentDetail.confidence !== undefined ? currentDetail.confidence : 0),
-      evidence: isDifferent ? [] : (currentDetail.evidence || [])
+      status: currentDetail.status || 'EDITED',
+      confidence: currentDetail.confidence !== undefined ? currentDetail.confidence : 0,
+      evidence: currentDetail.evidence || []
     };
 
     return {
