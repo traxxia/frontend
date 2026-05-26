@@ -394,6 +394,35 @@ const EditableBriefSection = ({
   const ML_API_BASE_URL = import.meta.env.VITE_ML_BACKEND_URL;
   const analysisService = useRef(new AnalysisApiService(ML_API_BASE_URL, API_BASE_URL, getAuthToken)).current;
 
+  // Dynamic configuration limits fetched from backend (Single Source of Truth)
+  const [uploadLimits, setUploadLimits] = useState({
+    maxFilesLimit: 5,
+    maxFileSizeMB: 15
+  });
+
+  useEffect(() => {
+    let active = true;
+    const fetchLimits = async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/config/limits`);
+        if (!response.ok) throw new Error('Failed to fetch config limits');
+        const data = await response.json();
+        if (active) {
+          setUploadLimits({
+            maxFilesLimit: data.maxFileUploadLimit || 5,
+            maxFileSizeMB: data.maxFileSizeMB || 15
+          });
+        }
+      } catch (err) {
+        console.warn('[EditableBriefSection] Could not retrieve server upload limits, falling back to local .env config:', err);
+      }
+    };
+    fetchLimits();
+    return () => {
+      active = false;
+    };
+  }, [API_BASE_URL]);
+
   const inputRefs = useRef({});
   const fieldRefs = useRef({});
   const autoSaveTimeoutRef = useRef(null);
@@ -796,8 +825,7 @@ const EditableBriefSection = ({
 
   // Multiple File sequential validation and upload engine
   const processMultipleFiles = async (files) => {
-    const maxFilesLimit = parseInt(import.meta.env.VITE_MAX_FILE_UPLOAD_LIMIT, 10) || 5;
-    const maxFileSizeMB = parseInt(import.meta.env.VITE_MAX_FILE_SIZE_MB, 10) || 15;
+    const { maxFilesLimit, maxFileSizeMB } = uploadLimits;
     const maxFileSizeBytes = maxFileSizeMB * 1024 * 1024;
 
     const currentFilesCount = uploadedFiles.length;
