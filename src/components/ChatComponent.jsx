@@ -1,7 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Loader, SkipForward } from "lucide-react";
 import { useTranslation } from "../hooks/useTranslation";
-import FinancialTemplatesPopup from './FinancialTemplatesPopup';
 
 // Hooks
 import { useChatManager } from '@/components/Chat/hooks/useChatManager';
@@ -28,7 +27,6 @@ const ChatComponent = (props) => {
 
   const { t } = useTranslation();
   const [currentInput, setCurrentInput] = useState('');
-  const [showTemplatesPopup, setShowTemplatesPopup] = useState(false);
   const fileInputRef = useRef(null);
   const messagesEndRef = useRef(null);
 
@@ -101,7 +99,7 @@ const ChatComponent = (props) => {
         isFileUploading={isFileUploading}
         hasUploadedDocument={hasUploadedDocument}
         onUploadDecision={(decision) => console.log(decision)}
-        onShowTemplates={() => setShowTemplatesPopup(true)}
+        onShowTemplates={() => fileInputRef.current?.click()}
       />
 
       {isProcessing && (
@@ -132,13 +130,6 @@ const ChatComponent = (props) => {
         totalCount={questions.length}
         followupAttempts={followupAttempts}
         isProcessing={isProcessing}
-      />
-
-      <FinancialTemplatesPopup 
-        isOpen={showTemplatesPopup} 
-        onClose={() => setShowTemplatesPopup(false)} 
-        onFileUploaded={(file, type) => chatFile.handleFileUpload(file, type)} 
-        isFileUploading={isFileUploading} 
       />
     </div>
   );
