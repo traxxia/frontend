@@ -1486,7 +1486,7 @@
   "auto_detect_template_type": "Auto-Detect Template Type",
   "upload_any_template_auto_detect": "Upload any template and we'll detect the type automatically",
   "choose_file_to_upload": "Choose File to Upload",
-  "supported_formats_excel_csv": "Supported formats: Excel (.xlsx, .xls) and CSV files",
+  "supported_formats_excel_csv": "Supported formats: Excel (.xlsx, .xls) files",
   "upload_any_template_file": "Upload Any Template File",
   "template_information": "Template Information:",
   "how_it_works": "How it works",

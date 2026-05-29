@@ -410,6 +410,7 @@ const EditableBriefSection = ({
   const autoSaveTimeoutRef = useRef(null);
   const fileInputRef = useRef(null);
   const analyzeBtnRef = useRef(null);
+  const fileUploadSectionRef = useRef(null);
   const { t } = useTranslation();
 
   const [userRole, setUserRole] = useState("");
@@ -938,6 +939,73 @@ const EditableBriefSection = ({
     }
   };
 
+  const handleFileUpload = async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+    const allowedTypes = ['application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'];
+    if (!allowedTypes.includes(file.type)) {
+      showToastMessage('Please upload Excel (.xlsx, .xls) files only.', 'error');
+      return;
+    }
+    try {
+      setIsFileUploading(true);
+      const detection = await detectTemplateType(file);
+      if (detection.confidence === 'none' || detection.score < 0.3) {
+        throw new Error('Please check the file format. The uploaded file should be in the proper template file format.');
+      }
+      const validation = await validateAgainstTemplate(file, detection.type);
+      if (!validation.isValid) {
+        throw new Error('Please check the file format. The uploaded file should be in the proper template file format.');
+      }
+      const validationResult = {
+        templateType: detection.type,
+        templateName: validation.templateName,
+        validation: validation,
+        confidence: detection.confidence,
+        uploadMode: 'auto-detect'
+      };
+      await saveFileToDatabase(file, validationResult);
+      
+      const fileId = `file-${Date.now()}`;
+      setUploadedFiles(prev => {
+        const filtered = prev.filter(f => f.type !== 'spreadsheet');
+        return [
+          ...filtered,
+          {
+            id: fileId,
+            name: file.name,
+            size: file.size,
+            uploadDate: new Date().toLocaleDateString(),
+            status: 'success',
+            type: 'spreadsheet',
+            progress: 100
+          }
+        ];
+      });
+
+      if (onUploadedFileUpdate) {
+        onUploadedFileUpdate(file);
+      }
+      if (onAnalysisRegenerate) {
+        setIsFinancialRegenerating(true);
+        onAnalysisRegenerate({
+          onlyFinancial: true,
+          uploadedFile: file,
+          skipConfirmation: true
+        });
+      }
+      showToastMessage(`File "${file.name}" ingested successfully!`, 'success');
+    } catch (error) {
+      console.error('File upload/validation error:', error);
+      showToastMessage(error.message || 'Failed to process file. Please try again.', 'error');
+    } finally {
+      setIsFileUploading(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
   const handleRemoveFile = async (fileId, fileName) => {
     try {
       if (fileId.startsWith('db-strategic-')) {
@@ -1283,6 +1351,10 @@ const EditableBriefSection = ({
     try {
       setIsAnalyzingDocs(true);
 
+      if (fileUploadSectionRef.current) {
+        fileUploadSectionRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+
       // Update status of queued files to 'analyzing'
       setUploadedFiles(prev =>
         prev.map(f =>
@@ -1461,7 +1533,7 @@ const EditableBriefSection = ({
   const successfulIngestionCount = uploadedFiles.filter(f => (f.type === 'pdf' || f.type === 'docx' || f.type === 'excel-strategic') && f.status === 'success').length;
   const uploadedFilesCount = uploadedFiles.filter(f => f.status === 'uploaded').length;
 
-  const strategyFiles = uploadedFiles.filter(f => f.type === 'pdf' || f.type === 'docx' || f.type === 'spreadsheet' || f.type === 'excel-strategic');
+  const strategyFiles = uploadedFiles.filter(f => f.type === 'pdf' || f.type === 'docx' || f.type === 'excel-strategic');
   const financialFiles = uploadedFiles.filter(f => f.type === 'spreadsheet');
 
   const initialCountStr = `${initialFields.filter(f => cleanValue(f.value).trim() !== '').length}/${initialFields.length}`;
@@ -1551,7 +1623,7 @@ const EditableBriefSection = ({
           )}
 
           {/* 2. Multiple File Upload Section */}
-          <div className="brief-card upload-docs-card">
+          <div ref={fileUploadSectionRef} className="brief-card upload-docs-card">
             <div 
               className={`brief-card-header accordion-header ${!leftPanelExpanded.fileUpload ? 'collapsed' : ''}`}
               onClick={() => { if (isAnyApiActive) return; setLeftPanelExpanded(prev => ({ ...prev, fileUpload: !prev.fileUpload })); }}
@@ -1998,7 +2070,12 @@ const EditableBriefSection = ({
           onClose={() => setShowTemplatesPopup(false)}
           isFileUploading={isFileUploading}
           onFileUploaded={(file, validation) => {
-            processMultipleFiles([file], true);
+            const mockEvent = {
+              target: {
+                files: [file]
+              }
+            };
+            handleFileUpload(mockEvent);
             setShowTemplatesPopup(false);
           }}
           fileInputRef={fileInputRef}
