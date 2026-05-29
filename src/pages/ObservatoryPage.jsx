@@ -57,6 +57,10 @@ const COST_RATES = {
     input: 3.00,
     output: 15.00
   },
+  'claude-sonnet-4-6': {
+    input: 3.00,
+    output: 15.00
+  },
   'claude-3-opus': {
     input: 15.00,
     output: 75.00
@@ -126,6 +130,14 @@ const COST_RATES = {
     output: 0.20
   },
   'gemini-3.0-pro': {
+    input: 2.50,
+    output: 7.50
+  },
+  'gemini-3.1-pro': {
+    input: 2.50,
+    output: 7.50
+  },
+  'gemini-3.1-pro-preview': {
     input: 2.50,
     output: 7.50
   },
@@ -338,8 +350,8 @@ function SessionCard({
 
       {open && <div className="obs-timeline">
           {loading && <div className="obs-empty observatory-page--s6"><div className="obs-spinner" /></div>}
-          {!loading && entries.map((e, i) => <div key={e._id} className={`obs-timeline-item ${selectedEntry?._id === e._id ? 'active' : ''}`} onClick={() => onSelectEntry(e)}>
-              <div className="obs-timeline-item__num">{i + 1}</div>
+          {!loading && [...entries].reverse().map((e, i) => <div key={e._id} className={`obs-timeline-item ${selectedEntry?._id === e._id ? 'active' : ''}`} onClick={() => onSelectEntry(e)}>
+              <div className="obs-timeline-item__num">{entries.length - i}</div>
               <div className="obs-timeline-item__info">
                 <div className="obs-timeline-item__stage">{e.stage}</div>
                 <div className="obs-timeline-item__meta">
