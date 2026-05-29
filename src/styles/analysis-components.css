@@ -513,12 +513,9 @@ body {
 }
 
 .category-section {
-  position: relative;
-  padding: 10px 15px 20px;
-  border-radius: 15px;
-  background: linear-gradient(145deg, rgba(255, 255, 255, 0.8), rgba(240, 242, 255, 0.9));
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.05);
-  margin-bottom: 30px;
+  position: relative; 
+  border-radius: 15px; 
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.05); 
   overflow: hidden;
 }
 

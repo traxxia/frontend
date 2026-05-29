@@ -1,8 +1,6 @@
 import React, { useMemo, useCallback } from "react";
 import { Target, Award, TrendingUp, Users, Building, Zap, Loader, Lock, ChevronDown, ChevronUp } from "lucide-react";
 import SwotAnalysis from "./SwotAnalysis";
-import PurchaseCriteria from "./PurchaseCriteria";
-import LoyaltyNPS from "./LoyaltyNPS";
 import PortersFiveForces from "./PortersFiveForces";
 import PestelAnalysis from "./PestelAnalysis";
 import FullSWOTPortfolio from "./FullSWOTPortfolio";
@@ -282,26 +280,6 @@ const AnalysisContentManager = (props) => {
       refKey: "competitiveAdvantageRef",
       pdfComponent: "competitive-advantage"
     },
-    purchaseCriteria: {
-      slug: "purchase-criteria",
-      component: PurchaseCriteria,
-      title: t("Purchase_Criteria"),
-      description: t("Key_factors_influencing_customer_buying_decisions"),
-      category: "customer",
-      dataKey: "purchaseCriteriaData",
-      refKey: "purchaseCriteriaRef",
-      pdfComponent: "purchase-criteria"
-    },
-    loyaltyNPS: {
-      slug: "loyalty-nps",
-      component: LoyaltyNPS,
-      title: t("Loyalty_&_NPS"),
-      description: t("Customer_loyalty_metrics_and_Net_Promoter_Score_analysis"),
-      category: "customer",
-      dataKey: "loyaltyNPSData",
-      refKey: "loyaltyNpsRef",
-      pdfComponent: "loyalty-nps"
-    },
     expandedCapability: {
       slug: "expanded-capability",
       component: ExpandedCapabilityHeatmap,
@@ -345,8 +323,6 @@ const AnalysisContentManager = (props) => {
   }), [t]);
   const API_TO_ANALYSIS_MAP = useMemo(() => ({
     'find': 'swot',
-    'purchase-criteria': 'purchaseCriteria',
-    'loyalty-metrics': 'loyaltyNPS',
     'porter-analysis': 'porters',
     'pestel-analysis': 'pestel',
     'full-swot-portfolio': 'fullSwot',
@@ -382,8 +358,6 @@ const AnalysisContentManager = (props) => {
     userAnswers: propsUserAnswers,
     businessData: propsBusinessData,
     swotAnalysisResult,
-    purchaseCriteriaData,
-    loyaltyNPSData,
     portersData: propsPortersData,
     pestelData: propsPestelData,
     fullSwotData: propsFullSwotData,
@@ -406,8 +380,6 @@ const AnalysisContentManager = (props) => {
     showImproveButton,
     readOnly,
     apiService,
-    setPurchaseCriteriaData,
-    setLoyaltyNPSData,
     uploadedFileForAnalysis,
     onRedirectToChat,
     isMobile,
@@ -416,8 +388,6 @@ const AnalysisContentManager = (props) => {
     documentInfo,
     showToastMessage,
     swotRef,
-    purchaseCriteriaRef,
-    loyaltyNpsRef,
     portersRef,
     pestelRef,
     fullSwotRef,
@@ -437,8 +407,6 @@ const AnalysisContentManager = (props) => {
 
   const {
     swotAnalysis,
-    purchaseCriteria,
-    loyaltyNPS,
     portersData,
     pestelData,
     fullSwotData,
@@ -523,8 +491,6 @@ const AnalysisContentManager = (props) => {
   const renderAnalysisCard = useCallback((analysisKey, config) => {
     const dataMap = {
       swot: swotAnalysisResult || swotAnalysis,
-      purchaseCriteria: purchaseCriteriaData || purchaseCriteria,
-      loyaltyNPS: loyaltyNPSData || loyaltyNPS,
       porters: propsPortersData || portersData,
       pestel: propsPestelData || pestelData,
       fullSwot: propsFullSwotData || fullSwotData,
@@ -546,8 +512,6 @@ const AnalysisContentManager = (props) => {
     const Component = config.component;
     const refsMap = {
       swotRef,
-      purchaseCriteriaRef,
-      loyaltyNpsRef,
       portersRef,
       pestelRef,
       fullSwotRef,
@@ -575,10 +539,6 @@ const AnalysisContentManager = (props) => {
         }} selectedBusinessId={selectedBusinessId} onRedirectToBrief={handleRedirectToBrief} isExpanded={expandedCards.has(cardId)} streamingManager={streamingManager} cardId={cardId} hideImproveButton={hideImproveButton} showImproveButton={showImproveButton} readOnly={readOnly} {...analysisKey === 'swot' && {
           analysisResult: data,
           saveAnalysisToBackend: (d, type) => apiService.saveAnalysisToBackend(d, type, selectedBusinessId)
-        }} {...analysisKey === 'purchaseCriteria' && {
-          onDataGenerated: setPurchaseCriteriaData
-        }} {...analysisKey === 'loyaltyNPS' && {
-          onDataGenerated: setLoyaltyNPSData
         }} {...config.category === 'costs-financial' && {
           uploadedFile: uploadedFileForAnalysis,
           onRedirectToChat: onRedirectToChat,
@@ -590,13 +550,13 @@ const AnalysisContentManager = (props) => {
         }} />
         </div>
       </MemoizedAnalysisCard>;
-  }, [questions, userAnswers, businessName, selectedBusinessId, swotAnalysis, purchaseCriteria, loyaltyNPS, portersData, pestelData, fullSwotData, competitiveAdvantage, strategicData, expandedCapability, strategicRadar, productivityData, maturityData, competitiveLandscape, coreAdjacency, profitabilityData, growthTrackerData, liquidityEfficiencyData, investmentPerformanceData, leverageRiskData, isTypeRegenerating, isAnalysisLoading, expandedCards, highlightedCard, toggleCard, streamingManager, hideRegenerateButtons, canRegenerate, hasInsightAccess, handleRedirectToBrief, createSimpleRegenerationHandler, hideImproveButton, showImproveButton, readOnly, apiService, uploadedFileForAnalysis, onRedirectToChat, isMobile, setActiveTab, hasUploadedDocument, documentInfo, swotRef, purchaseCriteriaRef, loyaltyNpsRef, portersRef, pestelRef, fullSwotRef, competitiveAdvantageRef, expandedCapabilityRef, strategicRadarRef, productivityRef, maturityScoreRef, profitabilityRef, growthTrackerRef, liquidityEfficiencyRef, investmentPerformanceRef, leverageRiskRef, competitiveLandscapeRef, coreAdjacencyRef, swotAnalysisResult, purchaseCriteriaData, loyaltyNPSData, propsPortersData, propsPestelData, propsFullSwotData, competitiveAdvantageData, expandedCapabilityData, strategicRadarData, propsProductivityData, propsMaturityData, competitiveLandscapeData, coreAdjacencyData, propsProfitabilityData, propsGrowthTrackerData, propsLiquidityEfficiencyData, propsInvestmentPerformanceData, propsLeverageRiskData, propsStrategicData, setPurchaseCriteriaData, setLoyaltyNPSData]);
+  }, [questions, userAnswers, businessName, selectedBusinessId, swotAnalysis, portersData, pestelData, fullSwotData, competitiveAdvantage, strategicData, expandedCapability, strategicRadar, productivityData, maturityData, competitiveLandscape, coreAdjacency, profitabilityData, growthTrackerData, liquidityEfficiencyData, investmentPerformanceData, leverageRiskData, isTypeRegenerating, isAnalysisLoading, expandedCards, highlightedCard, toggleCard, streamingManager, hideRegenerateButtons, canRegenerate, hasInsightAccess, handleRedirectToBrief, createSimpleRegenerationHandler, hideImproveButton, showImproveButton, readOnly, apiService, uploadedFileForAnalysis, onRedirectToChat, isMobile, setActiveTab, hasUploadedDocument, documentInfo, swotRef, portersRef, pestelRef, fullSwotRef, competitiveAdvantageRef, expandedCapabilityRef, strategicRadarRef, productivityRef, maturityScoreRef, profitabilityRef, growthTrackerRef, liquidityEfficiencyRef, investmentPerformanceRef, leverageRiskRef, competitiveLandscapeRef, coreAdjacencyRef, swotAnalysisResult, propsPortersData, propsPestelData, propsFullSwotData, competitiveAdvantageData, expandedCapabilityData, strategicRadarData, propsProductivityData, propsMaturityData, competitiveLandscapeData, coreAdjacencyData, propsProfitabilityData, propsGrowthTrackerData, propsLiquidityEfficiencyData, propsInvestmentPerformanceData, propsLeverageRiskData, propsStrategicData]);
   const unlockedFeatures = useMemo(() => phaseManager?.getUnlockedFeatures?.() || {}, [phaseManager]);
   const currentAnalyses = useMemo(() => {
     const sets = {
-      initial: ['swot', 'purchaseCriteria', 'loyaltyNPS', 'porters', 'pestel'],
-      essential: ['purchaseCriteria', 'loyaltyNPS', 'porters', 'pestel', 'fullSwot', 'competitiveAdvantage', 'expandedCapability', 'strategicRadar', 'productivityMetrics', 'maturityScore', 'competitiveLandscape', 'coreAdjacency'],
-      advanced: ['purchaseCriteria', 'loyaltyNPS', 'porters', 'pestel', 'fullSwot', 'competitiveAdvantage', 'expandedCapability', 'strategicRadar', 'productivityMetrics', 'maturityScore', 'competitiveLandscape', 'coreAdjacency'],
+      initial: ['swot', 'porters', 'pestel'],
+      essential: ['porters', 'pestel', 'fullSwot', 'competitiveAdvantage', 'expandedCapability', 'strategicRadar', 'productivityMetrics', 'maturityScore', 'competitiveLandscape', 'coreAdjacency'],
+      advanced: ['porters', 'pestel', 'fullSwot', 'competitiveAdvantage', 'expandedCapability', 'strategicRadar', 'productivityMetrics', 'maturityScore', 'competitiveLandscape', 'coreAdjacency'],
       financial: ['profitabilityAnalysis', 'growthTracker', 'liquidityEfficiency', 'investmentPerformance', 'leverageRisk']
     };
     const activeAnalyses = new Set();
@@ -648,7 +608,7 @@ const AnalysisContentManager = (props) => {
   }
   const financialAnalyses = ['profitabilityAnalysis', 'growthTracker', 'liquidityEfficiency', 'investmentPerformance', 'leverageRisk'];
   const isFinancialRegenerating = financialAnalyses.some(type => isAnalysisLoading(type)) || isTypeRegenerating('financial');
-  const isMainAnalysisRegenerating = ['swot', 'purchaseCriteria', 'loyaltyNPS', 'porters', 'pestel', 'fullSwot', 'competitiveAdvantage', 'expandedCapability', 'strategicRadar', 'productivityMetrics', 'maturityScore', 'competitiveLandscape', 'coreAdjacency'].some(type => isAnalysisLoading(type)) || isTypeRegenerating('initial') || isTypeRegenerating('essential') || isTypeRegenerating('advanced');
+  const isMainAnalysisRegenerating = ['swot', 'porters', 'pestel', 'fullSwot', 'competitiveAdvantage', 'expandedCapability', 'strategicRadar', 'productivityMetrics', 'maturityScore', 'competitiveLandscape', 'coreAdjacency'].some(type => isAnalysisLoading(type)) || isTypeRegenerating('initial') || isTypeRegenerating('essential') || isTypeRegenerating('advanced');
   return <div className="modern-analysis-container">
       {(isFinancialRegenerating || isMainAnalysisRegenerating) && <div className="analysis-regenerating-banner analysis-content-manager--s5">
           <Loader size={16} className="antigravity-rotating" />

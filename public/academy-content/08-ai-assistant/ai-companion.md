@@ -44,8 +44,7 @@ Based on the field you are editing or the phase you are in, the AI will suggest 
 -   "Help me refine the project description."
 -   "What risks should I consider for this initiative?"
 -   "Suggest success metrics for this strategic bet."
-
----
+ 
 
 > [!TIP] Use the AI as a "sparring partner" to challenge your strategic assumptions and help you write more professional business descriptions.
  

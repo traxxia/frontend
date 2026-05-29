@@ -13,12 +13,25 @@ const getAuthHeaders = () => {
 
 export const answerService = {
 
-    async createAnswer(business_id, question_id, answer) {
+    async analyzeStrategicDocumentsBackend(business_id) {
+        try {
+            const response = await axios.post(`${API_BASE_URL}/api/businesses/${business_id}/strategic-document/analyze`, {}, {
+                headers: getAuthHeaders()
+            });
+            return response.data;
+        } catch (error) {
+            console.error('Error analyzing strategic documents on backend:', error);
+            throw error;
+        }
+    },
+
+    async createAnswer(business_id, question_id, answer, extraFields = {}) {
         try {
             const response = await axios.post(`${API_BASE_URL}/api/answers`, {
                 business_id,
                 question_id,
-                answer
+                answer,
+                ...extraFields
             }, {
                 headers: getAuthHeaders()
             });
@@ -53,10 +66,11 @@ export const answerService = {
         }
     },
 
-    async updateAnswer(id, answer) {
+    async updateAnswer(id, answer, extraFields = {}) {
         try {
             const response = await axios.put(`${API_BASE_URL}/api/answers/${id}`, {
-                answer
+                answer,
+                ...extraFields
             }, {
                 headers: getAuthHeaders()
             });

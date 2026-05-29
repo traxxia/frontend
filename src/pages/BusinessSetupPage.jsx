@@ -64,8 +64,6 @@ const CARD_TO_CATEGORY_MAP = {
   "porters": "context-industry",
   "pestel": "context-industry",
   "competitive-advantage": "customer",
-  "purchase-criteria": "customer",
-  "loyalty-nps": "customer",
   "expanded-capability": "capabilities",
   "maturity": "capabilities",
   "competitive-landscape": "competition",
@@ -74,8 +72,6 @@ const CARD_TO_CATEGORY_MAP = {
 
 const CARD_ID_MAP = {
   "swot_analysis": "swot",
-  "Purchase_Criteria": "purchase-criteria",
-  "Loyalty_&_NPS": "loyalty-nps",
   "Porters_Five_Forces": "porters",
   "PESTEL_Analysis": "pestel",
   "Full_SWOT_Portfolio": "full-swot",
@@ -196,7 +192,7 @@ const BusinessSetupPage = () => {
     setQuestions, setQuestionsLoaded, initializeBusinessData, setUserAnswer, setAnalysisData, fetchAnalysisData,
     regeneratePhase, regenerateIndividualAnalysis,
     resetAnalysis,
-    swotAnalysis, purchaseCriteria, loyaltyNPS, portersData, pestelData,
+    swotAnalysis, portersData, pestelData,
     fullSwotData, competitiveAdvantage, strategicData, expandedCapability,
     strategicRadar, productivityData, maturityData, competitiveLandscape,
     coreAdjacency, profitabilityData, growthTrackerData, liquidityEfficiencyData,
@@ -214,8 +210,6 @@ const BusinessSetupPage = () => {
     regeneratePhase: state.regeneratePhase,
     regenerateIndividualAnalysis: state.regenerateIndividualAnalysis,
     swotAnalysis: state.swotAnalysis,
-    purchaseCriteria: state.purchaseCriteria,
-    loyaltyNPS: state.loyaltyNPS,
     portersData: state.portersData,
     pestelData: state.pestelData,
     fullSwotData: state.fullSwotData,
@@ -239,7 +233,7 @@ const BusinessSetupPage = () => {
   })));
 
   // Regenerating flag aliases
-  const isAnalysisRegenerating = isTypeRegenerating('swot') || isTypeRegenerating('purchaseCriteria') || isTypeRegenerating('loyaltyNPS') || isTypeRegenerating('porters') || isTypeRegenerating('pestel') || isTypeRegenerating('initial') || isTypeRegenerating('essential') || isTypeRegenerating('advanced');
+  const isAnalysisRegenerating = isTypeRegenerating('swot') || isTypeRegenerating('porters') || isTypeRegenerating('pestel') || isTypeRegenerating('initial') || isTypeRegenerating('essential') || isTypeRegenerating('advanced');
   const isStrategicRegenerating = isTypeRegenerating('strategic');
   const isFullSwotRegenerating = isTypeRegenerating('fullSwot');
   const isCompetitiveAdvantageRegenerating = isTypeRegenerating('competitiveAdvantage');
@@ -301,8 +295,6 @@ const BusinessSetupPage = () => {
   };
 
   const swotRef = useRef(null);
-  const purchaseCriteriaRef = useRef(null);
-  const loyaltyNpsRef = useRef(null);
   const dropdownRef = useRef(null);
   const isRegeneratingRef = useRef(false);
   const portersRef = useRef(null);
@@ -563,6 +555,7 @@ const BusinessSetupPage = () => {
           // 2. Handle Questions and Answers mapping
           let finalAnswers = {};
           let finalCompleted = [];
+          let answersDetailsMap = {};
 
           if (responseData.questions?.length > 0) {
             setQuestions(responseData.questions); // This internally sets questionsLoaded: true
@@ -575,6 +568,14 @@ const BusinessSetupPage = () => {
                 const qIdStr = String(ans.question_id);
                 answersMap[qIdStr] = ans.answer;
                 answerIdsMap[qIdStr] = ans._id;
+                answersDetailsMap[qIdStr] = {
+                  confidence: ans.confidence,
+                  status: ans.status,
+                  evidence: ans.evidence,
+                  ai_answer: ans.ai_answer,
+                  user_answer: ans.user_answer,
+                  previous_answer: ans.previous_answer
+                };
               }
             });
 
@@ -603,6 +604,7 @@ const BusinessSetupPage = () => {
           initializeBusinessData({
             questions: responseData.questions || [],
             userAnswers: finalAnswers,
+            answersDetails: answersDetailsMap,
             completedQuestions: finalCompleted,
             analysisUpdates: analysisUpdates || {},
             questionsLoaded: true
@@ -679,8 +681,6 @@ const BusinessSetupPage = () => {
 
   const stateSetters = useMemo(() => ({
     setSwotAnalysisResult: (d) => setAnalysisData('swot', d),
-    setPurchaseCriteriaData: (d) => setAnalysisData('purchaseCriteria', d),
-    setLoyaltyNPSData: (d) => setAnalysisData('loyaltyNPS', d),
     setPortersData: (d) => setAnalysisData('porters', d),
     setPestelData: (d) => setAnalysisData('pestel', d),
     setFullSwotData: (d) => setAnalysisData('fullSwot', d),
@@ -1114,14 +1114,13 @@ const BusinessSetupPage = () => {
 
     const categoryOptions = {
       initial: {
-        "Context/Industry": ["swot_analysis", "Porters_Five_Forces", "PESTEL_Analysis"],
-        "Customer": ["Purchase_Criteria", "Loyalty_&_NPS"]
+        "Context/Industry": ["swot_analysis", "Porters_Five_Forces", "PESTEL_Analysis"]
       },
       essential: {
         "Current Strategy": ["Core"],
         "Costs/Financial": ["Productivity_Metrics"],
         "Context/Industry": ["Porters_Five_Forces", "PESTEL_Analysis", "Full_SWOT_Portfolio", "Strategic_Positioning_Radar"],
-        "Customer": ["Purchase_Criteria", "Loyalty_&_NPS", "Competitive_Advantage_Matrix"],
+        "Customer": ["Competitive_Advantage_Matrix"],
         "Capabilities": ["Capability_Heatmap", "Maturity_Score"],
         "Competition": ["Competitive_Landscape"]
       },
@@ -1129,7 +1128,7 @@ const BusinessSetupPage = () => {
         "Current Strategy": ["Core"],
         "Costs/Financial": ["Productivity_Metrics"],
         "Context/Industry": ["Porters_Five_Forces", "PESTEL_Analysis", "Full_SWOT_Portfolio", "Strategic_Positioning_Radar"],
-        "Customer": ["Purchase_Criteria", "Loyalty_&_NPS", "Competitive_Advantage_Matrix"],
+        "Customer": ["Competitive_Advantage_Matrix"],
         "Capabilities": ["Capability_Heatmap", "Maturity_Score"],
         "Competition": ["Competitive_Landscape"]
       }
@@ -1213,7 +1212,7 @@ const BusinessSetupPage = () => {
   const currentPhase = getCurrentPhase();
   const storeLoadingStates = useUIStore(state => state.loadingStates);
 
-  const hasAnalysisData = !!(swotAnalysis || purchaseCriteria || loyaltyNPS || portersData ||
+  const hasAnalysisData = !!(swotAnalysis || portersData ||
     pestelData || fullSwotData || competitiveAdvantage || expandedCapability ||
     strategicRadar || productivityData || maturityData || competitiveLandscape ||
     coreAdjacency || profitabilityData || growthTrackerData);
@@ -1236,7 +1235,7 @@ const BusinessSetupPage = () => {
     collapsedCategories, setCollapsedCategories,
     highlightedCard,
     uploadedFileForAnalysis,
-    swotRef, purchaseCriteriaRef, loyaltyNpsRef, portersRef, pestelRef,
+    swotRef, portersRef, pestelRef,
     fullSwotRef, competitiveAdvantageRef, expandedCapabilityRef, strategicRadarRef,
     productivityRef, maturityScoreRef, profitabilityRef, growthTrackerRef,
     liquidityEfficiencyRef, investmentPerformanceRef, leverageRiskRef,
@@ -2412,6 +2411,7 @@ const BusinessSetupPage = () => {
             closeModal('pmfOnboarding');
             handleExecutiveTabClick();
             setPmfRefreshTrigger(prev => prev + 1);
+            window.dispatchEvent(new CustomEvent("pmfOnboardingCompleted"));
           }}
         />
       )}

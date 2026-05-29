@@ -11,8 +11,7 @@ Traxxia's success is measured by how quickly you gain clarity. We focus on:
 *   **Recognition over Analysis**: immediately recognize your business reality in the AI-generated data.
 *   **Weekly Habit**: a concise output that encourages weekly updates to your execution plan.
 
-> [!IMPORTANT]
-> The goal is to establish a strong "Good Enough" baseline quickly, which you can then refine over time as your strategy evolves.
+> [!IMPORTANT]  The goal is to establish a strong "Good Enough" baseline quickly, which you can then refine over time as your strategy evolves.
  
 
 ## 2. The Onboarding Journey

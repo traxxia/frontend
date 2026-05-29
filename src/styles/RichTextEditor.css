@@ -1,0 +1,195 @@
+/* Premium Rich Text Editor Styling */
+
+.rich-text-editor-container {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid #d1d5db;
+  border-radius: 12px;
+  background: #ffffff;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  margin-bottom: 12px;
+}
+
+.rich-text-editor-container:focus-within {
+  border-color: #4f46e5;
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15), 0 4px 16px rgba(79, 70, 229, 0.05);
+}
+
+/* Toolbar Styling */
+.rte-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 8px;
+  background: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+  user-select: none;
+}
+
+.rte-toolbar-group {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.rte-toolbar-divider {
+  width: 1px;
+  height: 18px;
+  background-color: #e2e8f0;
+  margin: 0 6px;
+}
+
+/* Toolbar Buttons */
+.rte-btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 28px !important;
+  height: 28px !important;
+  min-width: 28px !important;
+  min-height: 28px !important;
+  padding: 0 !important;
+  border: none !important;
+  background-color: transparent !important;
+  background: transparent !important;
+  color: #475569 !important;
+  border-radius: 6px !important;
+  cursor: pointer !important;
+  box-shadow: none !important;
+  transform: none !important;
+  transition: all 0.2s ease !important;
+}
+
+.rte-btn:hover {
+  background-color: #f1f5f9 !important;
+  color: #0f172a !important;
+}
+
+.rte-btn.active {
+  background-color: #e0e7ff !important;
+  color: #4f46e5 !important;
+}
+
+.rte-btn:disabled {
+  opacity: 0.4 !important;
+  cursor: not-allowed !important;
+}
+
+/* Content Area */
+.rte-content-area {
+  min-height: 120px;
+  max-height: 360px;
+  overflow-y: auto;
+  padding: 12px 16px;
+  color: #1e293b;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.rte-content-area .ProseMirror {
+  outline: none;
+  min-height: 100px;
+}
+
+.rte-content-area .ProseMirror p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  color: #94a3b8;
+  pointer-events: none;
+  height: 0;
+}
+
+/* Typography styles inside editor */
+.rte-content-area .ProseMirror h1 {
+  font-size: 1.6em;
+  font-weight: 700;
+  margin-top: 0.8em;
+  margin-bottom: 0.4em;
+  color: #0f172a;
+}
+
+.rte-content-area .ProseMirror h2 {
+  font-size: 1.4em;
+  font-weight: 600;
+  margin-top: 0.8em;
+  margin-bottom: 0.4em;
+  color: #0f172a;
+}
+
+.rte-content-area .ProseMirror h3 {
+  font-size: 1.2em;
+  font-weight: 600;
+  margin-top: 0.8em;
+  margin-bottom: 0.4em;
+  color: #0f172a;
+}
+
+.rte-content-area .ProseMirror ul {
+  list-style-type: disc;
+  padding-left: 20px;
+  margin-bottom: 12px;
+}
+
+.rte-content-area .ProseMirror ol {
+  list-style-type: decimal;
+  padding-left: 20px;
+  margin-bottom: 12px;
+}
+
+.rte-content-area .ProseMirror li {
+  margin-bottom: 4px;
+}
+
+.rte-content-area .ProseMirror p {
+  margin-bottom: 10px;
+}
+
+/* Dark Mode Overrides */
+[data-theme="dark"] .rich-text-editor-container {
+  border-color: #334155;
+  background: #0f172a;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+[data-theme="dark"] .rich-text-editor-container:focus-within {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.25);
+}
+
+[data-theme="dark"] .rte-toolbar {
+  background: #1e293b;
+  border-bottom-color: #334155;
+}
+
+[data-theme="dark"] .rte-toolbar-divider {
+  background-color: #334155;
+}
+
+[data-theme="dark"] .rte-btn {
+  background-color: transparent !important;
+  background: transparent !important;
+  color: #94a3b8 !important;
+}
+
+[data-theme="dark"] .rte-btn:hover {
+  background-color: #334155 !important;
+  color: #f8fafc !important;
+}
+
+[data-theme="dark"] .rte-btn.active {
+  background-color: rgba(99, 102, 241, 0.2) !important;
+  color: #818cf8 !important;
+}
+
+[data-theme="dark"] .rte-content-area {
+  color: #cbd5e1;
+}
+
+[data-theme="dark"] .rte-content-area .ProseMirror h1,
+[data-theme="dark"] .rte-content-area .ProseMirror h2,
+[data-theme="dark"] .rte-content-area .ProseMirror h3 {
+  color: #f8fafc;
+}
