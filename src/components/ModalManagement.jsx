@@ -330,7 +330,17 @@ const ModalManagement = ({ onToast }) => {
           </p>
         </div>
 
-        <div className="modal-management-actions">
+        <div className="modal-management-actions d-flex align-items-center gap-2">
+          {isSaved ? (
+            <Badge bg="success" className="d-inline-flex align-items-center gap-1 px-3 py-2 rounded-2 fw-semibold shadow-sm">
+              <CheckCircle size={14} /> Saved to database
+            </Badge>
+          ) : (
+            <Badge bg="secondary" className="px-3 py-2 rounded-2 fw-semibold">
+              Unsaved changes
+            </Badge>
+          )}
+
           <Button
             variant="primary"
             className="d-inline-flex align-items-center gap-2 px-4 py-2 rounded-3 fw-semibold shadow-sm"
@@ -452,18 +462,6 @@ const ModalManagement = ({ onToast }) => {
         </Col>
       </Row>
 
-      {/* Footer Changes Badge */}
-      <div className="mt-4 d-flex align-items-center gap-2 flex-wrap">
-        {isSaved ? (
-          <Badge bg="success" className="d-inline-flex align-items-center gap-1 px-3 py-2 rounded-2 fw-semibold shadow-sm">
-            <CheckCircle size={14} /> Saved and applied to database
-          </Badge>
-        ) : (
-          <Badge bg="secondary" className="px-3 py-2 rounded-2 fw-semibold">
-            Unsaved changes present
-          </Badge>
-        )}
-      </div>
     </div>
   );
 };
