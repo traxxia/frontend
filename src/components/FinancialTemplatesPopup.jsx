@@ -186,9 +186,9 @@ const FinancialTemplatesPopup = ({
   const handleFileUpload = event => {
     const file = event.target.files[0];
     if (!file) return;
-    const allowedTypes = ['application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'text/csv'];
+    const allowedTypes = ['application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'];
     if (!allowedTypes.includes(file.type)) {
-      alert('Please upload Excel (.xlsx, .xls) or CSV files only.');
+      alert('Please upload Excel (.xlsx, .xls) files only.');
       return;
     }
     if (onFileUploaded) {
@@ -220,7 +220,7 @@ const FinancialTemplatesPopup = ({
         </div>
 
         {}
-        {!readOnly && <input ref={fileInputRef} type="file" accept=".xlsx,.xls,.csv" onChange={handleFileUpload} className="financial-templates-popup--s7" />}
+        {!readOnly && <input ref={fileInputRef} type="file" accept=".xlsx,.xls" onChange={handleFileUpload} className="financial-templates-popup--s7" />}
 
         <div className="financial-templates-popup--s8">
           {}

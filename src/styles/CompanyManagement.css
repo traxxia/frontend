@@ -1855,7 +1855,7 @@ body.modal-open {
   top: 50px;
   right: 0;
   width: 360px;
-  height: 100vh;
+  height: calc(100vh - 50px);
   background: white;
   box-shadow: -4px 0 30px rgba(0, 0, 0, 0.15);
   z-index: 999999;
@@ -1866,6 +1866,8 @@ body.modal-open {
   transform: translateX(100%);
   transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   box-sizing: border-box;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .reference-drawer.open {
@@ -1873,6 +1875,10 @@ body.modal-open {
 }
 
 .drawer-header {
+  position: sticky;
+  top: -14px;
+  background: white;
+  z-index: 10;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -1882,8 +1888,9 @@ body.modal-open {
 }
 
 .drawer-content {
-  flex: 1;
-  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
 }
 
 .ledger-grid {
@@ -2673,22 +2680,47 @@ body.modal-open {
 /* ── Split Workspace Layout ── */
 .brief-split-layout {
   display: grid;
-  grid-template-columns: 220px 1fr;
+  grid-template-columns: 250px 1fr;
   gap: 10px;
   margin-top: 16px;
   align-items: start;
 }
 
+/* Ensure the parent scrolling ancestors don't intercept sticky positioning */
+.info-panel-content:has(.simple-workspace) {
+  overflow: visible !important;
+}
+
 /* Left column sticks in viewport while right column scrolls */
 .brief-left-column {
   position: sticky;
-  top: 60px;
-  max-height: calc(100vh - 60px);
+  top: 80px;
+  max-height: calc(100vh - 160px);
   overflow-y: auto;
   overflow-x: hidden;
   scrollbar-width: thin;
   scrollbar-color: #e2e8f0 transparent;
   align-self: start;
+  overscroll-behavior-y: contain;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+}
+
+.brief-left-column::-webkit-scrollbar {
+  width: 5px;
+}
+
+.brief-left-column::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.brief-left-column::-webkit-scrollbar-thumb {
+  background-color: #cbd5e1;
+  border-radius: 10px;
+}
+
+.brief-left-column::-webkit-scrollbar-thumb:hover {
+  background-color: #94a3b8;
 }
 
 .brief-right-column {
@@ -3251,7 +3283,7 @@ body.modal-open {
 .sqc-summary {
   display: grid;
   grid-template-columns: 36px 1fr auto;
-  align-items: center;
+  align-items: start;
   gap: 8px;
   padding: 10px 14px;
   cursor: pointer;
@@ -3271,9 +3303,10 @@ body.modal-open {
 .sqc-left {
   display: flex;
   align-items: center;
-  align-self: center;
+  align-self: start;
   gap: 6px;
   flex-shrink: 0;
+  margin-top: 3px;
 }
 
 .sqc-num {
@@ -3309,9 +3342,7 @@ body.modal-open {
   font-size: 14.5px;
   font-weight: 600;
   color: #1e293b;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  white-space: normal;
   line-height: 1.35;
 }
 
@@ -3343,9 +3374,10 @@ body.modal-open {
 .sqc-right {
   display: flex;
   align-items: center;
-  align-self: center;
+  align-self: start;
   gap: 6px;
   flex-shrink: 0;
+  margin-top: 4px;
 }
 
 .sqc-conf-dot {
