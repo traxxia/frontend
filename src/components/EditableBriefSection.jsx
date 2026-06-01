@@ -51,40 +51,22 @@ const getQuestionIntelligence = (field, docName, details) => {
     const conf = details.confidence >= 0.7 ? 'High' : details.confidence >= 0.5 ? 'Medium' : 'Low';
     const color = conf === 'High' ? '#10b981' : conf === 'Medium' ? '#f59e0b' : '#ef4444';
     
-    let docCitation = docName || 'Strategic Document';
-    let excerpt = '';
-    
-    if (Array.isArray(details.evidence) && details.evidence.length > 0) {
-      const firstEv = details.evidence[0];
-      const sourceDoc = firstEv.document_name || docName || 'Strategic Document';
-      docCitation = `${sourceDoc} (Page ${firstEv.page || 1})`;
-      excerpt = firstEv.text ? `"...${firstEv.text}..."` : '';
-    }
-
     return {
       conf,
       color,
-      doc: docCitation,
-      excerpt,
       original,
-      hasCitation: true
+      hasCitation: true,
+      evidence: Array.isArray(details.evidence) ? details.evidence : []
     };
   }
   
   if (details.status === 'NOT_FOUND') {
-    let docCitation = docName || 'Strategic Document';
-    if (Array.isArray(details.evidence) && details.evidence.length > 0) {
-      const firstEv = details.evidence[0];
-      docCitation = firstEv.document_name || docName || 'Strategic Document';
-    }
-    const finalOriginal = original || 'Not found';
     return {
       conf: 'None',
       color: '#9ca3af',
-      doc: docCitation,
-      excerpt: 'No relevant information found in the document.',
-      original: finalOriginal,
-      hasCitation: true
+      original: original || 'Not found',
+      hasCitation: true,
+      evidence: Array.isArray(details.evidence) ? details.evidence : []
     };
   }
 
@@ -159,9 +141,9 @@ const SimpleQuestionCard = ({
       className={`sqc-row ${isHighlighted ? 'highlighted' : ''} ${isEditing ? 'sqc-editing' : ''} ${effectiveExpanded ? 'sqc-expanded' : ''}`}
     >
       {/* Compact summary row — always visible */}
-      <div className="sqc-summary" onClick={() => !isEditing && setIsExpanded(prev => !prev)}>
+      <div className="sqc-summary" style={{ display: 'grid', gridTemplateColumns: '36px 1fr auto', alignItems: 'start', gap: '8px', minHeight: '46px' }} onClick={() => !isEditing && setIsExpanded(prev => !prev)}>
         {/* Left: number + status dot */}
-        <div className="sqc-left">
+        <div className="sqc-left" style={{ display: 'flex', alignItems: 'center', alignSelf: 'start', marginTop: '5px', gap: '6px', flexShrink: 0 }}>
           <span className="sqc-num">{field.sequentialNumber}</span>
           {hasValue ? (
             <span className="sqc-status-dot" style={{ backgroundColor: isAI ? '#a855f7' : (isRefinedAI ? '#475569' : '#3b82f6') }} title={isAI ? 'AI Answer' : (isRefinedAI ? 'Refined Answer' : 'Edited')} />
@@ -184,7 +166,7 @@ const SimpleQuestionCard = ({
         </div>
 
         {/* Right: confidence dot + expand chevron */}
-        <div className="sqc-right">
+        <div className="sqc-right" style={{ display: 'flex', alignItems: 'center', alignSelf: 'start', marginTop: '5px', gap: '6px', flexShrink: 0 }}>
           {intel.hasCitation && (
             <span className="sqc-conf-dot" style={{ backgroundColor: intel.color }} title={`${intel.conf} Confidence`} />
           )}
@@ -436,6 +418,7 @@ const EditableBriefSection = ({
   const autoSaveTimeoutRef = useRef(null);
   const fileInputRef = useRef(null);
   const analyzeBtnRef = useRef(null);
+  const fileUploadSectionRef = useRef(null);
   const { t } = useTranslation();
 
   const [userRole, setUserRole] = useState("");
@@ -1178,7 +1161,7 @@ const EditableBriefSection = ({
   };
 
   // Multiple File sequential validation and upload engine
-  const processMultipleFiles = async (files) => {
+  const processMultipleFiles = async (files, isFinancial = false) => {
     const { maxFilesLimit, maxFileSizeMB } = uploadLimits;
     const maxFileSizeBytes = maxFileSizeMB * 1024 * 1024;
 
@@ -1202,15 +1185,35 @@ const EditableBriefSection = ({
       }
 
       const fileExt = file.name.split('.').pop().toLowerCase();
-      const isSpreadsheet = ['xlsx', 'xls', 'csv'].includes(fileExt);
+      const isSpreadsheet = ['xlsx', 'xls'].includes(fileExt);
       const isDoc = ['pdf', 'docx'].includes(fileExt);
 
+      if (fileExt === 'csv') {
+        showToastMessage(`File "${file.name}" format is unsupported. CSV files are not accepted. Please upload PDF, Word (DOCX), or Excel (XLSX, XLS) files.`, 'error');
+        continue;
+      }
+
+      // If uploading via financial templates popup, only allow spreadsheets
+      if (isFinancial && !isSpreadsheet) {
+        showToastMessage(`File "${file.name}" format is unsupported for financial data. Please upload Excel (XLSX, XLS) files only.`, 'error');
+        continue;
+      }
+
       if (!isSpreadsheet && !isDoc) {
-        showToastMessage(`File "${file.name}" format is unsupported. Please upload Excel, CSV, PDF, or Word files.`, 'error');
+        showToastMessage(`File "${file.name}" format is unsupported. Please upload PDF, Word (DOCX), or Excel (XLSX, XLS) files.`, 'error');
         continue;
       }
 
       const fileId = `file-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+      
+      // Determine file object type
+      let fileType = 'pdf';
+      if (isDoc) {
+        fileType = fileExt === 'pdf' ? 'pdf' : 'docx';
+      } else if (isSpreadsheet) {
+        fileType = isFinancial ? 'spreadsheet' : 'excel-strategic';
+      }
+
       const newFileObj = {
         id: fileId,
         name: file.name,
@@ -1218,7 +1221,7 @@ const EditableBriefSection = ({
         uploadDate: new Date().toLocaleDateString(),
         status: 'uploading',
         progress: 15,
-        type: fileExt === 'pdf' ? 'pdf' : fileExt === 'docx' ? 'docx' : 'spreadsheet'
+        type: fileType
       };
 
       // Add to file library state
@@ -1232,7 +1235,7 @@ const EditableBriefSection = ({
       }, 250);
 
       try {
-        if (isSpreadsheet) {
+        if (isFinancial && isSpreadsheet) {
           // Detect template & validate
           const detection = await detectTemplateType(file);
           if (detection.confidence === 'none' || detection.score < 0.3) {
@@ -1261,7 +1264,7 @@ const EditableBriefSection = ({
           setUploadedFiles(prev => prev.map(f => f.id === fileId ? { ...f, progress: 100, status: 'success', fileObject: file } : f));
           showToastMessage(`File "${file.name}" uploaded successfully! Click "Upload Financial Document" below to analyze.`, 'success');
         } else {
-          // Strategic PDF/DOCX - upload to database immediately!
+          // Strategic PDF/DOCX/XLSX/XLS - upload to database immediately!
           const result = await saveStrategicFileToDatabase(file);
           
           clearInterval(progressInterval);
@@ -1278,6 +1281,73 @@ const EditableBriefSection = ({
         clearInterval(progressInterval);
         setUploadedFiles(prev => prev.map(f => f.id === fileId ? { ...f, status: 'failed', errorMessage: error.message } : f));
         showToastMessage(`Ingestion failed for "${file.name}": ${error.message || 'Verification error.'}`, 'error');
+      }
+    }
+  };
+
+  const handleFileUpload = async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+    const allowedTypes = ['application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'];
+    if (!allowedTypes.includes(file.type)) {
+      showToastMessage('Please upload Excel (.xlsx, .xls) files only.', 'error');
+      return;
+    }
+    try {
+      setIsFileUploading(true);
+      const detection = await detectTemplateType(file);
+      if (detection.confidence === 'none' || detection.score < 0.3) {
+        throw new Error('Please check the file format. The uploaded file should be in the proper template file format.');
+      }
+      const validation = await validateAgainstTemplate(file, detection.type);
+      if (!validation.isValid) {
+        throw new Error('Please check the file format. The uploaded file should be in the proper template file format.');
+      }
+      const validationResult = {
+        templateType: detection.type,
+        templateName: validation.templateName,
+        validation: validation,
+        confidence: detection.confidence,
+        uploadMode: 'auto-detect'
+      };
+      await saveFileToDatabase(file, validationResult);
+      
+      const fileId = `file-${Date.now()}`;
+      setUploadedFiles(prev => {
+        const filtered = prev.filter(f => f.type !== 'spreadsheet');
+        return [
+          ...filtered,
+          {
+            id: fileId,
+            name: file.name,
+            size: file.size,
+            uploadDate: new Date().toLocaleDateString(),
+            status: 'success',
+            type: 'spreadsheet',
+            progress: 100
+          }
+        ];
+      });
+
+      if (onUploadedFileUpdate) {
+        onUploadedFileUpdate(file);
+      }
+      if (onAnalysisRegenerate) {
+        setIsFinancialRegenerating(true);
+        onAnalysisRegenerate({
+          onlyFinancial: true,
+          uploadedFile: file,
+          skipConfirmation: true
+        });
+      }
+      showToastMessage(`File "${file.name}" ingested successfully!`, 'success');
+    } catch (error) {
+      console.error('File upload/validation error:', error);
+      showToastMessage(error.message || 'Failed to process file. Please try again.', 'error');
+    } finally {
+      setIsFileUploading(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
       }
     }
   };
@@ -1616,7 +1686,7 @@ const EditableBriefSection = ({
   const handleAnalyzeDocuments = async () => {
     // Find all strategic documents either loaded in memory or loaded from Azure Blob
     const filesToAnalyze = uploadedFiles.filter(
-      f => (f.type === 'pdf' || f.type === 'docx')
+      f => (f.type === 'pdf' || f.type === 'docx' || f.type === 'excel-strategic')
     );
 
     if (filesToAnalyze.length === 0) {
@@ -1626,6 +1696,10 @@ const EditableBriefSection = ({
 
     try {
       setIsAnalyzingDocs(true);
+
+      if (fileUploadSectionRef.current) {
+        fileUploadSectionRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
 
       // Update status of queued files to 'analyzing'
       setUploadedFiles(prev =>
@@ -1823,10 +1897,10 @@ const EditableBriefSection = ({
 
   // Multi-file aggregate helper values
   const totalFileSizeKB = uploadedFiles.reduce((acc, f) => acc + (f.size || 0), 0) / 1024;
-  const successfulIngestionCount = uploadedFiles.filter(f => (f.type === 'pdf' || f.type === 'docx') && f.status === 'success').length;
+  const successfulIngestionCount = uploadedFiles.filter(f => (f.type === 'pdf' || f.type === 'docx' || f.type === 'excel-strategic') && f.status === 'success').length;
   const uploadedFilesCount = uploadedFiles.filter(f => f.status === 'uploaded').length;
 
-  const strategyFiles = uploadedFiles.filter(f => f.type === 'pdf' || f.type === 'docx');
+  const strategyFiles = uploadedFiles.filter(f => f.type === 'pdf' || f.type === 'docx' || f.type === 'excel-strategic');
   const financialFiles = uploadedFiles.filter(f => f.type === 'spreadsheet');
 
   const initialCountStr = `${initialFields.filter(f => cleanValue(f.value).trim() !== '').length}/${initialFields.length}`;
@@ -1916,7 +1990,7 @@ const EditableBriefSection = ({
           )}
 
           {/* 2. Multiple File Upload Section */}
-          <div className="brief-card upload-docs-card">
+          <div ref={fileUploadSectionRef} className="brief-card upload-docs-card">
             <div 
               className={`brief-card-header accordion-header ${!leftPanelExpanded.fileUpload ? 'collapsed' : ''}`}
               onClick={() => { if (isAnyApiActive) return; setLeftPanelExpanded(prev => ({ ...prev, fileUpload: !prev.fileUpload })); }}
@@ -1962,8 +2036,11 @@ const EditableBriefSection = ({
                   <div className="sidebar-dropzone-icon">
                     <Upload size={20} />
                   </div>
-                  <p className="sidebar-dropzone-text">
-                    Drag & drop PDF/DOCX or click to browse
+                  <p className="sidebar-dropzone-text" style={{ fontSize: '11.5px', padding: '0 4px' }}>
+                    Drag & drop files or click to browse
+                  </p>
+                  <p style={{ fontSize: '10.5px', color: '#64748b', margin: '2px 0 0 0' }}>
+                    Supports: PDF, DOCX, XLSX, XLS
                   </p>
                   <input 
                     type="file" 
@@ -1971,18 +2048,58 @@ const EditableBriefSection = ({
                     ref={fileInputRef} 
                     style={{ display: 'none' }} 
                     onChange={handleFileInputChange}
-                    accept=".pdf,.docx,.xlsx,.xls,.csv"
+                    accept=".pdf,.docx,.xlsx,.xls"
                     disabled={isAnyApiActive || !canEdit}
                   />
                 </div>
 
                 {strategyFiles.length > 0 && (
                   <div className="sidebar-file-list">
-                    <div className="sidebar-list-header">Ingested Strategy Documents</div>
+                    <div className="sidebar-list-header">Uploaded Documents</div>
                     {strategyFiles.map(file => (
                       <div key={file.id} className="sidebar-file-item">
                         <div className="sidebar-file-info">
-                          <FileText size={14} style={{ color: '#2563eb' }} />
+                          {file.name.toLowerCase().endsWith('.pdf') ? (
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                              <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7l-5-5z" fill="rgba(239, 68, 68, 0.05)" />
+                              <path d="M14 2v5h5" />
+                              <line x1="8" y1="15" x2="16" y2="15" stroke="rgba(239, 68, 68, 0.4)" strokeWidth="1.5" />
+                              <line x1="8" y1="17.5" x2="16" y2="17.5" stroke="rgba(239, 68, 68, 0.4)" strokeWidth="1.5" />
+                              <line x1="8" y1="20" x2="16" y2="20" stroke="rgba(239, 68, 68, 0.4)" strokeWidth="1.5" />
+                              <rect x="1.5" y="7.5" width="13.5" height="7" rx="1.2" fill="#ef4444" stroke="none" />
+                              <text x="8.25" y="11" fill="white" fontSize="5.2" fontWeight="900" fontFamily="system-ui, -apple-system, sans-serif" stroke="none" textAnchor="middle" dominantBaseline="central">PDF</text>
+                            </svg>
+                          ) : file.name.toLowerCase().endsWith('.docx') ? (
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                              <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7l-5-5z" fill="rgba(37, 99, 235, 0.05)" />
+                              <path d="M14 2v5h5" />
+                              <line x1="8" y1="15" x2="16" y2="15" stroke="rgba(37, 99, 235, 0.4)" strokeWidth="1.5" />
+                              <line x1="8" y1="17.5" x2="16" y2="17.5" stroke="rgba(37, 99, 235, 0.4)" strokeWidth="1.5" />
+                              <line x1="8" y1="20" x2="16" y2="20" stroke="rgba(37, 99, 235, 0.4)" strokeWidth="1.5" />
+                              <rect x="1.5" y="7.5" width="13.5" height="7" rx="1.2" fill="#2563eb" stroke="none" />
+                              <text x="8.25" y="11" fill="white" fontSize="5.2" fontWeight="900" fontFamily="system-ui, -apple-system, sans-serif" stroke="none" textAnchor="middle" dominantBaseline="central">DOC</text>
+                            </svg>
+                          ) : (file.name.toLowerCase().endsWith('.xlsx') || file.name.toLowerCase().endsWith('.xls')) ? (
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                              <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7l-5-5z" fill="rgba(22, 163, 74, 0.05)" />
+                              <path d="M14 2v5h5" />
+                              <line x1="8" y1="15" x2="16" y2="15" stroke="rgba(22, 163, 74, 0.4)" strokeWidth="1.5" />
+                              <line x1="8" y1="17.5" x2="16" y2="17.5" stroke="rgba(22, 163, 74, 0.4)" strokeWidth="1.5" />
+                              <line x1="8" y1="20" x2="16" y2="20" stroke="rgba(22, 163, 74, 0.4)" strokeWidth="1.5" />
+                              <rect x="1.5" y="7.5" width="13.5" height="7" rx="1.2" fill="#16a34a" stroke="none" />
+                              <text x="8.25" y="11" fill="white" fontSize="5.2" fontWeight="900" fontFamily="system-ui, -apple-system, sans-serif" stroke="none" textAnchor="middle" dominantBaseline="central">XLS</text>
+                            </svg>
+                          ) : (
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#64748b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                              <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7l-5-5z" fill="rgba(100, 116, 139, 0.05)" />
+                              <path d="M14 2v5h5" />
+                              <line x1="8" y1="15" x2="16" y2="15" stroke="rgba(100, 116, 139, 0.4)" strokeWidth="1.5" />
+                              <line x1="8" y1="17.5" x2="16" y2="17.5" stroke="rgba(100, 116, 139, 0.4)" strokeWidth="1.5" />
+                              <line x1="8" y1="20" x2="16" y2="20" stroke="rgba(100, 116, 139, 0.4)" strokeWidth="1.5" />
+                              <rect x="1.5" y="7.5" width="13.5" height="7" rx="1.2" fill="#64748b" stroke="none" />
+                              <text x="8.25" y="11" fill="white" fontSize="4.5" fontWeight="900" fontFamily="system-ui, -apple-system, sans-serif" stroke="none" textAnchor="middle" dominantBaseline="central">FILE</text>
+                            </svg>
+                          )}
                           <span className="sidebar-file-name" title={file.name}>{file.name}</span>
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -2095,7 +2212,15 @@ const EditableBriefSection = ({
                     {financialFiles.map(file => (
                       <div key={file.id} className="sidebar-file-item financial-item">
                         <div className="sidebar-file-info">
-                          <FileSpreadsheet size={14} style={{ color: '#16a34a' }} />
+                          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                            <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7l-5-5z" fill="rgba(22, 163, 74, 0.05)" />
+                            <path d="M14 2v5h5" />
+                            <line x1="8" y1="15" x2="16" y2="15" stroke="rgba(22, 163, 74, 0.4)" strokeWidth="1.5" />
+                            <line x1="8" y1="17.5" x2="16" y2="17.5" stroke="rgba(22, 163, 74, 0.4)" strokeWidth="1.5" />
+                            <line x1="8" y1="20" x2="16" y2="20" stroke="rgba(22, 163, 74, 0.4)" strokeWidth="1.5" />
+                            <rect x="1.5" y="7.5" width="13.5" height="7" rx="1.2" fill="#16a34a" stroke="none" />
+                            <text x="8.25" y="11" fill="white" fontSize="5.2" fontWeight="900" fontFamily="system-ui, -apple-system, sans-serif" stroke="none" textAnchor="middle" dominantBaseline="central">XLS</text>
+                          </svg>
                           <span className="sidebar-file-name" title={file.name}>{file.name}</span>
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -2422,38 +2547,92 @@ const EditableBriefSection = ({
 
         {drawerData && (
           <div className="drawer-content">
-            <div className="drawer-section-title">
-              Target Question Context
-            </div>
-            <div className="drawer-question-label">
-              {drawerData.title || 'Extracted Metric Source'}
+            <div>
+              <div className="drawer-section-title" style={{ fontSize: '11px', fontWeight: '700', color: '#6366f1', textTransform: 'uppercase', marginBottom: '8px' }}>
+                Target Question Context
+              </div>
+              <div className="drawer-question-label" style={{ fontWeight: '700', fontSize: '14px', color: '#0f172a', lineHeight: '1.4' }}>
+                {drawerData.title}
+              </div>
             </div>
 
-            <div className="drawer-source-box">
-              <div className="drawer-source-label">
-                DOCUMENT SOURCE
-              </div>
-              <div className="drawer-source-name">
-                {drawerData.doc || 'Strategic_Report.pdf'}
-              </div>
-              {drawerData.cell && (
-                <div className="drawer-source-cell">
-                  Cell: {drawerData.cell}
-                </div>
-              )}
-            </div>
+            {/* Loop through each evidence block individually */}
+            {Array.isArray(drawerData.evidence) && drawerData.evidence.length > 0 ? (
+              drawerData.evidence.map((ev, index) => {
+                // Split comma-separated document names if present
+                const docNames = ev.document_name 
+                  ? ev.document_name.split(',').map(s => s.trim()).filter(Boolean)
+                  : [docName || 'Strategic Document'];
 
-            <div className="drawer-excerpt-box">
-              <div className="drawer-excerpt-label">
-                VERBATIM DOCUMENT EXCERPT
+                return (
+                  <div key={index} className="evidence-block" style={{ border: '1px solid #e2e8f0', borderRadius: '12px', overflow: 'hidden', background: '#f8fafc' }}>
+                    <div style={{ background: '#f1f5f9', padding: '10px 14px', borderBottom: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                      <div className="drawer-source-label" style={{ fontSize: '10px', fontWeight: '700', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.02em' }}>
+                        DOCUMENT SOURCE {drawerData.evidence.length > 1 ? `#${index + 1}` : ''}
+                      </div>
+                      
+                      {/* Render each document citation individually */}
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                        {docNames.map((name, dIdx) => {
+                          const isPDF = name.toLowerCase().endsWith('.pdf');
+                          const isDocx = name.toLowerCase().endsWith('.docx') || name.toLowerCase().endsWith('.doc');
+                          const isExcel = name.toLowerCase().endsWith('.xlsx') || name.toLowerCase().endsWith('.xls');
+
+                          return (
+                            <div key={dIdx} style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'white', border: '1px solid #e2e8f0', borderRadius: '6px', padding: '6px 10px' }}>
+                              {isPDF ? (
+                                <span style={{ background: '#fee2e2', color: '#ef4444', fontSize: '9px', fontWeight: '800', padding: '2px 4px', borderRadius: '4px' }}>PDF</span>
+                              ) : isDocx ? (
+                                <span style={{ background: '#dbeafe', color: '#2563eb', fontSize: '9px', fontWeight: '800', padding: '2px 4px', borderRadius: '4px' }}>DOC</span>
+                              ) : isExcel ? (
+                                <span style={{ background: '#dcfce7', color: '#16a34a', fontSize: '9px', fontWeight: '800', padding: '2px 4px', borderRadius: '4px' }}>XLS</span>
+                              ) : (
+                                <span style={{ background: '#f1f5f9', color: '#64748b', fontSize: '9px', fontWeight: '800', padding: '2px 4px', borderRadius: '4px' }}>FILE</span>
+                              )}
+                              <span style={{ fontSize: '12px', fontWeight: '600', color: '#1e293b', wordBreak: 'break-all', flex: 1 }}>
+                                {name}
+                              </span>
+                              <span style={{ fontSize: '11px', fontWeight: '700', color: '#4f46e5', background: '#e0e7ff', padding: '1px 6px', borderRadius: '10px', whiteSpace: 'nowrap' }}>
+                                Page {ev.page || 1}
+                              </span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    <div className="drawer-excerpt-box" style={{ padding: '14px', background: '#fffbeb' }}>
+                      <div className="drawer-excerpt-label" style={{ fontSize: '10px', fontWeight: '700', color: '#b45309', marginBottom: '6px', textTransform: 'uppercase' }}>
+                        VERBATIM DOCUMENT EXCERPT
+                      </div>
+                      <p className="drawer-excerpt-text" style={{ margin: 0, fontSize: '12px', color: '#78350f', fontStyle: 'italic', lineHeight: '1.6' }}>
+                        {ev.text ? `"${ev.text}"` : 'No excerpt text available.'}
+                      </p>
+                    </div>
+                  </div>
+                );
+              })
+            ) : (
+              <div style={{ textAlign: 'center', padding: '20px', color: '#64748b', fontSize: '13px' }}>
+                No citation details found.
               </div>
-              <p className="drawer-excerpt-text">
-                {drawerData.excerpt}
-              </p>
-            </div>
+            )}
           </div>
         )}
       </div>
+
+      {showTemplatesPopup && (
+        <FinancialTemplatesPopup
+          isOpen={showTemplatesPopup}
+          onClose={() => setShowTemplatesPopup(false)}
+          isFileUploading={isFileUploading}
+          onFileUploaded={(file, validation) => {
+            processMultipleFiles([file]);
+            setShowTemplatesPopup(false);
+          }}
+          fileInputRef={fileInputRef}
+        />
+      )}
 
       {showConfirmModal && (
         <ConfirmationModal

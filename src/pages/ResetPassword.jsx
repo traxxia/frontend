@@ -6,10 +6,12 @@ import logo from '../assets/traxxia-logo.png';
 import { Sun, Moon, Eye, EyeOff, CheckCircle, XCircle } from "lucide-react";
 import { useUIStore } from "../store/uiStore";
 import { useTranslation } from "../hooks/useTranslation";
+import PasswordStrengthTooltip from "../components/PasswordStrengthTooltip";
 
 const ResetPassword = () => {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [isPasswordFocused, setIsPasswordFocused] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -31,11 +33,25 @@ const ResetPassword = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!password) {
-      setError("Password is required");
+      setError(t('password_required') || 'Password is required');
+      return;
+    }
+    if (
+      password.length < 8 ||
+      !/(?=.*[a-z])/.test(password) ||
+      !/(?=.*[A-Z])/.test(password) ||
+      !/(?=.*\d)/.test(password) ||
+      !/(?=.*[^A-Za-z0-9])/.test(password)
+    ) {
+      setError(t("password_rule_missing") || "Password rule is missing");
+      return;
+    }
+    if (!confirmPassword) {
+      setError(t('confirm_password_required') || 'Please confirm your password');
       return;
     }
     if (password !== confirmPassword) {
-      setError("Passwords do not match");
+      setError(t('passwords_do_not_match') || 'Passwords do not match');
       return;
     }
     if (!token) {
@@ -107,6 +123,9 @@ const ResetPassword = () => {
           ) : (
             <form onSubmit={handleSubmit} noValidate>
               <div className="form-group">
+                <label style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', marginBottom: '8px', fontSize: 'var(--font-size-sm)', fontWeight: 'var(--font-weight-semibold)', color: 'var(--color-text-primary)' }}>
+                  {t("new_password") || "New Password"}
+                </label>
                 <div className="input-container">
                   <input 
                     type={showPassword ? "text" : "password"} 
@@ -116,16 +135,22 @@ const ResetPassword = () => {
                       setPassword(e.target.value);
                       if (error) setError("");
                     }} 
+                    onFocus={() => setIsPasswordFocused(true)}
+                    onBlur={() => setIsPasswordFocused(false)}
                     placeholder={t("new_password") || "New Password"} 
                     disabled={isLoading} 
                   />
                   <button type="button" className="toggle-password" onClick={() => setShowPassword(!showPassword)} disabled={isLoading}>
                     {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                   </button>
+                  <PasswordStrengthTooltip password={password} isFocused={isPasswordFocused} position="bottom" />
                 </div>
               </div>
 
               <div className="form-group">
+                <label style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', marginBottom: '8px', fontSize: 'var(--font-size-sm)', fontWeight: 'var(--font-weight-semibold)', color: 'var(--color-text-primary)' }}>
+                  {t("confirm_new_password") || "Confirm New Password"}
+                </label>
                 <div className="input-container">
                   <input 
                     type={showConfirmPassword ? "text" : "password"} 

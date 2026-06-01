@@ -84,11 +84,8 @@ const UserOverview = ({
         if (!value || !value.trim()) {
           return t('Password_is_required');
         }
-        if (value.trim().length < 8) {
-          return t('Password_must_be_at_least_8_characters_long');
-        }
-        if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(value)) {
-          return t('Password_must_contain_at_least_one_uppercase_letter_one_lowercase_letter_and_one_number');
+        if (value.trim().length < 8 || !/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(value)) {
+          return t('password_rule_missing') || 'Password rule is missing';
         }
         return '';
       default:

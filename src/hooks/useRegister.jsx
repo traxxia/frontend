@@ -78,16 +78,14 @@ export const useRegister = () => {
 
     if (!form.password) {
       newErrors.password = t('password_required') || 'Password is required';
-    } else if (form.password.length < 8) {
-      newErrors.password = t('password_min_length_8') || 'Min 8 characters';
-    } else if (!/(?=.*[a-z])/.test(form.password)) {
-      newErrors.password = t("Password_must_contain_lowercase_letter") || "Password must contain lowercase letter";
-    } else if (!/(?=.*[A-Z])/.test(form.password)) {
-      newErrors.password = t("Password_must_contain_uppercase_letter") || "Password must contain uppercase letter";
-    } else if (!/(?=.*\d)/.test(form.password)) {
-      newErrors.password = t("Password_must_contain_number") || "Password must contain number";
-    } else if (!/(?=.*[^A-Za-z0-9])/.test(form.password)) {
-      newErrors.password = t("Password_must_contain_special_character") || "Password must contain special character";
+    } else if (
+      form.password.length < 8 ||
+      !/(?=.*[a-z])/.test(form.password) ||
+      !/(?=.*[A-Z])/.test(form.password) ||
+      !/(?=.*\d)/.test(form.password) ||
+      !/(?=.*[^A-Za-z0-9])/.test(form.password)
+    ) {
+      newErrors.password = t("password_rule_missing") || "Password rule is missing";
     }
 
     if (!form.confirmPassword) {
