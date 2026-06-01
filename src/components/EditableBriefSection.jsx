@@ -2255,7 +2255,7 @@ const EditableBriefSection = ({
                   ) : (
                     <>
                       <Sparkles size={14} />
-                      <span>Upload Financial Document</span>
+                      <span>Analyze Financial Document</span>
                     </>
                   )}
                 </button>
