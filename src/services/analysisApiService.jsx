@@ -7,16 +7,12 @@ import { MlApiService } from './MlApiService';
 export const PHASE_API_CONFIG = {
   initial: [
     'swot',
-    'purchaseCriteria',
-    'loyaltyNPS',
     'porters',
     'pestel'
   ],
 
   essential: [
-    'purchaseCriteria',
     'fullSwot',
-    'loyaltyNPS',
     'porters',
     'pestel',
     'competitiveAdvantage',
@@ -29,9 +25,7 @@ export const PHASE_API_CONFIG = {
   ],
 
   advanced: [
-    'purchaseCriteria',
     'fullSwot',
-    'loyaltyNPS',
     'porters',
     'pestel',
     'competitiveAdvantage',
@@ -52,9 +46,7 @@ export const PHASE_API_CONFIG = {
 };
 export const API_ENDPOINTS = {
   swot: 'find',
-  purchaseCriteria: 'purchase-criteria',
   fullSwot: 'full-swot-portfolio',
-  loyaltyNPS: 'loyalty-metrics',
   porters: 'porter-analysis',
   pestel: 'pestel-analysis',
   competitiveAdvantage: 'competitive-advantage',
@@ -382,7 +374,7 @@ export class AnalysisApiService {
           }
           obsHeaders['x-request-timestamp'] = new Date().toISOString();
         }
-      } catch (_) {  }
+      } catch (_) { }
 
       let response;
       if (isExcelAnalysis) {
@@ -506,7 +498,7 @@ export class AnalysisApiService {
     if (!analysisTypes) {
       console.error(`Unknown phase: ${phase}`);
       return;
-    } 
+    }
 
     this.clearPhaseData(phase, stateSetters);
 
@@ -525,10 +517,10 @@ export class AnalysisApiService {
           .then((res) => {
             status.completed++;
             stateSetters.setRegenerating?.(analysisType, false);
-            
+
             const setterName = this.getStateSetterName(analysisType);
             if (stateSetters[setterName]) {
-                stateSetters[setterName](res);
+              stateSetters[setterName](res);
             }
 
             showToastMessage(
@@ -606,11 +598,11 @@ export class AnalysisApiService {
           .then((res) => {
             status.completed++;
             stateSetters.setRegenerating?.(analysisType, false);
-            
+
             // Map the result back to the store using the stateSetters
             const setterName = this.getStateSetterName(analysisType);
             if (stateSetters[setterName]) {
-                stateSetters[setterName](res);
+              stateSetters[setterName](res);
             }
 
             showToastMessage(
@@ -663,8 +655,6 @@ export class AnalysisApiService {
       investmentPerformance: "Investment Performance",
       leverageRisk: "Leverage & Risk",
       swot: "SWOT Analysis",
-      purchaseCriteria: "Purchase Criteria",
-      loyaltyNPS: "Loyalty & NPS",
       porters: "Porter's Five Forces",
       pestel: "PESTEL Analysis",
       fullSwot: "Full SWOT Portfolio",
@@ -710,8 +700,6 @@ export class AnalysisApiService {
   getStateSetterName(analysisType) {
     const setterMap = {
       swot: 'setSwotAnalysisResult',
-      purchaseCriteria: 'setPurchaseCriteriaData',
-      loyaltyNPS: 'setLoyaltyNPSData',
       porters: 'setPortersData',
       pestel: 'setPestelData',
       fullSwot: 'setFullSwotData',
@@ -750,8 +738,6 @@ export class AnalysisApiService {
 
       const analysisPhaseMap = {
         'swot': 'initial',
-        'purchaseCriteria': 'initial',
-        'loyaltyNPS': 'initial',
         'porters': 'initial',
         'pestel': 'initial',
         'fullSwot': 'essential',
@@ -773,8 +759,6 @@ export class AnalysisApiService {
         'investmentPerformance': 'Investment Performance',
         'leverageRisk': 'Leverage & Risk',
         'swot': 'SWOT Analysis',
-        'purchaseCriteria': 'Purchase Criteria',
-        'loyaltyNPS': 'Loyalty & NPS',
         'porters': "Porter's Five Forces",
         'pestel': 'PESTEL Analysis',
         'fullSwot': 'Full SWOT Portfolio',
@@ -902,8 +886,6 @@ export class AnalysisApiService {
         }
         const methodNameMap = {
           swot: 'generateSWOTAnalysis',
-          purchaseCriteria: 'generatePurchaseCriteria',
-          loyaltyNPS: 'generateLoyaltyNPS',
           porters: 'generatePortersAnalysis',
           pestel: 'generatePestelAnalysis',
           fullSwot: 'generateFullSwotPortfolio',
@@ -1034,7 +1016,7 @@ export class AnalysisApiService {
   }
   async generateAnalysis(analysisType, questions, answers, selectedBusinessId, options = {}) {
     const { uploadedFile = null, onStreamChunk = null, forceRefresh = false } = options;
-    
+
     try {
       const endpoint = API_ENDPOINTS[analysisType];
       if (!endpoint) throw new Error(`Unknown analysis type: ${analysisType}`);
@@ -1046,9 +1028,9 @@ export class AnalysisApiService {
         freshAnswers = freshData.freshAnswers;
       }
       const combinedAnswers = { ...answers, ...freshAnswers };
-      
+
       const { questionsArray, answersArray } = this.prepareQuestionsAndAnswers(
-        questions, 
+        questions,
         combinedAnswers,
         analysisType === 'fullSwot' ? (q, ans) => ans[q._id] && ans[q._id].trim() !== '' : null
       );
@@ -1073,16 +1055,16 @@ export class AnalysisApiService {
         );
       } else {
         result = await this.makeAPICall(
-          endpoint, 
-          questionsArray, 
-          answersArray, 
-          selectedBusinessId, 
-          null, 
-          null, 
-          onStreamChunk, 
-          null, 
-          null, 
-          null, 
+          endpoint,
+          questionsArray,
+          answersArray,
+          selectedBusinessId,
+          null,
+          null,
+          onStreamChunk,
+          null,
+          null,
+          null,
           analysisType
         );
       }
@@ -1093,10 +1075,6 @@ export class AnalysisApiService {
         processedResult = typeof result === 'string' ? result : JSON.stringify(result);
       } else if (analysisType === 'strategic') {
         processedResult = result.strategic_analysis || result.strategic || result;
-      } else if (analysisType === 'purchaseCriteria') {
-        processedResult = result.purchase_criteria || result.purchaseCriteria || result;
-      } else if (analysisType === 'loyaltyNPS') {
-        processedResult = result.loyalty_nps || result.loyaltyNPS || result;
       } else if (analysisType === 'porters') {
         processedResult = result.porters_analysis || result.porters || result;
       } else if (analysisType === 'expandedCapability') {
@@ -1113,7 +1091,7 @@ export class AnalysisApiService {
       if (selectedBusinessId) {
         await this.saveAnalysisToBackend(processedResult, analysisType, selectedBusinessId);
       }
-      
+
       return processedResult;
     } catch (error) {
       console.error(`Error generating ${analysisType} analysis:`, error);
@@ -1132,14 +1110,6 @@ export class AnalysisApiService {
 
   async generateSWOTAnalysis(questions, answers, selectedBusinessId) {
     return this.generateAnalysis('swot', questions, answers, selectedBusinessId);
-  }
-
-  async generatePurchaseCriteria(questions, answers, selectedBusinessId) {
-    return this.generateAnalysis('purchaseCriteria', questions, answers, selectedBusinessId);
-  }
-
-  async generateLoyaltyNPS(questions, answers, selectedBusinessId) {
-    return this.generateAnalysis('loyaltyNPS', questions, answers, selectedBusinessId);
   }
 
   async generatePortersAnalysis(questions, answers, selectedBusinessId) {
@@ -1210,6 +1180,7 @@ export class AnalysisApiService {
       if (!response.ok) throw new Error('Failed to fetch fresh answers data');
       const { data } = await response.json();
       const freshAnswers = {};
+      const freshAnswersDetails = {};
       const freshCompletedSet = new Set();
       data?.forEach(answerDoc => {
         const questionId = String(answerDoc.question_id);
@@ -1217,9 +1188,17 @@ export class AnalysisApiService {
         if (answerText && answerText.trim()) {
           freshCompletedSet.add(questionId);
           freshAnswers[questionId] = answerText.trim();
+          freshAnswersDetails[questionId] = {
+            confidence: answerDoc.confidence,
+            status: answerDoc.status,
+            evidence: answerDoc.evidence,
+            ai_answer: answerDoc.ai_answer,
+            user_answer: answerDoc.user_answer,
+            previous_answer: answerDoc.previous_answer
+          };
         }
       });
-      return { freshAnswers, freshCompletedSet };
+      return { freshAnswers, freshCompletedSet, freshAnswersDetails };
     } catch (error) {
       console.error('Error fetching fresh answers data:', error);
       return { freshAnswers: {}, freshCompletedSet: new Set() };

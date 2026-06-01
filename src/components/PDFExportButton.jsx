@@ -12,12 +12,6 @@ const PHASE_COMPONENTS = {
   }, {
     selector: '[data-component="pestel-analysis"]',
     name: 'PESTEL Analysis'
-  }, {
-    selector: '[data-component="purchase-criteria"]',
-    name: 'Purchase Criteria Matrix'
-  }, {
-    selector: '[data-component="loyalty-nps"]',
-    name: 'Loyalty & NPS Analysis'
   }],
   essential: [{
     selector: '[data-component="core-adjacency"]',
@@ -40,12 +34,6 @@ const PHASE_COMPONENTS = {
   }, {
     selector: '[data-component="strategic-radar"]',
     name: 'Strategic Positioning Radar'
-  }, {
-    selector: '[data-component="purchase-criteria"]',
-    name: 'Purchase Criteria Matrix'
-  }, {
-    selector: '[data-component="loyalty-nps"]',
-    name: 'Loyalty & NPS Analysis'
   }, {
     selector: '[data-component="competitive-advantage"]',
     name: 'Competitive Advantage Matrix'
@@ -96,12 +84,6 @@ const PHASE_COMPONENTS = {
     selector: '[data-component="strategic-radar"]',
     name: 'Strategic Positioning Radar'
   }, {
-    selector: '[data-component="purchase-criteria"]',
-    name: 'Purchase Criteria Matrix'
-  }, {
-    selector: '[data-component="loyalty-nps"]',
-    name: 'Loyalty & NPS Analysis'
-  }, {
     selector: '[data-component="competitive-advantage"]',
     name: 'Competitive Advantage Matrix'
   }, {
@@ -150,12 +132,6 @@ const PHASE_COMPONENTS = {
   }, {
     selector: '[data-component="strategic-radar"]',
     name: 'Strategic Positioning Radar'
-  }, {
-    selector: '[data-component="purchase-criteria"]',
-    name: 'Purchase Criteria Matrix'
-  }, {
-    selector: '[data-component="loyalty-nps"]',
-    name: 'Loyalty & NPS Analysis'
   }, {
     selector: '[data-component="competitive-advantage"]',
     name: 'Competitive Advantage Matrix'

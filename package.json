@@ -9,6 +9,8 @@
     "@stripe/stripe-js": "^8.8.0",
     "@tanstack/react-query": "^5.99.2",
     "@tinymce/tinymce-react": "^6.1.0",
+    "@tiptap/react": "^3.23.5",
+    "@tiptap/starter-kit": "^3.23.5",
     "axios": "^1.7.9",
     "bootstrap": "^5.3.3",
     "crypto-js": "^4.2.0",

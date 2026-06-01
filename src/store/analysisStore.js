@@ -9,10 +9,9 @@ const initialState = {
   questions: [],
   questionsLoaded: false,
   userAnswers: {},
+  answersDetails: {},
   completedQuestions: [],
   swotAnalysis: null,
-  purchaseCriteria: null,
-  loyaltyNPS: null,
   portersData: null,
   pestelData: null,
   fullSwotData: null,
@@ -61,11 +60,10 @@ export const useAnalysisStore = create((set, get) => ({
   questions: [],
   questionsLoaded: false,
   userAnswers: {},
+  answersDetails: {},
   completedQuestions: [],
 
   swotAnalysis: null,
-  purchaseCriteria: null,
-  loyaltyNPS: null,
   portersData: null,
   pestelData: null,
   fullSwotData: null,
@@ -104,17 +102,47 @@ export const useAnalysisStore = create((set, get) => ({
   setQuestions: (questions) => set({ questions }),
   setQuestionsLoaded: (loaded) => set({ questionsLoaded: loaded }),
 
-  setUserAnswer: (questionId, answer) => set((state) => ({
-    userAnswers: { ...state.userAnswers, [questionId]: answer },
-    completedQuestions: answer
-      ? [...new Set([...state.completedQuestions, questionId])]
-      : state.completedQuestions.filter(id => id !== questionId),
-  })),
+  setUserAnswer: (questionId, answer) => set((state) => {
+    const newDetails = { ...state.answersDetails };
+    const currentDetail = newDetails[questionId] || {};
+    const oldAnswer = state.userAnswers[questionId] || null;
 
-  initializeBusinessData: ({ questions, userAnswers, completedQuestions, analysisUpdates = {}, questionsLoaded = true }) =>
+    const newPreviousAnswer = answer === oldAnswer
+      ? (currentDetail.previous_answer !== undefined ? currentDetail.previous_answer : null)
+      : (oldAnswer || currentDetail.ai_answer || currentDetail.previous_answer || null);
+
+    const newUserAnswer = answer === oldAnswer
+      ? (currentDetail.user_answer !== undefined ? currentDetail.user_answer : null)
+      : answer;
+
+    const isDifferent = answer !== oldAnswer;
+
+    newDetails[questionId] = {
+      ...currentDetail,
+      ai_answer: currentDetail.ai_answer !== undefined && currentDetail.ai_answer !== null && currentDetail.ai_answer !== ''
+        ? currentDetail.ai_answer
+        : (oldAnswer || ''),
+      previous_answer: newPreviousAnswer,
+      user_answer: newUserAnswer,
+      status: currentDetail.status || 'EDITED',
+      confidence: currentDetail.confidence !== undefined ? currentDetail.confidence : 0,
+      evidence: currentDetail.evidence || []
+    };
+
+    return {
+      userAnswers: { ...state.userAnswers, [questionId]: answer },
+      answersDetails: newDetails,
+      completedQuestions: answer
+        ? [...new Set([...state.completedQuestions, questionId])]
+        : state.completedQuestions.filter(id => id !== questionId),
+    };
+  }),
+
+  initializeBusinessData: ({ questions, userAnswers, completedQuestions, answersDetails, analysisUpdates = {}, questionsLoaded = true }) =>
     set((state) => ({
       questions: questions !== undefined ? questions : state.questions,
       userAnswers: userAnswers !== undefined ? userAnswers : state.userAnswers,
+      answersDetails: answersDetails !== undefined ? answersDetails : state.answersDetails,
       completedQuestions: completedQuestions !== undefined ? completedQuestions : state.completedQuestions,
       ...analysisUpdates,
       questionsLoaded
@@ -122,7 +150,7 @@ export const useAnalysisStore = create((set, get) => ({
 
   setAnalysisData: (type, data) => {
     const keyMap = {
-      swot: 'swotAnalysis', purchaseCriteria: 'purchaseCriteria', loyaltyNPS: 'loyaltyNPS',
+      swot: 'swotAnalysis',
       porters: 'portersData', pestel: 'pestelData', fullSwot: 'fullSwotData',
       competitiveAdvantage: 'competitiveAdvantage', strategic: 'strategicData',
       expandedCapability: 'expandedCapability', strategicRadar: 'strategicRadar',
@@ -179,7 +207,7 @@ export const useAnalysisStore = create((set, get) => ({
     if (!skipLoadingFlag) set({ questionsLoaded: false });
     if (!skipReset) {
       const resetData = {
-        swotAnalysis: null, purchaseCriteria: null, loyaltyNPS: null,
+        swotAnalysis: null,
         portersData: null, pestelData: null, fullSwotData: null,
         competitiveAdvantage: null, strategicData: null,
         expandedCapability: null, strategicRadar: null,
@@ -212,7 +240,7 @@ export const useAnalysisStore = create((set, get) => ({
 
       const updates = {};
       const keyMap = {
-        swot: 'swotAnalysis', purchaseCriteria: 'purchaseCriteria', loyaltyNPS: 'loyaltyNPS',
+        swot: 'swotAnalysis',
         porters: 'portersData', pestel: 'pestelData', fullSwot: 'fullSwotData',
         competitiveAdvantage: 'competitiveAdvantage', strategic: 'strategicData',
         expandedCapability: 'expandedCapability', strategicRadar: 'strategicRadar',
@@ -315,6 +343,7 @@ export const useAnalysisStore = create((set, get) => ({
 
       set({ 
         userAnswers: answersResult.freshAnswers || {},
+        answersDetails: answersResult.freshAnswersDetails || {},
         completedQuestions: Array.from(answersResult.freshCompletedSet || []),
         questionsLoaded: true,
         isInitialLoading: false
@@ -341,7 +370,7 @@ export const useAnalysisStore = create((set, get) => ({
       const apiService = getApiService();
       const stateSetters = {};
       const analysisTypes = [
-        'swot', 'purchaseCriteria', 'loyaltyNPS', 'porters', 'pestel',
+        'swot', 'porters', 'pestel',
         'fullSwot', 'competitiveAdvantage', 'strategic', 'expandedCapability',
         'strategicRadar', 'productivityMetrics', 'maturityScore', 'competitiveLandscape',
         'coreAdjacency', 'profitabilityAnalysis', 'growthTracker', 'liquidityEfficiency',
@@ -396,7 +425,7 @@ export const useAnalysisStore = create((set, get) => ({
       const apiService = getApiService();
       const stateSetters = {};
       const allPossibleTypes = [
-        'swot', 'purchaseCriteria', 'loyaltyNPS', 'porters', 'pestel',
+        'swot', 'porters', 'pestel',
         'fullSwot', 'competitiveAdvantage', 'strategic', 'expandedCapability',
         'strategicRadar', 'productivityMetrics', 'maturityScore', 'competitiveLandscape',
         'coreAdjacency', 'profitabilityAnalysis', 'growthTracker', 'liquidityEfficiency',

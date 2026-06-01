@@ -45,8 +45,8 @@ const PhaseTabsComponent = ({
   };
   const getPhaseSpecificOptions = phase => {
     const baseOptions = {
-      initial: ["swot_analysis", "Porters_Five_Forces", "PESTEL_Analysis", "Purchase_Criteria", "Loyalty_&_NPS"],
-      essential: ["Productivity_Metrics", "Porters_Five_Forces", "PESTEL_Analysis", "Full_SWOT_Portfolio", "Strategic_Positioning_Radar", "Purchase_Criteria", "Loyalty_&_NPS", "Competitive_Advantage_Matrix", "Capability_Heatmap", "Maturity_Score", "Competitive_Landscape", "Core"],
+      initial: ["swot_analysis", "Porters_Five_Forces", "PESTEL_Analysis"],
+      essential: ["Productivity_Metrics", "Porters_Five_Forces", "PESTEL_Analysis", "Full_SWOT_Portfolio", "Strategic_Positioning_Radar", "Competitive_Advantage_Matrix", "Capability_Heatmap", "Maturity_Score", "Competitive_Landscape", "Core"],
       good: ["Profitability_Analysis", "Growth_Tracker", "Liquidity_Efficiency", "Investment_Performance", "Leverage_Risk"]
     };
     return baseOptions[phase] || [];

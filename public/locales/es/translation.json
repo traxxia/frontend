@@ -1387,7 +1387,7 @@
   "auto_detect_template_type": "Detección automática del tipo de plantilla",
   "upload_any_template_auto_detect": "Sube cualquier plantilla y detectaremos el tipo automáticamente",
   "choose_file_to_upload": "Elegir archivo para subir",
-  "supported_formats_excel_csv": "Formatos compatibles: Excel (.xlsx, .xls) y archivos CSV",
+  "supported_formats_excel_csv": "Formatos compatibles: Excel (.xlsx, .xls) y archivos",
   "upload_any_template_file": "Subir cualquier archivo de plantilla",
   "template_information": "Información de la plantilla:",
   "how_it_works": "Cómo funciona:",

@@ -248,12 +248,12 @@
   background: var(--color-bg-secondary);
 }
 
-.category-title {
+.academy-category-title{
   display: flex;
   align-items: center;
   gap: var(--spacing-sm);
-  font-size: 12px;
-  font-weight: var(--font-weight-medium);
+  font-size: 15px;
+  font-weight: var(--font-weight-semibold);
   flex: 1;
   min-width: 0;
 }

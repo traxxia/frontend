@@ -21,6 +21,14 @@ export const academyStructure = {
                     phase: 1,
                     roles: ["all"],
                     tags: ["setup", "registration"]
+                },
+                {
+                    id: "forgot-password",
+                    title: "Self-Service Password Reset",
+                    path: "01-auth-onboarding/forgot-password.md",
+                    phase: 1,
+                    roles: ["all"],
+                    tags: ["auth", "login", "password", "security"]
                 }
             ]
         },
@@ -231,6 +239,14 @@ export const academyStructure = {
                     phase: 2,
                     roles: ["all"],
                     tags: ["financial", "insights"]
+                },
+                {
+                    id: "multiple-document-upload",
+                    title: "Multiple Document Upload",
+                    path: "06-ai-questionnaire/multiple-document-upload.md",
+                    phase: 1,
+                    roles: ["all"],
+                    tags: ["ai", "upload", "ingestion", "strategy"]
                 }
             ]
         },

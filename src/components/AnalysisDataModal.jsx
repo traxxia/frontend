@@ -4,9 +4,7 @@ import '../styles/AnalysisEmptyState.css';
 
 import SwotAnalysis from './SwotAnalysis';
 import CustomerSegmentation from './CustomerSegmentation';
-import PurchaseCriteria from './PurchaseCriteria';
 import ChannelHeatmap from './ChannelHeatmap';
-import LoyaltyNPS from './LoyaltyNPS';
 import CapabilityHeatmap from './CapabilityHeatmap';
 import StrategicAnalysis from './StrategicAnalysis';
 import PortersFiveForces from './PortersFiveForces';
@@ -96,27 +94,11 @@ const AnalysisDataModal = ({
           />
         );
 
-      case 'purchaseCriteria':
-        return (
-          <PurchaseCriteria
-            {...mockProps}
-            purchaseCriteriaData={analysisData}
-          />
-        );
-
       case 'channelHeatmap':
         return (
           <ChannelHeatmap
             {...mockProps}
             channelHeatmapData={analysisData}
-          />
-        );
-
-      case 'loyaltyNPS':
-        return (
-          <LoyaltyNPS
-            {...mockProps}
-            loyaltyNPSData={analysisData}
           />
         );
 
@@ -355,7 +337,7 @@ const AnalysisDataModal = ({
 
               if (isFinancialAnalysis && !hasDocumentUploaded && !validData) {
                 return (
-                  <div className="loyalty-nps">
+                  <div className="analysis-empty-container">
                     <div className="empty-state-container">
                       <h3 className="empty-state-title">{analysisName || "Financial Analysis Limited"}</h3>
                       <p className="empty-state-message">

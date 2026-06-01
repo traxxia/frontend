@@ -7,6 +7,9 @@ When you first arrive at Traxxia, you have two options:
 -   **Login**: Access your existing account with your credentials.
 -   **Register**: Create a new account. If you are the first person in your organization, you will register as a **Company Admin**.
 
+### **Forgot Password?**
+If you ever lose access to your account, Traxxia supports a secure [Self-Service Password Reset](./forgot-password.md) (OTP-verified) so you can regain access immediately without requiring admin intervention.
+
 ![Login Page](/academy-screenshots/getting-started/login-page.png)
 *Screenshot of Traxxia Login Page*
 

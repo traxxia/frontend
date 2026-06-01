@@ -27,9 +27,7 @@ export const showToastMessage = (setShowToast) => (message, type = "success", op
 export const clearAllAnalysisData = (setters) => {
   const {
     setSwotAnalysisResult,
-    setPurchaseCriteriaData,
     setChannelHeatmapData,
-    setLoyaltyNPSData,
     setCapabilityHeatmapData,
     setStrategicData,
     setPortersData,
@@ -47,9 +45,7 @@ export const clearAllAnalysisData = (setters) => {
   } = setters;
 
   setSwotAnalysisResult("");
-  setPurchaseCriteriaData(null);
   setChannelHeatmapData(null);
-  setLoyaltyNPSData(null);
   setCapabilityHeatmapData(null);
   setStrategicData(null);
   setPortersData(null);

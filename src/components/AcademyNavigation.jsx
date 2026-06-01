@@ -69,72 +69,72 @@ const AcademyNavigation = ({
     return IconComponent ? <IconComponent size={16} /> : <LucideIcons.BookOpen size={16} />;
   };
   return <div ref={navRef} className={`academy-navigation ${isMobileMenuOpen ? 'mobile-open' : ''}`}>
-            <div className="academy-nav-sticky-top">
-                <div className="academy-nav-header">
-                    <Link to="/academy" className="academy-home-link">
-                        <LucideIcons.BookOpen size={24} />
-                        <span>Traxxia Academy</span>
-                    </Link>
-                    {onCloseMobileMenu && <button aria-label="Close navigation menu" className="mobile-close-btn" onClick={onCloseMobileMenu}>
-                            <LucideIcons.X size={24} />
-                        </button>}
-                </div>
+    <div className="academy-nav-sticky-top">
+      <div className="academy-nav-header">
+        <Link to="/academy" className="academy-home-link">
+          <LucideIcons.BookOpen size={24} />
+          <span>Traxxia Academy</span>
+        </Link>
+        {onCloseMobileMenu && <button aria-label="Close navigation menu" className="mobile-close-btn" onClick={onCloseMobileMenu}>
+          <LucideIcons.X size={24} />
+        </button>}
+      </div>
 
-            </div>
+    </div>
 
-            <nav className="academy-nav-categories">
-                {academyStructure.categories.map(category => {
+    <nav className="academy-nav-categories">
+      {academyStructure.categories.map(category => {
         const isExpanded = expandedCategories.includes(category.id);
         const isActive = activeCategory === category.id;
         return <div key={category.id} ref={el => categoryRefs.current[category.id] = el} className={`category-section ${isActive ? 'active-category' : ''}`}>
-                            <div className="category-header" onClick={() => toggleCategory(category.id)} role="button" tabIndex={0} onKeyDown={e => {
+          <div className="category-header" onClick={() => toggleCategory(category.id)} role="button" tabIndex={0} onKeyDown={e => {
             if (e.key === 'Enter' || e.key === ' ') {
               e.preventDefault();
               toggleCategory(category.id);
             }
           }}>
-                                <div className="category-title">
-                                    {renderCategoryIcon(category.icon)}
-                                    <span>{category.title}</span>
-                                </div>
-                                <div className="category-header-right">
-                                    <span className="article-count-badge">
-                                        {category.articles.length}
-                                    </span>
-                                    <LucideIcons.ChevronDown size={16} className={`category-chevron ${isExpanded ? 'expanded' : ''}`} />
-                                </div>
-                            </div>
+            <div className="academy-category-title">
+              {renderCategoryIcon(category.icon)}
+              <span>{category.title}</span>
+            </div>
+            <div className="category-header-right">
+              <span className="article-count-badge">
+                {category.articles.length}
+              </span>
+              <LucideIcons.ChevronDown size={16} className={`category-chevron ${isExpanded ? 'expanded' : ''}`} />
+            </div>
+          </div>
 
-                            {isExpanded && <ul className="category-articles">
-                                    {category.articles.map(article => {
+          {isExpanded && <ul className="category-articles">
+            {category.articles.map(article => {
               const isArticleActive = activeCategory === category.id && activeArticle === article.id;
               return <li key={article.id} className={isArticleActive ? 'active-article' : ''}>
-                                                <button className="article-link" onClick={() => handleArticleClick(category.id, article.id)}>
-                                                    <span className="article-title-text">{article.title}</span>
-                                                    {isArticleActive && <LucideIcons.ChevronRight size={14} className="active-indicator flex-shrink-0 ml-2" />}
-                                                </button>
-                                            </li>;
+                <button className="article-link" onClick={() => handleArticleClick(category.id, article.id)}>
+                  <span className="article-title-text">{article.title}</span>
+                  {isArticleActive && <LucideIcons.ChevronRight size={14} className="active-indicator flex-shrink-0 ml-2" />}
+                </button>
+              </li>;
             })}
-                                </ul>}
-                        </div>;
-      })}
-            </nav>
-
-            <div className="academy-nav-footer">
-                <div className="nav-footer-links">
-                    <Link to={userRole === 'super_admin' ? '/super-admin' : '/dashboard'} className="footer-link academy-navigation--s1">
-                        <LucideIcons.LayoutDashboard size={16} />
-                        <span>Back to Main</span>
-                    </Link>
-                    <Link to="/academy" className="footer-link">
-                        <LucideIcons.Home size={16} />
-                        <span>Academy Home</span>
-                    </Link>
-                </div>
-                <div className="nav-footer-info">
-                    <small>Version 1.0 • Phase 3</small>
-                </div>
-            </div>
+          </ul>}
         </div>;
+      })}
+    </nav>
+
+    <div className="academy-nav-footer">
+      <div className="nav-footer-links">
+        <Link to={userRole === 'super_admin' ? '/super-admin' : '/dashboard'} className="footer-link academy-navigation--s1">
+          <LucideIcons.LayoutDashboard size={16} />
+          <span>Back to Main</span>
+        </Link>
+        <Link to="/academy" className="footer-link">
+          <LucideIcons.Home size={16} />
+          <span>Academy Home</span>
+        </Link>
+      </div>
+      <div className="nav-footer-info">
+        <small>Version 1.0 • Phase 3</small>
+      </div>
+    </div>
+  </div>;
 };
 export default AcademyNavigation;
