@@ -516,96 +516,158 @@ const EditableBriefSection = ({
     loadSession();
   }, [selectedBusinessId, API_BASE_URL]);
 
-  // Trigger simulated Document Intelligence SSE streaming analysis!
+  // Trigger actual ML Backend financial extraction API!
   const triggerSSEAnalysis = (businessId) => {
     setIsAnalyzingFinancial(true);
     setSseLogs([
-      { timestamp: new Date().toLocaleTimeString(), tag: "INGEST", message: "Financial document upload detected. Initiating pipeline...", type: "info" }
+      { timestamp: new Date().toLocaleTimeString(), tag: "INGEST", message: "Initiating ML financial extraction...", type: "info" }
     ]);
     
-    const eventSource = new EventSource(`${API_BASE_URL}/api/sessions/business/${businessId}/stream-analysis`);
-    
-    eventSource.addEventListener("progress", (event) => {
-      const data = JSON.parse(event.data);
-      setSseLogs(prev => [...prev, {
-        timestamp: new Date().toLocaleTimeString(),
-        tag: `PROGRESS (${data.percent}%)`,
-        message: data.message,
-        type: "progress"
-      }]);
-    });
-    
-    eventSource.addEventListener("completed", (event) => {
-      const data = JSON.parse(event.data);
-      setSseLogs(prev => [...prev, {
-        timestamp: new Date().toLocaleTimeString(),
-        tag: "SUCCESS",
-        message: `Extraction complete! Extracted key performance indicators, margins, and leverage ratios.`,
-        type: "success"
-      }]);
-      
-      const loadSession = async () => {
-        try {
-          const token = getAuthToken();
-          const response = await fetch(`${API_BASE_URL}/api/sessions/business/${businessId}`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-          });
-          if (response.ok) {
-            const sData = await response.json();
-            if (sData && sData.hasSession !== false) {
-              setDocIntelSession(sData);
-              setActivePhaseTab('financial');
-            } else {
-              setDocIntelSession(null);
-            }
-          }
-        } catch (e) {}
-      };
-      loadSession();
-      
-      setIsAnalyzingFinancial(false);
-      eventSource.close();
-      showToastMessage("Financial data processed successfully via Document Intelligence Add-on!", "success");
-    });
-    
-    eventSource.addEventListener("error", (event) => {
-      let errMessage = "Extraction pipeline connection completed.";
+    const runExtraction = async () => {
       try {
-        if (event.data) {
-          const data = JSON.parse(event.data);
-          errMessage = data.error || errMessage;
-        }
-      } catch (_) {}
-      
-      setSseLogs(prev => [...prev, {
-        timestamp: new Date().toLocaleTimeString(),
-        tag: "SUCCESS",
-        message: "Verbatim excerpts mapped successfully. Ready for HITL review.",
-        type: "success"
-      }]);
-      
-      const loadSession = async () => {
-        try {
-          const token = getAuthToken();
-          const response = await fetch(`${API_BASE_URL}/api/sessions/business/${businessId}`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-          });
-          if (response.ok) {
-            const sData = await response.json();
-            if (sData && sData.hasSession !== false) {
-              setDocIntelSession(sData);
-              setActivePhaseTab('financial');
-            } else {
-              setDocIntelSession(null);
+        let fileToAnalyze = financialFiles[0]?.fileObject;
+
+        if (!fileToAnalyze) {
+          setSseLogs(prev => [...prev, {
+            timestamp: new Date().toLocaleTimeString(),
+            tag: "DOWNLOAD",
+            message: "File not in memory. Downloading uploaded spreadsheet from database...",
+            type: "info"
+          }]);
+
+          const docInfo = await analysisService.fetchFinancialDocument(businessId);
+          if (docInfo) {
+            const docBlob = await analysisService.downloadFinancialDocument(businessId);
+            if (docBlob) {
+              fileToAnalyze = await analysisService.createFileFromDocument(docBlob, docInfo);
             }
           }
-        } catch (e) {}
-      };
-      loadSession();
-      
-      setIsAnalyzingFinancial(false);
-      eventSource.close();
-    });
+        }
+
+        if (!fileToAnalyze) {
+          throw new Error("Could not retrieve the uploaded financial document file.");
+        }
+
+        setSseLogs(prev => [...prev, {
+          timestamp: new Date().toLocaleTimeString(),
+          tag: "ML_API",
+          message: "Sending file to ML backend for summary extraction...",
+          type: "progress"
+        }]);
+
+        const formData = new FormData();
+        formData.append('files', fileToAnalyze);
+
+        const mlResponse = await fetch('https://trax-qa1-ml-b4e6gmc4hjdncdg2.centralus-01.azurewebsites.net/financial-summary-extract', {
+          method: 'POST',
+          body: formData
+        });
+
+        if (!mlResponse.ok) {
+          const errText = await mlResponse.text();
+          throw new Error(`ML extraction failed: ${mlResponse.statusText}. Details: ${errText}`);
+        }
+
+        const financialMetrics = await mlResponse.json();
+
+        setSseLogs(prev => [...prev, {
+          timestamp: new Date().toLocaleTimeString(),
+          tag: "DATABASE",
+          message: "Saving extracted financial metrics to database...",
+          type: "progress"
+        }]);
+
+        const token = getAuthToken();
+        const saveResponse = await fetch(`${API_BASE_URL}/api/sessions/save-raw`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            businessId,
+            status: "completed",
+            strategicAnswers: [],
+            financialMetrics
+          })
+        });
+
+        if (!saveResponse.ok) {
+          const saveErr = await saveResponse.json();
+          throw new Error(saveErr.error || "Failed to save raw metrics to session state");
+        }
+
+        setSseLogs(prev => [...prev, {
+          timestamp: new Date().toLocaleTimeString(),
+          tag: "SYNC",
+          message: "Synchronizing metrics with dashboard panels...",
+          type: "progress"
+        }]);
+
+        const syncResponse = await fetch(`${API_BASE_URL}/api/sessions/business/${businessId}/sync-financial`, {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${token}`,
+            "Content-Type": "application/json"
+          }
+        });
+
+        if (!syncResponse.ok) {
+          const syncErr = await syncResponse.json();
+          throw new Error(syncErr.error || "Failed to synchronize metrics to core product");
+        }
+
+        const syncResult = await syncResponse.json();
+
+        // Reactively update Zustand store to render core charts instantly
+        useAnalysisStore.setState({
+          profitabilityData: { profitability: syncResult.excelAnalysisSuite.profitability },
+          growthTrackerData: { growth_trends: syncResult.excelAnalysisSuite.growth_trends },
+          liquidityEfficiencyData: { liquidity: syncResult.excelAnalysisSuite.liquidity },
+          investmentPerformanceData: { investment: syncResult.excelAnalysisSuite.investment },
+          leverageRiskData: { leverage: syncResult.excelAnalysisSuite.leverage },
+          financialPerformanceData: syncResult.financialPerformanceData
+        });
+
+        if (onUploadedFileUpdate) {
+          onUploadedFileUpdate({ name: fileToAnalyze.name });
+        }
+
+        setSseLogs(prev => [...prev, {
+          timestamp: new Date().toLocaleTimeString(),
+          tag: "SUCCESS",
+          message: "Financial metrics extracted and synchronized successfully!",
+          type: "success"
+        }]);
+
+        // Load latest session state to update local UI State
+        const sessionResponse = await fetch(`${API_BASE_URL}/api/sessions/business/${businessId}`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (sessionResponse.ok) {
+          const sData = await sessionResponse.json();
+          if (sData && sData.hasSession !== false) {
+            setDocIntelSession(sData);
+            setActivePhaseTab('financial');
+          }
+        }
+
+        showToastMessage("Financial data processed successfully via ML Backend!", "success");
+      } catch (err) {
+        console.error("Extraction pipeline failed:", err);
+        setSseLogs(prev => [...prev, {
+          timestamp: new Date().toLocaleTimeString(),
+          tag: "FAILED",
+          message: `Error: ${err.message}`,
+          type: "failed"
+        }]);
+        showToastMessage(`Extraction failed: ${err.message}`, "error");
+      } finally {
+        setIsAnalyzingFinancial(false);
+      }
+    };
+
+    runExtraction();
   };
 
   // Update a single financial metric (Human-in-the-loop)
@@ -1196,7 +1258,7 @@ const EditableBriefSection = ({
           }
 
           clearInterval(progressInterval);
-          setUploadedFiles(prev => prev.map(f => f.id === fileId ? { ...f, progress: 100, status: 'success' } : f));
+          setUploadedFiles(prev => prev.map(f => f.id === fileId ? { ...f, progress: 100, status: 'success', fileObject: file } : f));
           showToastMessage(`File "${file.name}" uploaded successfully! Click "Upload Financial Document" below to analyze.`, 'success');
         } else {
           // Strategic PDF/DOCX - upload to database immediately!
