@@ -87,18 +87,6 @@ const FRAMEWORK_FLOWS = [
     icon: Compass,
   },
   {
-    key: 'strategicRadar',
-    title: 'PESTEL Analysis',
-    description: 'External environment analysis covering political, economic, social, technological, environmental, and legal factors.',
-    icon: Globe,
-  },
-  {
-    key: 'simpleSwot',
-    title: 'Full SWOT Portfolio',
-    description: 'Comprehensive SWOT analysis with strategic recommendations.',
-    icon: Layers,
-  },
-  {
     key: 'competitiveAdvantage',
     title: 'Competitive Advantage Matrix',
     description: 'Analysis of competitive positioning and advantages.',
