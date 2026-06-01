@@ -749,7 +749,7 @@ const EditableBriefSection = ({
           return [
             ...prev,
             {
-              id: documentInfo.id || 'db-financial',
+              id: documentInfo.id || `db-financial-${documentInfo.filename || 'default'}`,
               name: docName,
               size: documentInfo.file_size || documentInfo.size || 240000,
               uploadDate: documentInfo.upload_date ? new Date(documentInfo.upload_date).toLocaleDateString() : 'Active Ingestion',
@@ -774,7 +774,7 @@ const EditableBriefSection = ({
           const docName = doc.original_name || 'financial_statement.xlsx';
           if (!updated.some(f => f.name === docName && f.section === 'financial')) {
             updated.push({
-              id: doc.id || 'db-financial',
+              id: doc.id || `db-financial-${doc.filename || 'default'}`,
               name: docName,
               size: doc.file_size || 240000,
               uploadDate: doc.upload_date ? new Date(doc.upload_date).toLocaleDateString() : 'Uploaded',
@@ -2044,7 +2044,7 @@ const EditableBriefSection = ({
                     ref={fileInputRef} 
                     style={{ display: 'none' }} 
                     onChange={handleFileInputChange}
-                    accept=".pdf,.docx,.xlsx,.xls"
+                    accept=".pdf,.docx,.doc,.xlsx,.xls,.csv"
                     disabled={isAnyApiActive || !canEdit}
                   />
                 </div>
@@ -2169,7 +2169,7 @@ const EditableBriefSection = ({
             {leftPanelExpanded.financialUpload && (
               <div className="brief-card-body">
                 <p className="brief-card-description">
-                  Upload financial statement templates (Excel/Spreadsheet) to populate the core financial indicators.
+                  Upload financial statement templates to populate the core financial indicators.
                 </p>
 
                 <div 
@@ -2188,8 +2188,11 @@ const EditableBriefSection = ({
                   <div className="sidebar-dropzone-icon" style={{ color: '#16a34a', background: '#dcfce7' }}>
                     <Upload size={20} />
                   </div>
-                  <p className="sidebar-dropzone-text">
-                    Drag & drop Excel/CSV or click to browse
+                  <p className="sidebar-dropzone-text" style={{ fontSize: '11.5px', padding: '0 4px' }}>
+                    Drag & drop files or click to browse
+                  </p>
+                  <p style={{ fontSize: '10.5px', color: '#64748b', margin: '2px 0 0 0' }}>
+                    Supports: PDF, DOCX, XLSX, XLS
                   </p>
                   <input 
                     type="file" 
@@ -2197,26 +2200,58 @@ const EditableBriefSection = ({
                     ref={financialFileInputRef} 
                     style={{ display: 'none' }} 
                     onChange={handleFinancialFileInputChange}
-                    accept=".xlsx,.xls,.csv"
+                    accept=".pdf,.docx,.doc,.xlsx,.xls,.csv"
                     disabled={isAnyApiActive || !canEdit}
                   />
                 </div>
 
                 {financialFiles.length > 0 && (
                   <div className="sidebar-file-list">
-                    <div className="sidebar-list-header">Active Ledger Spreadsheet</div>
+                    <div className="sidebar-list-header">Uploaded Documents</div>
                     {financialFiles.map(file => (
                       <div key={file.id} className="sidebar-file-item financial-item">
                         <div className="sidebar-file-info">
-                          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
-                            <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7l-5-5z" fill="rgba(22, 163, 74, 0.05)" />
-                            <path d="M14 2v5h5" />
-                            <line x1="8" y1="15" x2="16" y2="15" stroke="rgba(22, 163, 74, 0.4)" strokeWidth="1.5" />
-                            <line x1="8" y1="17.5" x2="16" y2="17.5" stroke="rgba(22, 163, 74, 0.4)" strokeWidth="1.5" />
-                            <line x1="8" y1="20" x2="16" y2="20" stroke="rgba(22, 163, 74, 0.4)" strokeWidth="1.5" />
-                            <rect x="1.5" y="7.5" width="13.5" height="7" rx="1.2" fill="#16a34a" stroke="none" />
-                            <text x="8.25" y="11" fill="white" fontSize="5.2" fontWeight="900" fontFamily="system-ui, -apple-system, sans-serif" stroke="none" textAnchor="middle" dominantBaseline="central">XLS</text>
-                          </svg>
+                          {file.name.toLowerCase().endsWith('.pdf') ? (
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                              <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7l-5-5z" fill="rgba(239, 68, 68, 0.05)" />
+                              <path d="M14 2v5h5" />
+                              <line x1="8" y1="15" x2="16" y2="15" stroke="rgba(239, 68, 68, 0.4)" strokeWidth="1.5" />
+                              <line x1="8" y1="17.5" x2="16" y2="17.5" stroke="rgba(239, 68, 68, 0.4)" strokeWidth="1.5" />
+                              <line x1="8" y1="20" x2="16" y2="20" stroke="rgba(239, 68, 68, 0.4)" strokeWidth="1.5" />
+                              <rect x="1.5" y="7.5" width="13.5" height="7" rx="1.2" fill="#ef4444" stroke="none" />
+                              <text x="8.25" y="11" fill="white" fontSize="5.2" fontWeight="900" fontFamily="system-ui, -apple-system, sans-serif" stroke="none" textAnchor="middle" dominantBaseline="central">PDF</text>
+                            </svg>
+                          ) : (file.name.toLowerCase().endsWith('.docx') || file.name.toLowerCase().endsWith('.doc')) ? (
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                              <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7l-5-5z" fill="rgba(37, 99, 235, 0.05)" />
+                              <path d="M14 2v5h5" />
+                              <line x1="8" y1="15" x2="16" y2="15" stroke="rgba(37, 99, 235, 0.4)" strokeWidth="1.5" />
+                              <line x1="8" y1="17.5" x2="16" y2="17.5" stroke="rgba(37, 99, 235, 0.4)" strokeWidth="1.5" />
+                              <line x1="8" y1="20" x2="16" y2="20" stroke="rgba(37, 99, 235, 0.4)" strokeWidth="1.5" />
+                              <rect x="1.5" y="7.5" width="13.5" height="7" rx="1.2" fill="#2563eb" stroke="none" />
+                              <text x="8.25" y="11" fill="white" fontSize="5.2" fontWeight="900" fontFamily="system-ui, -apple-system, sans-serif" stroke="none" textAnchor="middle" dominantBaseline="central">DOC</text>
+                            </svg>
+                          ) : (file.name.toLowerCase().endsWith('.xlsx') || file.name.toLowerCase().endsWith('.xls') || file.name.toLowerCase().endsWith('.csv')) ? (
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                              <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7l-5-5z" fill="rgba(22, 163, 74, 0.05)" />
+                              <path d="M14 2v5h5" />
+                              <line x1="8" y1="15" x2="16" y2="15" stroke="rgba(22, 163, 74, 0.4)" strokeWidth="1.5" />
+                              <line x1="8" y1="17.5" x2="16" y2="17.5" stroke="rgba(22, 163, 74, 0.4)" strokeWidth="1.5" />
+                              <line x1="8" y1="20" x2="16" y2="20" stroke="rgba(22, 163, 74, 0.4)" strokeWidth="1.5" />
+                              <rect x="1.5" y="7.5" width="13.5" height="7" rx="1.2" fill="#16a34a" stroke="none" />
+                              <text x="8.25" y="11" fill="white" fontSize="5.2" fontWeight="900" fontFamily="system-ui, -apple-system, sans-serif" stroke="none" textAnchor="middle" dominantBaseline="central">XLS</text>
+                            </svg>
+                          ) : (
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#64748b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                              <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7l-5-5z" fill="rgba(100, 116, 139, 0.05)" />
+                              <path d="M14 2v5h5" />
+                              <line x1="8" y1="15" x2="16" y2="15" stroke="rgba(100, 116, 139, 0.4)" strokeWidth="1.5" />
+                              <line x1="8" y1="17.5" x2="16" y2="17.5" stroke="rgba(100, 116, 139, 0.4)" strokeWidth="1.5" />
+                              <line x1="8" y1="20" x2="16" y2="20" stroke="rgba(100, 116, 139, 0.4)" strokeWidth="1.5" />
+                              <rect x="1.5" y="7.5" width="13.5" height="7" rx="1.2" fill="#64748b" stroke="none" />
+                              <text x="8.25" y="11" fill="white" fontSize="4.5" fontWeight="900" fontFamily="system-ui, -apple-system, sans-serif" stroke="none" textAnchor="middle" dominantBaseline="central">FILE</text>
+                            </svg>
+                          )}
                           <span className="sidebar-file-name" title={file.name}>{file.name}</span>
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -2400,7 +2435,7 @@ const EditableBriefSection = ({
                                 <div className="ledger-metric-info">
                                   <span className="ledger-metric-name">{metricKey.replace(/_/g, ' ')}</span>
                                   <div className="ledger-metric-subtext">
-                                    {mData?.source_page && (
+                                    {(mData?.source_page || mData?.source_sheet) && (
                                       <span 
                                         className="ledger-metric-citation"
                                         onClick={(e) => {
@@ -2408,13 +2443,13 @@ const EditableBriefSection = ({
                                           handleOpenReference({
                                             title: `FINANCIAL INDICATOR: ${metricKey.replace(/_/g, ' ').toUpperCase()}`,
                                             doc: docIntelSession.uploadedDocuments?.[0]?.original_name || "financial_statement.xlsx",
-                                            excerpt: mData.excerpt || "Disclosed financial metric in balance sheet worksheets.",
-                                            cell: `Page ${mData.source_page}`,
-                                            page: mData.source_page
+                                            excerpt: mData.excerpt || `Disclosed financial metric in ${mData.source_sheet ? `sheet ${mData.source_sheet}` : 'balance sheet worksheets'}.`,
+                                            cell: mData.source_page ? `Page ${mData.source_page}` : `Sheet ${mData.source_sheet}`,
+                                            page: mData.source_page || null
                                           });
                                         }}
                                       >
-                                        Ref: Page {mData.source_page}
+                                        Ref: {mData.source_page ? `Page ${mData.source_page}` : mData.source_sheet}
                                       </span>
                                     )}
                                     <span>Conf: {mData?.confidence || "High"}</span>
@@ -2588,9 +2623,15 @@ const EditableBriefSection = ({
                               <span style={{ fontSize: '12px', fontWeight: '600', color: '#1e293b', wordBreak: 'break-all', flex: 1 }}>
                                 {name}
                               </span>
-                              <span style={{ fontSize: '11px', fontWeight: '700', color: '#4f46e5', background: '#e0e7ff', padding: '1px 6px', borderRadius: '10px', whiteSpace: 'nowrap' }}>
-                                Page {ev.page || 1}
-                              </span>
+                              {ev.page ? (
+                                <span style={{ fontSize: '11px', fontWeight: '700', color: '#4f46e5', background: '#e0e7ff', padding: '1px 6px', borderRadius: '10px', whiteSpace: 'nowrap' }}>
+                                  Page {ev.page}
+                                </span>
+                              ) : (ev.sheet || ev.source_sheet) ? (
+                                <span style={{ fontSize: '11px', fontWeight: '700', color: '#16a34a', background: '#dcfce7', padding: '1px 6px', borderRadius: '10px', whiteSpace: 'nowrap' }}>
+                                  {ev.sheet || ev.source_sheet}
+                                </span>
+                              ) : null}
                             </div>
                           );
                         })}

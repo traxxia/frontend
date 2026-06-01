@@ -536,8 +536,7 @@ const BusinessSetupPage = () => {
 
         if (responseData) {
           // 1. Handle Document Info
-          const documentExists = responseData.document_info?.has_document === true;
-          setHasUploadedDocument(documentExists);
+          let documentExists = responseData.document_info?.has_document === true;
 
           if (responseData.document_info && responseData.document_info.has_document) {
             setDocumentInfo(responseData.document_info);
@@ -546,11 +545,12 @@ const BusinessSetupPage = () => {
             const doc = await apiService.fetchFinancialDocument(selectedBusinessId);
             if (doc) {
               setDocumentInfo(doc);
+              documentExists = true;
             } else {
               setDocumentInfo({ has_document: false });
             }
           }
-          setDocumentInfo(responseData.document_info || { has_document: false });
+          setHasUploadedDocument(documentExists);
 
           // 2. Handle Questions and Answers mapping
           let finalAnswers = {};
