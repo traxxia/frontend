@@ -2621,18 +2621,6 @@ const EditableBriefSection = ({
         )}
       </div>
 
-      {showTemplatesPopup && (
-        <FinancialTemplatesPopup
-          isOpen={showTemplatesPopup}
-          onClose={() => setShowTemplatesPopup(false)}
-          isFileUploading={isFileUploading}
-          onFileUploaded={(file, validation) => {
-            processMultipleFiles([file]);
-            setShowTemplatesPopup(false);
-          }}
-          fileInputRef={fileInputRef}
-        />
-      )}
 
       {showConfirmModal && (
         <ConfirmationModal
