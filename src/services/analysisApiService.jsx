@@ -374,7 +374,7 @@ export class AnalysisApiService {
           }
           obsHeaders['x-request-timestamp'] = new Date().toISOString();
         }
-      } catch (_) {  }
+      } catch (_) { }
 
       let response;
       if (isExcelAnalysis) {
@@ -498,7 +498,7 @@ export class AnalysisApiService {
     if (!analysisTypes) {
       console.error(`Unknown phase: ${phase}`);
       return;
-    } 
+    }
 
     this.clearPhaseData(phase, stateSetters);
 
@@ -517,10 +517,10 @@ export class AnalysisApiService {
           .then((res) => {
             status.completed++;
             stateSetters.setRegenerating?.(analysisType, false);
-            
+
             const setterName = this.getStateSetterName(analysisType);
             if (stateSetters[setterName]) {
-                stateSetters[setterName](res);
+              stateSetters[setterName](res);
             }
 
             showToastMessage(
@@ -598,11 +598,11 @@ export class AnalysisApiService {
           .then((res) => {
             status.completed++;
             stateSetters.setRegenerating?.(analysisType, false);
-            
+
             // Map the result back to the store using the stateSetters
             const setterName = this.getStateSetterName(analysisType);
             if (stateSetters[setterName]) {
-                stateSetters[setterName](res);
+              stateSetters[setterName](res);
             }
 
             showToastMessage(
@@ -1016,7 +1016,7 @@ export class AnalysisApiService {
   }
   async generateAnalysis(analysisType, questions, answers, selectedBusinessId, options = {}) {
     const { uploadedFile = null, onStreamChunk = null, forceRefresh = false } = options;
-    
+
     try {
       const endpoint = API_ENDPOINTS[analysisType];
       if (!endpoint) throw new Error(`Unknown analysis type: ${analysisType}`);
@@ -1028,9 +1028,9 @@ export class AnalysisApiService {
         freshAnswers = freshData.freshAnswers;
       }
       const combinedAnswers = { ...answers, ...freshAnswers };
-      
+
       const { questionsArray, answersArray } = this.prepareQuestionsAndAnswers(
-        questions, 
+        questions,
         combinedAnswers,
         analysisType === 'fullSwot' ? (q, ans) => ans[q._id] && ans[q._id].trim() !== '' : null
       );
@@ -1055,16 +1055,16 @@ export class AnalysisApiService {
         );
       } else {
         result = await this.makeAPICall(
-          endpoint, 
-          questionsArray, 
-          answersArray, 
-          selectedBusinessId, 
-          null, 
-          null, 
-          onStreamChunk, 
-          null, 
-          null, 
-          null, 
+          endpoint,
+          questionsArray,
+          answersArray,
+          selectedBusinessId,
+          null,
+          null,
+          onStreamChunk,
+          null,
+          null,
+          null,
           analysisType
         );
       }
@@ -1091,7 +1091,7 @@ export class AnalysisApiService {
       if (selectedBusinessId) {
         await this.saveAnalysisToBackend(processedResult, analysisType, selectedBusinessId);
       }
-      
+
       return processedResult;
     } catch (error) {
       console.error(`Error generating ${analysisType} analysis:`, error);

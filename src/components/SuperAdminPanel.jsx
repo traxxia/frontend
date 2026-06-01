@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { createPortal } from "react-dom";
 import { useLocation, useSearchParams, useNavigate } from "react-router-dom";
-import { Building2, Users, MessagesSquare, Briefcase, Plus, Settings, ArrowLeft, Loader, CheckCircle, AlertCircle, History, Shield, Activity, CircleUserRound, Key, CreditCard, ClipboardList, MessageSquareText, Telescope } from "lucide-react";
+import { Building2, Users, MessagesSquare, Briefcase, Plus, Settings, ArrowLeft, Loader, CheckCircle, AlertCircle, History, Shield, Activity, CircleUserRound, Key, CreditCard, ClipboardList, MessageSquareText, Telescope, AppWindow } from "lucide-react";
 import CompanyManagement from "./CompanyManagement";
 import QuestionManagement from "./QuestionManagement";
 import UserOverview from "./UserOverview";
@@ -15,6 +15,7 @@ import SubscriptionTab from "./SubscriptionTab";
 import AcademyFeedbackAdmin from "./AcademyFeedbackAdmin";
 import PlanManagement from "./PlanManagement";
 import StaleBetsAdmin from "./StaleBetsAdmin";
+import ModalManagement from "./ModalManagement";
 import { useTranslation } from "../hooks/useTranslation";
 import "../styles/superadmin.css";
 import { useAuthStore } from "../store";
@@ -103,6 +104,11 @@ const SuperAdminPanel = () => {
     label: t('Plan management') || "Plan Management",
     icon: ClipboardList,
     superAdminOnly: true
+  }, {
+    id: "modal_management",
+    label: t('Modal Management') || "Modal Management",
+    icon: AppWindow,
+    superAdminOnly: true
   }];
   const tabs = allTabs.filter(tab => {
     if (tab.superAdminOnly && !isSuperAdmin) return false;
@@ -136,6 +142,8 @@ const SuperAdminPanel = () => {
         return <PlanManagement onToast={showToastMessage} />;
       case "stale_bets":
         return <StaleBetsAdmin onToast={showToastMessage} />;
+      case "modal_management":
+        return <ModalManagement onToast={showToastMessage} />;
       default:
         return <CompanyManagement onToast={showToastMessage} />;
     }
