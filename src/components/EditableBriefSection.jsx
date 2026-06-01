@@ -745,7 +745,7 @@ const EditableBriefSection = ({
       if (documentInfo.filename || documentInfo.id || documentInfo.has_document || documentInfo.file_size) {
         const docName = documentInfo.filename || 'Financial_Statement.xlsx';
         setUploadedFiles(prev => {
-          if (prev.some(f => f.name === docName)) return prev;
+          if (prev.some(f => f.name === docName && f.section === 'financial')) return prev;
           return [
             ...prev,
             {
@@ -755,6 +755,7 @@ const EditableBriefSection = ({
               uploadDate: documentInfo.upload_date ? new Date(documentInfo.upload_date).toLocaleDateString() : 'Active Ingestion',
               status: 'success',
               type: 'spreadsheet',
+              section: 'financial',
               progress: 100
             }
           ];
@@ -771,7 +772,7 @@ const EditableBriefSection = ({
         let changed = false;
         docIntelSession.uploadedDocuments.forEach(doc => {
           const docName = doc.original_name || 'financial_statement.xlsx';
-          if (!updated.some(f => f.name === docName)) {
+          if (!updated.some(f => f.name === docName && f.section === 'financial')) {
             updated.push({
               id: doc.id || 'db-financial',
               name: docName,
@@ -779,6 +780,7 @@ const EditableBriefSection = ({
               uploadDate: doc.upload_date ? new Date(doc.upload_date).toLocaleDateString() : 'Uploaded',
               status: 'success',
               type: 'spreadsheet',
+              section: 'financial',
               progress: 100
             });
             changed = true;
@@ -807,7 +809,7 @@ const EditableBriefSection = ({
         if (!active) return;
 
         setUploadedFiles(prev => {
-          // Retain only spreadsheets and temporary upload-queue files
+          // Retain only financial files and temporary files
           const nonDbStrategic = prev.filter(f => !f.id.startsWith('db-strategic-'));
           const dbStrategic = (data.documents || []).map(doc => ({
             id: `db-strategic-${doc.filename}`,
@@ -816,6 +818,7 @@ const EditableBriefSection = ({
             uploadDate: doc.upload_date ? new Date(doc.upload_date).toLocaleDateString() : 'Uploaded',
             status: 'success',
             type: doc.original_name.toLowerCase().endsWith('.docx') ? 'docx' : 'pdf',
+            section: 'strategic',
             progress: 100
           }));
           return [...nonDbStrategic, ...dbStrategic];
@@ -1125,15 +1128,15 @@ const EditableBriefSection = ({
 
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
       const files = Array.from(e.dataTransfer.files);
-      const onlySpreadsheets = files.filter(file => {
+      const allowedFiles = files.filter(file => {
         const fileExt = file.name.split('.').pop().toLowerCase();
-        return ['xlsx', 'xls', 'csv'].includes(fileExt);
+        return ['pdf', 'docx', 'doc', 'xlsx', 'xls', 'csv'].includes(fileExt);
       });
-      if (onlySpreadsheets.length < files.length) {
-        showToastMessage("Only Excel (.xlsx, .xls) and CSV files are allowed in this section.", "error");
+      if (allowedFiles.length < files.length) {
+        showToastMessage("Unsupported file format in selection. Only PDF, Word, and Excel files are allowed.", "error");
       }
-      if (onlySpreadsheets.length > 0) {
-        processMultipleFiles(onlySpreadsheets);
+      if (allowedFiles.length > 0) {
+        processMultipleFiles(allowedFiles, true);
       }
     }
   };
@@ -1141,15 +1144,15 @@ const EditableBriefSection = ({
   const handleFinancialFileInputChange = (e) => {
     if (e.target.files && e.target.files[0]) {
       const files = Array.from(e.target.files);
-      const onlySpreadsheets = files.filter(file => {
+      const allowedFiles = files.filter(file => {
         const fileExt = file.name.split('.').pop().toLowerCase();
-        return ['xlsx', 'xls', 'csv'].includes(fileExt);
+        return ['pdf', 'docx', 'doc', 'xlsx', 'xls', 'csv'].includes(fileExt);
       });
-      if (onlySpreadsheets.length < files.length) {
-        showToastMessage("Only Excel (.xlsx, .xls) and CSV files are allowed in this section.", "error");
+      if (allowedFiles.length < files.length) {
+        showToastMessage("Unsupported file format in selection. Only PDF, Word, and Excel files are allowed.", "error");
       }
-      if (onlySpreadsheets.length > 0) {
-        processMultipleFiles(onlySpreadsheets);
+      if (allowedFiles.length > 0) {
+        processMultipleFiles(allowedFiles, true);
       }
     }
   };
@@ -1165,9 +1168,10 @@ const EditableBriefSection = ({
     const { maxFilesLimit, maxFileSizeMB } = uploadLimits;
     const maxFileSizeBytes = maxFileSizeMB * 1024 * 1024;
 
-    const currentFilesCount = uploadedFiles.length;
+    const targetSection = isFinancial ? 'financial' : 'strategic';
+    const currentFilesCount = uploadedFiles.filter(f => f.section === targetSection).length;
     if (currentFilesCount + files.length > maxFilesLimit) {
-      showToastMessage(`Upload limit exceeded. You can upload a maximum of ${maxFilesLimit} files.`, 'error');
+      showToastMessage(`Upload limit exceeded. You can upload a maximum of ${maxFilesLimit} files in this section.`, 'error');
       return;
     }
 
@@ -1178,42 +1182,23 @@ const EditableBriefSection = ({
         continue;
       }
 
-      // Check if file is already added to queue
-      if (uploadedFiles.some(f => f.name === file.name)) {
-        showToastMessage(`File "${file.name}" is already uploaded.`, 'info');
+      // Check if file is already added to queue in the same section
+      if (uploadedFiles.some(f => f.name === file.name && f.section === targetSection)) {
+        showToastMessage(`File "${file.name}" is already uploaded in this section.`, 'info');
         continue;
       }
 
       const fileExt = file.name.split('.').pop().toLowerCase();
-      const isSpreadsheet = ['xlsx', 'xls'].includes(fileExt);
-      const isDoc = ['pdf', 'docx'].includes(fileExt);
-
-      if (fileExt === 'csv') {
-        showToastMessage(`File "${file.name}" format is unsupported. CSV files are not accepted. Please upload PDF, Word (DOCX), or Excel (XLSX, XLS) files.`, 'error');
-        continue;
-      }
-
-      // If uploading via financial templates popup, only allow spreadsheets
-      if (isFinancial && !isSpreadsheet) {
-        showToastMessage(`File "${file.name}" format is unsupported for financial data. Please upload Excel (XLSX, XLS) files only.`, 'error');
-        continue;
-      }
+      const isSpreadsheet = ['xlsx', 'xls', 'csv'].includes(fileExt);
+      const isDoc = ['pdf', 'docx', 'doc'].includes(fileExt);
 
       if (!isSpreadsheet && !isDoc) {
-        showToastMessage(`File "${file.name}" format is unsupported. Please upload PDF, Word (DOCX), or Excel (XLSX, XLS) files.`, 'error');
+        showToastMessage(`File "${file.name}" format is unsupported. Please upload Excel, CSV, PDF, or Word files.`, 'error');
         continue;
       }
 
       const fileId = `file-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
       
-      // Determine file object type
-      let fileType = 'pdf';
-      if (isDoc) {
-        fileType = fileExt === 'pdf' ? 'pdf' : 'docx';
-      } else if (isSpreadsheet) {
-        fileType = isFinancial ? 'spreadsheet' : 'excel-strategic';
-      }
-
       const newFileObj = {
         id: fileId,
         name: file.name,
@@ -1221,7 +1206,8 @@ const EditableBriefSection = ({
         uploadDate: new Date().toLocaleDateString(),
         status: 'uploading',
         progress: 15,
-        type: fileType
+        type: isSpreadsheet ? 'spreadsheet' : (fileExt === 'pdf' ? 'pdf' : 'docx'),
+        section: targetSection
       };
 
       // Add to file library state
@@ -1235,23 +1221,33 @@ const EditableBriefSection = ({
       }, 250);
 
       try {
-        if (isFinancial && isSpreadsheet) {
-          // Detect template & validate
-          const detection = await detectTemplateType(file);
-          if (detection.confidence === 'none' || detection.score < 0.3) {
-            throw new Error(`Spreadsheet structure not identified. Ensure it matches financial templates.`);
-          }
-          const validation = await validateAgainstTemplate(file, detection.type);
-          if (!validation.isValid) {
-            throw new Error(`Validation failed for: ${validation.templateName}`);
-          }
-          const validationResult = {
-            templateType: detection.type,
-            templateName: validation.templateName,
-            validation: validation,
-            confidence: detection.confidence,
-            uploadMode: 'auto-detect'
+        if (isFinancial) {
+          let validationResult = {
+            templateType: 'simple',
+            templateName: 'Standard Ingestion',
+            confidence: 'high',
+            uploadMode: 'manual'
           };
+
+          if (isSpreadsheet && fileExt !== 'csv') {
+            try {
+              const detection = await detectTemplateType(file);
+              if (detection.confidence !== 'none' && detection.score >= 0.3) {
+                const validation = await validateAgainstTemplate(file, detection.type);
+                if (validation.isValid) {
+                  validationResult = {
+                    templateType: detection.type,
+                    templateName: validation.templateName,
+                    validation: validation,
+                    confidence: detection.confidence,
+                    uploadMode: 'auto-detect'
+                  };
+                }
+              }
+            } catch (err) {
+              console.warn('Template validation skipped or failed:', err);
+            }
+          }
 
           // Actual backend upload
           await saveFileToDatabase(file, validationResult);
@@ -1264,9 +1260,9 @@ const EditableBriefSection = ({
           setUploadedFiles(prev => prev.map(f => f.id === fileId ? { ...f, progress: 100, status: 'success', fileObject: file } : f));
           showToastMessage(`File "${file.name}" uploaded successfully! Click "Upload Financial Document" below to analyze.`, 'success');
         } else {
-          // Strategic PDF/DOCX/XLSX/XLS - upload to database immediately!
+          // Strategic PDF/DOCX/Spreadsheet
           const result = await saveStrategicFileToDatabase(file);
-          
+
           clearInterval(progressInterval);
           setUploadedFiles(prev => prev.map(f => f.id === fileId ? { 
             ...f, 
@@ -1897,11 +1893,11 @@ const EditableBriefSection = ({
 
   // Multi-file aggregate helper values
   const totalFileSizeKB = uploadedFiles.reduce((acc, f) => acc + (f.size || 0), 0) / 1024;
-  const successfulIngestionCount = uploadedFiles.filter(f => (f.type === 'pdf' || f.type === 'docx' || f.type === 'excel-strategic') && f.status === 'success').length;
+  const successfulIngestionCount = uploadedFiles.filter(f => f.section === 'strategic' && f.status === 'success').length;
   const uploadedFilesCount = uploadedFiles.filter(f => f.status === 'uploaded').length;
 
-  const strategyFiles = uploadedFiles.filter(f => f.type === 'pdf' || f.type === 'docx' || f.type === 'excel-strategic');
-  const financialFiles = uploadedFiles.filter(f => f.type === 'spreadsheet');
+  const strategyFiles = uploadedFiles.filter(f => f.section === 'strategic');
+  const financialFiles = uploadedFiles.filter(f => f.section === 'financial');
 
   const initialCountStr = `${initialFields.filter(f => cleanValue(f.value).trim() !== '').length}/${initialFields.length}`;
   const essentialCountStr = `${essentialFields.filter(f => cleanValue(f.value).trim() !== '').length}/${essentialFields.length}`;
