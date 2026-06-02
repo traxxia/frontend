@@ -19,7 +19,12 @@ import {
   ArrowUpRight,
   Zap,
   Globe,
-  Gauge
+  Gauge,
+  Target,
+  TrendingUp,
+  Building,
+  AlertTriangle,
+  LineChart
 } from 'lucide-react';
 import { useModelSettingsStore } from '../store';
 
@@ -71,63 +76,87 @@ const SYSTEM_FLOWS = [
 const FRAMEWORK_FLOWS = [
   {
     key: 'simpleSwot',
-    title: 'Simple SWOT Portfolio',
-    description: 'Conducts Strengths, Weaknesses, Opportunities, and Threats mapping.',
+    title: 'SWOT Analysis',
+    description: 'Comprehensive strengths, weaknesses, opportunities, and threats analysis.',
     icon: Layers,
   },
   {
-    key: 'purchaseCriteria',
-    title: 'Purchase Criteria Matrix',
-    description: 'Analyzes user-buying motivators and customer decision metrics.',
-    icon: Percent,
-  },
-  {
-    key: 'loyaltyNps',
-    title: 'Loyalty & NPS Estimator',
-    description: 'Predicts retention curves and net promoter configurations.',
-    icon: Gauge,
-  },
-  {
-    key: 'expandedCapability',
-    title: 'Expanded Capability Heatmap',
-    description: 'Identifies operational capabilities and skill expansions.',
-    icon: ArrowUpRight,
-  },
-  {
     key: 'strategicRadar',
-    title: 'Strategic Radar',
-    description: 'Plots competitive positions and business opportunities.',
+    title: "Porter's Five Forces",
+    description: "Competitive analysis using Porter's strategic framework.",
     icon: Compass,
   },
   {
-    key: 'maturityScoring',
-    title: 'Maturity Scoring Index',
-    description: 'Benchmarks organizational status against industry standards.',
-    icon: Landmark,
+    key: 'competitiveAdvantage',
+    title: 'Competitive Advantage Matrix',
+    description: 'Analysis of competitive positioning and advantages.',
+    icon: Award,
   },
   {
-    key: 'competitiveAdvantage',
-    title: 'Competitive Advantage',
-    description: 'Highlights barriers to entry and unique selling propositions.',
-    icon: Award,
+    key: 'expandedCapability',
+    title: 'Capability Heatmap',
+    description: 'Advanced organizational capability analysis.',
+    icon: ArrowUpRight,
   },
   {
     key: 'strategicPositioning',
     title: 'Strategic Positioning Radar',
-    description: 'Visualizes product pricing, value, and quadrant placements.',
+    description: 'Visual representation of strategic positioning across key dimensions.',
     icon: PieChart,
   },
   {
     key: 'productivityMetrics',
     title: 'Productivity Metrics',
-    description: 'Estimates delivery benchmarks, performance, and efficiency.',
+    description: 'Analysis of organizational productivity and efficiency metrics.',
     icon: Activity,
+  },
+  {
+    key: 'maturityScoring',
+    title: 'Maturity Score',
+    description: 'Business maturity assessment and scoring.',
+    icon: Landmark,
+  },
+  {
+    key: 'simpleSwot',
+    title: 'Competitive Landscape',
+    description: 'Comprehensive analysis of key competitors using SWOT framework.',
+    icon: Building,
   },
   {
     key: 'coreAdjacency',
     title: 'Core Adjacency Matrix',
-    description: 'Explores horizontal expansion vectors and market adjacencies.',
-    icon: Globe,
+    description: 'Strategic analysis of core business areas and adjacent growth opportunities.',
+    icon: Target,
+  },
+  {
+    key: 'documentQa',
+    title: 'Profitability Analysis',
+    description: 'Detailed profitability margins with industry benchmark comparisons.',
+    icon: Percent,
+  },
+  {
+    key: 'documentQa',
+    title: 'Growth Tracker',
+    description: 'Revenue and net income trends with growth pattern analysis.',
+    icon: TrendingUp,
+  },
+  {
+    key: 'documentQa',
+    title: 'Liquidity & Efficiency',
+    description: 'Financial ratios with gauges and color-coded risk indicators.',
+    icon: Gauge,
+  },
+  {
+    key: 'documentQa',
+    title: 'Investment Performance',
+    description: 'ROA ROE ROIC analysis with benchmark comparisons and trend charts.',
+    icon: LineChart,
+  },
+  {
+    key: 'documentQa',
+    title: 'Leverage & Risk',
+    description: 'Financial risk assessment with traffic light risk indicators.',
+    icon: AlertTriangle,
   },
 ];
 
@@ -193,6 +222,7 @@ const ModalManagement = ({ onToast }) => {
       productivityMetrics: productivityMetrics || DEFAULTS.productivityMetrics,
       coreAdjacency: coreAdjacency || DEFAULTS.coreAdjacency,
     });
+    setIsSaved(true);
   }, [
     pmfFlow,
     enrichment,
@@ -266,7 +296,7 @@ const ModalManagement = ({ onToast }) => {
     const isCustomized = selections[key] !== DEFAULTS[key];
 
     return (
-      <div key={key} className="model-settings-row">
+      <div key={title} className="model-settings-row">
         <div className="d-flex align-items-center gap-3 flex-grow-1 me-3">
           <div className={`model-icon-container ${type}`}>
             <Icon size={18} />
