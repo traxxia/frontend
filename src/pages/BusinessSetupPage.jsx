@@ -324,6 +324,7 @@ const BusinessSetupPage = () => {
 
   useEffect(() => {
     if (selectedBusinessId) {
+      resetAnalysis(); // Reset old business analysis data immediately on business change
       // Clear the local fetch cache when business changes so we re-fetch everything for the new business
       fetchedAnalysisKeys.current.clear();
       // Only fetch if questions are NOT going to be fetched by the question loader (optimization)
@@ -332,7 +333,7 @@ const BusinessSetupPage = () => {
         fetchAnalysisData(selectedBusinessId, false, false, false);
       }
     }
-  }, [selectedBusinessId, fetchAnalysisData]);
+  }, [selectedBusinessId, resetAnalysis, fetchAnalysisData]);
 
   const [activeNavDropdown, setActiveNavDropdown] = useState(null);
   const navDropdownRef = useRef(null);

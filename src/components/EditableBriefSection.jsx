@@ -313,7 +313,8 @@ const EditableBriefSection = ({
   isFinancialRegeneratingProp = false,
   answerIds = {},
   setAnswerIds,
-  hasPmfAccess = false
+  hasPmfAccess = false,
+  isLoading = false
 }) => {
   const answersDetails = useAnalysisStore(state => state.answersDetails || {});
   const lastFetchedBusinessId = useAnalysisStore(state => state.lastFetchedBusinessId);
@@ -470,9 +471,7 @@ const EditableBriefSection = ({
   }, [selectedBusinessId, analysisService]);
 
   useEffect(() => {
-    if (questions && questions.length > 0) {
-      generateBriefFields();
-    }
+    generateBriefFields();
   }, [questions, userAnswers]);
 
   // Reset uploaded files state when the business selection changes
@@ -764,7 +763,7 @@ const EditableBriefSection = ({
   const generateBriefFields = () => {
     const fields = [];
     const phaseOrderMap = { 'initial': 1, 'essential': 2, 'advanced': 3 };
-    const filteredQuestions = questions.filter(q => q.phase && !['good'].includes(q.phase.toLowerCase()));
+    const filteredQuestions = (questions || []).filter(q => q.phase && !['good'].includes(q.phase.toLowerCase()));
 
     const sortedQuestions = [...filteredQuestions].sort((a, b) => {
       const phaseA = phaseOrderMap[a.phase?.toLowerCase()] || 4;
