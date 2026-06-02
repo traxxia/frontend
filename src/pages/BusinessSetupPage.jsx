@@ -541,14 +541,7 @@ const BusinessSetupPage = () => {
           if (responseData.document_info && responseData.document_info.has_document) {
             setDocumentInfo(responseData.document_info);
           } else {
-            // Use the service which now has local promise-caching to avoid duplicate requests
-            const doc = await apiService.fetchFinancialDocument(selectedBusinessId);
-            if (doc) {
-              setDocumentInfo(doc);
-              documentExists = true;
-            } else {
-              setDocumentInfo({ has_document: false });
-            }
+            setDocumentInfo({ has_document: false });
           }
           setHasUploadedDocument(documentExists);
 

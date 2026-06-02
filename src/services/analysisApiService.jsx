@@ -81,7 +81,7 @@ const pmfAnalysisCache = new Map();
 const pmfExecutiveSummaryCache = new Map();
 const analysisDataCache = new Map();
 const projectsCache = new Map();
-const financialDocumentCache = new Map();
+const strategicDocsCache = new Map();
 
 export class AnalysisApiService {
   constructor(ML_API_BASE_URL, API_BASE_URL, getAuthToken, setApiLoading = null) {
@@ -237,24 +237,72 @@ export class AnalysisApiService {
   requiresDeepSearch(endpoint) {
     return DEEP_SEARCH_ENDPOINTS.includes(endpoint);
   }
+  // Fetch the spreadsheet document info from strategic documents list (replaces obsolete /financial-document GET)
   async fetchFinancialDocument(businessId) {
     if (!businessId) return null;
-    const cacheKey = `doc-${businessId}`;
-    if (financialDocumentCache.has(cacheKey)) return await financialDocumentCache.get(cacheKey);
+    const cacheKey = `strategic-docs-${businessId}`;
+    if (strategicDocsCache.has(cacheKey)) {
+      const docs = await strategicDocsCache.get(cacheKey);
+      return this._findSpreadsheetDoc(docs);
+    }
 
     const promise = (async () => {
       try {
-        return await this.businessService.fetchFinancialDocument(businessId);
+        const token = this.getAuthToken();
+        const response = await fetch(`${this.API_BASE_URL}/api/businesses/${businessId}/strategic-documents`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (!response.ok) return [];
+        const data = await response.json();
+        return data.documents || [];
       } catch (err) {
-        financialDocumentCache.delete(cacheKey);
-        throw err;
+        strategicDocsCache.delete(cacheKey);
+        return [];
       }
     })();
-    financialDocumentCache.set(cacheKey, promise);
-    return promise;
+
+    strategicDocsCache.set(cacheKey, promise);
+    const docs = await promise;
+    return this._findSpreadsheetDoc(docs);
   }
+
+  _findSpreadsheetDoc(docs) {
+    if (!Array.isArray(docs)) return null;
+    const spreadsheet = docs.find(doc => {
+      const ext = (doc.original_name || '').toLowerCase().split('.').pop();
+      return ['xlsx', 'xls', 'csv'].includes(ext);
+    });
+    if (!spreadsheet) return null;
+    return {
+      filename: spreadsheet.filename,
+      original_name: spreadsheet.original_name,
+      file_size: spreadsheet.file_size,
+      upload_date: spreadsheet.upload_date,
+      has_document: true,
+      template_type: 'simple'
+    };
+  }
+
+  // Download a spreadsheet via the strategic-document download endpoint (replaces obsolete /financial-document/download GET)
   async downloadFinancialDocument(businessId) {
-    return this.businessService.downloadFinancialDocument(businessId);
+    if (!businessId) return null;
+    const docInfo = await this.fetchFinancialDocument(businessId);
+    if (!docInfo || !docInfo.filename) return null;
+    const token = this.getAuthToken();
+    const response = await fetch(
+      `${this.API_BASE_URL}/api/businesses/${businessId}/strategic-document/${encodeURIComponent(docInfo.filename)}/download`,
+      { headers: { 'Authorization': `Bearer ${token}` } }
+    );
+    if (!response.ok) throw new Error(`Failed to download spreadsheet: ${response.statusText}`);
+    return await response.blob();
+  }
+
+  clearFinancialCache(businessId) {
+    if (businessId) {
+      strategicDocsCache.delete(`strategic-docs-${businessId}`);
+    } else {
+      strategicDocsCache.clear();
+    }
   }
   async createFileFromDocument(documentBlob, documentInfo) {
     try {
@@ -382,6 +430,8 @@ export class AnalysisApiService {
 
         let fileToUpload = uploadedFile;
         let documentInfo = null;
+
+        // If no in-memory file provided, retrieve the spreadsheet from the strategic documents store
         if (!fileToUpload && selectedBusinessId) {
           documentInfo = await this.fetchFinancialDocument(selectedBusinessId);
           if (documentInfo) {
@@ -390,10 +440,9 @@ export class AnalysisApiService {
               fileToUpload = await this.createFileFromDocument(documentBlob, documentInfo);
             }
           }
-        } else if (fileToUpload) {
-          if (!documentInfo && selectedBusinessId) {
-            documentInfo = await this.fetchFinancialDocument(selectedBusinessId);
-          }
+        } else if (fileToUpload && selectedBusinessId) {
+          // Fetch metadata for template_type only (no separate download needed)
+          documentInfo = await this.fetchFinancialDocument(selectedBusinessId);
         }
 
         if (fileToUpload) {
@@ -786,19 +835,6 @@ export class AnalysisApiService {
           generation_context: 'regular_generation'
         }
       };
-
-      try {
-        await fetch(`${this.API_BASE_URL}/api/conversations/phase-analysis`, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(analysisPayload)
-        });
-      } catch (legacyError) {
-        console.warn('Legacy analysis save failed:', legacyError);
-      }
 
       await AnalysisService.upsertAnalysis(this.API_BASE_URL, token, analysisPayload);
       analysisDataCache.delete(`analysis-${selectedBusinessId}`);

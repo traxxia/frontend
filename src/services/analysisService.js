@@ -17,7 +17,14 @@ export const AnalysisService = {
             throw new Error(error.error || `Failed to upsert analysis: ${response.statusText}`);
         }
 
-        return await response.json();
+        const result = await response.json();
+        const busId = data.business_id || data.businessId;
+        if (busId) {
+            analysisRequestCache.delete(`analysis-${busId}`);
+        } else {
+            analysisRequestCache.clear();
+        }
+        return result;
     },
 
     async getAnalysis(apiBaseUrl, token, businessId, forceRefresh = false) {

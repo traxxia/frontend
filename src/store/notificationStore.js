@@ -3,6 +3,8 @@ import { useAuthStore } from './authStore';
 
 const API_BASE_URL = import.meta.env.VITE_BACKEND_URL;
 
+let activeFetchPromise = null;
+
 export const useNotificationStore = create((set, get) => ({
   notifications: [],
   unreadCount: 0,
@@ -10,17 +12,17 @@ export const useNotificationStore = create((set, get) => ({
   error: null,
 
   fetchNotifications: async () => {
-    const { isLoading } = get();
-    if (isLoading) return;
+    if (activeFetchPromise) return activeFetchPromise;
 
     const token = useAuthStore.getState().token;
     if (!token) return;
 
     set({ isLoading: true, error: null });
-    try {
-      const res = await fetch(`${API_BASE_URL}/api/notifications`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
+
+    activeFetchPromise = fetch(`${API_BASE_URL}/api/notifications`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    }).then(async res => {
+      activeFetchPromise = null;
       if (res.ok) {
         const data = await res.json();
         set({
@@ -32,10 +34,13 @@ export const useNotificationStore = create((set, get) => ({
       } else {
         set({ isLoading: false, error: 'Failed to fetch notifications' });
       }
-    } catch (err) {
+    }).catch(err => {
+      activeFetchPromise = null;
       console.error('Failed to fetch notifications', err);
       set({ isLoading: false, error: err.message });
-    }
+    });
+
+    return activeFetchPromise;
   },
 
   markAsRead: async (notifId) => {
