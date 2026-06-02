@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap');
 @import url('./variables.css');
 
 * {
@@ -97,6 +98,11 @@
   justify-content: center;
   background-color: var(--color-bg-primary);
   overflow-y: auto;
+  font-family: 'Montserrat', 'Helvetica Neue', Arial, sans-serif;
+}
+
+.register-right-section * {
+  font-family: 'Montserrat', 'Helvetica Neue', Arial, sans-serif;
 }
 
 [data-theme="dark"] .register-right-section {
@@ -118,20 +124,32 @@
 }
 
 .register-header {
-  text-align: center;
-  margin-bottom: var(--spacing-xl);
+  text-align: left;
+  margin-bottom: 24px;
+  width: 100%;
 }
 
 .register-header h1 {
-  font-size: var(--font-size-2xl);
-  font-weight: var(--font-weight-bold);
-  color: var(--color-text-primary);
+  font-size: 2.25rem;
+  font-weight: 800;
+  color: #0c1b2f;
   margin-bottom: var(--spacing-xs);
+  letter-spacing: -0.5px;
 }
 
 .register-header p {
-  color: var(--color-text-secondary);
-  font-size: var(--font-size-sm);
+  color: #006abc;
+  font-size: 15px;
+  font-weight: 500;
+  letter-spacing: 0.2px;
+}
+
+[data-theme="dark"] .register-header h1 {
+  color: var(--color-text-primary);
+}
+
+[data-theme="dark"] .register-header p {
+  color: #5b7cd6;
 }
 
 .mobile-logo-container {
@@ -260,27 +278,28 @@
 .register-form input,
 .register-form select {
   width: 100%;
-  padding: 0.65rem 0.8rem;
-  border: 1px solid var(--color-email-border);
-  border-radius: var(--border-radius-lg);
-  font-size: var(--font-size-base);
-  background: var(--color-bg-primary);
+  padding: 12px 16px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 14px;
+  background: #ffffff;
   color: var(--color-text-primary);
-  font-weight: var(--font-weight-medium);
+  font-weight: var(--font-weight-normal);
   transition: var(--transition-normal);
+  box-sizing: border-box;
 }
 
 [data-theme="dark"] .register-form input,
 [data-theme="dark"] .register-form select {
   background: var(--color-bg-light);
-  border-color: var(--color-email-border);
+  border-color: #4a4a4a;
 }
 
 .register-form input:focus,
 .register-form select:focus {
   outline: none;
-  border-color: var(--color-primary);
-  box-shadow: 0 0 0 2px rgba(72, 100, 161, 0.5);
+  border-color: #006abc;
+  box-shadow: 0 0 0 3px rgba(0, 106, 188, 0.15);
 }
 
 .register-form input.error,
@@ -549,13 +568,96 @@
 }
 
 .form-group label {
-  margin-bottom: 0px !important;
+  font-size: 14px;
+  font-weight: 700;
+  color: #0c1b2f;
+  margin-bottom: 8px !important;
+  display: block;
+}
+
+[data-theme="dark"] .form-group label {
+  color: var(--color-text-primary);
+}
+
+.form-group .required {
+  color: #ef476f;
+  margin-left: 2px;
 }
 
 .form-grid {
   display: block !important;
   grid-template-columns: none !important;
   gap: 0px !important;
+}
+
+.register-form .form-group {
+  margin-bottom: 20px;
+  width: 100%;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 24px;
+  width: 100%;
+}
+
+.form-actions button,
+.form-actions .btn-primary,
+.form-actions .btn-secondary {
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition-normal);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 42px;
+}
+
+.form-actions .btn-secondary {
+  background-color: #ffffff;
+  color: #555555;
+  border: 1px solid #d9dbe9;
+}
+
+.form-actions .btn-secondary:hover {
+  background-color: #f7fafc;
+  border-color: #c5c6cc;
+}
+
+.form-actions .btn-primary {
+  background-color: #006abc;
+  color: #ffffff;
+  border: none;
+  box-shadow: 0 4px 10px rgba(0, 106, 188, 0.15);
+}
+
+.form-actions .btn-primary:hover {
+  background-color: #005a9e;
+  box-shadow: 0 6px 14px rgba(0, 106, 188, 0.25);
+}
+
+[data-theme="dark"] .form-actions .btn-secondary {
+  background-color: #2a2a2a;
+  color: #cccccc;
+  border-color: #444444;
+}
+
+[data-theme="dark"] .form-actions .btn-secondary:hover {
+  background-color: #333333;
+}
+
+[data-theme="dark"] .form-actions .btn-primary {
+  background-color: #5b7cd6;
+  box-shadow: 0 4px 10px rgba(91, 124, 214, 0.15);
+}
+
+[data-theme="dark"] .form-actions .btn-primary:hover {
+  background-color: #4a68c2;
 }
 
 .success-icon {
