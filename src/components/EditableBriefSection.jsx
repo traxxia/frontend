@@ -6,15 +6,19 @@ import {
 import { AnalysisApiService } from '../services/analysisApiService';
 import { answerService } from '../services/answerService';
 import { useTranslation } from "../hooks/useTranslation";
-import FinancialTemplatesPopup from './FinancialTemplatesPopup';
 import { detectTemplateType, validateAgainstTemplate } from '../utils/templateValidator';
 import '../styles/CompanyManagement.css';
+import '../styles/docIntelligence.css';
 import { useAuthStore } from '../store/authStore';
 import { useAnalysisStore } from '../store/analysisStore';
 import DOMPurify from 'dompurify';
 import RichTextEditor from './RichTextEditor';
 import { markdownToHtml } from '../utils/markdownHelper';
 import ConfirmationModal from './ConfirmationModal';
+
+let globalLimitsPromise = null;
+const sessionCache = new Map();
+const strategicDocsCache = new Map();
 
 const cleanValue = (val) => {
   if (!val || val === '[Question Skipped]') return '';
@@ -323,7 +327,6 @@ const EditableBriefSection = ({
   const [isApplyingEnrichment, setIsApplyingEnrichment] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [confirmModalConfig, setConfirmModalConfig] = useState({ title: '', message: '', onConfirm: () => {} });
-  const [showTemplatesPopup, setShowTemplatesPopup] = useState(false);
   const [isFileUploading, setIsFileUploading] = useState(false);
   const [isFinancialRegenerating, setIsFinancialRegenerating] = useState(false);
   const [isAnalyzingDocs, setIsAnalyzingDocs] = useState(false);
@@ -349,6 +352,14 @@ const EditableBriefSection = ({
   const [drawerData, setDrawerData] = useState(null);
   const [expandAll, setExpandAll] = useState(false);
   const drawerRef = useRef(null);
+
+  // Document Intelligence Add-on States
+  const [docIntelSession, setDocIntelSession] = useState(null);
+  const [isAnalyzingFinancial, setIsAnalyzingFinancial] = useState(false);
+  const [sseLogs, setSseLogs] = useState([]);
+  const [editingMetric, setEditingMetric] = useState(null); // { category, key }
+  const [editMetricValue, setEditMetricValue] = useState('');
+
 
   useEffect(() => {
     const handleOutsideClick = (event) => {
@@ -387,9 +398,13 @@ const EditableBriefSection = ({
     let active = true;
     const fetchLimits = async () => {
       try {
-        const response = await fetch(`${API_BASE_URL}/api/config/limits`);
-        if (!response.ok) throw new Error('Failed to fetch config limits');
-        const data = await response.json();
+        if (!globalLimitsPromise) {
+          globalLimitsPromise = answerService.getConfigLimits().catch(err => {
+            globalLimitsPromise = null;
+            throw err;
+          });
+        }
+        const data = await globalLimitsPromise;
         if (active) {
           setUploadLimits({
             maxFilesLimit: data.maxFileUploadLimit || 5,
@@ -404,7 +419,7 @@ const EditableBriefSection = ({
     return () => {
       active = false;
     };
-  }, [API_BASE_URL]);
+  }, []);
 
   const inputRefs = useRef({});
   const fieldRefs = useRef({});
@@ -464,29 +479,229 @@ const EditableBriefSection = ({
     setUploadedFiles([]);
   }, [selectedBusinessId]);
 
-  // Sync initial loaded financial document into our multi-file library
+  // Load Document Intelligence Session
   useEffect(() => {
-    if (documentInfo) {
-      if (documentInfo.filename || documentInfo.id || documentInfo.has_document || documentInfo.file_size) {
-        const docName = documentInfo.filename || 'Financial_Statement.xlsx';
-        setUploadedFiles(prev => {
-          if (prev.some(f => f.name === docName)) return prev;
-          return [
-            ...prev,
-            {
-              id: documentInfo.id || 'db-financial',
-              name: docName,
-              size: documentInfo.file_size || documentInfo.size || 240000,
-              uploadDate: documentInfo.upload_date ? new Date(documentInfo.upload_date).toLocaleDateString() : 'Active Ingestion',
-              status: 'success',
-              type: 'spreadsheet',
-              progress: 100
-            }
-          ];
-        });
+    if (!selectedBusinessId) return;
+    let active = true;
+    const loadSession = async () => {
+      try {
+        let sPromise = sessionCache.get(selectedBusinessId);
+        if (!sPromise) {
+          sPromise = answerService.getSessionByBusiness(selectedBusinessId)
+            .then(data => data && data.hasSession !== false ? data : null)
+            .catch(err => {
+              sessionCache.delete(selectedBusinessId);
+              throw err;
+            });
+          sessionCache.set(selectedBusinessId, sPromise);
+        }
+
+        const sData = await sPromise;
+        if (active) {
+          setDocIntelSession(sData);
+        }
+      } catch (err) {
+        console.warn("[DocIntel] Failed to load session:", err);
+        if (active) {
+          setDocIntelSession(null);
+        }
       }
+    };
+    loadSession();
+    return () => {
+      active = false;
+    };
+  }, [selectedBusinessId]);
+
+  // Trigger actual ML Backend financial extraction API!
+  const triggerSSEAnalysis = async (businessId, files = []) => {
+    sessionCache.delete(businessId);
+    analysisService.clearFinancialCache(businessId);
+    setIsAnalyzingFinancial(true);
+    setSseLogs([
+      { timestamp: new Date().toLocaleTimeString(), tag: "INGEST", message: "Initiating ML financial extraction...", type: "info" }
+    ]);
+    
+    try {
+      let filesToAnalyze = files;
+
+      if (filesToAnalyze.length === 0) {
+        // Fallback to memory file if not passed
+        const spreadsheetFile = uploadedFiles.find(f => f.type === 'spreadsheet')?.fileObject || uploadedFiles[0]?.fileObject;
+        if (spreadsheetFile) {
+          filesToAnalyze = [spreadsheetFile];
+        }
+      }
+
+      // /financial-summary-extract supports: .pdf, .xlsx, .xls, .docx, .doc only
+      const SUPPORTED_EXTS = ['pdf', 'xlsx', 'xls', 'docx', 'doc'];
+      filesToAnalyze = filesToAnalyze.filter(f => {
+        const ext = (f.name || '').toLowerCase().split('.').pop();
+        return SUPPORTED_EXTS.includes(ext);
+      });
+
+      if (filesToAnalyze.length === 0) {
+        console.warn('[triggerSSEAnalysis] No supported financial files (pdf/xlsx/xls/docx/doc) found — skipping financial extraction.');
+        setIsAnalyzingFinancial(false);
+        return false;
+      }
+
+      setSseLogs(prev => [...prev, {
+        timestamp: new Date().toLocaleTimeString(),
+        tag: "ML_API",
+        message: `Sending ${filesToAnalyze.length} file(s) to ML backend for summary extraction...`,
+        type: "progress"
+      }]);
+
+      const formData = new FormData();
+      filesToAnalyze.forEach(file => {
+        formData.append('files', file, file.name);
+      });
+
+      const financialMetrics = await answerService.extractFinancialSummary(formData);
+
+      setSseLogs(prev => [...prev, {
+        timestamp: new Date().toLocaleTimeString(),
+        tag: "DATABASE",
+        message: "Saving extracted financial metrics to database...",
+        type: "progress"
+      }]);
+
+      await answerService.saveRawSession(businessId, "completed", financialMetrics);
+
+      setSseLogs(prev => [...prev, {
+        timestamp: new Date().toLocaleTimeString(),
+        tag: "SYNC",
+        message: "Synchronizing metrics with dashboard panels...",
+        type: "progress"
+      }]);
+
+      const syncResult = await answerService.syncFinancial(businessId);
+
+      // Reactively update Zustand store to render core charts instantly
+      useAnalysisStore.setState({
+        profitabilityData: { profitability: syncResult.excelAnalysisSuite.profitability },
+        growthTrackerData: { growth_trends: syncResult.excelAnalysisSuite.growth_trends },
+        liquidityEfficiencyData: { liquidity: syncResult.excelAnalysisSuite.liquidity },
+        investmentPerformanceData: { investment: syncResult.excelAnalysisSuite.investment },
+        leverageRiskData: { leverage: syncResult.excelAnalysisSuite.leverage },
+        financialPerformanceData: syncResult.financialPerformanceData
+      });
+
+      if (onUploadedFileUpdate && filesToAnalyze.length > 0) {
+        onUploadedFileUpdate({ name: filesToAnalyze[0].name });
+      }
+
+      setSseLogs(prev => [...prev, {
+        timestamp: new Date().toLocaleTimeString(),
+        tag: "SUCCESS",
+        message: "Financial metrics extracted and synchronized successfully!",
+        type: "success"
+      }]);
+
+      // Load latest session state to update local UI State
+      const sData = await answerService.getSessionByBusiness(businessId);
+      if (sData && sData.hasSession !== false) {
+        sessionCache.set(businessId, Promise.resolve(sData));
+        setDocIntelSession(sData);
+        setActivePhaseTab('financial');
+      }
+
+      showToastMessage("Financial data processed successfully! Regenerating all insights...", "success");
+      return true;
+    } catch (err) {
+      console.error("Extraction pipeline failed:", err);
+      setSseLogs(prev => [...prev, {
+        timestamp: new Date().toLocaleTimeString(),
+        tag: "FAILED",
+        message: `Error: ${err.message}`,
+        type: "failed"
+      }]);
+      showToastMessage(`Extraction failed: ${err.message}`, "error");
+      throw err;
+    } finally {
+      setIsAnalyzingFinancial(false);
     }
-  }, [documentInfo]);
+  };
+
+  // Update a single financial metric (Human-in-the-loop)
+  const handleUpdateMetric = async (category, metricKey, newValue) => {
+    if (!docIntelSession) return;
+    
+    const oldValue = docIntelSession.financialMetrics?.[category]?.[metricKey]?.value;
+    
+    const trimmed = String(newValue || '').trim();
+    let parsedNewValue = null;
+    if (trimmed !== '') {
+      if (trimmed === '-' || trimmed === '.' || trimmed === '-.' || isNaN(parseFloat(trimmed))) {
+        showToastMessage("Please enter a valid number.", "error");
+        return;
+      }
+      parsedNewValue = parseFloat(trimmed);
+    }
+    
+    // Guard: Only call the API if there is an actual change!
+    if (oldValue === parsedNewValue || (parsedNewValue === null && oldValue === null)) {
+      console.log(`[DocIntel] No change detected for ${metricKey} (${oldValue} === ${newValue}). Skipping API call.`);
+      return;
+    }
+    
+    const updatedMetrics = { ...docIntelSession.financialMetrics };
+    if (updatedMetrics[category] && updatedMetrics[category][metricKey]) {
+      updatedMetrics[category][metricKey].value = parsedNewValue;
+    }
+    
+    try {
+      const result = await answerService.updateSession(selectedBusinessId, updatedMetrics);
+      sessionCache.set(selectedBusinessId, Promise.resolve({
+        ...docIntelSession,
+        financialMetrics: result.financialMetrics
+      }));
+      setDocIntelSession(prev => ({
+        ...prev,
+        financialMetrics: result.financialMetrics
+      }));
+      showToastMessage("Metric updated successfully.", "success");
+    } catch (err) {
+      showToastMessage(`Failed to update metric: ${err.message}`, "error");
+    }
+  };
+
+
+  // Sync to Core Product
+  const handleSyncFinancial = async () => {
+    if (!docIntelSession) return;
+    
+    try {
+      showToastMessage("Syncing Document Intelligence financial data...", "info");
+      const result = await answerService.syncFinancial(selectedBusinessId);
+      
+      // Reactively update Zustand store to render core charts instantly
+      useAnalysisStore.setState({
+        profitabilityData: { profitability: result.excelAnalysisSuite.profitability },
+        growthTrackerData: { growth_trends: result.excelAnalysisSuite.growth_trends },
+        liquidityEfficiencyData: { liquidity: result.excelAnalysisSuite.liquidity },
+        investmentPerformanceData: { investment: result.excelAnalysisSuite.investment },
+        leverageRiskData: { leverage: result.excelAnalysisSuite.leverage },
+        financialPerformanceData: result.financialPerformanceData
+      });
+      
+      if (onUploadedFileUpdate) {
+        onUploadedFileUpdate({ name: docIntelSession.uploadedDocuments?.[0]?.original_name || "financial_statement.xlsx" });
+      }
+      
+      showToastMessage("Extracted metrics synchronized!", "success");
+    } catch (err) {
+      showToastMessage(`Sync failed: ${err.message}`, "error");
+    }
+  };
+
+  // NOTE: Document sync from documentInfo/docIntelSession is intentionally removed.
+  // All documents (including spreadsheets) are now managed through the unified
+  // strategic documents endpoint loaded by loadStrategicDocs below.
+
+
+
 
   // Fetch strategic documents from database
   useEffect(() => {
@@ -494,28 +709,35 @@ const EditableBriefSection = ({
     const loadStrategicDocs = async () => {
       if (!selectedBusinessId) return;
       try {
-        const token = getAuthToken();
-        const response = await fetch(`${API_BASE_URL}/api/businesses/${selectedBusinessId}/strategic-documents`, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-        if (!response.ok) throw new Error('Failed to fetch strategic documents');
-        const data = await response.json();
+        let docsPromise = strategicDocsCache.get(selectedBusinessId);
+        if (!docsPromise) {
+          docsPromise = answerService.getStrategicDocuments(selectedBusinessId).catch(err => {
+            strategicDocsCache.delete(selectedBusinessId);
+            throw err;
+          });
+          strategicDocsCache.set(selectedBusinessId, docsPromise);
+        }
+
+        const data = await docsPromise;
         if (!active) return;
 
         setUploadedFiles(prev => {
-          // Retain only spreadsheets and temporary upload-queue files
+          // Retain only financial files and temporary files
           const nonDbStrategic = prev.filter(f => !f.id.startsWith('db-strategic-'));
-          const dbStrategic = (data.documents || []).map(doc => ({
-            id: `db-strategic-${doc.filename}`,
-            name: doc.original_name,
-            size: doc.file_size || 512000,
-            uploadDate: doc.upload_date ? new Date(doc.upload_date).toLocaleDateString() : 'Uploaded',
-            status: 'success',
-            type: doc.original_name.toLowerCase().endsWith('.docx') ? 'docx' : 'pdf',
-            progress: 100
-          }));
+          const dbStrategic = (data.documents || []).map(doc => {
+            const ext = doc.original_name.toLowerCase().split('.').pop();
+            const type = ['xlsx', 'xls', 'csv'].includes(ext) ? 'spreadsheet' : ext;
+            return {
+              id: `db-strategic-${doc.filename}`,
+              name: doc.original_name,
+              size: doc.file_size || 512000,
+              uploadDate: doc.upload_date ? new Date(doc.upload_date).toLocaleDateString() : 'Uploaded',
+              status: 'success',
+              type: type,
+              section: 'strategic',
+              progress: 100
+            };
+          });
           return [...nonDbStrategic, ...dbStrategic];
         });
       } catch (err) {
@@ -527,7 +749,7 @@ const EditableBriefSection = ({
     return () => {
       active = false;
     };
-  }, [selectedBusinessId, API_BASE_URL]);
+  }, [selectedBusinessId]);
 
 
 
@@ -705,64 +927,13 @@ const EditableBriefSection = ({
     setEditingField(null);
   };
 
-  // Reusable fully dynamic original database save function
-  const saveFileToDatabase = async (file, validationResult) => {
-    try {
-      const token = getAuthToken();
-      if (!token) throw new Error('Authentication token not found');
-      if (!selectedBusinessId) throw new Error('No business selected');
-
-      const formData = new FormData();
-      formData.append('document', file);
-
-      const templateComplexityMap = {
-        'simplified': 'simple',
-        'standard': 'medium',
-        'detailed': 'medium'
-      };
-
-      const backendTemplateType = templateComplexityMap[validationResult.templateType] || 'simple';
-      formData.append('template_type', backendTemplateType);
-      formData.append('template_name', validationResult.templateName || '');
-      formData.append('validation_confidence', validationResult.confidence || 'high');
-      formData.append('upload_mode', validationResult.uploadMode || 'auto-detect');
-
-      const response = await fetch(`${API_BASE_URL}/api/businesses/${selectedBusinessId}/financial-document`, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        },
-        body: formData
-      });
-
-      const result = await response.json();
-      if (!response.ok) throw new Error(result.error || 'Failed to save file to database');
-      return result;
-    } catch (error) {
-      console.error('Database save error:', error);
-      throw error;
-    }
-  };
 
   const saveStrategicFileToDatabase = async (file) => {
     try {
-      const token = getAuthToken();
-      if (!token) throw new Error('Authentication token not found');
+      strategicDocsCache.delete(selectedBusinessId);
       if (!selectedBusinessId) throw new Error('No business selected');
 
-      const formData = new FormData();
-      formData.append('document', file);
-
-      const response = await fetch(`${API_BASE_URL}/api/businesses/${selectedBusinessId}/strategic-document`, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        },
-        body: formData
-      });
-
-      const result = await response.json();
-      if (!response.ok) throw new Error(result.error || 'Failed to save strategic document to database');
+      const result = await answerService.uploadStrategicDocument(selectedBusinessId, file);
       return result;
     } catch (error) {
       console.error('Strategic database save error:', error);
@@ -805,16 +976,21 @@ const EditableBriefSection = ({
     }
   };
 
-  // Multiple File sequential validation and upload engine
-  const processMultipleFiles = async (files, isFinancial = false) => {
+
+
+  // Multiple File concurrent validation and upload engine
+  const processMultipleFiles = async (files) => {
     const { maxFilesLimit, maxFileSizeMB } = uploadLimits;
     const maxFileSizeBytes = maxFileSizeMB * 1024 * 1024;
 
-    const currentFilesCount = uploadedFiles.length;
-    if (currentFilesCount + files.length > maxFilesLimit) {
+    const strategicFilesCount = uploadedFiles.filter(f => f.section === 'strategic').length;
+    if (strategicFilesCount + files.length > maxFilesLimit) {
       showToastMessage(`Upload limit exceeded. You can upload a maximum of ${maxFilesLimit} files.`, 'error');
       return;
     }
+
+    const validFiles = [];
+    const newFileObjs = [];
 
     for (const file of files) {
       // Check file size
@@ -824,41 +1000,22 @@ const EditableBriefSection = ({
       }
 
       // Check if file is already added to queue
-      if (uploadedFiles.some(f => f.name === file.name)) {
+      if (uploadedFiles.some(f => f.name === file.name && f.section === 'strategic')) {
         showToastMessage(`File "${file.name}" is already uploaded.`, 'info');
         continue;
       }
 
       const fileExt = file.name.split('.').pop().toLowerCase();
       const isSpreadsheet = ['xlsx', 'xls'].includes(fileExt);
-      const isDoc = ['pdf', 'docx'].includes(fileExt);
-
-      if (fileExt === 'csv') {
-        showToastMessage(`File "${file.name}" format is unsupported. CSV files are not accepted. Please upload PDF, Word (DOCX), or Excel (XLSX, XLS) files.`, 'error');
-        continue;
-      }
-
-      // If uploading via financial templates popup, only allow spreadsheets
-      if (isFinancial && !isSpreadsheet) {
-        showToastMessage(`File "${file.name}" format is unsupported for financial data. Please upload Excel (XLSX, XLS) files only.`, 'error');
-        continue;
-      }
+      const isDoc = ['pdf', 'docx', 'doc'].includes(fileExt);
 
       if (!isSpreadsheet && !isDoc) {
-        showToastMessage(`File "${file.name}" format is unsupported. Please upload PDF, Word (DOCX), or Excel (XLSX, XLS) files.`, 'error');
+        showToastMessage(`File "${file.name}" format is unsupported. Please upload Excel, CSV, PDF, or Word files.`, 'error');
         continue;
       }
 
       const fileId = `file-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
       
-      // Determine file object type
-      let fileType = 'pdf';
-      if (isDoc) {
-        fileType = fileExt === 'pdf' ? 'pdf' : 'docx';
-      } else if (isSpreadsheet) {
-        fileType = isFinancial ? 'spreadsheet' : 'excel-strategic';
-      }
-
       const newFileObj = {
         id: fileId,
         name: file.name,
@@ -866,12 +1023,22 @@ const EditableBriefSection = ({
         uploadDate: new Date().toLocaleDateString(),
         status: 'uploading',
         progress: 15,
-        type: fileType
+        type: isSpreadsheet ? 'spreadsheet' : (fileExt === 'pdf' ? 'pdf' : 'docx'),
+        section: 'strategic',
+        fileObject: file
       };
 
-      // Add to file library state
-      setUploadedFiles(prev => [...prev, newFileObj]);
+      validFiles.push({ file, fileId });
+      newFileObjs.push(newFileObj);
+    }
 
+    if (newFileObjs.length === 0) return;
+
+    // 1. Add all valid file objects to the queue at once so they render simultaneously!
+    setUploadedFiles(prev => [...prev, ...newFileObjs]);
+
+    // 2. Upload all valid files concurrently
+    const uploadPromises = validFiles.map(async ({ file, fileId }) => {
       // Progress animation
       let progressVal = 15;
       const progressInterval = setInterval(() => {
@@ -880,62 +1047,30 @@ const EditableBriefSection = ({
       }, 250);
 
       try {
-        if (isFinancial && isSpreadsheet) {
-          // Detect template & validate
-          const detection = await detectTemplateType(file);
-          if (detection.confidence === 'none' || detection.score < 0.3) {
-            throw new Error(`Spreadsheet structure not identified. Ensure it matches financial templates.`);
-          }
-          const validation = await validateAgainstTemplate(file, detection.type);
-          if (!validation.isValid) {
-            throw new Error(`Validation failed for: ${validation.templateName}`);
-          }
-          const validationResult = {
-            templateType: detection.type,
-            templateName: validation.templateName,
-            validation: validation,
-            confidence: detection.confidence,
-            uploadMode: 'auto-detect'
-          };
+        // Upload via the single unified endpoint!
+        const strategicResult = await saveStrategicFileToDatabase(file);
 
-          // Actual backend upload
-          await saveFileToDatabase(file, validationResult);
-
-          if (onUploadedFileUpdate) {
-            onUploadedFileUpdate(file);
-          }
-
-          if (onAnalysisRegenerate) {
-            onAnalysisRegenerate({
-              onlyFinancial: true,
-              uploadedFile: file,
-              skipConfirmation: true
-            });
-          }
-
-          clearInterval(progressInterval);
-          setUploadedFiles(prev => prev.map(f => f.id === fileId ? { ...f, progress: 100, status: 'success' } : f));
-          showToastMessage(`File "${file.name}" ingested successfully!`, 'success');
-        } else {
-          // Strategic PDF/DOCX/XLSX/XLS - upload to database immediately!
-          const result = await saveStrategicFileToDatabase(file);
-          
-          clearInterval(progressInterval);
-          setUploadedFiles(prev => prev.map(f => f.id === fileId ? { 
-            ...f, 
-            id: `db-strategic-${result.document.filename}`,
-            progress: 100, 
-            status: 'success', 
-            fileObject: file 
-          } : f));
-          showToastMessage(`File "${file.name}" uploaded successfully! Click "Analyze Document" to process.`, 'success');
+        if (onUploadedFileUpdate) {
+          onUploadedFileUpdate(file);
         }
+
+        clearInterval(progressInterval);
+        setUploadedFiles(prev => prev.map(f => f.id === fileId ? { 
+          ...f, 
+          id: `db-strategic-${strategicResult.document.filename}`,
+          progress: 100, 
+          status: 'success', 
+          fileObject: file 
+        } : f));
+        showToastMessage(`File "${file.name}" uploaded successfully! Click "Analyze Document" to process.`, 'success');
       } catch (error) {
         clearInterval(progressInterval);
         setUploadedFiles(prev => prev.map(f => f.id === fileId ? { ...f, status: 'failed', errorMessage: error.message } : f));
         showToastMessage(`Ingestion failed for "${file.name}": ${error.message || 'Verification error.'}`, 'error');
       }
-    }
+    });
+
+    await Promise.all(uploadPromises);
   };
 
   const handleFileUpload = async (event) => {
@@ -1008,6 +1143,7 @@ const EditableBriefSection = ({
   const handleRemoveFile = async (fileId, fileName) => {
     try {
       if (fileId.startsWith('db-strategic-')) {
+        strategicDocsCache.delete(selectedBusinessId);
         setIsSaving(true);
         showToastMessage(`Removing "${fileName}" references from database...`, 'info');
 
@@ -1015,17 +1151,7 @@ const EditableBriefSection = ({
         const backendFilename = fileId.replace('db-strategic-', '');
         if (backendFilename && backendFilename !== fileName) {
           try {
-            const token = getAuthToken();
-            const response = await fetch(`${API_BASE_URL}/api/businesses/${selectedBusinessId}/strategic-document/${backendFilename}`, {
-              method: 'DELETE',
-              headers: {
-                'Authorization': `Bearer ${token}`
-              }
-            });
-            const result = await response.json();
-            if (!response.ok) {
-              console.warn('Failed to delete strategic document from database:', result.error);
-            }
+            await answerService.deleteStrategicDocument(selectedBusinessId, backendFilename);
           } catch (err) {
             console.error('Failed to delete strategic document:', err);
           }
@@ -1094,27 +1220,6 @@ const EditableBriefSection = ({
           showToastMessage(`Removed "${fileName}" and cleared citations.`, 'success');
         } else {
           showToastMessage(`Removed "${fileName}" from view.`, 'info');
-        }
-      } else if (fileId === 'db-financial' || fileId.startsWith('db-financial')) {
-        setIsSaving(true);
-        showToastMessage(`Deleting financial document "${fileName}" from server...`, 'info');
-        
-        const token = getAuthToken();
-        const response = await fetch(`${API_BASE_URL}/api/businesses/${selectedBusinessId}/financial-document`, {
-          method: 'DELETE',
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-
-        const result = await response.json();
-        if (!response.ok) {
-          throw new Error(result.error || 'Failed to delete financial document');
-        }
-
-        showToastMessage(`Financial document "${fileName}" deleted successfully.`, 'success');
-        if (onBusinessDataUpdate) {
-          onBusinessDataUpdate();
         }
       } else {
         // Queue/temporary files not yet persisted
@@ -1336,14 +1441,13 @@ const EditableBriefSection = ({
   };
 
   // Multiple File Strategic Document Ingestion & Bulk Save Flow
+  // Multiple File Unified Document Ingestion & Bulk Save Flow
   const handleAnalyzeDocuments = async () => {
-    // Find all strategic documents either loaded in memory or loaded from Azure Blob
-    const filesToAnalyze = uploadedFiles.filter(
-      f => (f.type === 'pdf' || f.type === 'docx' || f.type === 'excel-strategic')
-    );
+    // Find all documents in the upload section (strategic) — matches exactly what is shown in the UI
+    const filesToAnalyze = uploadedFiles.filter(f => f.section === 'strategic');
 
     if (filesToAnalyze.length === 0) {
-      showToastMessage('No strategic documents in the queue to analyze.', 'info');
+      showToastMessage('No documents in the queue to analyze.', 'info');
       return;
     }
 
@@ -1363,11 +1467,33 @@ const EditableBriefSection = ({
         )
       );
 
-      // Call the backend analysis API
-      const result = await answerService.analyzeStrategicDocumentsBackend(selectedBusinessId);
+      // 1. Download ALL files from Azure Cloud (via Backend strategic download)
+      const fetchedFiles = [];
+      for (const file of filesToAnalyze) {
+        let rawFile = file.fileObject;
+        if (!rawFile) {
+          const filename = file.id.replace('db-strategic-', '');
+          const blob = await answerService.downloadStrategicDocument(selectedBusinessId, filename);
+          rawFile = new File([blob], file.name, { type: blob.type || 'application/octet-stream' });
+        }
+        fetchedFiles.push(rawFile);
+      }
+
+      // 2. Call the ML strategic analysis API (document-qa) with ALL uploaded documents
+      let mlResult = { answers: [] };
+      if (fetchedFiles.length > 0) {
+        mlResult = await answerService.analyzeStrategicDocumentsML(fetchedFiles);
+      }
+      
+      if (!mlResult || !Array.isArray(mlResult.answers)) {
+        throw new Error('Invalid response received from the ML analysis engine.');
+      }
+
+      // 3. Pass responses to backend to save in the database
+      const result = await answerService.analyzeStrategicDocumentsBackend(selectedBusinessId, mlResult.answers);
       
       if (!result || !Array.isArray(result.answers)) {
-        throw new Error(result?.error || 'Invalid response received from the analysis engine.');
+        throw new Error(result?.error || 'Failed to save analysis answers to backend.');
       }
 
       const mappedAnswers = result.answers;
@@ -1433,6 +1559,9 @@ const EditableBriefSection = ({
         }
       });
 
+      // 2. Call the financial analysis API (financial-summary-extract) with all documents in queue
+      await triggerSSEAnalysis(selectedBusinessId, fetchedFiles);
+
       // Set file status to success
       setUploadedFiles(prev =>
         prev.map(f =>
@@ -1442,27 +1571,26 @@ const EditableBriefSection = ({
         )
       );
 
-      // Trigger AI Regeneration if needed
+      // 3. Trigger full insights & strategic & financial regeneration
       if (onAnalysisRegenerate) {
         onAnalysisRegenerate({
-          updatedQuestionIds: mappedAnswers.map(a => a.question_id),
           alsoRegenerateStrategic: true,
-          skipConfirmation: true,
-          skipFinancial: true
+          includeFinancial: true,
+          skipConfirmation: true
         });
       }
 
     } catch (err) {
-      console.error('Batch Strategic Document analysis error:', err);
+      console.error('Unified dual analysis error:', err);
       const serverError = err.response?.data?.error || err.message || 'Error occurred.';
       setUploadedFiles(prev =>
         prev.map(f =>
           filesToAnalyze.some(fa => fa.id === f.id)
-            ? { ...f, status: 'failed', errorMessage: serverError }
+            ? { ...f, status: 'success', progress: 100 }
             : f
         )
       );
-      showToastMessage(`Analysis failed: ${serverError}`, 'error');
+      showToastMessage(`ML Analysis API failed: ${serverError}. The document remains uploaded successfully.`, 'error');
     } finally {
       setIsAnalyzingDocs(false);
     }
@@ -1529,11 +1657,10 @@ const EditableBriefSection = ({
 
   // Multi-file aggregate helper values
   const totalFileSizeKB = uploadedFiles.reduce((acc, f) => acc + (f.size || 0), 0) / 1024;
-  const successfulIngestionCount = uploadedFiles.filter(f => (f.type === 'pdf' || f.type === 'docx' || f.type === 'excel-strategic') && f.status === 'success').length;
+  const successfulIngestionCount = uploadedFiles.filter(f => f.section === 'strategic' && f.status === 'success').length;
   const uploadedFilesCount = uploadedFiles.filter(f => f.status === 'uploaded').length;
 
-  const strategyFiles = uploadedFiles.filter(f => f.type === 'pdf' || f.type === 'docx' || f.type === 'excel-strategic');
-  const financialFiles = uploadedFiles.filter(f => f.type === 'spreadsheet');
+  const strategyFiles = uploadedFiles.filter(f => f.section === 'strategic');
 
   const initialCountStr = `${initialFields.filter(f => cleanValue(f.value).trim() !== '').length}/${initialFields.length}`;
   const essentialCountStr = `${essentialFields.filter(f => cleanValue(f.value).trim() !== '').length}/${essentialFields.length}`;
@@ -1545,7 +1672,7 @@ const EditableBriefSection = ({
       ? essentialFields
       : advancedFields;
 
-  const isAnyApiActive = isEnriching || isApplyingEnrichment || isAnalyzingDocs;
+  const isAnyApiActive = isEnriching || isApplyingEnrichment || isAnalyzingDocs || isAnalyzingFinancial;
 
   return (
     <div className="simple-workspace">
@@ -1621,7 +1748,7 @@ const EditableBriefSection = ({
           </div>
           )}
 
-          {/* 2. Multiple File Upload Section */}
+          {/* 2. Unified Ingestion Dropzone Section */}
           <div ref={fileUploadSectionRef} className="brief-card upload-docs-card">
             <div 
               className={`brief-card-header accordion-header ${!leftPanelExpanded.fileUpload ? 'collapsed' : ''}`}
@@ -1630,27 +1757,27 @@ const EditableBriefSection = ({
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <Upload size={16} style={{ color: '#2563eb' }} />
-                <h4 className="brief-card-title">Multiple File Upload</h4>
+                <h4 className="brief-card-title">Documents Upload</h4>
               </div>
               {leftPanelExpanded.fileUpload ? <ChevronUp size={16} style={{ color: '#64748b' }} /> : <ChevronDown size={16} style={{ color: '#64748b' }} />}
             </div>
             {leftPanelExpanded.fileUpload && (
               <div className="brief-card-body">
-                {isAnalyzingDocs && (
+                {(isAnalyzingDocs || isAnalyzingFinancial) && (
                   <div className="brief-loading-top-banner">
                     <div className="brief-loading-top-content">
                       <div className="brief-loading-top-icon-wrapper">
                         <Loader className="brief-loading-top-spinner animate-spin" size={18} />
                       </div>
                       <div className="brief-loading-top-text">
-                        <h5 className="brief-loading-top-title">Analyzing Strategic Documents</h5>
-                        <p className="brief-loading-top-subtitle">We are getting refined AI answers based on the onboarding data...</p>
+                        <h5 className="brief-loading-top-title">Analyzing Documents</h5>
+                        <p className="brief-loading-top-subtitle">Running deep QA semantic mapping and financial indicator extraction...</p>
                       </div>
                     </div> 
                   </div>
                 )}
                 <p className="brief-card-description">
-                  Upload PDF or DOCX strategic documents. The AI will extract answers to the strategic questions from your document.
+                  Upload PDF, DOCX, XLSX or XLS documents. The AI will extract answers for your strategic questionnaire and financial indicator ledger.
                 </p>
 
                 <div 
@@ -1680,7 +1807,7 @@ const EditableBriefSection = ({
                     ref={fileInputRef} 
                     style={{ display: 'none' }} 
                     onChange={handleFileInputChange}
-                    accept=".pdf,.docx,.xlsx,.xls"
+                    accept=".pdf,.docx,.doc,.xlsx,.xls,.csv"
                     disabled={isAnyApiActive || !canEdit}
                   />
                 </div>
@@ -1773,10 +1900,9 @@ const EditableBriefSection = ({
                   className="btn-analyze-docs"
                   style={{ marginTop: '12px', width: '100%' }}
                 >
-                  {isAnalyzingDocs ? (
+                  {(isAnalyzingDocs || isAnalyzingFinancial) ? (
                     <>
-                      <Loader size={14} style={{ animation: 'spin 1.5s linear infinite' }} />
-                      <span>Analyzing Document...</span>
+                      <span>Analyzing Documents & Extrapolating Insights...</span>
                     </>
                   ) : (
                     <>
@@ -1785,105 +1911,6 @@ const EditableBriefSection = ({
                     </>
                   )}
                 </button>
-              </div>
-            )}
-          </div>
-
-          {/* 3. Financial Data Upload Section */}
-          <div className="brief-card financial-upload-card">
-            <div 
-              className={`brief-card-header accordion-header ${!leftPanelExpanded.financialUpload ? 'collapsed' : ''}`}
-              onClick={() => { if (isAnyApiActive) return; setLeftPanelExpanded(prev => ({ ...prev, financialUpload: !prev.financialUpload })); }}
-              style={{ cursor: isAnyApiActive ? 'not-allowed' : 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Database size={16} style={{ color: '#16a34a' }} />
-                <h4 className="brief-card-title">Financial Data Upload</h4>
-              </div>
-              {leftPanelExpanded.financialUpload ? <ChevronUp size={16} style={{ color: '#64748b' }} /> : <ChevronDown size={16} style={{ color: '#64748b' }} />}
-            </div>
-            {leftPanelExpanded.financialUpload && (
-              <div className="brief-card-body">
-                <p className="brief-card-description">
-                  Upload financial statement templates (Excel/Spreadsheet) to populate the core financial indicators.
-                </p>
-
-                <div className="financial-upload-actions">
-                  <button 
-                    onClick={() => { if (isAnyApiActive || !canEdit) return; setShowTemplatesPopup(true); }}
-                    disabled={isAnyApiActive || !canEdit}
-                    className="btn-financial-upload"
-                  >
-                    <FileSpreadsheet size={16} />
-                    <span>Verify & Upload Excel</span>
-                  </button>
-                </div>
-
-                {financialFiles.length > 0 && (
-                  <div className="sidebar-file-list">
-                    <div className="sidebar-list-header">Active Ledger Spreadsheet</div>
-                    {financialFiles.map(file => (
-                      <div key={file.id} className="sidebar-file-item financial-item">
-                        <div className="sidebar-file-info">
-                          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
-                            <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7l-5-5z" fill="rgba(22, 163, 74, 0.05)" />
-                            <path d="M14 2v5h5" />
-                            <line x1="8" y1="15" x2="16" y2="15" stroke="rgba(22, 163, 74, 0.4)" strokeWidth="1.5" />
-                            <line x1="8" y1="17.5" x2="16" y2="17.5" stroke="rgba(22, 163, 74, 0.4)" strokeWidth="1.5" />
-                            <line x1="8" y1="20" x2="16" y2="20" stroke="rgba(22, 163, 74, 0.4)" strokeWidth="1.5" />
-                            <rect x="1.5" y="7.5" width="13.5" height="7" rx="1.2" fill="#16a34a" stroke="none" />
-                            <text x="8.25" y="11" fill="white" fontSize="5.2" fontWeight="900" fontFamily="system-ui, -apple-system, sans-serif" stroke="none" textAnchor="middle" dominantBaseline="central">XLS</text>
-                          </svg>
-                          <span className="sidebar-file-name" title={file.name}>{file.name}</span>
-                        </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                          <span className={`file-status-badge ${file.status}`} style={{ fontSize: '8px', padding: '1px 4px' }}>
-                            {file.status === 'uploading' ? `${file.progress}%` : file.status}
-                          </span>
-                          <button 
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              if (isAnyApiActive || !canEdit) return;
-                              handleRemoveFile(file.id, file.name);
-                            }}
-                            disabled={isAnyApiActive || !canEdit}
-                            className="sidebar-file-remove"
-                            title="Remove File"
-                          >
-                            <Trash2 size={12} />
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {/* <div className="sidebar-ledger-summary">
-                  <div className="ledger-summary-header">
-                    <span>Financial Ledger Indicators</span>
-                    <span className={`ledger-status-tag ${financialFiles.length > 0 ? 'active' : ''}`}>
-                      {financialFiles.length > 0 ? 'SYNC ACTIVE' : 'OFFLINE'}
-                    </span>
-                  </div>
-                  <div className="ledger-summary-grid">
-                    <div className="summary-indicator">
-                      <span className="indicator-lbl">ANNUAL REVENUE</span>
-                      <span className="indicator-val">{ledgerVals.revenue}</span>
-                    </div>
-                    <div className="summary-indicator">
-                      <span className="indicator-lbl">EBITDA</span>
-                      <span className="indicator-val">{ledgerVals.ebitda}</span>
-                    </div>
-                    <div className="summary-indicator">
-                      <span className="indicator-lbl">GROSS MARGIN</span>
-                      <span className="indicator-val">{ledgerVals.grossMargin}</span>
-                    </div>
-                    <div className="summary-indicator">
-                      <span className="indicator-lbl">EBITDA MARGIN</span>
-                      <span className="indicator-val">{ledgerVals.ebitdaMargin}</span>
-                    </div>
-                  </div>
-                </div> */}
               </div>
             )}
           </div>
@@ -1897,56 +1924,235 @@ const EditableBriefSection = ({
             <div className="phase-tabs-container">
               <button
                 className={`phase-tab-btn ${activePhaseTab === 'initial' ? 'active' : ''}`}
-                disabled={isAnyApiActive}
-                onClick={() => { if (isAnyApiActive) return; setActivePhaseTab('initial'); setExpandAll(false); }}
+                onClick={() => { setActivePhaseTab('initial'); setExpandAll(false); }}
               >
                 <span className="phase-tab-title">Initial</span>
                 <span className="phase-tab-badge">{initialCountStr}</span>
               </button>
               <button
                 className={`phase-tab-btn ${activePhaseTab === 'essential' ? 'active' : ''}`}
-                disabled={isAnyApiActive}
-                onClick={() => { if (isAnyApiActive) return; setActivePhaseTab('essential'); setExpandAll(false); }}
+                onClick={() => { setActivePhaseTab('essential'); setExpandAll(false); }}
               >
                 <span className="phase-tab-title">Essential</span>
                 <span className="phase-tab-badge">{essentialCountStr}</span>
               </button>
               <button
                 className={`phase-tab-btn ${activePhaseTab === 'advanced' ? 'active' : ''}`}
-                disabled={isAnyApiActive}
-                onClick={() => { if (isAnyApiActive) return; setActivePhaseTab('advanced'); setExpandAll(false); }}
+                onClick={() => { setActivePhaseTab('advanced'); setExpandAll(false); }}
               >
                 <span className="phase-tab-title">Advanced</span>
                 <span className="phase-tab-badge">{advancedCountStr}</span>
               </button>
+              {docIntelSession && docIntelSession.financialMetrics && (
+                <button
+                  className={`phase-tab-btn ${activePhaseTab === 'financial' ? 'active' : ''}`}
+                  onClick={() => { setActivePhaseTab('financial'); setExpandAll(false); }}
+                >
+                  <span className="phase-tab-title">Financial Data</span>
+                  <span className="phase-tab-badge">
+                    {Object.keys(docIntelSession.financialMetrics).filter(k => k !== "meta").reduce((acc, cat) => acc + Object.keys(docIntelSession.financialMetrics[cat]).length, 0)}
+                  </span>
+                </button>
+              )}
             </div>
             <div className="sqc-meta-bar">
-              <span className="sqc-meta-count">
-                <span style={{ color: '#4f46e5', fontWeight: 700 }}>
-                  {currentTabFields.filter(f => cleanValue(f.value).trim() !== '').length}
+              {activePhaseTab === 'financial' ? (
+                <span className="sqc-meta-count">
+                  <span style={{ color: '#16a34a', fontWeight: 700 }}>
+                    {Object.keys(docIntelSession?.financialMetrics || {}).filter(k => k !== "meta").reduce((acc, cat) => acc + Object.keys(docIntelSession.financialMetrics[cat]).length, 0)}
+                  </span>
+                  /19 metrics extracted
                 </span>
-                /{currentTabFields.length} answered
-              </span>
-              <button
-                className={`sqc-expand-all-btn ${expandAll ? 'sqc-expand-all-active' : ''}`}
-                disabled={isAnyApiActive}
-                onClick={() => { if (isAnyApiActive) return; setExpandAll(prev => !prev); }}
-                title={expandAll ? 'Collapse all rows' : 'Expand all rows'}
-              >
-                {expandAll
-                  ? <><ChevronUp size={12} /> Collapse All</>
-                  : <><ChevronDown size={12} /> Expand All</>
-                }
-              </button>
+              ) : (
+                <span className="sqc-meta-count">
+                  <span style={{ color: '#4f46e5', fontWeight: 700 }}>
+                    {currentTabFields.filter(f => cleanValue(f.value).trim() !== '').length}
+                  </span>
+                  /{currentTabFields.length} answered
+                </span>
+              )}
+              {activePhaseTab !== 'financial' && (
+                <button
+                  className={`sqc-expand-all-btn ${expandAll ? 'sqc-expand-all-active' : ''}`}
+                  disabled={isAnyApiActive}
+                  onClick={() => { if (isAnyApiActive) return; setExpandAll(prev => !prev); }}
+                  title={expandAll ? 'Collapse all rows' : 'Expand all rows'}
+                >
+                  {expandAll
+                    ? <><ChevronUp size={12} /> Collapse All</>
+                    : <><ChevronDown size={12} /> Expand All</>
+                  }
+                </button>
+              )}
             </div>
           </div>
 
           <div className="phase-tab-content-list">
-            {isLoading ? (
-              <div className="brief-questions-loading" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '60px 20px', gap: '16px' }}>
-                <Loader size={32} className="animate-spin" style={{ color: '#4f46e5' }} />
-                <span style={{ color: '#64748b', fontSize: '14px', fontWeight: 500 }}>{t("loadingQuestions") || "Loading questions and answers..."}</span>
-              </div>
+            {activePhaseTab === 'financial' ? (
+              docIntelSession && docIntelSession.financialMetrics ? (
+                <div className="doc-intel-ledger" style={{ marginTop: '0', border: 'none', boxShadow: 'none', background: 'transparent', padding: '24px' }}>
+                  <div className="ledger-category-header" style={{ marginBottom: '15px', color: '#16a34a', borderBottom: '1px solid rgba(0,0,0,0.06)', paddingBottom: '8px' }}>
+                    <Database size={16} />
+                    <span>Extracted Ledger Workspace</span>
+                  </div>
+
+                  {/* Sync ledger button moved to the top */}
+                  <div className="sync-ledger-footer" style={{ marginBottom: '20px', marginTop: '5px' }}>
+                    <span style={{ fontSize: '11px', color: '#64748b' }}>
+                      HITL verification active. Sync to update core products.
+                    </span>
+                    <button 
+                      className="btn-sync-ledger"
+                      onClick={handleSyncFinancial}
+                      disabled={!canEdit || isAnyApiActive}
+                    > 
+                      <span>Save Financial Data</span>
+                    </button>
+                  </div>
+
+                  <div className="ledger-meta-grid">
+                    <div className="meta-pill">
+                      <span className="meta-pill-lbl">CURRENCY</span>
+                      <span className="meta-pill-val">{docIntelSession.financialMetrics.meta?.document_currency || "USD"}</span>
+                    </div>
+                    <div className="meta-pill">
+                      <span className="meta-pill-lbl">REPORT PERIOD</span>
+                      <span className="meta-pill-val">{docIntelSession.financialMetrics.meta?.reporting_period || "FY2024"}</span>
+                    </div>
+                    <div className="meta-pill">
+                      <span className="meta-pill-lbl">CONFIDENCE</span>
+                      <span className="meta-pill-val confidence-high" style={{ textTransform: 'uppercase' }}>
+                        <CheckCircle size={12} />
+                        {docIntelSession.financialMetrics.meta?.extraction_confidence || "HIGH"}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Expandable LEDGER CATEGORIES */}
+                  {Object.entries({
+                    "financial_performance": { icon: "📈", label: "Financial Performance" },
+                    "financial_health": { icon: "🏦", label: "Financial Health" },
+                    "operational_efficiency": { icon: "⚙️", label: "Operational Efficiency" },
+                    "cost_efficiency": { icon: "💰", label: "Cost & CAPEX Efficiency" }
+                  }).map(([catKey, catInfo]) => {
+                    const metricsMap = docIntelSession.financialMetrics[catKey] || {};
+                    const metricsEntries = Object.entries(metricsMap).filter(([k]) => k !== "meta");
+                    
+                    return (
+                      <div key={catKey} className="ledger-category-block">
+                        <div className="ledger-category-header">
+                          <span>{catInfo.icon}</span>
+                          <span>{catInfo.label}</span>
+                          <span className="count">{metricsEntries.length}</span>
+                        </div>
+                        
+                        <div className="ledger-metrics-grid">
+                          {metricsEntries.map(([metricKey, mData]) => {
+                            const isEditing = editingMetric?.category === catKey && editingMetric?.key === metricKey;
+                            const displayValue = mData?.value !== null && mData?.value !== undefined 
+                              ? (catKey === "operational_efficiency" || metricKey === "revenue_growth_yoy" 
+                                  ? `${(mData.value * 100).toFixed(1)}%` 
+                                  : (mData.currency || "USD") === "USD" 
+                                    ? `$${mData.value.toLocaleString()}` 
+                                    : `${mData.value.toLocaleString()} ${mData.currency || ""}`)
+                              : "N/A";
+
+                            return (
+                              <div key={metricKey} className="ledger-metric-card">
+                                <div className="ledger-metric-info">
+                                  <span className="ledger-metric-name">{metricKey.replace(/_/g, ' ')}</span>
+                                  <div className="ledger-metric-subtext">
+                                    {(mData?.source_page || mData?.source_sheet) && (
+                                      <span 
+                                        className="ledger-metric-citation"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handleOpenReference({
+                                            title: `FINANCIAL INDICATOR: ${metricKey.replace(/_/g, ' ').toUpperCase()}`,
+                                            doc: docIntelSession.uploadedDocuments?.[0]?.original_name || "financial_statement.xlsx",
+                                            excerpt: mData.excerpt || `Disclosed financial metric in ${mData.source_sheet ? `sheet ${mData.source_sheet}` : 'balance sheet worksheets'}.`,
+                                            cell: mData.source_page ? `Page ${mData.source_page}` : `Sheet ${mData.source_sheet}`,
+                                            page: mData.source_page || null
+                                          });
+                                        }}
+                                      >
+                                        Ref: {mData.source_page ? `Page ${mData.source_page}` : mData.source_sheet}
+                                      </span>
+                                    )} 
+                                  </div>
+                                </div>
+
+                                <div className="ledger-metric-action-area">
+                                  {isEditing ? (
+                                    <input 
+                                      type="text"
+                                      className="ledger-metric-edit-input"
+                                      value={editMetricValue}
+                                      onChange={(e) => {
+                                        const val = e.target.value;
+                                        if (val === '' || /^-?\d*\.?\d*$/.test(val)) {
+                                          setEditMetricValue(val);
+                                        }
+                                      }}
+                                      onBlur={() => {
+                                        handleUpdateMetric(catKey, metricKey, editMetricValue);
+                                        setEditingMetric(null);
+                                      }}
+                                      onKeyDown={(e) => {
+                                        if (e.key === "Enter") {
+                                          handleUpdateMetric(catKey, metricKey, editMetricValue);
+                                          setEditingMetric(null);
+                                        } else if (e.key === "Escape") {
+                                          setEditingMetric(null);
+                                        }
+                                      }}
+                                      autoFocus
+                                    />
+                                  ) : (
+                                    <span 
+                                      className="ledger-metric-value-display"
+                                      onClick={() => {
+                                        if (!canEdit || isAnyApiActive) return;
+                                        setEditingMetric({ category: catKey, key: metricKey });
+                                        setEditMetricValue(mData?.value !== null ? String(mData.value) : '');
+                                      }}
+                                      style={{ cursor: (!canEdit || isAnyApiActive) ? 'not-allowed' : 'pointer' }}
+                                    >
+                                      {displayValue}
+                                    </span>
+                                  )}
+
+                                  <button 
+                                    className="ledger-metric-edit-btn"
+                                    disabled={!canEdit || isAnyApiActive}
+                                    onClick={() => {
+                                      if (!canEdit || isAnyApiActive) return;
+                                      if (isEditing) {
+                                        handleUpdateMetric(catKey, metricKey, editMetricValue);
+                                        setEditingMetric(null);
+                                      } else {
+                                        setEditingMetric({ category: catKey, key: metricKey });
+                                        setEditMetricValue(mData?.value !== null ? String(mData.value) : '');
+                                      }
+                                    }}
+                                  >
+                                    {isEditing ? <Check size={12} /> : <Edit3 size={12} />}
+                                  </button>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })}
+
+                </div>
+              ) : (
+                <div className="empty-phase-questions">
+                  No financial data available.
+                </div>
+              )
             ) : currentTabFields.length === 0 ? (
               <div className="empty-phase-questions">
                 No questions found for this phase.
@@ -2039,9 +2245,15 @@ const EditableBriefSection = ({
                               <span style={{ fontSize: '12px', fontWeight: '600', color: '#1e293b', wordBreak: 'break-all', flex: 1 }}>
                                 {name}
                               </span>
-                              <span style={{ fontSize: '11px', fontWeight: '700', color: '#4f46e5', background: '#e0e7ff', padding: '1px 6px', borderRadius: '10px', whiteSpace: 'nowrap' }}>
-                                Page {ev.page || 1}
-                              </span>
+                              {ev.page ? (
+                                <span style={{ fontSize: '11px', fontWeight: '700', color: '#4f46e5', background: '#e0e7ff', padding: '1px 6px', borderRadius: '10px', whiteSpace: 'nowrap' }}>
+                                  Page {ev.page}
+                                </span>
+                              ) : (ev.sheet || ev.source_sheet) ? (
+                                <span style={{ fontSize: '11px', fontWeight: '700', color: '#16a34a', background: '#dcfce7', padding: '1px 6px', borderRadius: '10px', whiteSpace: 'nowrap' }}>
+                                  {ev.sheet || ev.source_sheet}
+                                </span>
+                              ) : null}
                             </div>
                           );
                         })}
@@ -2068,23 +2280,6 @@ const EditableBriefSection = ({
         )}
       </div>
 
-      {showTemplatesPopup && (
-        <FinancialTemplatesPopup
-          isOpen={showTemplatesPopup}
-          onClose={() => setShowTemplatesPopup(false)}
-          isFileUploading={isFileUploading}
-          onFileUploaded={(file, validation) => {
-            const mockEvent = {
-              target: {
-                files: [file]
-              }
-            };
-            handleFileUpload(mockEvent);
-            setShowTemplatesPopup(false);
-          }}
-          fileInputRef={fileInputRef}
-        />
-      )}
 
       {showConfirmModal && (
         <ConfirmationModal
