@@ -200,10 +200,7 @@
   background: rgba(22, 163, 74, 0.05);
 }
 
-.sync-ledger-footer {
-  margin-top: 24px;
-  border-top: 1px solid rgba(0, 0, 0, 0.06);
-  padding-top: 18px;
+.sync-ledger-footer { 
   display: flex;
   justify-content: space-between;
   align-items: center;
