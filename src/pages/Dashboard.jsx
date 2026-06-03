@@ -101,6 +101,7 @@ const Dashboard = () => {
   });
   const [statusFilter, setStatusFilter] = useState(['ALL', 'EXECUTION', 'CREATED', 'DELETED']);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [isHowItWorksExpanded, setIsHowItWorksExpanded] = useState(false);
 
   const allBusinesses = useMemo(() => {
     return [...ownedBusinesses, ...collaboratingBusinesses, ...deletedBusinesses];
@@ -155,6 +156,81 @@ const Dashboard = () => {
 
   const [accessModalMessage, setAccessModalMessage] = useState('');
   const [accessModalSubMessage, setAccessModalSubMessage] = useState('');
+
+  const renderHowItWorksCards = (showCreateButton) => (
+    <div className="how-it-works-cards">
+      <div className="hiw-card">
+        <div className="hiw-card-header">
+          <div className="hiw-number yellow">1</div>
+          <div className="hiw-meta">
+            <span className="hiw-subtitle">{t('hiw_create_business_caps') || 'CREATE BUSINESS'}</span>
+            <h3 className="hiw-title">{t('hiw_start_with_business') || 'Start with your business'}</h3>
+          </div>
+        </div>
+        <p className="hiw-description">
+          {t('hiw_start_with_business_desc') || 'Name your business and answer a few basic questions. Trax turns that into a real diagnosis — add documents for a sharper one.'}
+        </p>
+        <div className="hiw-list">
+          <div className="hiw-list-item">
+            <strong>{t('hiw_inputs') || 'Inputs'}:</strong> {t('hiw_inputs_details') || 'basic questions · documents (optional)'}
+          </div>
+          <div className="hiw-list-item">
+            <strong>{t('hiw_output') || 'Output'}:</strong> {t('hiw_output_details') || 'insights, strategy draft, and priorities'}
+          </div>
+        </div>
+        {showCreateButton && !isCollaborator && !isViewer && (
+          <>
+            <hr className="hiw-divider hiw-card-btn-divider" />
+            <button className="btn-create-business" onClick={handleShowCreateModal} disabled={isLoadingBusinesses}>
+              + {t('create_business') || 'Create Business'}
+            </button>
+          </>
+        )}
+      </div>
+
+      <div className="hiw-card">
+        <div className="hiw-card-header">
+          <div className="hiw-number blue">2</div>
+          <div className="hiw-meta">
+            <span className="hiw-subtitle">{t('hiw_insights_caps') || 'INSIGHTS'}</span>
+            <h3 className="hiw-title">{t('hiw_diagnosis_from_docs') || 'A diagnosis from your documents'}</h3>
+          </div>
+        </div>
+        <p className="hiw-description">
+          {t('hiw_diagnosis_from_docs_desc') || 'Trax reads everything and gives you a structured report at two depths.'}
+        </p> 
+        <div className="hiw-list">
+          <div className="hiw-list-item">
+            <strong>{t('hiw_basic') || 'Basic'}:</strong> {t('hiw_basic_details') || 'AHA insights, Where & How to compete, Top 5 priorities'}
+          </div>
+          <div className="hiw-list-item">
+            <strong>{t('hiw_advanced') || 'Advanced'}:</strong> {t('hiw_advanced_details') || "PESTEL, Porter's Five Forces, NPS, BCG, S.T.R.A.T.E.G.I.C. scorecard"}
+          </div>
+        </div>
+      </div>
+
+      <div className="hiw-card">
+        <div className="hiw-card-header">
+          <div className="hiw-number green">3</div>
+          <div className="hiw-meta">
+            <span className="hiw-subtitle">{t('hiw_execution_caps') || 'EXECUTION'}</span>
+            <h3 className="hiw-title">{t('hiw_priorities_turn_commitment') || 'Priorities that turn into commitment'}</h3>
+          </div>
+        </div>
+        <p className="hiw-description">
+          {t('hiw_priorities_turn_commitment_desc') || 'Each priority becomes a tracked bet — owner, hypothesis, expected results. Anchored to the rituals that move the business forward.'}
+        </p> 
+        <div className="hiw-list">
+          <div className="hiw-list-item">
+            <strong>{t('hiw_bets') || 'Bets'}:</strong> {t('hiw_bets_details') || 'ledger of active initiatives with status, score, impact, risk'}
+          </div>
+          <div className="hiw-list-item">
+            <strong>{t('hiw_moments') || 'Moments'}:</strong> {t('hiw_moments_details') || 'MBR, QBR, Annual Planning — auto-generated management reports'}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 
   useEffect(() => {
     // Preload all slides for the "How it works" modal
@@ -368,123 +444,162 @@ const Dashboard = () => {
             <div className="dashboard-content">
               <div className="welcome-section">
                 <h1 className="welcome-title">
-                  {t('welcome')} <span>{userName} !</span>
+                  {t('welcome')} <span>{userName}</span>
                 </h1>
                 <p className="welcome-description">
-                  {t('dashboard_description_redesign') || "Create business plans step by step with the S.T.R.A.T.E.G.I.C framework."}
+                  {t('dashboard_description_redesign') || "Strategy as an operating system. Traxxia gives you a strategic diagnosis of your business in minutes, then turns each priority into a tracked bet your team actually executes."}
                 </p>
-                
-                <div className="action-buttons">
-                  {!isCollaborator && !isViewer && (
-                    <button className="btn-create-business" onClick={handleShowCreateModal} disabled={isLoadingBusinesses}>
-                      <span style={{ fontSize: '20px', lineHeight: '1' }}>+</span>
-                      {t('create_business')}
-                    </button>
-                  )}
-                  <button className="btn-how-it-works" onClick={() => openModal('howItWorks')}>
-                    <Info size={17} />
-                    {t('how_it_works')}
-                  </button>
-                </div>
               </div>
 
               {isLoadingBusinesses ? (
                 <div className="d-flex justify-content-center py-5">
                   <Spinner animation="border" variant="primary" />
                 </div>
+              ) : allBusinessesQuery.length === 0 ? (
+                /* FIRST-TIME LOGIN VIEW (3 cards side-by-side) */
+                <div className="first-time-container">
+                  {renderHowItWorksCards(true)}
+                </div>
               ) : (
-                <div className="businesses-container">
-                  <div className="businesses-header d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-3">
-                    <h2>{t('your_businesses_all_states') || "YOUR BUSINESSES — ALL STATES"}</h2>
-                    
-                    <div className="status-filter-wrapper">
-                      <button className="status-filter-btn" onClick={() => setIsFilterOpen(!isFilterOpen)}>
-                        <span className="filter-label">STATE</span>
-                        <span className="filter-value">
-                          {statusFilter.length === 4 ? 'All' : (statusFilter.length === 1 ? statusFilter[0] : 'Multiple')} · {filteredBusinesses.length}
-                        </span>
-                        <ChevronDown size={14} className={`ms-2 transition-transform ${isFilterOpen ? 'rotate-180' : ''}`} />
-                      </button>
+                /* STANDARD LOGIN VIEW */
+                <>
+                  {/* Collapsible Accordion */}
+                  <div className="how-it-works-accordion">
+                    <div 
+                      className="how-it-works-header"
+                      onClick={() => setIsHowItWorksExpanded(!isHowItWorksExpanded)}
+                    >
+                      <span>{t('how_it_works') || 'HOW IT WORKS'}</span>
+                      <ChevronDown 
+                        size={18} 
+                        className={`how-it-works-icon ${isHowItWorksExpanded ? 'expanded' : ''}`} 
+                      />
+                    </div>
+                    {isHowItWorksExpanded && (
+                      <div className="how-it-works-body">
+                        {renderHowItWorksCards(false)}
+                      </div>
+                    )}
+                  </div>
 
-                      {isFilterOpen && (
-                        <>
-                          <div className="status-filter-overlay" onClick={() => setIsFilterOpen(false)} />
-                          <div className="status-dropdown">
-                          {['ALL', 'EXECUTION', 'CREATED', 'DELETED'].map(status => (
-                            <div key={status} className="dropdown-item" onClick={() => toggleStatusFilter(status)}>
-                              <div className={`custom-checkbox ${statusFilter.includes(status) ? 'checked' : ''}`}>
-                                {statusFilter.includes(status) && <Check size={12} color="white" />}
+                  {/* Businesses Table */}
+                  <div className="businesses-container">
+                    <div className="businesses-header d-flex justify-content-between align-items-center gap-3">
+                      <h2>
+                        {t('your_businesses_all_states') || "YOUR BUSINESSES — ALL STATES"}
+                      </h2>
+                      
+                      <div className="d-flex align-items-center gap-3">
+                        <div className="status-filter-wrapper">
+                          <button className="status-filter-btn" onClick={() => setIsFilterOpen(!isFilterOpen)}>
+                            <span className="filter-label">{t('state_column') || 'STATE'}</span>
+                            <span className="filter-value">
+                              {statusFilter.length === 4 ? t('ALL') : (statusFilter.length === 1 ? t(statusFilter[0]) : t('multiple_filter') || 'Multiple')} · {filteredBusinesses.length}
+                            </span>
+                            <ChevronDown size={14} className={`ms-2 transition-transform ${isFilterOpen ? 'rotate-180' : ''}`} />
+                          </button>
+
+                          {isFilterOpen && (
+                            <>
+                              <div className="status-filter-overlay" onClick={() => setIsFilterOpen(false)} />
+                              <div className="status-dropdown">
+                              {['ALL', 'EXECUTION', 'CREATED', 'DELETED'].map(status => (
+                                <div key={status} className="dropdown-item" onClick={() => toggleStatusFilter(status)}>
+                                  <div className={`custom-checkbox ${statusFilter.includes(status) ? 'checked' : ''}`}>
+                                    {statusFilter.includes(status) && <Check size={12} color="white" />}
+                                  </div>
+                                  <span className="status-name">{status === 'ALL' ? t('ALL') : t(status)}</span>
+                                  <span className="status-count">{statusCounts[status]}</span>
+                                </div>
+                              ))}
                               </div>
-                              <span className="status-name">{status === 'ALL' ? 'All' : status}</span>
-                              <span className="status-count">{statusCounts[status]}</span>
-                            </div>
-                          ))}
-                          </div>
-                        </>
-                      )}
+                            </>
+                          )}
+                        </div>
+
+                        {!isCollaborator && !isViewer && (
+                          <button className="btn-create-business-header" onClick={handleShowCreateModal} disabled={isLoadingBusinesses}>
+                            + {t('create_business') || 'Create Business'}
+                          </button>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="businesses-table-wrapper">
+                      <table className="businesses-table">
+                        <thead>
+                          <tr>
+                            <th>{t('business_column') || "BUSINESS"}</th>
+                            <th>{t('state_column') || "STATE"}</th>
+                            <th className="th-date">{t('date_of_creation_column') || "DATE OF CREATION"}</th>
+                            <th className="text-center">{t('active_bets_column') || "ACTIVE BETS"}</th>
+                            <th className="text-center">{t('collaborators_column') || "COLLABORATORS"}</th>
+                            <th className="text-end th-actions">{t('actions_column') || "ACTIONS"}</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {filteredBusinesses.length === 0 ? (
+                            <tr>
+                              <td colSpan="6" className="text-center py-5 text-muted">
+                                {t('no_businesses_yet') || 'No businesses yet'}
+                              </td>
+                            </tr>
+                          ) : (
+                            filteredBusinesses.map((business) => {
+                              const isDeleted = business.status === 'deleted';
+                              const state = isDeleted ? 'DELETED' : (business.has_projects ? 'EXECUTION' : 'CREATED');
+                              const date = business.created_at ? new Date(business.created_at).toLocaleDateString('en-US', { 
+                                month: 'short', day: '2-digit', year: 'numeric' 
+                              }) : 'N/A';
+                              
+                              const activeBets = business.project_count || business.question_statistics?.total_projects || 0;
+                              const collaborators = business.collaborators_count ?? (business.company_admin_id?.length || 1);
+
+                              return (
+                                <tr key={business._id || business.id} onClick={!isDeleted ? () => handleBusinessClick(business) : undefined} className={isDeleted ? 'row-deleted' : ''}>
+                                  <td className="business-name-cell">{business.business_name}</td>
+                                  <td>
+                                    <span className={`state-badge state-${state.toLowerCase()}`}>
+                                      {t(state)}
+                                    </span>
+                                  </td>
+                                  <td className="date-cell">{date}</td>
+                                  <td className="stats-cell text-center">{activeBets}</td>
+                                  <td className="stats-cell text-center">{collaborators}</td>
+                                  <td className="actions-cell">
+                                    <div className="d-flex align-items-center gap-2 justify-content-end" onClick={(e) => e.stopPropagation()}>
+                                      <button 
+                                        className="btn-insights-outline" 
+                                        onClick={() => handleBusinessClick(business)}
+                                      >
+                                        <span className="btn-icon-left">⚡</span> {t('insights') || 'Insights'}
+                                      </button>
+                                      <button 
+                                        className="btn-execution-outline" 
+                                        onClick={() => {}}
+                                      >
+                                        <span className="btn-icon-left">☑</span> {t('Execution') || 'Execution'} <span className="btn-icon-right">🔒</span>
+                                      </button>
+                                      {!isCollaborator && !isViewer && !isDeleted && (
+                                        <button 
+                                          className="btn-delete-business-inline" 
+                                          onClick={() => handleShowDeleteModal(business)} 
+                                          title={t('delete_business')}
+                                        >
+                                          <Trash2 size={15} />
+                                        </button>
+                                      )}
+                                    </div>
+                                  </td>
+                                </tr>
+                              );
+                            })
+                          )}
+                        </tbody>
+                      </table>
                     </div>
                   </div>
-                  <div className="businesses-table-wrapper">
-                    <table className="businesses-table">
-                      <thead>
-                        <tr>
-                          <th>{t('business_column') || "BUSINESS"}</th>
-                          <th>{t('state_column') || "STATE"}</th>
-                          <th className="th-date">{t('date_of_creation_column') || "DATE OF CREATION"}</th>
-                          <th>{t('status_column') || "STATUS"}</th>
-                          <th>{t('active_bets_column') || "# BETS"}</th>
-                          <th>{t('collaborators_column') || "# COLLABORATORS"}</th>
-                          {(!isCollaborator && !isViewer) && <th>{t('action_column') || "ACTION"}</th>}
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {filteredBusinesses.length === 0 ? (
-                          <tr>
-                            <td colSpan={(!isCollaborator && !isViewer) ? "7" : "6"} className="text-center py-5 text-muted">
-                              {t('no_businesses_yet')}
-                            </td>
-                          </tr>
-                        ) : (
-                          filteredBusinesses.map((business) => {
-                            const isDeleted = business.status === 'deleted';
-                            const state = isDeleted ? 'DELETED' : (business.has_projects ? 'EXECUTION' : 'CREATED');
-                            const date = business.created_at ? new Date(business.created_at).toLocaleDateString('en-US', { 
-                              month: 'short', day: '2-digit', year: 'numeric' 
-                            }) : 'N/A';
-                            
-                            const activeBets = business.project_count || business.question_statistics?.total_projects || 0;
-                            const collaborators = business.collaborators_count ?? (business.company_admin_id?.length || 1);
-                            const isArchived = (business.status || '').toLowerCase() === 'archived' || (business.access_mode || '').toLowerCase() === 'archived';
-                            const displayStatus = isDeleted ? 'Deleted' : (isArchived ? 'Archived' : 'Active');
-                            const statusBadgeClass = isDeleted ? 'status-deleted' : (isArchived ? 'status-archived' : 'status-active');
-
-                            return (
-                              <tr key={business._id || business.id} onClick={!isDeleted ? () => handleBusinessClick(business) : undefined} className={isDeleted ? 'row-deleted' : ''}>
-                                <td className="business-name-cell">{business.business_name}</td>
-                                <td><span className={`state-badge state-${state.toLowerCase()}`}>{state}</span></td>
-                                <td className="date-cell">{date}</td>
-                                <td className="status-response-cell">
-                                  <span className={`status-badge ${statusBadgeClass}`}>{displayStatus}</span>
-                                </td>
-                                <td className="stats-cell">{activeBets}</td>
-                                <td className="stats-cell">{collaborators}</td>
-                                {(!isCollaborator && !isViewer) && (
-                                  <td className="stats-cell">
-                                    {!isDeleted && (
-                                      <button className="btn-delete-business" onClick={(e) => { e.stopPropagation(); handleShowDeleteModal(business); }} title={t('delete_business')}>
-                                        <Trash2 size={16} />
-                                      </button>
-                                    )}
-                                  </td>
-                                )}
-                              </tr>
-                            );
-                          })
-                        )}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
+                </>
               )}
             </div>
           </Container>
