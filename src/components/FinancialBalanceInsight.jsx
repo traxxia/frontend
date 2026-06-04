@@ -20,23 +20,17 @@ const FinancialBalanceInsight = ({
   onRedirectToBrief
 }) => {
   const { t } = useTranslation();
-  
-  // Use Zustand store
-  const { 
+  const {
     financialBalanceData: storeFinancialBalanceData,
     isRegenerating: isTypeRegenerating,
-    regenerateIndividualAnalysis 
+    regenerateIndividualAnalysis
   } = useAnalysisStore();
 
   const isRegenerating = propIsRegenerating || isTypeRegenerating('financialBalance');
-
-  // Helper function to get financial data from either structure
   const getFinancialData = useCallback((data) => {
     if (!data) return null;
     return data.financialHealth || data.financialBalanceInsight || (Object.keys(data).length > 0 && !data.financialHealth ? data : null);
   }, []);
-
-  // Normalize data from store or props
   const analysisData = useMemo(() => {
     const rawData = propFinancialBalanceData || storeFinancialBalanceData;
     if (!rawData) return null;
@@ -79,20 +73,20 @@ const FinancialBalanceInsight = ({
     const { balanceSheet, innovationInvestment } = financialData;
     if (!balanceSheet || !balanceSheet.assets || !balanceSheet.liabilities) return true;
     if (!innovationInvestment) return true;
-    
+
     return false;
   }, [getFinancialData]);
 
   const parseCurrency = useCallback((value) => {
     if (typeof value === 'number') return value;
     if (!value || value === '') return 0;
-    
+
     const cleaned = value.toString().replace(/[$,KkMm\s]/g, '');
     const number = parseFloat(cleaned);
-    
+
     if (value.includes('K') || value.includes('k')) return number * 1000;
     if (value.includes('M') || value.includes('m')) return number * 1000000;
-    
+
     return number || 0;
   }, []);
 
@@ -148,7 +142,7 @@ const FinancialBalanceInsight = ({
     if (!financialData?.balanceSheet) return [];
 
     const { assets, liabilities, equity } = financialData.balanceSheet;
-    
+
     return [
       {
         category: 'Assets',
@@ -177,7 +171,7 @@ const FinancialBalanceInsight = ({
 
     const breakdown = financialData.balanceSheet.assets.breakdown;
     const result = [];
-    
+
     Object.entries(breakdown).forEach(([key, value]) => {
       if (value && value !== '') {
         result.push({
@@ -187,7 +181,7 @@ const FinancialBalanceInsight = ({
         });
       }
     });
-    
+
     return result;
   }, [analysisData, getFinancialData, parseCurrency]);
 
@@ -198,7 +192,7 @@ const FinancialBalanceInsight = ({
 
     const ratios = financialData.ratios;
     const result = [];
-    
+
     if (ratios.debtToEquity !== '' && ratios.debtToEquity !== undefined) {
       result.push({
         name: 'Debt to Equity',
@@ -207,7 +201,7 @@ const FinancialBalanceInsight = ({
         status: (parseFloat(ratios.debtToEquity) || 0) <= 0.6 ? 'good' : 'warning'
       });
     }
-    
+
     if (ratios.currentRatio !== '' && ratios.currentRatio !== undefined) {
       result.push({
         name: 'Current Ratio',
@@ -216,7 +210,7 @@ const FinancialBalanceInsight = ({
         status: (parseFloat(ratios.currentRatio) || 0) >= 1.5 ? 'good' : 'warning'
       });
     }
-    
+
     if (ratios.quickRatio !== '' && ratios.quickRatio !== undefined) {
       result.push({
         name: 'Quick Ratio',
@@ -225,7 +219,7 @@ const FinancialBalanceInsight = ({
         status: (parseFloat(ratios.quickRatio) || 0) >= 1.0 ? 'good' : 'warning'
       });
     }
-    
+
     return result;
   }, [analysisData, getFinancialData]);
 
@@ -267,7 +261,7 @@ const FinancialBalanceInsight = ({
   const renderContent = () => {
     if (error) {
       return (
-        <AnalysisError 
+        <AnalysisError
           error={error}
           onRetry={handleRegenerate}
           title="Financial Balance Analysis Error"
@@ -308,7 +302,7 @@ const FinancialBalanceInsight = ({
 
     return (
       <>
-        {/* Key Metrics */}
+        {}
         <div className="ch-metrics">
           <div className="ch-metric-card ch-metric-blue">
             <div className="ch-metric-header">
@@ -343,7 +337,7 @@ const FinancialBalanceInsight = ({
           </div>
         </div>
 
-        {/* Charts Section */}
+        {}
         <div className="ch-heatmap-container">
           <div className="ch-heatmap-scroll">
             <div className="ch-heatmap-header-section">
@@ -351,7 +345,7 @@ const FinancialBalanceInsight = ({
             </div>
 
             <div className="ch-charts-grid">
-              {/* Balance Sheet Overview */}
+              {}
               <div className="ch-chart-section">
                 <h4>Balance Sheet Overview</h4>
                 <div className="ch-chart-wrapper">
@@ -377,7 +371,7 @@ const FinancialBalanceInsight = ({
                 </div>
               </div>
 
-              {/* Assets Breakdown */}
+              {}
               {assetsBreakdownData.length > 0 && (
                 <div className="ch-chart-section">
                   <h4>Assets Breakdown</h4>
@@ -408,7 +402,7 @@ const FinancialBalanceInsight = ({
           </div>
         </div>
 
-        {/* Financial Ratios */}
+        {}
         {ratiosData.length > 0 && (
           <div className="ch-breakdown-section">
             <h3 className="ch-section-title">Financial Ratios & Health</h3>
@@ -437,7 +431,7 @@ const FinancialBalanceInsight = ({
           </div>
         )}
 
-        {/* Balance Sheet Details */}
+        {}
         <div className="ch-breakdown-section">
           <h3 className="ch-section-title">Balance Sheet Details</h3>
           <div className="ch-breakdown-grid">
@@ -487,7 +481,7 @@ const FinancialBalanceInsight = ({
           </div>
         </div>
 
-        {/* Innovation Investment */}
+        {}
         <div className="ch-breakdown-section">
           <h3 className="ch-section-title">Innovation Investment</h3>
           <div className="ch-breakdown-grid">
@@ -536,7 +530,7 @@ const FinancialBalanceInsight = ({
   };
 
   return (
-    <div className="channel-heatmap channel-heatmap-container" 
+    <div className="channel-heatmap channel-heatmap-container"
       data-analysis-type="financial-health"
       data-analysis-name="Financial Health"
       data-analysis-order="3">

@@ -1,4 +1,3 @@
-/* ========== GLOBAL RESET & BEHAVIOR ========== */
 * {
   margin: 0;
   padding: 0;
@@ -10,7 +9,6 @@ body {
   height: 100%;
 }
 
-/* ========== ANIMATIONS ========== */
 @keyframes spin {
   0% {
     transform: rotate(0deg);
@@ -49,7 +47,6 @@ body {
   animation: spin 1s linear infinite;
 }
 
-/* ========== CONTAINER LAYOUTS ========== */
 .business-setup-container {
   min-height: 100vh;
   background: #f8f9fa;
@@ -63,7 +60,7 @@ body {
   display: flex;
   overflow: hidden;
   position: relative;
-  /* transition: all 1s cubic-bezier(0.25, 0.8, 0.25, 1); */
+
 }
 
 .main-container.analysis-expanded {
@@ -80,7 +77,6 @@ body {
   user-select: auto;
 }
 
-/* ========== HEADER COMPONENTS ========== */
 .main-header {
   display: flex;
   align-items: center;
@@ -125,7 +121,6 @@ body {
   background: #f3f4f6;
 }
 
-/* Sub Header */
 .sub-header {
   background: white;
   border-bottom: 1px solid #e1e5e9;
@@ -203,18 +198,17 @@ body {
   border-bottom: 1px solid #e1e5e9;
   background: white;
   box-shadow: 0 4px 4px -2px rgba(59, 130, 246, 0.15);
-  /* Shadow only below */
+
 }
 
 [data-theme="dark"] .welcome-area {
   background: var(--color-bg-primary);
-  /* Dark mode background */
-  /* Dark mode border */
+
 }
 
 [data-theme="dark"] .welcome-area p {
   color: var(--color-text-dark);
-  /* Dark mode text color */
+
 }
 
 [data-theme="dark"] .welcome-heading {
@@ -223,7 +217,7 @@ body {
 
 [data-theme="dark"] .chat-section {
   background-color: var(--color-bg-primary);
-  /* Dark mode text color */
+
 }
 
 [data-theme="dark"] .desktop-tabs {
@@ -236,9 +230,8 @@ body {
 
 [data-theme="dark"] .info-panel {
   background-color: var(--color-bg-primary);
-  /* Dark mode text color */
-}
 
+}
 
 [data-theme="dark"] .item-label {
   color: var(--color-text-dark);
@@ -254,7 +247,6 @@ body {
 
 [data-theme="dark"] .brief-item:hover {
   background-color: rgba(59, 58, 58, 0.338);
-
 
 }
 
@@ -283,12 +275,12 @@ body {
 }
 
 [data-theme="dark"] .back-button {
-  background-color: var(--color-bg-secondary) !important;
+  background-color: transparent !important;
   color: var(--color-text-dark) !important;
 }
 
 [data-theme="dark"] .business-header-container {
-  background-color: var(--color-bg-secondary);
+  background-color: transparent;
 }
 
 [data-theme="dark"] .breadcrumb-separator {
@@ -314,7 +306,6 @@ body {
   background-color: var(--color-bg-secondary) !important;
 }
 
-
 [data-theme="dark"] .capability-heatmap,
 [data-theme="dark"] .channel-heatmap,
 [data-theme="dark"] .swot-analysis-container,
@@ -322,10 +313,7 @@ body {
   background-color: var(--color-text-light);
 }
 
-[data-theme="dark"] .loyalty-nps,
-[data-theme="dark"] .purchase-criteria {
-  background-color: #222435;
-}
+
 
 [data-theme="dark"] .item-text:hover {
   background-color: var(--color-bg-secondary);
@@ -351,7 +339,6 @@ body {
   color: var(--color-text-light) !important;
 }
 
-/* ========== DESKTOP TOP NAVIGATION & DROPDOWNS ========== */
 .desktop-tabs {
   display: flex;
   align-items: center;
@@ -429,6 +416,15 @@ body {
   border-bottom-color: #2563eb;
 }
 
+[data-theme="dark"] .nav-dropdown-trigger {
+  color: #e0e5ec;
+}
+
+[data-theme="dark"] .nav-dropdown-trigger.active {
+  color: #fff;
+  border-bottom-color: #fff;
+}
+
 .chevron-icon {
   transition: transform 0.2s ease;
   color: #9ca3af;
@@ -461,6 +457,12 @@ body {
   right: 0;
 }
 
+[data-theme="dark"] .nav-dropdown-menu {
+  background-color: #1a1d23 !important;
+  border-color: #334155 !important;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4) !important;
+}
+
 @keyframes dropdownFade {
   from {
     opacity: 0;
@@ -486,6 +488,7 @@ body {
 [data-theme="dark"] .dropdown-main-header {
   border-bottom-color: #334155;
   background: rgba(59, 130, 246, 0.1) !important;
+  color: #fff !important;
 }
 
 [data-theme="dark"] .business-decision-logs-page {
@@ -500,7 +503,6 @@ body {
   color: var(--color-text-dark) !important;
 }
 
-
 .dropdown-section-label {
   font-size: 0.7rem;
   font-weight: 700;
@@ -508,6 +510,10 @@ body {
   text-transform: uppercase;
   letter-spacing: 0.05em;
   padding: 0.5rem 0.75rem 0.25rem;
+}
+
+[data-theme="dark"] .dropdown-section-label {
+  color: #64748b !important;
 }
 
 .dropdown-item {
@@ -547,6 +553,20 @@ body {
 
 .dropdown-item.active svg {
   color: #2563eb;
+}
+
+[data-theme="dark"] .dropdown-item {
+  color: #e2e8f0 !important;
+}
+
+[data-theme="dark"] .dropdown-item:hover {
+  background-color: #2d3748 !important;
+  color: #60a5fa !important;
+}
+
+[data-theme="dark"] .dropdown-item.active {
+  background-color: rgba(37, 99, 235, 0.2) !important;
+  color: #60a5fa !important;
 }
 
 /* Mobile Nav Groups */
@@ -607,8 +627,6 @@ body {
   color: #10b981;
 }
 
-
-/* ========== CHAT SECTION ========== */
 .chat-section {
   flex: 1;
   background: white;
@@ -616,13 +634,12 @@ body {
   display: flex;
   flex-direction: column;
   padding: 0px;
-  /* transition: all 1s cubic-bezier(0.25, 0.8, 0.25, 1); */
+
   transform-origin: left center;
   width: 50%;
   flex-shrink: 0;
   flex-basis: 50%;
 }
-
 
 .chat-section.slide-out,
 .main-container.analysis-expanded .chat-section {
@@ -690,7 +707,6 @@ body {
   line-height: 1.5;
 }
 
-/* ========== MESSAGES ========== */
 .messages-container {
   flex: 1;
   overflow-y: auto;
@@ -758,7 +774,6 @@ body {
   font-size: 14px;
 }
 
-/* ========== INPUT AREA ========== */
 .input-area {
   margin-top: auto;
 }
@@ -809,7 +824,6 @@ body {
   transition: background-color 0.2s;
 }
 
-
 .send-btn:hover:not(:disabled) {
   background: #2563eb;
 }
@@ -819,7 +833,6 @@ body {
   cursor: not-allowed;
 }
 
-/* ========== INFO PANEL ========== */
 .info-panel {
   flex: 1;
   background: white;
@@ -828,7 +841,7 @@ body {
   flex-direction: column;
   scroll-behavior: smooth;
   position: relative;
-  /* transition: all 1s cubic-bezier(0.25, 0.8, 0.25, 1); */
+
   width: 50%;
   flex-basis: 50%;
   flex-shrink: 0;
@@ -850,12 +863,11 @@ body {
 .info-panel-content {
   flex: 1;
   padding: 10px;
-  /* Removed redundant overflow and max-height to allow parent to handle scroll */
+
   position: relative;
   overscroll-behavior: contain;
 }
 
-/* ========== PROGRESS INDICATORS ========== */
 .progress-area {
   margin-bottom: 20px;
 }
@@ -880,7 +892,6 @@ body {
   transition: width 0.3s ease;
 }
 
-/* ========== BRIEF SECTION ========== */
 .brief-section {
   position: relative;
   margin-top: 0px;
@@ -909,7 +920,7 @@ body {
   border-bottom: 1px solid #ccc;
   border-radius: 0px;
   padding: 5px;
-  /* transition: all 0.2s ease; */
+
   min-height: 60px;
   position: relative;
   scroll-margin: 0 !important;
@@ -969,7 +980,6 @@ body {
   opacity: 0.6;
 }
 
-/* ========== EDIT FUNCTIONALITY ========== */
 .edit-button,
 .save-button,
 .cancel-button {
@@ -1030,7 +1040,6 @@ body {
   background-color: #1a1d23 !important;
 }
 
-
 .edit-input,
 .edit-textarea {
   border: 1px solid #d1d5db;
@@ -1063,7 +1072,6 @@ body {
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
   overscroll-behavior-y: contain;
-  vertical-align: top;
   box-sizing: border-box;
   display: block;
   width: 100%;
@@ -1088,7 +1096,6 @@ body {
   background-color: rgba(59, 130, 246, 0.3);
 }
 
-/* Textarea Scrollbar */
 .edit-textarea::-webkit-scrollbar {
   width: 8px;
 }
@@ -1145,7 +1152,6 @@ body {
   background-color: #dc2626;
 }
 
-/* ========== EDITED ITEMS STYLING ========== */
 .brief-item.edited {
   background-color: #f0f9ff;
   border-left: 3px solid #3b82f6;
@@ -1179,7 +1185,6 @@ body {
   margin-left: 4px;
 }
 
-/* ========== ANALYSIS SECTION ========== */
 .analysis-section {
   display: flex;
   flex-direction: column;
@@ -1430,7 +1435,6 @@ body {
   gap: 16px;
 }
 
-/* ========== ANALYSIS REGENERATING BANNER ========== */
 .analysis-regenerating-banner {
   display: flex;
   align-items: center;
@@ -1445,7 +1449,6 @@ body {
   font-weight: 500;
 }
 
-/* ========== TOAST MESSAGES ========== */
 .simple-toast.info {
   background: linear-gradient(135deg, #2196f3, #21cbf3);
   color: white;
@@ -1470,7 +1473,6 @@ body {
   top: 100px;
 }
 
-/* ========== EXPANDED ANALYSIS VIEW ========== */
 .desktop-expanded-analysis {
   position: absolute;
   top: 0;
@@ -1489,15 +1491,12 @@ body {
 .expanded-analysis-view {
   width: 100%;
   height: 100%;
-  /* display: flex;
-  flex-direction: column; */
+
   background: white;
   overflow: auto;
   flex: 1;
   scroll-behavior: smooth;
 }
-
-
 
 .expanded-analysis-main {
   flex: 1;
@@ -1564,7 +1563,6 @@ body {
   cursor: not-allowed;
 }
 
-/* ========== UTILITY CLASSES ========== */
 .field-source {
   font-size: 12px;
   color: #6c757d;
@@ -1598,7 +1596,6 @@ body {
   text-align: center;
 }
 
-/* ========== LOADING STATES ========== */
 .loading {
   opacity: 0.7;
   pointer-events: none;
@@ -1678,7 +1675,6 @@ body {
   font-size: 14px;
 }
 
-/* ========== SCROLLBAR STYLING ========== */
 .messages-container::-webkit-scrollbar,
 .info-panel::-webkit-scrollbar,
 .expanded-analysis-main::-webkit-scrollbar {
@@ -1708,7 +1704,6 @@ body {
 
 }
 
-/* ========== DARK MODE SUPPORT ========== */
 @media (prefers-color-scheme: dark) {
   .brief-item.edited {
     background-color: #1e3a8a20;
@@ -1737,7 +1732,6 @@ body {
   }
 }
 
-/* ========== MOBILE RESPONSIVE ========== */
 @media (max-width: 768px) {
   .business-setup-container {
     background: white;
@@ -1991,10 +1985,6 @@ body {
     border-color: #cbd5e1;
   }
 
-  .swot-analysis,
-  .analysis-content:not(.analysis-content-wrapper) {
-    /* display: none; */
-  }
 
   .analysis-header {
     flex-direction: column;
@@ -2074,7 +2064,6 @@ body {
   }
 }
 
-/* ========== SMALL MOBILE SCREENS ========== */
 @media (max-width: 480px) {
 
   .sub-header {
@@ -2099,7 +2088,6 @@ body {
   }
 }
 
-/* ========== DESKTOP EXPANDED VIEW FIXES ========== */
 @media (min-width: 769px) {
   .main-container.analysis-expanded {
     justify-content: flex-end;
@@ -2121,7 +2109,6 @@ body {
 
 @keyframes spin {}
 
-/* Enhanced Coming Soon Section Styles */
 .coming-soon-section {
   position: relative;
   padding: 20px;
@@ -2340,7 +2327,6 @@ body {
   }
 }
 
-/* Responsive Design */
 @media (max-width: 768px) {
   .coming-soon-section {
     padding: 40px 20px;
@@ -2369,7 +2355,6 @@ body {
   }
 }
 
-/* Dark Mode Support */
 @media (prefers-color-scheme: dark) {
   .coming-soon-section {
     background: linear-gradient(135deg, #2d3748 0%, #1a202c 100%);
@@ -2424,7 +2409,6 @@ body {
   margin-top: 0px;
 }
 
-
 .expanded-analysis-view.mobile {
   padding: 0.5rem;
   font-size: 14px;
@@ -2438,7 +2422,7 @@ body {
   display: flex;
   flex-direction: column;
   flex: 1;
-  /* Add if missing: */
+
   min-height: 100%;
   width: 100%;
 }
@@ -2451,30 +2435,14 @@ body {
   opacity: 1 !important;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 .info-panel-content {
   scrollbar-width: thin;
-  /* For Firefox */
+
   scrollbar-color: #ccc transparent;
-  /* For Firefox */
+
   overflow-y: auto;
 }
 
-/* WebKit (Chrome, Safari, Edge) */
 .info-panel-content::-webkit-scrollbar {
   width: 6px;
 }
@@ -2488,22 +2456,15 @@ body {
   border-radius: 3px;
 }
 
-
-
-
-
-/* 🔽 Full width on mobile */
 @media (max-width: 768px) {
   .chat-section {
     width: 100%;
     flex-basis: 100%;
     border-right: none;
     border-bottom: 1px solid #e1e5e9;
-    /* optional: gives separation on mobile */
+
   }
 }
-
-
 
 @media (max-width: 768px) {
   .progress-area {
@@ -2529,9 +2490,6 @@ body {
   }
 }
 
-
-
-
 @media (max-width: 768px) {
   .info-panel {
     width: 100% !important;
@@ -2539,11 +2497,6 @@ body {
     box-sizing: border-box;
   }
 }
-
-
-
-
-/* (Dropdown + Regenerate All + PDF Export) Responsive*/
 
 @media (max-width: 600px) {
   .analysis-controls-wrapper {
@@ -2582,25 +2535,21 @@ body {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
   margin-top: 0;
 
-  /* FIXED POSITIONING */
-  /* position: sticky; */
   top: 60px;
   z-index: 1000;
 
 }
 
-/* Make the analysis-pdf-content the scrollable container */
 #analysis-pdf-content {
   background-color: white;
   padding: 0;
-  /* ADD SCROLLING TO THIS CONTAINER */
+
   max-height: calc(100vh - 200px);
   overflow-y: auto;
   padding-top: 0px;
-  /* margin-top: 65px; */
+
 }
 
-/* Remove overflow from parent containers */
 .expanded-analysis-main {
   flex: 1;
   padding: 10px;
@@ -2770,10 +2719,6 @@ body {
   background-color: #272d3e !important;
 }
 
-
-
-
-/* Responsive changes */
 @media (max-width: 768px) {
   .phase-tabs-container {
     width: 100%;
@@ -2785,10 +2730,9 @@ body {
     justify-content: space-between;
     gap: 12px;
     flex-wrap: wrap;
-    /* allows wrapping on small screens */
+
   }
 
-  /* Phase tabs nav */
   .phase-tabs-nav {
     display: flex;
     gap: 8px;
@@ -2819,7 +2763,6 @@ body {
     align-items: center;
   }
 
-
   .phase-tabs-inner {
     flex-direction: column;
     align-items: stretch;
@@ -2843,7 +2786,6 @@ body {
   }
 }
 
-/* Back button styles */
 .back-button {
   position: absolute;
   top: 10px;
@@ -2867,7 +2809,6 @@ body {
   background-color: transparent;
 }
 
-/* Desktop expanded analysis back button */
 .desktop-expanded-analysis .back-button {
   background-color: transparent;
   border: none;
@@ -2884,14 +2825,12 @@ body {
   position: static;
 }
 
-/* Analysis controls wrapper */
 .analysis-controls-wrapper {
   display: flex;
   gap: 12px;
   align-items: center;
 }
 
-/* Regenerate button styles */
 .regenerate-button {
   background-color: rgb(26, 115, 232);
   color: #fff;
@@ -2916,7 +2855,6 @@ body {
   cursor: not-allowed;
 }
 
-/* Desktop tabs container */
 .desktop-tabs {
   display: flex;
   justify-content: space-between;
@@ -2941,7 +2879,6 @@ body {
   align-items: center;
 }
 
-/* Dropdown wrapper and button */
 .dropdown-wrapper {
   position: relative;
 }
@@ -2983,7 +2920,6 @@ body {
   transform: rotate(180deg);
 }
 
-/* Dropdown menu */
 .dropdown-menu-options {
   position: absolute;
   top: 110%;
@@ -3000,7 +2936,6 @@ body {
   backdrop-filter: blur(20px);
 }
 
-/* Dropdown phase header */
 .dropdown-phase-header {
   padding: 12px 16px;
   background-color: #dbeafe;
@@ -3012,7 +2947,6 @@ body {
   letter-spacing: 0.5px;
 }
 
-/* Dropdown option */
 .dropdown-option {
   padding: 12px 16px;
   cursor: pointer;
@@ -3064,29 +2998,26 @@ body {
   font-size: 13.5px;
 }
 
-/* Analysis section mobile controls */
 .analysis-section-mobile-controls {
   padding: 0rem;
   background: #ffffffff;
 }
 
-/*Dark Mode*/
-
 [data-theme="dark"] .dropdown-option:hover {
   background-color: #23263a !important;
-  /* deep navy highlight */
+
   color: #90cdf4 !important;
-  /* light blue text */
+
   padding-left: 20px;
 }
 
 [data-theme="dark"] .dropdown-menu-options {
   background: #23263a !important;
-  /* card/navy background */
+
   border: 2px solid #313654 !important;
-  /* thick, visible border */
+
   box-shadow: 0 8px 32px #21253a88;
-  /* soft modal shadow */
+
 }
 
 [data-theme="dark"] .dropdown-option {
@@ -3098,22 +3029,21 @@ body {
 [data-theme="dark"] .dropdown-option:hover,
 [data-theme="dark"] .dropdown-option:focus {
   background-color: #202535 !important;
-  /* muted darker highlight */
+
   color: #8fc6ff !important;
-  /* blue-accent highlight */
+
   padding-left: 20px;
 }
 
 [data-theme="dark"] .dropdown-option .bullet {
   background-color: #60a5fa !important;
-  /* blue bullet for selected */
+
 }
 
 [data-theme="dark"] .dropdown-category-header {
   color: #94a3b8;
 }
 
-/* ========== MOBILE HAMBURGER MENU ========== */
 .mobile-menu-trigger-container {
   display: flex;
   align-items: center;
@@ -3304,19 +3234,6 @@ body {
   border-color: rgba(37, 99, 235, 0.2);
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 .mobile-header {
   position: sticky;
   top: 0;
@@ -3425,21 +3342,12 @@ body {
   margin-bottom: 1rem;
 }
 
-
-
-
-
-
-
-
-
-
 .mobile-menu-overlay {
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.45);
   z-index: 9999;
-  /* 🔥 VERY IMPORTANT */
+
   display: flex;
 }
 
@@ -3450,7 +3358,6 @@ body {
   background: #fff;
   box-shadow: 4px 0 20px rgba(0, 0, 0, 0.15);
 }
-
 
 .mobile-action-bar {
   display: flex;
@@ -3480,7 +3387,6 @@ body {
   flex-shrink: 0;
 }
 
-/* Ensure mobile dropdown options don't overflow */
 @media (max-width: 768px) {
   .dropdown-menu-options {
     position: absolute;
@@ -3538,7 +3444,6 @@ body {
   }
 }
 
-/* ========== ARCHIVED STATE VISUALS ========== */
 .expanded-analysis-view {
   position: relative;
 }
@@ -3549,21 +3454,19 @@ body {
   background: white !important;
 }
 
-/* Hide utility buttons (PDF, Regenerate, Section Dropdown) in archived state */
 .is-archived .desktop-tabs-buttons {
   display: none !important;
 }
 
-/* Hide all content inside expanded-analysis-content ONLY for archived workspaces */
 .is-archived .expanded-analysis-content {
   opacity: 0.3;
-  /* Show content but faded (70% obscured) */
+
   pointer-events: none;
-  /* Prevent any interaction */
+
   user-select: none;
-  /* Prevent text selection */
+
   filter: blur(1px);
-  /* Add a very light blur directly to content */
+
 }
 
 .archived-overlay {
@@ -3580,12 +3483,10 @@ body {
   border-radius: 8px;
 }
 
-/* Ensure banner is above everything else */
 .is-archived .alert-warning {
   z-index: 2000 !important;
 }
 
-/* Archived / Hidden State Overlays */
 .is-archived .info-panel-content {
   position: relative;
   pointer-events: none !important;
@@ -3603,7 +3504,6 @@ body {
   pointer-events: none;
 }
 
-/* Hide all utility and action buttons in archived state */
 .is-archived .pdf-export-button,
 .is-archived .regenerate-button,
 .is-archived .improve-button,
@@ -3614,7 +3514,6 @@ body {
   display: none !important;
 }
 
-/* Specific indicator for menu labels */
 .nav-dropdown-trigger .read-only-indicator,
 .dropdown-item .read-only-indicator,
 .mobile-menu-item .read-only-indicator,
@@ -3630,12 +3529,12 @@ body {
   background: rgba(0, 0, 0, 0.4);
 }
 
-/* ========== CUSTOM TOOLTIP STYLES ========== */
 .custom-tooltip-wrapper {
   display: flex !important;
   align-items: center;
   justify-content: center;
   position: relative;
+  z-index: 999 !important;
 }
 
 .custom-tooltip-content {
@@ -3660,7 +3559,6 @@ body {
   letter-spacing: 0.01em;
 }
 
-/* Base Positionings */
 .tooltip-top {
   bottom: calc(100% + 12px);
 }
@@ -3669,7 +3567,6 @@ body {
   top: calc(100% + 12px);
 }
 
-/* Alignment logic to prevent overflow */
 .align-center {
   left: 50%;
   transform: translateX(-50%);
@@ -3693,13 +3590,11 @@ body {
   border-right: 7px solid transparent;
 }
 
-/* Arrow - Top positioned tooltip */
 .tooltip-top .tooltip-arrow {
   top: 100%;
   border-top: 7px solid #e2e8f0;
 }
 
-/* Arrow interior for the white background */
 .tooltip-top .tooltip-arrow::after {
   content: '';
   position: absolute;
@@ -3710,7 +3605,6 @@ body {
   border-top: 7px solid rgba(255, 255, 255, 0.98);
 }
 
-/* Arrow - Bottom positioned tooltip */
 .tooltip-bottom .tooltip-arrow {
   bottom: 100%;
   border-bottom: 7px solid #e2e8f0;
@@ -3726,7 +3620,6 @@ body {
   border-bottom: 7px solid rgba(255, 255, 255, 0.98);
 }
 
-/* Arrow Alignment */
 .align-center .tooltip-arrow {
   left: 50%;
   transform: translateX(-50%);

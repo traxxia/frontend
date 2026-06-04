@@ -20,17 +20,13 @@ const FinancialPerformance = ({
     onRedirectToBrief
 }) => {
     const { t } = useTranslation();
-    
-    // Use Zustand store
-    const { 
+    const {
         financialPerformanceData: storeFinancialPerformanceData,
         isRegenerating: isTypeRegenerating,
-        regenerateIndividualAnalysis 
+        regenerateIndividualAnalysis
     } = useAnalysisStore();
 
     const isRegenerating = propIsRegenerating || isTypeRegenerating('financialPerformance');
-
-    // Normalize data from store or props
     const analysisData = useMemo(() => {
         const rawData = propFinancialPerformanceData || storeFinancialPerformanceData;
         if (!rawData) return null;
@@ -246,7 +242,7 @@ const FinancialPerformance = ({
 
         return (
             <>
-                {/* Key Metrics */}
+                {}
                 <div className="ch-metrics">
                     <div className="ch-metric-card ch-metric-blue">
                         <div className="ch-metric-header">
@@ -281,7 +277,7 @@ const FinancialPerformance = ({
                     </div>
                 </div>
 
-                {/* Charts Section */}
+                {}
                 <div className="ch-heatmap-container">
                     <div className="ch-heatmap-scroll">
                         <div className="ch-heatmap-header-section">

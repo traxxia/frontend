@@ -1,7 +1,6 @@
 import React from 'react';
 import { RefreshCw, Loader } from 'lucide-react';
 import { useTranslation } from "../hooks/useTranslation";
-
 const SIZES = {
   small: {
     padding: "5px",
@@ -19,51 +18,30 @@ const SIZES = {
     iconSize: 16
   }
 };
-
 const RegenerateButton = ({
   onRegenerate,
   isRegenerating = false,
   canRegenerate = true,
   sectionName = "Analysis",
-  size = "medium", // "small", "medium", "large"
-  hideRegenerateButtons = false // Add this prop
+  size = "medium",
+  hideRegenerateButtons = false
 }) => {
   const currentSize = SIZES[size] || SIZES.small;
-  const { t } = useTranslation();
-
-  // Hide button when in user history (hideRegenerateButtons = true)
+  const {
+    t
+  } = useTranslation();
   if (hideRegenerateButtons) {
     return null;
   }
-
-  // Hide button when regenerating or can't regenerate
   if (isRegenerating || !canRegenerate) {
     return null;
   }
-
-  return (
-    <button
-      onClick={onRegenerate}
-      style={{
-        backgroundColor: "rgb(26, 115, 232)",
-        color: "#fff",
-        border: "none",
-        borderRadius: "8px",
-        padding: currentSize.padding,
-        fontSize: currentSize.fontSize,
-        fontWeight: 500,
-        display: "flex",
-        gap:"5px",
-        alignItems: "center",
-        cursor: "pointer",
-        transition: "all 0.2s ease",
-        marginLeft: "auto"
-      }}
-    >
+  return <button onClick={onRegenerate} style={{
+    padding: currentSize.padding,
+    fontSize: currentSize.fontSize
+  }} className="regenerate-button--s1">
       <RefreshCw size={currentSize.iconSize} />
       {t("regenerate")}
-    </button>
-  );
+    </button>;
 };
-
 export default RegenerateButton;

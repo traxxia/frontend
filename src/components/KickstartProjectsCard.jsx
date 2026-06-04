@@ -21,7 +21,7 @@ const KickstartProjectsCard = ({ onKickstart, isLocked = false }) => {
     <Container fluid className="p-0 mb-3">
       <div className="kickstart-wrapper">
         <Row className="align-items-center g-3">
-          {/* Text */}
+          {}
           <Col xs={12} md={8}>
             <h2 className="kickstart-title">
               {isLocked ? "Ready to Execute Your Strategy?" : `${t("Ready_to_Start_Project_Planning")}?`}
@@ -35,7 +35,7 @@ const KickstartProjectsCard = ({ onKickstart, isLocked = false }) => {
             </p>
           </Col>
 
-          {/* Button */}
+          {}
           <Col xs={12} md="auto" className="ms-md-auto">
             <Button
               variant={isLocked ? "warning" : "primary"}

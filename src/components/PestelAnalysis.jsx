@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import '../styles/PestelAnalysis.css';
 import { useTranslation } from "../hooks/useTranslation";
 import { ChevronDown, ChevronRight, BarChart3, TrendingUp, Loader } from 'lucide-react';
 import { useAuthStore, useAnalysisStore } from "../store";
@@ -25,7 +26,7 @@ const PestelAnalysis = ({
 }) => {
   const { t } = useTranslation();
   const token = useAuthStore(state => state.token);
-  
+
   const {
     pestelData: storePestelData,
     isRegenerating: isTypeRegenerating,
@@ -202,7 +203,7 @@ const PestelAnalysis = ({
     );
   }
 
-  if ((!pestelData || Array.isArray(pestelData) || isPestelDataIncomplete(pestelData)) && Object.keys(userAnswers).length > 0) {
+  if (!pestelData || Array.isArray(pestelData) || isPestelDataIncomplete(pestelData)) {
     return (
       <div className="porters-container">
         <AnalysisEmptyState

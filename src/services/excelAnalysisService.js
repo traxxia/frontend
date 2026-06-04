@@ -7,14 +7,13 @@ export class ExcelAnalysisService {
 
   async generateExcelAnalysis(uploadedFile, questions, userAnswers, metricType = null) {
     this.setApiLoading('excel-analysis', true);
-    
+
     try {
       const formData = new FormData();
-      
+
       if (uploadedFile) {
         formData.append('file', uploadedFile);
       } else {
-        // Create dummy file with business information
         const questionsArray = [];
         const answersArray = [];
 
@@ -30,15 +29,13 @@ export class ExcelAnalysisService {
         const dummyFile = new Blob([businessInfo], { type: 'text/plain' });
         formData.append('file', dummyFile, 'business_data.txt');
       }
-
-      // Build URL with query parameters
       let url = `${this.ML_API_BASE_URL}/excel-analysis`;
       const params = new URLSearchParams();
-      
+
       if (metricType) {
         params.append('metric_type', metricType);
       }
-      
+
       if (params.toString()) {
         url += `?${params.toString()}`;
       }

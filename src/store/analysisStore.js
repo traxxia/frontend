@@ -1,21 +1,17 @@
 import { create } from 'zustand';
-import axios from 'axios';
 import { useAuthStore } from './authStore';
 import { AnalysisApiService, PHASE_API_CONFIG } from '../services/analysisApiService';
 import { useUIStore } from './uiStore';
 
-const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
-const ML_API_BASE_URL = process.env.REACT_APP_ML_BACKEND_URL;
-
-// Initial state for resetting
+const API_BASE_URL = import.meta.env.VITE_BACKEND_URL;
+const ML_API_BASE_URL = import.meta.env.VITE_ML_BACKEND_URL;
 const initialState = {
   questions: [],
   questionsLoaded: false,
   userAnswers: {},
+  answersDetails: {},
   completedQuestions: [],
   swotAnalysis: null,
-  purchaseCriteria: null,
-  loyaltyNPS: null,
   portersData: null,
   pestelData: null,
   fullSwotData: null,
@@ -42,9 +38,11 @@ const initialState = {
   cultureProfileData: null,
   strategicGoalsData: null,
   kickstartData: null,
-  regenerating: {},
-  streamingText: {},
-  isStreaming: {},
+  isInitialLoading: false,
+  isAnalysisLoading: false,
+  lastFetchedBusinessId: null,
+  lastSkipFinancial: false,
+  lastSkipQuestions: false,
 };
 
 const getApiService = () => {
@@ -62,11 +60,10 @@ export const useAnalysisStore = create((set, get) => ({
   questions: [],
   questionsLoaded: false,
   userAnswers: {},
+  answersDetails: {},
   completedQuestions: [],
 
   swotAnalysis: null,
-  purchaseCriteria: null,
-  loyaltyNPS: null,
   portersData: null,
   pestelData: null,
   fullSwotData: null,
@@ -98,21 +95,54 @@ export const useAnalysisStore = create((set, get) => ({
   regenerating: {},
   streamingText: {},
   isStreaming: {},
+  isInitialLoading: false,
+  isAnalysisLoading: false,
+  lastFetchedBusinessId: null,
 
   setQuestions: (questions) => set({ questions }),
   setQuestionsLoaded: (loaded) => set({ questionsLoaded: loaded }),
 
-  setUserAnswer: (questionId, answer) => set((state) => ({
-    userAnswers: { ...state.userAnswers, [questionId]: answer },
-    completedQuestions: answer
-      ? [...new Set([...state.completedQuestions, questionId])]
-      : state.completedQuestions.filter(id => id !== questionId),
-  })),
+  setUserAnswer: (questionId, answer) => set((state) => {
+    const newDetails = { ...state.answersDetails };
+    const currentDetail = newDetails[questionId] || {};
+    const oldAnswer = state.userAnswers[questionId] || null;
 
-  initializeBusinessData: ({ questions, userAnswers, completedQuestions, analysisUpdates = {}, questionsLoaded = true }) => 
+    const newPreviousAnswer = answer === oldAnswer
+      ? (currentDetail.previous_answer !== undefined ? currentDetail.previous_answer : null)
+      : (oldAnswer || currentDetail.ai_answer || currentDetail.previous_answer || null);
+
+    const newUserAnswer = answer === oldAnswer
+      ? (currentDetail.user_answer !== undefined ? currentDetail.user_answer : null)
+      : answer;
+
+    const isDifferent = answer !== oldAnswer;
+
+    newDetails[questionId] = {
+      ...currentDetail,
+      ai_answer: currentDetail.ai_answer !== undefined && currentDetail.ai_answer !== null && currentDetail.ai_answer !== ''
+        ? currentDetail.ai_answer
+        : (oldAnswer || ''),
+      previous_answer: newPreviousAnswer,
+      user_answer: newUserAnswer,
+      status: currentDetail.status || 'EDITED',
+      confidence: currentDetail.confidence !== undefined ? currentDetail.confidence : 0,
+      evidence: currentDetail.evidence || []
+    };
+
+    return {
+      userAnswers: { ...state.userAnswers, [questionId]: answer },
+      answersDetails: newDetails,
+      completedQuestions: answer
+        ? [...new Set([...state.completedQuestions, questionId])]
+        : state.completedQuestions.filter(id => id !== questionId),
+    };
+  }),
+
+  initializeBusinessData: ({ questions, userAnswers, completedQuestions, answersDetails, analysisUpdates = {}, questionsLoaded = true }) =>
     set((state) => ({
       questions: questions !== undefined ? questions : state.questions,
       userAnswers: userAnswers !== undefined ? userAnswers : state.userAnswers,
+      answersDetails: answersDetails !== undefined ? answersDetails : state.answersDetails,
       completedQuestions: completedQuestions !== undefined ? completedQuestions : state.completedQuestions,
       ...analysisUpdates,
       questionsLoaded
@@ -120,7 +150,7 @@ export const useAnalysisStore = create((set, get) => ({
 
   setAnalysisData: (type, data) => {
     const keyMap = {
-      swot: 'swotAnalysis', purchaseCriteria: 'purchaseCriteria', loyaltyNPS: 'loyaltyNPS',
+      swot: 'swotAnalysis',
       porters: 'portersData', pestel: 'pestelData', fullSwot: 'fullSwotData',
       competitiveAdvantage: 'competitiveAdvantage', strategic: 'strategicData',
       expandedCapability: 'expandedCapability', strategicRadar: 'strategicRadar',
@@ -154,37 +184,51 @@ export const useAnalysisStore = create((set, get) => ({
 
   resetAnalysis: () => set(initialState),
 
-  fetchAnalysisData: async (businessId, skipLoadingFlag = false, forceRefresh = false) => {
+  fetchAnalysisData: async (businessId, skipLoadingFlag = false, forceRefresh = false, skipReset = false) => {
     if (!businessId) return;
+    
+    // Guard against duplicate concurrent requests or redundant fetches
+    const state = get();
+    if (state.lastFetchedBusinessId === businessId && !forceRefresh) {
+      // If we already have some data and questions are loaded, skip
+      if (state.questionsLoaded && (state.swotAnalysis || state.portersData || state.strategicData)) {
+        return;
+      }
+    }
+
+    if (state.isAnalysisLoading && state.lastFetchedBusinessId === businessId && !forceRefresh) {
+      return;
+    }
+
     const { token } = useAuthStore.getState();
     if (!token) return;
 
+    set({ isAnalysisLoading: true, lastFetchedBusinessId: businessId });
     if (!skipLoadingFlag) set({ questionsLoaded: false });
-    
-    // Always reset the analysis-related state when fetching for a potentially different business
-    // or when forcing a refresh. This prevents data "bleeding" between different business contexts.
-    const resetData = {
-      swotAnalysis: null, purchaseCriteria: null, loyaltyNPS: null,
-      portersData: null, pestelData: null, fullSwotData: null,
-      competitiveAdvantage: null, strategicData: null,
-      expandedCapability: null, strategicRadar: null,
-      productivityData: null, maturityData: null,
-      competitiveLandscape: null, coreAdjacency: null,
-      profitabilityData: null, growthTrackerData: null,
-      liquidityEfficiencyData: null, investmentPerformanceData: null,
-      leverageRiskData: null,
-      financialBalanceData: null, costEfficiencyData: null,
-      operationalEfficiencyData: null, financialPerformanceData: null,
-      channelEffectivenessData: null, channelHeatmapData: null,
-      customerSegmentationData: null, cultureProfileData: null,
-      strategicGoalsData: null,
-    };
-    set(resetData);
+    if (!skipReset) {
+      const resetData = {
+        swotAnalysis: null,
+        portersData: null, pestelData: null, fullSwotData: null,
+        competitiveAdvantage: null, strategicData: null,
+        expandedCapability: null, strategicRadar: null,
+        productivityData: null, maturityData: null,
+        competitiveLandscape: null, coreAdjacency: null,
+        profitabilityData: null, growthTrackerData: null,
+        liquidityEfficiencyData: null, investmentPerformanceData: null,
+        leverageRiskData: null,
+        financialBalanceData: null, costEfficiencyData: null,
+        operationalEfficiencyData: null, financialPerformanceData: null,
+        channelEffectivenessData: null, channelHeatmapData: null,
+        customerSegmentationData: null, cultureProfileData: null,
+        strategicGoalsData: null,
+      };
+      set(resetData);
+    }
 
     try {
       const apiService = getApiService();
       const newsAnalysisData = await apiService.fetchAnalysisDataThroughBackend(businessId, forceRefresh);
-      
+
       const latestAnalysisByType = {};
       newsAnalysisData
         .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
@@ -196,7 +240,7 @@ export const useAnalysisStore = create((set, get) => ({
 
       const updates = {};
       const keyMap = {
-        swot: 'swotAnalysis', purchaseCriteria: 'purchaseCriteria', loyaltyNPS: 'loyaltyNPS',
+        swot: 'swotAnalysis',
         porters: 'portersData', pestel: 'pestelData', fullSwot: 'fullSwotData',
         competitiveAdvantage: 'competitiveAdvantage', strategic: 'strategicData',
         expandedCapability: 'expandedCapability', strategicRadar: 'strategicRadar',
@@ -223,54 +267,124 @@ export const useAnalysisStore = create((set, get) => ({
           }
         }
 
-        updates[dataKey] = type === 'swot' 
+        updates[dataKey] = type === 'swot'
           ? (typeof analysis.analysis_data === 'string' ? analysis.analysis_data : JSON.stringify(analysis.analysis_data))
           : analysis.analysis_data;
       });
 
-      set({ ...updates });
+      set({ ...updates, isAnalysisLoading: false });
       if (!skipLoadingFlag) set({ questionsLoaded: true });
       return updates;
     } catch (err) {
       console.error('Failed to fetch analysis data:', err);
-      set({ questionsLoaded: true });
+      set({ questionsLoaded: true, isAnalysisLoading: false });
+    }
+  },
+
+  fetchInitialSetupData: async (businessId, options = {}) => {
+    if (!businessId) return;
+    
+    const { isInitialLoading, lastFetchedBusinessId, lastSkipFinancial, lastSkipQuestions, questions, questionsLoaded } = get();
+    
+    // Only skip if we are already loading the same business with compatible skip options
+    // OR if we already have the data and aren't forcing a refresh
+    if (lastFetchedBusinessId === businessId && !options.forceRefresh) {
+      const hasQuestions = questions.length > 0 || questionsLoaded;
+      const hasAnswers = Object.keys(get().userAnswers).length > 0;
+      
+      if (hasQuestions && hasAnswers) {
+        // If we also need financial and already have it (or it's skipped), we can skip
+        if (options.skipFinancial || get().documentInfo) {
+          return;
+        }
+      }
+
+      if (isInitialLoading) {
+        const financialCompatible = lastSkipFinancial === options.skipFinancial || (!lastSkipFinancial && options.skipFinancial);
+        const questionsCompatible = lastSkipQuestions === options.skipQuestions || (!lastSkipQuestions && options.skipQuestions);
+        
+        if (financialCompatible && questionsCompatible) {
+          return;
+        }
+      }
+    }
+
+    const { token } = useAuthStore.getState();
+    if (!token) return;
+
+    set({ 
+      isInitialLoading: true, 
+      lastFetchedBusinessId: businessId,
+      lastSkipFinancial: !!options.skipFinancial,
+      lastSkipQuestions: !!options.skipQuestions
+    });
+
+    try {
+      const apiService = getApiService();
+      
+      // Fetch questions if not already loaded AND not skipping
+      if (get().questions.length === 0 && !options.skipQuestions) {
+        const questionsResponse = await fetch(`${API_BASE_URL}/api/questions`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const questionsData = await questionsResponse.json();
+        set({ questions: questionsData.questions || [] });
+      }
+
+      // Fetch answers and optionally document info in parallel
+      const tasks = [apiService.getFreshAnswersData(businessId)];
+      if (!options.skipFinancial) {
+        tasks.push(apiService.fetchFinancialDocument(businessId));
+      }
+
+      const results = await Promise.all(tasks);
+      const answersResult = results[0];
+      const docInfo = options.skipFinancial ? null : results[1];
+
+      set({ 
+        userAnswers: answersResult.freshAnswers || {},
+        answersDetails: answersResult.freshAnswersDetails || {},
+        completedQuestions: Array.from(answersResult.freshCompletedSet || []),
+        questionsLoaded: true,
+        isInitialLoading: false
+      });
+
+      return { answersResult, docInfo };
+    } catch (err) {
+      console.error('Failed to fetch initial setup data:', err);
+      set({ questionsLoaded: true, isInitialLoading: false });
     }
   },
 
   regeneratePhase: async (phase, questions, userAnswers, businessId, onToast) => {
     if (!businessId || !phase) return;
-
-    // Set both the phase and all its constituent analysis types as regenerating
     const phaseTypes = PHASE_API_CONFIG[phase] || [];
     const regenerationUpdates = { [phase]: true };
     phaseTypes.forEach(type => { regenerationUpdates[type] = true; });
 
-    set((state) => ({ 
+    set((state) => ({
       regenerating: { ...state.regenerating, ...regenerationUpdates }
     }));
 
     try {
       const apiService = getApiService();
       const stateSetters = {};
-      // Create transient setters for the service to call for all analysis types
       const analysisTypes = [
-        'swot', 'purchaseCriteria', 'loyaltyNPS', 'porters', 'pestel', 
-        'fullSwot', 'competitiveAdvantage', 'strategic', 'expandedCapability', 
-        'strategicRadar', 'productivityMetrics', 'maturityScore', 'competitiveLandscape', 
-        'coreAdjacency', 'profitabilityAnalysis', 'growthTracker', 'liquidityEfficiency', 
+        'swot', 'porters', 'pestel',
+        'fullSwot', 'competitiveAdvantage', 'strategic', 'expandedCapability',
+        'strategicRadar', 'productivityMetrics', 'maturityScore', 'competitiveLandscape',
+        'coreAdjacency', 'profitabilityAnalysis', 'growthTracker', 'liquidityEfficiency',
         'investmentPerformance', 'leverageRisk'
       ];
-      
+
       analysisTypes.forEach(type => {
         const setterName = apiService.getStateSetterName(type);
         if (setterName) {
           stateSetters[setterName] = (data) => get().setAnalysisData(type, data);
         }
       });
-      
+
       stateSetters.setRegenerating = (type, isRegenerating) => get().setRegenerating(type, isRegenerating);
-      
-      // Include uploaded file if available in the arguments or global context
       if (userAnswers && userAnswers.uploadedFile) {
         stateSetters.uploadedFile = userAnswers.uploadedFile;
       }
@@ -291,7 +405,58 @@ export const useAnalysisStore = create((set, get) => ({
       const completionUpdates = { [phase]: false };
       phaseTypes.forEach(type => { completionUpdates[type] = false; });
 
-      set((state) => ({ 
+      set((state) => ({
+        regenerating: { ...state.regenerating, ...completionUpdates }
+      }));
+    }
+  },
+
+  regenerateCustomTypes: async (types, questions, userAnswers, businessId, onToast) => {
+    if (!businessId || !types || types.length === 0) return;
+    
+    const regenerationUpdates = {};
+    types.forEach(type => { regenerationUpdates[type] = true; });
+
+    set((state) => ({
+      regenerating: { ...state.regenerating, ...regenerationUpdates }
+    }));
+
+    try {
+      const apiService = getApiService();
+      const stateSetters = {};
+      const allPossibleTypes = [
+        'swot', 'porters', 'pestel',
+        'fullSwot', 'competitiveAdvantage', 'strategic', 'expandedCapability',
+        'strategicRadar', 'productivityMetrics', 'maturityScore', 'competitiveLandscape',
+        'coreAdjacency', 'profitabilityAnalysis', 'growthTracker', 'liquidityEfficiency',
+        'investmentPerformance', 'leverageRisk'
+      ];
+
+      allPossibleTypes.forEach(type => {
+        const setterName = apiService.getStateSetterName(type);
+        if (setterName) {
+          stateSetters[setterName] = (data) => get().setAnalysisData(type, data);
+        }
+      });
+
+      stateSetters.setRegenerating = (type, isRegenerating) => get().setRegenerating(type, isRegenerating);
+
+      await apiService.handleCustomTypesCompletion(
+        types,
+        questions,
+        userAnswers,
+        businessId,
+        stateSetters,
+        onToast
+      );
+    } catch (err) {
+      console.error(`Failed to regenerate custom types:`, err);
+      onToast?.(`Failed to regenerate insights.`, "error");
+    } finally {
+      const completionUpdates = {};
+      types.forEach(type => { completionUpdates[type] = false; });
+
+      set((state) => ({
         regenerating: { ...state.regenerating, ...completionUpdates }
       }));
     }
@@ -302,26 +467,22 @@ export const useAnalysisStore = create((set, get) => ({
     set((state) => ({ regenerating: { ...state.regenerating, [type]: true } }));
     try {
       const apiService = getApiService();
-      
-      // Prepare stateSetters for the individual analysis
       const stateSetters = {};
       const setterName = apiService.getStateSetterName(type);
       if (setterName) {
         stateSetters[setterName] = (data) => get().setAnalysisData(type, data);
       }
-      
-      // Include uploaded file if available
       if (uploadedFile) {
         stateSetters.uploadedFile = uploadedFile;
       } else if (userAnswers && userAnswers.uploadedFile) {
         stateSetters.uploadedFile = userAnswers.uploadedFile;
       }
 
-      const payload = { 
-        questions, 
-        userAnswers, 
+      const payload = {
+        questions,
+        userAnswers,
         selectedBusinessId: businessId,
-        stateSetters 
+        stateSetters
       };
 
       const result = await apiService.callAnalysisEndpoint(type, payload);
@@ -365,4 +526,3 @@ export const useAnalysisStore = create((set, get) => ({
   isStreamingType: (type) => get().isStreaming[type] || false,
   getStreamingText: (type) => get().streamingText[type] || '',
 }));
-

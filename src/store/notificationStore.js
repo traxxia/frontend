@@ -1,8 +1,9 @@
-// src/store/notificationStore.js
 import { create } from 'zustand';
 import { useAuthStore } from './authStore';
 
-const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
+const API_BASE_URL = import.meta.env.VITE_BACKEND_URL;
+
+let activeFetchPromise = null;
 
 export const useNotificationStore = create((set, get) => ({
   notifications: [],
@@ -11,17 +12,17 @@ export const useNotificationStore = create((set, get) => ({
   error: null,
 
   fetchNotifications: async () => {
-    const { isLoading } = get();
-    if (isLoading) return;
+    if (activeFetchPromise) return activeFetchPromise;
 
     const token = useAuthStore.getState().token;
     if (!token) return;
 
     set({ isLoading: true, error: null });
-    try {
-      const res = await fetch(`${API_BASE_URL}/api/notifications`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
+
+    activeFetchPromise = fetch(`${API_BASE_URL}/api/notifications`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    }).then(async res => {
+      activeFetchPromise = null;
       if (res.ok) {
         const data = await res.json();
         set({
@@ -33,10 +34,13 @@ export const useNotificationStore = create((set, get) => ({
       } else {
         set({ isLoading: false, error: 'Failed to fetch notifications' });
       }
-    } catch (err) {
+    }).catch(err => {
+      activeFetchPromise = null;
       console.error('Failed to fetch notifications', err);
       set({ isLoading: false, error: err.message });
-    }
+    });
+
+    return activeFetchPromise;
   },
 
   markAsRead: async (notifId) => {
@@ -44,10 +48,9 @@ export const useNotificationStore = create((set, get) => ({
     if (!token) return;
 
     try {
-      // Optimistic update
       const { notifications, unreadCount } = get();
       const notif = notifications.find(n => n._id === notifId);
-      
+
       if (notif && !notif.is_read) {
         set({
           notifications: notifications.map(n => n._id === notifId ? { ...n, is_read: true } : n),
@@ -93,7 +96,6 @@ export const useNotificationStore = create((set, get) => ({
     if (!token) return;
 
     try {
-      // Optimistic update
       set({
         notifications: get().notifications.map(n => ({ ...n, is_read: true })),
         unreadCount: 0
@@ -105,7 +107,6 @@ export const useNotificationStore = create((set, get) => ({
       });
     } catch (err) {
       console.error('Error marking all as read', err);
-      // Optional: rollback if needed, but usually not necessary for mark all read
     }
   }
 }));

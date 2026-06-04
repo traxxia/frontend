@@ -1,6 +1,6 @@
 import { useAuthStore } from '../store';
 
-const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
+const API_BASE_URL = import.meta.env.VITE_BACKEND_URL;
 
 const getAuthToken = () => useAuthStore.getState().token;
 
@@ -123,22 +123,13 @@ export const checkMissingQuestionsAndRedirect = async (
 };
 
 export const ANALYSIS_TYPES = {
-  // Initial Phase Analyses
   swot: {
     displayName: 'SWOT Analysis',
     customMessage: 'Please provide more detailed answers for SWOT analysis. The current answers are insufficient to generate meaningful SWOT insights.'
   },
-  purchaseCriteria: {
-    displayName: 'Purchase Criteria Analysis',
-    customMessage: 'Please provide more detailed answers for purchase criteria analysis. The current answers are insufficient to generate meaningful criteria.'
-  },
   channelHeatmap: {
     displayName: 'Channel Heatmap Analysis',
     customMessage: 'Please provide more detailed answers for channel heatmap analysis. The current answers are insufficient to generate meaningful channel performance data.'
-  },
-  loyaltyNPS: {
-    displayName: 'Loyalty/NPS Analysis',
-    customMessage: 'Please provide more detailed answers for loyalty and NPS analysis. The current answers are insufficient to generate meaningful loyalty insights.'
   },
   capabilityHeatmap: {
     displayName: 'Capability Heatmap Analysis',
@@ -156,8 +147,6 @@ export const ANALYSIS_TYPES = {
     displayName: 'Strategic Analysis',
     customMessage: 'Please provide more detailed answers for strategic analysis. The current answers are insufficient to generate meaningful strategic insights.'
   },
-
-  // Essential Phase Analyses
   fullSwot: {
     displayName: 'Full SWOT Portfolio',
     customMessage: 'Please provide more detailed answers for Full SWOT Portfolio analysis. The current answers are insufficient to generate comprehensive SWOT insights.'
@@ -197,12 +186,6 @@ export const ANALYSIS_TYPES = {
   maturityScore: {
     displayName: 'Maturity Score Analysis',
     customMessage: 'Please provide more detailed answers for maturity score analysis. The current answers are insufficient to generate meaningful maturity insights.'
-  },
-
-  // Additional analyses that might be present
-  loyaltyMetrics: {
-    displayName: 'Loyalty Metrics Analysis',
-    customMessage: 'Please provide more detailed answers for loyalty metrics analysis. The current answers are insufficient to generate meaningful loyalty insights.'
   },
   expandedCapabilityHeatmap: {
     displayName: 'Capability Heatmap Analysis',

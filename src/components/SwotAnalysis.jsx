@@ -27,7 +27,7 @@ const SwotAnalysis = ({
   isExpanded = true,
 }) => {
   const { t } = useTranslation();
-  
+
   const {
     swotAnalysis: storeAnalysisResult,
     isRegenerating: isTypeRegenerating,
@@ -41,7 +41,7 @@ const SwotAnalysis = ({
   const [expandedSections, setExpandedSections] = useState({
     swotAnalysis: true
   });
-  
+
   const [visibleRows, setVisibleRows] = useState(0);
 
   const handleRedirectToBrief = (missingQuestionsData = null) => {
@@ -83,7 +83,7 @@ const SwotAnalysis = ({
   const parseAnalysisResult = (result) => {
     if (!result) return null;
     if (typeof result === 'object' && result !== null) return result;
-    
+
     let cleanedResult = result.trim();
     if (cleanedResult.startsWith('```json') || cleanedResult.startsWith('```')) {
       cleanedResult = cleanedResult.replace(/^```(?:json)?\s*/i, '').replace(/```\s*$/, '').trim();
@@ -162,13 +162,10 @@ const SwotAnalysis = ({
   };
 
   const swotTableData = prepareSwotTableData();
-
-  // Unified streaming logic
   useEffect(() => {
     if (isRegenerating) {
       setVisibleRows(0);
     } else if (swotTableData.length > 0) {
-      // ONLY stream if specifically requested (via regenerate button)
       if (!streamingManager?.shouldStream(cardId)) {
         setVisibleRows(swotTableData.length);
         return;
@@ -199,7 +196,7 @@ const SwotAnalysis = ({
     );
   }
 
-  if (errorMessage || (isSwotDataIncomplete(analysisResult) && Object.keys(userAnswers).length > 0)) {
+  if (errorMessage || isSwotDataIncomplete(analysisResult)) {
     return (
       <div className="porters-container">
         <AnalysisEmptyState
@@ -238,7 +235,7 @@ const SwotAnalysis = ({
               </thead>
               <tbody>
                 {swotTableData.slice(0, visibleRows).map((row, index) => (
-                  <StreamingRow 
+                  <StreamingRow
                     key={`${row.type}-${index}`}
                     isVisible={true}
                     isLast={index === visibleRows - 1}

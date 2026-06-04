@@ -1,8 +1,5 @@
 export const staticTranslations = {
   en: {
-    // ===========================
-    // LOGIN & AUTHENTICATION
-    // ===========================
     'welcome': 'Welcome',
     'email': 'Email',
     'login': 'Log In',
@@ -37,10 +34,6 @@ export const staticTranslations = {
     'maturity_details_subdimension': 'Maturity details by sub-dimension',
     'focus_capability_gaps': 'We focus on specific capability gaps and strengths, not generic maturity scores.',
     'ai_refinement_helper': 'Traxxia will start from your INITIAL answers, propose refined versions, and label them AI‑REFINED. You can edit or revert to INITIAL at any time.',
-
-    // ===========================
-    // REGISTRATION
-    // ===========================
     'upgrade_to_create_more': 'Upgrade Plan to Create More',
     'plan_workspace_limit_msg': 'You have reached the limit of {{limit}} business(es) on the {{plan}} plan. Please upgrade your plan to create more businesses.',
     'plan_collaborator_limit_reached': 'The {{plan}} plan does not support adding more collaborators. Please upgrade your plan to expand your team.',
@@ -82,8 +75,6 @@ export const staticTranslations = {
     'registration_failed_msg': 'Registration Failed',
     'redirecting_login': 'Redirecting to login...',
     'oops': 'Oops!',
-
-    // Registration Validation
     'first_name_required': 'First name is required',
     'last_name_required': 'Last name is required',
     'email_required': 'Email address is required',
@@ -188,8 +179,6 @@ export const staticTranslations = {
     "six_cs_capabilities_desc": "Internal strengths and maturity.",
     "six_cs_competition_desc": "Landscape and market positioning.",
     "six_cs_strategy_desc": "Core business and growth options.",
-
-    // PMF Insights Tab
     "Your PMF onboarding was updated by": "Your PMF onboarding was updated by",
     "Update Notification": "Update Notification",
     "noInsightsAvailable": "No results available yet.",
@@ -211,9 +200,6 @@ export const staticTranslations = {
     'Change_role_confirm_msg': 'Are you sure you want to change the role for {{user}} to {{role}}?',
     'Reactivate_User_Confirm_Msg': 'Are you sure you want to reactivate {{user}} as {{role}}?',
     'Reactivate_And_Change_Role_Confirm_Msg': 'Are you sure you want to reactivate {{user}} and change their role to {{role}}?',
-    // ===========================
-    // DASHBOARD
-    // ===========================
     "dashboard": "Dashboard",
     "welcome_dashboard": "Welcome",
     "Project Phase": "Project Phase",
@@ -377,6 +363,7 @@ export const staticTranslations = {
     'Admin_name_must_be_at_least_2_characters_long': 'Admin name must be at least 2 characters long',
     'Admin_name_must_be_at_most_20_characters_long': 'Admin name must be at most 20 characters long',
     'Password_must_contain_at_least_one_uppercase_letter_one_lowercase_letter_and_one_number': 'Password must contain at least one uppercase letter, one lowercase letter, and one number',
+    'password_rule_missing': 'Password rule is missing',
     'Name_can_only_contain_letters_and_spaces': 'Name can only contain letters and spaces',
     'Name_must_be_at_least_2_characters_long': 'Name must be at least 2 characters long',
     'Name_must_be_at_most_20_characters_long': 'Name must be at most 20 characters long',
@@ -386,10 +373,6 @@ export const staticTranslations = {
     'Password_is_required': 'Password is required',
     "is_editing": "is editing",
     "business_name_cannot_contain_numbers": "Business name cannot contain numbers",
-
-    // ===========================
-    // BUSINESS DETAIL PAGE
-    // ===========================
     'insights': 'Insights',
     'strategic': 'S.T.R.A.T.E.G.I.C.',
     'save_successful': 'Save successful!',
@@ -404,10 +387,6 @@ export const staticTranslations = {
     'All_questions_completed!': 'All questions completed!',
     'Export_PDF': 'Export PDF',
     'required_information': 'Project Information',
-
-    // ===========================
-    // PROGRESS & STATUS
-    // ===========================
     'progress': 'Progress',
     'completed': 'Completed',
     'in_progress': 'In Progress',
@@ -422,10 +401,6 @@ export const staticTranslations = {
     'questions_answered_label': 'questions answered',
     'complete_remaining_questions': 'Please complete the remaining questions to continue. The more questions you answer, the more accurate and personalized your results will be.',
     'manual_save': 'Manual Save',
-
-    // ===========================
-    // PREVIEW CONTENT
-    // ===========================
     'summary': 'Summary',
     'answered_questions': 'Answered Questions',
     'pending_questions': 'Pending Questions',
@@ -443,10 +418,6 @@ export const staticTranslations = {
     'available_options': 'Available options',
     'rating': 'Rating',
     'objective': 'Objective',
-
-    // ===========================
-    // COMMON UI ELEMENTS
-    // ===========================
     'participants': 'Participants',
     'loading': 'Loading...',
     'error': 'Error',
@@ -619,9 +590,6 @@ export const staticTranslations = {
     'Uniqueness': 'Uniqueness',
     'Customer Value': 'Customer Value',
     'Proof Points': 'Proof Points',
-    // ===========================
-    // STRATEGY BLOCK
-    // ===========================
     'strategy_block_title': 'Strategy Block: Direction & Positioning  (S.T.R.)',
     'strategy_desc': 'Forward-looking recommendations for where and how to compete, tactical initiatives, and resource allocation. ',
     'strategy_subtitle_1': 'S – Strategy: Where to Compete',
@@ -684,15 +652,7 @@ export const staticTranslations = {
     'sustainability_card3': 'C – Culture: Alignment & Transformation',
     'sustainability_card3_header1': 'Cultural Shifts',
     'sustainability_card3_header2': 'Change Approach',
-
-    // ===========================
-    // LOADER
-    // ===========================
     'loading_businesses': 'Loading Business..',
-
-    // ===========================
-    // INSIGHTS BLOCK
-    // ===========================
 
     'cost_title': 'Costs/Financial',
     'cost_desc': 'Financial performance, profitability, and resource efficiency metrics',
@@ -712,10 +672,6 @@ export const staticTranslations = {
     'context_desc': 'External environment, market forces, and industry dynamics',
     'fullswot_title': 'Full SWOT Portfolio',
     'fullswot_desc': 'Comprehensive SWOT analysis with strategic recommendations',
-
-    // ===========================
-    // INSIGHTS BLOCK
-    // ===========================
     'fullswot_card1': 'Full SWOT',
     'fullswot_card1_head1': 'Strength',
     'fullswot_card1_head2': 'Score',
@@ -771,10 +727,6 @@ export const staticTranslations = {
     'raw_data': 'Raw Event Data',
     'event_data': 'Event Data',
     'technical_details': 'Technical Details',
-
-    // ===========================
-    // USER HISTORY
-    // ===========================
     'conversation': 'Conversation',
     'Purpose': 'Purpose',
     'history_records': 'History Records',
@@ -793,32 +745,19 @@ export const staticTranslations = {
     'view_analysis': 'View Analysis',
     'audit_analysis': 'Audit Analysis',
     'view': 'View',
-    // ===========================
-    // ANALYSIS FRAMEWORKS
-    // ===========================
     'swot_analysis': 'SWOT',
     'porters_five_forces': "Porter's Five Forces",
     'value_chain_analysis': 'Value Chain',
     'bcg_matrix': 'BCG Matrix',
     'strategic_framework': 'STRATEGIC',
-
-    // Analysis Subtitles
     'swot_subtitle': 'Strengths, weaknesses, opportunities, and threats',
     'porters_subtitle': 'Industry analysis framework',
     'bcg_subtitle': 'Portfolio analysis tool for strategic planning',
     'value_chain_subtitle': 'Activities that create value in your organization',
     'strategic_subtitle': 'Comprehensive strategic analysis',
-
-    // ===========================
-    // ERROR MESSAGES
-    // ===========================
     'no_survey_responses': 'No survey responses found. Please complete the survey first.',
     'failed_to_generate': 'Failed to generate analysis. Please try again.',
     'error_fetching_data': 'Error fetching data. Please try again.',
-
-    // ===========================
-    // ANALYSIS SECTIONS
-    // ===========================
     'regenerate': 'Regenerate',
     'select_analysis_framework': 'Select Analysis Framework',
     'choose_framework_instruction': 'Choose from the tabs above to start your analysis',
@@ -849,9 +788,6 @@ export const staticTranslations = {
     'Customer': 'Customer',
     'Customer_behavior,_loyalty,_and_purchase_decision_factors': 'Customer behavior, loyalty, and purchase decision factors',
     'Capabilities': 'Capabilities',
-    // ===========================
-    // AUTO-SAVE FEATURES
-    // ===========================
     'unsaved_changes': 'Unsaved changes',
     'auto_save_in': 'Auto-save in',
     'auto_save_pending': 'Auto-save pending...',
@@ -865,10 +801,6 @@ export const staticTranslations = {
     'save_in_progress': 'Save in progress',
     'auto_save_enabled': 'Auto-save enabled',
     'manual_save_now': 'Save now',
-
-    // ===========================
-    // STRATEGIC FRAMEWORK
-    // ===========================
     'unlockBusinessAnalysis': 'Unlock Business Analysis',
     'completePhaseMessage': 'Complete all questions in the initial phase to unlock SWOT analysis and strategic insights!',
     'letsBegin': "Let's Begin!",
@@ -901,9 +833,6 @@ export const staticTranslations = {
     'No_Users_Found': 'No Users Found',
     'No_users_match_your_search_criteria': 'No users match your search criteria',
     'No_users_available': 'No users available',
-    'Org_Admin': 'Org Admin',
-    'Viewer': 'Viewer',
-    'Select_Role': 'Select Role',
     'Select_Company': 'Select Company',
     'Adding': 'Adding...',
     'Add_Project_Access': 'Add Project Access',
@@ -942,15 +871,12 @@ export const staticTranslations = {
     'Password_must_contain_uppercase_letter': 'Password must contain an uppercase letter',
     'Password_must_contain_number': 'Password must contain a number',
     'Password_must_contain_special_character': 'Password contain a special character',
+    'password_rule_missing': 'Password rule is missing',
     'Company_is_required': 'Company is required',
     'select_collaborators_at_least_one': 'Please select at least one collaborator',
     'reRanking': 'Reranking',
     'projectEdit': 'Edit',
     'Your_plan_doesnt_support_collaborators': "Your plan doesn't support collaborators. Upgrade to Advanced to assign team members.",
-
-    // ===========================
-    // PLAN MANAGEMENT
-    // ===========================
     'plan_name_invalid': 'Plan name must contain at least one letter',
     'plan_name_required': 'Plan name is required',
     'plan_description_required': 'Description is required',
@@ -974,18 +900,12 @@ export const staticTranslations = {
     'year': 'Year',
     'users': 'Users',
     'viewers': 'Viewers',
-
-    // ===========================
-    // ANALYSIS TYPES
-    // ===========================
     'SWOT Analysis': 'SWOT Analysis',
     'Customer Segmentation': 'Customer Segmentation',
     'Purchase Criteria Matrix': 'Purchase Criteria Matrix',
     'Channel Heatmap': 'Channel Heatmap',
     'Loyalty & NPS Score': 'Loyalty & NPS Score',
     'Capability Heatmap': 'Capability Heatmap',
-
-    // Analysis Generation Messages
     'Regenerating customer segmentation analysis...': 'Regenerating customer segmentation analysis...',
     'Generating customer segmentation analysis...': 'Generating customer segmentation analysis...',
     'Regenerating purchase criteria analysis...': 'Regenerating purchase criteria analysis...',
@@ -998,10 +918,6 @@ export const staticTranslations = {
     'Generating capability heatmap analysis...': 'Generating capability heatmap analysis...',
     'Go_to_Section': 'Go to Section',
     'add_question': 'Add Question',
-
-    // ===========================
-    // SWOT ANALYSIS SPECIFICS
-    // ===========================
     'strengths': 'Strengths',
     'weaknesses': 'Weaknesses',
     'opportunities': 'Opportunities',
@@ -1010,19 +926,11 @@ export const staticTranslations = {
     'external_factors': 'External Factors',
     'company_management': 'Company Management',
     'All_Users_Overview': 'All Users Overview',
-
-    // ===========================
-    // PORTER'S FIVE FORCES
-    // ===========================
     'competitive_rivalry': 'Competitive Rivalry',
     'supplier_power': 'Supplier Power',
     'buyer_power': 'Buyer Power',
     'threat_of_substitution': 'Threat of Substitution',
     'threat_of_new_entry': 'Threat of New Entry',
-
-    // ===========================
-    // VALUE CHAIN
-    // ===========================
     'primary_activities': 'Primary Activities',
     'support_activities': 'Support Activities',
     'inbound_logistics': 'Inbound Logistics',
@@ -1030,20 +938,12 @@ export const staticTranslations = {
     'outbound_logistics': 'Outbound Logistics',
     'marketing_sales': 'Marketing & Sales',
     'service': 'Service',
-
-    // ===========================
-    // BCG MATRIX
-    // ===========================
     'stars': 'Stars (High Share / High Growth)',
     'cash_cows': 'Cash Cows (High Share / Low Growth)',
     'question_marks': 'Question Marks (Low Share / High Growth)',
     'dogs': 'Dogs (Low Share / Low Growth)',
     'market_share': 'Market Share',
     'market_growth': 'Market Growth',
-
-    // ===========================
-    // PESTLE ANALYSIS
-    // ===========================
     'political_factors': 'Political',
     'economic_factors': 'Economic',
     'social_factors': 'Social',
@@ -1054,18 +954,9 @@ export const staticTranslations = {
     'Minimum_8_characters': 'Minimum 8 characters',
     'user_history_and_chat_records': 'User History & Chat Records',
 
-
-    // ===========================
-    // KICK START PROJECT
-    // ===========================
-
     'Ready_to_Start_Project_Planning': 'Ready to Start Project Planning',
     'Kickstart_your_project_workflow_by_cloning_initiatives_into_actionable_projects.': 'Kickstart your project workflow by cloning initiatives into actionable projects.',
     'Kickstart_Projects': 'Kickstart Projects',
-
-    // ===========================
-    // PRIORITIES & PROJECTS PAGE
-    // ===========================
     'Projects kickstarted successfully!': 'Projects kickstarted successfully!',
     'Failed to kickstart projects. Please try again.': 'Failed to kickstart projects. Please try again.',
     'Loading priorities...': 'Loading priorities...',
@@ -1080,11 +971,6 @@ export const staticTranslations = {
     'Status_Completed': 'Kickstarted',
     'Note': 'Note',
     'Kickstarting a priority creates separate draft projects for each tactical action where you can further define scope and metrics.': 'Kickstarting a priority creates separate draft projects for each tactical action where you can further define scope and metrics.',
-
-
-    // ===========================
-    // COLLABORATION CARD
-    // ===========================
     'Open_for_Collaboration': 'Open for Collaboration',
     'All_collaborators_can_add_projects_update_info_and_rank': 'All collaborators can add projects, update info, and rank',
     'Lock_Project_Creation': 'Lock Project Creation',
@@ -1131,20 +1017,12 @@ export const staticTranslations = {
     'active': 'Active',
     'Projects_ready_for_execution': 'Projects ready for execution',
     'View_Details': 'View Details',
-
-    // ===========================
-    // TEAM RANKING BLOCK
-    // ===========================
     'Team_Rankings_View': 'Rankings View',
     'See_how_all_team_members_ranked_projects': 'See how all team members ranked projects',
     'High_Agreement': 'High Agreement',
     'Medium_Agreement': 'Medium Agreement',
     'Low_Agreement': 'Low Agreement',
     'Consensus': 'Consensus',
-
-    // ===========================
-    // USER MANAGEMENT BLOCK
-    // ===========================
     'User_Management': 'User Management',
     'Add_and_manage_organization_collaborators_and_viewers': 'Add and manage organization collaborators and viewers',
     'Search_by_name_or_email': 'Search by name, email, or company.',
@@ -1166,7 +1044,6 @@ export const staticTranslations = {
     'total_businesses': 'Total Businesses',
     'Add_User': 'Add User',
     'Assign_User': 'Assign User',
-    'Collaborator': 'Collaborator',
     'All_Users': 'All Users',
     'Role': 'Role',
     'Last_Active': 'Last Active',
@@ -1187,10 +1064,6 @@ export const staticTranslations = {
     'Enter a valid email address': 'Enter a valid email address.',
     'Password_uppercase_lowercase_number_special character': 'Password must be at least 8 characters and include uppercase, lowercase, a number, and a special character.',
     'Role_is_required': 'Role is required.',
-
-    // ===========================
-    // ACCESS MANAGEMENT BLOCK
-    // ===========================
     'access_management': 'Access Management',
     'Total Users with Access': 'Total Users with Access',
     'Reranking Access': 'Reranking Access',
@@ -1207,10 +1080,6 @@ export const staticTranslations = {
     'Loading collaborators': 'Loading collaborators...',
     'Loading projects': 'Loading projects...',
     'Give Access': 'Give Access',
-
-    // ===========================
-    // PROJECT FOEM PAGE
-    // ===========================
 
     'New_Project': 'New Bet',
     'View_Project': 'View Project',
@@ -1229,11 +1098,6 @@ export const staticTranslations = {
     'Expected_Outcome': 'Expected Outcome',
     'Success_Metrics': 'Success Metrics (KPIs)',
     'Budget_Estimate': 'Budget Estimate',
-    'Projects': 'Projects',
-
-    // ===========================
-    // PROJECT DETAILS PAGE
-    // ===========================
     'Strategic_Core': 'Strategic Core',
     'Strategic_Decision_Bet': 'Strategic Decision / Bet',
     'Key_Assumptions': 'Key Assumptions',
@@ -1280,10 +1144,6 @@ export const staticTranslations = {
     'State': 'State',
     'Needs_Review': 'Needs Review',
     'days_ago': 'days ago',
-
-    // ===========================
-    // SUBSCRIPTION
-    // ===========================
     'subscription': 'Subscription',
     'loading_subscription_details': 'Loading subscription details...',
     'renews_on': 'Renews on',
@@ -1307,10 +1167,6 @@ export const staticTranslations = {
     'bets': 'Bets',
     'Bets': 'Bets',
     'professional': 'Professional',
-
-    // ========================
-    // PMF
-    // ==========================
     'aha': 'AHA',
     'AHA Insights': 'AHA Insights',
     'Heres what we discovered': 'Heres what we discovered',
@@ -1431,10 +1287,6 @@ export const staticTranslations = {
     'Telecom / Media': 'Telecom / Media',
     'Technology / SaaS': 'Technology / SaaS',
     'Government / Public Sector': 'Government / Public Sector',
-
-    // ========================
-    // Create project form
-    // ==========================
     'Owner_Placeholder': 'Owner name or email',
     'Assumption_Placeholder': 'Describe the assumption',
     'Success_Criteria_Placeholder': 'Describe the success criteria',
@@ -1448,7 +1300,6 @@ export const staticTranslations = {
     "search_by_name_email_company": "Search by name, email, or company",
     "explore_traxxia_academy": "Explore Traxxia Academy",
     "traxxia_academy": "Traxxia Academy",
-    "Ranking": "Ranking",
     "characters": "characters",
     'Last_Reviewed': 'Last Reviewed',
     'Next_Review_Date': 'Next Review Date',
@@ -1545,7 +1396,7 @@ export const staticTranslations = {
     "auto_detect_template_type": "Auto-Detect Template Type",
     "upload_any_template_auto_detect": "Upload any template and we'll detect the type automatically",
     "choose_file_to_upload": "Choose File to Upload",
-    "supported_formats_excel_csv": "Supported formats: Excel (.xlsx, .xls) and CSV files",
+    "supported_formats_excel_csv": "Supported formats: Excel (.xlsx, .xls) files",
     "upload_any_template_file": "Upload Any Template File",
     "template_information": "Template Information:",
     "how_it_works": "How it works",
@@ -1580,7 +1431,6 @@ export const staticTranslations = {
     "business": "Business",
     "businesses": "Businesses",
     'events': 'Events',
-    "User": "User",
     "Users": "Users",
     "Company": "Company",
     "Companies": "Companies",
@@ -1631,7 +1481,6 @@ export const staticTranslations = {
     "create_new": "Create New",
     "action_type": "Action Type",
     "select_company": "Select Company",
-    "join_existing": "Join Existing",
     "type_a_company": "Type a company",
     "please_select": "Please select:",
     "no_companies_found": "No companies found",
@@ -1686,7 +1535,6 @@ export const staticTranslations = {
     "1000+ employees": "1000+ employees",
     "User Name": "User Name",
     "Showing": "Showing",
-    "of": "of",
     "Loading...": "Loading...",
     "Loading your options...": "Loading your options...",
     "Plan Management": "Plan Management",
@@ -1712,7 +1560,6 @@ export const staticTranslations = {
     "Current Usage": "Current Usage",
     "Workspaces": "Workspaces",
     "Collaborators": "Collaborators",
-    "active": "active",
     "total": "total",
     "What will happen": "What will happen",
     "Only 1 workspace will remain active": "Only 1 workspace will remain active",
@@ -1791,8 +1638,6 @@ export const staticTranslations = {
     "Are you sure you want to regenerate the S.T.R.A.T.E.G.I.C. analysis? Your existing strategic insights will be permanently overwritten. This action cannot be undone as version history is not maintained.": "Are you sure you want to regenerate the S.T.R.A.T.E.G.I.C. analysis? Your existing strategic insights will be permanently overwritten. This action cannot be undone as version history is not maintained.",
     "Are you sure you want to regenerate all insights? This will permanently overwrite all your current analysis data across all phases. This action cannot be undone as version history is not maintained.": "Are you sure you want to regenerate all insights? This will permanently overwrite all your current analysis data across all phases. This action cannot be undone as version history is not maintained.",
 
-
-
     "AI-inferred from your data": "AI-inferred from your data",
     "no_access_dashboard_message": "You don't have access to this business. Please upgrade your plan or contact admin.",
     "no_access_modal_title": "Feature Restricted",
@@ -1800,14 +1645,9 @@ export const staticTranslations = {
     "no_access_modal_sub_admin": "Your current plan does not include access to this business data. Upgrade now to unlock advanced AI insights and strategic tools.",
     "no_access_modal_sub_user": "Your current plan does not include access to this business data. Please upgrade your plan or contact your administrator."
 
-
   },
 
   es: {
-
-    // ==========================
-    // SUBSCRIPTION & BILLING
-    // ==========================
     'add_new_card': 'Agregar nueva tarjeta',
     'save_card': 'Guardar tarjeta',
     'card_added_success': 'Tarjeta agregada exitosamente',
@@ -1817,11 +1657,6 @@ export const staticTranslations = {
     'monthly_billing': 'Facturación Mensual',
     'no_payment_methods': 'Aún no se han agregado métodos de pago',
     'default_card_updated': 'Método de pago predeterminado actualizado exitosamente',
-
-
-    // ==========================
-    // PMF
-    // ==========================
 
     'aha': 'Ajá',
     'Heres what we discovered': 'Esto es lo que descubrimos',
@@ -1940,13 +1775,6 @@ export const staticTranslations = {
     'Telecom / Media': 'Telecomunicaciones / Medios',
     'Technology / SaaS': 'Tecnología / SaaS',
     'Government / Public Sector': 'Gobierno / Sector Público',
-
-
-
-
-    // ===========================
-    // LOGIN Y AUTENTICACIÓN
-    // ===========================
     'Execution': 'Ejecución',
     'Priorities': 'Prioridades',
     'Projects': 'Proyectos',
@@ -1964,8 +1792,6 @@ export const staticTranslations = {
     "six_cs_capabilities_desc": "Fortalezas internas y madurez.",
     "six_cs_competition_desc": "Panorama y posición en el mercado.",
     "six_cs_strategy_desc": "Negocio principal y opciones de crecimiento.",
-
-    // PMF Insights Tab
     "download_insights_tooltip": "Exporte el análisis completo de insights para esta fase a un informe PDF profesional.",
     "regenerate_all_tooltip": "Vuelva a ejecutar todo el análisis para la fase actual basado en los datos actualizados.",
     "download_strategic_tooltip": "Descargue un informe PDF completo que contiene Direction & Positioning, Execution y Sustainability.",
@@ -2008,10 +1834,6 @@ export const staticTranslations = {
     'maturity_details_subdimension': 'Detalles de madurez por subdimensión',
     'focus_capability_gaps': 'Nos enfocamos en brechas de capacidad específicas y fortalezas, no en puntajes de madurez genéricos.',
     'ai_refinement_helper': 'Traxxia comenzará con sus respuestas INICIALES, propondrá versiones refinadas y las etiquetará como REFINADAS POR IA. Puede editar o revertir a INICIAL en cualquier momento.',
-
-    // ===========================
-    // REGISTRO
-    // ===========================
     'upgrade_to_create_more': 'Actualiza el Plan para Crear Más',
     'essential_plan_limit_msg': 'Has alcanzado el límite de 1 negocio en el plan Essential. Por favor, actualiza tu plan para crear más negocios.',
     'upgrade_plan': 'Actualizar Plan',
@@ -2049,8 +1871,6 @@ export const staticTranslations = {
     'oops': '¡Ups!',
     'exhausted_plan_collaborators_msg': 'Has agotado el plan al añadir tres colaboradores.',
     'You_must_agree_to_the_Terms_&_Conditions_and_Privacy_Policy_to_proceed': 'Debes aceptar los Términos y Condiciones y la Política de Privacidad para continuar',
-
-    // Validación de Registro
     'first_name_required': 'El nombre es obligatorio',
     'last_name_required': 'El apellido es obligatorio',
     'email_required': 'El correo electrónico es obligatorio',
@@ -2082,10 +1902,6 @@ export const staticTranslations = {
     'company_name_needs_letter': 'El nombre de la empresa debe contener al menos una letra',
     'company_name_continuous_special': 'El nombre de la empresa no puede tener caracteres especiales continuos',
     'company_name_continuous_numbers': 'El nombre de la empresa no puede tener números continuos (máx. 3)',
-
-    // ===========================
-    // PANEL DE CONTROL
-    // ===========================
     "dashboard": "Panel de Control",
     "welcome_dashboard": "¡Bienvenido",
     "Project Phase": "Fase del Proyecto",
@@ -2187,9 +2003,6 @@ export const staticTranslations = {
     "city_cannot_contain_only_spaces": "No se permiten espacios vacíos.",
     "country_cannot_contain_only_spaces": "No se permiten espacios vacíos.",
     "Numeric_values_not_allowed": "No se permiten valores numéricos.",
-    // ===========================
-    // PÁGINA DE DETALLE DEL NEGOCIO
-    // ===========================
     'insights': 'Insights',
     'Not Answered': 'No Respondida',
 
@@ -2204,11 +2017,6 @@ export const staticTranslations = {
     'questions_completed': 'preguntas completadas',
     'All_questions_completed!': '¡Todas las preguntas completadas!',
     'Go_to_Section': 'Ir a la Sección',
-
-
-    // ===========================
-    // PROGRESO Y ESTADO
-    // ===========================
     'progress': 'Progreso',
     'completed': 'Completado',
     'in_progress': 'En Progreso',
@@ -2223,10 +2031,6 @@ export const staticTranslations = {
     'questions_answered_label': 'preguntas respondidas',
     'complete_remaining_questions': 'Por favor completa las preguntas restantes para continuar. Cuantas más preguntas respondas, más precisos y personalizados serán tus resultados.',
     'manual_save': 'Guardado Manual',
-
-    // ===========================
-    // CONTENIDO DE VISTA PREVIA
-    // ===========================
     'summary': 'Resumen',
     'answered_questions': 'Preguntas Respondidas',
     'pending_questions': 'Preguntas Pendientes',
@@ -2242,10 +2046,6 @@ export const staticTranslations = {
     'no_answer_provided': 'Aún no se ha proporcionado respuesta',
     'available_options': 'Opciones disponibles',
     'rating': 'Calificación',
-
-    // ===========================
-    // ELEMENTOS COMUNES DE UI
-    // ===========================
     'participants': 'Participantes',
     'error': 'Error',
     'no_data': 'No hay datos disponibles',
@@ -2279,10 +2079,6 @@ export const staticTranslations = {
     'yes': 'Sí',
     'no': 'No',
     'ok': 'Aceptar',
-
-    // ===========================
-    // MARCOS DE ANÁLISIS
-    // ===========================
     'swot_analysis': 'FODA',
     'porters_five_forces': 'Cinco Fuerzas de Porter',
     'value_chain_analysis': 'Cadena de Valor',
@@ -2292,24 +2088,14 @@ export const staticTranslations = {
     'admin': 'Administrador',
     'signed_in_as': 'Iniciar sesión como',
     'role': 'Rol',
-
-    // Subtítulos de Análisis
     'swot_subtitle': 'Fortalezas, debilidades, oportunidades y amenazas',
     'porters_subtitle': 'Marco de análisis de la industria',
     'bcg_subtitle': 'Herramienta de análisis de portafolio para planificación estratégica',
     'value_chain_subtitle': 'Actividades que crean valor en tu organización',
     'strategic_subtitle': 'Análisis estratégico completo',
-
-    // ===========================
-    // MENSAJES DE ERROR
-    // ===========================
     'no_survey_responses': 'No se encontraron respuestas de encuesta. Por favor completa la encuesta primero.',
     'failed_to_generate': 'Error al generar el análisis. Por favor intenta de nuevo.',
     'error_fetching_data': 'Error al obtener datos. Por favor intenta de nuevo.',
-
-    // ===========================
-    // SECCIONES DE ANÁLISIS
-    // ===========================
     'select_analysis_framework': 'Selecciona un Marco de Análisis',
     'choose_framework_instruction': 'Elige entre las pestañas de arriba para comenzar tu análisis',
     'regenerate_analysis': 'Regenerar Análisis',
@@ -2334,10 +2120,6 @@ export const staticTranslations = {
     'please_try_again': 'Por favor intenta de nuevo',
     'analysis_loading_text': 'Cargando datos del análisis...',
     'analysis_unavailable': 'Análisis temporalmente no disponible',
-
-    // ===========================
-    // FUNCIONES DE AUTO-GUARDADO
-    // ===========================
     'unsaved_changes': 'Cambios sin guardar',
     'auto_guardado_in': 'Auto-guardado en',
     'auto_save_pending': 'Auto-guardado pendiente...',
@@ -2349,10 +2131,6 @@ export const staticTranslations = {
     'save_in_progress': 'Guardado en progreso',
     'auto_save_enabled': 'Auto-guardado habilitado',
     'manual_save_now': 'Guardar ahora',
-
-    // ===========================
-    // MARCO ESTRATÉGICO
-    // ===========================
     'regenerate': 'Regenerar',
     'unlockBusinessAnalysis': 'Desbloquear Análisis de Negocios',
     'completePhaseMessage': '¡Completa todas las preguntas de la fase inicial para desbloquear el análisis FODA y conocimientos estratégicos!',
@@ -2378,18 +2156,12 @@ export const staticTranslations = {
     'Generate Analysis Now': 'Generar Análisis Ahora',
     'Your business analysis will appear here once generated.': 'Tu análisis de negocio aparecerá aquí una vez generado.',
     'Continue the conversation to trigger analysis generation.': 'Continúa la conversación para iniciar la generación del análisis.',
-
-    // ===========================
-    // TIPOS DE ANÁLISIS
-    // ===========================
     'SWOT Analysis': 'Análisis FODA',
     'Customer Segmentation': 'Segmentación de Clientes',
     'Purchase Criteria Matrix': 'Matriz de Criterios de Compra',
     'Channel Heatmap': 'Mapa de Calor de Canales',
     'Loyalty & NPS Score': 'Fidelidad & Puntuación NPS',
     'Capability Heatmap': 'Mapa de Calor de Capacidades',
-
-    // Mensajes de Generación de Análisis
     'Regenerating customer segmentation analysis...': 'Regenerando el análisis de segmentación de clientes...',
     'Generating customer segmentation analysis...': 'Generando el análisis de segmentación de clientes...',
     'Regenerating purchase criteria analysis...': 'Regenerando el análisis de criterios de compra...',
@@ -2400,29 +2172,17 @@ export const staticTranslations = {
     'Generating loyalty & NPS analysis...': 'Generando el análisis de lealtad y NPS...',
     'Regenerating capability heatmap analysis...': 'Regenerando el análisis del mapa de calor de capacidades...',
     'Generating capability heatmap analysis...': 'Generando el análisis del mapa de calor de capacidades...',
-
-    // ===========================
-    // ANÁLISIS FODA ESPECÍFICOS
-    // ===========================
     'strengths': 'Fortalezas',
     'weaknesses': 'Debilidades',
     'opportunities': 'Oportunidades',
     'threats': 'Amenazas',
     'internal_factors': 'Factores Internos',
     'external_factors': 'Factores Externos',
-
-    // ===========================
-    // CINCO FUERZAS DE PORTER
-    // ===========================
     'competitive_rivalry': 'Rivalidad Competitiva',
     'supplier_power': 'Poder de Proveedores',
     'buyer_power': 'Poder de Compradores',
     'threat_of_substitution': 'Amenaza de Sustitutos',
     'threat_of_new_entry': 'Amenaza de Nuevos Entrantes',
-
-    // ===========================
-    // CADENA DE VALOR
-    // ===========================
     'primary_activities': 'Actividades Primarias',
     'support_activities': 'Actividades de Apoyo',
     'inbound_logistics': 'Logística de Entrada',
@@ -2430,20 +2190,12 @@ export const staticTranslations = {
     'outbound_logistics': 'Logística de Salida',
     'marketing_sales': 'Marketing y Ventas',
     'service': 'Servicio',
-
-    // ===========================
-    // MATRIZ BCG
-    // ===========================
     'stars': 'Estrellas (Alta Participación / Alto Crecimiento)',
     'cash_cows': 'Vacas Lecheras (Alta Participación / Bajo Crecimiento)',
     'question_marks': 'Interrogantes (Baja Participación / Alto Crecimiento)',
     'dogs': 'Perros (Baja Participación / Bajo Crecimiento)',
     'market_share': 'Participación de Mercado',
     'market_growth': 'Crecimiento de Mercado',
-
-    // ===========================
-    // ANÁLISIS PESTLE
-    // ===========================
     'political_factors': 'Político',
     'economic_factors': 'Económico',
     'social_factors': 'Social',
@@ -2517,15 +2269,12 @@ export const staticTranslations = {
     'Password_must_contain_uppercase_letter': 'La contraseña debe contener una letra mayúscula',
     'Password_must_contain_number': 'La contraseña debe contener un número',
     'Password_must_contain_special_character': 'La contraseña debe contener un carácter especial',
+    'password_rule_missing': 'Falta alguna regla de la contraseña',
     'Company_is_required': 'La empresa es obligatoria',
     'select_collaborators_at_least_one': 'Por favor, seleccione al menos un colaborador',
     'reRanking': 'Re-jerarquización',
     'projectEdit': 'Edición',
     'Your_plan_doesnt_support_collaborators': "Tu plan no admite colaboradores. Actualiza a Avanzado para asignar miembros del equipo.",
-
-    // ===========================
-    // PLAN MANAGEMENT
-    // ===========================
     'pricing': 'Precios',
     'not_editable': '(no editable)',
     'basic_info': 'Información Básica',
@@ -2636,6 +2385,7 @@ export const staticTranslations = {
     'Admin_name_must_be_at_least_2_characters_long': 'El nombre del administrador debe tener al menos 2 caracteres',
     'Admin_name_must_be_at_most_20_characters_long': 'El nombre del administrador debe tener como máximo 20 caracteres',
     'Password_must_contain_at_least_one_uppercase_letter_one_lowercase_letter_and_one_number': 'La contraseña debe contener al menos una letra mayúscula, una letra minúscula y un número',
+    'password_rule_missing': 'Falta alguna regla de la contraseña',
     'Name_must_be_at_most_20_characters_long': 'El nombre debe tener como máximo 20 caracteres',
     'Email_is_required': 'El correo electrónico es obligatorio',
     'Please_enter_a_valid_email_address': 'Por favor ingresa una dirección de correo electrónico válida',
@@ -2768,9 +2518,6 @@ export const staticTranslations = {
     'Customer Value': 'Valor para el Cliente',
     'Sustainability': 'Sostenibilidad',
     'Proof Points': 'Puntos de Prueba',
-    // ===========================
-    // STRATEGY BLOCK (Bloque de Estrategia)
-    // ===========================
     'strategy_block_title': 'Bloque de Estrategia: Dirección y Posicionamiento (S.T.R.)',
     'strategy_desc': 'Recomendaciones con visión de futuro sobre dónde y cómo competir, iniciativas tácticas y asignación de recursos.',
     'strategy_subtitle_1': 'S – Estrategia: Dónde Competir',
@@ -2833,16 +2580,8 @@ export const staticTranslations = {
     'sustainability_card3': 'C – Cultura: Alineación y Transformación',
     'sustainability_card3_header1': 'Cambios Culturale',
     'sustainability_card3_header2': 'Enfoque de Cambio',
-
-    // ===========================
-    // LOADER
-    // ===========================
     'loading_businesses': 'Cargando Negocio..',
     'loading': 'Cargando tu progreso...',
-
-    // ===========================
-    // INSIGHTS BLOCK (Bloque de Perspectivas)
-    // ===========================
 
     'cost_title': 'Costos/Financiero',
     'cost_desc': 'Métricas de rendimiento financiero, rentabilidad y eficiencia de recursos',
@@ -2862,10 +2601,6 @@ export const staticTranslations = {
     'context_desc': 'Entorno externo, fuerzas del mercado y dinámica de la industria',
     'fullswot_title': 'Full SWOT Portfolio',
     'fullswot_desc': 'Comprehensive SWOT analysis with strategic recommendations',
-
-    // ===========================
-    // INSIGHTS BLOCK (Bloque de Perspectivas)
-    // ===========================
 
     'fullswot_card1': 'FODA completo',
     'fullswot_card1_head1': 'Fortaleza',
@@ -2918,24 +2653,12 @@ export const staticTranslations = {
     'audit_view': 'Ver Detalles',
     'showing': 'Mostrando',
     'total_entries': 'Entradas totales',
-
-    // ===========================
-    // USER HISTORY
-    // ===========================
     'conversation': 'Conversación',
     'Purpose': 'Propósito',
     'user_management': 'Gestión de Usuarios',
 
-    // ===========================
-    // KICK START PROJECT
-    // ===========================
-
     'Ready_to_Start_Project_Planning': 'Listo para comenzar la planificación del proyecto',
     'Kickstart_your_project_workflow_by_cloning_initiatives_into_actionable_projects.': 'Ponga en marcha el flujo de trabajo de su proyecto clonando iniciativas en proyectos viables.',
-
-    // ===========================
-    // COLLABORATION CARD
-    // ===========================
     'Open_for_Collaboration': 'Abierto a la colaboración',
     'All_collaborators_can_add_projects_update_info_and_rank': 'Todos los colaboradores pueden agregar proyectos, actualizar información y clasificar.',
     'Lock_Project_Creation': 'Bloquear creación de proyecto',
@@ -2975,21 +2698,12 @@ export const staticTranslations = {
     'Projects_ready_for_execution': 'Proyectos listos para ejecución',
     'View_Details': 'Ver detalles',
 
-    // ===========================
-    // TEAM RANKING BLOCK
-    // ===========================
-
     'Team_Rankings_View': 'Vista de clasificaciones de equipos',
     'See_how_all_team_members_ranked_projects': 'Vea cómo todos los miembros del equipo clasificaron los proyectos',
     'High_Agreement': 'Alto Acuerdo',
     'Medium_Agreement': 'Acuerdo medio',
     'Low_Agreement': 'Acuerdo bajo',
     'Consensus': 'Consenso',
-
-
-    // ===========================
-    // USER MANAGEMENT BLOCK
-    // ===========================
     'User_Management': 'Gestión de usuarios',
     'Add_and_manage_organization_collaborators_and_viewers': 'Agregar y administrar colaboradores y espectadores de la organización',
     'Total_Users': 'Total de usuarios',
@@ -3020,10 +2734,6 @@ export const staticTranslations = {
     'Enter a valid email address': 'Ingrese una dirección de correo electrónico válida.',
     'Password_uppercase_lowercase_number_special character': 'La contraseña debe tener al menos 8 caracteres e incluir mayúsculas, minúsculas, un número y un carácter especial.',
     'Role_is_required': 'El rol es obligatorio.',
-
-    // ===========================
-    // ACCESS MANAGEMENT BLOCK
-    // ===========================
     'access_management': 'Gestión de Accesos',
     'Total Users with Access': 'Total de Usuarios con Acceso',
     'Reranking Access': 'Acceso a re-ranking',
@@ -3044,10 +2754,6 @@ export const staticTranslations = {
     'Name_must_be_at_least_2_characters_long': 'El nombre debe tener al menos 2 caracteres',
     'business_name_cannot_contain_numbers': 'El nombre de la empresa no puede contener números',
 
-    // ===========================
-    // PROJECT FOEM PAGE
-    // ===========================
-
     'New_Project': 'Nuevo proyecto',
     'View_Project': 'Ver proyecto',
     'Edit_Project': 'Editar proyecto',
@@ -3066,10 +2772,6 @@ export const staticTranslations = {
     'Success_Metrics': 'Métricas de éxito (KPIs)',
     'Budget_Estimate': 'Estimación del presupuesto',
     "is_editing": "está editando",
-
-    // ===========================
-    // PROJECT DETAILS PAGE
-    // ===========================
     'Strategic_Core': 'Núcleo Estratégico',
     'Strategic_Decision_Bet': 'Decisión/Apuesta Estratégica',
     'Key_Assumptions': 'Supuestos Clave',
@@ -3117,10 +2819,6 @@ export const staticTranslations = {
     'Needs_Review': 'Necesita revisión',
     'Reviewed_ago': 'Revisado hace',
     'days_ago': 'días',
-
-    // ===========================
-    // SUBSCRIPTION
-    // ===========================
     'subscription': 'Suscripción',
     'loading_subscription_details': 'Cargando detalles de suscripción...',
     'renews_on': 'Se renueva el',
@@ -3139,10 +2837,6 @@ export const staticTranslations = {
     'upgrade': 'Mejorar',
     'downgrade': 'Degradar',
     'billing_history': 'Historial de Facturación',
-
-    // ===========================
-    // PRIORITIES & PROJECTS PAGE
-    // ===========================
     'Projects kickstarted successfully!': '¡Proyectos iniciados con éxito!',
     'Failed to kickstart projects. Please try again.': 'Error al iniciar los proyectos. Por favor, inténtelo de nuevo.',
     'Loading priorities...': 'Cargando prioridades...',
@@ -3161,11 +2855,6 @@ export const staticTranslations = {
     'noInsightsAvailable': 'No hay resultados disponibles aún.',
     'completeOnboardingPrompt': 'Por favor complete la Incorporación PMF para ver los resultados aquí.',
     'startPMFOnboarding': 'Iniciar Incorporación PMF',
-    'Projects': 'Proyectos',
-
-    // ========================
-    // Create project form
-    // ==========================
     'Owner_Placeholder': 'Nombre del propietario o dirección de correo electrónico',
     'Assumption_Placeholder': 'Describe la suposición',
     'Success_Criteria_Placeholder': 'Describe el criterio de éxito',
@@ -3181,7 +2870,6 @@ export const staticTranslations = {
     "search_by_name_email_company": "Busque por nombre, dirección de correo electrónico o empresa.",
     "explore_traxxia_academy": "Explora Traxxia Academia",
     "traxxia_academy": "Traxxia Academia",
-    "Ranking": "Ranking",
     "Rankings_View": "Rankings Vista",
     "characters": "personajes",
     'Last_Reviewed': 'Última Revisión',
@@ -3276,7 +2964,7 @@ export const staticTranslations = {
     "auto_detect_template_type": "Detección automática del tipo de plantilla",
     "upload_any_template_auto_detect": "Sube cualquier plantilla y detectaremos el tipo automáticamente",
     "choose_file_to_upload": "Elegir archivo para subir",
-    "supported_formats_excel_csv": "Formatos compatibles: Excel (.xlsx, .xls) y archivos CSV",
+    "supported_formats_excel_csv": "Formatos compatibles: archivos Excel (.xlsx, .xls)",
     "upload_any_template_file": "Subir cualquier archivo de plantilla",
     "template_information": "Información de la plantilla:",
     "how_it_works": "Cómo funciona:",
@@ -3355,7 +3043,6 @@ export const staticTranslations = {
     "team": "Equipo",
     "level": "Nivel",
     "new plan": "Nuevo Plan",
-    "join_existing": "Unirse a existente",
     "create_new": "Crear nuevo",
     "action_type": "Tipo de acción",
     "select_company": "Seleccionar empresa",
@@ -3415,7 +3102,6 @@ export const staticTranslations = {
     "search_audit_trail_tooltip": "Buscar eventos del sistema por usuario, correo electrónico, empresa o tipo de evento. Esto ayuda a rastrear todas las actividades administrativas.",
     "User Name": "Nombre de usuario",
     "Showing": "Mostrando",
-    "of": "de",
     "Loading...": "Cargando...",
     "Loading your options...": "Cargando tus opciones...",
     "Plan Management": "Gestión del plan",
@@ -3582,7 +3268,6 @@ export const staticTranslations = {
     "Are you sure you want to regenerate the S.T.R.A.T.E.G.I.C. analysis? Your existing strategic insights will be permanently overwritten. This action cannot be undone as version history is not maintained.": "¿Está seguro de que desea regenerar el análisis S.T.R.A.T.E.G.I.C.? Sus insights estratégicos existentes se sobrescribirán permanentemente. Esta acción no se puede deshacer ya que no se mantiene un historial de versiones.",
     "Are you sure you want to regenerate all insights? This will permanently overwrite all your current analysis data across all phases. This action cannot be undone as version history is not maintained.": "¿Está seguro de que desea regenerar todos los insights? Esto sobrescribirá permanentemente todos sus datos de análisis actuales en todas las fases. Esta acción no se puede deshacer ya que no se mantiene un historial de versiones.",
 
-
     "AI-inferred from your data": "AI-inferred a partir de sus datos",
     "no_access_dashboard_message": "No tienes acceso a este negocio. Por favor, actualiza tu plan o contacta al administrador.",
     "no_access_modal_title": "Función Restringida",
@@ -3591,12 +3276,8 @@ export const staticTranslations = {
     "no_access_modal_sub_user": "Tu plan actual no incluye acceso a los datos de este negocio. Por favor, actualiza tu plan o contacta a tu administrador."
   }
 };
-
-// Initialize global translations
 export const initializeTranslations = () => {
   window.appTranslations = staticTranslations;
-
-  // Global translation function - fallback for legacy components
   window.getTranslation = function (key, params = {}) {
     const currentLang = window.currentAppLanguage || 'en';
     let result = window.appTranslations[currentLang]?.[key] || key;
@@ -3608,13 +3289,9 @@ export const initializeTranslations = () => {
 
     return result;
   };
-
-  // Enhanced language change function
   window.setAppLanguage = function (language) {
     const oldLanguage = window.currentAppLanguage;
     window.currentAppLanguage = language;
-
-    // Only dispatch event if language actually changed
     if (oldLanguage !== language) {
       window.dispatchEvent(new CustomEvent('languageChanged', {
         detail: {
@@ -3624,22 +3301,13 @@ export const initializeTranslations = () => {
       }));
     }
   };
-
-  // Get current language function
   window.getCurrentLanguage = function () {
     return window.currentAppLanguage || 'en';
   };
-
-  // Backward compatibility
   window.translateApp = window.setAppLanguage;
-
-  // Clear language from session (legacy no-op)
   window.clearSessionLanguage = function () {
-    // Session language is now managed by languageStore persistence
   };
 };
-
-// Language detection function - for analysis components
 export const detectLanguage = (analysisResult) => {
   if (!analysisResult) return 'en';
 

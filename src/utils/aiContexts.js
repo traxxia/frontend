@@ -34,5 +34,9 @@ export const AI_PAGE_CONTEXTS = {
     PROJECT_EDIT: {
         current_page: "Project edit page",
         page_description: "The Edit Page functions as the active, collaborative workspace for managing the project through its entire execution lifecycle."
+    },
+    RANKING: {
+        current_page: "Project Ranking Dashboard",
+        page_description: "The Ranking Dashboard is where the team collaboratively prioritizes projects. It allows team members to submit their individual rankings, view the AI's suggested priority, and see a real-time consensus view (Team Ranking) to make final strategic decisions on which projects to launch."
     }
 };

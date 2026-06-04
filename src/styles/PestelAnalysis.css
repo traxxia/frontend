@@ -1,0 +1,72 @@
+/* PestelAnalysis.css */
+@import './AnalysisBase.css';
+
+.pestel-table-container {
+  padding: 10px 20px;
+}
+
+.pestel-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 20px;
+  margin-top: 20px;
+}
+
+.pestel-card {
+  padding: 20px;
+  border-radius: 16px;
+  background: white;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+}
+
+.pestel-card-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 15px;
+}
+
+.pestel-icon-wrapper {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+}
+
+.pestel-political .pestel-icon-wrapper { background-color: #ef4444; }
+.pestel-economic .pestel-icon-wrapper { background-color: #10b981; }
+.pestel-social .pestel-icon-wrapper { background-color: #3b82f6; }
+.pestel-technological .pestel-icon-wrapper { background-color: #8b5cf6; }
+.pestel-environmental .pestel-icon-wrapper { background-color: #f59e0b; }
+.pestel-legal .pestel-icon-wrapper { background-color: #6b7280; }
+
+.pestel-card-header h3 {
+  font-size: 18px;
+  font-weight: 700;
+  margin: 0;
+}
+
+.pestel-factors {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.pestel-factor-item {
+  font-size: 14px;
+  margin-bottom: 10px;
+  padding-left: 15px;
+  position: relative;
+  line-height: 1.5;
+}
+
+.pestel-factor-item::before {
+  content: "•";
+  position: absolute;
+  left: 0;
+  color: #9ca3af;
+}

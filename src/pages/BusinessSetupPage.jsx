@@ -21,11 +21,12 @@ import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from "../hooks/useTranslation";
 import { useAuthStore, useBusinessStore, useUIStore, useAnalysisStore, useProjectStore } from "../store";
 import { useShallow } from 'zustand/shallow';
+import { useQueryClient } from "@tanstack/react-query";
 
 import MenuBar from "../components/MenuBar";
 import EditableBriefSection from "../components/EditableBriefSection";
 import StrategicAnalysis from "../components/StrategicAnalysis";
-import PhaseManager from "../components/PhaseManager";
+import PhaseManager, { getUnlockedFeatures } from "../components/PhaseManager";
 import PhaseUnlockToast from "../components/PhaseUnlockToast";
 import AnalysisContentManager from "../components/AnalysisContentManager";
 import { extractBusinessName } from '../utils/businessHelpers';
@@ -47,6 +48,7 @@ import { answerService } from "../services/answerService";
 import { AI_PAGE_CONTEXTS } from "../utils/aiContexts";
 import { getUserLimits } from '../utils/authUtils';
 import CustomTooltip from "../components/CustomTooltip";
+import { BusinessSetupContext } from "../context/BusinessSetupContext";
 import PlanLimitModal from "../components/PlanLimitModal";
 
 const CARD_TO_CATEGORY_MAP = {
@@ -62,8 +64,6 @@ const CARD_TO_CATEGORY_MAP = {
   "porters": "context-industry",
   "pestel": "context-industry",
   "competitive-advantage": "customer",
-  "purchase-criteria": "customer",
-  "loyalty-nps": "customer",
   "expanded-capability": "capabilities",
   "maturity": "capabilities",
   "competitive-landscape": "competition",
@@ -72,8 +72,6 @@ const CARD_TO_CATEGORY_MAP = {
 
 const CARD_ID_MAP = {
   "swot_analysis": "swot",
-  "Purchase_Criteria": "purchase-criteria",
-  "Loyalty_&_NPS": "loyalty-nps",
   "Porters_Five_Forces": "porters",
   "PESTEL_Analysis": "pestel",
   "Full_SWOT_Portfolio": "full-swot",
@@ -102,6 +100,7 @@ const BusinessSetupPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const { t } = useTranslation();
   const { pmf: hasPmfAccess, insight: hasInsightAccess, strategic: hasStrategicAccess, project: hasProjectAccess } = getUserLimits();
+  const queryClient = useQueryClient();
 
   // State management for business context
   const {
@@ -193,7 +192,7 @@ const BusinessSetupPage = () => {
     setQuestions, setQuestionsLoaded, initializeBusinessData, setUserAnswer, setAnalysisData, fetchAnalysisData,
     regeneratePhase, regenerateIndividualAnalysis,
     resetAnalysis,
-    swotAnalysis, purchaseCriteria, loyaltyNPS, portersData, pestelData,
+    swotAnalysis, portersData, pestelData,
     fullSwotData, competitiveAdvantage, strategicData, expandedCapability,
     strategicRadar, productivityData, maturityData, competitiveLandscape,
     coreAdjacency, profitabilityData, growthTrackerData, liquidityEfficiencyData,
@@ -211,8 +210,6 @@ const BusinessSetupPage = () => {
     regeneratePhase: state.regeneratePhase,
     regenerateIndividualAnalysis: state.regenerateIndividualAnalysis,
     swotAnalysis: state.swotAnalysis,
-    purchaseCriteria: state.purchaseCriteria,
-    loyaltyNPS: state.loyaltyNPS,
     portersData: state.portersData,
     pestelData: state.pestelData,
     fullSwotData: state.fullSwotData,
@@ -236,7 +233,7 @@ const BusinessSetupPage = () => {
   })));
 
   // Regenerating flag aliases
-  const isAnalysisRegenerating = isTypeRegenerating('swot') || isTypeRegenerating('purchaseCriteria') || isTypeRegenerating('loyaltyNPS') || isTypeRegenerating('porters') || isTypeRegenerating('pestel') || isTypeRegenerating('initial') || isTypeRegenerating('essential') || isTypeRegenerating('advanced');
+  const isAnalysisRegenerating = isTypeRegenerating('swot') || isTypeRegenerating('porters') || isTypeRegenerating('pestel') || isTypeRegenerating('initial') || isTypeRegenerating('essential') || isTypeRegenerating('advanced');
   const isStrategicRegenerating = isTypeRegenerating('strategic');
   const isFullSwotRegenerating = isTypeRegenerating('fullSwot');
   const isCompetitiveAdvantageRegenerating = isTypeRegenerating('competitiveAdvantage');
@@ -298,8 +295,6 @@ const BusinessSetupPage = () => {
   };
 
   const swotRef = useRef(null);
-  const purchaseCriteriaRef = useRef(null);
-  const loyaltyNpsRef = useRef(null);
   const dropdownRef = useRef(null);
   const isRegeneratingRef = useRef(false);
   const portersRef = useRef(null);
@@ -329,11 +324,16 @@ const BusinessSetupPage = () => {
 
   useEffect(() => {
     if (selectedBusinessId) {
+      resetAnalysis(); // Reset old business analysis data immediately on business change
       // Clear the local fetch cache when business changes so we re-fetch everything for the new business
       fetchedAnalysisKeys.current.clear();
-      fetchAnalysisData(selectedBusinessId);
+      // Only fetch if questions are NOT going to be fetched by the question loader (optimization)
+      const tabsNeedingQuestions = ['advanced', 'insights', 'strategic'];
+      if (!tabsNeedingQuestions.includes(activeTab)) {
+        fetchAnalysisData(selectedBusinessId, false, false, false);
+      }
     }
-  }, [selectedBusinessId, fetchAnalysisData]);
+  }, [selectedBusinessId, resetAnalysis, fetchAnalysisData]);
 
   const [activeNavDropdown, setActiveNavDropdown] = useState(null);
   const navDropdownRef = useRef(null);
@@ -413,7 +413,9 @@ const BusinessSetupPage = () => {
     else if (activeTab === "advanced") pageContext = AI_PAGE_CONTEXTS.ADVANCED;
     else if (activeTab === "insights") pageContext = AI_PAGE_CONTEXTS.INSIGHTS;
     else if (activeTab === "strategic") pageContext = AI_PAGE_CONTEXTS.STRATEGIC;
-    else if (activeTab === "decision-logs") pageContext = AI_PAGE_CONTEXTS.PROJECTS;
+    else if (activeTab === "decision-logs" || activeTab === "bets") pageContext = AI_PAGE_CONTEXTS.PROJECTS;
+    else if (activeTab === "ranking") pageContext = AI_PAGE_CONTEXTS.RANKING;
+
     let contextPayload = { ...pageContext };
 
     if (activeTab === "advanced" && questions && questions.length > 0) {
@@ -535,25 +537,19 @@ const BusinessSetupPage = () => {
 
         if (responseData) {
           // 1. Handle Document Info
-          const documentExists = responseData.document_info?.has_document === true;
-          setHasUploadedDocument(documentExists);
+          let documentExists = responseData.document_info?.has_document === true;
 
           if (responseData.document_info && responseData.document_info.has_document) {
             setDocumentInfo(responseData.document_info);
           } else {
-            // Use the service which now has local promise-caching to avoid duplicate requests
-            const doc = await apiService.fetchFinancialDocument(selectedBusinessId);
-            if (doc) {
-              setDocumentInfo(doc);
-            } else {
-              setDocumentInfo({ has_document: false });
-            }
+            setDocumentInfo({ has_document: false });
           }
-          setDocumentInfo(responseData.document_info || { has_document: false });
+          setHasUploadedDocument(documentExists);
 
           // 2. Handle Questions and Answers mapping
           let finalAnswers = {};
           let finalCompleted = [];
+          let answersDetailsMap = {};
 
           if (responseData.questions?.length > 0) {
             setQuestions(responseData.questions); // This internally sets questionsLoaded: true
@@ -566,6 +562,14 @@ const BusinessSetupPage = () => {
                 const qIdStr = String(ans.question_id);
                 answersMap[qIdStr] = ans.answer;
                 answerIdsMap[qIdStr] = ans._id;
+                answersDetailsMap[qIdStr] = {
+                  confidence: ans.confidence,
+                  status: ans.status,
+                  evidence: ans.evidence,
+                  ai_answer: ans.ai_answer,
+                  user_answer: ans.user_answer,
+                  previous_answer: ans.previous_answer
+                };
               }
             });
 
@@ -584,13 +588,17 @@ const BusinessSetupPage = () => {
           // 3. Fetch analysis results silently (don't set loaded=true inside fetchAnalysisData)
           let analysisUpdates = {};
           if (Object.keys(finalAnswers).length > 0) {
-            analysisUpdates = await fetchAnalysisData(selectedBusinessId, true);
+            analysisUpdates = await fetchAnalysisData(selectedBusinessId, true, false, true); // skipReset = true
+            // Mark this tab as fetched to prevent the tab-change useEffect from redundant fetching
+            const fetchKey = `${selectedBusinessId}-${activeTab}`;
+            fetchedAnalysisKeys.current.add(fetchKey);
           }
 
           // 4. ATOMIC INITIALIZATION
           initializeBusinessData({
             questions: responseData.questions || [],
             userAnswers: finalAnswers,
+            answersDetails: answersDetailsMap,
             completedQuestions: finalCompleted,
             analysisUpdates: analysisUpdates || {},
             questionsLoaded: true
@@ -667,8 +675,6 @@ const BusinessSetupPage = () => {
 
   const stateSetters = useMemo(() => ({
     setSwotAnalysisResult: (d) => setAnalysisData('swot', d),
-    setPurchaseCriteriaData: (d) => setAnalysisData('purchaseCriteria', d),
-    setLoyaltyNPSData: (d) => setAnalysisData('loyaltyNPS', d),
     setPortersData: (d) => setAnalysisData('porters', d),
     setPestelData: (d) => setAnalysisData('pestel', d),
     setFullSwotData: (d) => setAnalysisData('fullSwot', d),
@@ -734,9 +740,14 @@ const BusinessSetupPage = () => {
     const skipConfirmation = options?.skipConfirmation || false;
 
     const performPhaseRegeneration = async () => {
-      //showToastMessage(`Regenerating ${targetPhase} phase...`, 'info');
       const state = useAnalysisStore.getState();
       const { questions: storeQuestions, userAnswers: storeUserAnswers, regeneratePhase: storeRegeneratePhase } = state;
+
+      const hasAnswers = Object.values(storeUserAnswers || {}).some(answer => answer && String(answer).trim().length > 0);
+      if (!hasAnswers && targetPhase !== 'financial') {
+        console.warn(`Skipping regeneration for phase ${targetPhase}: No answers found in store.`);
+        return;
+      }
 
       // Merge uploadedFile from options into userAnswers context for the store
       const mergedAnswers = { ...storeUserAnswers };
@@ -770,7 +781,9 @@ const BusinessSetupPage = () => {
   const loadExistingAnalysisData = useCallback((phaseAnalysisArray) => {
     setPhaseAnalysisArray(phaseAnalysisArray);
     // Data mapping is now handled inside fetchAnalysisData in the store
-  }, []);
+    // But we trigger it here to ensure the store is updated with the latest data
+    fetchAnalysisData(selectedBusinessId, true, false, true); // skipReset = true
+  }, [selectedBusinessId, fetchAnalysisData]);
 
   const phaseManager = PhaseManager({
     questions, questionsLoaded, completedQuestions, userAnswers, selectedBusinessId,
@@ -821,6 +834,18 @@ const BusinessSetupPage = () => {
         showToastMessage(t('regeneration_in_progress'), 'info');
         return;
       }
+
+      const latestStoreState = useAnalysisStore.getState();
+      const hasAnswers = Object.values(latestStoreState.userAnswers || {}).some(answer => answer && String(answer).trim().length > 0);
+      
+      if (!hasAnswers && !options?.onlyFinancial) {
+        console.warn("Skipping full insights regeneration: No answers found in store.");
+        if (options?.includeFinancial || hasUploadedDocument) {
+          await handleRegeneratePhase('financial', false, { ...options, skipConfirmation: true });
+        }
+        return;
+      }
+
       isRegeneratingRef.current = true;
       try {
         if (options?.onlyFinancial) {
@@ -835,11 +860,17 @@ const BusinessSetupPage = () => {
         let phasesToRegenerate = [];
 
         if (isBulkApply) {
-          // Get the current unlocked features based on the latest answers
-          const unlockedFeatures = phaseManager.getUnlockedFeatures();
+          // Get the current unlocked features based on the latest answers from the store
+          // instead of relying on the stale phaseManager instance
+          const latestStoreState = useAnalysisStore.getState();
+          const unlockedFeatures = getUnlockedFeatures(
+            latestStoreState.questions, 
+            latestStoreState.userAnswers, 
+            latestStoreState.completedQuestions, 
+            hasUploadedDocument
+          );
 
           // Fallback logic: Call advanced if unlocked, else essential, else initial.
-          // Since higher phases now include all lower-phase APIs (like SWOT), calling just the highest is sufficient.
           if (unlockedFeatures.advancedPhase) {
             phasesToRegenerate = ['advanced'];
           } else if (unlockedFeatures.essentialPhase) {
@@ -880,6 +911,10 @@ const BusinessSetupPage = () => {
         if (options?.alsoRegenerateStrategic) { 
           await handleStrategicAnalysisRegenerate(true);
         }
+        
+        // Final sync to ensure UI is perfectly updated with all regenerated results
+        await fetchAnalysisData(selectedBusinessId, true, true, true);
+        
         //showToastMessage(t('regeneration_completed'), 'success');
       } catch (err) {
         console.error('Error in handleRegenerateAllAnalysis:', err);
@@ -1062,6 +1097,18 @@ const BusinessSetupPage = () => {
   const handleKickstartSuccess = () => {
     // Clear project-store caches so the Projects page fetches fresh data
     clearProjectCache(selectedBusinessId);
+    
+    // Invalidate React Query projects and rankings cache so the Projects page fetches fresh data immediately
+    queryClient.invalidateQueries({
+      queryKey: ["projects", selectedBusinessId]
+    });
+    queryClient.invalidateQueries({
+      queryKey: ["rankingsSummary", selectedBusinessId]
+    });
+    queryClient.invalidateQueries({
+      queryKey: ["teamRankings", selectedBusinessId]
+    });
+
     useProjectStore.getState().setViewMode('projects');
     setShowProjectsTab(true);
     setActiveTab("bets");
@@ -1078,14 +1125,13 @@ const BusinessSetupPage = () => {
 
     const categoryOptions = {
       initial: {
-        "Context/Industry": ["swot_analysis", "Porters_Five_Forces", "PESTEL_Analysis"],
-        "Customer": ["Purchase_Criteria", "Loyalty_&_NPS"]
+        "Context/Industry": ["swot_analysis", "Porters_Five_Forces", "PESTEL_Analysis"]
       },
       essential: {
         "Current Strategy": ["Core"],
         "Costs/Financial": ["Productivity_Metrics"],
         "Context/Industry": ["Porters_Five_Forces", "PESTEL_Analysis", "Full_SWOT_Portfolio", "Strategic_Positioning_Radar"],
-        "Customer": ["Purchase_Criteria", "Loyalty_&_NPS", "Competitive_Advantage_Matrix"],
+        "Customer": ["Competitive_Advantage_Matrix"],
         "Capabilities": ["Capability_Heatmap", "Maturity_Score"],
         "Competition": ["Competitive_Landscape"]
       },
@@ -1093,7 +1139,7 @@ const BusinessSetupPage = () => {
         "Current Strategy": ["Core"],
         "Costs/Financial": ["Productivity_Metrics"],
         "Context/Industry": ["Porters_Five_Forces", "PESTEL_Analysis", "Full_SWOT_Portfolio", "Strategic_Positioning_Radar"],
-        "Customer": ["Purchase_Criteria", "Loyalty_&_NPS", "Competitive_Advantage_Matrix"],
+        "Customer": ["Competitive_Advantage_Matrix"],
         "Capabilities": ["Capability_Heatmap", "Maturity_Score"],
         "Competition": ["Competitive_Landscape"]
       }
@@ -1141,20 +1187,15 @@ const BusinessSetupPage = () => {
   useEffect(() => {
     if (activeTab !== 'insights' && activeTab !== 'strategic') return;
 
-    // Check if we need to force a refresh for the strategic tab
-    const forceRefresh = activeTab === 'strategic';
-
+    // We use a local ref to track which business-tab combinations have been fetched
+    // to prevent redundant calls during the same session or on simple re-renders.
     const fetchKey = `${selectedBusinessId}-${activeTab}`;
     if (selectedBusinessId && questionsLoaded && !fetchedAnalysisKeys.current.has(fetchKey)) {
       fetchedAnalysisKeys.current.add(fetchKey);
       setTimeout(() => {
-        // Use the store's fetchAnalysisData directly with forceRefresh if needed
-        // This ensures the store is updated and the backend is hit
-        if (forceRefresh) {
-          fetchAnalysisData(selectedBusinessId, true, true);
-        } else {
-          phaseManager.loadExistingAnalysis();
-        }
+        // Use skipReset: true to prevent flickering when switching tabs
+        // and forceRefresh: false to respect the backend/service cache.
+        fetchAnalysisData(selectedBusinessId, true, false, true);
       }, 100);
     }
   }, [selectedBusinessId, questionsLoaded, activeTab, fetchAnalysisData]);
@@ -1182,7 +1223,7 @@ const BusinessSetupPage = () => {
   const currentPhase = getCurrentPhase();
   const storeLoadingStates = useUIStore(state => state.loadingStates);
 
-  const hasAnalysisData = !!(swotAnalysis || purchaseCriteria || loyaltyNPS || portersData ||
+  const hasAnalysisData = !!(swotAnalysis || portersData ||
     pestelData || fullSwotData || competitiveAdvantage || expandedCapability ||
     strategicRadar || productivityData || maturityData || competitiveLandscape ||
     coreAdjacency || profitabilityData || growthTrackerData);
@@ -1205,7 +1246,7 @@ const BusinessSetupPage = () => {
     collapsedCategories, setCollapsedCategories,
     highlightedCard,
     uploadedFileForAnalysis,
-    swotRef, purchaseCriteriaRef, loyaltyNpsRef, portersRef, pestelRef,
+    swotRef, portersRef, pestelRef,
     fullSwotRef, competitiveAdvantageRef, expandedCapabilityRef, strategicRadarRef,
     productivityRef, maturityScoreRef, profitabilityRef, growthTrackerRef,
     liquidityEfficiencyRef, investmentPerformanceRef, leverageRiskRef,
@@ -1226,8 +1267,47 @@ const BusinessSetupPage = () => {
     } catch { }
   }, [selectedBusinessId, setBusinessSetting]);
 
+  const setupValue = useMemo(() => ({
+    selectedBusinessId,
+    currentBusiness,
+    isArchived,
+    openModal,
+    closeModal,
+    isModalOpen,
+    pmfRefreshTrigger,
+    t,
+    apiService,
+    setActiveTab,
+    hasPmfAccess,
+    hasInsightAccess,
+    hasStrategicAccess,
+    hasProjectAccess,
+    handleKickstartSuccess,
+    handleStayOnPriorities,
+    showProjectsTab
+  }), [
+    selectedBusinessId,
+    currentBusiness,
+    isArchived,
+    openModal,
+    closeModal,
+    isModalOpen,
+    pmfRefreshTrigger,
+    t,
+    apiService,
+    setActiveTab,
+    hasPmfAccess,
+    hasInsightAccess,
+    hasStrategicAccess,
+    hasProjectAccess,
+    handleKickstartSuccess,
+    handleStayOnPriorities,
+    showProjectsTab
+  ]);
+
   return (
-    <div className={`business-setup-container ${isArchived ? 'is-archived' : ''}`}>
+    <BusinessSetupContext.Provider value={setupValue}>
+      <div className={`business-setup-container ${isArchived ? 'is-archived' : ''}`}>
       <MenuBar />
 
       {/* Read-Only Banner for Archived Workspaces */}
@@ -2340,8 +2420,9 @@ const BusinessSetupPage = () => {
           onToastMessage={showToastMessage}
           onSubmit={() => {
             closeModal('pmfOnboarding');
-            setActiveTab("executive");
+            handleExecutiveTabClick();
             setPmfRefreshTrigger(prev => prev + 1);
+            window.dispatchEvent(new CustomEvent("pmfOnboardingCompleted"));
           }}
         />
       )}
@@ -2363,6 +2444,7 @@ const BusinessSetupPage = () => {
         isAdmin={['super_admin', 'company_admin', 'org_admin'].includes(userRole?.toLowerCase())}
       />
     </div>
+    </BusinessSetupContext.Provider>
   );
 };
 

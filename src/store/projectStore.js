@@ -1,9 +1,8 @@
-// src/store/projectStore.js
 import { create } from 'zustand';
 import axios from 'axios';
 import { useAuthStore } from './authStore';
 
-const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
+const API_BASE_URL = import.meta.env.VITE_BACKEND_URL;
 
 const checkAllAccessCache = new Map();
 const teamRankingsCache = new Map();
@@ -17,7 +16,7 @@ export const useProjectStore = create((set, get) => ({
   accessControl: { hasRerankAccess: false, hasRankingAccess: false, projectsEditAccess: {} },
   lockSummary: { locked_users_count: 0, total_users: 0, locked_users: [] },
   businessStatus: 'draft',
-  viewMode: 'projects', // 'projects' or 'ranking'
+  viewMode: 'projects',
   isLoading: false,
   error: null,
 
@@ -37,13 +36,13 @@ export const useProjectStore = create((set, get) => ({
           headers: { Authorization: 'Bearer ' + token },
           params: { business_id: businessId }
         });
-        
+
         const projects = response.data.projects || [];
-        set({ 
-          projects, 
+        set({
+          projects,
           businessStatus: response.data.business_status || 'draft',
           lockSummary: response.data.ranking_lock_summary || { total_users: 0, locked_users_count: 0, locked_users: [] },
-          isLoading: false 
+          isLoading: false
         });
         return response.data;
       } catch (err) {
@@ -103,7 +102,7 @@ export const useProjectStore = create((set, get) => ({
     if (teamRankingsCache.has(cacheKey)) {
       const cachedPromise = teamRankingsCache.get(cacheKey);
       const cachedData = await cachedPromise;
-      set({ 
+      set({
         projects: cachedData?.projects || [],
         businessStatus: cachedData?.business_status,
         lockSummary: cachedData?.ranking_lock_summary || { locked_users_count: 0, total_users: 0, locked_users: [] }
@@ -118,7 +117,7 @@ export const useProjectStore = create((set, get) => ({
           headers: { Authorization: 'Bearer ' + token },
           params: { business_id: businessId }
         });
-        set({ 
+        set({
           projects: response.data.projects || [],
           businessStatus: response.data.business_status,
           lockSummary: response.data.ranking_lock_summary || { locked_users_count: 0, total_users: 0, locked_users: [] },
@@ -162,6 +161,8 @@ export const useProjectStore = create((set, get) => ({
       const response = await axios.post(API_BASE_URL + '/api/projects', payload, {
         headers: { Authorization: 'Bearer ' + token }
       });
+      const bizId = payload.business_id || response.data.project?.business_id || response.data.project?.businessId;
+      if (bizId) get().clearCache(bizId);
       set((state) => ({ projects: [...state.projects, response.data.project], isLoading: false }));
       return { success: true, project: response.data.project };
     } catch (err) {
@@ -178,10 +179,12 @@ export const useProjectStore = create((set, get) => ({
       const response = await axios.patch(API_BASE_URL + '/api/projects/' + projectId, payload, {
         headers: { Authorization: 'Bearer ' + token }
       });
+      const bizId = response.data.project?.business_id || response.data.project?.businessId || payload.business_id;
+      if (bizId) get().clearCache(bizId);
       set((state) => ({
-        projects: state.projects.map(p => 
-          (p._id === projectId || p.id === projectId) 
-            ? { ...p, ...response.data.project } 
+        projects: state.projects.map(p =>
+          (p._id === projectId || p.id === projectId)
+            ? { ...p, ...response.data.project }
             : p
         ),
         selectedProject: state.selectedProject?._id === projectId ? { ...state.selectedProject, ...response.data.project } : state.selectedProject,
@@ -199,9 +202,12 @@ export const useProjectStore = create((set, get) => ({
     if (!token) return;
     set({ isLoading: true });
     try {
+      const project = get().projects.find(p => p._id === projectId || p.id === projectId);
+      const bizId = project?.business_id || project?.businessId;
       await axios.delete(API_BASE_URL + '/api/projects/' + projectId, {
         headers: { Authorization: 'Bearer ' + token }
       });
+      if (bizId) get().clearCache(bizId);
       set((state) => ({
         projects: state.projects.filter(p => p._id !== projectId && p.id !== projectId),
         isLoading: false,
@@ -221,9 +227,9 @@ export const useProjectStore = create((set, get) => ({
       const response = await axios.post(API_BASE_URL + '/api/projects/launch', { project_ids: projectIds }, {
         headers: { Authorization: 'Bearer ' + token }
       });
-      // Update projects list from response
-      // Update projects list from response by merging into existing state
       if (response.data.projects) {
+        const bizId = response.data.projects[0]?.business_id || response.data.projects[0]?.businessId;
+        if (bizId) get().clearCache(bizId);
         set((state) => ({
           projects: response.data.projects.map(newProj => {
             const existingProj = state.projects.find(p => String(p._id) === String(newProj._id));
@@ -266,17 +272,13 @@ export const useProjectStore = create((set, get) => ({
       }, {
         headers: { Authorization: `Bearer ${token}` }
       });
-
-      // Clear all related caches to force a fresh fetch
       const cacheKey = `teamRankings-${businessId}`;
       const projCacheKey = `projects-${businessId}`;
       const accessCacheKey = `checkAccess-${businessId}`;
-      
+
       teamRankingsCache.delete(cacheKey);
       projectsCache.delete(projCacheKey);
       checkAllAccessCache.delete(accessCacheKey);
-
-      // Refresh data
       await get().fetchProjects(businessId, { silent: true });
       await get().fetchTeamRankings(businessId, { silent: true });
       await get().checkAllAccess(businessId);
@@ -301,7 +303,6 @@ export const useProjectStore = create((set, get) => ({
       }, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      // Map aiRankings to the expected format for the store if needed
       const persistedRankings = aiRankings.map(r => ({
         project_id: r.project_id,
         rank: r.rank
@@ -342,10 +343,12 @@ export const useProjectStore = create((set, get) => ({
       const response = await axios.post(`${API_BASE_URL}/api/projects/${projectId}/review`, data, {
         headers: { Authorization: `Bearer ${token}` }
       });
+      const bizId = response.data.project?.business_id || response.data.project?.businessId;
+      if (bizId) get().clearCache(bizId);
       set((state) => ({
-        projects: state.projects.map(p => 
-          (p._id === projectId || p.id === projectId) 
-            ? { ...p, ...response.data.project } 
+        projects: state.projects.map(p =>
+          (p._id === projectId || p.id === projectId)
+            ? { ...p, ...response.data.project }
             : p
         ),
         isLoading: false
@@ -365,10 +368,12 @@ export const useProjectStore = create((set, get) => ({
       const response = await axios.patch(`${API_BASE_URL}/api/projects/${projectId}/adhoc-update`, data, {
         headers: { Authorization: `Bearer ${token}` }
       });
+      const bizId = response.data.project?.business_id || response.data.project?.businessId;
+      if (bizId) get().clearCache(bizId);
       set((state) => ({
-        projects: state.projects.map(p => 
-          (p._id === projectId || p.id === projectId) 
-            ? { ...p, ...response.data.project } 
+        projects: state.projects.map(p =>
+          (p._id === projectId || p.id === projectId)
+            ? { ...p, ...response.data.project }
             : p
         ),
         isLoading: false
@@ -409,6 +414,7 @@ export const useProjectStore = create((set, get) => ({
       }, {
         headers: { Authorization: `Bearer ${token}` }
       });
+      get().clearCache(businessId);
       set({ isLoading: false });
       return { success: true, data: response.data };
     } catch (err) {
@@ -421,10 +427,11 @@ export const useProjectStore = create((set, get) => ({
     const token = useAuthStore.getState().token;
     if (!token || !businessId) return;
     try {
-      const response = await axios.put(`${API_BASE_URL}/api/projects/edit-access`, 
+      const response = await axios.put(`${API_BASE_URL}/api/projects/edit-access`,
         { scope, business_id: businessId },
         { headers: { Authorization: `Bearer ${token}` } }
       );
+      get().clearCache(businessId);
       return { success: true, data: response.data };
     } catch (err) {
       return { success: false, error: err.response?.data?.error || err.message };
@@ -435,10 +442,11 @@ export const useProjectStore = create((set, get) => ({
     const token = useAuthStore.getState().token;
     if (!token || !businessId || !projectId) return;
     try {
-      const response = await axios.patch(`${API_BASE_URL}/api/businesses/${businessId}/project/${projectId}/allowed-collaborators`, 
+      const response = await axios.patch(`${API_BASE_URL}/api/businesses/${businessId}/project/${projectId}/allowed-collaborators`,
         { collaborator_ids: collaboratorIds },
         { headers: { Authorization: `Bearer ${token}` } }
       );
+      get().clearCache(businessId);
       return { success: true, data: response.data };
     } catch (err) {
       return { success: false, error: err.response?.data?.error || err.message };
@@ -449,10 +457,11 @@ export const useProjectStore = create((set, get) => ({
     const token = useAuthStore.getState().token;
     if (!token || !businessId) return;
     try {
-      const response = await axios.patch(`${API_BASE_URL}/api/businesses/${businessId}/allowed-ranking-collaborators`, 
+      const response = await axios.patch(`${API_BASE_URL}/api/businesses/${businessId}/allowed-ranking-collaborators`,
         { collaborator_ids: collaboratorIds },
         { headers: { Authorization: `Bearer ${token}` } }
       );
+      get().clearCache(businessId);
       return { success: true, data: response.data };
     } catch (err) {
       return { success: false, error: err.response?.data?.error || err.message };
@@ -503,7 +512,7 @@ export const useProjectStore = create((set, get) => ({
   },
 
   callMLRankingAPI: async (projects) => {
-    const ML_API_BASE_URL = process.env.REACT_APP_ML_BACKEND_URL;
+    const ML_API_BASE_URL = import.meta.env.VITE_ML_BACKEND_URL;
     try {
       const projectList = projects.map(project => ({
         name: project.project_name,
@@ -537,9 +546,6 @@ export const useProjectStore = create((set, get) => ({
   clearProjects: () => set({ projects: [], selectedProject: null, teamRankings: [], aiRankings: [] }),
   projectCount: () => get().projects.length,
   getProjectById: (id) => get().projects.find(p => p._id === id || p.id === id),
-
-  // Clears all module-level API caches so the next load fetches fresh data.
-  // Call this before navigating to the Projects page after a kickstart.
   clearCache: (businessId) => {
     if (businessId) {
       checkAllAccessCache.delete(`access-${businessId}`);

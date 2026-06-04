@@ -13,12 +13,11 @@ const PlanLimitModal = ({ show, onHide, onAction, title, message, subMessage, pl
     const handleAction = () => {
         const currentPath = location.pathname;
         const targetPath = currentPath.includes('/super-admin') ? '/super-admin' : '/admin';
-        
+
         onHide();
         if (onAction) onAction();
-        
+
         if (isAdmin) {
-            // Increased delay to ensure modal backdrop and state cleanup before navigation
             setTimeout(() => {
                 navigate(`${targetPath}?tab=subscription`);
             }, 300);
@@ -27,7 +26,7 @@ const PlanLimitModal = ({ show, onHide, onAction, title, message, subMessage, pl
 
     const displayTitle = title || (isAdmin ? (t('plan_limit_reached') || "Plan Limit Reached") : (t('Action Restricted') || "Action Restricted"));
     const displayMessage = message || (isAdmin ? (t('upgrade_to_create_more') || "Upgrade Plan to Create More") : (t('company_business_limit_reached') || "Business Limit Reached"));
-    const displaySubMessage = subMessage || (isAdmin 
+    const displaySubMessage = subMessage || (isAdmin
         ? t('plan_workspace_limit_msg', { plan, limit })
         : (t('contact_admin_to_upgrade') || "Please contact your administrator to upgrade the plan."));
     const displayButtonText = isAdmin ? (t('upgrade_plan') || "Upgrade Plan") : (t('ok') || "OK");

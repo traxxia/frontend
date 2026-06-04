@@ -1,8 +1,3 @@
-/* ===========================
-   AI ASSISTANT — CLEAN UI
-   =========================== */
-
-/* Floating Action Button */
 .ai-fab {
   position: fixed !important;
   bottom: 20px !important;
@@ -28,14 +23,12 @@
   box-shadow: 0 6px 22px rgba(111, 60, 255, 0.55) !important;
 }
 
-/* Hide FAB when panel is open */
 .ai-fab--hidden {
   opacity: 0 !important;
   pointer-events: none !important;
   transform: scale(0.8) !important;
 }
 
-/* Backdrop */
 .ai-backdrop {
   position: fixed;
   inset: 0;
@@ -43,7 +36,6 @@
   background: rgba(0, 0, 0, 0.15);
 }
 
-/* Panel — anchored to bottom of page */
 .ai-panel {
   position: fixed;
   bottom: 0;
@@ -69,7 +61,6 @@
   pointer-events: all;
 }
 
-/* Header */
 .ai-header {
   display: flex;
   align-items: center;
@@ -166,17 +157,17 @@
 
 .ai-usage-fill.usage-low {
   stroke: #22c55e;
-  /* Green */
+
 }
 
 .ai-usage-fill.usage-medium {
   stroke: #f59e0b;
-  /* Orange */
+
 }
 
 .ai-usage-fill.usage-high {
   stroke: #ef4444;
-  /* Red */
+
 }
 
 .ai-usage-text {
@@ -246,11 +237,10 @@
   transform: scale(1.05);
 }
 
-/* Messages */
 .ai-messages {
   flex: 1;
   min-height: 0;
-  /* critical: allows flex child to shrink and scroll */
+
   overflow-y: auto;
   padding: 14px 14px 8px;
   display: flex;
@@ -268,7 +258,6 @@
   border-radius: 4px;
 }
 
-/* Message rows */
 .ai-msg {
   display: flex;
   align-items: flex-end;
@@ -311,8 +300,8 @@
   border-bottom-right-radius: 4px;
 }
 
-/* Typing dots */
 .ai-msg__bubble--typing {
+  background: #918e8e !important;
   display: flex;
   align-items: center;
   gap: 4px;
@@ -350,7 +339,6 @@
   }
 }
 
-/* Suggested Questions */
 .ai-suggestions {
   padding: 5px 12px 4px;
   border-top: 1px solid #f3f4f6;
@@ -385,7 +373,6 @@
   border-color: #c4b5fd !important;
 }
 
-/* Input Row */
 .ai-input-row {
   display: flex;
   align-items: center;
@@ -437,9 +424,6 @@
   transform: scale(1.08) !important;
 }
 
-/* ===========================
-   DARK MODE
-   =========================== */
 [data-theme="dark"] .ai-panel {
   background: #1e1e2e;
   box-shadow: 0 8px 40px rgba(0, 0, 0, 0.5);
@@ -487,7 +471,6 @@
   background: rgba(0, 0, 0, 0.35);
 }
 
-/* Limit reached message */
 .ai-limit-reached {
   flex: 1;
   display: flex;
@@ -538,9 +521,6 @@
   }
 }
 
-/* ===========================
-   MODAL STYLES
-   =========================== */
 .ai-modal-overlay {
   position: fixed;
   inset: 0;
@@ -643,7 +623,6 @@
   }
 }
 
-/* Dark mode for modal */
 [data-theme='dark'] .ai-modal {
   background: #1e1e2e;
   border: 1px solid #3d3b6e;
@@ -670,7 +649,6 @@
   background: #451212;
 }
 
-/* AI ASSISTANT RESPONSIVE FIX */
 .ai-backdrop {
   position: fixed;
   inset: 0;

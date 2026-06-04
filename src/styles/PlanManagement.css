@@ -1,7 +1,7 @@
 .plan-management-wrapper .admin-header {
     display: flex;
     justify-content: end;
-    align-items: center; 
+    align-items: center;
     background-color: transparent;
     border-bottom: none;
 }
@@ -24,7 +24,6 @@
     background-color: var(--primary-color-dark, #4338ca);
 }
 
-/* Modal Styles */
 .plan-modal-overlay {
     position: fixed;
     top: 0;
@@ -166,7 +165,6 @@ textarea.plan-form-input {
     cursor: not-allowed;
 }
 
-/* Responsive Styles */
 @media (max-width: 768px) {
     .plan-management-wrapper {
         padding: var(--spacing-sm, 12px);
@@ -204,7 +202,6 @@ textarea.plan-form-input {
     }
 }
 
-/* Plan Status Toggle */
 .plan-status-switch {
     cursor: pointer;
     width: 2.5em !important;
@@ -229,7 +226,6 @@ textarea.plan-form-input {
     margin-left: 50px;
 }
 
-/* Status Confirm Modal */
 .status-confirm-modal-container {
     z-index: 1060 !important;
 }
@@ -263,16 +259,10 @@ textarea.plan-form-input {
     font-weight: 500;
 }
 
-/* ─────────────────────────────────────────────
-   PlanManagement.css
-   ───────────────────────────────────────────── */
-
-/* ── Page wrapper ── */
 .plan-management-wrapper {
     padding: 8px 0;
-} 
+}
 
-/* ── Create Plan button ── */
 .create-plan-btn {
     display: inline-flex;
     align-items: center;
@@ -293,7 +283,6 @@ textarea.plan-form-input {
     box-shadow: 0 4px 12px rgba(79, 70, 229, 0.28);
 }
 
-/* ── Table action button ── */
 .admin-action-btn.edit-plan-btn {
     display: inline-flex;
     align-items: center;
@@ -313,27 +302,22 @@ textarea.plan-form-input {
     border-color: #9ca3af;
 }
 
-/* ═══════════════════════════════════════
-   MODAL — overall shell
-═══════════════════════════════════════ */
 .plan-modal-dialog {
     max-width: 680px;
 }
 
-/* ── Modal Header ── */
 .plan-modal-header {
     padding: 18px 24px 16px;
     border-bottom: 1px solid #e5e7eb;
     background: #fff;
 }
 
-/* Flex row: title on left, status toggle on right */
 .plan-modal-header-inner {
     display: flex;
     align-items: center;
     justify-content: space-between;
     width: 100%;
-    padding-right: 6px;   /* breathing room before the × button */
+    padding-right: 6px;
 }
 
 .plan-modal-title {
@@ -343,7 +327,6 @@ textarea.plan-form-input {
     margin: 0;
 }
 
-/* Status toggle cluster */
 .plan-status-toggle-wrap {
     display: inline-flex;
     align-items: center;
@@ -387,7 +370,7 @@ textarea.plan-form-input {
     appearance: none !important;
     -webkit-appearance: none !important;
     transition: background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    margin: 0 !important;  /* CRITICAL: Override Bootstrap -1.5rem margin */
+    margin: 0 !important;
     padding: 0 !important;
     flex-shrink: 0;
 }
@@ -437,7 +420,6 @@ textarea.plan-form-input {
     color: #64748b;
 }
 
-/* ── Modal Body ── */
 .plan-modal-body {
     padding: 6px 24px 10px;
     max-height: 66vh;
@@ -446,14 +428,10 @@ textarea.plan-form-input {
     background: #fafafa;
 }
 
-/* Subtle scrollbar */
 .plan-modal-body::-webkit-scrollbar { width: 5px; }
 .plan-modal-body::-webkit-scrollbar-track { background: transparent; }
 .plan-modal-body::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 4px; }
 
-/* ═══════════════════════════════════════
-   SECTIONS inside the modal body
-═══════════════════════════════════════ */
 .plan-section {
     background: #fff;
     border: 1px solid #e5e7eb;
@@ -465,7 +443,6 @@ textarea.plan-form-input {
     margin-bottom: 6px;
 }
 
-/* Section heading (replaces <h6>) */
 .plan-section-label {
     font-size: 0.7rem;
     font-weight: 700;
@@ -475,7 +452,6 @@ textarea.plan-form-input {
     margin: 0 0 14px;
 }
 
-/* ── Field labels ── */
 .plan-field-label {
     display: block;
     font-size: 0.82rem;
@@ -505,7 +481,6 @@ textarea.plan-form-input {
     font-weight: 400;
 }
 
-/* ── Form inputs ── */
 .plan-form-input {
     width: 100%;
     padding: 8px 11px;
@@ -525,20 +500,17 @@ textarea.plan-form-input {
     color: #9ca3af;
 }
 
-/* Textarea */
 .plan-textarea {
     resize: vertical;
     min-height: 72px;
     line-height: 1.5;
 }
 
-/* Select arrow */
 .plan-form-input[type="number"]::-webkit-inner-spin-button,
 .plan-form-input[type="number"]::-webkit-outer-spin-button {
     opacity: 0.6;
 }
 
-/* ── Price input with $ prefix ── */
 .plan-price-input-wrap {
     position: relative;
 }
@@ -556,16 +528,12 @@ textarea.plan-form-input {
     padding-left: 24px;
 }
 
-/* ═══════════════════════════════════════
-   FEATURE ACCESS cards
-═══════════════════════════════════════ */
 .plan-access-grid {
     display: flex;
     flex-wrap: wrap;
     gap: 10px;
 }
 
-/* Each toggle card */
 .plan-access-card {
     display: flex;
     align-items: center;
@@ -584,9 +552,8 @@ textarea.plan-form-input {
     background: #f5f3ff;
 }
 
-/* Active state — driven by JS via :has selector fallback on the indicator */
 .plan-access-checkbox {
-    display: none;   /* hidden; state shown via indicator */
+    display: none;
 }
 
 .plan-access-indicator {
@@ -603,7 +570,6 @@ textarea.plan-form-input {
     position: relative;
 }
 
-/* Checked state via :has (modern browsers) */
 .plan-access-card:has(.plan-access-checkbox:checked) {
     border-color: #4f46e5;
     background: #eef2ff;
@@ -627,7 +593,6 @@ textarea.plan-form-input {
     font-weight: 600;
 }
 
-/* Sub-card (Projects, shown only when PMF is on) */
 .plan-access-card--sub {
     border-style: dashed;
     border-color: #c7d2fe;
@@ -641,9 +606,6 @@ textarea.plan-form-input {
     transition: color 0.15s;
 }
 
-/* ═══════════════════════════════════════
-   FEATURES PREVIEW
-═══════════════════════════════════════ */
 .plan-features-preview {
     border: 1px dashed #d1d5db;
     border-radius: 8px;
@@ -684,7 +646,6 @@ textarea.plan-form-input {
     font-style: italic;
 }
 
-/* ── Modal Footer ── */
 .plan-modal-footer {
     padding: 14px 24px;
     border-top: 1px solid #e5e7eb;
@@ -713,7 +674,6 @@ textarea.plan-form-input {
     box-shadow: 0 4px 12px rgba(79, 70, 229, 0.28);
 }
 
-/* ── Spinner ── */
 .spinner {
     animation: spin 0.8s linear infinite;
 }
@@ -721,9 +681,6 @@ textarea.plan-form-input {
     to { transform: rotate(360deg); }
 }
 
-/* ═══════════════════════════════════════
-   STATUS CONFIRM MODAL
-═══════════════════════════════════════ */
 .status-confirm-modal {
     max-width: 400px;
 }
@@ -755,7 +712,16 @@ textarea.plan-form-input {
     border-radius: 6px;
 }
 
-/* ─── z-index fix: nested modal sits above parent ─── */
 .status-confirm-modal-container {
     z-index: 1060 !important;
+}
+
+
+/* ── Extracted inline styles ── */
+.plan-management--s1 {
+  max-width: 300px;
+  display: inline-block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }

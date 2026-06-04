@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import '../styles/PortersFiveForces.css';
 import { useTranslation } from "../hooks/useTranslation";
 import { Shield, Loader, AlertTriangle, Users, DollarSign, TrendingUp, Building, ArrowRight, ChevronDown, ChevronRight } from 'lucide-react';
 import { useAuthStore, useAnalysisStore } from "../store";
@@ -26,7 +27,7 @@ const PortersFiveForces = ({
 }) => {
   const { t } = useTranslation();
   const token = useAuthStore(state => state.token);
-  
+
   const {
     portersData: storePortersData,
     isRegenerating: isTypeRegenerating,
@@ -268,7 +269,7 @@ const PortersFiveForces = ({
 
   const parsedData = parsePortersData(portersAnalysisData);
 
-  if (error || ((!parsedData || isPortersDataIncomplete(parsedData)) && Object.keys(userAnswers).length > 0)) {
+  if (error || !parsedData || isPortersDataIncomplete(parsedData)) {
     return (
       <div className="porters-container">
         <AnalysisEmptyState
