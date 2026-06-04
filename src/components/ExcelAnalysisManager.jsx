@@ -121,7 +121,7 @@ const ExcelAnalysisManager = ({
     setIsLoading(true);
     setError(null);
     try {
-      const result = await excelAnalysisService.generateExcelAnalysis(localUploadedFile, questions, userAnswers);
+      const result = await excelAnalysisService.generateExcelAnalysis(localUploadedFile, questions, userAnswers, null, selectedBusinessId);
       const transformedData = {
         profitability: result.profitability,
         growth_trends: result.growth_trends,
@@ -145,7 +145,7 @@ const ExcelAnalysisManager = ({
     setIsLoading(true);
     setError(null);
     try {
-      const result = await excelAnalysisService.generateExcelAnalysis(localUploadedFile, questions, userAnswers, metricType);
+      const result = await excelAnalysisService.generateExcelAnalysis(localUploadedFile, questions, userAnswers, metricType, selectedBusinessId);
       setAnalysisData(prevData => ({
         ...prevData,
         ...result
