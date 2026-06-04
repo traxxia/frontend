@@ -50,6 +50,7 @@ import { getUserLimits } from '../utils/authUtils';
 import CustomTooltip from "../components/CustomTooltip";
 import { BusinessSetupContext } from "../context/BusinessSetupContext";
 import PlanLimitModal from "../components/PlanLimitModal";
+import OnboardingChat from "../components/OnboardingChat";
 
 const CARD_TO_CATEGORY_MAP = {
   "profitability-analysis": "costs-financial",
@@ -141,6 +142,7 @@ const BusinessSetupPage = () => {
 
   const token = useAuthStore(state => state.token);
   const userRole = useAuthStore(state => state.userRole);
+  const userName = useAuthStore(state => state.userName);
   const getAuthToken = useCallback(() => token, [token]);
   const getLoggedInRole = () => (userRole || "").toLowerCase();
   const loggedInRole = getLoggedInRole();
@@ -1317,7 +1319,16 @@ const BusinessSetupPage = () => {
         </div>
       )}
 
-      {isMobile && (
+      {activeTab === 'onboarding' ? (
+        <OnboardingChat
+          userName={userName}
+          businessName={selectedBusinessName}
+          onBack={handleBack}
+          onStart={() => setActiveTab('advanced')}
+        />
+      ) : (
+        <>
+          {isMobile && (
         <>
           <div className="mobile-header">
             <div className="mobile-header-top">
@@ -2389,6 +2400,8 @@ const BusinessSetupPage = () => {
           )}
         </div>
       </div>
+        </>
+      )}
       <UpgradeModal
         show={isModalOpen('upgrade')}
         onHide={() => closeModal('upgrade')}

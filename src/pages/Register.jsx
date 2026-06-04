@@ -109,53 +109,14 @@ const Register = () => {
                 )}
               </AnimatePresence>
 
-              <div className="register-steps-container">
-                <div className={`step-item ${activeTab >= 1 ? 'active' : ''} ${activeTab > 1 ? 'completed' : ''}`}>
-                  <div className="step-circle">{activeTab > 1 ? <Check size={16} /> : 1}</div>
-                  <span className="step-label">{t('step_1_user_info')}</span>
-                </div>
-                <div className={`step-line ${activeTab > 1 ? 'completed' : ''}`}></div>
-                <div className={`step-item ${activeTab >= 2 ? 'active' : ''} ${activeTab > 2 ? 'completed' : ''}`}>
-                  <div className="step-circle">{activeTab > 2 ? <Check size={16} /> : 2}</div>
-                  <span className="step-label">{t('step_2_company_setup')}</span>
-                </div>
-                {isNewCompany && (
-                  <>
-                    <div className={`step-line ${activeTab > 2 ? 'completed' : ''}`}></div>
-                    <div className={`step-item ${activeTab === 3 ? 'active' : ''}`}>
-                      <div className="step-circle">3</div>
-                      <span className="step-label">{t("Payment")}</span>
-                    </div>
-                  </>
-                )}
-              </div>
-
               <AnimatePresence mode="wait">
-                {activeTab === 1 && (
-                  <UserStep
-                    form={form} handleChange={handleChange} errors={errors} isCheckingEmail={isCheckingEmail}
-                    showPassword={showPassword} setShowPassword={setShowPassword}
-                    showConfirmPassword={showConfirmPassword} setShowConfirmPassword={setShowConfirmPassword}
-                    handleNext={handleNext} onBackToLogin={() => navigate('/login')} t={t}
-                  />
-                )}
-                {activeTab === 2 && (
-                  <CompanyStep
-                    form={form} handleChange={handleChange} isNewCompany={isNewCompany} setIsNewCompany={setIsNewCompany}
-                    errors={errors} loadingCompanies={loadingCompanies} isCompanyDropdownOpen={isCompanyDropdownOpen}
-                    setIsCompanyDropdownOpen={setIsCompanyDropdownOpen} companySearch={companySearch} setCompanySearch={setCompanySearch}
-                    filteredCompanies={filteredCompanies} companies={companies} companyDropdownRef={companyDropdownRef}
-                    isRoleDropdownOpen={isRoleDropdownOpen} setIsRoleDropdownOpen={setIsRoleDropdownOpen} roleDropdownRef={roleDropdownRef}
-                    plans={plans} selectedPlanId={selectedPlanId} setSelectedPlanId={setSelectedPlanId} onNext={handleNextWithScroll}
-                    onBack={handleBack} setShowTermsModal={setShowTermsModal} setShowPrivacyModal={setShowPrivacyModal}
-                    companyErrorRef={companyErrorRef} plansErrorRef={plansErrorRef} termsErrorRef={termsErrorRef} t={t}
-                  />
-                )}
-                {activeTab === 3 && isNewCompany && stripeComponents && (
-                  <stripeComponents.Elements stripe={stripePromise}>
-                    <StripeHookWrapper onBack={handleBack} onSubmit={handleSubmit} isSubmitting={isSubmitting} error={errors.payment} selectedPlanPrice={plans.find(p => p._id === selectedPlanId)?.price} stripeComponents={stripeComponents} />
-                  </stripeComponents.Elements>
-                )}
+                <UserStep
+                  form={form} handleChange={handleChange} errors={errors} isCheckingEmail={isCheckingEmail}
+                  isSubmitting={isSubmitting}
+                  showPassword={showPassword} setShowPassword={setShowPassword}
+                  showConfirmPassword={showConfirmPassword} setShowConfirmPassword={setShowConfirmPassword}
+                  handleNext={handleNext} onBackToLogin={() => navigate('/login')} t={t}
+                />
               </AnimatePresence>
             </motion.div>
           </main>

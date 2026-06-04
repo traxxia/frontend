@@ -26,7 +26,6 @@ import { useBusinesses, usePlanDetails } from '../hooks/useQueries';
 import { useQueryClient } from '@tanstack/react-query';
 
 import { getUserLimits } from '../utils/authUtils';
-import UserTour from "../components/UserTour";
 
 const toSlug = (name = '') => name.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 
@@ -94,10 +93,8 @@ const Dashboard = () => {
   const [newlyCreatedBusiness, setNewlyCreatedBusiness] = useState(null);
   const [businessFormData, setBusinessFormData] = useState({
     business_name: '',
-    business_purpose: '',
-    description: '',
-    city: '',
-    country: ''
+    website: '',
+    has_no_website: false
   });
   const [statusFilter, setStatusFilter] = useState(['ALL', 'EXECUTION', 'CREATED', 'DELETED']);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
@@ -274,14 +271,16 @@ const Dashboard = () => {
       closeModal('createBusiness');
       addToast({ message: t('business_created_successfully'), type: 'success' });
 
-      if (ENABLE_PMF) openModal('pmfOnboarding');
+      const business = data.business;
+      const businessSlug = toSlug(business?.business_name || '');
+      navigate(`/businesspage?business=${businessSlug}&tab=onboarding`, {
+        state: { business, initialTab: 'onboarding' }
+      });
 
       setBusinessFormData({
         business_name: '',
-        business_purpose: '',
-        description: '',
-        city: '',
-        country: ''
+        website: '',
+        has_no_website: false
       });
 
       await Promise.all([
@@ -291,25 +290,25 @@ const Dashboard = () => {
     } catch (error) {
       console.error('Error creating business:', error);
     }
-  }, [createBusinessAction, businessFormData, setSelectedBusinessId, t, ENABLE_PMF, closeModal, openModal, addToast, queryClient]);
+  }, [createBusinessAction, businessFormData, setSelectedBusinessId, t, closeModal, addToast, queryClient, navigate]);
 
   const validateForm = useCallback(() => {
     const errors = {};
     const businessName = businessFormData.business_name.trim();
 
     if (!businessName) {
-      errors.business_name = t('business_name_cannot_be_empty');
+      errors.business_name = t('business_name_cannot_be_empty') || "Business name cannot be empty";
     } else if (businessName.length < 3) {
       errors.business_name = "Business name must be at least 3 characters";
     } else if (!/[A-Za-z]/.test(businessName)) {
       errors.business_name = "Business name must contain at least one letter";
     }
 
-    const businessPurpose = businessFormData.business_purpose.trim();
-    if (!businessPurpose) {
-      errors.business_purpose = t('business_purpose_required');
-    } else if (businessPurpose.length < 10) {
-      errors.business_purpose = "Business purpose must be at least 10 characters long";
+    if (!businessFormData.has_no_website) {
+      const website = businessFormData.website.trim();
+      if (!website) {
+        errors.website = t('website_required') || "Website is required";
+      }
     }
 
     setFormErrors(errors);
@@ -334,10 +333,8 @@ const Dashboard = () => {
     closeModal('createBusiness');
     setBusinessFormData({
       business_name: '',
-      business_purpose: '',
-      description: '',
-      city: '',
-      country: ''
+      website: '',
+      has_no_website: false
     });
     clearErrors();
     setFormErrors({});
@@ -410,11 +407,10 @@ const Dashboard = () => {
     closeModal('howItWorks');
   }, [closeModal]);
 
-  const businessNameLength = businessFormData.business_name.length;
+
 
   return (
     <div className="dashboard-layout">
-      <UserTour />
       <PlanLimitModal
         show={isModalOpen('planLimit')}
         onHide={() => closeModal('planLimit')}
@@ -643,41 +639,91 @@ const Dashboard = () => {
             />
           )}
 
-          <Modal show={isModalOpen('createBusiness')} onHide={handleCloseCreateModal} centered size="lg" backdrop="static">
-            <Modal.Header closeButton><Modal.Title>{t('create_new_business')}</Modal.Title></Modal.Header>
+          <Modal 
+            show={isModalOpen('createBusiness')} 
+            onHide={handleCloseCreateModal} 
+            centered 
+            dialogClassName="create-business-modal" 
+            backdrop="static"
+          >
+            <Modal.Header closeButton>
+              <Modal.Title>{t('create_new_business', 'Create New Business')}</Modal.Title>
+            </Modal.Header>
             <Form onSubmit={handleSubmitBusiness} noValidate>
               <fieldset disabled={isCreatingBusiness}>
                 <Modal.Body>
                   <Form.Group className="mb-3">
-                    <Form.Label>{t('business_name')} *</Form.Label>
-                    <Form.Control type="text" name="business_name" value={businessFormData.business_name} onChange={handleFormChange} placeholder={t('enter_your_business_name')} isInvalid={!!formErrors.business_name} maxLength={100} />
-                    <div className="d-flex justify-content-between align-items-center mt-1">
-                      <Form.Text className="text-danger">{formErrors.business_name}</Form.Text>
-                      <Form.Text className={businessNameLength > 20 ? 'text-danger' : 'text-muted'}>{businessNameLength}/20</Form.Text>
+                    <Form.Label>{t('business_name', 'Business Name')} <span>*</span></Form.Label>
+                    <Form.Control 
+                      type="text" 
+                      name="business_name" 
+                      value={businessFormData.business_name} 
+                      onChange={handleFormChange} 
+                      placeholder="e.g. Atlas CPG" 
+                      isInvalid={!!formErrors.business_name} 
+                      maxLength={100} 
+                    />
+                    {formErrors.business_name && (
+                      <Form.Text className="text-danger mt-1 d-block">{formErrors.business_name}</Form.Text>
+                    )}
+                  </Form.Group>
+                  <Form.Group className="mb-3">
+                    <Form.Label>{t('website', 'Website')} <span>*</span></Form.Label>
+                    <Form.Control 
+                      type="text" 
+                      name="website" 
+                      value={businessFormData.website} 
+                      onChange={handleFormChange} 
+                      placeholder="e.g. atlascpg.com" 
+                      isInvalid={!!formErrors.website}
+                      disabled={businessFormData.has_no_website}
+                    />
+                    {formErrors.website && (
+                      <Form.Text className="text-danger mt-1 d-block">{formErrors.website}</Form.Text>
+                    )}
+                  </Form.Group>
+                  <Form.Group className="mb-3 form-check d-flex flex-column align-items-start gap-1 p-0">
+                    <div className="d-flex align-items-center gap-2">
+                      <input
+                        type="checkbox"
+                        className="form-check-input m-0"
+                        id="has_no_website"
+                        name="has_no_website"
+                        checked={businessFormData.has_no_website}
+                        onChange={(e) => {
+                          const checked = e.target.checked;
+                          setBusinessFormData(prev => ({
+                            ...prev,
+                            has_no_website: checked,
+                            website: checked ? '' : prev.website
+                          }));
+                          setFormErrors(prev => ({
+                            ...prev,
+                            website: ''
+                          }));
+                        }}
+                      />
+                      <label className="form-check-label" htmlFor="has_no_website">
+                        {t('i_dont_have_website', "I don't have a website yet")}
+                      </label>
                     </div>
-                  </Form.Group>
-                  <Form.Group className="mb-3">
-                    <Form.Label>{t('business_purpose')} *</Form.Label>
-                    <Form.Control type="text" name="business_purpose" value={businessFormData.business_purpose} onChange={handleFormChange} placeholder={t('brief_description_of_what')} isInvalid={!!formErrors.business_purpose} />
-                    <Form.Text className="text-danger">{formErrors.business_purpose}</Form.Text>
-                  </Form.Group>
-                  <Row className="mb-3">
-                    <Col md={6}>
-                      <Form.Group><Form.Label>{t('city')} ({t('optional')})</Form.Label><Form.Control type="text" name="city" value={businessFormData.city} onChange={handleFormChange} placeholder={t('enter_city')} /></Form.Group>
-                    </Col>
-                    <Col md={6}>
-                      <Form.Group><Form.Label>{t('country')} ({t('optional')})</Form.Label><Form.Control type="text" name="country" value={businessFormData.country} onChange={handleFormChange} placeholder={t('enter_country')} /></Form.Group>
-                    </Col>
-                  </Row>
-                  <Form.Group className="mb-3">
-                    <Form.Label>{t('description')} ({t('optional')})</Form.Label>
-                    <Form.Control as="textarea" rows={3} name="description" value={businessFormData.description} onChange={handleFormChange} placeholder={t('detailed_description_of_your_business')} />
+                    <div className="help-text">
+                      {t('website_help_text', "Trax will read your website and ask only for what's still missing.")}
+                    </div>
                   </Form.Group>
                   {businessError && <Alert variant="danger" className="mb-3">{businessError}</Alert>}
                 </Modal.Body>
                 <Modal.Footer>
-                  <Button variant="secondary" onClick={handleCloseCreateModal}>{t('cancel')}</Button>
-                  <Button variant="primary" type="submit">{isCreatingBusiness ? <Spinner size="sm" /> : t('create_business')}</Button>
+                  <button type="button" className="btn-cancel" onClick={handleCloseCreateModal}>
+                    {t('cancel', 'Cancel')}
+                  </button>
+                  <button 
+                    type="submit" 
+                    className="btn-continue" 
+                    disabled={isCreatingBusiness || !businessFormData.business_name.trim() || (!businessFormData.has_no_website && !businessFormData.website.trim())}
+                  >
+                    {isCreatingBusiness ? <Spinner size="sm" /> : (t('continue_with_trax', 'Continue with Trax') + ' →')}
+                  </button>
                 </Modal.Footer>
               </fieldset>
             </Form>

@@ -16,12 +16,12 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #2563eb !important;
+  color: var(--color-primary) !important;
   flex-shrink: 0;
 }
 
 .icon-box svg {
-  stroke: #2563eb !important;
+  stroke: var(--color-primary) !important;
 }
 
 .insight-list {
@@ -31,12 +31,12 @@
 }
 
 .insight-list li::marker {
-  color: #2563eb !important;
+  color: var(--color-primary) !important;
 }
 
 .pmf-insights-header .badge {
   background: #e8f0ff;
-  color: #2563eb;
+  color: var(--color-primary);
   padding: 6px 14px;
   border-radius: 20px;
   font-size: 13px;
@@ -120,7 +120,7 @@
 }
 
 .continue-btn {
-  background: #2563eb;
+  background: var(--color-primary);
   color: #fff;
   border: none;
   padding: 12px 32px;
@@ -131,7 +131,7 @@
 }
 
 .continue-btn:hover {
-  background: #1e4fd8;
+  background: var(--color-primary-dark);
 }
 
 
@@ -178,11 +178,11 @@
 }
 
 [data-theme="dark"] .icon-box {
-  background: rgba(37, 99, 235, 0.2);
+  background: rgba(12, 113, 185, 0.2);
 }
 
 [data-theme="dark"] .icon-box svg {
-  stroke: #4f46e5 !important;
+  stroke: var(--color-primary) !important;
 }
 
 [data-theme="dark"] .confidence.high {
@@ -196,6 +196,6 @@
 }
 
 [data-theme="dark"] .pmf-insights-header .badge {
-  background: rgba(37, 99, 235, 0.2);
-  color: #6366f1;
+  background: rgba(12, 113, 185, 0.2);
+  color: var(--color-primary-light);
 }

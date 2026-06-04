@@ -32,9 +32,9 @@
   --letter-spacing-wider: 1.5px;
   --letter-spacing-widest: 2px;
 
-  --color-primary: #4864a1;
+  --color-primary: #0C71B9;
 
-  --color-primary-dark: #3a56d4;
+  --color-primary-dark: #0B62A1;
 
   --color-primary-light: #9D96E8;
 
@@ -173,7 +173,7 @@
   --business-card-max-width-mobile: 350px;
   --business-card-max-width-desktop: 1000px;
 
-  --gradient-primary: linear-gradient(135deg, #4864a1, #3a56d4);
+  --gradient-primary: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
 
   --gradient-secondary: linear-gradient(135deg, #FF9800, #FF5722);
 
@@ -258,9 +258,9 @@
 
   --color-password-border: #4a4a4a;
 
-  --color-primary: #5b7cd6;
+  --color-primary: #0C71B9;
 
-  --color-primary-dark: #4a68c2;
+  --color-primary-dark: #0B62A1;
 
   --color-primary-light: #b3ade8;
 
@@ -321,7 +321,7 @@
   --button-bg: #333;
   --button-text: #fff;
 
-  --gradient-primary: linear-gradient(135deg, #5b7cd6, #9b59b6);
+  --gradient-primary: linear-gradient(135deg, var(--color-primary), #9b59b6);
 
   --gradient-secondary: linear-gradient(135deg, #e67e22, #d35400);
 
