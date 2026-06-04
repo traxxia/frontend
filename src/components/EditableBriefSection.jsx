@@ -1688,6 +1688,7 @@ const EditableBriefSection = ({
       : advancedFields;
 
   const isAnyApiActive = isEnriching || isApplyingEnrichment || isAnalyzingDocs || isAnalyzingFinancial;
+  const isAnyFileUploading = uploadedFiles.some(f => f.status === 'uploading');
 
   return (
     <div className="simple-workspace">
@@ -1880,13 +1881,20 @@ const EditableBriefSection = ({
                           <span className={`file-status-badge ${file.status}`} style={{ fontSize: '8px', padding: '1px 4px' }}>
                             {file.status === 'uploading' ? `${file.progress}%` : file.status}
                           </span>
-                          <button 
+                           <button 
                             onClick={(e) => {
                               e.stopPropagation();
-                              if (isAnyApiActive || !canEdit) return;
-                              handleRemoveFile(file.id, file.name);
+                              if (isAnyApiActive || !canEdit || isAnalyzingDocs || isAnyFileUploading) return;
+                              setConfirmModalConfig({
+                                title: t('Confirm File Deletion') || 'Confirm File Deletion',
+                                message: 'By doing this action will delete the file permanently.',
+                                onConfirm: () => {
+                                  handleRemoveFile(file.id, file.name);
+                                }
+                              });
+                              setShowConfirmModal(true);
                             }}
-                            disabled={isAnyApiActive || !canEdit}
+                            disabled={isAnyApiActive || !canEdit || isAnalyzingDocs || isAnyFileUploading}
                             className="sidebar-file-remove"
                             title="Remove File"
                           >
@@ -1901,7 +1909,7 @@ const EditableBriefSection = ({
                 <button
                   ref={analyzeBtnRef}
                   onClick={() => {
-                    if (!canEdit || strategyFiles.length === 0 || isAnyApiActive) return;
+                    if (!canEdit || strategyFiles.length === 0 || isAnyApiActive || isAnyFileUploading) return;
                     setConfirmModalConfig({
                       title: t('Confirm Document Analysis') || 'Analyze Strategic Documents',
                       message: 'By doing this, this will overwrite all the existing answers and it will regenerate the insights and strategic analysis. Are you sure you want to proceed?',
@@ -1911,7 +1919,7 @@ const EditableBriefSection = ({
                     });
                     setShowConfirmModal(true);
                   }}
-                  disabled={isAnyApiActive || !canEdit || strategyFiles.length === 0}
+                  disabled={isAnyApiActive || !canEdit || strategyFiles.length === 0 || isAnyFileUploading}
                   className="btn-analyze-docs"
                   style={{ marginTop: '12px', width: '100%' }}
                 >
@@ -2064,13 +2072,42 @@ const EditableBriefSection = ({
                         <div className="ledger-metrics-grid">
                           {metricsEntries.map(([metricKey, mData]) => {
                             const isEditing = editingMetric?.category === catKey && editingMetric?.key === metricKey;
-                            const displayValue = mData?.value !== null && mData?.value !== undefined 
-                              ? (catKey === "operational_efficiency" || metricKey === "revenue_growth_yoy" 
-                                  ? `${(mData.value * 100).toFixed(1)}%` 
-                                  : (mData.currency || "USD") === "USD" 
-                                    ? `$${mData.value.toLocaleString()}` 
-                                    : `${mData.value.toLocaleString()} ${mData.currency || ""}`)
-                              : "N/A";
+                            const displayValue = (() => {
+                              if (mData?.value === null || mData?.value === undefined) return "N/A";
+                              
+                              const lowerKey = metricKey.toLowerCase();
+                              
+                              // Percentage (%) -> Growth, Margins, ROA, ROE
+                              const isPercentage = 
+                                lowerKey.includes('growth') || 
+                                lowerKey.includes('margin') || 
+                                lowerKey === 'roa' || 
+                                lowerKey === 'roe';
+                                
+                              if (isPercentage) {
+                                return `${(mData.value * 100).toFixed(1)}%`;
+                              }
+                              
+                              // Plain numbers -> Current Ratio, Quick Ratio, Debt-to-Equity, Interest Coverage, Employees
+                              const isPlainNumber = 
+                                lowerKey.includes('ratio') || 
+                                lowerKey.includes('coverage') || 
+                                lowerKey.includes('debt_to_equity') || 
+                                lowerKey === 'employees';
+                                
+                              if (isPlainNumber) {
+                                return mData.value.toLocaleString(undefined, { 
+                                  minimumFractionDigits: 0, 
+                                  maximumFractionDigits: 2 
+                                });
+                              }
+                              
+                              // Dollar sign ($) -> Revenue, Profit, EBITDA, Income, Cash, Assets, Equity, COGS, OPEX, R&D, CAPEX
+                              if ((mData.currency || "USD") === "USD") {
+                                return `$${mData.value.toLocaleString()}`;
+                              }
+                              return `${mData.value.toLocaleString()} ${mData.currency || ""}`;
+                            })();
 
                             return (
                               <div key={metricKey} className="ledger-metric-card">
