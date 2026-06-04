@@ -15,6 +15,7 @@ import DOMPurify from 'dompurify';
 import RichTextEditor from './RichTextEditor';
 import { markdownToHtml } from '../utils/markdownHelper';
 import ConfirmationModal from './ConfirmationModal';
+import { formatCurrencyValue } from '../utils/currencyUtils';
 
 let globalLimitsPromise = null;
 const sessionCache = new Map();
@@ -559,7 +560,7 @@ const EditableBriefSection = ({
         formData.append('files', file, file.name);
       });
 
-      const financialMetrics = await answerService.extractFinancialSummary(formData);
+      const financialMetrics = await answerService.extractFinancialSummary(formData, businessId);
       console.log("=== extracted financial metrics ===", financialMetrics);
 
       setSseLogs(prev => [...prev, {
@@ -1485,7 +1486,7 @@ const EditableBriefSection = ({
       // 2. Call the ML strategic analysis API (document-qa) with ALL uploaded documents
       let mlResult = { answers: [] };
       if (fetchedFiles.length > 0) {
-        mlResult = await answerService.analyzeStrategicDocumentsML(fetchedFiles);
+        mlResult = await answerService.analyzeStrategicDocumentsML(fetchedFiles, selectedBusinessId);
         console.log("=== strategic document QA response ===", mlResult);
       }
       
@@ -2102,11 +2103,8 @@ const EditableBriefSection = ({
                                 });
                               }
                               
-                              // Dollar sign ($) -> Revenue, Profit, EBITDA, Income, Cash, Assets, Equity, COGS, OPEX, R&D, CAPEX
-                              if ((mData.currency || "USD") === "USD") {
-                                return `$${mData.value.toLocaleString()}`;
-                              }
-                              return `${mData.value.toLocaleString()} ${mData.currency || ""}`;
+                              // Currency formatting using common utility
+                              return formatCurrencyValue(mData.value, mData.currency || "USD");
                             })();
 
                             return (

@@ -5,7 +5,7 @@ export class ExcelAnalysisService {
     this.setApiLoading = setApiLoading;
   }
 
-  async generateExcelAnalysis(uploadedFile, questions, userAnswers, metricType = null) {
+  async generateExcelAnalysis(uploadedFile, questions, userAnswers, metricType = null, businessId = null) {
     this.setApiLoading('excel-analysis', true);
 
     try {
@@ -40,12 +40,25 @@ export class ExcelAnalysisService {
         url += `?${params.toString()}`;
       }
 
+      // Build observatory headers
+      const customHeaders = {
+        'accept': 'application/json',
+        'source': 'simple'
+      };
+      try {
+        const authState = JSON.parse(
+          sessionStorage.getItem('auth-storage') || localStorage.getItem('auth-storage') || '{}'
+        );
+        const isObservatory = authState?.state?.isObservatory === true;
+        customHeaders['x-is-observatory'] = isObservatory ? 'true' : 'false';
+        if (businessId) {
+          customHeaders['x-business-id'] = String(businessId);
+        }
+      } catch (_) {}
+
       const response = await fetch(url, {
         method: 'POST',
-        headers: {
-          'accept': 'application/json',
-          'source': 'simple'
-        },
+        headers: customHeaders,
         body: formData
       });
 
