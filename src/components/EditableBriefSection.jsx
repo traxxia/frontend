@@ -2103,7 +2103,7 @@ const EditableBriefSection = ({
                                             });
                                           }}
                                         >
-                                          Ref: {displayRef}
+                                          Citation
                                         </span>
                                       );
                                     })()}
