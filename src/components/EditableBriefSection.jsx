@@ -498,6 +498,7 @@ const EditableBriefSection = ({
 
         const sData = await sPromise;
         if (active) {
+          console.log("=== loaded Document Intelligence session ===", sData);
           setDocIntelSession(sData);
         }
       } catch (err) {
@@ -559,6 +560,7 @@ const EditableBriefSection = ({
       });
 
       const financialMetrics = await answerService.extractFinancialSummary(formData);
+      console.log("=== extracted financial metrics ===", financialMetrics);
 
       setSseLogs(prev => [...prev, {
         timestamp: new Date().toLocaleTimeString(),
@@ -601,6 +603,7 @@ const EditableBriefSection = ({
 
       // Load latest session state to update local UI State
       const sData = await answerService.getSessionByBusiness(businessId);
+      console.log("=== session state after sync ===", sData);
       if (sData && sData.hasSession !== false) {
         sessionCache.set(businessId, Promise.resolve(sData));
         setDocIntelSession(sData);
@@ -1483,6 +1486,7 @@ const EditableBriefSection = ({
       let mlResult = { answers: [] };
       if (fetchedFiles.length > 0) {
         mlResult = await answerService.analyzeStrategicDocumentsML(fetchedFiles);
+        console.log("=== strategic document QA response ===", mlResult);
       }
       
       if (!mlResult || !Array.isArray(mlResult.answers)) {
@@ -1573,9 +1577,11 @@ const EditableBriefSection = ({
 
       // 3. Trigger full insights & strategic & financial regeneration
       if (onAnalysisRegenerate) {
+        const hasStrategicAnswers = Object.values(useAnalysisStore.getState().userAnswers || {}).some(ans => ans && ans.trim());
         onAnalysisRegenerate({
-          alsoRegenerateStrategic: true,
+          alsoRegenerateStrategic: hasStrategicAnswers,
           includeFinancial: true,
+          onlyFinancial: !hasStrategicAnswers,
           skipConfirmation: true
         });
       }
@@ -1601,7 +1607,16 @@ const EditableBriefSection = ({
     if (drawerOpen && drawerData && drawerData.title === data.title) {
       setDrawerOpen(false);
     } else {
-      setDrawerData(data);
+      let normalizedData = { ...data };
+      if (!Array.isArray(normalizedData.evidence)) {
+        normalizedData.evidence = [{
+          document_name: data.doc || data.document_name || 'Strategic Document',
+          page: data.page || null,
+          sheet: data.sheet || data.source_sheet || data.cell || null,
+          text: data.text || data.excerpt || ''
+        }];
+      }
+      setDrawerData(normalizedData);
       setDrawerOpen(true);
     }
   };
@@ -2062,23 +2077,36 @@ const EditableBriefSection = ({
                                 <div className="ledger-metric-info">
                                   <span className="ledger-metric-name">{metricKey.replace(/_/g, ' ')}</span>
                                   <div className="ledger-metric-subtext">
-                                    {(mData?.source_page || mData?.source_sheet) && (
-                                      <span 
-                                        className="ledger-metric-citation"
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          handleOpenReference({
-                                            title: `FINANCIAL INDICATOR: ${metricKey.replace(/_/g, ' ').toUpperCase()}`,
-                                            doc: docIntelSession.uploadedDocuments?.[0]?.original_name || "financial_statement.xlsx",
-                                            excerpt: mData.excerpt || `Disclosed financial metric in ${mData.source_sheet ? `sheet ${mData.source_sheet}` : 'balance sheet worksheets'}.`,
-                                            cell: mData.source_page ? `Page ${mData.source_page}` : `Sheet ${mData.source_sheet}`,
-                                            page: mData.source_page || null
-                                          });
-                                        }}
-                                      >
-                                        Ref: {mData.source_page ? `Page ${mData.source_page}` : mData.source_sheet}
-                                      </span>
-                                    )} 
+                                    {(() => {
+                                      const citation = mData?.citation;
+                                      const sourcePage = citation?._metadata?.page || mData?.source_page;
+                                      const sourceSheet = citation?._metadata?.sheet || mData?.source_sheet;
+                                      const citationText = citation?.text || mData?.excerpt;
+                                      const citationFilename = citation?.filename || docIntelSession?.uploadedDocuments?.[0]?.original_name || "financial_statement.xlsx";
+                                      const hasCitation = !!(citation || sourcePage || sourceSheet);
+                                      const displayRef = sourcePage ? `Page ${sourcePage}` : (sourceSheet ? sourceSheet : '');
+
+                                      if (!hasCitation) return null;
+
+                                      return (
+                                        <span 
+                                          className="ledger-metric-citation"
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleOpenReference({
+                                              title: `FINANCIAL INDICATOR: ${metricKey.replace(/_/g, ' ').toUpperCase()}`,
+                                              doc: citationFilename,
+                                              excerpt: citationText || `Disclosed financial metric in ${sourceSheet ? `sheet ${sourceSheet}` : 'balance sheet worksheets'}.`,
+                                              cell: sourcePage ? `Page ${sourcePage}` : (sourceSheet ? `Sheet ${sourceSheet}` : ''),
+                                              page: sourcePage || null,
+                                              sheet: sourceSheet || null
+                                            });
+                                          }}
+                                        >
+                                          Ref: {displayRef}
+                                        </span>
+                                      );
+                                    })()}
                                   </div>
                                 </div>
 

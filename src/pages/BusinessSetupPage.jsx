@@ -740,9 +740,14 @@ const BusinessSetupPage = () => {
     const skipConfirmation = options?.skipConfirmation || false;
 
     const performPhaseRegeneration = async () => {
-      //showToastMessage(`Regenerating ${targetPhase} phase...`, 'info');
       const state = useAnalysisStore.getState();
       const { questions: storeQuestions, userAnswers: storeUserAnswers, regeneratePhase: storeRegeneratePhase } = state;
+
+      const hasAnswers = Object.values(storeUserAnswers || {}).some(answer => answer && String(answer).trim().length > 0);
+      if (!hasAnswers && targetPhase !== 'financial') {
+        console.warn(`Skipping regeneration for phase ${targetPhase}: No answers found in store.`);
+        return;
+      }
 
       // Merge uploadedFile from options into userAnswers context for the store
       const mergedAnswers = { ...storeUserAnswers };
@@ -829,6 +834,18 @@ const BusinessSetupPage = () => {
         showToastMessage(t('regeneration_in_progress'), 'info');
         return;
       }
+
+      const latestStoreState = useAnalysisStore.getState();
+      const hasAnswers = Object.values(latestStoreState.userAnswers || {}).some(answer => answer && String(answer).trim().length > 0);
+      
+      if (!hasAnswers && !options?.onlyFinancial) {
+        console.warn("Skipping full insights regeneration: No answers found in store.");
+        if (options?.includeFinancial || hasUploadedDocument) {
+          await handleRegeneratePhase('financial', false, { ...options, skipConfirmation: true });
+        }
+        return;
+      }
+
       isRegeneratingRef.current = true;
       try {
         if (options?.onlyFinancial) {
