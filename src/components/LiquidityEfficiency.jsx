@@ -1,43 +1,68 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { Activity, Loader, AlertCircle } from 'lucide-react';
+import { Activity, Loader, AlertCircle, Info } from 'lucide-react';
 import '../styles/goodPhase.css';
 import { useTranslation } from "../hooks/useTranslation";
 import { useAnalysisStore } from "../store";
 import FinancialEmptyState from './FinancialEmptyState';
-import CitationSource from './CitationSource';
 import { checkMissingQuestionsAndRedirect, ANALYSIS_TYPES } from '../services/missingQuestionsService';
-const getTrafficLightColor = (value, threshold, metricType, t) => {
-  if (!threshold || threshold === 'NA' || threshold === null || threshold === undefined) {
-    return '#6b7280';
+
+// Custom normalizer for both old and new response formats
+const parseMetric = (rawVal) => {
+  if (rawVal === null || rawVal === undefined) {
+    return { value: null, currency: null, period: null, citation: null };
   }
-  const numValue = typeof value === 'string' ? parseFloat(value.replace(/[,$%]/g, '')) : value;
-  const numThreshold = typeof threshold === 'string' ? parseFloat(threshold.replace(/[,$%]/g, '')) : threshold;
-  if (isNaN(numValue) || isNaN(numThreshold)) {
-    return '#6b7280';
+  if (typeof rawVal === 'object') {
+    return {
+      value: rawVal.value !== undefined ? rawVal.value : null,
+      currency: rawVal.currency || null,
+      period: rawVal.period || null,
+      citation: rawVal.citation || null
+    };
   }
-  if (metricType === 'Cash Conversion Cycle' || t && metricType === t('cash_conversion_cycle')) {
-    if (numValue <= numThreshold * 0.9) return '#10b981';
-    if (numValue <= numThreshold * 1.1) return '#f59e0b';
-    return '#ef4444';
-  } else {
-    if (numValue >= numThreshold * 1.1) return '#10b981';
-    if (numValue >= numThreshold * 0.9) return '#f59e0b';
-    return '#ef4444';
-  }
+  return {
+    value: rawVal,
+    currency: null,
+    period: null,
+    citation: null
+  };
 };
-const parseRatioValue = value => {
-  if (value === null || value === undefined || value === '' || value === 'NA') return 0;
-  if (typeof value === 'string') {
-    const numValue = parseFloat(value.replace(/[,$%days ]/g, ''));
-    return isNaN(numValue) ? 0 : numValue;
+
+const getRatioStatus = (key, value) => {
+  if (value === null || value === undefined) return { label: 'N/A', colorClass: 'null' };
+  
+  if (key === 'current_ratio') {
+    if (value >= 1.5) return { label: 'Optimal', colorClass: 'green' };
+    if (value >= 1.0) return { label: 'Adequate', colorClass: 'yellow' };
+    return { label: 'Low', colorClass: 'red' };
   }
-  return typeof value === 'number' ? value : 0;
+  
+  if (key === 'quick_ratio') {
+    if (value >= 1.0) return { label: 'Optimal', colorClass: 'green' };
+    if (value >= 0.8) return { label: 'Adequate', colorClass: 'yellow' };
+    return { label: 'Low', colorClass: 'red' };
+  }
+  
+  if (key === 'cash_ratio') {
+    if (value >= 0.5) return { label: 'Optimal', colorClass: 'green' };
+    if (value >= 0.2) return { label: 'Adequate', colorClass: 'yellow' };
+    return { label: 'Low', colorClass: 'red' };
+  }
+  
+  return { label: 'N/A', colorClass: 'null' };
 };
-const getCitationUrl = (metricKey, citations) => {
-  if (!citations) return null;
-  const searchKey = metricKey.toLowerCase().replace(/ /g, '_');
-  return citations[searchKey] || citations[metricKey] || null;
+
+const formatCurrencyValue = (val, currency) => {
+  if (val === null || val === undefined || val === '') return '-';
+  const num = typeof val === 'string' ? parseFloat(val.replace(/[,$%]/g, '')) : val;
+  if (isNaN(num)) return val;
+  const formatter = new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: currency || 'USD',
+    maximumFractionDigits: 0
+  });
+  return formatter.format(num);
 };
+
 const getNormalizedData = data => {
   if (!data) return null;
   if (data.liquidity) return data.liquidity;
@@ -46,142 +71,77 @@ const getNormalizedData = data => {
   if (wrapper) return wrapper.liquidity || wrapper;
   return null;
 };
-const extractLiquidityMetrics = (data, t, keyMappings) => {
-  const normalized = getNormalizedData(data);
-  if (!normalized) return {
-    metrics: {},
-    thresholds: {},
-    citations: {}
-  };
-  const transformedMetrics = {};
-  const thresholds = {};
-  const citations = normalized.citations || {};
-  Object.entries(normalized).forEach(([key, value]) => {
-    if (key === 'citations') return;
-    if (key.includes('_threshold') || key.includes('threshold')) {
-      const baseKey = key.replace('_threshold', '').replace('threshold', '');
-      const displayKey = keyMappings[baseKey] || baseKey.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase());
-      thresholds[displayKey] = value;
-    } else {
-      const displayKey = keyMappings[key] || key.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase());
-      transformedMetrics[displayKey] = value;
-    }
-  });
-  return {
-    metrics: transformedMetrics,
-    thresholds,
-    citations
-  };
-};
+
 const isLiquidityDataIncomplete = data => {
   const normalized = getNormalizedData(data);
   if (!normalized) return true;
-  const hasValidRatio = Object.entries(normalized).some(([key, value]) => {
-    if (key.includes('_threshold') || key.includes('threshold') || key === 'citations') {
-      return false;
-    }
-    return value !== null && value !== undefined && !isNaN(parseFloat(value));
+  
+  // Check if at least one ratio has a valid value. If all 3 ratios are empty, treat as incomplete/empty state.
+  const ratioMetrics = ['current_ratio', 'quick_ratio', 'cash_ratio'];
+  const hasValidRatio = ratioMetrics.some(key => {
+    const parsed = parseMetric(normalized[key]);
+    return parsed.value !== null && parsed.value !== undefined && parsed.value !== '' && !isNaN(parseFloat(parsed.value));
   });
-  return !hasValidRatio;
+  
+  if (!hasValidRatio) return true;
+
+  const metricsToCheck = [
+    'current_ratio',
+    'quick_ratio',
+    'cash_ratio',
+    'operating_cash_flow',
+    'working_capital',
+    'cash_and_equivalents'
+  ];
+  
+  const hasValidValue = metricsToCheck.some(key => {
+    const parsed = parseMetric(normalized[key]);
+    return parsed.value !== null && parsed.value !== undefined && parsed.value !== '' && !isNaN(parseFloat(parsed.value));
+  });
+  
+  return !hasValidValue;
 };
-const PairedBarChart = React.memo(({
-  metrics,
-  thresholds,
-  citations,
-  t,
-  activeBusinessName
-}) => {
-  const [containerWidth, setContainerWidth] = useState(600);
-  const containerRef = useRef(null);
-  const chartData = useMemo(() => {
-    return Object.entries(metrics).filter(([key, value]) => value !== null && value !== undefined && value !== '').map(([key, value]) => ({
-      metric: key,
-      actualValue: parseRatioValue(value),
-      benchmarkValue: parseRatioValue(thresholds[key]),
-      color: getTrafficLightColor(value, thresholds[key], key, t),
-      hasData: value !== null && value !== undefined && value !== '',
-      type: key,
-      citationUrl: getCitationUrl(key, citations)
-    }));
-  }, [metrics, thresholds, citations, t]);
-  useEffect(() => {
-    const updateWidth = () => {
-      if (containerRef.current) {
-        const width = containerRef.current.offsetWidth - 40;
-        setContainerWidth(Math.max(width, 500));
-      }
-    };
-    updateWidth();
-    window.addEventListener('resize', updateWidth);
-    return () => window.removeEventListener('resize', updateWidth);
-  }, []);
-  if (chartData.length === 0) return null;
-  const maxValue = Math.max(...chartData.map(d => Math.max(d.actualValue, d.benchmarkValue)), 10);
-  const chartHeight = chartData.length * 120 + 40;
-  const chartWidth = containerWidth;
-  const leftMargin = 160;
-  const rightMargin = 60;
-  const barHeight = 25;
-  const groupSpacing = 120;
-  const formatDisplayValue = (value, type) => {
-    if (type === 'Cash Conversion Cycle' || t && type === t('cash_conversion_cycle')) {
-      return `${value.toFixed(0)} ${t ? t('days_label') : 'days'}`;
-    }
-    return value.toFixed(2);
-  };
-  return <div ref={containerRef} className="liquidity-efficiency--s1">
-      <div className="liquidity-efficiency--s2">
-        <h3 className="liquidity-efficiency--s3">
-          {t ? t('liquidity_metrics_vs_benchmarks') : 'Liquidity Metrics vs Benchmarks'}
-        </h3>
 
-        <div className="liquidity-efficiency--s4">
-          <div className="liquidity-efficiency--s5">
-            <div className="liquidity-efficiency--s6"></div>
-            <span className="liquidity-efficiency--s7">{activeBusinessName}</span>
+const MetricCitation = ({ citation }) => {
+  if (!citation || (!citation.filename && !citation.text)) return null;
+  const sourceName = citation.filename || 'Source Document';
+  const pageInfo = citation._metadata?.page ? `Page ${citation._metadata.page}` : '';
+  const sheetInfo = citation._metadata?.sheet ? `Sheet: ${citation._metadata.sheet}` : '';
+  const location = [pageInfo, sheetInfo].filter(Boolean).join(', ');
+  const displaySource = location ? `${sourceName} (${location})` : sourceName;
+
+  return (
+    <div className="liquidity-efficiency__citation-badge" title={citation.text || ''}>
+      <Info size={12} style={{ display: 'inline', marginRight: '4px', verticalAlign: 'middle' }} />
+      <span>{displaySource}</span>
+    </div>
+  );
+};
+
+const ReserveCard = ({ label, metric }) => {
+  const { t } = useTranslation();
+  const { value, currency, period, citation } = metric;
+  
+  return (
+    <div className="liquidity-efficiency__reserve-card">
+      <div className="liquidity-efficiency__reserve-header">
+        <div className="liquidity-efficiency__reserve-title">{label}</div>
+        {period && (
+          <div className="liquidity-efficiency__reserve-period">
+            {t('period', 'Period')}: {period}
           </div>
-          <div className="liquidity-efficiency--s5">
-            <div className="liquidity-efficiency--s8"></div>
-            <span className="liquidity-efficiency--s7">{t ? t('Industry_Average') : 'Industry Average'}</span>
-          </div>
+        )}
+      </div>
+      <div className="liquidity-efficiency__reserve-body">
+        <div className="liquidity-efficiency__reserve-value">
+          {formatCurrencyValue(value, currency)}
         </div>
+        <MetricCitation citation={citation} />
       </div>
+    </div>
+  );
+};
 
-      <div className="liquidity-efficiency--s9">
-        <svg width={chartWidth} height={chartHeight} className="liquidity-efficiency--s10">
-          <rect width={chartWidth} height={chartHeight} fill="#ffffff" />
-
-          {chartData.map((data, index) => {
-          const y = index * groupSpacing + 20;
-          const barWidth = chartWidth - leftMargin - rightMargin;
-          const actualBarLength = data.actualValue / maxValue * barWidth;
-          const benchmarkBarLength = data.benchmarkValue / maxValue * barWidth;
-          return <g key={data.metric}>
-                <text x={leftMargin - 15} y={y + 15} textAnchor="end" fontSize="13" fontWeight="500" fill="#374151" fontFamily="Inter, system-ui, sans-serif">
-                  {data.metric}
-                </text>
-
-                <rect x={leftMargin} y={y} width={actualBarLength} height={barHeight} fill={data.color} rx="4" fillOpacity="0.9" />
-
-                <rect x={leftMargin} y={y + barHeight + 4} width={benchmarkBarLength} height={barHeight} fill="#94a3b8" rx="4" fillOpacity="0.4" />
-
-                <text x={leftMargin + actualBarLength + 8} y={y + 17} fontSize="12" fontWeight="600" fill={data.color} fontFamily="Inter, system-ui, sans-serif">
-                  {formatDisplayValue(data.actualValue, data.type)}
-                </text>
-
-                <text x={leftMargin + benchmarkBarLength + 8} y={y + barHeight + 23} fontSize="12" fontWeight="500" fill="#6b7280" fontFamily="Inter, system-ui, sans-serif">
-                  {formatDisplayValue(data.benchmarkValue, data.type)}
-                </text>
-
-                <CitationSource url={data.citationUrl} x={leftMargin} y={y + barHeight * 2 + 22} />
-
-                {index < chartData.length - 1 && <line x1={0} y1={y + barHeight * 2 + 45} x2={chartWidth} y2={y + barHeight * 2 + 45} stroke="#f3f4f6" strokeWidth="1" />}
-              </g>;
-        })}
-        </svg>
-      </div>
-    </div>;
-});
 const LiquidityEfficiency = ({
   questions = [],
   userAnswers = {},
@@ -201,15 +161,14 @@ const LiquidityEfficiency = ({
   readOnly = false,
   documentInfo = null
 }) => {
-  const {
-    t
-  } = useTranslation();
+  const { t } = useTranslation();
   const {
     liquidityEfficiencyData: storeLiquidityData,
     isRegenerating: isTypeRegenerating,
     regenerateIndividualAnalysis
   } = useAnalysisStore();
   const isRegenerating = propIsRegenerating || isTypeRegenerating('liquidityEfficiency');
+  
   const analysisData = useMemo(() => {
     const rawData = liquidityData || liquidityEfficiencyData || storeLiquidityData;
     if (!rawData) return null;
@@ -218,100 +177,466 @@ const LiquidityEfficiency = ({
       liquidity: normalized
     } : null;
   }, [liquidityData, liquidityEfficiencyData, storeLiquidityData]);
+
   const [error, setError] = useState(null);
   const fileInputRef = useRef(null);
-  const activeBusinessName = businessName || t('yourBusiness');
+
+  const activeBusinessName = businessName || t('yourBusiness', 'Your Business');
+
   const handleRedirectToBrief = useCallback((missingQuestionsData = null) => {
     if (onRedirectToBrief) {
       onRedirectToBrief(missingQuestionsData);
     }
   }, [onRedirectToBrief]);
+
   const handleMissingQuestionsCheck = useCallback(async () => {
     const analysisConfig = ANALYSIS_TYPES.liquidityEfficiency || {
-      displayName: t('Liquidity_Efficiency'),
-      customMessage: t('liquidity_efficiency_unlock_msg')
+      displayName: t('Liquidity_Efficiency', 'Liquidity & Efficiency'),
+      customMessage: t('liquidity_efficiency_unlock_msg', 'Answer more questions to unlock detailed liquidity analysis')
     };
     await checkMissingQuestionsAndRedirect('liquidityEfficiency', selectedBusinessId, handleRedirectToBrief, {
       displayName: analysisConfig.displayName,
       customMessage: analysisConfig.customMessage
     });
   }, [selectedBusinessId, handleRedirectToBrief, t]);
+
   const handleRegenerate = useCallback(async () => {
     if (onRegenerate) {
       try {
         setError(null);
         await onRegenerate();
       } catch (error) {
-        setError(t('failed_to_generate'));
+        setError(t('failed_to_generate', 'Failed to generate analysis'));
       }
     } else {
       try {
         setError(null);
         await regenerateIndividualAnalysis('liquidityEfficiency', questions, userAnswers, selectedBusinessId);
       } catch (error) {
-        setError(t('failed_to_generate'));
+        setError(t('failed_to_generate', 'Failed to generate analysis'));
       }
     }
   }, [onRegenerate, regenerateIndividualAnalysis, questions, userAnswers, selectedBusinessId, t]);
+
   const handleFileUpload = useCallback(file => {
     if (file) {
       const allowedTypes = ['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/vnd.ms-excel', 'text/csv'];
       if (allowedTypes.includes(file.type)) {
         setError(null);
       } else {
-        setError(t('upload_excel_csv_error') || 'Please upload an Excel or CSV file.');
+        setError(t('upload_excel_csv_error', 'Please upload an Excel or CSV file.'));
       }
     }
   }, [t]);
+
   const removeFile = useCallback(() => {
     if (fileInputRef.current) fileInputRef.current.value = '';
   }, []);
+
   if (isRegenerating) {
-    return <div className="channel-heatmap channel-heatmap-container">
+    return (
+      <div className="channel-heatmap channel-heatmap-container">
         <div className="loading-state">
           <Loader size={24} className="loading-spinner" />
-          <span>{t('generating_liquidity_analysis')}</span>
+          <span>{t('generating_liquidity_analysis', 'Generating liquidity & efficiency analysis...')}</span>
         </div>
-      </div>;
+      </div>
+    );
   }
+
   const renderContent = () => {
     if (error) {
-      return <div className="liquidity-efficiency__warning">
+      return (
+        <div className="liquidity-efficiency__warning">
           <AlertCircle size={20} color="#f59e0b" />
           <div>
-            <h4 className="liquidity-efficiency__warning-title">{t('analysis_error')}</h4>
+            <h4 className="liquidity-efficiency__warning-title">{t('analysis_error', 'Analysis Error')}</h4>
             <p className="liquidity-efficiency__warning-text">{error}</p>
           </div>
-        </div>;
-    }
-    if (!analysisData || isLiquidityDataIncomplete(analysisData)) {
-      return <FinancialEmptyState analysisType="liquidityEfficiency" analysisDisplayName={t('liquidity_analysis_display_name')} icon={Activity} onImproveAnswers={handleMissingQuestionsCheck} onRegenerate={handleRegenerate} isRegenerating={isRegenerating} canRegenerate={canRegenerate} readOnly={readOnly} userAnswers={userAnswers} minimumAnswersRequired={3} showFileUpload={true} onFileUpload={handleFileUpload} uploadedFile={uploadedFile} onRemoveFile={removeFile} onRedirectToChat={onRedirectToChat} isMobile={isMobile} setActiveTab={setActiveTab} hasUploadedDocument={hasUploadedDocument} fileUploadMessage={t('liquidity_upload_msg')} acceptedFileTypes=".xlsx,.xls,.csv" documentInfo={documentInfo} />;
-    }
-    const keyMappings = {
-      'current_ratio': t('current_ratio'),
-      'quick_ratio': t('quick_ratio'),
-      'cash_conversion_cycle': t('cash_conversion_cycle')
-    };
-    const {
-      metrics: liquidityMetrics,
-      thresholds,
-      citations
-    } = extractLiquidityMetrics(analysisData, t, keyMappings);
-    return <div className="ch-heatmap-container">
-        <div className="ch-heatmap-scroll">
-          {Object.values(liquidityMetrics).every(value => value === null) && <div className="liquidity-efficiency__warning">
-              <AlertCircle size={20} color="#f59e0b" />
-              <div>
-                <h4 className="liquidity-efficiency__warning-title">{t('no_liquidity_data_available')}</h4>
-                <p className="liquidity-efficiency__warning-text">{t('upload_excel_required_ratios')}</p>
-              </div>
-            </div>}
-          <PairedBarChart metrics={liquidityMetrics} thresholds={thresholds} citations={citations} t={t} activeBusinessName={activeBusinessName} />
         </div>
-      </div>;
+      );
+    }
+
+    if (!analysisData || isLiquidityDataIncomplete(analysisData)) {
+      return (
+        <FinancialEmptyState 
+          analysisType="liquidityEfficiency" 
+          analysisDisplayName={t('liquidity_analysis_display_name', 'Liquidity & Efficiency Analysis')} 
+          icon={Activity} 
+          onImproveAnswers={handleMissingQuestionsCheck} 
+          onRegenerate={handleRegenerate} 
+          isRegenerating={isRegenerating} 
+          canRegenerate={canRegenerate} 
+          readOnly={readOnly} 
+          userAnswers={userAnswers} 
+          minimumAnswersRequired={3} 
+          showFileUpload={true} 
+          onFileUpload={handleFileUpload} 
+          uploadedFile={uploadedFile} 
+          onRemoveFile={removeFile} 
+          onRedirectToChat={onRedirectToChat} 
+          isMobile={isMobile} 
+          setActiveTab={setActiveTab} 
+          hasUploadedDocument={hasUploadedDocument} 
+          fileUploadMessage={t('liquidity_upload_msg', 'Upload Excel or CSV files with financial data for liquidity & efficiency analysis')} 
+          acceptedFileTypes=".xlsx,.xls,.csv" 
+          documentInfo={documentInfo} 
+        />
+      );
+    }
+
+    const normalized = getNormalizedData(analysisData);
+    
+    // Parse all metric fields safely using the unified parseMetric normalizer
+    const currentRatio = parseMetric(normalized.current_ratio);
+    const quickRatio = parseMetric(normalized.quick_ratio);
+    const cashRatio = parseMetric(normalized.cash_ratio);
+    const operatingCashFlow = parseMetric(normalized.operating_cash_flow);
+    const workingCapital = parseMetric(normalized.working_capital);
+    const cashAndEquivalents = parseMetric(normalized.cash_and_equivalents);
+
+    const chartRows = [
+      {
+        key: 'current_ratio',
+        label: t('current_ratio', 'Current Ratio'),
+        actualValue: currentRatio.value,
+        colorClass: getRatioStatus('current_ratio', currentRatio.value).colorClass,
+        period: currentRatio.period,
+        citation: currentRatio.citation
+      },
+      {
+        key: 'quick_ratio',
+        label: t('quick_ratio', 'Quick Ratio'),
+        actualValue: quickRatio.value,
+        colorClass: getRatioStatus('quick_ratio', quickRatio.value).colorClass,
+        period: quickRatio.period,
+        citation: quickRatio.citation
+      },
+      {
+        key: 'cash_ratio',
+        label: t('cash_ratio', 'Cash Ratio'),
+        actualValue: cashRatio.value,
+        colorClass: getRatioStatus('cash_ratio', cashRatio.value).colorClass,
+        period: cashRatio.period,
+        citation: cashRatio.citation
+      }
+    ];
+
+    // Calculate maximum value for chart scaling (cap minimum at 3.0)
+    const maxValue = Math.max(
+      ...chartRows.map(r => r.actualValue || 0),
+      3.0
+    );
+
+    return (
+      <div className="ch-heatmap-container" style={{ width: '100%' }}>
+        <style dangerouslySetInnerHTML={{__html: `
+          .liquidity-efficiency__chart-card {
+            background-color: #fff;
+            border-radius: 12px;
+            padding: 16px;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            margin-bottom: 16px;
+            width: 100%;
+          }
+          [data-theme="dark"] .liquidity-efficiency__chart-card {
+            background-color: #1f2937;
+            border-color: #374151;
+          }
+          .liquidity-efficiency__chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+            gap: 16px;
+          }
+          .liquidity-efficiency__chart-title {
+            font-size: 15px;
+            font-weight: 600;
+            color: #111827;
+            margin: 0;
+          }
+          [data-theme="dark"] .liquidity-efficiency__chart-title {
+            color: #f3f4f6;
+          }
+          .liquidity-efficiency__chart-rows {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+          }
+          .liquidity-efficiency__chart-row {
+            display: grid;
+            grid-template-columns: 180px 1fr;
+            align-items: center;
+            gap: 24px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #f3f4f6;
+          }
+          .liquidity-efficiency__chart-row:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+          }
+          [data-theme="dark"] .liquidity-efficiency__chart-row {
+            border-bottom-color: #374151;
+          }
+          .liquidity-efficiency__row-info {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+          }
+          .liquidity-efficiency__label-citation {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+          }
+          .liquidity-efficiency__row-label {
+            font-size: 14px;
+            font-weight: 600;
+            color: #374151;
+            line-height: 1.2;
+          }
+          [data-theme="dark"] .liquidity-efficiency__row-label {
+            color: #e5e7eb;
+          }
+          .liquidity-efficiency__row-period {
+            font-size: 11px;
+            color: #6b7280;
+            line-height: 1;
+            margin-top: 2px;
+          }
+          [data-theme="dark"] .liquidity-efficiency__row-period {
+            color: #9ca3af;
+          }
+          .liquidity-efficiency__bar-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            width: 100%;
+          }
+          .liquidity-efficiency__bar {
+            height: 14px;
+            border-radius: 4px;
+            transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            min-width: 4px;
+          }
+          .liquidity-efficiency__bar--actual-green {
+            background: linear-gradient(90deg, #34d399 0%, #10b981 100%);
+          }
+          .liquidity-efficiency__bar--actual-yellow {
+            background: linear-gradient(90deg, #fbbf24 0%, #f59e0b 100%);
+          }
+          .liquidity-efficiency__bar--actual-red {
+            background: linear-gradient(90deg, #f87171 0%, #ef4444 100%);
+          }
+          .liquidity-efficiency__bar--actual-null {
+            background-color: #e5e7eb;
+            border: 1px dashed #9ca3af;
+          }
+          [data-theme="dark"] .liquidity-efficiency__bar--actual-null {
+            background-color: #374151;
+            border-color: #4b5563;
+          }
+          .liquidity-efficiency__bar-value {
+            font-size: 11px;
+            font-weight: 600;
+            white-space: nowrap;
+            width: 36px;
+            flex-shrink: 0;
+          }
+          .liquidity-efficiency__bar-value--actual-green {
+            color: #10b981;
+          }
+          .liquidity-efficiency__bar-value--actual-yellow {
+            color: #d97706;
+          }
+          [data-theme="dark"] .liquidity-efficiency__bar-value--actual-yellow {
+            color: #f59e0b;
+          }
+          .liquidity-efficiency__bar-value--actual-red {
+            color: #ef4444;
+          }
+          .liquidity-efficiency__bar-value--actual-null {
+            color: #374151;
+            font-size: 14px;
+            font-weight: 700;
+          }
+          [data-theme="dark"] .liquidity-efficiency__bar-value--actual-null {
+            color: #e5e7eb;
+          }
+          .liquidity-efficiency__section-title {
+            font-size: 15px;
+            font-weight: 600;
+            color: #374151;
+            margin: 20px 0 12px 0;
+            padding-bottom: 6px;
+            border-bottom: 1px solid #e2e8f0;
+          }
+          [data-theme="dark"] .liquidity-efficiency__section-title {
+            color: #e5e7eb;
+            border-bottom-color: #374151;
+          }
+          .liquidity-efficiency__reserves-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin-bottom: 16px;
+            width: 100%;
+          }
+          .liquidity-efficiency__reserve-card {
+            background-color: #fff;
+            border-radius: 12px;
+            padding: 12px 16px;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+          }
+          .liquidity-efficiency__reserve-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+          }
+          [data-theme="dark"] .liquidity-efficiency__reserve-card {
+            background-color: #1f2937;
+            border-color: #374151;
+          }
+          .liquidity-efficiency__reserve-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+          }
+          .liquidity-efficiency__reserve-title {
+            font-size: 13px;
+            font-weight: 500;
+            color: #6b7280;
+          }
+          [data-theme="dark"] .liquidity-efficiency__reserve-title {
+            color: #9ca3af;
+          }
+          .liquidity-efficiency__reserve-period {
+            font-size: 11px;
+            color: #9ca3af;
+          }
+          .liquidity-efficiency__reserve-body {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+          }
+          .liquidity-efficiency__reserve-value {
+            font-size: 20px;
+            font-weight: 700;
+            color: #111827;
+          }
+          [data-theme="dark"] .liquidity-efficiency__reserve-value {
+            color: #f3f4f6;
+          }
+          .liquidity-efficiency__citation-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 11px;
+            color: #3b82f6;
+            background-color: #eff6ff;
+            padding: 4px 8px;
+            border-radius: 4px;
+            width: fit-content;
+            max-width: 100%;
+            cursor: help;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+          }
+          [data-theme="dark"] .liquidity-efficiency__citation-badge {
+            background-color: rgba(59, 130, 246, 0.1);
+            color: #60a5fa;
+          }
+          @media (max-width: 768px) {
+            .liquidity-efficiency__chart-row {
+              grid-template-columns: 1fr;
+              gap: 8px;
+              padding-bottom: 12px;
+            }
+            .liquidity-efficiency__reserves-grid {
+              grid-template-columns: 1fr;
+              gap: 12px;
+            }
+          }
+        `}} />
+        <div className="ch-heatmap-scroll" style={{ padding: '4px', width: '100%' }}>
+          
+          <div className="liquidity-efficiency__chart-card">
+            <div className="liquidity-efficiency__chart-header">
+              <h3 className="liquidity-efficiency__chart-title">
+                {t('liquidity_ratios', 'Liquidity Ratios')}
+              </h3>
+            </div>
+
+            <div className="liquidity-efficiency__chart-rows">
+              {chartRows.map((row) => (
+                <div className="liquidity-efficiency__chart-row" key={row.key}>
+                  <div className="liquidity-efficiency__row-info">
+                    <div className="liquidity-efficiency__label-citation">
+                      <span className="liquidity-efficiency__row-label">{row.label}</span>
+                      <MetricCitation citation={row.citation} />
+                    </div>
+                    {row.period && (
+                      <span className="liquidity-efficiency__row-period">
+                        {t('period', 'Period')}: {row.period}
+                      </span>
+                    )}
+                  </div>
+                  
+                  <div className="liquidity-efficiency__bar-wrapper">
+                    {row.actualValue !== null && (
+                      <div 
+                        className={`liquidity-efficiency__bar liquidity-efficiency__bar--actual-${row.colorClass}`}
+                        style={{ width: `${(row.actualValue / maxValue) * 100}%` }}
+                      />
+                    )}
+                    <span className={`liquidity-efficiency__bar-value liquidity-efficiency__bar-value--actual-${row.colorClass}`}>
+                      {row.actualValue !== null ? row.actualValue.toFixed(2) : '-'}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="liquidity-efficiency__section-title">
+            {t('cash_reserves_and_flows', 'Cash Reserves & Flows')}
+          </div>
+
+          <div className="liquidity-efficiency__reserves-grid">
+            <ReserveCard 
+              label={t('cash_and_equivalents', 'Cash & Equivalents')} 
+              metric={cashAndEquivalents} 
+            />
+            <ReserveCard 
+              label={t('working_capital', 'Working Capital')} 
+              metric={workingCapital} 
+            />
+            <ReserveCard 
+              label={t('operating_cash_flow', 'Operating Cash Flow')} 
+              metric={operatingCashFlow} 
+            />
+          </div>
+          
+        </div>
+      </div>
+    );
   };
-  return <div className="liquidity-efficiency" data-analysis-type="liquidity-efficiency" data-analysis-name="Liquidity & Efficiency" data-analysis-order="3">
+
+  return (
+    <div className="liquidity-efficiency" data-analysis-type="liquidity-efficiency" data-analysis-name="Liquidity & Efficiency" data-analysis-order="3" style={{ width: '100%' }}>
       {renderContent()}
-    </div>;
+    </div>
+  );
 };
+
 export default React.memo(LiquidityEfficiency);
