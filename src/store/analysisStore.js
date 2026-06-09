@@ -487,7 +487,6 @@ export const useAnalysisStore = create((set, get) => ({
 
       const result = await apiService.callAnalysisEndpoint(type, payload);
       get().setAnalysisData(type, result.data);
-      await apiService.saveAnalysisToBackend(result.data, type, businessId);
       onToast?.(`${type} regenerated successfully!`, "success");
     } catch (err) {
       console.error(`Failed to regenerate ${type}:`, err);

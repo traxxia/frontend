@@ -210,7 +210,7 @@ export const answerService = {
                 const isObservatory = authState?.state?.isObservatory === true;
                 customHeaders['x-is-observatory'] = isObservatory ? 'true' : 'false';
                 if (businessId) {
-                    customHeaders['x-business-id'] = String(businessId);
+                    customHeaders['X-Business-Id'] = String(businessId);
                 }
             } catch (_) {}
 

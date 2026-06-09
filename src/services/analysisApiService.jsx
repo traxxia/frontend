@@ -58,11 +58,11 @@ export const API_ENDPOINTS = {
   coreAdjacency: 'core-adjacency-matrix',
   strategic: 'strategic-analysis',
 
-  profitabilityAnalysis: 'excel-analysis',
-  growthTracker: 'excel-analysis',
-  liquidityEfficiency: 'excel-analysis',
-  investmentPerformance: 'excel-analysis',
-  leverageRisk: 'excel-analysis',
+  profitabilityAnalysis: 'insights/profitability',
+  growthTracker: 'insights/growth',
+  liquidityEfficiency: 'insights/liquidity',
+  investmentPerformance: 'insights/investment',
+  leverageRisk: 'insights/leverage',
   ahaInsight: 'aha-insight',
   executiveSummary: 'executive-summary',
   answerQuestionsWithEnrichment: 'answer-questions-with-enrichment'
@@ -393,7 +393,7 @@ export class AnalysisApiService {
     loadingKey = null,
     analysisType = null
   ) {
-    if (!rawPayload && (!questionsArray || questionsArray.length === 0) && endpoint !== 'excel-analysis') {
+    if (!rawPayload && (!questionsArray || questionsArray.length === 0) && endpoint !== 'excel-analysis' && !endpoint.startsWith('insights/')) {
       throw new Error(`No questions available for ${endpoint} analysis`);
     }
 
@@ -413,7 +413,7 @@ export class AnalysisApiService {
         obsHeaders['x-is-observatory'] = isObservatory ? 'true' : 'false';
 
         if (selectedBusinessId) {
-          obsHeaders['x-business-id'] = selectedBusinessId;
+          obsHeaders['X-Business-Id'] = selectedBusinessId;
         }
 
         if (isObservatory) {
@@ -473,8 +473,16 @@ export class AnalysisApiService {
           },
           body: formData
         });
-      }
-      else {
+      } else if (endpoint && endpoint.startsWith('insights/')) {
+        const headers = {
+          'Accept': 'application/json',
+          ...obsHeaders
+        };
+        response = await fetch(`${this.ML_API_BASE_URL}/${endpoint}`, {
+          method: 'POST',
+          headers
+        });
+      } else {
         const headers = {
           'Accept': 'application/json',
           'Content-Type': 'application/json',
@@ -1003,7 +1011,7 @@ export class AnalysisApiService {
           const loadingKey = `excel-analysis-${metricType?.replace('_trends', '')}`;
 
           const result = await this.makeAPICall(
-            'excel-analysis',
+            endpoint,
             questionsArray,
             answersArray,
             payload.selectedBusinessId,
@@ -1077,7 +1085,7 @@ export class AnalysisApiService {
         const metricType = EXCEL_ANALYSIS_METRIC_TYPES[analysisType];
         const loadingKey = `excel-analysis-${metricType?.replace('_trends', '')}`;
         result = await this.makeAPICall(
-          'excel-analysis',
+          endpoint,
           questionsArray,
           answersArray,
           selectedBusinessId,
