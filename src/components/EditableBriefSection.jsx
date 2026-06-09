@@ -15,6 +15,7 @@ import DOMPurify from 'dompurify';
 import RichTextEditor from './RichTextEditor';
 import { markdownToHtml } from '../utils/markdownHelper';
 import ConfirmationModal from './ConfirmationModal';
+import { formatCurrencyValue } from '../utils/currencyUtils';
 
 let globalLimitsPromise = null;
 const sessionCache = new Map();
@@ -338,6 +339,7 @@ const EditableBriefSection = ({
   const [leftPanelExpanded, setLeftPanelExpanded] = useState({
     refineAi: true,
     fileUpload: false,
+    docsHistory: false,
     financialUpload: false
   });
 
@@ -498,6 +500,7 @@ const EditableBriefSection = ({
 
         const sData = await sPromise;
         if (active) {
+          console.log("=== loaded Document Intelligence session ===", sData);
           setDocIntelSession(sData);
         }
       } catch (err) {
@@ -558,7 +561,8 @@ const EditableBriefSection = ({
         formData.append('files', file, file.name);
       });
 
-      const financialMetrics = await answerService.extractFinancialSummary(formData);
+      const financialMetrics = await answerService.extractFinancialSummary(formData, businessId);
+      console.log("=== extracted financial metrics ===", financialMetrics);
 
       setSseLogs(prev => [...prev, {
         timestamp: new Date().toLocaleTimeString(),
@@ -601,6 +605,7 @@ const EditableBriefSection = ({
 
       // Load latest session state to update local UI State
       const sData = await answerService.getSessionByBusiness(businessId);
+      console.log("=== session state after sync ===", sData);
       if (sData && sData.hasSession !== false) {
         sessionCache.set(businessId, Promise.resolve(sData));
         setDocIntelSession(sData);
@@ -735,7 +740,8 @@ const EditableBriefSection = ({
               status: 'success',
               type: type,
               section: 'strategic',
-              progress: 100
+              progress: 100,
+              isNewSessionFile: false
             };
           });
           return [...nonDbStrategic, ...dbStrategic];
@@ -980,37 +986,16 @@ const EditableBriefSection = ({
 
   // Multiple File concurrent validation and upload engine
   const processMultipleFiles = async (files) => {
-    const { maxFilesLimit, maxFileSizeMB } = uploadLimits;
-    const maxFileSizeBytes = maxFileSizeMB * 1024 * 1024;
-
-    const strategicFilesCount = uploadedFiles.filter(f => f.section === 'strategic').length;
-    if (strategicFilesCount + files.length > maxFilesLimit) {
-      showToastMessage(`Upload limit exceeded. You can upload a maximum of ${maxFilesLimit} files.`, 'error');
-      return;
-    }
-
     const validFiles = [];
     const newFileObjs = [];
 
     for (const file of files) {
-      // Check file size
-      if (file.size > maxFileSizeBytes) {
-        showToastMessage(`File "${file.name}" exceeds the size limit of ${maxFileSizeMB}MB.`, 'error');
-        continue;
-      }
-
-      // Check if file is already added to queue
-      if (uploadedFiles.some(f => f.name === file.name && f.section === 'strategic')) {
-        showToastMessage(`File "${file.name}" is already uploaded.`, 'info');
-        continue;
-      }
-
       const fileExt = file.name.split('.').pop().toLowerCase();
       const isSpreadsheet = ['xlsx', 'xls'].includes(fileExt);
       const isDoc = ['pdf', 'docx', 'doc'].includes(fileExt);
 
       if (!isSpreadsheet && !isDoc) {
-        showToastMessage(`File "${file.name}" format is unsupported. Please upload Excel, CSV, PDF, or Word files.`, 'error');
+        showToastMessage(`File "${file.name}" format is unsupported. Please upload Excel, PDF, or Word files.`, 'error');
         continue;
       }
 
@@ -1025,7 +1010,8 @@ const EditableBriefSection = ({
         progress: 15,
         type: isSpreadsheet ? 'spreadsheet' : (fileExt === 'pdf' ? 'pdf' : 'docx'),
         section: 'strategic',
-        fileObject: file
+        fileObject: file,
+        isNewSessionFile: true
       };
 
       validFiles.push({ file, fileId });
@@ -1444,7 +1430,7 @@ const EditableBriefSection = ({
   // Multiple File Unified Document Ingestion & Bulk Save Flow
   const handleAnalyzeDocuments = async () => {
     // Find all documents in the upload section (strategic) — matches exactly what is shown in the UI
-    const filesToAnalyze = uploadedFiles.filter(f => f.section === 'strategic');
+    const filesToAnalyze = uploadedFiles.filter(f => f.section === 'strategic' && f.isNewSessionFile);
 
     if (filesToAnalyze.length === 0) {
       showToastMessage('No documents in the queue to analyze.', 'info');
@@ -1482,7 +1468,8 @@ const EditableBriefSection = ({
       // 2. Call the ML strategic analysis API (document-qa) with ALL uploaded documents
       let mlResult = { answers: [] };
       if (fetchedFiles.length > 0) {
-        mlResult = await answerService.analyzeStrategicDocumentsML(fetchedFiles);
+        mlResult = await answerService.analyzeStrategicDocumentsML(fetchedFiles, selectedBusinessId);
+        console.log("=== strategic document QA response ===", mlResult);
       }
       
       if (!mlResult || !Array.isArray(mlResult.answers)) {
@@ -1566,16 +1553,18 @@ const EditableBriefSection = ({
       setUploadedFiles(prev =>
         prev.map(f =>
           filesToAnalyze.some(fa => fa.id === f.id)
-            ? { ...f, status: 'success', progress: 100 }
+            ? { ...f, status: 'success', progress: 100, isNewSessionFile: false }
             : f
         )
       );
 
       // 3. Trigger full insights & strategic & financial regeneration
       if (onAnalysisRegenerate) {
+        const hasStrategicAnswers = Object.values(useAnalysisStore.getState().userAnswers || {}).some(ans => ans && ans.trim());
         onAnalysisRegenerate({
-          alsoRegenerateStrategic: true,
+          alsoRegenerateStrategic: hasStrategicAnswers,
           includeFinancial: true,
+          onlyFinancial: !hasStrategicAnswers,
           skipConfirmation: true
         });
       }
@@ -1586,7 +1575,7 @@ const EditableBriefSection = ({
       setUploadedFiles(prev =>
         prev.map(f =>
           filesToAnalyze.some(fa => fa.id === f.id)
-            ? { ...f, status: 'success', progress: 100 }
+            ? { ...f, status: 'failed', progress: 100 }
             : f
         )
       );
@@ -1601,7 +1590,16 @@ const EditableBriefSection = ({
     if (drawerOpen && drawerData && drawerData.title === data.title) {
       setDrawerOpen(false);
     } else {
-      setDrawerData(data);
+      let normalizedData = { ...data };
+      if (!Array.isArray(normalizedData.evidence)) {
+        normalizedData.evidence = [{
+          document_name: data.doc || data.document_name || 'Strategic Document',
+          page: data.page || null,
+          sheet: data.sheet || data.source_sheet || data.cell || null,
+          text: data.text || data.excerpt || ''
+        }];
+      }
+      setDrawerData(normalizedData);
       setDrawerOpen(true);
     }
   };
@@ -1660,7 +1658,7 @@ const EditableBriefSection = ({
   const successfulIngestionCount = uploadedFiles.filter(f => f.section === 'strategic' && f.status === 'success').length;
   const uploadedFilesCount = uploadedFiles.filter(f => f.status === 'uploaded').length;
 
-  const strategyFiles = uploadedFiles.filter(f => f.section === 'strategic');
+  const strategyFiles = uploadedFiles.filter(f => f.section === 'strategic' && f.isNewSessionFile);
 
   const initialCountStr = `${initialFields.filter(f => cleanValue(f.value).trim() !== '').length}/${initialFields.length}`;
   const essentialCountStr = `${essentialFields.filter(f => cleanValue(f.value).trim() !== '').length}/${essentialFields.length}`;
@@ -1673,6 +1671,7 @@ const EditableBriefSection = ({
       : advancedFields;
 
   const isAnyApiActive = isEnriching || isApplyingEnrichment || isAnalyzingDocs || isAnalyzingFinancial;
+  const isAnyFileUploading = uploadedFiles.some(f => f.status === 'uploading');
 
   return (
     <div className="simple-workspace">
@@ -1818,30 +1817,30 @@ const EditableBriefSection = ({
                     {strategyFiles.map(file => (
                       <div key={file.id} className="sidebar-file-item">
                         <div className="sidebar-file-info">
-                          {file.name.toLowerCase().endsWith('.pdf') ? (
+                          {file.type === 'pdf' || file.name.toLowerCase().endsWith('.pdf') ? (
                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
                               <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7l-5-5z" fill="rgba(239, 68, 68, 0.05)" />
-                              <path d="M14 2v5h5" />
+                              <path d="M15 2v5h5" />
                               <line x1="8" y1="15" x2="16" y2="15" stroke="rgba(239, 68, 68, 0.4)" strokeWidth="1.5" />
                               <line x1="8" y1="17.5" x2="16" y2="17.5" stroke="rgba(239, 68, 68, 0.4)" strokeWidth="1.5" />
                               <line x1="8" y1="20" x2="16" y2="20" stroke="rgba(239, 68, 68, 0.4)" strokeWidth="1.5" />
                               <rect x="1.5" y="7.5" width="13.5" height="7" rx="1.2" fill="#ef4444" stroke="none" />
                               <text x="8.25" y="11" fill="white" fontSize="5.2" fontWeight="900" fontFamily="system-ui, -apple-system, sans-serif" stroke="none" textAnchor="middle" dominantBaseline="central">PDF</text>
                             </svg>
-                          ) : file.name.toLowerCase().endsWith('.docx') ? (
+                          ) : file.type === 'docx' || file.type === 'doc' || file.name.toLowerCase().endsWith('.docx') || file.name.toLowerCase().endsWith('.doc') ? (
                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
                               <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7l-5-5z" fill="rgba(37, 99, 235, 0.05)" />
-                              <path d="M14 2v5h5" />
+                              <path d="M15 2v5h5" />
                               <line x1="8" y1="15" x2="16" y2="15" stroke="rgba(37, 99, 235, 0.4)" strokeWidth="1.5" />
                               <line x1="8" y1="17.5" x2="16" y2="17.5" stroke="rgba(37, 99, 235, 0.4)" strokeWidth="1.5" />
                               <line x1="8" y1="20" x2="16" y2="20" stroke="rgba(37, 99, 235, 0.4)" strokeWidth="1.5" />
                               <rect x="1.5" y="7.5" width="13.5" height="7" rx="1.2" fill="#2563eb" stroke="none" />
                               <text x="8.25" y="11" fill="white" fontSize="5.2" fontWeight="900" fontFamily="system-ui, -apple-system, sans-serif" stroke="none" textAnchor="middle" dominantBaseline="central">DOC</text>
                             </svg>
-                          ) : (file.name.toLowerCase().endsWith('.xlsx') || file.name.toLowerCase().endsWith('.xls')) ? (
+                          ) : file.type === 'spreadsheet' || ['xlsx', 'xls', 'csv'].includes(file.type) || file.name.toLowerCase().endsWith('.xlsx') || file.name.toLowerCase().endsWith('.xls') || file.name.toLowerCase().endsWith('.csv') ? (
                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
                               <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7l-5-5z" fill="rgba(22, 163, 74, 0.05)" />
-                              <path d="M14 2v5h5" />
+                              <path d="M15 2v5h5" />
                               <line x1="8" y1="15" x2="16" y2="15" stroke="rgba(22, 163, 74, 0.4)" strokeWidth="1.5" />
                               <line x1="8" y1="17.5" x2="16" y2="17.5" stroke="rgba(22, 163, 74, 0.4)" strokeWidth="1.5" />
                               <line x1="8" y1="20" x2="16" y2="20" stroke="rgba(22, 163, 74, 0.4)" strokeWidth="1.5" />
@@ -1851,7 +1850,7 @@ const EditableBriefSection = ({
                           ) : (
                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#64748b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
                               <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7l-5-5z" fill="rgba(100, 116, 139, 0.05)" />
-                              <path d="M14 2v5h5" />
+                              <path d="M15 2v5h5" />
                               <line x1="8" y1="15" x2="16" y2="15" stroke="rgba(100, 116, 139, 0.4)" strokeWidth="1.5" />
                               <line x1="8" y1="17.5" x2="16" y2="17.5" stroke="rgba(100, 116, 139, 0.4)" strokeWidth="1.5" />
                               <line x1="8" y1="20" x2="16" y2="20" stroke="rgba(100, 116, 139, 0.4)" strokeWidth="1.5" />
@@ -1865,17 +1864,24 @@ const EditableBriefSection = ({
                           <span className={`file-status-badge ${file.status}`} style={{ fontSize: '8px', padding: '1px 4px' }}>
                             {file.status === 'uploading' ? `${file.progress}%` : file.status}
                           </span>
-                          <button 
-                            onClick={(e) => {
-                              e.stopPropagation();
+                          <button
+                            className="sidebar-file-remove"
+                            onClick={() => {
                               if (isAnyApiActive || !canEdit) return;
                               handleRemoveFile(file.id, file.name);
                             }}
                             disabled={isAnyApiActive || !canEdit}
-                            className="sidebar-file-remove"
-                            title="Remove File"
+                            style={{
+                              cursor: (isAnyApiActive || !canEdit) ? 'not-allowed' : 'pointer',
+                              opacity: (isAnyApiActive || !canEdit) ? 0.5 : 1,
+                              padding: '4px',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              justifyContent: 'center'
+                            }}
+                            title="Remove file"
                           >
-                            <Trash2 size={12} />
+                            <Trash2 size={14} />
                           </button>
                         </div>
                       </div>
@@ -1886,17 +1892,17 @@ const EditableBriefSection = ({
                 <button
                   ref={analyzeBtnRef}
                   onClick={() => {
-                    if (!canEdit || strategyFiles.length === 0 || isAnyApiActive) return;
+                    if (!canEdit || strategyFiles.length === 0 || isAnyApiActive || isAnyFileUploading) return;
                     setConfirmModalConfig({
                       title: t('Confirm Document Analysis') || 'Analyze Strategic Documents',
-                      message: 'By doing this, this will overwrite all the existing answers and it will regenerate the insights and strategic analysis. Are you sure you want to proceed?',
+                      message: 'Uploading this document will update the current answer based on the newly uploaded document(s) while preserving the existing context.',
                       onConfirm: () => {
                         handleAnalyzeDocuments();
                       }
                     });
                     setShowConfirmModal(true);
                   }}
-                  disabled={isAnyApiActive || !canEdit || strategyFiles.length === 0}
+                  disabled={isAnyApiActive || !canEdit || strategyFiles.length === 0 || isAnyFileUploading}
                   className="btn-analyze-docs"
                   style={{ marginTop: '12px', width: '100%' }}
                 >
@@ -1914,6 +1920,137 @@ const EditableBriefSection = ({
               </div>
             )}
           </div>
+
+          {/* All Uploaded Documents History */}
+          {(() => {
+            const allUploadedDocuments = uploadedFiles.filter(f => f.section === 'strategic' && f.status === 'success');
+            return (
+              <div className="brief-card uploaded-docs-history-card" style={{ marginTop: '16px' }}>
+                <div 
+                  className={`brief-card-header accordion-header ${!leftPanelExpanded.docsHistory ? 'collapsed' : ''}`}
+                  onClick={() => { if (isAnyApiActive) return; setLeftPanelExpanded(prev => ({ ...prev, docsHistory: !prev.docsHistory })); }}
+                  style={{ 
+                    cursor: isAnyApiActive ? 'not-allowed' : 'pointer', 
+                    display: 'flex', 
+                    justifyContent: 'space-between', 
+                    alignItems: 'center', 
+                    width: '100%',
+                    gap: '8px'
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: 0, flex: 1 }}>
+                    <FileText size={16} style={{ color: '#16a34a', flexShrink: 0 }} />
+                    <h4 className="brief-card-title" style={{ margin: 0, fontSize: '13px', fontWeight: '700', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title="All Uploaded Documents">
+                      All Uploaded Documents
+                    </h4>
+                    {allUploadedDocuments.length > 0 && (
+                      <span className="phase-tab-badge" style={{ background: '#e2e8f0', color: '#475569', marginLeft: '4px', flexShrink: 0 }}>
+                        {allUploadedDocuments.length}
+                      </span>
+                    )}
+                  </div>
+                  {leftPanelExpanded.docsHistory ? <ChevronUp size={16} style={{ color: '#64748b', flexShrink: 0 }} /> : <ChevronDown size={16} style={{ color: '#64748b', flexShrink: 0 }} />}
+                </div>
+                {leftPanelExpanded.docsHistory && (
+                  <div className="brief-card-body" style={{ padding: '12px 8px' }}>
+                    <p className="brief-card-description" style={{ fontSize: '12px', color: '#64748b', marginBottom: '12px', marginTop: 0 }}>
+                      Successfully uploaded strategy and financial documents.
+                    </p>
+                    
+                    {allUploadedDocuments.length > 0 ? (
+                      <div className="sidebar-file-list" style={{ border: 'none', padding: 0, margin: 0 }}>
+                        {allUploadedDocuments.map(file => (
+                          <div key={file.id} className="sidebar-file-item" style={{ padding: '8px 10px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', marginBottom: '8px' }}>
+                            <div className="sidebar-file-info" style={{ display: 'flex', alignItems: 'center', gap: '8px', overflow: 'hidden' }}>
+                              {file.type === 'pdf' || file.name.toLowerCase().endsWith('.pdf') ? (
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                                  <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7l-5-5z" fill="rgba(239, 68, 68, 0.05)" />
+                                  <path d="M15 2v5h5" />
+                                  <line x1="8" y1="15" x2="16" y2="15" stroke="rgba(239, 68, 68, 0.4)" strokeWidth="1.5" />
+                                  <line x1="8" y1="17.5" x2="16" y2="17.5" stroke="rgba(239, 68, 68, 0.4)" strokeWidth="1.5" />
+                                  <line x1="8" y1="20" x2="16" y2="20" stroke="rgba(239, 68, 68, 0.4)" strokeWidth="1.5" />
+                                  <rect x="1.5" y="7.5" width="13.5" height="7" rx="1.2" fill="#ef4444" stroke="none" />
+                                  <text x="8.25" y="11" fill="white" fontSize="5.2" fontWeight="900" fontFamily="system-ui, -apple-system, sans-serif" stroke="none" textAnchor="middle" dominantBaseline="central">PDF</text>
+                                </svg>
+                              ) : file.type === 'docx' || file.type === 'doc' || file.name.toLowerCase().endsWith('.docx') || file.name.toLowerCase().endsWith('.doc') ? (
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                                  <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7l-5-5z" fill="rgba(37, 99, 235, 0.05)" />
+                                  <path d="M15 2v5h5" />
+                                  <line x1="8" y1="15" x2="16" y2="15" stroke="rgba(37, 99, 235, 0.4)" strokeWidth="1.5" />
+                                  <line x1="8" y1="17.5" x2="16" y2="17.5" stroke="rgba(37, 99, 235, 0.4)" strokeWidth="1.5" />
+                                  <line x1="8" y1="20" x2="16" y2="20" stroke="rgba(37, 99, 235, 0.4)" strokeWidth="1.5" />
+                                  <rect x="1.5" y="7.5" width="13.5" height="7" rx="1.2" fill="#2563eb" stroke="none" />
+                                  <text x="8.25" y="11" fill="white" fontSize="5.2" fontWeight="900" fontFamily="system-ui, -apple-system, sans-serif" stroke="none" textAnchor="middle" dominantBaseline="central">DOC</text>
+                                </svg>
+                              ) : file.type === 'spreadsheet' || ['xlsx', 'xls', 'csv'].includes(file.type) || file.name.toLowerCase().endsWith('.xlsx') || file.name.toLowerCase().endsWith('.xls') || file.name.toLowerCase().endsWith('.csv') ? (
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                                  <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7l-5-5z" fill="rgba(22, 163, 74, 0.05)" />
+                                  <path d="M15 2v5h5" />
+                                  <line x1="8" y1="15" x2="16" y2="15" stroke="rgba(22, 163, 74, 0.4)" strokeWidth="1.5" />
+                                  <line x1="8" y1="17.5" x2="16" y2="17.5" stroke="rgba(22, 163, 74, 0.4)" strokeWidth="1.5" />
+                                  <line x1="8" y1="20" x2="16" y2="20" stroke="rgba(22, 163, 74, 0.4)" strokeWidth="1.5" />
+                                  <rect x="1.5" y="7.5" width="13.5" height="7" rx="1.2" fill="#16a34a" stroke="none" />
+                                  <text x="8.25" y="11" fill="white" fontSize="5.2" fontWeight="900" fontFamily="system-ui, -apple-system, sans-serif" stroke="none" textAnchor="middle" dominantBaseline="central">XLS</text>
+                                </svg>
+                              ) : (
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#64748b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                                  <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7l-5-5z" fill="rgba(100, 116, 139, 0.05)" />
+                                  <path d="M15 2v5h5" />
+                                  <line x1="8" y1="15" x2="16" y2="15" stroke="rgba(100, 116, 139, 0.4)" strokeWidth="1.5" />
+                                  <line x1="8" y1="17.5" x2="16" y2="17.5" stroke="rgba(100, 116, 139, 0.4)" strokeWidth="1.5" />
+                                  <line x1="8" y1="20" x2="16" y2="20" stroke="rgba(100, 116, 139, 0.4)" strokeWidth="1.5" />
+                                  <rect x="1.5" y="7.5" width="13.5" height="7" rx="1.2" fill="#64748b" stroke="none" />
+                                  <text x="8.25" y="11" fill="white" fontSize="4.5" fontWeight="900" fontFamily="system-ui, -apple-system, sans-serif" stroke="none" textAnchor="middle" dominantBaseline="central">FILE</text>
+                                </svg>
+                              )}
+                              <span className="sidebar-file-name" title={file.name} style={{ fontSize: '12px', fontWeight: '500', color: '#1e293b', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                {file.name}
+                              </span>
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                              <span className="file-status-badge success" style={{ fontSize: '9px', padding: '2px 6px', background: '#dcfce7', color: '#16a34a', borderRadius: '4px', fontWeight: '500' }}>
+                                success
+                              </span>
+                              <button
+                                className="sidebar-file-remove"
+                                onClick={() => {
+                                  if (isAnyApiActive || !canEdit) return;
+                                  setConfirmModalConfig({
+                                    title: t('Delete Document') || 'Delete Document',
+                                    message: `Are you sure you want to delete "${file.name}"? This will also remove any AI citations associated with this document.`,
+                                    onConfirm: () => {
+                                      handleRemoveFile(file.id, file.name);
+                                    }
+                                  });
+                                  setShowConfirmModal(true);
+                                }}
+                                disabled={isAnyApiActive || !canEdit}
+                                style={{
+                                  cursor: (isAnyApiActive || !canEdit) ? 'not-allowed' : 'pointer',
+                                  opacity: (isAnyApiActive || !canEdit) ? 0.5 : 1,
+                                  padding: '4px',
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center'
+                                }}
+                                title="Delete document"
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div style={{ textAlign: 'center', padding: '16px', color: '#64748b', fontSize: '12px', border: '1px dashed #e2e8f0', borderRadius: '8px', background: '#f8fafc' }}>
+                        No uploaded documents yet.
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          })()}
 
         </div>
 
@@ -1948,10 +2085,7 @@ const EditableBriefSection = ({
                   className={`phase-tab-btn ${activePhaseTab === 'financial' ? 'active' : ''}`}
                   onClick={() => { setActivePhaseTab('financial'); setExpandAll(false); }}
                 >
-                  <span className="phase-tab-title">Financial Data</span>
-                  <span className="phase-tab-badge">
-                    {Object.keys(docIntelSession.financialMetrics).filter(k => k !== "meta").reduce((acc, cat) => acc + Object.keys(docIntelSession.financialMetrics[cat]).length, 0)}
-                  </span>
+                  <span className="phase-tab-title">Financial Data</span> 
                 </button>
               )}
             </div>
@@ -2049,36 +2183,75 @@ const EditableBriefSection = ({
                         <div className="ledger-metrics-grid">
                           {metricsEntries.map(([metricKey, mData]) => {
                             const isEditing = editingMetric?.category === catKey && editingMetric?.key === metricKey;
-                            const displayValue = mData?.value !== null && mData?.value !== undefined 
-                              ? (catKey === "operational_efficiency" || metricKey === "revenue_growth_yoy" 
-                                  ? `${(mData.value * 100).toFixed(1)}%` 
-                                  : (mData.currency || "USD") === "USD" 
-                                    ? `$${mData.value.toLocaleString()}` 
-                                    : `${mData.value.toLocaleString()} ${mData.currency || ""}`)
-                              : "N/A";
+                            const displayValue = (() => {
+                              if (mData?.value === null || mData?.value === undefined) return "N/A";
+                              
+                              const lowerKey = metricKey.toLowerCase();
+                              
+                              // Percentage (%) -> Growth, Margins, ROA, ROE
+                              const isPercentage = 
+                                lowerKey.includes('growth') || 
+                                lowerKey.includes('margin') || 
+                                lowerKey === 'roa' || 
+                                lowerKey === 'roe';
+                                
+                              if (isPercentage) {
+                                return `${(mData.value * 100).toFixed(1)}%`;
+                              }
+                              
+                              // Plain numbers -> Current Ratio, Quick Ratio, Debt-to-Equity, Interest Coverage, Employees
+                              const isPlainNumber = 
+                                lowerKey.includes('ratio') || 
+                                lowerKey.includes('coverage') || 
+                                lowerKey.includes('debt_to_equity') || 
+                                lowerKey === 'employees';
+                                
+                              if (isPlainNumber) {
+                                return mData.value.toLocaleString(undefined, { 
+                                  minimumFractionDigits: 0, 
+                                  maximumFractionDigits: 2 
+                                });
+                              }
+                              
+                              // Currency formatting using common utility
+                              return formatCurrencyValue(mData.value, mData.currency || "USD");
+                            })();
 
                             return (
                               <div key={metricKey} className="ledger-metric-card">
                                 <div className="ledger-metric-info">
                                   <span className="ledger-metric-name">{metricKey.replace(/_/g, ' ')}</span>
                                   <div className="ledger-metric-subtext">
-                                    {(mData?.source_page || mData?.source_sheet) && (
-                                      <span 
-                                        className="ledger-metric-citation"
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          handleOpenReference({
-                                            title: `FINANCIAL INDICATOR: ${metricKey.replace(/_/g, ' ').toUpperCase()}`,
-                                            doc: docIntelSession.uploadedDocuments?.[0]?.original_name || "financial_statement.xlsx",
-                                            excerpt: mData.excerpt || `Disclosed financial metric in ${mData.source_sheet ? `sheet ${mData.source_sheet}` : 'balance sheet worksheets'}.`,
-                                            cell: mData.source_page ? `Page ${mData.source_page}` : `Sheet ${mData.source_sheet}`,
-                                            page: mData.source_page || null
-                                          });
-                                        }}
-                                      >
-                                        Ref: {mData.source_page ? `Page ${mData.source_page}` : mData.source_sheet}
-                                      </span>
-                                    )} 
+                                    {(() => {
+                                      const citation = mData?.citation;
+                                      const sourcePage = citation?._metadata?.page || mData?.source_page;
+                                      const sourceSheet = citation?._metadata?.sheet || mData?.source_sheet;
+                                      const citationText = citation?.text || mData?.excerpt;
+                                      const citationFilename = citation?.filename || docIntelSession?.uploadedDocuments?.[0]?.original_name || "financial_statement.xlsx";
+                                      const hasCitation = !!(citation || sourcePage || sourceSheet);
+                                      const displayRef = sourcePage ? `Page ${sourcePage}` : (sourceSheet ? sourceSheet : '');
+
+                                      if (!hasCitation) return null;
+
+                                      return (
+                                        <span 
+                                          className="ledger-metric-citation"
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleOpenReference({
+                                              title: `FINANCIAL INDICATOR: ${metricKey.replace(/_/g, ' ').toUpperCase()}`,
+                                              doc: citationFilename,
+                                              excerpt: citationText || `Disclosed financial metric in ${sourceSheet ? `sheet ${sourceSheet}` : 'balance sheet worksheets'}.`,
+                                              cell: sourcePage ? `Page ${sourcePage}` : (sourceSheet ? `Sheet ${sourceSheet}` : ''),
+                                              page: sourcePage || null,
+                                              sheet: sourceSheet || null
+                                            });
+                                          }}
+                                        >
+                                          Citation
+                                        </span>
+                                      );
+                                    })()}
                                   </div>
                                 </div>
 

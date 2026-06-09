@@ -574,7 +574,7 @@ const Dashboard = () => {
                                         className="btn-execution-outline" 
                                         onClick={() => {}}
                                       >
-                                        <span className="btn-icon-left">☑</span> {t('Execution') || 'Execution'} <span className="btn-icon-right">🔒</span>
+                                        <span className="btn-icon-left">☑</span> {t('Execution') || 'Execution'} 
                                       </button>
                                       {!isCollaborator && !isViewer && !isDeleted && (
                                         <button 

@@ -142,18 +142,31 @@ export const answerService = {
         }
     },
 
-    async analyzeStrategicDocumentsML(files) {
+    async analyzeStrategicDocumentsML(files, businessId = null) {
         try {
             const formData = new FormData();
             files.forEach(file => {
                 formData.append('files', file, file.name);
             });
 
+            // Build observatory headers
+            const customHeaders = {
+                'Accept': 'application/json'
+            };
+            try {
+                const authState = JSON.parse(
+                    sessionStorage.getItem('auth-storage') || localStorage.getItem('auth-storage') || '{}'
+                );
+                const isObservatory = authState?.state?.isObservatory === true;
+                customHeaders['x-is-observatory'] = isObservatory ? 'true' : 'false';
+                if (businessId) {
+                    customHeaders['x-business-id'] = String(businessId);
+                }
+            } catch (_) {}
+
             const mlUrl = import.meta.env.VITE_ML_BACKEND_URL || 'https://trax-qa1-ml-b4e6gmc4hjdncdg2.centralus-01.azurewebsites.net';
             const response = await axios.post(`${mlUrl}/document-qa`, formData, {
-                headers: {
-                    'Accept': 'application/json'
-                }
+                headers: customHeaders
             });
             return response.data;
         } catch (error) {
@@ -184,13 +197,26 @@ export const answerService = {
         }
     },
 
-    async extractFinancialSummary(formData) {
+    async extractFinancialSummary(formData, businessId = null) {
         try {
+            // Build observatory headers
+            const customHeaders = {
+                'Accept': 'application/json'
+            };
+            try {
+                const authState = JSON.parse(
+                    sessionStorage.getItem('auth-storage') || localStorage.getItem('auth-storage') || '{}'
+                );
+                const isObservatory = authState?.state?.isObservatory === true;
+                customHeaders['x-is-observatory'] = isObservatory ? 'true' : 'false';
+                if (businessId) {
+                    customHeaders['X-Business-Id'] = String(businessId);
+                }
+            } catch (_) {}
+
             const mlUrl = import.meta.env.VITE_ML_BACKEND_URL || 'https://trax-qa1-ml-b4e6gmc4hjdncdg2.centralus-01.azurewebsites.net';
             const response = await axios.post(`${mlUrl}/financial-summary-extract`, formData, {
-                headers: {
-                    'Accept': 'application/json'
-                }
+                headers: customHeaders
             });
             return response.data;
         } catch (error) {
