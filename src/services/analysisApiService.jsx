@@ -123,17 +123,19 @@ export class AnalysisApiService {
     return fetchPromise;
   }
   async savePMFOnboardingData(businessId, onboardingData) {
-    return this.pmfService.savePMFOnboardingData(businessId, onboardingData);
+    const res = await this.pmfService.savePMFOnboardingData(businessId, onboardingData);
+    pmfAnalysisCache.delete(`pmf-${businessId}`);
+    return res;
   }
 
-  async getPMFAnalysis(businessId) {
+  async getPMFAnalysis(businessId, forceRefresh = false) {
     if (!businessId) return null;
     const cacheKey = `pmf-${businessId}`;
-    if (pmfAnalysisCache.has(cacheKey)) return await pmfAnalysisCache.get(cacheKey);
+    if (!forceRefresh && pmfAnalysisCache.has(cacheKey)) return await pmfAnalysisCache.get(cacheKey);
 
     const promise = (async () => {
       try {
-        return await this.pmfService.getPMFAnalysis(businessId);
+        return await this.pmfService.getPMFAnalysis(businessId, forceRefresh);
       } catch (err) {
         pmfAnalysisCache.delete(cacheKey);
         throw err;
@@ -146,6 +148,7 @@ export class AnalysisApiService {
   async savePMFExecutiveSummary(businessId, summary) {
     const res = await this.pmfService.savePMFExecutiveSummary(businessId, summary);
     pmfExecutiveSummaryCache.delete(`exec-${businessId}`);
+    pmfAnalysisCache.delete(`pmf-${businessId}`);
     return res;
   }
 
@@ -184,7 +187,9 @@ export class AnalysisApiService {
   }
 
   async savePMFInsights(businessId, insights) {
-    return this.pmfService.savePMFInsights(businessId, insights);
+    const res = await this.pmfService.savePMFInsights(businessId, insights);
+    pmfAnalysisCache.delete(`pmf-${businessId}`);
+    return res;
   }
 
   async getKickstartData(businessId, forceRefresh = false) {

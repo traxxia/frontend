@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect, useCallback, useRef } from "react";
-import { ChevronDown, ChevronUp, CheckCircle2, AlertCircle, Info, Target, FileText, ListChecks, Loader2, Zap, Plus, Rocket, ArrowRight, AlertTriangle } from "lucide-react";
+import { ChevronDown, ChevronUp, CheckCircle2, AlertCircle, Info, Target, FileText, ListChecks, Loader2, Zap, Plus, Rocket, ArrowRight, AlertTriangle, Lock } from "lucide-react";
 import { Modal, Button, Spinner } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 import { AnalysisApiService } from "../services/analysisApiService";
@@ -500,6 +500,33 @@ const ExecutiveSummary = () => {
                 </div>;
           }) || <p className="exc-content-text exc-italic">{t("Identifying strategic priorities")}...</p>}
           </div>
+        </div>
+
+        {/* Next Step Card */}
+        <div className="exc-section-card p-4">
+          <p className="fw-bold text-uppercase mb-2" style={{ fontSize: '0.75rem', letterSpacing: '1px', color: '#2563eb' }}>{t("Next step")}</p>
+          <h3 className="exc-section-title mb-3" style={{ fontSize: '1.4rem', textTransform: 'none' }}>{t("Go deeper with Advanced Insights")}</h3>
+          <p className="exc-content-text mb-4" style={{ fontSize: '14px' }}>
+            {t("Your Basic diagnosis is the quick read. Advanced asks a few more questions to build the full picture — the 6 C's and the S.T.R.A.T.E.G.I.C. scorecard — and that sharper analysis is what your Bets are built from.")}
+          </p>
+          
+          <div className="d-flex align-items-center mb-4 flex-wrap gap-2" style={{ fontSize: '0.9rem', fontWeight: '500' }}>
+            <div className="d-flex align-items-center rounded-pill px-3 py-1" style={{ backgroundColor: '#dcfce7', color: '#166534' }}>
+              <CheckCircle2 size={16} fill="#166534" color="#dcfce7" className="me-2" /> {t("Basic")}
+            </div>
+            <span className="text-muted mx-1">→</span>
+            <div className="d-flex align-items-center border rounded-pill px-3 py-1 bg-white" style={{ borderColor: '#2563eb', color: '#2563eb' }}>
+              <div className="rounded-circle d-flex align-items-center justify-content-center me-2" style={{ backgroundColor: '#2563eb', color: 'white', width: '20px', height: '20px', fontSize: '0.75rem' }}>2</div> {t("Advanced")}
+            </div>
+            <span className="text-muted mx-1">→</span>
+            <div className="d-flex align-items-center rounded-pill px-3 py-1" style={{ backgroundColor: '#f3f4f6', color: '#4b5563', border: '1px solid #e5e7eb' }}>
+              <span className="me-2 fw-bold" style={{ fontSize: '0.85rem' }}>3</span> {t("Execution")}
+            </div>
+          </div>
+
+          <button className="exc-create-project-btn mt-0" onClick={() => navigate(`/business/${businessId || 'default'}/advanced-insights`)}>
+            <Lock size={16} fill="#f59e0b" color="#1e3a8a" /> {t("Continue to Advanced Insights")} <ArrowRight size={16} />
+          </button>
         </div>
       </div>
 

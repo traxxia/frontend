@@ -2679,7 +2679,6 @@ body.modal-open {
 
 /* ── Split Workspace Layout ── */
 .brief-split-layout {
-  display: grid;
   grid-template-columns: 250px 1fr;
   gap: 10px;
   margin-top: 16px;
@@ -3541,10 +3540,10 @@ body.modal-open {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.brief-split-layout.left-collapsed {
+/* .brief-split-layout.left-collapsed {
   grid-template-columns: 0px 1fr;
   gap: 0;
-}
+} */
 
 .brief-left-column {
   transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.3s cubic-bezier(0.4, 0, 0.2, 1);

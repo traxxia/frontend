@@ -157,8 +157,7 @@ body {
   align-items: center;
   gap: 0px;
   background: #fff;
-  padding: 2px 4px;
-  border-radius: 8px;
+  padding: 2px 4px;   
 }
 
 .business-breadcrumb {
@@ -177,17 +176,11 @@ body {
   font-size: 0.95rem;
   font-weight: 600;
   color: #1a1a2e;
-  background: rgba(37, 99, 235, 0.05);
-  padding: 4px 12px;
-  border-radius: 6px;
-  border: 1px solid rgba(37, 99, 235, 0.1);
   letter-spacing: 0.01em;
-  transition: all 0.2s ease;
 }
 
 .business-header-name:hover {
-  background: rgba(37, 99, 235, 0.08);
-  border-color: rgba(37, 99, 235, 0.2);
+  /* No hover effect needed for plain text breadcrumb */
 }
 
 .header-spacer {
@@ -289,13 +282,10 @@ body {
 
 [data-theme="dark"] .business-header-name {
   color: #f1f5f9;
-  background: rgba(96, 165, 250, 0.1);
-  border-color: rgba(96, 165, 250, 0.2);
 }
 
 [data-theme="dark"] .business-header-name:hover {
-  background: rgba(96, 165, 250, 0.15);
-  border-color: rgba(96, 165, 250, 0.3);
+  /* No hover effect needed */
 }
 
 [data-theme="dark"] .expanded-analysis-content {

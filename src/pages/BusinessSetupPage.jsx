@@ -100,7 +100,11 @@ const BusinessSetupPage = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { t } = useTranslation();
-  const { pmf: hasPmfAccess, insight: hasInsightAccess, strategic: hasStrategicAccess, project: hasProjectAccess } = getUserLimits();
+  const limits = getUserLimits();
+  const hasPmfAccess = true;
+  const hasInsightAccess = true;
+  const hasStrategicAccess = true;
+  const hasProjectAccess = true;
   const queryClient = useQueryClient();
 
   // State management for business context
@@ -270,7 +274,11 @@ const BusinessSetupPage = () => {
     if (window.history.state?.usr?.initialTab) return window.history.state.usr.initialTab;
 
     // Fallback based on user plan priority: PMF > Insights/Strategic > Projects
-    const { pmf: hasPmfAccess, insight: hasInsightAccess, strategic: hasStrategicAccess, project: hasProjectAccess } = getUserLimits();
+    const limits = getUserLimits();
+    const hasPmfAccess = true;
+    const hasInsightAccess = true;
+    const hasStrategicAccess = true;
+    const hasProjectAccess = true;
     if (hasPmfAccess) return "executive";
     if (hasInsightAccess || hasStrategicAccess) return "advanced";
     if (hasProjectAccess) return "bets";
@@ -279,6 +287,7 @@ const BusinessSetupPage = () => {
   });
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [isAnalysisExpanded, setIsAnalysisExpanded] = useState(true);
+  const [isOnboardingStarted, setIsOnboardingStarted] = useState(false);
   const [isSliding, setIsSliding] = useState(false);
   const [businessData, setBusinessData] = useState({
     name: currentBusiness?.business_name || "",
@@ -513,7 +522,7 @@ const BusinessSetupPage = () => {
   // Use a ref to prevent re-running when questionsLoaded changes (avoids infinite loop).
   const hasLoadedQuestionsRef = useRef(false);
   useEffect(() => {
-    const tabsNeedingQuestions = ['advanced', 'insights', 'strategic'];
+    const tabsNeedingQuestions = ['advanced', 'insights', 'strategic', 'onboarding'];
     if (!tabsNeedingQuestions.includes(activeTab)) {
       // For non-question tabs, just mark as loaded if not already done
       if (!useAnalysisStore.getState().questionsLoaded) {
@@ -1337,12 +1346,123 @@ const BusinessSetupPage = () => {
       )}
 
       {activeTab === 'onboarding' ? (
-        <OnboardingChat
-          userName={userName}
-          businessName={selectedBusinessName}
-          onBack={handleBack}
-          onStart={() => setActiveTab('advanced')}
-        />
+        !isOnboardingStarted ? (
+          <OnboardingChat
+            userName={userName}
+            businessName={selectedBusinessName}
+            onBack={handleBack}
+            onStart={() => navigate(`/onboarding/${selectedBusinessId}`)}
+          />
+        ) : (
+          <div className="split-onboarding-wrapper">
+            {/* Top breadcrumb header */}
+            <div className="split-onboarding-header">
+              <button className="back-button" onClick={handleBack} aria-label="Back to Dashboard" style={{ display: 'contents', alignItems: 'center', gap: '8px' }}>
+                <ArrowLeft size={16} style={{margin: '4px 10px'}}/>
+                <span>{t("backToDashboard_B3") || "Back to Dashboard"}</span>
+              </button>
+              <div className="business-breadcrumb">
+                <span className="breadcrumb-separator">/</span>
+                <span className="business-header-name">{selectedBusinessName}</span>
+                <span className="breadcrumb-separator">/</span>
+                <span className="business-header-name">Onboarding</span>
+              </div>
+            </div>
+
+            {/* Split layout: Left chat sidebar + Right questionnaire */}
+            <div className="split-onboarding-container">
+              {/* Left: Docked Trax chat sidebar */}
+              <div className="split-onboarding-left">
+                <div className="docked-onboarding-chat">
+                  <div className="onboarding-chat-header">
+                    <div className="avatar-wrapper">
+                      <div className="avatar-circle">TX</div>
+                    </div>
+                    <div className="header-info">
+                      <h3 className="header-title">Trax</h3>
+                      <span className="header-subtitle">{t("Strategy Consultant") || "Strategy Consultant"}</span>
+                    </div>
+                  </div>
+                  <div className="docked-chat-body">
+                    <div className="onboarding-chat-message">
+                      <div className="bubble-avatar">TX</div>
+                      <div className="bubble-content">
+                        Hi {userName} — I'm Trax, your strategy consultant. To draft a real diagnosis for <strong>{selectedBusinessName}</strong>, I'll need a feel for the business.
+                      </div>
+                    </div>
+                    <div className="onboarding-chat-message">
+                      <div className="bubble-avatar">TX</div>
+                      <div className="bubble-content">
+                        You can fill out the questions yourself — or add documents (annual plan, board deck, financials) and I'll read them and auto-fill what I can.
+                      </div>
+                    </div>
+                    <div className="onboarding-chat-highlight-card">
+                      <strong>I value context.</strong> The more you share, the sharper the diagnosis. Upload anything you have.
+                    </div>
+                    <div className="onboarding-chat-message">
+                      <div className="bubble-avatar">TX</div>
+                      <div className="bubble-content">
+                        Great. Here are the {questions?.length || 6} questions I need to draft your diagnosis. Answer in any order — or add documents and I'll auto-fill what I can.
+                      </div>
+                    </div>
+                  </div>
+                  {/* Input bar — styled active to match Figma (no action on submit) */}
+                  <div className="onboarding-chat-input-bar">
+                    <div className="onboarding-chat-input-wrapper">
+                      <input
+                        type="text"
+                        className="onboarding-chat-input-field"
+                        placeholder={t("Type a message to Trax...") || "Type a message to Trax..."}
+                        readOnly
+                      />
+                      <button type="button" className="onboarding-chat-send-btn" aria-label="Send">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <line x1="22" y1="2" x2="11" y2="13" />
+                          <polygon points="22 2 15 22 11 13 2 9 22 2" />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+
+                </div>
+              </div>
+
+              {/* Right: Questionnaire */}
+              <div className="split-onboarding-right">
+                <EditableBriefSection
+                  selectedBusinessId={selectedBusinessId}
+                  questions={questions}
+                  userAnswers={userAnswers}
+                  businessData={businessData}
+                  isLoading={!questionsLoaded}
+                  onBusinessDataUpdate={handleBusinessDataUpdate}
+                  onAnswerUpdate={async (questionId, newAnswer) => {
+                    handleAnswerUpdate(questionId, newAnswer);
+                    window.dispatchEvent(
+                      new CustomEvent("conversationUpdated", {
+                        detail: { questionId, businessId: selectedBusinessId },
+                      })
+                    );
+                  }}
+                  onAnalysisRegenerate={handleRegenerateAllAnalysis}
+                  onUploadedFileUpdate={setUploadedFile}
+                  isAnalysisRegenerating={isAnalysisRegenerating}
+                  isStrategicRegenerating={isStrategicRegenerating}
+                  isFinancialRegeneratingProp={isProfitabilityAnalysisRegenerating || isGrowthTrackerRegenerating || isLiquidityEfficiencyRegenerating || isInvestmentPerformanceRegenerating || isLeverageRiskRegenerating || isTypeRegenerating('financial')}
+                  isEssentialPhaseGenerating={isFullSwotRegenerating || isCompetitiveAdvantageRegenerating || isExpandedCapabilityRegenerating || isStrategicRadarRegenerating || isProductivityRegenerating || isMaturityRegenerating || isTypeRegenerating('initial') || isTypeRegenerating('essential') || isTypeRegenerating('advanced')}
+                  highlightedMissingQuestions={highlightedMissingQuestions}
+                  onClearHighlight={() => setHighlightedMissingQuestions(null)}
+                  isLaunchedStatus={isLaunchedStatus}
+                  documentInfo={documentInfo}
+                  answerIds={answerIds}
+                  setAnswerIds={setAnswerIds}
+                  hasPmfAccess={hasPmfAccess}
+                  isOnboarding={true}
+                />
+              </div>
+            </div>
+          </div>
+        )
       ) : (
         <>
           {isMobile && (
@@ -1361,14 +1481,7 @@ const BusinessSetupPage = () => {
                 {selectedBusinessName}
               </div>
 
-              <button
-                className="mobile-menu-trigger"
-                onClick={() => isModalOpen('mobileMenu') ? closeModal('mobileMenu') : openModal('mobileMenu')}
-                aria-label="Toggle Menu"
-              >
-                {isModalOpen('mobileMenu') ? <X size={22} /> : <Menu size={22} />}
-              </button>
-            </div>
+              </div>
 
             <div className="mobile-active-tab">
               {(['executive', 'advanced', 'insights', 'strategic', 'priorities', 'bets', 'ranking', 'decision-logs'].includes(activeTab)) ? (
@@ -1524,127 +1637,6 @@ const BusinessSetupPage = () => {
             </div>
           </div>
 
-          {isModalOpen('mobileMenu') && (
-            <div className="mobile-menu-overlay" onClick={() => closeModal('mobileMenu')}>
-              <div className="mobile-menu-content" onClick={(e) => e.stopPropagation()}>
-                <div className="mobile-menu-header">
-                  <h5>{t("Navigation")}</h5>
-                  <button className="close-menu" onClick={() => closeModal('mobileMenu')}>
-                    <X size={24} />
-                  </button>
-                </div>
-                <div className="mobile-nav-groups">
-                  <div className="mobile-nav-group">
-                    <div className="mobile-nav-group-header">{t("Insights & Recommendations")}</div>
-
-                    <div className="mobile-nav-sub-group">
-                      <div className="mobile-nav-sub-group-header">{t("Basic")}</div>
-                      {hasPmfAccess && (
-                        <button
-                          className={`mobile-menu-item ${activeTab === "executive" ? "active" : ""}`}
-                          onClick={() => { handleExecutiveTabClick(); closeModal('mobileMenu'); }}
-                        >
-                          <LayoutDashboard size={18} />
-                          <span>{t("Executive Summary")}</span>
-                        </button>
-                      )}
-                    </div>
-
-                    <div className="mobile-nav-sub-group mt-3">
-                      {(hasInsightAccess || hasStrategicAccess) && (
-                        <>
-                          <div className="mobile-nav-sub-group-header">{t("Advanced")}</div>
-                          <button
-                            className={`mobile-menu-item ${activeTab === "advanced" ? "active" : ""}`}
-                            onClick={() => { handleBriefTabClick(); closeModal('mobileMenu'); }}
-                          >
-                            <HelpCircle size={18} />
-                            <span>{t("Answers/Brief")}</span>
-                          </button>
-                        </>
-                      )}
-                      {hasInsightAccess && (
-                        <button
-                          className={`mobile-menu-item ${activeTab === "insights" ? "active" : ""}`}
-                          onClick={() => { handleAnalysisTabClick(); closeModal('mobileMenu'); }}
-                        >
-                          <TrendingUp size={18} />
-                          <span>{t("Insights")}</span>
-                        </button>
-                      )}
-                      {hasStrategicAccess && (
-                        <button
-                          className={`mobile-menu-item ${activeTab === "strategic" ? "active" : ""}`}
-                          onClick={() => { handleStrategicTabClick(); closeModal('mobileMenu'); }}
-                        >
-                          <Target size={18} />
-                          <span>{t("STRATEGIC_LABEL") || "S.T.R.A.T.E.G.I.C."}</span>
-                        </button>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="mobile-nav-group mt-4">
-                    <div className="mobile-nav-group-header">{t("Projects")}</div>
-                    {hasPmfAccess && (
-                      <button
-                        className={`mobile-menu-item ${activeTab === "priorities" ? "active" : ""}`}
-                        onClick={() => { setActiveTab("priorities"); closeModal('mobileMenu'); }}
-                      >
-                        <ListTodo size={18} />
-                        <span>{t("Priorities")}</span>
-                      </button>
-                    )}
-                    {showProjectsTab && hasProjectAccess && (
-                      <div className="mobile-nav-sub-group mt-3">
-                        <div className="mobile-nav-sub-group-header">{t("Projects")}</div>
-                        <button
-                          className={`mobile-menu-item ${activeTab === 'bets' && useProjectStore.getState().viewMode === 'projects' ? 'active' : ''}`}
-                          onClick={() => {
-                            useProjectStore.getState().setViewMode('projects');
-                            setActiveTab('bets');
-                            closeModal('mobileMenu');
-                          }}
-                        >
-                          <Briefcase size={18} />
-                          <span>{t("Bets")}</span>
-                        </button>
-
-                        <button
-                          className={`mobile-menu-item ${activeTab === 'ranking' ? 'active' : ''}`}
-                          onClick={() => {
-                            useProjectStore.getState().setViewMode('ranking');
-                            useProjectStore.getState().clearCache(selectedBusinessId);
-                            if (activeTab === 'ranking') {
-                              useProjectStore.getState().checkAllAccess(selectedBusinessId);
-                              useProjectStore.getState().fetchTeamRankings(selectedBusinessId);
-                            } else {
-                              setActiveTab('ranking');
-                            }
-                            closeModal('mobileMenu');
-                          }}
-                        >
-                          <BarChart4 size={18} />
-                          <span>{t("Ranking")}</span>
-                        </button>
-
-                        <button
-                          className={`mobile-menu-item ${activeTab === 'decision-logs' ? 'active' : ''}`}
-                          onClick={() => {
-                            setActiveTab('decision-logs');
-                            closeModal('mobileMenu');
-                          }}
-                        >
-                          <FileText size={18} />
-                          <span>{t("Decision_Logs") || "Decision Logs"}</span>
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
         </>
       )}
 
@@ -1665,150 +1657,20 @@ const BusinessSetupPage = () => {
                         <div className="business-breadcrumb">
                           <span className="breadcrumb-separator">/</span>
                           <span className="business-header-name">{selectedBusinessName}</span>
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="desktop-nav-main">
-                      {/* Insights & Recommendations Dropdown */}
-                      <div className={`nav-dropdown-wrapper ${activeNavDropdown === 'insights' ? 'open' : ''}`}>
-                        <button
-                          className={`nav-dropdown-trigger ${['executive', 'advanced', 'insights', 'strategic'].includes(activeTab) ? 'active' : ''}`}
-                          onClick={() => setActiveNavDropdown(activeNavDropdown === 'insights' ? null : 'insights')}
-                        >
-                          {/* Dynamically show active tab target name or category name */}
-                          {(() => {
-                            if (activeTab === "executive") return t("Executive Summary");
-                            if (activeTab === "advanced") return t("Answers/Brief");
-                            if (activeTab === "insights") return t("Insights");
-                            if (activeTab === "strategic") return t("STRATEGIC_LABEL") || "S.T.R.A.T.E.G.I.C.";
-                            return t("Insights & Recommendations");
-                          })()}
-                          <ChevronDown size={14} className={`chevron-icon ${activeNavDropdown === 'insights' ? 'rotated' : ''}`} />
-                        </button>
-                        {activeNavDropdown === 'insights' && (
-                          <div className={`nav-dropdown-menu ${!(hasPmfAccess || (showProjectsTab && hasProjectAccess)) ? 'align-right' : ''}`}>
-                            <div className="dropdown-main-header">{t("Insights & Recommendations")}</div>
-                            {hasPmfAccess && (
-                              <>
-                                <div className="dropdown-section-label">{t("Basic")}</div>
-                                <button
-                                  className={`dropdown-item ${activeTab === 'executive' ? 'active' : ''}`}
-                                  onClick={() => { handleExecutiveTabClick(); setActiveNavDropdown(null); }}
-                                >
-                                  <LayoutDashboard size={14} />
-                                  <span>{t("Executive Summary")}</span>
-                                </button>
-                              </>
-                            )}
-
-                            {(hasInsightAccess || hasStrategicAccess) && (
-                              <>
-                                <div className="dropdown-section-label mt-2">{t("Advanced")}</div>
-                                <button
-                                  className={`dropdown-item ${activeTab === 'advanced' ? 'active' : ''}`}
-                                  onClick={() => { handleBriefTabClick(); setActiveNavDropdown(null); }}
-                                >
-                                  <HelpCircle size={14} />
-                                  <span>{t("Answers/Brief")}</span>
-                                </button>
-                              </>
-                            )}
-                            {hasInsightAccess && (
-                              <button
-                                className={`dropdown-item ${activeTab === 'insights' ? 'active' : ''}`}
-                                onClick={() => { setActiveTab('insights'); setActiveNavDropdown(null); }}
-                              >
-                                <TrendingUp size={14} />
-                                <span>{t("Insights")}</span>
-                              </button>
-                            )}
-                            {hasStrategicAccess && (
-                              <button
-                                className={`dropdown-item ${activeTab === 'strategic' ? 'active' : ''}`}
-                                onClick={() => { setActiveTab('strategic'); setActiveNavDropdown(null); }}
-                              >
-                                <Target size={14} />
-                                <span>{t("STRATEGIC_LABEL") || "S.T.R.A.T.E.G.I.C."}</span>
-                              </button>
-                            )}
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Execution Dropdown */}
-                      {(hasPmfAccess || (showProjectsTab && hasProjectAccess)) && (
-                        <div className={`nav-dropdown-wrapper ${activeNavDropdown === 'execution' ? 'open' : ''}`}>
-                          <button
-                            className={`nav-dropdown-trigger ${['priorities', 'bets', 'ranking', 'decision-logs'].includes(activeTab) ? 'active' : ''}`}
-                            onClick={() => setActiveNavDropdown(activeNavDropdown === 'execution' ? null : 'execution')}
-                          >
-                            {/* Dynamically show active tab target name or category name */}
-                            {(() => {
-                              if (activeTab === "priorities") return t("Priorities");
-                              if (activeTab === "ranking") return t("Ranking");
-                              if (activeTab === "bets" || activeTab === "projects") return t("Bets");
-                              if (activeTab === "decision-logs") return t("Decision_Logs") || "Decision Logs";
-                              return t("Projects");
-                            })()}
-                            <ChevronDown size={14} className={`chevron-icon ${activeNavDropdown === 'execution' ? 'rotated' : ''}`} />
-                          </button>
-                          {activeNavDropdown === 'execution' && (
-                            <div className="nav-dropdown-menu align-right">
-                              <div className="dropdown-main-header">{t("Projects")}</div>
-                              {hasPmfAccess && (
-                                <button
-                                  className={`dropdown-item ${activeTab === 'priorities' ? 'active' : ''}`}
-                                  onClick={() => { handlePrioritiesTabClick(); setActiveNavDropdown(null); }}
-                                >
-                                  <ListTodo size={14} />
-                                  <span>{t("Priorities")}</span>
-                                </button>
-                              )}
-                              {showProjectsTab && hasProjectAccess && (
-                                <>
-                                  <div className="dropdown-section-label">{t("Projects")}</div>
-                                  <button
-                                    className={`dropdown-item ${activeTab === 'bets' ? 'active' : ''}`}
-                                    onClick={() => {
-                                      useProjectStore.getState().setViewMode('projects');
-                                      setActiveTab('bets');
-                                      setActiveNavDropdown(null);
-                                    }}
-                                  >
-                                    <Briefcase size={14} />
-                                    <span>{t("Bets")}</span>
-                                  </button>
-
-                                  <button
-                                    className={`dropdown-item ${activeTab === 'ranking' ? 'active' : ''}`}
-                                    onClick={() => {
-                                      useProjectStore.getState().setViewMode('ranking');
-                                      setActiveTab('ranking');
-                                      setActiveNavDropdown(null);
-                                    }}
-                                  >
-                                    <BarChart4 size={14} />
-                                    <span>{t("Ranking")}</span>
-                                  </button>
-
-                                  <button
-                                    className={`dropdown-item ${activeTab === 'decision-logs' ? 'active' : ''}`}
-                                    onClick={() => {
-                                      setActiveTab('decision-logs');
-                                      setActiveNavDropdown(null);
-                                    }}
-                                  >
-                                    <FileText size={14} />
-                                    <span>{t("Decision_Logs") || "Decision Logs"}</span>
-                                  </button>
-                                </>
-                              )}
-                            </div>
+                          {['executive', 'insights', 'advanced', 'strategic', 'bets', 'ranking', 'decision-logs', 'priorities'].includes(activeTab) && (
+                            <>
+                              <span className="breadcrumb-separator">/</span>
+                              <span className="business-header-name">
+                                {['executive', 'insights', 'advanced', 'strategic'].includes(activeTab) 
+                                  ? (t("Insights") || "Insights") 
+                                  : (t("Execution") || "Execution")}
+                              </span>
+                            </>
                           )}
                         </div>
                       )}
                     </div>
+
                   </div>
 
                   <div className="desktop-tabs-buttons">

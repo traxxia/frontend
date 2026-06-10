@@ -332,7 +332,6 @@
 
 .businesses-table tr {
   transition: background-color 0.2s;
-  cursor: pointer;
 }
 
 .businesses-table tr:hover {
@@ -607,6 +606,35 @@
 
   .businesses-header {
     padding: 16px 20px;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 16px !important;
+  }
+
+  .businesses-header h2 {
+    text-align: left;
+    margin: 0;
+  }
+
+  .businesses-header > div {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    gap: 12px !important;
+  }
+
+  .status-filter-wrapper {
+    flex-grow: 1;
+  }
+
+  .status-filter-btn {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .btn-create-business-header {
+    flex-grow: 1;
+    justify-content: center;
   }
 
   .businesses-table th,
@@ -2608,7 +2636,7 @@
 
 /* Outline Table Action Buttons */
 .btn-insights-outline {
-  border: 1px solid #d9dbe9;
+  border: 1px solid #cbd5e1;
   background: #ffffff;
   color: #4b5563;
   font-weight: 600;
@@ -2639,7 +2667,7 @@
 }
 
 .btn-execution-outline {
-  border: 1px solid #d9dbe9;
+  border: 1px solid #cbd5e1;
   background: #ffffff;
   color: #4b5563;
   font-weight: 600;
@@ -2753,7 +2781,7 @@
 
 .create-business-modal .form-label {
   font-size: 13px !important;
-  font-weight: 600 !important;
+  font-weight: 700 !important;
   color: #475569 !important;
   margin-bottom: 6px !important;
 }
@@ -2886,4 +2914,163 @@
   -webkit-backdrop-filter: blur(8px) !important;
   background-color: rgba(15, 23, 42, 0.45) !important;
   transition: all 0.3s ease !important;
+}
+
+[data-theme="dark"] .create-business-doc-upload {
+  border-top-color: var(--color-border-light);
+}
+
+.doc-upload-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+[data-theme="dark"] .doc-upload-title {
+  color: var(--color-text-primary);
+}
+
+.info-box-blue {
+  background-color: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 8px;
+  padding: 12px;
+  font-size: 12px;
+  color: #1e3a8a;
+  line-height: 1.5;
+}
+
+[data-theme="dark"] .info-box-blue {
+  background-color: rgba(37, 99, 235, 0.1);
+  border-color: rgba(37, 99, 235, 0.2);
+  color: #93c5fd;
+}
+
+.info-box-green {
+  background-color: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 11px;
+  color: #14532d;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.info-box-green svg {
+  margin-top: 2px;
+}
+
+[data-theme="dark"] .info-box-green {
+  background-color: rgba(22, 163, 74, 0.1);
+  border-color: rgba(22, 163, 74, 0.2);
+  color: #86efac;
+}
+
+.btn-add-file-dashed {
+  background: transparent;
+  border: 1.5px dashed #cbd5e1;
+  border-radius: 8px;
+  color: #475569;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-add-file-dashed:hover {
+  background-color: #f8fafc;
+  border-color: #94a3b8;
+  color: #1e293b;
+}
+
+[data-theme="dark"] .btn-add-file-dashed {
+  border-color: var(--color-border-light);
+  color: var(--color-text-secondary);
+}
+
+[data-theme="dark"] .btn-add-file-dashed:hover {
+  background-color: var(--color-bg-secondary);
+  color: var(--color-text-primary);
+}
+
+.selected-file-card {
+  background-color: #f8fafc;
+  border: 1px solid #f1f5f9;
+  border-radius: 8px;
+  padding: 10px 14px;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+[data-theme="dark"] .selected-file-card {
+  background-color: var(--color-bg-secondary);
+  border-color: var(--color-border-light);
+}
+
+.file-type-badge {
+  background-color: #e0f2fe;
+  color: #0369a1;
+  width: 38px;
+  height: 38px;
+  border-radius: 6px;
+  font-weight: 700;
+  font-size: 10px;
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+[data-theme="dark"] .file-type-badge {
+  background-color: rgba(3, 105, 161, 0.2);
+  color: #38bdf8;
+}
+
+.selected-file-name {
+  color: #0f172a;
+  font-weight: 600;
+  font-size: 13px;
+  word-break: break-all;
+}
+
+[data-theme="dark"] .selected-file-name {
+  color: var(--color-text-primary);
+}
+
+.selected-file-meta {
+  color: #64748b;
+  font-size: 11px;
+  margin-top: 2px;
+}
+
+[data-theme="dark"] .selected-file-meta {
+  color: var(--color-text-secondary);
+}
+
+.files-count-badge {
+  background-color: #eff6ff;
+  color: #2563eb;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  margin-left: 8px;
+  display: inline-block;
+}
+
+[data-theme="dark"] .files-count-badge {
+  background-color: rgba(37, 99, 235, 0.2);
+  color: #60a5fa;
+}
+
+.btn-add-file-small {
+  width: auto;
+  min-width: 110px;
+  padding-left: 16px;
+  padding-right: 16px;
 }

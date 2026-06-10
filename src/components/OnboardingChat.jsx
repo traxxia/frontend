@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Send } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { useTranslation } from '../hooks/useTranslation';
 
 const OnboardingChat = ({ userName, businessName, onBack, onStart }) => {
@@ -8,7 +8,6 @@ const OnboardingChat = ({ userName, businessName, onBack, onStart }) => {
 
   const handleSend = (e) => {
     if (e) e.preventDefault();
-    onStart();
   };
 
   const handleKeyPress = (e) => {
@@ -19,13 +18,15 @@ const OnboardingChat = ({ userName, businessName, onBack, onStart }) => {
 
   return (
     <div className="onboarding-chat-wrapper">
-      <div className="onboarding-chat-breadcrumb-bar">
-        <button className="back-button" onClick={onBack} aria-label="Back to Dashboard">
+      <div className="business-header-container mb-4" style={{width: '-webkit-fill-available', margin: '0 auto', position: 'fixed'}}>
+        <button className="back-button" onClick={onBack} aria-label="Back to Dashboard" style={{ position: 'static', display: 'flex', alignItems: 'center', gap: '8px' }}>
           <ArrowLeft size={16} />
           <span>{t("backToDashboard_B3") || "Back to Dashboard"}</span>
         </button>
-        <span className="breadcrumb-separator">/</span>
-        <span className="business-badge">{businessName}</span>
+        <div className="business-breadcrumb">
+          <span className="breadcrumb-separator">/</span>
+          <span className="business-header-name">{businessName}</span>
+        </div>
       </div>
 
       <div className="onboarding-chat-card">
@@ -34,7 +35,6 @@ const OnboardingChat = ({ userName, businessName, onBack, onStart }) => {
             <div className="avatar-circle">
               TX
             </div>
-            <div className="status-dot"></div>
           </div>
           <div className="header-info">
             <h3 className="header-title">Trax</h3>
@@ -83,7 +83,20 @@ const OnboardingChat = ({ userName, businessName, onBack, onStart }) => {
               onKeyPress={handleKeyPress}
             />
             <button type="submit" className="onboarding-chat-send-btn" aria-label="Send">
-              <Send />
+              <svg 
+                xmlns="http://www.w3.org/2000/svg" 
+                width="16" 
+                height="16" 
+                viewBox="0 0 24 24" 
+                fill="none" 
+                stroke="currentColor" 
+                strokeWidth="2" 
+                strokeLinecap="round" 
+                strokeLinejoin="round"
+              >
+                <line x1="22" y1="2" x2="11" y2="13" />
+                <polygon points="22 2 15 22 11 13 2 9 22 2" />
+              </svg>
             </button>
           </form>
         </div>

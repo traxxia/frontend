@@ -1394,9 +1394,7 @@
 
 .actions-cell button,
 .export-button,
-.view-details-button {
-  border: none;
-  padding: 8px 12px;
+.view-details-button {  
   font-size: 13px;
   border-radius: 6px;
   cursor: pointer;

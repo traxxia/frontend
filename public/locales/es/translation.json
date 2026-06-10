@@ -1774,5 +1774,14 @@
   "leverage_analysis_display_name": "Análisis de Apalancamiento y Riesgo",
   "leverage_upload_msg": "Sube archivos Excel o CSV con datos financieros para el análisis de apalancamiento y riesgo",
   "leverage_reserves_and_debt": "Deuda y Pasivos",
-  "leverage_efficiency_unlock_msg": "Responde más preguntas para desbloquear el análisis detallado de apalancamiento y riesgo"
+  "leverage_efficiency_unlock_msg": "Responde más preguntas para desbloquear el análisis detallado de apalancamiento y riesgo",
+  "add_documents_optional": "Agregar documentos (opcional)",
+  "trax_will_read_your_website_bold": "Trax leerá su sitio web",
+  "trax_will_read_your_website_rest": "y solo pedirá lo que falte.",
+  "your_documents_stay_private_bold": "Sus documentos se mantienen privados.",
+  "your_documents_stay_private_rest": "Cifrados en reposo e aislados en su espacio de trabajo.",
+  "i_dont_have_website": "Aún no tengo un sitio web",
+  "continue_with_trax": "Continuar con Trax",
+  "file": "archivo",
+  "files": "archivos"
 }
