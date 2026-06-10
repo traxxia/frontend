@@ -46,6 +46,16 @@ const Aiassistant = ({ businessId: propBusinessId, projectId, pageContext, isDis
     }
   }, [open]);
 
+  useEffect(() => {
+    const handleOpenAssistant = () => {
+      if (!isDisabled) {
+        setOpen(true);
+      }
+    };
+    window.addEventListener('open_ai_assistant', handleOpenAssistant);
+    return () => window.removeEventListener('open_ai_assistant', handleOpenAssistant);
+  }, [isDisabled]);
+
   const checkQuota = React.useCallback(async () => {
     const businessId = propBusinessId || selectedBusinessId;
     const token = getToken();

@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect, useCallback, useRef } from "react";
-import { ChevronDown, ChevronUp, CheckCircle2, AlertCircle, Info, Target, FileText, ListChecks, Loader2, Zap, Plus, Rocket, ArrowRight, AlertTriangle, Lock } from "lucide-react";
+import { ChevronDown, ChevronUp, CheckCircle2, AlertCircle, Info, Target, FileText, ListChecks, Loader2, Zap, Plus, Rocket, ArrowRight, AlertTriangle, Lock, XCircle } from "lucide-react";
 import { Modal, Button, Spinner } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 import { AnalysisApiService } from "../services/analysisApiService";
@@ -217,6 +217,26 @@ const ExecutiveSummary = () => {
   const newAdjacencies = whereToCompete?.new_adjacencies_to_explore || whereToCompete?.new_adjacencies || whereToCompete?.["New Adjacencies"];
   const existingAdjacencies = whereToCompete?.existing_adjacencies || whereToCompete?.["Existing Adjacencies"];
   const topAhaInsights = getTopAhaInsights();
+  
+  const formatCoreData = (key1, key2, key3) => {
+    const v1 = data?.onboarding_data?.[key1];
+    const v2 = data?.onboarding_data?.[key2];
+    const v3 = data?.onboarding_data?.[key3];
+    if (v1 || v2 || v3) {
+      return [v1, v2, v3].filter(Boolean).join(", ");
+    }
+    return "N/A";
+  };
+
+  const formatAdjData = (adjList, key) => {
+    if (!adjList || !Array.isArray(adjList) || adjList.length === 0) {
+      const fallback = getNested(whereToCompete, `existing_adjacencies.${key}`);
+      if (fallback && Array.isArray(fallback)) return fallback.join(", ");
+      if (fallback) return fallback;
+      return "N/A";
+    }
+    return adjList.map(a => Array.isArray(a[key]) ? a[key].join(", ") : a[key]).filter(Boolean).join(" | ") || "N/A";
+  };
   return <div className="exc-executive-summary-container">
       <div className="exc-executive-content">
         {}
@@ -268,6 +288,15 @@ const ExecutiveSummary = () => {
                     </div>;
             })}
               </div>
+              <div className="exc-discuss-footer">
+                <button 
+                  className="exc-discuss-btn"
+                  onClick={() => window.dispatchEvent(new CustomEvent('open_ai_assistant'))}
+                >
+                  <span className="exc-tx-icon">TX</span>
+                  {t("Discuss with Trax") || "Discuss with Trax"}
+                </button>
+              </div>
             </div>
           </div>}
 
@@ -291,81 +320,91 @@ const ExecutiveSummary = () => {
           </div>
 
           <div className={`exc-section-body ${expandedSections.whereToCompete ? 'expanded' : 'collapsed'}`} data-component="executive-where">
-            {}
-            <div className="exc-subsection exc-current-core">
-              <div className="exc-subsection-icon exc-blue">
-                <Target size={18} />
+            <div className="exc-horizons-container">
+              <div className="exc-horizons-header">
+                <p className="exc-super-title">{t("COMPARISON ACROSS HORIZONS")}</p>
+                <h4 className="exc-horizons-title">{t("How the business expands outward from its core")}</h4>
               </div>
-              <div className="exc-subsection-body">
-                <h3 className="exc-subsection-title">{t("Current Core")}</h3>
-                <p className="exc-source-label">
-                  <Info size={14} /> {t("AI-inferred from your data")}
-                </p>
-                <p className="exc-content-text">
-                  <strong>{t("Segments")}:</strong> {data?.onboarding_data?.customerSegment1 || data?.onboarding_data?.customerSegment2 || data?.onboarding_data?.customerSegment3 ? [data?.onboarding_data?.customerSegment1, data?.onboarding_data?.customerSegment2, data?.onboarding_data?.customerSegment3].filter(Boolean).join(", ") : "N/A"}
-                </p>
-                <p className="exc-content-text">
-                  <strong>{t("Products")}:</strong> {data?.onboarding_data?.productService1 || data?.onboarding_data?.productService2 || data?.onboarding_data?.productService3 ? [data?.onboarding_data?.productService1, data?.onboarding_data?.productService2, data?.onboarding_data?.productService3].filter(Boolean).join(", ") : "N/A"}
-                </p>
-                <p className="exc-content-text">
-                  <strong>{t("Channels")}:</strong> {data?.onboarding_data?.channel1 || data?.onboarding_data?.channel2 || data?.onboarding_data?.channel3 ? [data?.onboarding_data?.channel1, data?.onboarding_data?.channel2, data?.onboarding_data?.channel3].filter(Boolean).join(", ") : "N/A"}
-                </p>
-                <p className="exc-content-text">
-                  <strong>{t("Geographies")}:</strong> {data?.onboarding_data?.geography1 || data?.onboarding_data?.geography2 || data?.onboarding_data?.geography3 ? [data?.onboarding_data?.geography1, data?.onboarding_data?.geography2, data?.onboarding_data?.geography3].filter(Boolean).join(", ") : "N/A"}
-                </p>
-              </div>
-            </div>
-
-            {}
-            <div className="exc-subsection exc-existing-adjacencies">
-              <div className="exc-subsection-icon exc-orange">
-                <FileText size={18} />
-              </div>
-              <div className="exc-subsection-body">
-                <h3 className="exc-subsection-title">{t("Existing Adjacencies")}</h3>
-                <p className="exc-source-label exc-orange-text">
-                  <Info size={14} /> {t("AI-inferred from your core business data")}
-                </p>
-                {Array.isArray(existingAdjacencies) && existingAdjacencies.length > 0 ? existingAdjacencies.map((adj, idx) => <div className="exc-option-block" key={idx}>
-                      <p className="exc-option-title"><strong>{t("Recommendation Basis")}: {adj.recommendation_basis || adj.basis}</strong></p>
-                      <p className="exc-content-text"><strong>{t("Segments")}:</strong> {Array.isArray(adj.segments) ? adj.segments.join(", ") : adj.segments || "N/A"}</p>
-                      <p className="exc-content-text"><strong>{t("Products")}:</strong> {Array.isArray(adj.products) ? adj.products.join(", ") : adj.products || "N/A"}</p>
-                      <p className="exc-content-text"><strong>{t("Channels")}:</strong> {Array.isArray(adj.channels) ? adj.channels.join(", ") : adj.channels || "N/A"}</p>
-                      {adj.geographies && <p className="exc-content-text"><strong>{t("Geographies")}:</strong> {Array.isArray(adj.geographies) ? adj.geographies.join(", ") : adj.geographies}</p>}
-                    </div>) : getNested(whereToCompete, 'existing_adjacencies.segments')?.length > 0 ? <div className="exc-option-block">
-                    <p className="exc-content-text">
-                      <strong>{t("Segments")}:</strong> {getNested(whereToCompete, 'existing_adjacencies.segments').join(", ")}
-                    </p>
-                  </div> : <p className="exc-content-text exc-italic">{t("No existing adjacencies inferred. Business appears focused on core.")}</p>}
+              <div className="exc-horizons-table-wrapper">
+                <table className="exc-horizons-table">
+                  <thead>
+                    <tr>
+                      <th></th>
+                      <th>{t("CURRENT CORE")}</th>
+                      <th>{t("EXISTING ADJACENCIES")}</th>
+                      <th>{t("NEW ADJACENCIES")}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td className="exc-row-label">{t("Segments")}</td>
+                      <td>{formatCoreData("customerSegment1", "customerSegment2", "customerSegment3")}</td>
+                      <td>{formatAdjData(existingAdjacencies, "segments")}</td>
+                      <td>{formatAdjData(newAdjacencies, "segments")}</td>
+                    </tr>
+                    <tr>
+                      <td className="exc-row-label">{t("Products")}</td>
+                      <td>{formatCoreData("productService1", "productService2", "productService3")}</td>
+                      <td>{formatAdjData(existingAdjacencies, "products")}</td>
+                      <td>{formatAdjData(newAdjacencies, "products")}</td>
+                    </tr>
+                    <tr>
+                      <td className="exc-row-label">{t("Channels")}</td>
+                      <td>{formatCoreData("channel1", "channel2", "channel3")}</td>
+                      <td>{formatAdjData(existingAdjacencies, "channels")}</td>
+                      <td>{formatAdjData(newAdjacencies, "channels")}</td>
+                    </tr>
+                    <tr>
+                      <td className="exc-row-label">{t("Geographies")}</td>
+                      <td>{formatCoreData("geography1", "geography2", "geography3")}</td>
+                      <td>{formatAdjData(existingAdjacencies, "geographies")}</td>
+                      <td>{formatAdjData(newAdjacencies, "geographies")}</td>
+                    </tr>
+                  </tbody>
+                </table>
               </div>
             </div>
 
-            {}
-            <div className="exc-subsection exc-new-adjacencies">
-              <div className="exc-subsection-icon exc-green">
-                <ListChecks size={18} />
+            <div className="exc-recommended-moves">
+              <div className="exc-recommended-header">
+                <p className="exc-super-title">{t("RECOMMENDED MOVES")}</p>
+                <h4 className="exc-horizons-title">{t("Adjacencies Trax surfaced — ranked by strategic fit")}</h4>
               </div>
-              <div className="exc-subsection-body">
-                <h3 className="exc-subsection-title">{t("New Adjacencies to Explore")}</h3>
-                <p className="exc-source-label exc-green-text">
-                  <Info size={14} /> {t("AI-recommended based on industry and core business")}
-                </p>
-                {newAdjacencies?.map((adj, idx) => <div className="exc-option-block" key={idx}>
-                    <p className="exc-option-title"><strong>{t("Recommendation Basis")}: {adj.recommendation_basis || adj.title || adj.name}</strong></p>
-                    <p className="exc-content-text"><strong>{t("Segments")}:</strong> {Array.isArray(adj.segments) ? adj.segments.join(", ") : adj.segments || "N/A"}</p>
-                    <p className="exc-content-text"><strong>{t("Products")}:</strong> {Array.isArray(adj.products) ? adj.products.join(", ") : adj.products || "N/A"}</p>
-                    <p className="exc-content-text"><strong>{t("Channels")}:</strong> {Array.isArray(adj.channels) ? adj.channels.join(", ") : adj.channels || "N/A"}</p>
-                    {adj.strategic_fit_score && <p className="exc-content-text"><strong>{t("Strategic Fit Score")}:</strong> {adj.strategic_fit_score}</p>}
-                    {adj.rationale && <p className="exc-content-text"><strong>{t("Rationale")}:</strong> {adj.rationale}</p>}
-
+              <div className="exc-moves-list">
+                {newAdjacencies?.map((adj, idx) => (
+                  <div className="exc-move-card" key={idx}>
+                    <div className="exc-move-card-header">
+                      <h5 className="exc-move-title">{adj.title || adj.name || adj.recommendation_basis || "Adjacency"}</h5>
+                      {adj.strategic_fit_score && <span className="exc-move-score">{t("FIT SCORE")} <strong>{adj.strategic_fit_score}</strong></span>}
+                    </div>
+                    <p className="exc-move-subtitle">{adj.recommendation_basis || "Strategic expansion"}</p>
+                    <p className="exc-move-body">{adj.rationale}</p>
+                    
                     {isCompanyAdmin && (() => {
-                  const exists = isAlreadyProject(adj);
-                  return <button className={`exc-create-project-btn ${exists ? 'exists' : ''}`} onClick={() => !exists && handleCreateButtonClick(adj, idx)} disabled={kickstarting || exists}>
+                      const exists = isAlreadyProject(adj);
+                      return (
+                        <button 
+                          className={`exc-create-project-btn mt-3 ${exists ? 'exists' : ''}`} 
+                          onClick={() => !exists && handleCreateButtonClick(adj, idx)} 
+                          disabled={kickstarting || exists}
+                        >
                           {exists ? <CheckCircle2 size={14} /> : <Plus size={14} />}
                           <span>{exists ? t("Already in Bets") : t("Create Strategic Bet")}</span>
-                        </button>;
-                })()}
-                  </div>) || <p className="exc-content-text exc-italic">{t("Analyzing potential adjacencies")}...</p>}
+                        </button>
+                      );
+                    })()}
+                  </div>
+                )) || <p className="exc-content-text exc-italic">{t("Analyzing potential adjacencies")}...</p>}
+              </div>
+
+              <div className="exc-discuss-footer">
+                <button 
+                  className="exc-discuss-btn"
+                  onClick={() => window.dispatchEvent(new CustomEvent('open_ai_assistant'))}
+                >
+                  <span className="exc-tx-icon">TX</span>
+                  {t("Discuss with Trax") || "Discuss with Trax"}
+                </button>
               </div>
             </div>
           </div>
@@ -391,57 +430,95 @@ const ExecutiveSummary = () => {
           </div>
 
           <div className={`exc-section-body ${expandedSections.howToCompete ? 'expanded' : 'collapsed'}`} data-component="executive-how">
-            <div className="exc-how-compete-box">
-              <p className="exc-box-title">{t("Differentiation Strategy")}:</p>
-
-              {howToCompete?.current_differentiation && <div className="exc-differentiation-inner mb-3 executive-summary--s2">
-                  <div className="exc-differentiation-header">
-                    <p className="exc-differentiation-label executive-summary--s3">{t("Current differentiation")}</p>
-                    <p className="exc-differentiation-text"><strong>{howToCompete.current_differentiation.primary_lever}</strong></p>
-                  </div>
-                  {howToCompete.current_differentiation.description && <p className="exc-alternative-reason mt-2">{howToCompete.current_differentiation.description}</p>}
-                </div>}
-
-              <div className="exc-differentiation-inner">
-                <div className="exc-differentiation-header">
-                  <p className="exc-differentiation-label">{t("Recommended differentiation levers")}</p>
-                  <p className="exc-differentiation-text"><strong>{differentiationLevers}</strong></p>
+            
+            {}
+            {howToCompete?.current_differentiation && (
+              <div className="exc-how-block">
+                <p className="exc-super-title">{t("CURRENT DIFFERENTIATION")}</p>
+                <h4 className="exc-horizons-title">{t("How the business differentiates today")}</h4>
+                <div className="exc-current-diff-card">
+                  <h5 className="exc-diff-title">{howToCompete.current_differentiation.primary_lever}</h5>
+                  {howToCompete.current_differentiation.description && (
+                    <p className="exc-diff-desc">{howToCompete.current_differentiation.description}</p>
+                  )}
                 </div>
+              </div>
+            )}
 
-                <div className="exc-implications-list">
-                  <div className="exc-implication-row exc-includes">
-                    <div className="exc-icon-label">
-                      <CheckCircle2 size={16} />
-                      <span>{t("What this implies")}:</span>
+            {}
+            <div className="exc-how-block">
+              <p className="exc-super-title">{t("RECOMMENDED DIFFERENTIATION LEVER")}</p>
+              <h4 className="exc-horizons-title">{t("What Trax recommends doubling down on")}</h4>
+              <div className="exc-rec-diff-card">
+                <h5 className="exc-diff-title">{differentiationLevers}</h5>
+                
+                <div className="exc-implications-container">
+                  <div className="exc-impl-group">
+                    <div className="exc-impl-header">
+                      <div className="exc-impl-icon-green"><CheckCircle2 size={14} strokeWidth={3} /></div>
+                      <span className="exc-impl-label">{t("What this implies")}</span>
                     </div>
-                    <div className="exc-implication-content">
-                      {Array.isArray(implications) ? implications.map((item, i) => <div key={i}>{typeof item === 'object' ? JSON.stringify(item) : item}</div>) : typeof implications === 'object' ? JSON.stringify(implications) : implications || "N/A"}
+                    <div className="exc-impl-list">
+                      {Array.isArray(implications) ? implications.map((item, i) => (
+                        <p className="exc-impl-text" key={i}>{typeof item === 'object' ? JSON.stringify(item) : item}</p>
+                      )) : (
+                        <p className="exc-impl-text">{typeof implications === 'object' ? JSON.stringify(implications) : implications || "N/A"}</p>
+                      )}
                     </div>
                   </div>
 
-                  <div className="exc-implication-row exc-excludes">
-                    <div className="exc-icon-label">
-                      <AlertCircle size={16} />
-                      <span>{t("What this excludes")}:</span>
+                  <div className="exc-impl-group">
+                    <div className="exc-impl-header">
+                      <div className="exc-impl-icon-red"><XCircle size={14} strokeWidth={3} /></div>
+                      <span className="exc-impl-label">{t("What this excludes")}</span>
                     </div>
-                    <div className="exc-implication-content">
-                      {Array.isArray(excludes) ? excludes.map((item, i) => <div key={i}>{typeof item === 'object' ? JSON.stringify(item) : item}</div>) : typeof excludes === 'object' ? JSON.stringify(excludes) : excludes || "N/A"}
+                    <div className="exc-impl-list">
+                      {Array.isArray(excludes) ? excludes.map((item, i) => (
+                        <p className="exc-impl-text" key={i}>{typeof item === 'object' ? JSON.stringify(item) : item}</p>
+                      )) : (
+                        <p className="exc-impl-text">{typeof excludes === 'object' ? JSON.stringify(excludes) : excludes || "N/A"}</p>
+                      )}
                     </div>
                   </div>
                 </div>
               </div>
+            </div>
 
-              {alternativeLevers.length > 0 && <div className="exc-alternative-levers">
-                  <p className="exc-differentiation-label executive-summary--s4">{t("Alternative differentiation levers")}</p>
-                  <ul className="exc-alternative-list">
-                    {Array.isArray(alternativeLevers) ? alternativeLevers.map((item, idx) => <li key={idx} className="exc-alternative-item">
-                        {typeof item === 'object' ? <>
-                            <strong>{item.lever}</strong> (Score: {item.suitability_score}/10)
-                            <p className="exc-alternative-reason">{item.reason}</p>
-                          </> : item}
-                      </li>) : <li className="exc-alternative-item">{alternativeLevers}</li>}
-                  </ul>
-                </div>}
+            {}
+            {alternativeLevers && alternativeLevers.length > 0 && (
+              <div className="exc-how-blocks">
+                <p className="exc-super-title">{t("ALTERNATIVE DIFFERENTIATION LEVERS")}</p>
+                <h4 className="exc-horizons-title">{t("Considered but not recommended — ranked by fit")}</h4>
+                <div className="exc-alt-levers-list">
+                  {Array.isArray(alternativeLevers) ? alternativeLevers.map((item, idx) => (
+                    <div className="exc-alt-card" key={idx}>
+                      <div className="exc-alt-card-header">
+                        <h5 className="exc-alt-title">{typeof item === 'object' ? item.lever : item}</h5>
+                        {typeof item === 'object' && item.suitability_score && (
+                          <span className="exc-alt-score">{t("SCORE")} {item.suitability_score} / 10</span>
+                        )}
+                      </div>
+                      {typeof item === 'object' && item.reason && (
+                        <p className="exc-alt-desc">{item.reason}</p>
+                      )}
+                    </div>
+                  )) : (
+                    <div className="exc-alt-card">
+                      <h5 className="exc-alt-title">{alternativeLevers}</h5>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            <div className="exc-discuss-footer">
+              <button 
+                className="exc-discuss-btn"
+                onClick={() => window.dispatchEvent(new CustomEvent('open_ai_assistant'))}
+              >
+                <span className="exc-tx-icon">TX</span>
+                {t("Discuss with Trax") || "Discuss with Trax"}
+              </button>
             </div>
           </div>
         </div>
@@ -466,39 +543,64 @@ const ExecutiveSummary = () => {
           </div>
 
           <div className={`exc-section-body ${expandedSections.topPriorities ? 'expanded' : 'collapsed'}`} data-component="executive-priorities">
-            {topPriorities?.map((item, idx) => {
-            const actions = item.actions || item.Actions || [];
-            return <div className="exc-priority-item" key={idx}>
-                  <div className="exc-priority-header">
-                    <span className="exc-priority-number">{idx + 1}.</span>
-                    <h4 className="exc-priority-title">{item.title || item.action || item.Action || item.Title}</h4>
-                  </div>
-
-                  {actions.length > 0 && <div className="exc-priority-actions mt-2 ps-4">
-                      {actions.map((action, aIdx) => {
-                  const actionText = typeof action === 'string' ? action : action.action || action.Action || JSON.stringify(action);
-                  return <div className="exc-action-item" key={aIdx}>
-                            <CheckCircle2 size={16} />
-                            <div>
-                              <span className={theme === 'dark' ? 'text-white' : ''}>{actionText}</span>
-                            </div>
-                          </div>;
-                })}
-                    </div>}
-
-                  {item.what_this_excludes && Array.isArray(item.what_this_excludes) && item.what_this_excludes.length > 0 && <div className="exc-implication-row exc-excludes mt-3 ps-4">
-                      <div className="exc-icon-label executive-summary--s5">
-                        <AlertCircle size={16} />
-                        <span className="executive-summary--s6">{t("What this excludes")}:</span>
+            <div className="exc-prio-list">
+              {topPriorities?.map((item, idx) => {
+                const actions = item.actions || item.Actions || [];
+                return (
+                  <div className="exc-prio-card" key={idx}>
+                    <div className="exc-prio-card-header">
+                      <div className="exc-prio-header-left">
+                        <span className="exc-prio-number">{idx + 1}.</span>
+                        <h4 className="exc-prio-title">{item.title || item.action || item.Action || item.Title}</h4>
+                        <span className="exc-prio-badge">
+                          <CheckCircle2 size={10} strokeWidth={3} /> {t("BET")} #{idx + 1}
+                        </span>
                       </div>
-                      <ul className="exc-implication-content m-0 executive-summary--s7">
-                        {item.what_this_excludes.map((excludeItem, eIdx) => <li key={eIdx} className="executive-summary--s8">
-                            {typeof excludeItem === 'object' ? JSON.stringify(excludeItem) : excludeItem}
-                          </li>)}
-                      </ul>
-                    </div>}
-                </div>;
-          }) || <p className="exc-content-text exc-italic">{t("Identifying strategic priorities")}...</p>}
+                    </div>
+
+                    {actions.length > 0 && (
+                      <div className="exc-prio-actions">
+                        {actions.map((action, aIdx) => {
+                          const actionText = typeof action === 'string' ? action : action.action || action.Action || JSON.stringify(action);
+                          return (
+                            <div className="exc-prio-action-item" key={aIdx}>
+                              <div className="exc-prio-icon-green"><CheckCircle2 size={14} strokeWidth={2.5} /></div>
+                              <span className="exc-prio-action-text">{actionText}</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+
+                    {item.what_this_excludes && Array.isArray(item.what_this_excludes) && item.what_this_excludes.length > 0 && (
+                      <div className="exc-prio-excludes">
+                        <div className="exc-prio-excludes-header">
+                          <div className="exc-prio-icon-red"><AlertCircle size={14} strokeWidth={2.5} /></div>
+                          <span className="exc-prio-excludes-label">{t("What this excludes")}:</span>
+                        </div>
+                        <ul className="exc-prio-excludes-list">
+                          {item.what_this_excludes.map((excludeItem, eIdx) => (
+                            <li key={eIdx} className="exc-prio-exclude-item">
+                              {typeof excludeItem === 'object' ? JSON.stringify(excludeItem) : excludeItem}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                );
+              }) || <p className="exc-content-text exc-italic">{t("Identifying strategic priorities")}...</p>}
+            </div>
+
+            <div className="exc-discuss-footer">
+              <button 
+                className="exc-discuss-btn"
+                onClick={() => window.dispatchEvent(new CustomEvent('open_ai_assistant'))}
+              >
+                <span className="exc-tx-icon">TX</span>
+                {t("Discuss with Trax") || "Discuss with Trax"}
+              </button>
+            </div>
           </div>
         </div>
 
@@ -524,7 +626,7 @@ const ExecutiveSummary = () => {
             </div>
           </div>
 
-          <button className="exc-create-project-btn mt-0" onClick={() => navigate(`/business/${businessId || 'default'}/advanced-insights`)}>
+          <button className="exc-create-project-btn mt-4" onClick={() => navigate(`/business/${businessId || 'default'}/advanced-insights`)}>
             <Lock size={16} fill="#f59e0b" color="#1e3a8a" /> {t("Continue to Advanced Insights")} <ArrowRight size={16} />
           </button>
         </div>

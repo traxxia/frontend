@@ -3,6 +3,7 @@ import { useNavigate, useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Download, Lock, Globe, Swords, BarChart2, Map, LayoutGrid, Target, FileDown } from 'lucide-react';
 import MenuBar from '../components/MenuBar';
 import { useBusinessStore } from '../store';
+import { useUIStore } from '../store/uiStore';
 import '../styles/advancedInsights.css';
 
 const AdvancedInsightsPage = () => {
@@ -10,6 +11,7 @@ const AdvancedInsightsPage = () => {
   const { businessId } = useParams();
   
   const { selectedBusiness } = useBusinessStore();
+  const addToast = useUIStore(state => state.addToast);
   
   // Use actual business name from store
   const businessName = selectedBusiness?.business_name || "Business"; 
@@ -37,7 +39,11 @@ const AdvancedInsightsPage = () => {
           <span className="adv-breadcrumb-separator">/</span>
           <span className="adv-breadcrumb-active fw-bold">Insights</span>
         </div>
-        <button className="adv-export-btn-icon-only" title="Export PDF">
+        <button 
+          className="adv-export-btn-icon-only" 
+          title="Export PDF"
+          onClick={() => addToast({ message: "You can download the PDF only if you upgrade the plan.", type: "info" })}
+        >
           <FileDown size={20} color="#fff" />
         </button>
       </div>
