@@ -56,6 +56,21 @@ const OnboardingFlowPage = () => {
     other: false
   });
 
+  const [chatInput, setChatInput] = useState('');
+  const [chatMessages, setChatMessages] = useState([]);
+
+  const handleSendMessage = (e) => {
+    if (e) e.preventDefault();
+    if (!chatInput.trim()) return;
+    
+    setChatMessages(prev => [...prev, { role: 'user', content: chatInput }]);
+    setChatInput('');
+    
+    setTimeout(() => {
+      setChatMessages(prev => [...prev, { role: 'trax', content: "Thanks for the context! I'll keep this in mind. Please continue filling out the questions on the right so I can generate your insights." }]);
+    }, 1000);
+  };
+
   const handleCompeteToggle = (option) => {
     setCompeteOptions(prev => {
       const isChecked = prev[option];
@@ -205,15 +220,31 @@ const OnboardingFlowPage = () => {
                   Great. Here are the 6 questions I need to draft your diagnosis. Answer in any order — or add documents and I'll auto-fill what I can.
                 </div>
               </div>
+              {chatMessages.map((msg, idx) => (
+                <div key={idx} className={`onboarding-chat-message ${msg.role === 'user' ? 'user-message' : ''}`}>
+                  <div className="bubble-avatar">
+                    {msg.role === 'user' ? (userName?.charAt(0) || 'U') : 'TX'}
+                  </div>
+                  <div className="bubble-content">
+                    {msg.content}
+                  </div>
+                </div>
+              ))}
             </div>
             
             <div className="onboarding-chat-input-bar">
-              <div className="onboarding-chat-input-wrapper">
-                <input type="text" className="onboarding-chat-input-field" placeholder="Type a message to Trax..." readOnly />
-                <button className="onboarding-chat-send-btn" disabled>
+              <form onSubmit={handleSendMessage} className="onboarding-chat-input-wrapper">
+                <input 
+                  type="text" 
+                  className="onboarding-chat-input-field" 
+                  placeholder="Type a message to Trax..." 
+                  value={chatInput}
+                  onChange={(e) => setChatInput(e.target.value)}
+                />
+                <button type="submit" className="onboarding-chat-send-btn">
                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
                 </button>
-              </div>
+              </form>
             </div>
           </div>
         </div>

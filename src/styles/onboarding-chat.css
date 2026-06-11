@@ -738,3 +738,20 @@
   border-radius: 2px;
   transition: width 0.3s ease;
 }
+
+/* User message styling */
+.onboarding-chat-message.user-message {
+  flex-direction: row-reverse;
+  align-self: flex-end;
+  justify-content: flex-start;
+  width: 100%;
+}
+.onboarding-chat-message.user-message .bubble-avatar {
+  background-color: #0ea5e9;
+  color: #fff;
+}
+.onboarding-chat-message.user-message .bubble-content {
+  background-color: #f1f5f9;
+  margin-left: 0;
+  margin-right: 12px;
+}

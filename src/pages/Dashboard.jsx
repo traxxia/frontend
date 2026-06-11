@@ -407,10 +407,29 @@ const Dashboard = () => {
 
   const handleFileChange = useCallback((e) => {
     if (e.target.files) {
+      const allowedExtensions = ['.pdf', '.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx', '.txt', '.csv', '.rtf'];
       const files = Array.from(e.target.files);
-      setSelectedFiles(prev => [...prev, ...files]);
+      const validFiles = [];
+      const invalidFiles = [];
+      
+      files.forEach(file => {
+        const ext = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
+        if (allowedExtensions.includes(ext)) {
+          validFiles.push(file);
+        } else {
+          invalidFiles.push(file);
+        }
+      });
+      
+      if (invalidFiles.length > 0) {
+        addToast({ message: 'this is not supported file format', type: 'error' });
+      }
+      
+      if (validFiles.length > 0) {
+        setSelectedFiles(prev => [...prev, ...validFiles]);
+      }
     }
-  }, []);
+  }, [addToast]);
 
   const handleRemoveFile = useCallback((indexToRemove) => {
     setSelectedFiles(prev => prev.filter((_, idx) => idx !== indexToRemove));
@@ -886,7 +905,7 @@ const Dashboard = () => {
                         ref={fileInputRef}
                         onChange={handleFileChange}
                         style={{ display: 'none' }}
-                        accept="*"
+                        accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.rtf"
                       />
 
                       <div className="info-box-green mt-3">

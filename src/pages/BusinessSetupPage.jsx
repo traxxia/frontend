@@ -1349,6 +1349,21 @@ const BusinessSetupPage = () => {
     showProjectsTab
   ]);
 
+  const [chatInput, setChatInput] = useState('');
+  const [chatMessages, setChatMessages] = useState([]);
+
+  const handleSendMessage = (e) => {
+    if (e) e.preventDefault();
+    if (!chatInput.trim()) return;
+    
+    setChatMessages(prev => [...prev, { role: 'user', content: chatInput }]);
+    setChatInput('');
+    
+    setTimeout(() => {
+      setChatMessages(prev => [...prev, { role: 'trax', content: t("Thanks for the context! I'll keep this in mind. Please continue filling out the questions so I can generate your insights.") || "Thanks for the context! I'll keep this in mind. Please continue filling out the questions so I can generate your insights." }]);
+    }, 1000);
+  };
+
   return (
     <BusinessSetupContext.Provider value={setupValue}>
       <div className={`business-setup-container ${isArchived ? 'is-archived' : ''}`}>
@@ -1442,23 +1457,34 @@ const BusinessSetupPage = () => {
                         Great. Here are the {questions?.length || 6} questions I need to draft your diagnosis. Answer in any order — or add documents and I'll auto-fill what I can.
                       </div>
                     </div>
+                    {chatMessages.map((msg, idx) => (
+                      <div key={idx} className={`onboarding-chat-message ${msg.role === 'user' ? 'user-message' : ''}`}>
+                        <div className="bubble-avatar">
+                          {msg.role === 'user' ? (userName?.charAt(0) || 'U') : 'TX'}
+                        </div>
+                        <div className="bubble-content">
+                          {msg.content}
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                  {/* Input bar — styled active to match Figma (no action on submit) */}
+                  {/* Input bar */}
                   <div className="onboarding-chat-input-bar">
-                    <div className="onboarding-chat-input-wrapper">
+                    <form onSubmit={handleSendMessage} className="onboarding-chat-input-wrapper">
                       <input
                         type="text"
                         className="onboarding-chat-input-field"
                         placeholder={t("Type a message to Trax...") || "Type a message to Trax..."}
-                        readOnly
+                        value={chatInput}
+                        onChange={(e) => setChatInput(e.target.value)}
                       />
-                      <button type="button" className="onboarding-chat-send-btn" aria-label="Send">
+                      <button type="submit" className="onboarding-chat-send-btn" aria-label="Send">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                           <line x1="22" y1="2" x2="11" y2="13" />
                           <polygon points="22 2 15 22 11 13 2 9 22 2" />
                         </svg>
                       </button>
-                    </div>
+                    </form>
                   </div>
 
                 </div>
@@ -1988,6 +2014,7 @@ const BusinessSetupPage = () => {
                                 onRedirectToBrief={handleRedirectToBrief}
                                 isExpanded={true}
                                 onKickstartProjects={() => setActiveTab("bets")}
+                                onContinueToExecution={() => setActiveTab("priorities")}
                                 hasProjectsTab={showProjectsTab}
                                 onToastMessage={showToastMessage}
                                 hasStrategicAccess={hasStrategicAccess}
@@ -2275,6 +2302,7 @@ const BusinessSetupPage = () => {
                             streamingManager={streamingManager}
                             triggerConfirmation={triggerConfirmation}
                             isExpanded={true}
+                            onContinueToExecution={() => setActiveTab("priorities")}
                             hasProjectsTab={showProjectsTab}
                             isAnalysisRegenerating={isAnalysisRegenerating}
                             isStrategicRegenerating={isStrategicRegenerating}
@@ -2433,6 +2461,7 @@ const BusinessSetupPage = () => {
                           triggerConfirmation={triggerConfirmation}
                           isExpanded={true}
                           onKickstartProjects={() => setActiveTab("bets")}
+                          onContinueToExecution={() => setActiveTab("priorities")}
                           hasProjectsTab={showProjectsTab}
                           questionsLoaded={questionsLoaded}
                           isAnalysisRegenerating={isAnalysisRegenerating}

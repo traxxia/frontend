@@ -5,14 +5,23 @@ import { useTranslation } from '../hooks/useTranslation';
 const OnboardingChat = ({ userName, businessName, onBack, onStart }) => {
   const { t } = useTranslation();
   const [inputValue, setInputValue] = useState('');
+  const [chatMessages, setChatMessages] = useState([]);
 
   const handleSend = (e) => {
     if (e) e.preventDefault();
+    if (!inputValue.trim()) return;
+    
+    setChatMessages(prev => [...prev, { role: 'user', content: inputValue }]);
+    setInputValue('');
+    
+    setTimeout(() => {
+      setChatMessages(prev => [...prev, { role: 'trax', content: t("Thanks for the context! I'll keep this in mind. Please continue filling out the questions so I can generate your insights.") || "Thanks for the context! I'll keep this in mind. Please continue filling out the questions so I can generate your insights." }]);
+    }, 1000);
   };
 
   const handleKeyPress = (e) => {
     if (e.key === 'Enter') {
-      handleSend();
+      handleSend(e);
     }
   };
 
@@ -64,6 +73,17 @@ const OnboardingChat = ({ userName, businessName, onBack, onStart }) => {
           <div className="onboarding-chat-highlight-card">
             <strong>I value context.</strong> The more you share, the sharper the diagnosis. Upload anything you have.
           </div>
+
+          {chatMessages.map((msg, idx) => (
+            <div key={idx} className={`onboarding-chat-message ${msg.role === 'user' ? 'user-message' : ''}`}>
+              <div className="bubble-avatar">
+                {msg.role === 'user' ? (userName?.charAt(0) || 'U') : 'TX'}
+              </div>
+              <div className="bubble-content">
+                {msg.content}
+              </div>
+            </div>
+          ))}
 
           <div className="onboarding-chat-cta-container">
             <button className="onboarding-chat-btn-begin" onClick={onStart}>

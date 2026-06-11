@@ -43,6 +43,7 @@ const StrategicAnalysis = ({
   questionsLoaded = false,
   questions = [],
   userAnswers = {},
+  onContinueToExecution,
   isExportActive = () => false
 }) => {
   const { token, userId } = useAuthStore();
@@ -417,31 +418,33 @@ const StrategicAnalysis = ({
             </>
           )}
         </CategorySection>
-
-        <div className="move-to-execution-section mt-5" style={{ padding: '24px', backgroundColor: '#ffffff', borderRadius: '12px', border: '1px solid #eaeaea', marginTop: '32px' }}>
-          <div className="next-step-label text-uppercase text-muted font-weight-bold mb-2" style={{fontSize: '0.75rem', letterSpacing: '1px', color: '#64748b'}}>NEXT STEP</div>
-          <h3 className="mb-2" style={{fontSize: '1.25rem', fontWeight: 'bold', color: '#1e293b'}}>Your analysis is ready — move to Execution</h3>
-          <p className="text-muted mb-4" style={{color: '#64748b', fontSize: '0.9rem', maxWidth: '600px'}}>Trax now has the full picture. Lock in your priorities as tracked Bets and start running the cadences that move the business forward.</p>
-          <div className="progression-visual d-flex align-items-center mb-4" style={{gap: '8px'}}>
-            <div className="step completed d-flex align-items-center" style={{color: '#10b981', fontWeight: '500', fontSize: '0.9rem', backgroundColor: '#ecfdf5', padding: '4px 12px', borderRadius: '16px'}}>
-              <CheckCircle size={14} className="mr-1" style={{marginRight: '4px'}}/> Basic
-            </div>
-            <div className="arrow text-muted" style={{color: '#cbd5e1'}}>→</div>
-            <div className="step completed d-flex align-items-center" style={{color: '#10b981', fontWeight: '500', fontSize: '0.9rem', backgroundColor: '#ecfdf5', padding: '4px 12px', borderRadius: '16px'}}>
-              <CheckCircle size={14} className="mr-1" style={{marginRight: '4px'}}/> Advanced
-            </div>
-            <div className="arrow text-muted" style={{color: '#cbd5e1'}}>→</div>
-            <div className="step current d-flex align-items-center" style={{color: '#3b82f6', fontWeight: '500', fontSize: '0.9rem', border: '1px solid #3b82f6', borderRadius: '16px', padding: '4px 12px', backgroundColor: '#fff'}}>
-              Execution
-            </div>
-          </div>
-          <button className="continue-to-execution-btn" style={{backgroundColor: '#0284c7', color: '#fff', border: 'none', borderRadius: '6px', padding: '8px 20px', fontWeight: '500', fontSize: '0.95rem', cursor: 'pointer', display: 'inline-flex', alignItems: 'center'}} onClick={() => phaseManager?.setActiveTab?.('bets')}>
-            Continue to Execution <span style={{marginLeft: '8px'}}>→</span>
-          </button>
-        </div>
       </div>
     );
   };
+
+  const renderMoveToExecution = () => (
+    <div className="move-to-execution-section" style={{ padding: '24px', backgroundColor: '#ffffff', borderRadius: '12px', border: '1px solid #eaeaea', marginTop: '32px' }}>
+      <div className="next-step-label text-uppercase text-muted font-weight-bold mb-2" style={{fontSize: '0.75rem', letterSpacing: '1px', color: '#64748b'}}>NEXT STEP</div>
+      <h3 className="mb-2" style={{fontSize: '1.25rem', fontWeight: 'bold', color: '#1e293b'}}>Your analysis is ready - move to Execution</h3>
+      <p className="text-muted mb-4" style={{color: '#64748b', fontSize: '0.9rem', maxWidth: '600px'}}>Trax now has the full picture. Lock in your priorities as tracked Bets and start running the cadences that move the business forward.</p>
+      <div className="progression-visual d-flex align-items-center mb-4" style={{gap: '8px'}}>
+        <div className="step completed d-flex align-items-center" style={{color: '#10b981', fontWeight: '500', fontSize: '0.9rem', backgroundColor: '#ecfdf5', padding: '4px 12px', borderRadius: '16px'}}>
+          <CheckCircle size={14} className="mr-1" style={{marginRight: '4px'}}/> Basic
+        </div>
+        <div className="arrow text-muted" style={{color: '#cbd5e1'}}>→</div>
+        <div className="step completed d-flex align-items-center" style={{color: '#10b981', fontWeight: '500', fontSize: '0.9rem', backgroundColor: '#ecfdf5', padding: '4px 12px', borderRadius: '16px'}}>
+          <CheckCircle size={14} className="mr-1" style={{marginRight: '4px'}}/> Advanced
+        </div>
+        <div className="arrow text-muted" style={{color: '#cbd5e1'}}>→</div>
+        <div className="step current d-flex align-items-center" style={{color: '#3b82f6', fontWeight: '500', fontSize: '0.9rem', border: '1px solid #3b82f6', borderRadius: '16px', padding: '4px 12px', backgroundColor: '#fff'}}>
+          Execution
+        </div>
+      </div>
+      <button className="continue-to-execution-btn" style={{backgroundColor: '#0284c7', color: '#fff', border: 'none', borderRadius: '6px', padding: '8px 20px', fontWeight: '500', fontSize: '0.95rem', cursor: 'pointer', display: 'inline-flex', alignItems: 'center'}} onClick={() => onContinueToExecution?.()}>
+        Continue to Execution <span style={{marginLeft: '8px'}}>→</span>
+      </button>
+    </div>
+  );
 
   if (isRegenerating || isLoading || isLoadingData) {
     return (
@@ -451,6 +454,7 @@ const StrategicAnalysis = ({
           <h3>{t("Preparing Analysis...")}</h3>
           <p>{t("We're gathering the latest data to build your insights.")}</p>
         </div>
+        {renderMoveToExecution()}
       </div>
     );
   }
@@ -466,6 +470,7 @@ const StrategicAnalysis = ({
             <button onClick={() => onRedirectToBrief?.()} className="btn-review">{t("back")}</button>
           </div>
         </div>
+        {renderMoveToExecution()}
       </div>
     );
   }
@@ -478,6 +483,7 @@ const StrategicAnalysis = ({
           <h3>{t("Preparing Analysis...")}</h3>
           <p>{t("We're gathering the latest data to build your insights.")}</p>
         </div>
+        {renderMoveToExecution()}
       </div>
     );
   }
@@ -491,6 +497,7 @@ const StrategicAnalysis = ({
           <h3>{t("Analysis Locked")}</h3>
           <p>{t("Start answering questions in the business brief to unlock your comprehensive business analysis.")}</p>
         </div>
+        {renderMoveToExecution()}
       </div>
     );
   }
@@ -520,6 +527,7 @@ const StrategicAnalysis = ({
         ) : (
           renderStrategicContent()
         )}
+        {renderMoveToExecution()}
       </div>
       <UpgradeModal show={showUpgradeModal} onHide={() => setShowUpgradeModal(false)} />
       <PlanLimitModal show={showPlanLimitModal} onHide={() => setShowPlanLimitModal(false)} usage={usage} />

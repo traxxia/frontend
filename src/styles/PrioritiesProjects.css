@@ -509,3 +509,31 @@
 [data-theme="dark"] .warning-icon-wrapper {
   background: rgba(245, 158, 11, 0.2);
 }
+.priority-edit-input {
+  color: #1e293b;
+  font-size: 1rem;
+  border: 1px solid transparent;
+  background-color: transparent;
+  outline: none;
+  padding: 4px 8px;
+  margin-left: -8px;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  width: 100%;
+}
+
+.priority-edit-input:focus,
+.priority-edit-input:hover {
+  border-color: #bae6fd;
+  background-color: #f0f9ff;
+}
+
+[data-theme="dark"] .priority-edit-input {
+  color: #ffffff;
+}
+
+[data-theme="dark"] .priority-edit-input:focus,
+[data-theme="dark"] .priority-edit-input:hover {
+  border-color: #38bdf8;
+  background-color: rgba(14, 165, 233, 0.1);
+}

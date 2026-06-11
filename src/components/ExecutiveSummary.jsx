@@ -46,6 +46,8 @@ const ExecutiveSummary = ({ hideNextStep }) => {
   const fetchProjects = useProjectStore(state => state.fetchProjects);
   const isViewer = useAuthStore(state => (state.userRole || "").toLowerCase() === "viewer");
   const isCompanyAdmin = useAuthStore(state => state.userRole === 'company_admin' || state.isAdmin);
+  const userPlan = useAuthStore(state => state.userPlan);
+  const isPaidPlan = userPlan && userPlan.toLowerCase() !== 'explorer' && userPlan.toLowerCase() !== 'free' && userPlan.toLowerCase() !== 'none';
   const theme = useUIStore(state => state.theme);
   const fetchingRef = useRef(false);
   const lastFetchedRef = useRef(null);
@@ -381,13 +383,14 @@ const ExecutiveSummary = ({ hideNextStep }) => {
                     <p className="exc-move-body">{adj.rationale}</p>
                     
                     {isCompanyAdmin && (() => {
-                      const exists = isAlreadyProject(adj);
-                      return (
-                        <button 
-                          className={`exc-create-project-btn mt-3 ${exists ? 'exists' : ''}`} 
-                          onClick={() => !exists && handleCreateButtonClick(adj, idx)} 
-                          disabled={kickstarting || exists}
-                        >
+                        const exists = isAlreadyProject(adj);
+                        if (!isPaidPlan) return null;
+                        return (
+                          <button 
+                            className={`exc-create-project-btn mt-3 ${exists ? 'exists' : ''}`} 
+                            onClick={() => !exists && handleCreateButtonClick(adj, idx)} 
+                            disabled={kickstarting || exists}
+                          >
                           {exists ? <CheckCircle2 size={14} /> : <Plus size={14} />}
                           <span>{exists ? t("Already in Bets") : t("Create Strategic Bet")}</span>
                         </button>
