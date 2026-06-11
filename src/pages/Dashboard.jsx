@@ -470,8 +470,13 @@ const Dashboard = () => {
     }
 
     let initialTab = 'executive';
+    const userPlan = useAuthStore.getState().userPlan;
+    const isPaidPlan = userPlan && userPlan.toLowerCase() !== 'explorer' && userPlan.toLowerCase() !== 'free' && userPlan.toLowerCase() !== 'none';
     const limits = getUserLimits();
-    if (limits.pmf) {
+    
+    if (isPaidPlan) {
+      initialTab = 'insights';
+    } else if (limits.pmf) {
       initialTab = 'executive';
     } else if (limits.insight) {
       initialTab = 'insights';

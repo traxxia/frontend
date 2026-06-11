@@ -11,7 +11,7 @@ import { useUIStore } from '../store/uiStore';
 import { useAnalysisStore } from "../store/analysisStore";
 import { useBusinessSetupContext } from "../context/BusinessSetupContext";
 import { useQueryClient } from "@tanstack/react-query";
-const ExecutiveSummary = () => {
+const ExecutiveSummary = ({ hideNextStep }) => {
   const {
     selectedBusinessId: businessId,
     openModal,
@@ -605,7 +605,8 @@ const ExecutiveSummary = () => {
         </div>
 
         {/* Next Step Card */}
-        <div className="exc-section-card p-4">
+        {!hideNextStep && (
+          <div className="exc-section-card p-4">
           <p className="fw-bold text-uppercase mb-2" style={{ fontSize: '0.75rem', letterSpacing: '1px', color: '#2563eb' }}>{t("Next step")}</p>
           <h3 className="exc-section-title mb-3" style={{ fontSize: '1.4rem', textTransform: 'none' }}>{t("Go deeper with Advanced Insights")}</h3>
           <p className="exc-content-text mb-4" style={{ fontSize: '14px' }}>
@@ -630,6 +631,7 @@ const ExecutiveSummary = () => {
             <Lock size={16} fill="#f59e0b" color="#1e3a8a" /> {t("Continue to Advanced Insights")} <ArrowRight size={16} />
           </button>
         </div>
+        )}
       </div>
 
       {}

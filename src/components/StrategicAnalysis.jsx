@@ -340,6 +340,7 @@ const StrategicAnalysis = ({
 
     return (
       <div className="strategic-content">
+        <p className="overview-description text-muted mb-4">Forward-looking recommendations across strategy, execution, and sustainability — the spine of the Bets you'll commit to.</p>
         <CategorySection id="strategy-block" dataComponent="strategic-direction" title={t("strategy_block_title")} icon={Target} description={t("strategy_desc")}>
           {!hasStrategicAccess ? (
             <div className="modern-locked-state" style={{ margin: '20px', padding: '40px' }}>
@@ -416,6 +417,28 @@ const StrategicAnalysis = ({
             </>
           )}
         </CategorySection>
+
+        <div className="move-to-execution-section mt-5" style={{ padding: '24px', backgroundColor: '#ffffff', borderRadius: '12px', border: '1px solid #eaeaea', marginTop: '32px' }}>
+          <div className="next-step-label text-uppercase text-muted font-weight-bold mb-2" style={{fontSize: '0.75rem', letterSpacing: '1px', color: '#64748b'}}>NEXT STEP</div>
+          <h3 className="mb-2" style={{fontSize: '1.25rem', fontWeight: 'bold', color: '#1e293b'}}>Your analysis is ready — move to Execution</h3>
+          <p className="text-muted mb-4" style={{color: '#64748b', fontSize: '0.9rem', maxWidth: '600px'}}>Trax now has the full picture. Lock in your priorities as tracked Bets and start running the cadences that move the business forward.</p>
+          <div className="progression-visual d-flex align-items-center mb-4" style={{gap: '8px'}}>
+            <div className="step completed d-flex align-items-center" style={{color: '#10b981', fontWeight: '500', fontSize: '0.9rem', backgroundColor: '#ecfdf5', padding: '4px 12px', borderRadius: '16px'}}>
+              <CheckCircle size={14} className="mr-1" style={{marginRight: '4px'}}/> Basic
+            </div>
+            <div className="arrow text-muted" style={{color: '#cbd5e1'}}>→</div>
+            <div className="step completed d-flex align-items-center" style={{color: '#10b981', fontWeight: '500', fontSize: '0.9rem', backgroundColor: '#ecfdf5', padding: '4px 12px', borderRadius: '16px'}}>
+              <CheckCircle size={14} className="mr-1" style={{marginRight: '4px'}}/> Advanced
+            </div>
+            <div className="arrow text-muted" style={{color: '#cbd5e1'}}>→</div>
+            <div className="step current d-flex align-items-center" style={{color: '#3b82f6', fontWeight: '500', fontSize: '0.9rem', border: '1px solid #3b82f6', borderRadius: '16px', padding: '4px 12px', backgroundColor: '#fff'}}>
+              Execution
+            </div>
+          </div>
+          <button className="continue-to-execution-btn" style={{backgroundColor: '#0284c7', color: '#fff', border: 'none', borderRadius: '6px', padding: '8px 20px', fontWeight: '500', fontSize: '0.95rem', cursor: 'pointer', display: 'inline-flex', alignItems: 'center'}} onClick={() => phaseManager?.setActiveTab?.('bets')}>
+            Continue to Execution <span style={{marginLeft: '8px'}}>→</span>
+          </button>
+        </div>
       </div>
     );
   };

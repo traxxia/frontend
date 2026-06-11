@@ -623,46 +623,44 @@ const AnalysisContentManager = (props) => {
              t("Generating Insight...")}
           </span>
         </div>}
-      <div className="six-cs-framework-overview">
-        <div className="overview-header">
-          <div className="overview-icon-wrapper">
-            <Zap size={20} className="overview-main-icon" strokeWidth={2.5} />
+      <div className="six-cs-framework-overview mb-4">
+        <p className="overview-description text-muted mb-4">Your business analyzed across six key dimensions — the starting point for everything that follows.</p>
+        <div className="overview-bullets-grid">
+          <div className="overview-bullet-column">
+            <div className="overview-bullet-item">
+              <span className="bullet-dot"></span>
+              <span className="bullet-title">Current Strategy:</span>
+              <span className="bullet-desc">Core business and growth options.</span>
+            </div>
+            <div className="overview-bullet-item">
+              <span className="bullet-dot"></span>
+              <span className="bullet-title">Context/Industry:</span>
+              <span className="bullet-desc">Market forces and industry dynamics.</span>
+            </div>
+            <div className="overview-bullet-item">
+              <span className="bullet-dot"></span>
+              <span className="bullet-title">Capabilities:</span>
+              <span className="bullet-desc">Internal strengths and maturity.</span>
+            </div>
           </div>
-          <div className="overview-text">
-            <h3>{t("six_cs_overview_title")}</h3>
-            <p>{t("six_cs_overview_description")}</p>
+          <div className="overview-bullet-column">
+            <div className="overview-bullet-item">
+              <span className="bullet-dot"></span>
+              <span className="bullet-title">Costs/Financial:</span>
+              <span className="bullet-desc">Profitability and financial efficiency.</span>
+            </div>
+            <div className="overview-bullet-item">
+              <span className="bullet-dot"></span>
+              <span className="bullet-title">Customer:</span>
+              <span className="bullet-desc">Loyalty and purchase criteria.</span>
+            </div>
+            <div className="overview-bullet-item">
+              <span className="bullet-dot"></span>
+              <span className="bullet-title">Competition:</span>
+              <span className="bullet-desc">Landscape and market positioning.</span>
+            </div>
           </div>
         </div>
-        <ul className="overview-bullets">
-          {[{
-          id: 'current-strategy',
-          title: t('Current Strategy'),
-          desc: t('six_cs_strategy_desc')
-        }, {
-          id: 'costs-financial',
-          title: t('Costs/Financial'),
-          desc: t('six_cs_cost_desc')
-        }, {
-          id: 'context-industry',
-          title: t('Context/Industry'),
-          desc: t('six_cs_context_desc')
-        }, {
-          id: 'customer',
-          title: t('Customer'),
-          desc: t('six_cs_customer_desc')
-        }, {
-          id: 'capabilities',
-          title: t('Capabilities'),
-          desc: t('six_cs_capabilities_desc')
-        }, {
-          id: 'competition',
-          title: t('Competition'),
-          desc: t('six_cs_competition_desc')
-        }].map(item => <li key={item.id} className="overview-bullet-item">
-              <span className="bullet-title">{item.title}:</span>
-              <span className="bullet-desc">{item.desc}</span>
-            </li>)}
-        </ul>
       </div>
       <div className="modern-analysis-content">
 

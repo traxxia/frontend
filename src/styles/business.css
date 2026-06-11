@@ -270,14 +270,14 @@
 }
 
 .modern-card-text h3 {
-  font-size: 1.2rem;
+  font-size: 1.0rem;
   font-weight: 600;
   color: #1e293b;
   margin: 0 0 0.25rem 0;
 }
 
 .modern-card-text p {
-  font-size: 0.95rem;
+  font-size: 0.85rem;
   color: #64748b;
   margin: 0;
   line-height: 1.4;
@@ -776,7 +776,7 @@
 }
 
 .category-title {
-  font-size: 1.5rem !important;
+  font-size: 1.15rem !important;
   font-weight: 600 !important;
   color: #1f2937;
   margin: 0;
@@ -1079,14 +1079,7 @@
   line-height: 1.4;
 }
 
-.six-cs-framework-overview .overview-bullet-item::before {
-  content: "•";
-  color: #3b82f6;
-  font-weight: bold;
-  font-size: 1.1rem;
-  line-height: 1;
-  margin-top: 1px;
-}
+
 
 .six-cs-framework-overview .bullet-title {
   font-weight: 600;

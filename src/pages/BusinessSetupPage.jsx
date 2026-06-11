@@ -261,6 +261,8 @@ const BusinessSetupPage = () => {
   const expandedCapabilityData = expandedCapability;
   const strategicRadarData = strategicRadar;
 
+  const [insightsSubTab, setInsightsSubTab] = useState('diagnosis');
+  const [cameFromInsights, setCameFromInsights] = useState(false);
   const [activeTab, setActiveTab] = useState(() => {
     // Initializing state directly from URL prevents flickering on refresh
     const searchParams = new URLSearchParams(window.location.search);
@@ -279,8 +281,23 @@ const BusinessSetupPage = () => {
     const hasInsightAccess = true;
     const hasStrategicAccess = true;
     const hasProjectAccess = true;
-    if (hasPmfAccess) return "executive";
-    if (hasInsightAccess || hasStrategicAccess) return "advanced";
+
+    const pathSegments = window.location.pathname.split('/');
+    const currentBusinessId = pathSegments[2] || '';
+    const hasSeenHistory = localStorage.getItem(`hasSeenExecutiveSummary_${currentBusinessId}`) === 'true';
+
+    const userPlan = useAuthStore.getState().userPlan;
+    const isPaidPlan = userPlan && userPlan.toLowerCase() !== 'explorer' && userPlan.toLowerCase() !== 'free' && userPlan.toLowerCase() !== 'none';
+
+    // If on any paid plan, prioritize insights page from dashboard
+    if (isPaidPlan) {
+      if (hasInsightAccess || hasStrategicAccess) return "insights";
+      if (hasPmfAccess) return "executive";
+      if (hasProjectAccess) return "bets";
+    }
+
+    if (hasPmfAccess && !hasSeenHistory) return "executive";
+    if (hasInsightAccess || hasStrategicAccess) return "insights";
     if (hasProjectAccess) return "bets";
 
     return "advanced"; // Ultimate fallback
@@ -981,17 +998,17 @@ const BusinessSetupPage = () => {
   };
 
   const handleStrategicTabClick = () => {
-    // Removed unlockedFeatures.analysis check to make it always accessible
+    setInsightsSubTab('direction');
     if (isMobile) {
-      setActiveTab("strategic");
+      setActiveTab("insights");
     } else {
       if (!isAnalysisExpanded) {
         setIsSliding(true);
         setIsAnalysisExpanded(true);
-        setActiveTab("strategic");
+        setActiveTab("insights");
         setIsSliding(false);
       } else {
-        setActiveTab("strategic");
+        setActiveTab("insights");
       }
     }
   };
@@ -1000,7 +1017,13 @@ const BusinessSetupPage = () => {
     navigate("/dashboard");
   };
 
-  const handleBack = () => navigate("/dashboard");
+  const handleBack = () => {
+    if (activeTab === 'advanced') {
+      setActiveTab('insights');
+      return;
+    }
+    navigate("/dashboard");
+  };
 
   const handleScrollToSection = (cardId) => {
     if (!cardId) return;
@@ -1078,6 +1101,7 @@ const BusinessSetupPage = () => {
 
 
   const handleExecutiveTabClick = () => {
+    setCameFromInsights(false);
     if (isMobile) {
       setActiveTab("executive");
     } else {
@@ -1188,7 +1212,16 @@ const BusinessSetupPage = () => {
     const slug = toSlug(selectedBusinessName || '');
     const params = {};
     if (slug) params.business = slug;
-    if (activeTab) params.tab = activeTab;
+    
+    // Redirect strategic to insights
+    let tabToSet = activeTab;
+    if (activeTab === 'strategic') {
+      tabToSet = 'insights';
+      setActiveTab('insights');
+      setInsightsSubTab('direction');
+    }
+    
+    if (tabToSet) params.tab = tabToSet;
     setSearchParams(params, { replace: true });
   }, [activeTab, selectedBusinessName, selectedBusinessId]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -1357,9 +1390,13 @@ const BusinessSetupPage = () => {
           <div className="split-onboarding-wrapper">
             {/* Top breadcrumb header */}
             <div className="split-onboarding-header">
-              <button className="back-button" onClick={handleBack} aria-label="Back to Dashboard" style={{ display: 'contents', alignItems: 'center', gap: '8px' }}>
+              <button className="back-button" onClick={handleBack} aria-label="Back" style={{ display: 'contents', alignItems: 'center', gap: '8px' }}>
                 <ArrowLeft size={16} style={{margin: '4px 10px'}}/>
-                <span>{t("backToDashboard_B3") || "Back to Dashboard"}</span>
+                <span>
+                  {activeTab === 'advanced'
+                    ? (t("Back to Insights") || "Back to Insights")
+                    : (t("backToDashboard_B3") || "Back to Dashboard")}
+                </span>
               </button>
               <div className="business-breadcrumb">
                 <span className="breadcrumb-separator">/</span>
@@ -1484,7 +1521,7 @@ const BusinessSetupPage = () => {
               </div>
 
             <div className="mobile-active-tab">
-              {(['executive', 'advanced', 'insights', 'strategic', 'priorities', 'bets', 'ranking', 'decision-logs'].includes(activeTab)) ? (
+              {(['executive', 'advanced', 'insights', 'priorities', 'bets', 'ranking', 'decision-logs'].includes(activeTab)) ? (
                 <div className="mobile-tab-selector">
                   <div className="mobile-tab-trigger no-dropdown">
                     <span>
@@ -1492,7 +1529,6 @@ const BusinessSetupPage = () => {
                       {activeTab === "priorities" && t("Priorities")}
                       {activeTab === "advanced" && (hasInsightAccess || hasStrategicAccess) && t("Answers/Brief")}
                       {activeTab === "insights" && (hasPmfAccess ? t("insights") : "Insights")}
-                      {activeTab === "strategic" && (hasPmfAccess ? t("strategic") : "S.T.R.A.T.E.G.I.C")}
                       {(activeTab === "bets" || activeTab === "ranking") && t("Bets")}
                       {activeTab === "decision-logs" && (t("Decision_Logs") || "Decision Logs")}
                     </span>
@@ -1505,7 +1541,6 @@ const BusinessSetupPage = () => {
                   {activeTab === "priorities" && t("Priorities & Projects")}
                   {activeTab === "advanced" && (hasInsightAccess || hasStrategicAccess) && t("Questions and Answers")}
                   {activeTab === "insights" && (hasPmfAccess ? t("Insights") : "Insights")}
-                  {activeTab === "strategic" && (hasPmfAccess ? t("strategic") : "S.T.R.A.T.E.G.I.C")}
                   {(activeTab === "bets" || activeTab === "ranking") && t("Bets")}
                   {activeTab === "decision-logs" && (t("Decision_Logs") || "Decision Logs")}
                 </>
@@ -1649,26 +1684,80 @@ const BusinessSetupPage = () => {
                 <div className="desktop-tabs" ref={navDropdownRef}>
                   <div className="desktop-tabs-main">
                     <div className="business-header-container">
-                      <button className="back-button" onClick={handleBackFromAnalysis} aria-label="Go Back">
+                      <button 
+                        className="back-button" 
+                        onClick={() => {
+                          if (activeTab === 'advanced') {
+                            setActiveTab('insights');
+                          } else {
+                            handleBackFromAnalysis();
+                          }
+                        }} 
+                        aria-label="Go Back"
+                      >
                         <ArrowLeft size={18} />
-                        <span className="breadcrumb-back">{t("backToDashboard_B3") || "Back to Dashboard"}</span>
+                        <span className="breadcrumb-back">
+                          {activeTab === 'advanced' 
+                            ? (t("Back to Insights") || "Back to Insights") 
+                            : (t("backToDashboard_B3") || "Back to Dashboard")}
+                        </span>
                       </button>
                       {selectedBusinessName && (
-                        <div className="business-breadcrumb">
-                          <span className="breadcrumb-separator">/</span>
-                          <span className="business-header-name">{selectedBusinessName}</span>
-                          {['executive', 'insights', 'advanced', 'strategic', 'bets', 'ranking', 'decision-logs', 'priorities'].includes(activeTab) && (
-                            <>
-                              <span className="breadcrumb-separator">/</span>
-                              <span className="business-header-name">
-                                {['executive', 'insights', 'advanced', 'strategic'].includes(activeTab) 
-                                  ? (t("Insights") || "Insights") 
-                                  : (t("Execution") || "Execution")}
-                              </span>
-                            </>
-                          )}
-                        </div>
-                      )}
+                          <div className="business-breadcrumb">
+                            <span className="breadcrumb-separator">/</span>
+                            <span className="business-header-name">{selectedBusinessName}</span>
+                            
+                            {['executive', 'insights', 'advanced', 'strategic'].includes(activeTab) && (
+                              <>
+                                <span className="breadcrumb-separator">/</span>
+                                {activeTab === 'advanced' ? (
+                                  <>
+                                    <span 
+                                      className="business-header-name" 
+                                      onClick={() => setActiveTab('insights')}
+                                      style={{ cursor: 'pointer' }}
+                                    >
+                                      {t("Insights") || "Insights"}
+                                    </span>
+                                    <span className="breadcrumb-separator">/</span>
+                                    <span className="business-header-name text-muted">
+                                      {t("Answers/Brief") || "Answers/Brief"}
+                                    </span>
+                                  </>
+                                ) : activeTab === 'executive' ? (
+                                  cameFromInsights ? (
+                                    <>
+                                      <span className="business-header-name cursor-pointer text-muted hover-primary" style={{ cursor: 'pointer' }} onClick={() => { setActiveTab('insights'); setCameFromInsights(false); }}>
+                                        {t("Insights") || "Insights"}
+                                      </span>
+                                      <span className="breadcrumb-separator">/</span>
+                                      <span className="business-header-name">
+                                        {t("Executive Summary") || "Executive Summary"}
+                                      </span>
+                                    </>
+                                  ) : (
+                                    <span className="business-header-name">
+                                      {t("Executive Summary") || "Executive Summary"}
+                                    </span>
+                                  )
+                                ) : (
+                                  <span className="business-header-name">
+                                    {t("Insights") || "Insights"}
+                                  </span>
+                                )}
+                              </>
+                            )}
+
+                            {['bets', 'ranking', 'decision-logs', 'priorities'].includes(activeTab) && (
+                              <>
+                                <span className="breadcrumb-separator">/</span>
+                                <span className="business-header-name">
+                                  {t("Execution") || "Execution"}
+                                </span>
+                              </>
+                            )}
+                          </div>
+                        )}
                     </div>
 
                   </div>
@@ -1802,9 +1891,12 @@ const BusinessSetupPage = () => {
                     )}
                     {hasPmfAccess && activeTab === "executive" && (
                       <ExecutiveSummary
+                        hideNextStep={cameFromInsights}
                         businessId={selectedBusinessId}
                         onStartOnboarding={() => openModal('pmfOnboarding')}
                         refreshTrigger={pmfRefreshTrigger}
+                        questions={questions}
+                        userAnswers={userAnswers}
                       />
                     )}
                     {activeTab === "advanced" && (
@@ -1840,35 +1932,72 @@ const BusinessSetupPage = () => {
                         />
                       </div>
                     )}
-                    {activeTab === "insights" && hasInsightAccess &&
-                      <AnalysisContentManager
-                        {...analysisProps}
-                        canRegenerate={canShowRegenerateButtons}
-                        questionsLoaded={questionsLoaded}
-                      />}
-                    {activeTab === "strategic" && hasStrategicAccess && (
-                      <div className="strategic-section">
-                        <StrategicAnalysis
-                          onRegenerate={handleStrategicAnalysisRegenerate}
-                          isRegenerating={(() => {
-                            const isStrReg = isTypeRegenerating('strategic');
-                            return isStrReg;
-                          })()}
-                          canRegenerate={canShowRegenerateButtons && strategicData && !isAnalysisRegenerating && unlockedFeatures.analysis}
-                          selectedBusinessId={selectedBusinessId}
-                          phaseManager={phaseManager}
-                          saveAnalysisToBackend={(data, type) => apiService.saveAnalysisToBackend(data, type, selectedBusinessId)}
-                          hideDownload={false}
-                          onRedirectToBrief={handleRedirectToBrief}
-                          isExpanded={true}
-                          onKickstartProjects={() => setActiveTab("bets")}
-                          hasProjectsTab={showProjectsTab}
-                          onToastMessage={showToastMessage}
-                          hasStrategicAccess={hasStrategicAccess}
-                          isAnalysisRegenerating={isAnalysisRegenerating}
-                          isStrategicRegenerating={isStrategicRegenerating}
-                          questionsLoaded={questionsLoaded}
-                        />
+                    {activeTab === "insights" && hasInsightAccess && (
+                      <div className="analysis-section">
+                        <div className="analysis-content">
+                          <div className="insights-header-actions mb-4 d-flex justify-content-end gap-3">
+                            <button className="view-edit-inputs-btn" onClick={() => { setCameFromInsights(true); setActiveTab('executive'); }}>
+                              <i className="lucide-history" /> {t("History") || "History"}
+                            </button>
+                            <button className="view-edit-inputs-btn" onClick={() => setActiveTab('advanced')}>
+                              <i className="lucide-edit-3" /> {t("Edit") || "Edit"}
+                            </button>
+                          </div>
+                          <div className="insights-segmented-toggle mb-4">
+                            <div 
+                              className={`toggle-option ${insightsSubTab === 'diagnosis' ? 'active' : ''}`}
+                              onClick={() => setInsightsSubTab('diagnosis')}
+                            >
+                              <span className="toggle-label">DIAGNOSIS • WHERE YOU STAND</span>
+                              <span className="toggle-title">The 6 C's Framework</span>
+                            </div>
+                            <div 
+                              className={`toggle-option ${insightsSubTab === 'direction' ? 'active' : ''} ${!hasStrategicAccess ? 'disabled' : ''}`}
+                              onClick={() => {
+                                if (hasStrategicAccess) {
+                                  setInsightsSubTab('direction');
+                                }
+                              }}
+                            >
+                              <span className="toggle-label">DIRECTION • WHERE TO GO</span>
+                              <span className="toggle-title">S.T.R.A.T.E.G.I.C. Scorecard</span>
+                              {!hasStrategicAccess && <Lock size={14} className="ml-2" />}
+                            </div>
+                          </div>
+                          
+                          {insightsSubTab === 'diagnosis' && (
+                            <AnalysisContentManager
+                              {...analysisProps}
+                              canRegenerate={canShowRegenerateButtons}
+                              questionsLoaded={questionsLoaded} />
+                          )}
+                          
+                          {insightsSubTab === 'direction' && hasStrategicAccess && (
+                            <div className="strategic-section mt-4">
+                              <StrategicAnalysis
+                                onRegenerate={handleStrategicAnalysisRegenerate}
+                                isRegenerating={(() => {
+                                  const isStrReg = isTypeRegenerating('strategic');
+                                  return isStrReg;
+                                })()}
+                                canRegenerate={canShowRegenerateButtons && strategicData && !isAnalysisRegenerating && unlockedFeatures.analysis}
+                                selectedBusinessId={selectedBusinessId}
+                                phaseManager={phaseManager}
+                                saveAnalysisToBackend={(data, type) => apiService.saveAnalysisToBackend(data, type, selectedBusinessId)}
+                                hideDownload={false}
+                                onRedirectToBrief={handleRedirectToBrief}
+                                isExpanded={true}
+                                onKickstartProjects={() => setActiveTab("bets")}
+                                hasProjectsTab={showProjectsTab}
+                                onToastMessage={showToastMessage}
+                                hasStrategicAccess={hasStrategicAccess}
+                                isAnalysisRegenerating={isAnalysisRegenerating}
+                                isStrategicRegenerating={isStrategicRegenerating}
+                                questionsLoaded={questionsLoaded}
+                              />
+                            </div>
+                          )}
+                        </div>
                       </div>
                     )}
                     {activeTab === "bets" && hasProjectAccess && (
@@ -1932,12 +2061,6 @@ const BusinessSetupPage = () => {
                       <button className={`desktop-tab ${activeTab === "insights" ? "active" : ""}`} onClick={handleAnalysisTabClick}>
                         <TrendingUp size={16} />
                         <span>{t("Insights")}</span>
-                      </button>
-                    )}
-                    {hasStrategicAccess && (
-                      <button className={`desktop-tab ${activeTab === "strategic" ? "active" : ""}`} onClick={handleStrategicTabClick}>
-                        <Target size={16} />
-                        <span>{t("STRATEGIC_LABEL") || "S.T.R.A.T.E.G.I.C."}</span>
                       </button>
                     )}
                     {hasPmfAccess && (
@@ -2085,45 +2208,81 @@ const BusinessSetupPage = () => {
                 )}
                 {hasPmfAccess && activeTab === "executive" && (
                   <ExecutiveSummary
+                    hideNextStep={cameFromInsights}
                     businessId={selectedBusinessId}
                     onStartOnboarding={() => openModal('pmfOnboarding')}
                     refreshTrigger={pmfRefreshTrigger}
+                    questions={questions}
+                    userAnswers={userAnswers}
                   />
                 )}
                 {activeTab === "insights" && hasInsightAccess && (
                   <div className="analysis-section">
                     <div className="analysis-content">
-                      <AnalysisContentManager
-                        {...analysisProps}
-                        canRegenerate={canShowRegenerateButtons}
-                        questionsLoaded={questionsLoaded} />
+                      <div className="insights-header-actions mb-4 d-flex justify-content-end gap-3">
+                        <button className="view-edit-inputs-btn" onClick={() => { setCameFromInsights(true); setActiveTab('executive'); }}>
+                          <i className="lucide-history" /> {t("History") || "History"}
+                        </button>
+                        <button className="view-edit-inputs-btn" onClick={() => setActiveTab('advanced')}>
+                          <i className="lucide-edit-3" /> {t("Edit") || "Edit"}
+                        </button>
+                      </div>
+                      <div className="insights-segmented-toggle mb-4">
+                        <div 
+                          className={`toggle-option ${insightsSubTab === 'diagnosis' ? 'active' : ''}`}
+                          onClick={() => setInsightsSubTab('diagnosis')}
+                        >
+                          <span className="toggle-label">DIAGNOSIS • WHERE YOU STAND</span>
+                          <span className="toggle-title">The 6 C's Framework</span>
+                        </div>
+                        <div 
+                          className={`toggle-option ${insightsSubTab === 'direction' ? 'active' : ''} ${!hasStrategicAccess ? 'disabled' : ''}`}
+                          onClick={() => {
+                            if (hasStrategicAccess) {
+                              setInsightsSubTab('direction');
+                            }
+                          }}
+                        >
+                          <span className="toggle-label">DIRECTION • WHERE TO GO</span>
+                          <span className="toggle-title">S.T.R.A.T.E.G.I.C. Scorecard</span>
+                          {!hasStrategicAccess && <Lock size={14} className="ml-2" />}
+                        </div>
+                      </div>
+                      
+                      {insightsSubTab === 'diagnosis' && (
+                        <AnalysisContentManager
+                          {...analysisProps}
+                          canRegenerate={canShowRegenerateButtons}
+                          questionsLoaded={questionsLoaded} />
+                      )}
+                      
+                      {insightsSubTab === 'direction' && hasStrategicAccess && (
+                        <div className="strategic-section mt-4">
+                          <StrategicAnalysis
+                            questions={questions}
+                            userAnswers={userAnswers}
+                            businessName={businessData.name}
+                            onRegenerate={handleStrategicAnalysisRegenerate}
+                            isRegenerating={isStrategicRegenerating}
+                            canRegenerate={canShowRegenerateButtons && strategicData && !isAnalysisRegenerating && unlockedFeatures.analysis}
+                            strategicData={strategicData}
+                            selectedBusinessId={selectedBusinessId}
+                            phaseManager={phaseManager}
+                            saveAnalysisToBackend={(data, type) => apiService.saveAnalysisToBackend(data, type, selectedBusinessId)}
+                            hideDownload={false}
+                            phaseAnalysisArray={phaseAnalysisArray}
+                            onRedirectToBrief={handleRedirectToBrief}
+                            streamingManager={streamingManager}
+                            triggerConfirmation={triggerConfirmation}
+                            isExpanded={true}
+                            hasProjectsTab={showProjectsTab}
+                            isAnalysisRegenerating={isAnalysisRegenerating}
+                            isStrategicRegenerating={isStrategicRegenerating}
+                            questionsLoaded={questionsLoaded}
+                          />
+                        </div>
+                      )}
                     </div>
-                  </div>
-                )}
-                {activeTab === "strategic" && hasStrategicAccess && (
-                  <div className="strategic-section">
-                    <StrategicAnalysis
-                      questions={questions}
-                      userAnswers={userAnswers}
-                      businessName={businessData.name}
-                      onRegenerate={handleStrategicAnalysisRegenerate}
-                      isRegenerating={isStrategicRegenerating}
-                      canRegenerate={canShowRegenerateButtons && strategicData && !isAnalysisRegenerating && unlockedFeatures.analysis}
-                      strategicData={strategicData}
-                      selectedBusinessId={selectedBusinessId}
-                      phaseManager={phaseManager}
-                      saveAnalysisToBackend={(data, type) => apiService.saveAnalysisToBackend(data, type, selectedBusinessId)}
-                      hideDownload={false}
-                      phaseAnalysisArray={phaseAnalysisArray}
-                      onRedirectToBrief={handleRedirectToBrief}
-                      streamingManager={streamingManager}
-                      triggerConfirmation={triggerConfirmation}
-                      isExpanded={true}
-                      hasProjectsTab={showProjectsTab}
-                      isAnalysisRegenerating={isAnalysisRegenerating}
-                      isStrategicRegenerating={isStrategicRegenerating}
-                      questionsLoaded={questionsLoaded}
-                    />
                   </div>
                 )}
                 {activeTab === "bets" && hasProjectAccess && (
@@ -2206,46 +2365,82 @@ const BusinessSetupPage = () => {
               )}
               {hasPmfAccess && activeTab === "executive" && (
                 <ExecutiveSummary
+                  hideNextStep={cameFromInsights}
                   businessId={selectedBusinessId}
                   onStartOnboarding={() => openModal('pmfOnboarding')}
                   refreshTrigger={pmfRefreshTrigger}
+                  questions={questions}
+                  userAnswers={userAnswers}
                 />
               )}
               {activeTab === "insights" && hasInsightAccess && (
                 <div className="analysis-section">
                   <div className="analysis-content">
-                    <AnalysisContentManager
-                      {...analysisProps}
-                      canRegenerate={canShowRegenerateButtons}
-                      questionsLoaded={questionsLoaded} />
+                    <div className="insights-header-actions mb-4 d-flex justify-content-end gap-3">
+                      <button className="view-edit-inputs-btn" onClick={() => { setCameFromInsights(true); setActiveTab('executive'); }}>
+                        <i className="lucide-history" /> {t("History") || "History"}
+                      </button>
+                      <button className="view-edit-inputs-btn" onClick={() => setActiveTab('advanced')}>
+                        <i className="lucide-edit-3" /> {t("Edit") || "Edit"}
+                      </button>
+                    </div>
+                    <div className="insights-segmented-toggle mb-4">
+                      <div 
+                        className={`toggle-option ${insightsSubTab === 'diagnosis' ? 'active' : ''}`}
+                        onClick={() => setInsightsSubTab('diagnosis')}
+                      >
+                        <span className="toggle-label">DIAGNOSIS • WHERE YOU STAND</span>
+                        <span className="toggle-title">The 6 C's Framework</span>
+                      </div>
+                      <div 
+                        className={`toggle-option ${insightsSubTab === 'direction' ? 'active' : ''} ${!hasStrategicAccess ? 'disabled' : ''}`}
+                        onClick={() => {
+                          if (hasStrategicAccess) {
+                            setInsightsSubTab('direction');
+                          }
+                        }}
+                      >
+                        <span className="toggle-label">DIRECTION • WHERE TO GO</span>
+                        <span className="toggle-title">S.T.R.A.T.E.G.I.C. Scorecard</span>
+                        {!hasStrategicAccess && <Lock size={14} className="ml-2" />}
+                      </div>
+                    </div>
+                    
+                    {insightsSubTab === 'diagnosis' && (
+                      <AnalysisContentManager
+                        {...analysisProps}
+                        canRegenerate={canShowRegenerateButtons}
+                        questionsLoaded={questionsLoaded} />
+                    )}
+                    
+                    {insightsSubTab === 'direction' && hasStrategicAccess && (
+                      <div className="strategic-section mt-4">
+                        <StrategicAnalysis
+                          questions={questions}
+                          userAnswers={userAnswers}
+                          businessName={businessData.name}
+                          onRegenerate={handleStrategicAnalysisRegenerate}
+                          isRegenerating={isStrategicRegenerating}
+                          canRegenerate={canShowRegenerateButtons && strategicData && !isAnalysisRegenerating && unlockedFeatures.analysis}
+                          strategicData={strategicData}
+                          selectedBusinessId={selectedBusinessId}
+                          phaseManager={phaseManager}
+                          saveAnalysisToBackend={(data, type) => apiService.saveAnalysisToBackend(data, type, selectedBusinessId)}
+                          hideDownload={false}
+                          phaseAnalysisArray={phaseAnalysisArray}
+                          onRedirectToBrief={handleRedirectToBrief}
+                          streamingManager={streamingManager}
+                          triggerConfirmation={triggerConfirmation}
+                          isExpanded={true}
+                          onKickstartProjects={() => setActiveTab("bets")}
+                          hasProjectsTab={showProjectsTab}
+                          questionsLoaded={questionsLoaded}
+                          isAnalysisRegenerating={isAnalysisRegenerating}
+                          isStrategicRegenerating={isStrategicRegenerating}
+                        />
+                      </div>
+                    )}
                   </div>
-                </div>
-              )}
-              {activeTab === "strategic" && hasStrategicAccess && (
-                <div className="strategic-section">
-                  <StrategicAnalysis
-                    questions={questions}
-                    userAnswers={userAnswers}
-                    businessName={businessData.name}
-                    onRegenerate={handleStrategicAnalysisRegenerate}
-                    isRegenerating={isStrategicRegenerating}
-                    canRegenerate={canShowRegenerateButtons && strategicData && !isAnalysisRegenerating && unlockedFeatures.analysis}
-                    strategicData={strategicData}
-                    selectedBusinessId={selectedBusinessId}
-                    phaseManager={phaseManager}
-                    saveAnalysisToBackend={(data, type) => apiService.saveAnalysisToBackend(data, type, selectedBusinessId)}
-                    hideDownload={false}
-                    phaseAnalysisArray={phaseAnalysisArray}
-                    onRedirectToBrief={handleRedirectToBrief}
-                    streamingManager={streamingManager}
-                    triggerConfirmation={triggerConfirmation}
-                    isExpanded={true}
-                    onKickstartProjects={() => setActiveTab("bets")}
-                    hasProjectsTab={showProjectsTab}
-                    questionsLoaded={questionsLoaded}
-                    isAnalysisRegenerating={isAnalysisRegenerating}
-                    isStrategicRegenerating={isStrategicRegenerating}
-                  />
                 </div>
               )}
               {activeTab === "bets" && hasProjectAccess && (

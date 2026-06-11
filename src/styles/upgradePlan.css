@@ -479,6 +479,7 @@
   font-size: 18px;
   font-weight: 700;
   color: #111827;
+  justify-content: center; 
 }
 
 .comparison-table .plan-price.text-blue {
