@@ -10,7 +10,7 @@ import ToastNotifications from './components/ToastNotifications';
 import { useUIStore } from './store/uiStore';
 import { useLanguageStore } from './store/languageStore';
 const AI_EXCLUDED_EXACT_PATHS = ['/', '/login', '/register', '/dashboard', '/admin', '/super-admin', '/super-admin/observatory', '/forgot-password', '/reset-password'];
-const AI_EXCLUDED_PREFIX_PATHS = ['/academy', '/onboarding', '/businesspage'];
+const AI_EXCLUDED_PREFIX_PATHS = ['/academy', '/onboarding'];
 
 const GlobalAiAssistant = () => {
   const location = useLocation();

@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import axios from 'axios';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import MenuBar from '../components/MenuBar';
 import { useAuthStore, useBusinessStore } from '../store';
@@ -16,59 +17,191 @@ const OnboardingFlowPage = () => {
   const userName = useAuthStore(state => state.userName) || 'User';
   const businessName = business?.business_name || 'your business';
 
+  const pmfData = location.state?.pmfData;
   const [expandedSection, setExpandedSection] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   // Step 1
-  const [purpose, setPurpose] = useState('');
-  const [description, setDescription] = useState('');
+  const [purpose, setPurpose] = useState(pmfData?.businessPurpose?.purpose || '');
+  const [description, setDescription] = useState(pmfData?.businessPurpose?.description || '');
   
   // Step 2
-  const [country, setCountry] = useState('');
-  const [city, setCity] = useState('');
+  const [country, setCountry] = useState(pmfData?.location?.country || '');
+  const [city, setCity] = useState(pmfData?.location?.city || '');
   
   // Step 3
-  const [primaryIndustry, setPrimaryIndustry] = useState('');
+  const [primaryIndustry, setPrimaryIndustry] = useState(pmfData?.industry?.primaryIndustry || '');
   
   // Step 4
-  const [geo1, setGeo1] = useState('');
-  const [geo2, setGeo2] = useState('');
-  const [geo3, setGeo3] = useState('');
-  const [seg1, setSeg1] = useState('');
-  const [seg2, setSeg2] = useState('');
-  const [seg3, setSeg3] = useState('');
-  const [prod1, setProd1] = useState('');
-  const [prod2, setProd2] = useState('');
-  const [prod3, setProd3] = useState('');
-  const [chan1, setChan1] = useState('');
-  const [chan2, setChan2] = useState('');
-  const [chan3, setChan3] = useState('');
+  const [geo1, setGeo1] = useState(pmfData?.core?.geographies?.[0] || '');
+  const [geo2, setGeo2] = useState(pmfData?.core?.geographies?.[1] || '');
+  const [geo3, setGeo3] = useState(pmfData?.core?.geographies?.[2] || '');
+  const [seg1, setSeg1] = useState(pmfData?.core?.customerSegments?.[0] || '');
+  const [seg2, setSeg2] = useState(pmfData?.core?.customerSegments?.[1] || '');
+  const [seg3, setSeg3] = useState(pmfData?.core?.customerSegments?.[2] || '');
+  const [prod1, setProd1] = useState(pmfData?.core?.productsServices?.[0] || '');
+  const [prod2, setProd2] = useState(pmfData?.core?.productsServices?.[1] || '');
+  const [prod3, setProd3] = useState(pmfData?.core?.productsServices?.[2] || '');
+  const [chan1, setChan1] = useState(pmfData?.core?.channels?.[0] || '');
+  const [chan2, setChan2] = useState(pmfData?.core?.channels?.[1] || '');
+  const [chan3, setChan3] = useState(pmfData?.core?.channels?.[2] || '');
   
   // Step 5
-  const [competeOptions, setCompeteOptions] = useState({
-    price: false,
-    quality: false,
-    speed: false,
-    relationships: false,
-    customization: false,
-    scale: false,
-    brand: false,
-    other: false
+  const [competeOptions, setCompeteOptions] = useState(() => {
+    const selected = pmfData?.competitiveDimensions?.selected || [];
+    const labelToKeyMap = {
+      'price': 'price',
+      'quality': 'quality',
+      'speed': 'speed',
+      'relationships': 'relationships',
+      'customization': 'customization',
+      'scale': 'scale',
+      'brand': 'brand',
+      'other': 'other'
+    };
+
+    let mappedState = {
+      price: false,
+      quality: false,
+      speed: false,
+      relationships: false,
+      customization: false,
+      scale: false,
+      brand: false,
+      other: false
+    };
+
+    selected.forEach(val => {
+      const lowerVal = val.toLowerCase().trim();
+      let matchedKey = null;
+
+      for (const [label, key] of Object.entries(labelToKeyMap)) {
+        if (lowerVal.includes(label)) {
+          matchedKey = key;
+          break;
+        }
+      }
+
+      if (matchedKey) {
+        mappedState[matchedKey] = true;
+      } else {
+        mappedState.other = true;
+      }
+    });
+
+    return mappedState;
+  });
+
+  const [otherCompeteValue, setOtherCompeteValue] = useState(() => {
+    const selected = pmfData?.competitiveDimensions?.selected || [];
+    const labelToKeyMap = ['price', 'quality', 'speed', 'relationships', 'customization', 'scale', 'brand', 'other'];
+    let unmapped = [];
+    selected.forEach(val => {
+      const lowerVal = val.toLowerCase().trim();
+      const matched = labelToKeyMap.some(label => lowerVal.includes(label));
+      if (!matched) unmapped.push(val);
+    });
+    return unmapped.join(', ');
   });
 
   const [chatInput, setChatInput] = useState('');
   const [chatMessages, setChatMessages] = useState([]);
+  const [isChatLoading, setIsChatLoading] = useState(false);
+  const chatEndRef = useRef(null);
 
-  const handleSendMessage = (e) => {
+  const historyFetchedRef = useRef(false);
+
+  useEffect(() => {
+    if (!historyFetchedRef.current) {
+      historyFetchedRef.current = true;
+      const fetchHistory = async () => {
+        const token = useAuthStore.getState().token;
+        if (!token) return;
+        try {
+          const targetBusinessId = business?._id || business?.id || businessId;
+          const response = await axios.get(
+            `${import.meta.env.VITE_BACKEND_URL}/ai-chat/history/${targetBusinessId}`,
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+          
+          if (response.data.history && response.data.history.length > 0) {
+            setChatMessages(response.data.history.map((msg) => ({ role: msg.role, content: msg.text })));
+          }
+        } catch (error) {
+          console.error("Error fetching AI chat history:", error);
+        }
+      };
+      fetchHistory();
+    }
+  }, [business, businessId]);
+
+  const saveMessageToHistory = async (role, text) => {
+    const token = useAuthStore.getState().token;
+    if (!token) return;
+    try {
+      const targetBusinessId = business?._id || business?.id || businessId;
+      await axios.post(
+        `${import.meta.env.VITE_BACKEND_URL}/ai-chat/history`,
+        { role, text, project_id: targetBusinessId },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+    } catch (error) {
+      console.error("Error saving AI chat message:", error);
+    }
+  };
+
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [chatMessages, isChatLoading]);
+
+  const handleSendMessage = async (e) => {
     if (e) e.preventDefault();
     if (!chatInput.trim()) return;
     
-    setChatMessages(prev => [...prev, { role: 'user', content: chatInput }]);
+    const userMessage = chatInput;
+    setChatMessages(prev => [...prev, { role: 'user', content: userMessage }]);
     setChatInput('');
+    setIsChatLoading(true);
+    await saveMessageToHistory('user', userMessage);
     
-    setTimeout(() => {
-      setChatMessages(prev => [...prev, { role: 'trax', content: "Thanks for the context! I'll keep this in mind. Please continue filling out the questions on the right so I can generate your insights." }]);
-    }, 1000);
+    try {
+      const targetBusinessId = business?._id || business?.id || businessId;
+      const response = await fetch(import.meta.env.VITE_AI_CHAT_URL || 'http://localhost:4111/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-business-id': targetBusinessId || 'unknown'
+        },
+        body: JSON.stringify({
+          message: userMessage,
+          current_page: 'Onboarding Flow',
+          page_description: 'User is filling out the 5-step PMF onboarding form to generate insights.',
+          page_content: {
+            purpose, description, country, city, primaryIndustry,
+            geographies: [geo1, geo2, geo3].filter(Boolean),
+            segments: [seg1, seg2, seg3].filter(Boolean),
+            products: [prod1, prod2, prod3].filter(Boolean),
+            channels: [chan1, chan2, chan3].filter(Boolean),
+            differentiation: Object.keys(competeOptions).filter(k => competeOptions[k])
+          }
+        })
+      });
+      
+      const data = await response.json();
+      
+      if (response.ok && data.response) {
+        setChatMessages(prev => [...prev, { role: 'trax', content: data.response }]);
+        await saveMessageToHistory('assistant', data.response);
+      } else {
+        setChatMessages(prev => [...prev, { role: 'trax', content: "Sorry, I encountered an error connecting to the AI assistant." }]);
+        console.error("Chat API error:", data);
+      }
+    } catch (err) {
+      setChatMessages(prev => [...prev, { role: 'trax', content: "Sorry, I couldn't reach the AI assistant." }]);
+      console.error("Chat API fetch error:", err);
+    } finally {
+      setIsChatLoading(false);
+    }
   };
 
   const handleCompeteToggle = (option) => {
@@ -230,6 +363,19 @@ const OnboardingFlowPage = () => {
                   </div>
                 </div>
               ))}
+              {isChatLoading && (
+                <div className="onboarding-chat-message">
+                  <div className="bubble-avatar">TX</div>
+                  <div className="bubble-content">
+                    <div className="typing-indicator" style={{ display: 'flex', gap: '4px', alignItems: 'center', height: '100%', padding: '4px 0' }}>
+                      <span style={{ width: '6px', height: '6px', backgroundColor: '#94a3b8', borderRadius: '50%', animation: 'blink 1.4s infinite both', animationDelay: '0s' }}></span>
+                      <span style={{ width: '6px', height: '6px', backgroundColor: '#94a3b8', borderRadius: '50%', animation: 'blink 1.4s infinite both', animationDelay: '0.2s' }}></span>
+                      <span style={{ width: '6px', height: '6px', backgroundColor: '#94a3b8', borderRadius: '50%', animation: 'blink 1.4s infinite both', animationDelay: '0.4s' }}></span>
+                    </div>
+                  </div>
+                </div>
+              )}
+              <div ref={chatEndRef} />
             </div>
             
             <div className="onboarding-chat-input-bar">
@@ -240,8 +386,9 @@ const OnboardingFlowPage = () => {
                   placeholder="Type a message to Trax..." 
                   value={chatInput}
                   onChange={(e) => setChatInput(e.target.value)}
+                  disabled={isSubmitting}
                 />
-                <button type="submit" className="onboarding-chat-send-btn">
+                <button type="submit" className="onboarding-chat-send-btn" disabled={isSubmitting}>
                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
                 </button>
               </form>
@@ -262,7 +409,7 @@ const OnboardingFlowPage = () => {
             </div>
 
           
-            <div className="ob-flow-questions">
+            <div className="ob-flow-questions" style={{ pointerEvents: isSubmitting ? 'none' : 'auto', opacity: isSubmitting ? 0.6 : 1, transition: 'opacity 0.2s ease' }}>
               
               {/* Q1 */}
               <div className={`ob-question-card ${expandedSection === 1 ? 'expanded' : ''} ${(purpose) ? 'completed' : ''}`}>
@@ -446,15 +593,26 @@ const OnboardingFlowPage = () => {
                         brand: 'Brand',
                         other: 'Other'
                       }).map(([key, label]) => (
-                        <label key={key} className="ob-checkbox-container ob-flow-checkbox-container">
-                          <input 
-                            type="checkbox" 
-                            className="ob-flow-checkbox-input"
-                            checked={competeOptions[key]} 
-                            onChange={() => handleCompeteToggle(key)} 
-                          />
-                          <span className="ob-flow-checkbox-label">{label}</span>
-                        </label>
+                        <div key={key} className="ob-checkbox-wrapper mb-2">
+                          <label className="ob-checkbox-container ob-flow-checkbox-container m-0">
+                            <input 
+                              type="checkbox" 
+                              className="ob-flow-checkbox-input"
+                              checked={competeOptions[key]} 
+                              onChange={() => handleCompeteToggle(key)} 
+                            />
+                            <span className="ob-flow-checkbox-label">{label}</span>
+                          </label>
+                          {key === 'other' && competeOptions.other && (
+                            <input 
+                              type="text" 
+                              className="ob-flow-input mt-2" 
+                              placeholder="Please specify" 
+                              value={otherCompeteValue}
+                              onChange={(e) => setOtherCompeteValue(e.target.value)}
+                            />
+                          )}
+                        </div>
                       ))}
                     </div>
                   </div>
@@ -470,7 +628,18 @@ const OnboardingFlowPage = () => {
                   style={{ opacity: isSubmitting ? 0.7 : 1 }}
                   disabled={isSubmitting || answeredCount < 5}
                 >
-                  {isSubmitting ? 'Generating...' : 'Generate Insights'} <ArrowRight size={18} />
+                  {isSubmitting ? (
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'center', width: '100%' }}>
+                      Generating
+                      <div className="typing-indicator" style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+                        <span style={{ width: '4px', height: '4px', backgroundColor: '#94a3b8', borderRadius: '50%', animation: 'blink 1.4s infinite both', animationDelay: '0s' }}></span>
+                        <span style={{ width: '4px', height: '4px', backgroundColor: '#94a3b8', borderRadius: '50%', animation: 'blink 1.4s infinite both', animationDelay: '0.2s' }}></span>
+                        <span style={{ width: '4px', height: '4px', backgroundColor: '#94a3b8', borderRadius: '50%', animation: 'blink 1.4s infinite both', animationDelay: '0.4s' }}></span>
+                      </div>
+                    </span>
+                  ) : (
+                    <>Generate Insights <ArrowRight size={18} /></>
+                  )}
                 </button>
                 <p className="ob-flow-generate-subtext">Answer every question to generate your strategy draft.</p>
               </div>

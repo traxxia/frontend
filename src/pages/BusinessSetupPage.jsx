@@ -1351,17 +1351,91 @@ const BusinessSetupPage = () => {
 
   const [chatInput, setChatInput] = useState('');
   const [chatMessages, setChatMessages] = useState([]);
+  const [isChatLoading, setIsChatLoading] = useState(false);
+  const chatEndRef = useRef(null);
+  const historyFetchedRef = useRef(false);
 
-  const handleSendMessage = (e) => {
+  useEffect(() => {
+    if (!historyFetchedRef.current && selectedBusinessId) {
+      historyFetchedRef.current = true;
+      const fetchHistory = async () => {
+        const token = useAuthStore.getState().token;
+        if (!token) return;
+        try {
+          const response = await axios.get(
+            `${import.meta.env.VITE_BACKEND_URL}/ai-chat/history/${selectedBusinessId}`,
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+          
+          if (response.data.history && response.data.history.length > 0) {
+            setChatMessages(response.data.history.map((msg) => ({ role: msg.role, content: msg.text })));
+          }
+        } catch (error) {
+          console.error("Error fetching AI chat history:", error);
+        }
+      };
+      fetchHistory();
+    }
+  }, [selectedBusinessId]);
+
+  const saveMessageToHistory = async (role, text) => {
+    const token = useAuthStore.getState().token;
+    if (!token) return;
+    try {
+      await axios.post(
+        `${import.meta.env.VITE_BACKEND_URL}/ai-chat/history`,
+        { role, text, project_id: selectedBusinessId },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+    } catch (error) {
+      console.error("Error saving AI chat message:", error);
+    }
+  };
+
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [chatMessages, isChatLoading]);
+
+  const handleSendMessage = async (e) => {
     if (e) e.preventDefault();
     if (!chatInput.trim()) return;
     
-    setChatMessages(prev => [...prev, { role: 'user', content: chatInput }]);
+    const userMessage = chatInput;
+    setChatMessages(prev => [...prev, { role: 'user', content: userMessage }]);
     setChatInput('');
+    setIsChatLoading(true);
+    await saveMessageToHistory('user', userMessage);
     
-    setTimeout(() => {
-      setChatMessages(prev => [...prev, { role: 'trax', content: t("Thanks for the context! I'll keep this in mind. Please continue filling out the questions so I can generate your insights.") || "Thanks for the context! I'll keep this in mind. Please continue filling out the questions so I can generate your insights." }]);
-    }, 1000);
+    try {
+      const response = await fetch(import.meta.env.VITE_AI_CHAT_URL || 'http://localhost:4111/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-business-id': selectedBusinessId || 'unknown'
+        },
+        body: JSON.stringify({
+          message: userMessage,
+          current_page: 'Business Setup Onboarding',
+          page_description: 'User is filling out the 5-step PMF onboarding form to generate insights.',
+          page_content: userAnswers || {}
+        })
+      });
+      
+      const data = await response.json();
+      
+      if (response.ok && data.response) {
+        setChatMessages(prev => [...prev, { role: 'trax', content: data.response }]);
+        await saveMessageToHistory('assistant', data.response);
+      } else {
+        setChatMessages(prev => [...prev, { role: 'trax', content: "Sorry, I encountered an error connecting to the AI assistant." }]);
+        console.error("Chat API error:", data);
+      }
+    } catch (err) {
+      setChatMessages(prev => [...prev, { role: 'trax', content: "Sorry, I couldn't reach the AI assistant." }]);
+      console.error("Chat API fetch error:", err);
+    } finally {
+      setIsChatLoading(false);
+    }
   };
 
   return (
@@ -1467,6 +1541,19 @@ const BusinessSetupPage = () => {
                         </div>
                       </div>
                     ))}
+                    {isChatLoading && (
+                      <div className="onboarding-chat-message">
+                        <div className="bubble-avatar">TX</div>
+                        <div className="bubble-content">
+                          <div className="typing-indicator" style={{ display: 'flex', gap: '4px', alignItems: 'center', height: '100%', padding: '4px 0' }}>
+                            <span style={{ width: '6px', height: '6px', backgroundColor: '#94a3b8', borderRadius: '50%', animation: 'blink 1.4s infinite both', animationDelay: '0s' }}></span>
+                            <span style={{ width: '6px', height: '6px', backgroundColor: '#94a3b8', borderRadius: '50%', animation: 'blink 1.4s infinite both', animationDelay: '0.2s' }}></span>
+                            <span style={{ width: '6px', height: '6px', backgroundColor: '#94a3b8', borderRadius: '50%', animation: 'blink 1.4s infinite both', animationDelay: '0.4s' }}></span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                    <div ref={chatEndRef} />
                   </div>
                   {/* Input bar */}
                   <div className="onboarding-chat-input-bar">

@@ -185,6 +185,7 @@ const Dashboard = () => {
   const hasProjectAccess = limits.project;
 
   const [businessToDelete, setBusinessToDelete] = useState(null);
+  const [isProcessingDelete, setIsProcessingDelete] = useState(false);
   const [activeSlide, setActiveSlide] = useState(0);
 
   const [accessModalMessage, setAccessModalMessage] = useState('');
@@ -280,19 +281,22 @@ const Dashboard = () => {
 
   const deleteBusiness = useCallback(async (businessId) => {
     try {
+      setIsProcessingDelete(true);
       clearErrors();
       await deleteBusinessAction(businessId);
       
-      closeModal('deleteBusiness');
-      setBusinessToDelete(null);
-      addToast({ message: t('business_deleted_successfully'), type: 'success' });
-
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['businesses'] }),
         queryClient.invalidateQueries({ queryKey: ['planDetails'] })
       ]);
+
+      closeModal('deleteBusiness');
+      setBusinessToDelete(null);
+      addToast({ message: t('business_deleted_successfully'), type: 'success' });
     } catch (error) {
       console.error('Error deleting business:', error);
+    } finally {
+      setIsProcessingDelete(false);
     }
   }, [deleteBusinessAction, t, closeModal, addToast, clearErrors, queryClient]);
 
@@ -302,31 +306,51 @@ const Dashboard = () => {
       const business = data.business;
       const newBusinessId = business?._id || business?.id;
 
-      if (newBusinessId && selectedFiles.length > 0) {
+      let pmfData = null;
+      if (newBusinessId && (selectedFiles.length > 0 || (businessFormData.website && !businessFormData.has_no_website))) {
         setIsUploadingFiles(true);
-        for (const file of selectedFiles) {
-          try {
-            await answerService.uploadStrategicDocument(newBusinessId, file);
-          } catch (uploadErr) {
-            console.error(`Error uploading file ${file.name}:`, uploadErr);
+        if (selectedFiles.length > 0) {
+          for (const file of selectedFiles) {
+            try {
+              await answerService.uploadStrategicDocument(newBusinessId, file);
+            } catch (uploadErr) {
+              console.error(`Error uploading file ${file.name}:`, uploadErr);
+            }
           }
         }
         
         try {
-          const userId = useAuthStore.getState().userId || '';
-          const chatUrl = import.meta.env.VITE_AI_CHAT_URL || 'http://localhost:4111/api/chat';
-          const baseUrl = chatUrl.replace(/\/api\/chat\/?$/, '');
+          const mlBackendUrl = import.meta.env.VITE_ML_BACKEND_URL || 'http://localhost:8000';
+          const formData = new FormData();
+          if (selectedFiles.length > 0) {
+            formData.append('file', selectedFiles[0]);
+          }
+          if (businessFormData.website && !businessFormData.has_no_website) {
+            formData.append('url', businessFormData.website);
+          }
           
-          await fetch(`${baseUrl}/api/extract-to-db`, {
+          const mlResponse = await fetch(`${mlBackendUrl}/pmf-analysis`, {
             method: 'POST',
             headers: {
-              'Content-Type': 'application/json',
-              'x-business-id': newBusinessId,
+              'X-Business-Id': newBusinessId
             },
-            body: JSON.stringify({ userId, businessId: newBusinessId })
+            body: formData
           });
+          
+          const mlResult = await mlResponse.json();
+          if (mlResult.success && mlResult.data) {
+            pmfData = mlResult.data;
+            try {
+              const getAuthToken = () => useAuthStore.getState().token;
+              const analysisService = new AnalysisApiService(import.meta.env.VITE_ML_BACKEND_URL, import.meta.env.VITE_BACKEND_URL, getAuthToken);
+              await analysisService.savePMFOnboardingData(newBusinessId, pmfData);
+              console.log("Extracted PMF Data saved to DB successfully.");
+            } catch (saveErr) {
+              console.error("Failed to save extracted PMF data to DB:", saveErr);
+            }
+          }
         } catch (extractErr) {
-          console.warn("Extraction to DB failed:", extractErr);
+          console.warn("ML Analysis failed:", extractErr);
         }
 
         setIsUploadingFiles(false);
@@ -340,9 +364,8 @@ const Dashboard = () => {
       closeModal('createBusiness');
       addToast({ message: t('business_created_successfully'), type: 'success' });
 
-      const businessSlug = toSlug(business?.business_name || '');
-      navigate(`/businesspage?business=${businessSlug}&tab=onboarding`, {
-        state: { business, initialTab: 'onboarding' }
+      navigate(`/onboarding/${newBusinessId}`, {
+        state: { business, initialTab: 'onboarding', pmfData }
       });
 
       setBusinessFormData({
@@ -497,12 +520,32 @@ const Dashboard = () => {
                               (result?.onboarding && Object.keys(result.onboarding).length > 0);
         console.log(`[DEBUG] handleInsightsClick: hasOnboarding=${hasOnboarding}`);
         
-        if (!hasOnboarding) {
-          navigate(`/onboarding/${businessId}`);
+        let hasInsights = false;
+        let hasExecSummary = false;
+
+        hasInsights = result?.insights && Object.keys(result.insights).length > 0;
+        
+        try {
+          const execResult = await analysisService.getPMFExecutiveSummary(businessId);
+          hasExecSummary = execResult?.summary && Object.keys(execResult.summary).length > 0;
+        } catch (err) {
+          console.warn("Failed to check Executive Summary status:", err);
+        }
+
+        if (!hasOnboarding || !hasInsights || !hasExecSummary) {
+          console.warn("Missing onboarding, insights, or exec summary. Navigating to onboarding page.");
+          navigate(`/onboarding/${businessId}`, { 
+            state: { 
+              business, 
+              pmfData: result?.onboarding_data || result?.onboarding || null 
+            } 
+          });
           return;
         }
       } catch (err) {
-        console.warn("Failed to check PMF completion status", err);
+        console.error("Unexpected error in handleInsightsClick:", err);
+        navigate(`/onboarding/${businessId}`, { state: { business } });
+        return;
       }
     }
 
@@ -789,12 +832,15 @@ const Dashboard = () => {
 
           <Modal 
             show={isModalOpen('createBusiness')} 
-            onHide={handleCloseCreateModal} 
+            onHide={() => {
+              if (isCreatingBusiness || isUploadingFiles) return;
+              handleCloseCreateModal();
+            }} 
             centered 
             dialogClassName="create-business-modal" 
             backdrop="static"
           >
-            <Modal.Header closeButton>
+            <Modal.Header closeButton={!(isCreatingBusiness || isUploadingFiles)}>
               <Modal.Title>{t('create_new_business', 'Create New Business')}</Modal.Title>
             </Modal.Header>
             <Form onSubmit={handleSubmitBusiness} noValidate>
@@ -960,8 +1006,8 @@ const Dashboard = () => {
               {businessToDelete && <p>{t('are_you_sure_you_want_to_delete')} <strong>"{businessToDelete.business_name}"</strong>?</p>}
             </Modal.Body>
             <Modal.Footer>
-              <Button variant="secondary" onClick={handleCloseDeleteModal}>{t('cancel')}</Button>
-              <Button variant="danger" onClick={handleConfirmDelete}>{isDeletingBusiness ? <Spinner size="sm" /> : t('delete_business')}</Button>
+              <Button variant="secondary" onClick={handleCloseDeleteModal} disabled={isDeletingBusiness || isProcessingDelete}>{t('cancel')}</Button>
+              <Button variant="danger" onClick={handleConfirmDelete} disabled={isDeletingBusiness || isProcessingDelete}>{isDeletingBusiness || isProcessingDelete ? <Spinner size="sm" /> : t('delete_business')}</Button>
             </Modal.Footer>
           </Modal>
 

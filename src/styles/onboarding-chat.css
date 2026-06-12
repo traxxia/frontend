@@ -598,7 +598,7 @@
 
 .ob-question-text {
   font-size: 15px;
-  font-weight: 600;
+  font-weight: 700;
   color: #1e293b;
 }
 
@@ -620,7 +620,7 @@
 
 .ob-form-group label {
   font-size: 14px;
-  font-weight: 600;
+  font-weight: 700;
   color: #1e293b;
   margin-bottom: 4px;
 }
@@ -754,4 +754,9 @@
   background-color: #f1f5f9;
   margin-left: 0;
   margin-right: 12px;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 0.2; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1.2); }
 }

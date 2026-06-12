@@ -191,10 +191,10 @@ const ExecutiveSummary = ({ hideNextStep }) => {
   if (!data || !hasActualContent) {
     return <div className="bg-light py-5 text-center rounded-4 m-3 shadow-sm border">
         <div className="container executive-summary--s1">
-          <h3 className="fw-bold mb-3">{t("noInsightsAvailable") || "No executive summary available yet."}</h3>
-          <p className="text-muted mb-4">{t("completeOnboardingPrompt") || "Please complete the PMF Onboarding to generate this summary."}</p>
-          {openModal && !isViewer && <button className="btn btn-primary rounded-pill px-5 py-2 fw-semibold" onClick={() => openModal('pmfOnboarding')}>
-              {t("startPMFOnboarding") || "Start PMF Onboarding"}
+          <h3 className="fw-bold mb-3">{t("noInsightsAvailable") || "You haven't completed the onboarding process fully."}</h3>
+          <p className="text-muted mb-4">{t("completeOnboardingPrompt") || "Do you want to go back and complete it?"}</p>
+          {!isViewer && <button className="btn btn-primary rounded-pill px-5 py-2 fw-semibold" onClick={() => navigate(`/onboarding/${businessId}`, { state: { business: { _id: businessId, onboarding_data: data?.onboarding_data || data?.onboarding || data }, pmfData: data?.onboarding_data || data?.onboarding || data } })}>
+              {t("startPMFOnboarding") || "Go Back"}
             </button>}
         </div>
       </div>;

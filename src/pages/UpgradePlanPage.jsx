@@ -14,9 +14,12 @@ const UpgradePlanPage = () => {
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
-      document.documentElement.scrollTo({ top: 0, left: 0, behavior: 'instant' });
-    }, 0);
+      window.scrollTo(0, 0);
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+      const appElement = document.querySelector('.App');
+      if (appElement) appElement.scrollTop = 0;
+    }, 50);
     return () => clearTimeout(timer);
   }, []);
 
@@ -127,19 +130,21 @@ const UpgradePlanPage = () => {
           </p>
         </div>
 
-        <div className="upgrade-billing-toggle">
-          <button 
-            className={`toggle-btn ${!isAnnual ? 'active' : ''}`}
-            onClick={() => setIsAnnual(false)}
-          >
-            MONTHLY
-          </button>
-          <button 
-            className={`toggle-btn ${isAnnual ? 'active' : ''}`}
-            onClick={() => setIsAnnual(true)}
-          >
-            ANNUAL <span className="toggle-badge">-1 MONTH</span>
-          </button>
+        <div className="upgrade-billing-toggle-container">
+          <div className="upgrade-billing-toggle">
+            <button 
+              className={`toggle-btn ${!isAnnual ? 'active' : ''}`}
+              onClick={() => setIsAnnual(false)}
+            >
+              MONTHLY
+            </button>
+            <button 
+              className={`toggle-btn ${isAnnual ? 'active' : ''}`}
+              onClick={() => setIsAnnual(true)}
+            >
+              ANNUAL <span className="toggle-badge">-1 MONTH</span>
+            </button>
+          </div>
         </div>
 
         <div className="pricing-cards-container">

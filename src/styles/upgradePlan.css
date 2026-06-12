@@ -111,16 +111,27 @@
 }
 
 /* Billing Toggle */
-.upgrade-billing-toggle {
+.upgrade-billing-toggle-container {
   display: flex;
   justify-content: center;
   margin-bottom: 40px;
 }
 
-.upgrade-billing-toggle .toggle-btn {
-  background: none;
+.upgrade-billing-toggle {
+  display: inline-flex;
+  align-items: center;
+  background-color: #f8fafc;
   border: 1px solid #e5e7eb;
-  padding: 10px 24px;
+  border-radius: 8px;
+  padding: 4px;
+  gap: 4px;
+}
+
+.upgrade-billing-toggle .toggle-btn {
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  padding: 8px 24px;
   font-size: 12px;
   font-weight: 700;
   color: #6b7280;
@@ -132,19 +143,10 @@
   gap: 8px;
 }
 
-.upgrade-billing-toggle .toggle-btn:first-child {
-  border-radius: 8px 0 0 8px;
-  border-right: none;
-}
-
-.upgrade-billing-toggle .toggle-btn:last-child {
-  border-radius: 0 8px 8px 0;
-}
-
 .upgrade-billing-toggle .toggle-btn.active {
   color: #0277bd;
-  border-color: #e5e7eb;
   background-color: #fff;
+  border-color: #e5e7eb;
   box-shadow: 0 1px 2px rgba(0,0,0,0.05);
 }
 
