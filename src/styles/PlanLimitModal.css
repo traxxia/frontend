@@ -85,11 +85,11 @@
 }
 
 .upgrade-btn-premium {
-    background: linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%) !important;
+    background: var(--gradient-primary) !important;
     border: none !important;
     font-weight: 600 !important;
     letter-spacing: 0.5px !important;
-    box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3) !important;
+    box-shadow: 0 4px 15px rgba(12, 113, 185, 0.3) !important;
     transition: all 0.3s ease !important;
 }
 

@@ -175,7 +175,7 @@
   margin-bottom: 24px;
   font-size: 15px;
   font-weight: 500;
-  color: #006abc;
+  color: var(--color-primary);
   display: inline-block;
   letter-spacing: 0.2px;
 }
@@ -245,8 +245,8 @@
 
 .form-group input:focus {
   outline: none;
-  border-color: #006abc;
-  box-shadow: 0 0 0 3px rgba(0, 106, 188, 0.15);
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(12, 113, 185, 0.15);
 
 }
 
@@ -257,7 +257,7 @@
 }
 
 [data-theme="dark"] .form-group input:focus {
-  border-color: #5b7cd6;
+  border-color: var(--color-primary);
   box-shadow: 0 0 0 3px rgba(91, 124, 214, 0.2);
 }
 
@@ -288,7 +288,7 @@
 .login-button {
   width: 100%;
   padding: 12px;
-  background: #006abc;
+  background: var(--color-primary);
   color: var(--color-text-white);
   border: none;
   border-radius: 8px;
@@ -298,21 +298,21 @@
   transition: var(--transition-normal); 
   position: relative;
   overflow: hidden;
-  box-shadow: 0 4px 10px rgba(0, 106, 188, 0.15);
+  box-shadow: 0 4px 10px rgba(12, 113, 185, 0.15);
 }
 
 .login-button:hover {
-  background: #005a9e;
-  box-shadow: 0 6px 14px rgba(0, 106, 188, 0.25);
+  background: var(--color-primary-dark);
+  box-shadow: 0 6px 14px rgba(12, 113, 185, 0.25);
 }
 
 [data-theme="dark"] .login-button {
-  background: #5b7cd6;
+  background: var(--color-primary);
   box-shadow: 0 4px 10px rgba(91, 124, 214, 0.15);
 }
 
 [data-theme="dark"] .login-button:hover {
-  background: #4a68c2;
+  background: var(--color-primary-dark);
   box-shadow: 0 6px 14px rgba(91, 124, 214, 0.25);
 }
 
@@ -359,7 +359,7 @@
 }
 
 .login-footer a {
-  color: #006abc;
+  color: var(--color-primary);
   text-decoration: none;
   font-weight: var(--font-weight-semibold);
 }
@@ -369,7 +369,7 @@
 }
 
 [data-theme="dark"] .login-footer a {
-  color: #5b7cd6;
+  color: var(--color-primary);
 }
 
 .divider {
@@ -389,7 +389,7 @@
 
 .forgot-password-link a {
   font-size: 13px;
-  color: #006abc;
+  color: var(--color-primary);
   text-decoration: none;
   font-weight: 600;
 }
@@ -399,7 +399,7 @@
 }
 
 [data-theme="dark"] .forgot-password-link a {
-  color: #5b7cd6;
+  color: var(--color-primary);
 }
 
 .disabled-link {

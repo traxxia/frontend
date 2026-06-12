@@ -249,11 +249,11 @@
 }
 
 .pmf-radio-card:hover {
-  border-color: #4f46e5;
+  border-color: var(--color-primary);
 }
 
 .pmf-radio-card.selected {
-  border-color: #4f46e5;
+  border-color: var(--color-primary);
   background: #eef2ff;
 }
 

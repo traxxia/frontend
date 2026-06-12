@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Sparkles, Send, X, Bot, Zap, Trash2, AlertTriangle } from "lucide-react";
+import { Sparkles, Send, X, Bot, Zap, Trash2, AlertTriangle, CornerDownLeft } from "lucide-react";
 import axios from "axios";
 import "../styles/Ai.css";
 import { useTranslation } from "../hooks/useTranslation";
@@ -45,6 +45,16 @@ const Aiassistant = ({ businessId: propBusinessId, projectId, pageContext, isDis
       setQuery("");
     }
   }, [open]);
+
+  useEffect(() => {
+    const handleOpenAssistant = () => {
+      if (!isDisabled) {
+        setOpen(true);
+      }
+    };
+    window.addEventListener('open_ai_assistant', handleOpenAssistant);
+    return () => window.removeEventListener('open_ai_assistant', handleOpenAssistant);
+  }, [isDisabled]);
 
   const checkQuota = React.useCallback(async () => {
     const businessId = propBusinessId || selectedBusinessId;
@@ -294,7 +304,9 @@ const Aiassistant = ({ businessId: propBusinessId, projectId, pageContext, isDis
         disabled={isDisabled}
         title={isDisabled ? "Complete onboarding to use AI Assistant" : "AI Assistant"}
       >
-        <Sparkles size={22} color="#fff" />
+        <span className="ai-fab-text">TX</span>
+        <span className="ai-fab-dot-green"></span>
+        <span className="ai-fab-dot-orange">!</span>
       </button>
 
       {}
@@ -306,48 +318,12 @@ const Aiassistant = ({ businessId: propBusinessId, projectId, pageContext, isDis
         <div className="ai-header">
           <div className="ai-header__left">
             <div className="ai-header__icon">
-              <Sparkles size={16} color="#fff" />
+              <span className="ai-header-icon-text">TX</span>
+              <span className="ai-header-dot-green"></span>
             </div>
             <div className="ai-header__content">
-              <div className="ai-header__title">{t("AI Assistant")}</div>
-              <div className="ai-header__usage-circle-container">
-                {(() => {
-                  const used = quotaStatus.usedTokens || 0;
-                  const limit = quotaStatus.limit || 3000000;
-                  const percentage = Math.min(Math.round((used / limit) * 100), 100);
-                  const radius = 10;
-                  const circumference = 2 * Math.PI * radius;
-                  const offset = circumference - (percentage / 100) * circumference;
-
-                  let colorClass = "usage-low";
-                  if (percentage >= 90) colorClass = "usage-high";
-                  else if (percentage >= 70) colorClass = "usage-medium";
-
-                  return (
-                    <div title={`Used: ${used.toLocaleString()} / ${limit.toLocaleString()}`}>
-                      <div className="ai-usage-circle-wrap">
-                        <svg className="ai-usage-svg" viewBox="0 0 24 24">
-                          <circle
-                            className="ai-usage-bg"
-                            cx="12"
-                            cy="12"
-                            r={radius}
-                          />
-                          <circle
-                            className={`ai-usage-fill ${colorClass}`}
-                            cx="12"
-                            cy="12"
-                            r={radius}
-                            strokeDasharray={circumference}
-                            strokeDashoffset={offset}
-                          />
-                        </svg>
-                        <span className="ai-usage-text">{percentage}%</span>
-                      </div>
-                    </div>
-                  );
-                })()}
-              </div>
+              <div className="ai-header__title">Trax</div>
+              <div className="ai-header__subtitle">1 thing flagged</div>
             </div>
           </div>
           <div className="ai-header__actions">
@@ -366,16 +342,29 @@ const Aiassistant = ({ businessId: propBusinessId, projectId, pageContext, isDis
 
         {}
         <div className="ai-messages">
-          {messages.map((m, idx) => (
-            <div key={idx} className={`ai-msg ai-msg--${m.role}`}>
-              {m.role === "assistant" && (
-                <div className="ai-msg__avatar">
-                  <Bot size={14} color="#6f3cff" />
+          {messages.map((m, idx) => {
+            const isPushback = m.text.includes('PUSHBACK');
+            let displayText = m.text;
+            if (isPushback && m.role === "assistant") {
+              displayText = m.text.replace(/.*?PUSHBACK\s*/, '').trim();
+            }
+
+            return (
+              <div key={idx} className={`ai-msg ai-msg--${m.role}`}>
+                <div className={`ai-msg__avatar ai-msg__avatar--${m.role}`}>
+                  {m.role === "assistant" ? "TX" : "A"}
                 </div>
-              )}
-              <div className="ai-msg__bubble">{m.text}</div>
-            </div>
-          ))}
+                <div className={`ai-msg__bubble ${isPushback && m.role === "assistant" ? 'ai-msg__bubble--pushback' : ''}`}>
+                  {isPushback && m.role === "assistant" && (
+                    <div className="ai-pushback-header">
+                      <AlertTriangle size={12} strokeWidth={3} /> PUSHBACK
+                    </div>
+                  )}
+                  {displayText}
+                </div>
+              </div>
+            );
+          })}
 
           {isLoading && (
             <div className="ai-msg ai-msg--assistant">
@@ -416,7 +405,7 @@ const Aiassistant = ({ businessId: propBusinessId, projectId, pageContext, isDis
               <input
                 className="ai-input"
                 type="text"
-                placeholder="Ask anything..."
+                placeholder="Ask, push back, or correct..."
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 onKeyDown={handleKeyDown}
@@ -427,7 +416,7 @@ const Aiassistant = ({ businessId: propBusinessId, projectId, pageContext, isDis
                 onClick={() => handleSend()}
                 disabled={!query.trim() || isLoading}
               >
-                <Send size={15} color="#fff" />
+                <CornerDownLeft size={16} color="#fff" strokeWidth={3} />
               </button>
             </>
           )}

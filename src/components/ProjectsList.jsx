@@ -49,7 +49,22 @@ const ProjectsList = ({
     };
   }, [showMenuId]);
   const renderProjectTable = projects => {
-    if (!projects || projects.length === 0) return null;
+    if (!projects || projects.length === 0) {
+      return (
+        <div className="w-100 d-flex flex-column align-items-center justify-content-center" style={{ minHeight: '350px' }}>
+          <div className="mb-3" style={{ opacity: 0.5 }}>
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+              <line x1="9" y1="3" x2="9" y2="21"></line>
+            </svg>
+          </div>
+          <h5 className="text-secondary fw-bold mb-2">{t("No bets found")}</h5>
+          <p className="text-muted" style={{ maxWidth: '400px', textAlign: 'center' }}>
+            {t("There are currently no bets or initiatives to display.")}
+          </p>
+        </div>
+      );
+    }
     return <ProjectsTable projects={projects} rankMap={rankMap} onEdit={onEdit} onView={onView} onDelete={onDelete} onPerformReview={onPerformReview} onAdhocUpdate={onAdhocUpdate} showMenuId={showMenuId} setShowMenuId={setShowMenuId} selectedProjectIds={selectedProjectIds} onToggleSelection={onToggleSelection} isAdmin={isAdmin} isArchived={isArchived} isViewer={isViewer} canReviewProject={canReviewProject} canEditProject={canEditProject} myUserId={myUserId} />;
   };
   const getFilteredGroups = () => {

@@ -1815,5 +1815,14 @@
   "leverage_analysis_display_name": "Leverage & Risk Analysis",
   "leverage_upload_msg": "Upload Excel or CSV files with financial data for leverage & risk analysis",
   "leverage_reserves_and_debt": "Debt & Liabilities",
-  "leverage_efficiency_unlock_msg": "Answer more questions to unlock detailed leverage & risk analysis"
+  "leverage_efficiency_unlock_msg": "Answer more questions to unlock detailed leverage & risk analysis",
+  "add_documents_optional": "Add documents (optional)",
+  "trax_will_read_your_website_bold": "Trax will read your website",
+  "trax_will_read_your_website_rest": "and ask only for what's still missing.",
+  "your_documents_stay_private_bold": "Your documents stay private.",
+  "your_documents_stay_private_rest": "Encrypted at rest and isolated to your workspace.",
+  "i_dont_have_website": "I don't have a website yet",
+  "continue_with_trax": "Continue with Trax",
+  "file": "file",
+  "files": "files"
 }
