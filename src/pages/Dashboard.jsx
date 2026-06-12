@@ -311,6 +311,24 @@ const Dashboard = () => {
             console.error(`Error uploading file ${file.name}:`, uploadErr);
           }
         }
+        
+        try {
+          const userId = useAuthStore.getState().userId || '';
+          const chatUrl = import.meta.env.VITE_AI_CHAT_URL || 'http://localhost:4111/api/chat';
+          const baseUrl = chatUrl.replace(/\/api\/chat\/?$/, '');
+          
+          await fetch(`${baseUrl}/api/extract-to-db`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'x-business-id': newBusinessId,
+            },
+            body: JSON.stringify({ userId, businessId: newBusinessId })
+          });
+        } catch (extractErr) {
+          console.warn("Extraction to DB failed:", extractErr);
+        }
+
         setIsUploadingFiles(false);
       }
 
