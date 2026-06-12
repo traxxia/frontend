@@ -3,6 +3,7 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from './useTranslation';
 import { usePlans, useCompanies } from './useQueries';
+import { useAuthStore } from '../store/authStore';
 
 export const useRegister = () => {
   const navigate = useNavigate();
@@ -99,19 +100,7 @@ export const useRegister = () => {
   };
 
   const validateTab2 = () => {
-    const newErrors = {};
-    if (isNewCompany) {
-      if (!form.company_name.trim()) {
-        newErrors.company_name = t('company_name_required') || 'Company name is required';
-      }
-      if (!selectedPlanId) newErrors.selectedPlanId = t('plan_selection_required') || 'Please select a pricing plan';
-    } else if (!form.company_id) {
-      newErrors.company_id = t('Company_selection_is_required') || 'Company selection is required';
-    }
-    if (!form.terms) newErrors.terms = t('You_must_agree_to_the_Terms_&_Conditions_and_Privacy_Policy_to_proceed') || 'You must agree to the Terms & Conditions and Privacy Policy to proceed';
-
-    setErrors(newErrors);
-    return newErrors;
+    return {};
   };
 
   const handleNext = async () => {
@@ -120,34 +109,24 @@ export const useRegister = () => {
         try {
           setIsCheckingEmail(true);
           await axios.post(`${API_BASE_URL}/api/check-email`, { email: form.email.trim() });
-          setActiveTab(2);
+          setIsCheckingEmail(false);
+          await handleSubmit();
         } catch (err) {
           setErrors(prev => ({
             ...prev,
             email: err.response?.data?.error || err.response?.data?.message || t('email_already_exists') || 'Email is already in use'
           }));
-        } finally {
           setIsCheckingEmail(false);
         }
       }
-    } else if (activeTab === 2) {
-      const tab2Errors = validateTab2();
-      if (Object.keys(tab2Errors).length === 0) {
-        if (isNewCompany) {
-          setActiveTab(3);
-        } else {
-          handleSubmit();
-        }
-      }
-      return tab2Errors;
     }
   };
 
   const handleBack = () => {
-    setActiveTab(prev => prev - 1);
+    navigate('/login');
   };
 
-  const handleSubmit = async (paymentMethodId, saveCard) => {
+  const handleSubmit = async () => {
     setIsSubmitting(true);
     setErrors({});
     setSubmitError(null);
@@ -156,32 +135,15 @@ export const useRegister = () => {
       const userData = {
         name: form.name.trim(),
         email: form.email.trim(),
-        password: form.password,
-        terms_accepted: form.terms,
-        job_title: form.job_title.trim() || undefined
+        password: form.password
       };
 
-      if (isNewCompany) {
-        userData.company_name = form.company_name.trim();
-        userData.plan_id = selectedPlanId;
-        if (paymentMethodId) {
-          userData.paymentMethodId = paymentMethodId;
-          userData.saveCard = saveCard;
-        }
-      } else {
-        userData.company_id = form.company_id;
-        userData.role = form.role;
-      }
-
       const response = await axios.post(`${API_BASE_URL}/api/register`, userData);
-      setModalMessage(response.data.message || 'Success!');
-      setIsError(false);
-      setShowSuccessModal(true);
+      
+      const setAuth = useAuthStore.getState().setAuth;
+      setAuth(response.data);
 
-      setTimeout(() => {
-        setShowSuccessModal(false);
-        navigate('/login');
-      }, 2000);
+      navigate('/dashboard');
 
     } catch (err) {
       setIsSubmitting(false);

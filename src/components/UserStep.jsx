@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { ChevronLeft, ChevronRight, Loader, Eye, EyeOff } from 'lucide-react';
 import PasswordStrengthTooltip from './PasswordStrengthTooltip';
 
-const UserStep = ({ form, handleChange, errors, isCheckingEmail, showPassword, setShowPassword, showConfirmPassword, setShowConfirmPassword, handleNext, onBackToLogin, t }) => {
+const UserStep = ({ form, handleChange, errors, isCheckingEmail, isSubmitting, showPassword, setShowPassword, showConfirmPassword, setShowConfirmPassword, handleNext, onBackToLogin, t }) => {
   const [isPasswordFocused, setIsPasswordFocused] = useState(false);
 
   return (
@@ -106,8 +106,14 @@ const UserStep = ({ form, handleChange, errors, isCheckingEmail, showPassword, s
           <button type="button" className="btn-secondary" onClick={onBackToLogin}>
             <ChevronLeft size={18} /> {t('back_to_login')}
           </button>
-          <button type="submit" className="btn-primary" disabled={isCheckingEmail}>
-            {isCheckingEmail ? <><Loader className="animate-spin" size={16} /> {t('checking') || 'Checking...'}</> : <>{t('next')} <ChevronRight size={18} /></>}
+          <button type="submit" className="btn-primary" disabled={isCheckingEmail || isSubmitting}>
+            {isSubmitting ? (
+              <><Loader className="animate-spin" size={16} /> {t('creating_account') || 'Creating...'}</>
+            ) : isCheckingEmail ? (
+              <><Loader className="animate-spin" size={16} /> {t('checking') || 'Checking...'}</>
+            ) : (
+              <>{t('create_account') || 'Create Account'}</>
+            )}
           </button>
         </div>
       </form>

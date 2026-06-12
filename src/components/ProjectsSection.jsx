@@ -692,14 +692,7 @@ const ProjectsSection = ({
     }).length;
     return <>
         {}
-        <div className="secondary-tabs-container">
-          <button className={`secondary-tab ${activeView === "list" ? "active" : ""}`} onClick={() => setActiveView("list")}>
-            <List size={16} /> {t("Summary")}
-          </button>
-          <button className={`secondary-tab ${activeView === "analysis" ? "active" : ""} projects-section--s1`} onClick={() => {}} title={t("Executive Analysis (Coming Soon)")}>
-            <BarChart4 size={16} /> {t("Executive Analysis")}
-          </button>
-        </div>
+
 
         <div className="bet-ledger-container premium-card">
           <div className="bet-ledger-header d-flex justify-content-between align-items-center flex-wrap gap-3">

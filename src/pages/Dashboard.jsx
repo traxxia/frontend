@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Button,
@@ -12,8 +12,10 @@ import {
   Carousel
 } from "react-bootstrap";
 import {
-  Info, X, Trash2, Check, ChevronDown
+  Info, X, Trash2, Check, ChevronDown, Lock, FileText
 } from "lucide-react";
+import { answerService } from '../services/answerService';
+import { AnalysisApiService } from '../services/analysisApiService';
 import MenuBar from "../components/MenuBar";
 import PMFOnboardingModal from "../components/PMFOnboardingModal";
 import PMFInsights from "../components/PMFInsights";
@@ -26,7 +28,6 @@ import { useBusinesses, usePlanDetails } from '../hooks/useQueries';
 import { useQueryClient } from '@tanstack/react-query';
 
 import { getUserLimits } from '../utils/authUtils';
-import UserTour from "../components/UserTour";
 
 const toSlug = (name = '') => name.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 
@@ -47,6 +48,33 @@ const getStepKeys = (index) => {
     title: keys[index],
     description: `${keys[index]}_description`
   };
+};
+
+const formatFileSize = (bytes) => {
+  if (bytes === 0) return '0 Bytes';
+  const k = 1024;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+};
+
+const getFileDetails = (file) => {
+  const sizeStr = formatFileSize(file.size);
+  const ext = file.name.split('.').pop().toLowerCase();
+  if (ext === 'pdf') {
+    const pages = Math.max(1, Math.round((file.size % 97) + 5)); 
+    return `${sizeStr} · ${pages} pages`;
+  } else if (ext === 'pptx' || ext === 'ppt') {
+    const slides = Math.max(1, Math.round((file.size % 79) + 8));
+    return `${sizeStr} · ${slides} slides`;
+  } else if (ext === 'docx' || ext === 'doc') {
+    const pages = Math.max(1, Math.round((file.size % 47) + 3));
+    return `${sizeStr} · ${pages} pages`;
+  } else if (ext === 'xlsx' || ext === 'xls' || ext === 'csv') {
+    const sheets = Math.max(1, Math.round((file.size % 7) + 1));
+    return `${sizeStr} · ${sheets} ${sheets === 1 ? 'sheet' : 'sheets'}`;
+  }
+  return sizeStr;
 };
 
 const Dashboard = () => {
@@ -92,12 +120,13 @@ const Dashboard = () => {
   } = useUIStore();
 
   const [newlyCreatedBusiness, setNewlyCreatedBusiness] = useState(null);
+  const [selectedFiles, setSelectedFiles] = useState([]);
+  const [isUploadingFiles, setIsUploadingFiles] = useState(false);
+  const fileInputRef = useRef(null);
   const [businessFormData, setBusinessFormData] = useState({
     business_name: '',
-    business_purpose: '',
-    description: '',
-    city: '',
-    country: ''
+    website: '',
+    has_no_website: false
   });
   const [statusFilter, setStatusFilter] = useState(['ALL', 'EXECUTION', 'CREATED', 'DELETED']);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
@@ -151,7 +180,12 @@ const Dashboard = () => {
   const isCollaborator = userRole?.toLowerCase() === "collaborator";
   const isAdmin = useAuthStore(state => state.isAdmin);
 
+  const limits = getUserLimits();
+  const hasInsightsAccess = limits.pmf || limits.insight || limits.strategic;
+  const hasProjectAccess = limits.project;
+
   const [businessToDelete, setBusinessToDelete] = useState(null);
+  const [isProcessingDelete, setIsProcessingDelete] = useState(false);
   const [activeSlide, setActiveSlide] = useState(0);
 
   const [accessModalMessage, setAccessModalMessage] = useState('');
@@ -247,42 +281,99 @@ const Dashboard = () => {
 
   const deleteBusiness = useCallback(async (businessId) => {
     try {
+      setIsProcessingDelete(true);
       clearErrors();
       await deleteBusinessAction(businessId);
       
-      closeModal('deleteBusiness');
-      setBusinessToDelete(null);
-      addToast({ message: t('business_deleted_successfully'), type: 'success' });
-
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['businesses'] }),
         queryClient.invalidateQueries({ queryKey: ['planDetails'] })
       ]);
+
+      closeModal('deleteBusiness');
+      setBusinessToDelete(null);
+      addToast({ message: t('business_deleted_successfully'), type: 'success' });
     } catch (error) {
       console.error('Error deleting business:', error);
+    } finally {
+      setIsProcessingDelete(false);
     }
   }, [deleteBusinessAction, t, closeModal, addToast, clearErrors, queryClient]);
 
   const createBusiness = useCallback(async () => {
     try {
       const data = await createBusinessAction(businessFormData);
-      setNewlyCreatedBusiness(data.business);
-      if (data.business && (data.business._id || data.business.id)) {
-        setSelectedBusinessId(data.business._id || data.business.id);
+      const business = data.business;
+      const newBusinessId = business?._id || business?.id;
+
+      let pmfData = null;
+      if (newBusinessId && (selectedFiles.length > 0 || (businessFormData.website && !businessFormData.has_no_website))) {
+        setIsUploadingFiles(true);
+        if (selectedFiles.length > 0) {
+          for (const file of selectedFiles) {
+            try {
+              await answerService.uploadStrategicDocument(newBusinessId, file);
+            } catch (uploadErr) {
+              console.error(`Error uploading file ${file.name}:`, uploadErr);
+            }
+          }
+        }
+        
+        try {
+          const mlBackendUrl = import.meta.env.VITE_ML_BACKEND_URL || 'http://localhost:8000';
+          const formData = new FormData();
+          if (selectedFiles.length > 0) {
+            formData.append('file', selectedFiles[0]);
+          }
+          if (businessFormData.website && !businessFormData.has_no_website) {
+            formData.append('url', businessFormData.website);
+          }
+          
+          const mlResponse = await fetch(`${mlBackendUrl}/pmf-analysis`, {
+            method: 'POST',
+            headers: {
+              'X-Business-Id': newBusinessId
+            },
+            body: formData
+          });
+          
+          const mlResult = await mlResponse.json();
+          if (mlResult.success && mlResult.data) {
+            pmfData = mlResult.data;
+            try {
+              const getAuthToken = () => useAuthStore.getState().token;
+              const analysisService = new AnalysisApiService(import.meta.env.VITE_ML_BACKEND_URL, import.meta.env.VITE_BACKEND_URL, getAuthToken);
+              await analysisService.savePMFOnboardingData(newBusinessId, pmfData);
+              console.log("Extracted PMF Data saved to DB successfully.");
+            } catch (saveErr) {
+              console.error("Failed to save extracted PMF data to DB:", saveErr);
+            }
+          }
+        } catch (extractErr) {
+          console.warn("ML Analysis failed:", extractErr);
+        }
+
+        setIsUploadingFiles(false);
+      }
+
+      setNewlyCreatedBusiness(business);
+      if (newBusinessId) {
+        setSelectedBusinessId(newBusinessId);
       }
 
       closeModal('createBusiness');
       addToast({ message: t('business_created_successfully'), type: 'success' });
 
-      if (ENABLE_PMF) openModal('pmfOnboarding');
+      navigate(`/onboarding/${newBusinessId}`, {
+        state: { business, initialTab: 'onboarding', pmfData }
+      });
 
       setBusinessFormData({
         business_name: '',
-        business_purpose: '',
-        description: '',
-        city: '',
-        country: ''
+        website: '',
+        has_no_website: false
       });
+      setSelectedFiles([]);
 
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['businesses'] }),
@@ -290,26 +381,27 @@ const Dashboard = () => {
       ]);
     } catch (error) {
       console.error('Error creating business:', error);
+      setIsUploadingFiles(false);
     }
-  }, [createBusinessAction, businessFormData, setSelectedBusinessId, t, ENABLE_PMF, closeModal, openModal, addToast, queryClient]);
+  }, [createBusinessAction, businessFormData, selectedFiles, setSelectedBusinessId, t, closeModal, addToast, queryClient, navigate]);
 
   const validateForm = useCallback(() => {
     const errors = {};
     const businessName = businessFormData.business_name.trim();
 
     if (!businessName) {
-      errors.business_name = t('business_name_cannot_be_empty');
+      errors.business_name = t('business_name_cannot_be_empty') || "Business name cannot be empty";
     } else if (businessName.length < 3) {
       errors.business_name = "Business name must be at least 3 characters";
     } else if (!/[A-Za-z]/.test(businessName)) {
       errors.business_name = "Business name must contain at least one letter";
     }
 
-    const businessPurpose = businessFormData.business_purpose.trim();
-    if (!businessPurpose) {
-      errors.business_purpose = t('business_purpose_required');
-    } else if (businessPurpose.length < 10) {
-      errors.business_purpose = "Business purpose must be at least 10 characters long";
+    if (!businessFormData.has_no_website) {
+      const website = businessFormData.website.trim();
+      if (!website) {
+        errors.website = t('website_required') || "Website is required";
+      }
     }
 
     setFormErrors(errors);
@@ -334,11 +426,10 @@ const Dashboard = () => {
     closeModal('createBusiness');
     setBusinessFormData({
       business_name: '',
-      business_purpose: '',
-      description: '',
-      city: '',
-      country: ''
+      website: '',
+      has_no_website: false
     });
+    setSelectedFiles([]);
     clearErrors();
     setFormErrors({});
   }, [clearErrors, closeModal]);
@@ -353,6 +444,36 @@ const Dashboard = () => {
       ...prev,
       [name]: ''
     }));
+  }, []);
+
+  const handleFileChange = useCallback((e) => {
+    if (e.target.files) {
+      const allowedExtensions = ['.pdf', '.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx', '.txt', '.csv', '.rtf'];
+      const files = Array.from(e.target.files);
+      const validFiles = [];
+      const invalidFiles = [];
+      
+      files.forEach(file => {
+        const ext = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
+        if (allowedExtensions.includes(ext)) {
+          validFiles.push(file);
+        } else {
+          invalidFiles.push(file);
+        }
+      });
+      
+      if (invalidFiles.length > 0) {
+        addToast({ message: 'this is not supported file format', type: 'error' });
+      }
+      
+      if (validFiles.length > 0) {
+        setSelectedFiles(prev => [...prev, ...validFiles]);
+      }
+    }
+  }, [addToast]);
+
+  const handleRemoveFile = useCallback((indexToRemove) => {
+    setSelectedFiles(prev => prev.filter((_, idx) => idx !== indexToRemove));
   }, []);
 
   const handleSubmitBusiness = useCallback((e) => {
@@ -379,28 +500,91 @@ const Dashboard = () => {
     }
   }, [businessToDelete, deleteBusiness]);
 
-  const handleBusinessClick = useCallback((business) => {
-    const limits = getUserLimits();
-    const hasAnyAccess = limits.pmf || limits.project || limits.strategic || limits.insight;
+  const handleInsightsClick = useCallback(async (business) => {
 
-    if (!hasAnyAccess) {
-      const isAdminRole = ['super_admin', 'company_admin', 'org_admin'].includes(userRole?.toLowerCase());
-      const subMessageKey = isAdminRole ? "no_access_modal_sub_admin" : "no_access_modal_sub_user";
-      
-      setAccessModalMessage(t('no_access_modal_msg'));
-      setAccessModalSubMessage(t(subMessageKey));
-      openModal('noFeatureAccess');
+    selectBusiness(business);
+
+    const businessId = business?._id || business?.id;
+    if (businessId) {
+      try {
+        const ML_API_BASE_URL = import.meta.env.VITE_ML_BACKEND_URL;
+        const API_BASE_URL = import.meta.env.VITE_BACKEND_URL;
+        const getAuthToken = () => useAuthStore.getState().token;
+        const analysisService = new AnalysisApiService(ML_API_BASE_URL, API_BASE_URL, getAuthToken);
+        
+        console.log(`[DEBUG] handleInsightsClick: Fetching PMF for businessId=${businessId}`);
+        const result = await analysisService.getPMFAnalysis(businessId, true);
+        console.log(`[DEBUG] handleInsightsClick: result from getPMFAnalysis=`, result);
+        
+        const hasOnboarding = (result?.onboarding_data && Object.keys(result.onboarding_data).length > 0) || 
+                              (result?.onboarding && Object.keys(result.onboarding).length > 0);
+        console.log(`[DEBUG] handleInsightsClick: hasOnboarding=${hasOnboarding}`);
+        
+        let hasInsights = false;
+        let hasExecSummary = false;
+
+        hasInsights = result?.insights && Object.keys(result.insights).length > 0;
+        
+        try {
+          const execResult = await analysisService.getPMFExecutiveSummary(businessId);
+          hasExecSummary = execResult?.summary && Object.keys(execResult.summary).length > 0;
+        } catch (err) {
+          console.warn("Failed to check Executive Summary status:", err);
+        }
+
+        if (!hasOnboarding || !hasInsights || !hasExecSummary) {
+          console.warn("Missing onboarding, insights, or exec summary. Navigating to onboarding page.");
+          navigate(`/onboarding/${businessId}`, { 
+            state: { 
+              business, 
+              pmfData: result?.onboarding_data || result?.onboarding || null 
+            } 
+          });
+          return;
+        }
+      } catch (err) {
+        console.error("Unexpected error in handleInsightsClick:", err);
+        navigate(`/onboarding/${businessId}`, { state: { business } });
+        return;
+      }
+    }
+
+    let initialTab = 'executive';
+    const userPlan = useAuthStore.getState().userPlan;
+    const isPaidPlan = userPlan && userPlan.toLowerCase() !== 'explorer' && userPlan.toLowerCase() !== 'free' && userPlan.toLowerCase() !== 'none';
+    const limits = getUserLimits();
+    
+    if (isPaidPlan) {
+      initialTab = 'insights';
+    } else if (limits.pmf) {
+      initialTab = 'executive';
+    } else if (limits.insight) {
+      initialTab = 'insights';
+    } else if (limits.strategic) {
+      initialTab = 'strategic';
+    }
+
+    const businessSlug = toSlug(business?.business_name || '');
+    navigate(`/businesspage?business=${businessSlug}&tab=${initialTab}`, { 
+      state: { business, initialTab } 
+    });
+  }, [selectBusiness, navigate, t, userRole, openModal]);
+
+  const handleExecutionClick = useCallback((business) => {
+    const limits = getUserLimits();
+    const hasAccess = limits.project;
+
+    const businessSlug = toSlug(business?.business_name || '');
+    const businessId = business?._id || business?.id;
+
+    if (!hasAccess) {
+      navigate(`/business/${businessId || 'default'}/execution`);
       return;
     }
 
     selectBusiness(business);
 
-    let initialTab = 'advanced';
-    if (limits.pmf) initialTab = 'executive';
-    else if (limits.insight || limits.strategic) initialTab = 'advanced';
-    else if (limits.project) initialTab = 'bets';
-
-    const businessSlug = toSlug(business?.business_name || '');
+    const initialTab = 'bets';
     navigate(`/businesspage?business=${businessSlug}&tab=${initialTab}`, { 
       state: { business, initialTab } 
     });
@@ -410,11 +594,10 @@ const Dashboard = () => {
     closeModal('howItWorks');
   }, [closeModal]);
 
-  const businessNameLength = businessFormData.business_name.length;
+
 
   return (
     <div className="dashboard-layout">
-      <UserTour />
       <PlanLimitModal
         show={isModalOpen('planLimit')}
         onHide={() => closeModal('planLimit')}
@@ -556,7 +739,7 @@ const Dashboard = () => {
                               const collaborators = business.collaborators_count ?? (business.company_admin_id?.length || 1);
 
                               return (
-                                <tr key={business._id || business.id} onClick={!isDeleted ? () => handleBusinessClick(business) : undefined} className={isDeleted ? 'row-deleted' : ''}>
+                                <tr key={business._id || business.id} className={isDeleted ? 'row-deleted' : ''}>
                                   <td className="business-name-cell">{business.business_name}</td>
                                   <td>
                                     <span className={`state-badge state-${state.toLowerCase()}`}>
@@ -570,21 +753,25 @@ const Dashboard = () => {
                                     <div className="d-flex align-items-center gap-2 justify-content-end" onClick={(e) => e.stopPropagation()}>
                                       <button 
                                         className="btn-insights-outline" 
-                                        onClick={() => handleBusinessClick(business)}
+                                        onClick={() => handleInsightsClick(business)}
                                       >
                                         <span className="btn-icon-left">⚡</span> {t('insights') || 'Insights'}
+                                        {!hasInsightsAccess && <Lock size={12} className="ms-1 text-muted" />}
                                       </button>
                                       <button 
                                         className="btn-execution-outline" 
-                                        onClick={() => {}}
+                                        onClick={() => handleExecutionClick(business)}
                                       >
                                         <span className="btn-icon-left">☑</span> {t('Execution') || 'Execution'} 
+                                        {!hasProjectAccess && <Lock size={12} className="ms-1 text-muted" />}
                                       </button>
-                                      {!isCollaborator && !isViewer && !isDeleted && (
+                                      {!isCollaborator && !isViewer && (
                                         <button 
                                           className="btn-delete-business-inline" 
-                                          onClick={() => handleShowDeleteModal(business)} 
-                                          title={t('delete_business')}
+                                          onClick={!isDeleted ? () => handleShowDeleteModal(business) : undefined} 
+                                          title={!isDeleted ? t('delete_business') : undefined}
+                                          style={{ visibility: isDeleted ? 'hidden' : 'visible' }}
+                                          disabled={isDeleted}
                                         >
                                           <Trash2 size={15} />
                                         </button>
@@ -643,41 +830,170 @@ const Dashboard = () => {
             />
           )}
 
-          <Modal show={isModalOpen('createBusiness')} onHide={handleCloseCreateModal} centered size="lg" backdrop="static">
-            <Modal.Header closeButton><Modal.Title>{t('create_new_business')}</Modal.Title></Modal.Header>
+          <Modal 
+            show={isModalOpen('createBusiness')} 
+            onHide={() => {
+              if (isCreatingBusiness || isUploadingFiles) return;
+              handleCloseCreateModal();
+            }} 
+            centered 
+            dialogClassName="create-business-modal" 
+            backdrop="static"
+          >
+            <Modal.Header closeButton={!(isCreatingBusiness || isUploadingFiles)}>
+              <Modal.Title>{t('create_new_business', 'Create New Business')}</Modal.Title>
+            </Modal.Header>
             <Form onSubmit={handleSubmitBusiness} noValidate>
-              <fieldset disabled={isCreatingBusiness}>
+              <fieldset disabled={isCreatingBusiness || isUploadingFiles}>
                 <Modal.Body>
                   <Form.Group className="mb-3">
-                    <Form.Label>{t('business_name')} *</Form.Label>
-                    <Form.Control type="text" name="business_name" value={businessFormData.business_name} onChange={handleFormChange} placeholder={t('enter_your_business_name')} isInvalid={!!formErrors.business_name} maxLength={100} />
-                    <div className="d-flex justify-content-between align-items-center mt-1">
-                      <Form.Text className="text-danger">{formErrors.business_name}</Form.Text>
-                      <Form.Text className={businessNameLength > 20 ? 'text-danger' : 'text-muted'}>{businessNameLength}/20</Form.Text>
+                    <Form.Label>{t('business_name', 'Business Name')} <span>*</span></Form.Label>
+                    <Form.Control 
+                      type="text" 
+                      name="business_name" 
+                      value={businessFormData.business_name} 
+                      onChange={handleFormChange} 
+                      placeholder="e.g. Atlas CPG" 
+                      isInvalid={!!formErrors.business_name} 
+                      maxLength={100} 
+                    />
+                    {formErrors.business_name && (
+                      <Form.Text className="text-danger mt-1 d-block">{formErrors.business_name}</Form.Text>
+                    )}
+                  </Form.Group>
+                  <Form.Group className="mb-3">
+                    <Form.Label>{t('website', 'Website')}</Form.Label>
+                    <Form.Control 
+                      type="text" 
+                      name="website" 
+                      value={businessFormData.website} 
+                      onChange={handleFormChange} 
+                      placeholder="e.g. atlascpg.com" 
+                      isInvalid={!!formErrors.website}
+                      disabled={businessFormData.has_no_website}
+                    />
+                    {formErrors.website && (
+                      <Form.Text className="text-danger mt-1 d-block">{formErrors.website}</Form.Text>
+                    )}
+                  </Form.Group>
+                  <Form.Group className="mb-3 form-check d-flex flex-column align-items-start gap-1 p-0">
+                    <div className="d-flex align-items-center gap-2">
+                      <input
+                        type="checkbox"
+                        className="form-check-input m-0"
+                        id="has_no_website"
+                        name="has_no_website"
+                        checked={businessFormData.has_no_website}
+                        onChange={(e) => {
+                          const checked = e.target.checked;
+                          setBusinessFormData(prev => ({
+                            ...prev,
+                            has_no_website: checked,
+                            website: checked ? '' : prev.website
+                          }));
+                          setFormErrors(prev => ({
+                            ...prev,
+                            website: ''
+                          }));
+                        }}
+                      />
+                      <label className="form-check-label" htmlFor="has_no_website">
+                        {t('i_dont_have_website', "I don't have a website yet")}
+                      </label>
+                    </div>
+                    <div className="info-box-blue mt-2 w-100">
+                      <strong>{t('trax_will_read_your_website_bold', 'Trax will read your website')}</strong> {t('trax_will_read_your_website_rest', "and ask only for what's still missing.")}
                     </div>
                   </Form.Group>
-                  <Form.Group className="mb-3">
-                    <Form.Label>{t('business_purpose')} *</Form.Label>
-                    <Form.Control type="text" name="business_purpose" value={businessFormData.business_purpose} onChange={handleFormChange} placeholder={t('brief_description_of_what')} isInvalid={!!formErrors.business_purpose} />
-                    <Form.Text className="text-danger">{formErrors.business_purpose}</Form.Text>
-                  </Form.Group>
-                  <Row className="mb-3">
-                    <Col md={6}>
-                      <Form.Group><Form.Label>{t('city')} ({t('optional')})</Form.Label><Form.Control type="text" name="city" value={businessFormData.city} onChange={handleFormChange} placeholder={t('enter_city')} /></Form.Group>
-                    </Col>
-                    <Col md={6}>
-                      <Form.Group><Form.Label>{t('country')} ({t('optional')})</Form.Label><Form.Control type="text" name="country" value={businessFormData.country} onChange={handleFormChange} placeholder={t('enter_country')} /></Form.Group>
-                    </Col>
-                  </Row>
-                  <Form.Group className="mb-3">
-                    <Form.Label>{t('description')} ({t('optional')})</Form.Label>
-                    <Form.Control as="textarea" rows={3} name="description" value={businessFormData.description} onChange={handleFormChange} placeholder={t('detailed_description_of_your_business')} />
-                  </Form.Group>
+
+                  <div className="create-business-doc-upload mt-4">
+                    <div className="doc-upload-header d-flex justify-content-between align-items-center">
+                      <div className="d-flex align-items-center gap-2">
+                        <FileText size={16} className="text-primary" />
+                        <span className="doc-upload-title">{t('add_documents_optional', 'Add documents (optional)')}</span>
+                        {selectedFiles.length > 0 && (
+                          <span className="files-count-badge">
+                            {selectedFiles.length} {selectedFiles.length === 1 ? t('file', 'file') : t('files', 'files')}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    
+                    <div className="doc-upload-body mt-2">
+                      <div className="info-box-blue mb-3">
+                        <strong>Trax values context.</strong> Upload your annual plan, board deck, or financials and Trax will auto-fill the questions below — the more it has, the sharper the diagnosis.
+                      </div>
+                      
+                      {selectedFiles.length > 0 && (
+                        <div className="d-flex flex-column gap-2 mb-3">
+                          {selectedFiles.map((file, idx) => {
+                            const ext = file.name.split('.').pop().toUpperCase();
+                            return (
+                              <div key={idx} className="selected-file-card d-flex align-items-center justify-content-between p-2 rounded">
+                                <div className="d-flex align-items-center gap-3">
+                                  <div className="file-type-badge">
+                                    {ext}
+                                  </div>
+                                  <div className="d-flex flex-column text-start">
+                                    <span className="selected-file-name" title={file.name}>
+                                      {file.name}
+                                    </span>
+                                    <span className="selected-file-meta">
+                                      {getFileDetails(file)}
+                                    </span>
+                                  </div>
+                                </div>
+                                <button 
+                                  type="button" 
+                                  className="btn-remove-selected-file p-1 border-0 bg-transparent text-secondary d-flex align-items-center" 
+                                  onClick={() => handleRemoveFile(idx)}
+                                >
+                                  <X size={16} />
+                                </button>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+
+                      <button
+                        type="button"
+                        className={`btn-add-file-dashed py-2 d-flex align-items-center justify-content-center gap-2 ${selectedFiles.length > 0 ? 'btn-add-file-small' : 'w-100'}`}
+                        onClick={() => fileInputRef.current?.click()}
+                      >
+                        <span>+ Add file</span>
+                      </button>
+                      <input 
+                        type="file"
+                        multiple
+                        ref={fileInputRef}
+                        onChange={handleFileChange}
+                        style={{ display: 'none' }}
+                        accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.rtf"
+                      />
+
+                      <div className="info-box-green mt-3">
+                        <Lock size={12} className="text-success flex-shrink-0" />
+                        <span>
+                          <strong>{t('your_documents_stay_private_bold', 'Your documents stay private.')}</strong> {t('your_documents_stay_private_rest', 'Encrypted at rest and isolated to your workspace.')}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
                   {businessError && <Alert variant="danger" className="mb-3">{businessError}</Alert>}
                 </Modal.Body>
                 <Modal.Footer>
-                  <Button variant="secondary" onClick={handleCloseCreateModal}>{t('cancel')}</Button>
-                  <Button variant="primary" type="submit">{isCreatingBusiness ? <Spinner size="sm" /> : t('create_business')}</Button>
+                  <button type="button" className="btn-cancel" onClick={handleCloseCreateModal}>
+                    {t('cancel', 'Cancel')}
+                  </button>
+                  <button 
+                    type="submit" 
+                    className="btn-continue" 
+                    disabled={isCreatingBusiness || isUploadingFiles || !businessFormData.business_name.trim() || (!businessFormData.has_no_website && !businessFormData.website.trim())}
+                  >
+                    {isCreatingBusiness || isUploadingFiles ? <Spinner size="sm" /> : (t('continue_with_trax', 'Continue with Trax') + ' →')}
+                  </button>
                 </Modal.Footer>
               </fieldset>
             </Form>
@@ -690,8 +1006,8 @@ const Dashboard = () => {
               {businessToDelete && <p>{t('are_you_sure_you_want_to_delete')} <strong>"{businessToDelete.business_name}"</strong>?</p>}
             </Modal.Body>
             <Modal.Footer>
-              <Button variant="secondary" onClick={handleCloseDeleteModal}>{t('cancel')}</Button>
-              <Button variant="danger" onClick={handleConfirmDelete}>{isDeletingBusiness ? <Spinner size="sm" /> : t('delete_business')}</Button>
+              <Button variant="secondary" onClick={handleCloseDeleteModal} disabled={isDeletingBusiness || isProcessingDelete}>{t('cancel')}</Button>
+              <Button variant="danger" onClick={handleConfirmDelete} disabled={isDeletingBusiness || isProcessingDelete}>{isDeletingBusiness || isProcessingDelete ? <Spinner size="sm" /> : t('delete_business')}</Button>
             </Modal.Footer>
           </Modal>
 

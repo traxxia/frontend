@@ -2,8 +2,7 @@
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
-  padding: 10px;
-  background: #f8f9fa;
+  padding: 10px; 
   min-height: 100vh;
 }
 
@@ -84,6 +83,8 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
 .exc-aha-tile-category {
@@ -773,4 +774,434 @@
 
 .executive-summary--s14 {
   color: #10b981;
+}
+
+.exc-discuss-footer {
+  border-top: 1px dashed #e5e7eb;
+  margin-top: 10px;
+  padding-top: 15px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+[data-theme="dark"] .exc-discuss-footer {
+  border-top-color: #334155 !important;
+}
+
+.exc-discuss-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 8px 16px;
+  color: #374151;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+  transition: all 0.2s ease;
+}
+
+.exc-discuss-btn:hover {
+  background: #f9fafb;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  transform: translateY(-1px);
+}
+
+[data-theme="dark"] .exc-discuss-btn {
+  background: #1e293b;
+  border-color: #334155;
+  color: #f1f5f9;
+}
+
+[data-theme="dark"] .exc-discuss-btn:hover {
+  background: #334155;
+}
+
+.exc-tx-icon {
+  width: 20px;
+  height: 20px;
+  background: #3b82f6;
+  color: #ffffff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+}
+
+.exc-super-title {
+  font-size: 10px;
+  font-weight: 700;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 4px;
+}
+.exc-horizons-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #111827;
+  margin-bottom: 16px;
+}
+.exc-horizons-table-wrapper {
+  overflow-x: auto;
+}
+.exc-horizons-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+  text-align: left;
+}
+.exc-horizons-table th {
+  font-size: 10px;
+  font-weight: 700;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  padding: 12px 16px;
+  border-bottom: 1px solid #e5e7eb;
+}
+.exc-horizons-table td {
+  padding: 16px;
+  border-bottom: 1px solid #e5e7eb;
+  color: #4b5563;
+  vertical-align: top;
+  line-height: 1.5;
+}
+.exc-row-label {
+  font-weight: 600;
+  color: #111827;
+  white-space: nowrap;
+}
+
+.exc-move-card {
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 16px;
+  background-color: #fafafa;
+}
+.exc-move-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+.exc-move-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0;
+}
+.exc-move-score {
+  font-size: 11px;
+  font-weight: 700;
+  color: #3b82f6;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+.exc-move-score strong {
+  font-size: 13px;
+}
+.exc-move-subtitle {
+  font-size: 12px;
+  font-style: italic;
+  color: #9ca3af;
+  margin-bottom: 12px;
+}
+.exc-move-body {
+  font-size: 13px;
+  color: #6b7280;
+  line-height: 1.5;
+  margin-bottom: 0;
+}
+
+[data-theme="dark"] .exc-super-title {
+  color: #94a3b8;
+}
+[data-theme="dark"] .exc-horizons-title {
+  color: #f1f5f9;
+}
+[data-theme="dark"] .exc-horizons-table th {
+  color: #94a3b8;
+  border-bottom-color: #334155;
+}
+[data-theme="dark"] .exc-horizons-table td {
+  color: #cbd5e1;
+  border-bottom-color: #334155;
+}
+[data-theme="dark"] .exc-row-label {
+  color: #f1f5f9;
+}
+[data-theme="dark"] .exc-move-card {
+  background-color: #1e293b;
+  border-color: #334155;
+}
+[data-theme="dark"] .exc-move-title {
+  color: #f1f5f9;
+}
+[data-theme="dark"] .exc-move-subtitle {
+  color: #94a3b8;
+}
+[data-theme="dark"] .exc-move-body {
+  color: #cbd5e1;
+}
+
+.exc-current-diff-card {
+  background-color: #f9fafb;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 16px;
+}
+.exc-diff-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0 0 8px 0;
+}
+.exc-diff-desc {
+  font-size: 13px;
+  color: #6b7280;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.exc-rec-diff-card {
+  background-color: #f0fdf4; 
+  border: 1px solid #d1fae5;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 16px;
+}
+.exc-implications-container {
+  margin-top: 16px;
+}
+.exc-impl-group {
+  margin-bottom: 16px;
+}
+.exc-impl-group:last-child {
+  margin-bottom: 0;
+}
+.exc-impl-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.exc-impl-icon-green {
+  color: #10b981;
+  display: flex;
+  align-items: center;
+}
+.exc-impl-icon-red {
+  color: #ef4444;
+  display: flex;
+  align-items: center;
+}
+.exc-impl-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: #111827;
+}
+.exc-impl-list {
+  padding-left: 22px;
+}
+.exc-impl-text {
+  font-size: 13px;
+  color: #4b5563;
+  margin: 0 0 4px 0;
+  line-height: 1.5;
+}
+
+.exc-alt-levers-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.exc-alt-card {
+  background-color: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 16px 20px;
+}
+.exc-alt-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+.exc-alt-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0;
+}
+.exc-alt-score {
+  font-size: 10px;
+  font-weight: 700;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.exc-alt-desc {
+  font-size: 12px;
+  font-style: italic;
+  color: #9ca3af;
+  margin: 0;
+  line-height: 1.5;
+}
+
+[data-theme="dark"] .exc-current-diff-card {
+  background-color: #1e293b;
+}
+[data-theme="dark"] .exc-diff-title {
+  color: #f1f5f9;
+}
+[data-theme="dark"] .exc-diff-desc {
+  color: #cbd5e1;
+}
+[data-theme="dark"] .exc-rec-diff-card {
+  background-color: #111827;
+  border-color: #334155;
+}
+[data-theme="dark"] .exc-impl-label {
+  color: #f1f5f9;
+}
+[data-theme="dark"] .exc-impl-text {
+  color: #cbd5e1;
+}
+[data-theme="dark"] .exc-alt-card {
+  background-color: #1e293b;
+  border-color: #334155;
+}
+[data-theme="dark"] .exc-alt-title {
+  color: #f1f5f9;
+}
+[data-theme="dark"] .exc-alt-score {
+  color: #94a3b8;
+}
+[data-theme="dark"] .exc-alt-desc {
+  color: #94a3b8;
+}
+
+.exc-prio-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.exc-prio-card {
+  background-color: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 20px;
+}
+.exc-prio-card-header {
+  margin-bottom: 16px;
+}
+.exc-prio-header-left {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.exc-prio-number {
+  font-size: 16px;
+  font-weight: 800;
+  color: #10b981;
+}
+.exc-prio-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0;
+}
+.exc-prio-badge {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background-color: #d1fae5;
+  color: #059669;
+  font-size: 9px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  border: 1px solid #a7f3d0;
+}
+.exc-prio-actions {
+  margin-bottom: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.exc-prio-action-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+.exc-prio-icon-green {
+  color: #10b981;
+  margin-top: 2px;
+}
+.exc-prio-action-text {
+  font-size: 13px;
+  color: #4b5563;
+  line-height: 1.5;
+}
+.exc-prio-excludes {
+  margin-top: 16px;
+}
+.exc-prio-excludes-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+.exc-prio-icon-red {
+  color: #ef4444;
+}
+.exc-prio-excludes-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: #111827;
+}
+.exc-prio-excludes-list {
+  margin: 0;
+  padding-left: 20px;
+  list-style-type: disc;
+  color: #9ca3af;
+}
+.exc-prio-exclude-item {
+  font-size: 13px;
+  color: #6b7280;
+  margin-bottom: 4px;
+  line-height: 1.5;
+}
+
+[data-theme="dark"] .exc-prio-card {
+  background-color: #1e293b;
+  border-color: #334155;
+}
+[data-theme="dark"] .exc-prio-title {
+  color: #f1f5f9;
+}
+[data-theme="dark"] .exc-prio-badge {
+  background-color: #064e3b;
+  color: #34d399;
+  border-color: #065f46;
+}
+[data-theme="dark"] .exc-prio-action-text {
+  color: #cbd5e1;
+}
+[data-theme="dark"] .exc-prio-excludes-label {
+  color: #f1f5f9;
+}
+[data-theme="dark"] .exc-prio-exclude-item {
+  color: #cbd5e1;
 }

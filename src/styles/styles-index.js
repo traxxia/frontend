@@ -44,3 +44,5 @@ import './streaming.css';
 import './superadmin.css';
 import './observatory.css';
 import './usermanagement.css';
+import './onboarding-chat.css';
+

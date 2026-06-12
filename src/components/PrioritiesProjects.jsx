@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { Card, Button, Form, Badge, Spinner, Modal, ProgressBar } from "react-bootstrap";
-import { ChevronRight, ArrowRight } from "lucide-react";
+import { ChevronRight, ArrowRight, Zap } from "lucide-react";
 import { Folder, CheckCircle, Rocket, Info, AlertTriangle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore, useAnalysisStore, useProjectStore } from "../store";
@@ -42,7 +42,20 @@ const PrioritiesProjects = ({
     data: usageData
   } = usePlanDetails();
   const usage = usageData?.usage;
-  const priorities = useMemo(() => kickstartData?.priorities || [], [kickstartData]);
+  const initialPriorities = useMemo(() => kickstartData?.priorities || [], [kickstartData]);
+  const [priorities, setPriorities] = useState([]);
+
+  useEffect(() => {
+    setPriorities(initialPriorities.map(p => ({ ...p })));
+  }, [initialPriorities]);
+
+  const handleTitleChange = useCallback((idx, newTitle) => {
+    setPriorities(prev => {
+      const updated = [...prev];
+      updated[idx] = { ...updated[idx], title: newTitle };
+      return updated;
+    });
+  }, []);
   const hasCollaborators = kickstartData?.hasCollaborators ?? true;
   const {
     totalActions,
@@ -122,9 +135,11 @@ const PrioritiesProjects = ({
       setShowPlanLimitModal(true);
       return;
     }
-    if (selected.length === 0) return;
+    const allIndexes = priorities.map((_, idx) => idx);
+    setSelected(allIndexes);
     setShowNoCollaboratorsModal(true);
-  }, [selected, hasProjectsAccess]);
+  }, [priorities, hasProjectsAccess]);
+
   const handleConfirmRedirect = useCallback(() => {
     setShowSuccessModal(false);
     clearProjectCache(selectedBusinessId);
@@ -135,146 +150,102 @@ const PrioritiesProjects = ({
       navigate(`/businesspage?business=${selectedBusinessId}&tab=bets`);
     }
   }, [onSuccess, navigate, selectedBusinessId, clearProjectCache]);
+
   if (loading) {
-    return <div className="d-flex justify-content-center align-items-center py-5">
+    return (
+      <div className="d-flex justify-content-center align-items-center py-5">
         <Spinner animation="border" variant="success" />
         <span className="ms-2">{t("Loading priorities...")}</span>
-      </div>;
+      </div>
+    );
   }
+
   if (priorities.length === 0) {
-    return <div className="bg-light py-5 text-center rounded-4 m-3 shadow-sm border">
+    return (
+      <div className="bg-light py-5 text-center rounded-4 m-3 shadow-sm border">
         <div className="container priorities-projects--s1">
           <h3 className="fw-bold mb-3">{t("noInsightsAvailable") || "No results available yet."}</h3>
           <p className="text-muted mb-4">{t("completeOnboardingPrompt") || "Please complete the PMF Onboarding to see results here."}</p>
-          {onStartOnboarding && !isViewer && <button className="btn btn-primary rounded-pill px-5 py-2 fw-semibold" onClick={onStartOnboarding}>
+          {onStartOnboarding && !isViewer && (
+            <button className="btn btn-primary rounded-pill px-5 py-2 fw-semibold" onClick={onStartOnboarding}>
               {t("startPMFOnboarding") || "Start PMF Onboarding"}
-            </button>}
+            </button>
+          )}
         </div>
-      </div>;
+      </div>
+    );
   }
-  return <div className="container my-4 priorities-container">
-      {totalActions > 0 && <Card className="mb-4 border-0 shadow-sm granular-header priorities-projects--s2">
-          <Card.Body className="d-flex justify-content-between align-items-center py-3 px-4">
-            <div>
-              <h6 className="mb-1 text-dark fw-bold">
-                {t("Overall Kickstart Progress") || "Overall Kickstart Progress"}
-              </h6>
-              <div className="text-muted small">
-                {t("Track your tactical actions moving into execution phase")}
-              </div>
-            </div>
 
-            <div className="d-flex align-items-center gap-3">
-              <div className="text-end">
-                <div className="text-muted fw-bold text-uppercase priorities-projects--s3">
-                  {t("Tasks Kickstarted") || "Tasks Kickstarted"}
-                </div>
-                <div className="fw-bold text-dark priorities-projects--s4">
-                  {kickstartedActions} <span className="text-muted fw-normal priorities-projects--s5">/ {totalActions}</span>
-                </div>
-              </div>
-              <div className="priorities-projects--s6">
-                <svg viewBox="0 0 36 36" className="priorities-projects--s7">
-                  <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#e2e8f0" strokeWidth="3.5" />
-                  <path strokeDasharray={`${globalProgressPercent}, 100`} d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke={globalProgressPercent === 100 ? "#10b981" : "#6366f1"} strokeWidth="3.5" strokeLinecap="round" className="priorities-projects--s8" />
-                  <text x="18" y="21" fill="#333" fontSize="9" fontWeight="bold" textAnchor="middle">
-                    {globalProgressPercent}%
-                  </text>
-                </svg>
-              </div>
-            </div>
-          </Card.Body>
-        </Card>}
+  return (
+    <div className="container my-5" style={{ margin: '0 auto' }}>
+      
+      {/* Header Section */}
+      <div className="mb-4 text-center">
+        <div className="d-flex align-items-center justify-content-center gap-2 mb-2" style={{ fontSize: '0.75rem', fontWeight: 'bold', letterSpacing: '1.5px', color: '#0ea5e9' }}>
+          <Zap size={14} fill="#0ea5e9" stroke="none" />
+          <span>COMMIT - THE PROMOTION MOMENT</span>
+        </div>
+        <h1 className="fw-bold mb-3" style={{ color: '#0f172a', fontSize: '2rem' }}>
+          Build your <span style={{ color: '#0ea5e9' }}>Bets</span>
+        </h1>
+        <p className="text-muted mx-auto" style={{ maxWidth: '600px', fontSize: '0.95rem', lineHeight: '1.6' }}>
+          These are the five things you're choosing to bet on this period. Edit anything that doesn't read right — once you lock them in, they become Bets you'll execute and review. The commitment is what matters.
+        </p>
+      </div>
 
-      {isAdmin && <Card className="kickstart-card mb-4">
-          <Card.Body className="d-flex justify-content-between align-items-center">
-            <div>
-              <h6 className="kickstart-title mb-1">
-                {t("Ready to Start Project Planning")}?
-              </h6>
-              <small className="text-muted">
-                {t("Select one or more priorities below")}
-              </small>
-            </div>
-            <Button className={`kickstart-button d-flex align-items-center gap-2 ${!hasProjectsAccess ? 'upgrade-needed' : ''}`} variant={!hasProjectsAccess ? "warning" : "success"} disabled={selected.length === 0 && hasProjectsAccess || kickstarting} onClick={handleKickstart}>
-              {kickstarting ? <Spinner size="sm" /> : <span>{!hasProjectsAccess ? "⭐" : "🚀"}</span>}
-              <span>{!hasProjectsAccess ? t("Upgrade to Kickstart") : t("Kickstart_Projects")}</span>
-            </Button>
-          </Card.Body>
-        </Card>}
+      {/* Info Alert */}
+      <div className="d-flex align-items-center p-3 mb-4 rounded" style={{ backgroundColor: '#f0f9ff', border: '1px solid #bae6fd' }}>
+        <div className="d-flex align-items-center justify-content-center rounded-circle text-white fw-bold me-3" style={{ width: '32px', height: '32px', backgroundColor: '#3b82f6', flexShrink: 0, fontSize: '10px' }}>
+          TX
+        </div>
+        <p className="mb-0" style={{ fontSize: '0.9rem', color: '#334155' }}>
+          <strong style={{ color: '#0369a1' }}>One last edit, then they're yours.</strong> Anything you change here also updates the Top 5 in Insights Basic — this is your final draft of the diagnosis. After lock-in, bets evolve on their own.
+        </p>
+      </div>
+
+      {/* Priority Cards */}
+      <div className="d-flex flex-column gap-3 mb-4">
+        {priorities.map((item, idx) => (
+          <Card key={idx} className="border shadow-sm rounded-3" style={{ borderColor: '#e2e8f0' }}>
+            <Card.Body className="d-flex align-items-center p-3">
+              <div className="d-flex align-items-center justify-content-center rounded me-4" style={{ width: '40px', height: '40px', backgroundColor: '#f0f9ff', color: '#0284c7', fontWeight: '600', fontSize: '0.9rem', flexShrink: 0 }}>
+                #{idx + 1}
+              </div>
+              <div className="w-100">
+                <div className="text-uppercase mb-1" style={{ fontSize: '0.65rem', fontWeight: 'bold', letterSpacing: '1px', color: '#94a3b8' }}>
+                  PRIORITY {idx + 1} <span className="mx-1">→</span> BECOMES BET #{idx + 1}
+                </div>
+                <input 
+                  type="text"
+                  className="fw-bold w-100 priority-edit-input"
+                  value={item.title}
+                  onChange={(e) => handleTitleChange(idx, e.target.value)}
+                  placeholder="Enter your bet name..."
+                  readOnly={anyProjectKickstarted}
+                />
+              </div>
+            </Card.Body>
+          </Card>
+        ))}
+      </div>
+
+      {/* Build Bets Button */}
+      {!anyProjectKickstarted && (
+        <div className="d-flex justify-content-end">
+          <Button 
+            variant="primary" 
+            className="d-flex align-items-center gap-2 px-4 py-2 fw-semibold rounded-3" 
+            style={{ backgroundColor: '#0284c7', border: 'none' }}
+            onClick={handleKickstart}
+            disabled={kickstarting}
+          >
+            {kickstarting ? <Spinner size="sm" /> : null}
+            {kickstarting ? t("Building...") : t("Build bets")} <ArrowRight size={16} />
+          </Button>
+        </div>
+      )}
 
       <PlanLimitModal show={showPlanLimitModal} onHide={() => setShowPlanLimitModal(false)} title={t("no_access_modal_title")} message={t("no_access_modal_msg")} subMessage={t(isAdmin ? "no_access_modal_sub_admin" : "no_access_modal_sub_user")} plan={usage?.plan} limit={usage?.project?.limit} isAdmin={isAdmin} />
-
-      {priorities.map((item, idx) => {
-      const isExpanded = expandedId === idx;
-      const actions = item.actions || [];
-      const totalActions = actions.length;
-      const kickstartedActions = actions.filter(a => a.isKickstarted || a.status === 'kickstarted').length;
-      const progressPercent = totalActions > 0 ? kickstartedActions / totalActions * 100 : 0;
-      const isFullyKickstarted = progressPercent === 100 && totalActions > 0;
-      const isPartiallyKickstarted = progressPercent > 0 && progressPercent < 100;
-      return <Card key={idx} className={`priority-card mb-3 ${isFullyKickstarted ? 'kickstarted' : isPartiallyKickstarted ? 'partially-kickstarted' : ''}`}>
-            <Card.Body onClick={() => toggleExpand(idx)} className="expand-trigger">
-              <div className="priority-card-inner">
-                {}
-                <div className="priority-top justify-content-between">
-                  <div className="d-flex align-items-center gap-3">
-                    {isAdmin && <div onClick={e => e.stopPropagation()}>
-                        <Form.Check type="checkbox" disabled={isFullyKickstarted || kickstarting} checked={selected.includes(idx)} onChange={() => toggleSelection(idx)} />
-                      </div>}
-                    <h6 className="priority-title mb-0">{item.title}</h6>
-                  </div>
-
-                  {progressPercent > 0 && <div className={`minimal-status-badge ${isFullyKickstarted ? 'fully' : 'partial'}`}>
-                      {isFullyKickstarted ? <CheckCircle size={12} /> : <Rocket size={12} />}
-                      <span>{isFullyKickstarted ? t("Kickstarted") : `${kickstartedActions}/${totalActions}`}</span>
-                    </div>}
-                </div>
-
-                {}
-                <div className="priority-bottom mt-1">
-                  <div className="priority-meta text-muted">
-                    <Folder size={12} className="me-1" />
-                    <span>{actions.length} {t("Tactical Actions")}</span>
-                  </div>
-
-                  <ChevronRight size={16} className={`priority-chevron ${isExpanded ? "rotate" : ""}`} />
-                </div>
-              </div>
-
-              {isExpanded && actions.length > 0 && <div className="projects-section mt-3" onClick={e => e.stopPropagation()}>
-                  <div className="projects-title mb-2 d-flex align-items-center gap-2">
-                    <Info size={14} className="text-muted" />
-                    <span>{t("Individual Projects")}</span>
-                  </div>
-
-                  {actions.map((action, actionIdx) => {
-              const actionText = typeof action === 'object' ? action.action || action.Action || JSON.stringify(action) : action;
-              const isActionKickstarted = action.isKickstarted || action.status === 'kickstarted';
-              return <div key={actionIdx} className={`project-row ${isActionKickstarted ? 'kickstarted' : ''}`}>
-                        <div className="d-flex align-items-center justify-content-between w-100">
-                          <div className="d-flex align-items-start gap-2">
-                            <CheckCircle size={14} className={`${isActionKickstarted ? 'text-success' : 'text-muted'} mt-1 flex-shrink-0`} />
-                            <span className={isActionKickstarted ? "text-success small fw-medium" : "small"}>{actionText}</span>
-                          </div>
-                          {isActionKickstarted && <Badge bg="success" className="minimal-kickstart-badge">
-                              {t("Kickstarted")}
-                            </Badge>}
-                        </div>
-                      </div>;
-            })}
-                </div>}
-            </Card.Body>
-          </Card>;
-    })}
-
-      <Card className="footer-note mt-4">
-        <Card.Body>
-          <small className="text-muted">
-            <strong>{t("Note")}:</strong> {t("Kickstarting a priority creates separate draft projects for each tactical action where you can further define scope and metrics.")}
-          </small>
-        </Card.Body>
-      </Card>
 
       <Modal show={showSuccessModal} onHide={() => setShowSuccessModal(false)} centered className="kickstart-success-modal">
         <Modal.Body className="text-center p-4">
@@ -290,11 +261,11 @@ const PrioritiesProjects = ({
               {t("Go to Bets")} <ArrowRight size={18} />
             </Button>
             <Button variant="link" onClick={() => {
-            setShowSuccessModal(false);
-            if (onStayOnPriorities) {
-              onStayOnPriorities();
-            }
-          }} className="text-muted text-decoration-none">
+              setShowSuccessModal(false);
+              if (onStayOnPriorities) {
+                onStayOnPriorities();
+              }
+            }} className="text-muted text-decoration-none">
               {t("Stay on Priorities")}
             </Button>
           </div>
@@ -302,25 +273,25 @@ const PrioritiesProjects = ({
       </Modal>
 
       <Modal show={showNoCollaboratorsModal} onHide={() => {
-      if (!kickstarting) setShowNoCollaboratorsModal(false);
-    }} backdrop={kickstarting ? "static" : true} keyboard={!kickstarting} centered className="kickstart-confirm-modal">
+        if (!kickstarting) setShowNoCollaboratorsModal(false);
+      }} backdrop={kickstarting ? "static" : true} keyboard={!kickstarting} centered className="kickstart-confirm-modal">
         <Modal.Body className="text-center p-4">
           <div className="warning-icon-wrapper mb-3">
             <AlertTriangle size={48} className="text-warning" />
           </div>
-          <h4 className="fw-bold mb-2">{t("Kickstart Projects?")}</h4>
+          <h4 className="fw-bold mb-2">{t("Build Bets?")}</h4>
           <div className="text-muted mb-4">
             <p>
-              {t("Are you sure you want to kickstart the selected priorities and create new bets? This will trigger AI generation for project details.")}
+              {t("Are you sure you want to lock in these priorities? This will trigger AI generation for bet details.")}
             </p>
             {isAdmin && !hasCollaborators && !anyProjectKickstarted && projects.length === 0 && <p className="mb-0 small text-info">
-                {t("Note: You are proceeding without collaborators. You can also continue without any participants for now—this is perfectly fine, and you can always add them later.")}
+                {t("Note: You are proceeding without collaborators. You can also continue without any participants for nowâ€”this is perfectly fine, and you can always add them later.")}
               </p>}
           </div>
           <div className="d-grid gap-2">
-            <Button variant="success" onClick={confirmKickstart} disabled={kickstarting} className="d-flex align-items-center justify-content-center gap-2 py-2 fw-semibold">
+            <Button variant="success" onClick={confirmKickstart} disabled={kickstarting} className="d-flex align-items-center justify-content-center gap-2 py-2 fw-semibold" style={{ backgroundColor: '#0284c7', border: 'none' }}>
               {kickstarting ? <Spinner size="sm" /> : null}
-              {kickstarting ? t("Kickstarting...") : t("Kickstart to Bets")}
+              {kickstarting ? t("Building...") : t("Confirm Build Bets")}
             </Button>
             {!kickstarting && <>
                 {isAdmin && !hasCollaborators && !anyProjectKickstarted && projects.length === 0 && <Button variant="outline-secondary" onClick={() => navigate('/admin?tab=user_management')} className="py-2">
@@ -333,6 +304,7 @@ const PrioritiesProjects = ({
           </div>
         </Modal.Body>
       </Modal>
-    </div>;
+    </div>
+  );
 };
 export default PrioritiesProjects;

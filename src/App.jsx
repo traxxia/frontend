@@ -10,7 +10,7 @@ import ToastNotifications from './components/ToastNotifications';
 import { useUIStore } from './store/uiStore';
 import { useLanguageStore } from './store/languageStore';
 const AI_EXCLUDED_EXACT_PATHS = ['/', '/login', '/register', '/dashboard', '/admin', '/super-admin', '/super-admin/observatory', '/forgot-password', '/reset-password'];
-const AI_EXCLUDED_PREFIX_PATHS = ['/academy'];
+const AI_EXCLUDED_PREFIX_PATHS = ['/academy', '/onboarding'];
 
 const GlobalAiAssistant = () => {
   const location = useLocation();
@@ -65,6 +65,10 @@ const AcademyPage = React.lazy(() => import('./pages/AcademyPage'));
 const AllDecisionLogs = React.lazy(() => import('./components/AllDecisionLogs'));
 const ObservatoryPage = React.lazy(() => import('./pages/ObservatoryPage'));
 const ForgotPassword = React.lazy(() => import('./pages/ForgotPassword'));
+const OnboardingFlowPage = React.lazy(() => import('./pages/OnboardingFlowPage'));
+const AdvancedInsightsPage = React.lazy(() => import('./pages/AdvancedInsightsPage'));
+const UpgradePlanPage = React.lazy(() => import('./pages/UpgradePlanPage'));
+const ExecutionPage = React.lazy(() => import('./pages/ExecutionPage'));
 
 const App = () => {
   const theme = useUIStore((state) => state.theme);
@@ -105,6 +109,44 @@ const App = () => {
               element={
                 <ProtectedRoute>
                   <BusinessSetupPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/onboarding/:businessId"
+              element={
+                <ProtectedRoute>
+                  <OnboardingFlowPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/business/:businessId/advanced-insights"
+              element={
+                <ProtectedRoute>
+                  <React.Suspense fallback={<div className="p-5 text-center"><div className="spinner-border text-primary" role="status"><span className="visually-hidden">Loading...</span></div></div>}>
+                    <AdvancedInsightsPage />
+                  </React.Suspense>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/upgrade"
+              element={
+                <ProtectedRoute>
+                  <React.Suspense fallback={<div className="p-5 text-center"><div className="spinner-border text-primary" role="status"><span className="visually-hidden">Loading...</span></div></div>}>
+                    <UpgradePlanPage />
+                  </React.Suspense>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/business/:businessId/execution"
+              element={
+                <ProtectedRoute>
+                  <React.Suspense fallback={<div className="p-5 text-center"><div className="spinner-border text-primary" role="status"><span className="visually-hidden">Loading...</span></div></div>}>
+                    <ExecutionPage />
+                  </React.Suspense>
                 </ProtectedRoute>
               }
             />
