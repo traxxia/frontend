@@ -631,7 +631,7 @@ const ExecutiveSummary = ({ hideNextStep }) => {
           </div>
 
           <button className="exc-create-project-btn mt-4" onClick={() => navigate(`/business/${businessId || 'default'}/advanced-insights`)}>
-            <Lock size={16} fill="#f59e0b" color="#1e3a8a" /> {t("Continue to Advanced Insights")} <ArrowRight size={16} />
+            <span className="ms-1" style={{ fontSize: '14px' }}>🔒</span> {t("Continue to Advanced Insights")} <ArrowRight size={16} />
           </button>
         </div>
         )}

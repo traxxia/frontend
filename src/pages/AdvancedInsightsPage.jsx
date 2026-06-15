@@ -57,7 +57,7 @@ const AdvancedInsightsPage = () => {
         {/* Hero Card */}
         <div className="adv-hero-card">
           <div className="adv-badge">
-            <Lock size={12} className="adv-badge-icon" /> ADVANCED INSIGHTS · PRO
+            <span className="ms-1" style={{ fontSize: '13px' }}>🔒</span> ADVANCED INSIGHTS · PRO
           </div>
           <h1 className="adv-hero-title">Behind every priority, a framework.</h1>
           <p className="adv-hero-subtitle">
@@ -105,7 +105,7 @@ const AdvancedInsightsPage = () => {
             </div>
             <div className="adv-lock-overlay">
               <div className="adv-lock-box">
-                <Lock size={24} color="#1e3a8a" fill="#f59e0b" className="mb-3" />
+                <span className="ms-1" style={{ fontSize: '20px' }}>🔒</span>
                 <h3 className="adv-lock-title">Unlock PESTEL and 4 more frameworks</h3>
                 <p className="adv-lock-desc">Full PESTEL · Porter's Five Forces · NPS Analysis · Competitive Positioning<br/>Map · BCG Matrix</p>
                 <button className="adv-upgrade-btn" onClick={() => navigate('/upgrade')}>Upgrade to Pro &rarr;</button>
@@ -141,7 +141,7 @@ const AdvancedInsightsPage = () => {
             </div>
             <div className="adv-lock-overlay">
               <div className="adv-lock-box">
-                <Lock size={24} color="#1e3a8a" fill="#f59e0b" className="mb-3" />
+                <span className="ms-1" style={{ fontSize: '20px' }}>🔒</span>
                 <h3 className="adv-lock-title">See the full competitive picture</h3>
                 <p className="adv-lock-desc">All five forces scored, sourced, and tied back to your Top 5 Priorities</p>
                 <button className="adv-upgrade-btn" onClick={() => navigate('/upgrade')}>Upgrade to Pro &rarr;</button>

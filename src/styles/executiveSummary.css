@@ -634,7 +634,7 @@
 .exc-create-project-btn {
   margin-top: 1.25rem;
   padding: 0.65rem 1.25rem;
-  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  background: var(--color-primary);
   color: white;
   border: none;
   border-radius: 8px;
