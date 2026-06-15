@@ -12,7 +12,7 @@ import {
   Carousel
 } from "react-bootstrap";
 import {
-  Info, X, Trash2, Check, ChevronDown, Lock, FileText
+  Info, X, Trash2, Check, ChevronDown, Lock, FileText, Zap, CheckSquare
 } from "lucide-react";
 import { answerService } from '../services/answerService';
 import { AnalysisApiService } from '../services/analysisApiService';
@@ -527,11 +527,13 @@ const Dashboard = () => {
         let hasInsights = false;
         let hasExecSummary = false;
 
-        hasInsights = result?.insights && Object.keys(result.insights).length > 0;
+        const insightsContent = result?.insights;
+          hasInsights = !!insightsContent && (typeof insightsContent === 'string' ? insightsContent.trim().length > 0 : Object.keys(insightsContent).length > 0);
         
         try {
           const execResult = await analysisService.getPMFExecutiveSummary(businessId);
-          hasExecSummary = execResult?.summary && Object.keys(execResult.summary).length > 0;
+          const summaryContent = execResult?.summary || execResult;
+          hasExecSummary = !!summaryContent && (typeof summaryContent === 'string' ? summaryContent.trim().length > 0 : Object.keys(summaryContent).length > 0);
         } catch (err) {
           console.warn("Failed to check Executive Summary status:", err);
         }
@@ -761,8 +763,7 @@ const Dashboard = () => {
                                         disabled={isDeleted}
                                         style={isDeleted ? { opacity: 0.5, cursor: 'not-allowed' } : {}}
                                       >
-                                        <span className="btn-icon-left">⚡</span> {t('insights') || 'Insights'}
-                                        {!hasInsightsAccess && <Lock size={12} className="ms-1 text-muted" />}
+                                        <Zap size={14} className="me-2" /> {t('insights') || 'Insights'} 
                                       </button>
                                       <button 
                                         className="btn-execution-outline" 
@@ -770,8 +771,8 @@ const Dashboard = () => {
                                         disabled={isDeleted}
                                         style={isDeleted ? { opacity: 0.5, cursor: 'not-allowed' } : {}}
                                       >
-                                        <span className="btn-icon-left">☑</span> {t('Execution') || 'Execution'} 
-                                        {!hasProjectAccess && <Lock size={12} className="ms-1 text-muted" />}
+                                        <CheckSquare size={14} className="me-2" /> {t('Execution') || 'Execution'} 
+                                        {!hasProjectAccess && <span className="ms-1" style={{ fontSize: '10px' }}>🔒</span>}
                                       </button>
                                       {!isCollaborator && !isViewer && (
                                         <button 
@@ -1034,4 +1035,6 @@ const Dashboard = () => {
 };
 
 export default Dashboard;
+
+
 

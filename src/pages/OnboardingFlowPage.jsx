@@ -21,7 +21,7 @@ const OnboardingFlowPage = () => {
   const pmfData = location.state?.pmfData;
   const [expandedSection, setExpandedSection] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isOnboardingStarted, setIsOnboardingStarted] = useState(false);
+  const [isOnboardingStarted, setIsOnboardingStarted] = useState(!!pmfData?.letsBeginClicked || false);
   
   // Step 1
   const [purpose, setPurpose] = useState(pmfData?.businessPurpose?.purpose || '');
@@ -303,6 +303,26 @@ const OnboardingFlowPage = () => {
     Object.values(competeOptions).some(Boolean)
   ].filter(Boolean).length;
 
+  const handleStartOnboarding = async () => {
+    setIsOnboardingStarted(true);
+    try {
+      const getAuthToken = () => useAuthStore.getState().token;
+      const ML_API_BASE_URL = import.meta.env.VITE_ML_BACKEND_URL;
+      const API_BASE_URL = import.meta.env.VITE_BACKEND_URL;
+      const analysisService = new AnalysisApiService(ML_API_BASE_URL, API_BASE_URL, getAuthToken);
+      const targetBusinessId = business?._id || business?.id || businessId;
+      
+      const dataToSave = {
+        ...(pmfData || {}),
+        letsBeginClicked: true
+      };
+      
+      await analysisService.savePMFOnboardingData(targetBusinessId, dataToSave);
+    } catch (err) {
+      console.error("Failed to save letsBeginClicked state", err);
+    }
+  };
+
   if (!isOnboardingStarted) {
     return (
       <div className="dashboard-layout ob-flow-layout" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
@@ -312,7 +332,7 @@ const OnboardingFlowPage = () => {
             userName={userName}
             businessName={businessName}
             onBack={() => navigate('/dashboard')}
-            onStart={() => setIsOnboardingStarted(true)}
+            onStart={handleStartOnboarding}
           />
         </div>
       </div>
@@ -670,3 +690,4 @@ const OnboardingFlowPage = () => {
 };
 
 export default OnboardingFlowPage;
+
