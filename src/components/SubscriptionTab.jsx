@@ -339,6 +339,9 @@ const SubscriptionTab = ({
   } = useTranslation();
   const queryClient = useQueryClient();
   const token = useAuthStore(state => state.token);
+  const userPlan = useAuthStore(state => state.userPlan);
+  const isNonePlan = userPlan?.toLowerCase() === 'none' || sessionStorage.getItem('userPlan')?.toLowerCase() === 'none';
+
   const API_BASE_URL = import.meta.env.VITE_BACKEND_URL;
   const {
     data: subscription,
@@ -359,6 +362,25 @@ const SubscriptionTab = ({
     setShowUpgradeModal(true);
   };
   if (queryError) return <Alert variant="danger">{queryError.message || "Failed to load subscription details"}</Alert>;
+  
+  if (isNonePlan) {
+    return (
+      <div className="st-root d-flex align-items-center justify-content-center" style={{ minHeight: '60vh' }}>
+        <div className="text-center p-5 st-card shadow-sm border-0" style={{ maxWidth: '500px', backgroundColor: '#f8fafc' }}>
+          <div className="mb-4 d-flex justify-content-center">
+            <div className="rounded-circle d-flex align-items-center justify-content-center" style={{ width: '80px', height: '80px', backgroundColor: '#e0e7ff', color: '#4f46e5' }}>
+              <AlertCircle size={40} />
+            </div>
+          </div>
+          <h3 className="fw-bold mb-3" style={{ color: '#1e293b' }}>{t("under_construction") || "Under Construction"}</h3>
+          <p className="text-muted mb-0" style={{ fontSize: '1.05rem', lineHeight: '1.6' }}>
+            {t("subscription_under_construction_desc") || "The subscription page is currently under construction. Please check back later!"}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   if (!subscription && !loading) return null;
   const {
     plan = "Free",

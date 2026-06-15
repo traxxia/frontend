@@ -1,4 +1,6 @@
 {
+  "under_construction": "En Construcción",
+  "subscription_under_construction_desc": "La página de suscripción está actualmente en construcción. ¡Por favor, vuelva más tarde!",
   "add_new_card": "Agregar nueva tarjeta",
   "save_card": "Guardar tarjeta",
   "card_added_success": "Tarjeta agregada exitosamente",
