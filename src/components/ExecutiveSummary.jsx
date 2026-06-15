@@ -617,16 +617,16 @@ const ExecutiveSummary = ({ hideNextStep }) => {
           </p>
           
           <div className="d-flex align-items-center mb-4 flex-wrap gap-2" style={{ fontSize: '0.9rem', fontWeight: '500' }}>
-            <div className="d-flex align-items-center rounded-pill px-3 py-1" style={{ backgroundColor: '#dcfce7', color: '#166534' }}>
-              <CheckCircle2 size={16} fill="#166534" color="#dcfce7" className="me-2" /> {t("Basic")}
+            <div className="d-flex align-items-center rounded-pill px-3 py-1" style={{ backgroundColor: '#dcfce7', color: '#166534', border: '1px solid #bbf7d0' }}>
+              <CheckCircle2 size={16} fill="#166534" color="#ffffff" className="me-2" /> {t("Basic")}
             </div>
             <span className="text-muted mx-1">→</span>
-            <div className="d-flex align-items-center border rounded-pill px-3 py-1 bg-white" style={{ borderColor: '#2563eb', color: '#2563eb' }}>
-              <div className="rounded-circle d-flex align-items-center justify-content-center me-2" style={{ backgroundColor: '#2563eb', color: 'white', width: '20px', height: '20px', fontSize: '0.75rem' }}>2</div> {t("Advanced")}
+            <div className="d-flex align-items-center rounded-pill px-3 py-1" style={{ backgroundColor: '#eff6ff', border: '1px solid #2563eb', color: '#2563eb' }}>
+              <div className="rounded-circle d-flex align-items-center justify-content-center me-2" style={{ backgroundColor: '#2563eb', color: 'white', width: '20px', height: '20px', fontSize: '0.75rem', fontWeight: 'bold' }}>2</div> {t("Advanced")}
             </div>
             <span className="text-muted mx-1">→</span>
-            <div className="d-flex align-items-center rounded-pill px-3 py-1" style={{ backgroundColor: '#f3f4f6', color: '#4b5563', border: '1px solid #e5e7eb' }}>
-              <span className="me-2 fw-bold" style={{ fontSize: '0.85rem' }}>3</span> {t("Execution")}
+            <div className="d-flex align-items-center rounded-pill px-3 py-1" style={{ backgroundColor: '#f8fafc', color: '#334155', border: '1px solid #e2e8f0' }}>
+              <div className="rounded-circle d-flex align-items-center justify-content-center me-2" style={{ backgroundColor: '#f1f5f9', color: '#334155', width: '20px', height: '20px', fontSize: '0.75rem', fontWeight: 'bold' }}>3</div> {t("Execution")}
             </div>
           </div>
 
