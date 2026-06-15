@@ -5,7 +5,7 @@
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  overflow-x: hidden;
+  overflow-x: clip;
   font-family: 'Montserrat', 'Helvetica Neue', Arial, sans-serif;
 }
 
@@ -37,6 +37,13 @@
   flex: 1;
   overflow-x: hidden;
   overflow-y: auto;
+}
+
+.dashboard-content {
+  padding: 48px 32px 80px;
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
 }
 
 .responsive-view-container {
@@ -73,7 +80,7 @@
 }
 
 .welcome-section {
-  padding: 40px 20px 24px 20px;
+  padding: 0 0 24px 0;
   display: flex;
   flex-direction: column;
   background-color: transparent;
@@ -150,21 +157,24 @@
   transform: translateY(-1px);
 }
 
-.businesses-container {
-  border-radius: 16px;
-  border: 1px solid #e5e7eb;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-  margin: 0 20px 40px 20px;
-  position: relative;
+.businesses-container { 
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 14px;
+    box-shadow: 0 1px 3px rgba(11, 22, 49, 0.07), 0 1px 2px rgba(11, 22, 49, 0.04);
+    overflow: hidden;
 }
 
 .businesses-header {
-  padding: 16px 24px;
-  border-bottom: 1px solid #f3f4f6;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border-radius: 16px 16px 0 0;
+
+
+  padding: 14px 22px;
+    border-bottom: 1px solid #e5e7eb;
+    background: #f8f9fe;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
 }
 
 .businesses-header .biz-table-title {
@@ -300,7 +310,7 @@
 }
 
 .businesses-table th {
-  background-color: #f9fafb;
+  background-color: transparent;
   padding: 16px 24px;
   text-align: left;
   font-size: 11px;
@@ -584,7 +594,7 @@
 
 @media (max-width: 768px) {
   .welcome-section {
-    padding: 40px 20px;
+    padding: 0 0 24px 0;
   }
 
   .welcome-title {
@@ -603,7 +613,7 @@
   }
 
   .businesses-container {
-    margin: 0 10px 20px 10px;
+    margin: 0 0px 20px 0px;
     border-radius: 12px;
   }
 
@@ -773,8 +783,7 @@
 
   .welcome-section {
     min-height: auto;
-
-    padding: var(--spacing-3xl) var(--spacing-xl);
+    padding: 0 0 24px 0;
   }
 
   .businesses-section {
@@ -842,7 +851,7 @@
   }
 
   .welcome-section {
-    padding: var(--spacing-3xl) var(--spacing-2xl);
+    padding: 0 0 24px 0;
   }
 
   .businesses-section {
@@ -853,7 +862,7 @@
 
 @media (min-width: 1200px) {
   .welcome-section {
-    padding: var(--spacing-2xl);
+    padding: 0 0 24px 0;
   }
 
   .welcome-section h5 {
@@ -2395,12 +2404,12 @@
 /* Accordion How It Works styles */
 .how-it-works-accordion {
   background: #ffffff;
-  border: 1px solid #e2e8f0;
+  border: 1px solid #e5e7eb;
   border-radius: 12px;
-  margin: 0 20px 24px 20px;
+  margin: 0 0px 24px 0px;
   overflow: hidden;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-  transition: all 0.2s ease;
+  box-shadow: none;
+  transition: #e5e7eb 0.15s;
 }
 
 [data-theme="dark"] .how-it-works-accordion {

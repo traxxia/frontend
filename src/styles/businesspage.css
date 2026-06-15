@@ -173,7 +173,7 @@ body {
 }
 
 .business-header-name {
-  font-size: 0.95rem;
+  font-size: 13.5px;
   font-weight: 600;
   color: #1a1a2e;
   letter-spacing: 0.01em;
@@ -356,7 +356,7 @@ body {
   display: flex;
   align-items: center;
   gap: 0px;
-  flex-shrink: 0;
+  flex-shrink: 0; 
 }
 
 .business-breadcrumb {
@@ -2542,13 +2542,14 @@ body {
 
 .expanded-analysis-main {
   flex: 1;
-  padding: 10px;
+  padding: 0px 32px;
   overflow-y: visible;
   min-height: 0;
-  width: 100%;
+  max-width: 1200px;
   box-sizing: border-box;
   scroll-behavior: auto !important;
   position: relative;
+  margin: 0 auto;
 }
 
 .phase-tabs-nav {
@@ -2810,7 +2811,7 @@ body {
   align-items: center;
   justify-content: center;
   color: #374151;
-  font-size: 14px;
+  font-size: 13.5px;
   gap: 6px;
   position: static;
 }

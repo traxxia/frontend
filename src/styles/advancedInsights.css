@@ -78,7 +78,8 @@
 
 .adv-content-wrapper { 
   margin: 0 auto;
-  padding: 32px 25px;
+  padding: 20px 32px;
+  max-width: 1200px;
 }
 
 .adv-back-link {

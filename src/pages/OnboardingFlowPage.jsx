@@ -341,19 +341,21 @@ const OnboardingFlowPage = () => {
 
   return (
     <div className="dashboard-layout ob-flow-layout">
-      <MenuBar />
-      
-      <div className="split-onboarding-header ob-flow-header">
-        <button 
-          onClick={() => navigate('/dashboard')} 
-          className="ob-flow-back-btn"
-        >
-          &larr; Back to Dashboard
-        </button>
-        <span className="ob-flow-breadcrumb-sep">/</span>
-        <span className="business-header-name ob-flow-business-name">
-          {businessName}
-        </span>
+      <div style={{ position: 'sticky', top: 0, zIndex: 100, backgroundColor: '#fff', borderBottom: '1px solid #e2e8f0' }}>
+        <MenuBar />
+        
+        <div className="split-onboarding-header ob-flow-header" style={{ borderBottom: 'none' }}>
+          <button 
+            onClick={() => navigate('/dashboard')} 
+            className="ob-flow-back-btn"
+          >
+            &larr; Back to Dashboard
+          </button>
+          <span className="ob-flow-breadcrumb-sep">/</span>
+          <span className="business-header-name ob-flow-business-name">
+            {businessName}
+          </span>
+        </div>
       </div>
 
       <div className="split-onboarding-container ob-flow-container">
@@ -631,7 +633,7 @@ const OnboardingFlowPage = () => {
                         brand: 'Brand',
                         other: 'Other'
                       }).map(([key, label]) => (
-                        <div key={key} className="ob-checkbox-wrapper mb-2">
+                        <div key={key} className="ob-checkbox-wrapper">
                           <label className="ob-checkbox-container ob-flow-checkbox-container m-0">
                             <input 
                               type="checkbox" 
