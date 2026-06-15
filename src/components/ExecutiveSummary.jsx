@@ -555,9 +555,9 @@ const ExecutiveSummary = ({ hideNextStep }) => {
                       <div className="exc-prio-header-left">
                         <span className="exc-prio-number">{idx + 1}.</span>
                         <h4 className="exc-prio-title">{item.title || item.action || item.Action || item.Title}</h4>
-                        <span className="exc-prio-badge">
+                        {/* <span className="exc-prio-badge">
                           <CheckCircle2 size={10} strokeWidth={3} /> {t("BET")} #{idx + 1}
-                        </span>
+                        </span> */}
                       </div>
                     </div>
 
@@ -610,8 +610,8 @@ const ExecutiveSummary = ({ hideNextStep }) => {
         {/* Next Step Card */}
         {!hideNextStep && (
           <div className="exc-section-card p-4">
-          <p className="fw-bold text-uppercase mb-2" style={{ fontSize: '0.75rem', letterSpacing: '1px', color: '#2563eb' }}>{t("Next step")}</p>
-          <h3 className="exc-section-title mb-3" style={{ fontSize: '1.4rem', textTransform: 'none' }}>{t("Go deeper with Advanced Insights")}</h3>
+          <p className="fw-bold text-uppercase mb-2 cta-path-eyebrow">{t("Next step")}</p>
+          <h3 className="exc-section-title mb-3 next-step" style={{ fontSize: '19px', textTransform: 'none' }}>{t("Go deeper with Advanced Insights")}</h3>
           <p className="exc-content-text mb-4" style={{ fontSize: '14px' }}>
             {t("Your Basic diagnosis is the quick read. Advanced asks a few more questions to build the full picture — the 6 C's and the S.T.R.A.T.E.G.I.C. scorecard — and that sharper analysis is what your Bets are built from.")}
           </p>
