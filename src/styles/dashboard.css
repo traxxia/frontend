@@ -167,15 +167,18 @@
   border-radius: 16px 16px 0 0;
 }
 
-.businesses-header h2 {
-  font-size: 13px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: #4b5563;
-  margin: 0;
-}
+.businesses-header .biz-table-title {
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: #4b5563;
+    font-weight: 600;
 
+}
+.biz-table-title b {
+    color: var(--color-text-primary);
+    font-weight: 700;
+}
 .status-filter-wrapper {
   position: relative;
 }
@@ -348,7 +351,7 @@
 }
 
 .business-name-cell {
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 600;
   color: #0c1b2f;
 }
@@ -2406,7 +2409,7 @@
 }
 
 .how-it-works-header {
-  padding: 16px 24px;
+  padding: 14px 22px;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -2420,11 +2423,12 @@
 }
 
 .how-it-works-header span {
-  font-size: 13px;
+  font-family: 'Geist Mono', ui-monospace, monospace !important;
+  font-size: 11px;
   font-weight: 700;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: #4b5563;
+  color: #000;
 }
 
 [data-theme="dark"] .how-it-works-header span {
@@ -2441,9 +2445,9 @@
 }
 
 .how-it-works-body {
-  padding: 0 24px 24px 24px;
+  padding: 4px 22px 22px;
   border-top: 1px solid #f1f5f9;
-  background: #f8fafc;
+  background: #fff;
   animation: slideDown 0.25s ease-out;
 }
 
@@ -2469,7 +2473,7 @@
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 24px;
-  margin-top: 24px;
+  margin-top: 10px;
 }
 
 @media (max-width: 1024px) {
@@ -2482,9 +2486,8 @@
 .hiw-card {
   background: #ffffff;
   border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  padding: 24px;
-  display: flex;
+  border-radius: 16px;
+  padding: 22px 24px; 
   flex-direction: column;
   position: relative;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
@@ -2509,13 +2512,13 @@
 }
 
 .hiw-number {
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 700;
-  font-size: 14px;
+  font-size: 18px;
   border-radius: 6px;
   flex-shrink: 0;
 }
@@ -2541,16 +2544,17 @@
 }
 
 .hiw-subtitle {
-  font-size: 10px;
+  font-family: 'Geist Mono', ui-monospace, monospace !important;
+  font-size: 10.5px;
   font-weight: 700;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: #9ca3af;
-  margin-bottom: 2px;
+  color: var(--color-text-muted);
+  margin-bottom: 4px;
 }
 
 .hiw-title {
-  font-size: 16px;
+  font-size: 15.5px;
   font-weight: 700;
   color: #0c1b2f;
   margin: 0;
@@ -2561,10 +2565,10 @@
 }
 
 .hiw-description {
-  font-size: 13px;
+  font-size: 13.5px;
   line-height: 1.6;
-  color: #4b5563;
-  margin-bottom: 16px;
+  color: var(--color-text-secondary);
+  margin-bottom: 14px;
   flex-grow: 1;
 }
 
@@ -2575,7 +2579,7 @@
 .hiw-divider {
   border: none;
   border-top: 1px dotted #e2e8f0;
-  margin: 16px 0;
+  margin: 14px 0;
   width: 100%;
 }
 
@@ -2586,10 +2590,11 @@
 .hiw-list {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  font-size: 12px;
-  color: #6b7280;
-  margin-bottom: 16px;
+  gap: 12px;
+  font-size: 12.5px;
+  color: var(--color-text-secondary);
+  padding-top: 12px;
+  border-top: 1px dashed #e5e7eb; 
 }
 
 [data-theme="dark"] .hiw-list {

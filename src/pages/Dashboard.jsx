@@ -204,6 +204,7 @@ const Dashboard = () => {
         <p className="hiw-description">
           {t('hiw_start_with_business_desc') || 'Name your business and answer a few basic questions. Trax turns that into a real diagnosis — add documents for a sharper one.'}
         </p>
+        {/* <hr className="hiw-divider" /> */}
         <div className="hiw-list">
           <div className="hiw-list-item">
             <strong>{t('hiw_inputs') || 'Inputs'}:</strong> {t('hiw_inputs_details') || 'basic questions · documents (optional)'}
@@ -233,6 +234,7 @@ const Dashboard = () => {
         <p className="hiw-description">
           {t('hiw_diagnosis_from_docs_desc') || 'Trax reads everything and gives you a structured report at two depths.'}
         </p> 
+        {/* <hr className="hiw-divider" /> */}
         <div className="hiw-list">
           <div className="hiw-list-item">
             <strong>{t('hiw_basic') || 'Basic'}:</strong> {t('hiw_basic_details') || 'AHA insights, Where & How to compete, Top 5 priorities'}
@@ -254,6 +256,7 @@ const Dashboard = () => {
         <p className="hiw-description">
           {t('hiw_priorities_turn_commitment_desc') || 'Each priority becomes a tracked bet — owner, hypothesis, expected results. Anchored to the rituals that move the business forward.'}
         </p> 
+        {/* <hr className="hiw-divider" /> */}
         <div className="hiw-list">
           <div className="hiw-list-item">
             <strong>{t('hiw_bets') || 'Bets'}:</strong> {t('hiw_bets_details') || 'ledger of active initiatives with status, score, impact, risk'}
@@ -501,7 +504,8 @@ const Dashboard = () => {
   }, [businessToDelete, deleteBusiness]);
 
   const handleInsightsClick = useCallback(async (business) => {
-
+    if (business.status === 'deleted') return;
+  
     selectBusiness(business);
 
     const businessId = business?._id || business?.id;
@@ -571,6 +575,8 @@ const Dashboard = () => {
   }, [selectBusiness, navigate, t, userRole, openModal]);
 
   const handleExecutionClick = useCallback((business) => {
+    if (business.status === 'deleted') return;
+
     const limits = getUserLimits();
     const hasAccess = limits.project;
 
@@ -668,9 +674,7 @@ const Dashboard = () => {
                   {/* Businesses Table */}
                   <div className="businesses-container">
                     <div className="businesses-header d-flex justify-content-between align-items-center gap-3">
-                      <h2>
-                        {t('your_businesses_all_states') || "YOUR BUSINESSES — ALL STATES"}
-                      </h2>
+                      <span class="biz-table-title"><b>{t('your_businesses_all_states')}</b> — all states</span>
                       
                       <div className="d-flex align-items-center gap-3">
                         <div className="status-filter-wrapper">
@@ -754,6 +758,8 @@ const Dashboard = () => {
                                       <button 
                                         className="btn-insights-outline" 
                                         onClick={() => handleInsightsClick(business)}
+                                        disabled={isDeleted}
+                                        style={isDeleted ? { opacity: 0.5, cursor: 'not-allowed' } : {}}
                                       >
                                         <span className="btn-icon-left">⚡</span> {t('insights') || 'Insights'}
                                         {!hasInsightsAccess && <Lock size={12} className="ms-1 text-muted" />}
@@ -761,6 +767,8 @@ const Dashboard = () => {
                                       <button 
                                         className="btn-execution-outline" 
                                         onClick={() => handleExecutionClick(business)}
+                                        disabled={isDeleted}
+                                        style={isDeleted ? { opacity: 0.5, cursor: 'not-allowed' } : {}}
                                       >
                                         <span className="btn-icon-left">☑</span> {t('Execution') || 'Execution'} 
                                         {!hasProjectAccess && <Lock size={12} className="ms-1 text-muted" />}
@@ -1026,3 +1034,4 @@ const Dashboard = () => {
 };
 
 export default Dashboard;
+
