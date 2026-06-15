@@ -239,7 +239,7 @@ export const staticTranslations = {
     "deleting": "Deleting",
     "questions_remaining": "questions remaining",
     "dashboard_description_redesign": "Create business plans step by step with the S.T.R.A.T.E.G.I.C framework. Activate AI capabilities for analysis, prediction, and decision-making.",
-    "your_businesses_all_states": "YOUR BUSINESSES — ALL STATES",
+    "your_businesses_all_states": "YOUR BUSINESSES",
     "business_column": "BUSINESS",
     "state_column": "STATE",
     "date_of_creation_column": "DATE OF CREATION",

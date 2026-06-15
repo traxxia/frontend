@@ -7,6 +7,7 @@ import '../styles/onboarding-chat.css';
 import '../styles/onboarding-flow.css';
 import { AnalysisApiService } from '../services/analysisApiService';
 import { ChevronDown, ChevronUp, Lock, FileText, ArrowRight, Check } from 'lucide-react';
+import OnboardingChat from '../components/OnboardingChat';
 
 const OnboardingFlowPage = () => {
   const { businessId } = useParams();
@@ -20,6 +21,7 @@ const OnboardingFlowPage = () => {
   const pmfData = location.state?.pmfData;
   const [expandedSection, setExpandedSection] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isOnboardingStarted, setIsOnboardingStarted] = useState(false);
   
   // Step 1
   const [purpose, setPurpose] = useState(pmfData?.businessPurpose?.purpose || '');
@@ -301,6 +303,22 @@ const OnboardingFlowPage = () => {
     Object.values(competeOptions).some(Boolean)
   ].filter(Boolean).length;
 
+  if (!isOnboardingStarted) {
+    return (
+      <div className="dashboard-layout ob-flow-layout" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+        <MenuBar />
+        <div style={{ flex: 1, position: 'relative', overflowY: 'auto' }}>
+          <OnboardingChat
+            userName={userName}
+            businessName={businessName}
+            onBack={() => navigate('/dashboard')}
+            onStart={() => setIsOnboardingStarted(true)}
+          />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="dashboard-layout ob-flow-layout">
       <MenuBar />
@@ -350,7 +368,7 @@ const OnboardingFlowPage = () => {
               <div className="onboarding-chat-message">
                 <div className="bubble-avatar">TX</div>
                 <div className="bubble-content">
-                  Great. Here are the 6 questions I need to draft your diagnosis. Answer in any order — or add documents and I'll auto-fill what I can.
+                  Great. Here are the 5 questions I need to draft your diagnosis. Answer in any order — or add documents and I'll auto-fill what I can.
                 </div>
               </div>
               {chatMessages.map((msg, idx) => (
