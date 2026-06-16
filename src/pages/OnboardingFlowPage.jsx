@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import axios from 'axios';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import MenuBar from '../components/MenuBar';
-import { useAuthStore, useBusinessStore } from '../store';
+import { useAuthStore, useBusinessStore, useUIStore } from '../store';
 import '../styles/onboarding-chat.css';
 import '../styles/onboarding-flow.css';
 import { AnalysisApiService } from '../services/analysisApiService';
@@ -14,6 +14,7 @@ const OnboardingFlowPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const business = location.state?.business || useBusinessStore.getState().selectedBusiness;
+  const addToast = useUIStore(state => state.addToast);
   
   const userName = useAuthStore(state => state.userName) || 'User';
   const businessName = business?.business_name || 'your business';
@@ -24,33 +25,33 @@ const OnboardingFlowPage = () => {
   const [isOnboardingStarted, setIsOnboardingStarted] = useState(true);
   
   // Step 1
-  const [purpose, setPurpose] = useState(pmfData?.businessPurpose?.purpose || '');
-  const [description, setDescription] = useState(pmfData?.businessPurpose?.description || '');
+  const [purpose, setPurpose] = useState(pmfData?.businessPurpose?.purpose || pmfData?.purpose || '');
+  const [description, setDescription] = useState(pmfData?.businessPurpose?.description || pmfData?.description || '');
   
   // Step 2
-  const [country, setCountry] = useState(pmfData?.location?.country || '');
-  const [city, setCity] = useState(pmfData?.location?.city || '');
+  const [country, setCountry] = useState(pmfData?.location?.country || pmfData?.country || '');
+  const [city, setCity] = useState(pmfData?.location?.city || pmfData?.city || '');
   
   // Step 3
-  const [primaryIndustry, setPrimaryIndustry] = useState(pmfData?.industry?.primaryIndustry || '');
+  const [primaryIndustry, setPrimaryIndustry] = useState(pmfData?.industry?.primaryIndustry || pmfData?.primaryIndustry || '');
   
   // Step 4
-  const [geo1, setGeo1] = useState(pmfData?.core?.geographies?.[0] || '');
-  const [geo2, setGeo2] = useState(pmfData?.core?.geographies?.[1] || '');
-  const [geo3, setGeo3] = useState(pmfData?.core?.geographies?.[2] || '');
-  const [seg1, setSeg1] = useState(pmfData?.core?.customerSegments?.[0] || '');
-  const [seg2, setSeg2] = useState(pmfData?.core?.customerSegments?.[1] || '');
-  const [seg3, setSeg3] = useState(pmfData?.core?.customerSegments?.[2] || '');
-  const [prod1, setProd1] = useState(pmfData?.core?.productsServices?.[0] || '');
-  const [prod2, setProd2] = useState(pmfData?.core?.productsServices?.[1] || '');
-  const [prod3, setProd3] = useState(pmfData?.core?.productsServices?.[2] || '');
-  const [chan1, setChan1] = useState(pmfData?.core?.channels?.[0] || '');
-  const [chan2, setChan2] = useState(pmfData?.core?.channels?.[1] || '');
-  const [chan3, setChan3] = useState(pmfData?.core?.channels?.[2] || '');
+  const [geo1, setGeo1] = useState(pmfData?.core?.geographies?.[0] || pmfData?.geography1 || '');
+  const [geo2, setGeo2] = useState(pmfData?.core?.geographies?.[1] || pmfData?.geography2 || '');
+  const [geo3, setGeo3] = useState(pmfData?.core?.geographies?.[2] || pmfData?.geography3 || '');
+  const [seg1, setSeg1] = useState(pmfData?.core?.customerSegments?.[0] || pmfData?.customerSegment1 || '');
+  const [seg2, setSeg2] = useState(pmfData?.core?.customerSegments?.[1] || pmfData?.customerSegment2 || '');
+  const [seg3, setSeg3] = useState(pmfData?.core?.customerSegments?.[2] || pmfData?.customerSegment3 || '');
+  const [prod1, setProd1] = useState(pmfData?.core?.productsServices?.[0] || pmfData?.productService1 || '');
+  const [prod2, setProd2] = useState(pmfData?.core?.productsServices?.[1] || pmfData?.productService2 || '');
+  const [prod3, setProd3] = useState(pmfData?.core?.productsServices?.[2] || pmfData?.productService3 || '');
+  const [chan1, setChan1] = useState(pmfData?.core?.channels?.[0] || pmfData?.channel1 || '');
+  const [chan2, setChan2] = useState(pmfData?.core?.channels?.[1] || pmfData?.channel2 || '');
+  const [chan3, setChan3] = useState(pmfData?.core?.channels?.[2] || pmfData?.channel3 || '');
   
   // Step 5
   const [competeOptions, setCompeteOptions] = useState(() => {
-    const selected = pmfData?.competitiveDimensions?.selected || [];
+    const selected = pmfData?.competitiveDimensions?.selected || pmfData?.differentiation || [];
     const labelToKeyMap = {
       'price': 'price',
       'quality': 'quality',
@@ -95,7 +96,7 @@ const OnboardingFlowPage = () => {
   });
 
   const [otherCompeteValue, setOtherCompeteValue] = useState(() => {
-    const selected = pmfData?.competitiveDimensions?.selected || [];
+    const selected = pmfData?.competitiveDimensions?.selected || pmfData?.differentiation || [];
     const labelToKeyMap = ['price', 'quality', 'speed', 'relationships', 'customization', 'scale', 'brand', 'other'];
     let unmapped = [];
     selected.forEach(val => {
@@ -303,6 +304,72 @@ const OnboardingFlowPage = () => {
     Object.values(competeOptions).some(Boolean)
   ].filter(Boolean).length;
 
+  const formDataRef = useRef({});
+  const lastSavedDataRef = useRef(null);
+
+  useEffect(() => {
+    // Initialize on mount so we don't trigger an immediate save without changes
+    lastSavedDataRef.current = JSON.stringify({
+      companyName: businessName,
+      purpose, description, country, city, primaryIndustry,
+      geography1: geo1, geography2: geo2, geography3: geo3,
+      customerSegment1: seg1, customerSegment2: seg2, customerSegment3: seg3,
+      productService1: prod1, productService2: prod2, productService3: prod3,
+      channel1: chan1, channel2: chan2, channel3: chan3,
+      differentiation: Object.keys(competeOptions).filter(k => competeOptions[k])
+    });
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const handleAutoSave = useCallback(async () => {
+    const currentData = formDataRef.current;
+    if (Object.keys(currentData).length === 0) return;
+    
+    const currentDataStr = JSON.stringify(currentData);
+    if (lastSavedDataRef.current === currentDataStr) return;
+
+    try {
+      const ML_API_BASE_URL = import.meta.env.VITE_ML_BACKEND_URL;
+      const API_BASE_URL = import.meta.env.VITE_BACKEND_URL;
+      const getAuthToken = () => useAuthStore.getState().token;
+      const analysisService = new AnalysisApiService(ML_API_BASE_URL, API_BASE_URL, getAuthToken);
+
+      const targetBusinessId = business?._id || business?.id || businessId;
+      await analysisService.savePMFOnboardingData(targetBusinessId, currentData);
+      
+      lastSavedDataRef.current = currentDataStr;
+      addToast({ message: "Auto-saved successfully", type: "success" });
+    } catch (err) {
+      console.warn("Could not autosave pmf onboarding data...", err);
+    }
+  }, [business, businessId, addToast]);
+
+  useEffect(() => {
+    formDataRef.current = {
+      companyName: businessName,
+      purpose, description, country, city, primaryIndustry,
+      geography1: geo1, geography2: geo2, geography3: geo3,
+      customerSegment1: seg1, customerSegment2: seg2, customerSegment3: seg3,
+      productService1: prod1, productService2: prod2, productService3: prod3,
+      channel1: chan1, channel2: chan2, channel3: chan3,
+      differentiation: Object.keys(competeOptions).filter(k => competeOptions[k])
+    };
+
+    const timeoutId = setTimeout(() => {
+      handleAutoSave();
+    }, 5000);
+
+    return () => clearTimeout(timeoutId);
+  }, [
+    businessName, purpose, description, country, city, primaryIndustry,
+    geo1, geo2, geo3, seg1, seg2, seg3, prod1, prod2, prod3, chan1, chan2, chan3,
+    competeOptions, handleAutoSave
+  ]);
+
+  const handleBackToDashboard = async () => {
+    await handleAutoSave();
+    navigate('/dashboard');
+  };
+
   const handleStartOnboarding = async () => {
     setIsOnboardingStarted(true);
     try {
@@ -331,7 +398,7 @@ const OnboardingFlowPage = () => {
           <OnboardingChat
             userName={userName}
             businessName={businessName}
-            onBack={() => navigate('/dashboard')}
+            onBack={handleBackToDashboard}
             onStart={handleStartOnboarding}
           />
         </div>
@@ -346,7 +413,7 @@ const OnboardingFlowPage = () => {
         
         <div className="split-onboarding-header ob-flow-header" style={{ borderBottom: 'none' }}>
           <button 
-            onClick={() => navigate('/dashboard')} 
+            onClick={handleBackToDashboard} 
             className="ob-flow-back-btn"
           >
             &larr; Back to Dashboard
@@ -638,8 +705,8 @@ const OnboardingFlowPage = () => {
                         const isFaded = selectedCount >= 3 && !isSelected;
 
                         return (
-                          <div key={key} className="ob-checkbox-wrapper" style={{ opacity: isFaded ? 0.4 : 1, pointerEvents: isFaded ? 'none' : 'auto', transition: 'opacity 0.2s ease' }}>
-                            <label className="ob-checkbox-container ob-flow-checkbox-container m-0">
+                          <div key={key} className={`ob-flow-checkbox-wrapper ${isSelected ? 'selected' : ''}`} style={{ opacity: isFaded ? 0.4 : 1, pointerEvents: isFaded ? 'none' : 'auto' }}>
+                            <label className="ob-flow-checkbox-label-container m-0">
                               <input 
                                 type="checkbox" 
                                 className="ob-flow-checkbox-input"
@@ -649,13 +716,15 @@ const OnboardingFlowPage = () => {
                               <span className="ob-flow-checkbox-label">{label}</span>
                             </label>
                             {key === 'other' && competeOptions.other && (
-                              <input 
-                                type="text" 
-                                className="ob-flow-input mt-2" 
-                                placeholder="Please specify" 
-                                value={otherCompeteValue}
-                                onChange={(e) => setOtherCompeteValue(e.target.value)}
-                              />
+                              <div className="ob-flow-other-input-container">
+                                <input 
+                                  type="text" 
+                                  className="ob-flow-other-input" 
+                                  placeholder="Please specify" 
+                                  value={otherCompeteValue}
+                                  onChange={(e) => setOtherCompeteValue(e.target.value)}
+                                />
+                              </div>
                             )}
                           </div>
                         );
