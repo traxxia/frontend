@@ -215,14 +215,44 @@
   gap: 8px;
 }
 
-.ob-flow-checkbox-container {
+.ob-flow-checkbox-wrapper {
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #fff;
+  transition: all 0.2s ease;
+  overflow: hidden;
+}
+
+.ob-flow-checkbox-wrapper.selected {
+  border-color: #0C71B9;
+  background-color: #f0f7fb;
+}
+
+.ob-flow-checkbox-label-container {
   display: flex;
   align-items: center;
   padding: 10px 16px;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
   cursor: pointer;
+  width: 100%;
+}
+
+.ob-flow-other-input-container {
+  padding: 0 16px 16px 16px;
+}
+
+.ob-flow-other-input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
   background: #fff;
+  font-size: 13px;
+  color: #1e293b;
+  outline: none;
+}
+
+.ob-flow-other-input:focus {
+  border-color: #0C71B9;
 }
 .ob-flow-submit-section{
     margin-top: 6px;
@@ -268,10 +298,11 @@
 }
 
 .ob-flow-generate-btn:disabled {
-  background: #e2e8f0;
-  color: #94a3b8;
+  background: var(--color-primary);
+  opacity: 0.5;
+  color: #fff;
   cursor: not-allowed;
-  font-weight: 500;
+  font-weight: 700;
 }
 
 .ob-flow-generate-subtext {
