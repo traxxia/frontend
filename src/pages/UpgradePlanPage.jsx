@@ -1,14 +1,100 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Lock, Check } from 'lucide-react';
+import { ArrowLeft, Lock, Check, X, Bell } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import MenuBar from '../components/MenuBar';
 import { useBusinessStore } from '../store';
 import '../styles/upgradePlan.css';
 
+/* ─── Pilot Feedback Modal ─────────────────────────────────────── */
+const PilotFeedbackModal = ({ plan, onClose, onAccept }) => {
+  const allPlans = [
+    { label: 'Explorer — $0 / Free forever', value: 'explorer' },
+    { label: 'Pro — $245/mo · Founding Member', value: 'pro' },
+    { label: 'Strategist — $495/mo · Founding Member', value: 'strategist' },
+    { label: 'Custom — Get a quote', value: 'custom' },
+  ];
+  const [selectedPlan, setSelectedPlan] = useState(plan);
+  const [rating, setRating] = useState(8);
+  const [comment, setComment] = useState('');
+
+  const handleAccept = () => {
+    onAccept();
+  };
+
+  return (
+    <div className="pfm-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
+      <div className="pfm-modal">
+        <button className="pfm-close" onClick={onClose} aria-label="Close"><X size={18} /></button>
+
+        <div className="pfm-emoji">🎉</div>
+        <h2 className="pfm-title">Thanks for joining the Traxxia pilot</h2>
+        <p className="pfm-subtitle">
+          You're part of an early group helping shape Traxxia. This is a preview experience — nothing is charged today.
+        </p>
+
+        <div className="pfm-field">
+          <label className="pfm-label">The plan you chose</label>
+          <div className="pfm-select-wrapper">
+            <select
+              className="pfm-select"
+              value={selectedPlan}
+              onChange={(e) => setSelectedPlan(e.target.value)}
+            >
+              {allPlans.map((p) => (
+                <option key={p.value} value={p.value}>{p.label}</option>
+              ))}
+            </select>
+          </div>
+          <p className="pfm-change-hint">Changed your mind? Pick a different plan here.</p>
+        </div>
+
+        <div className="pfm-field">
+          <label className="pfm-label">How likely are you to recommend Traxxia to a colleague?</label>
+          <div className="pfm-nps-row">
+            {[1,2,3,4,5,6,7,8,9,10].map((n) => (
+              <button
+                key={n}
+                className={`pfm-nps-btn ${rating === n ? 'active' : ''}`}
+                onClick={() => setRating(n)}
+              >
+                {n}
+              </button>
+            ))}
+          </div>
+          <div className="pfm-nps-labels">
+            <span>1 · Not likely</span>
+            <span>Extremely likely · 10</span>
+          </div>
+        </div>
+
+        <div className="pfm-field">
+          <label className="pfm-label">Anything you'd like to share? <span className="pfm-optional">(optional)</span></label>
+          <textarea
+            className="pfm-textarea"
+            rows={4}
+            placeholder="What would make Traxxia a must-have for you?"
+            value={comment}
+            onChange={(e) => setComment(e.target.value)}
+          />
+        </div>
+
+        <div className="pfm-notice">
+          <Bell size={19} className="pfm-notice-icon" />
+          <span>The moment the product is ready, we'll notify you so you can try it with the launch discount you were offered.</span>
+        </div>
+
+        <button className="pfm-accept-btn" onClick={handleAccept}>Accept</button>
+      </div>
+    </div>
+  );
+};
+
+/* ─── Main Page ─────────────────────────────────────────────────── */
 const UpgradePlanPage = () => {
   const navigate = useNavigate();
   const [isAnnual, setIsAnnual] = useState(false);
+  const [feedbackModal, setFeedbackModal] = useState(null); // null | plan.id
   const { selectedBusiness } = useBusinessStore();
   const businessName = selectedBusiness?.business_name || "Business";
 
@@ -209,7 +295,10 @@ const UpgradePlanPage = () => {
                 </div>
 
                 <div className="card-action">
-                  <button className={`plan-action-btn ${plan.buttonVariant}`}>
+                  <button
+                    className={`plan-action-btn ${plan.buttonVariant}`}
+                    onClick={() => setFeedbackModal(plan.id)}
+                  >
                     {plan.buttonText}
                   </button>
                 </div>
@@ -425,6 +514,14 @@ const UpgradePlanPage = () => {
         </div>
 
       </div>
+
+      {feedbackModal && (
+        <PilotFeedbackModal
+          plan={feedbackModal}
+          onClose={() => setFeedbackModal(null)}
+          onAccept={() => navigate('/dashboard')}
+        />
+      )}
     </div>
   );
 };

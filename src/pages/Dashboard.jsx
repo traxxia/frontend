@@ -58,24 +58,167 @@ const formatFileSize = (bytes) => {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
 };
 
-const getFileDetails = (file) => {
-  const sizeStr = formatFileSize(file.size);
-  const ext = file.name.split('.').pop().toLowerCase();
-  if (ext === 'pdf') {
-    const pages = Math.max(1, Math.round((file.size % 97) + 5)); 
-    return `${sizeStr} · ${pages} pages`;
-  } else if (ext === 'pptx' || ext === 'ppt') {
-    const slides = Math.max(1, Math.round((file.size % 79) + 8));
-    return `${sizeStr} · ${slides} slides`;
-  } else if (ext === 'docx' || ext === 'doc') {
-    const pages = Math.max(1, Math.round((file.size % 47) + 3));
-    return `${sizeStr} · ${pages} pages`;
-  } else if (ext === 'xlsx' || ext === 'xls' || ext === 'csv') {
-    const sheets = Math.max(1, Math.round((file.size % 7) + 1));
-    return `${sizeStr} · ${sheets} ${sheets === 1 ? 'sheet' : 'sheets'}`;
+// Returns a stable key for a File object to use in the page-count map
+const fileKey = (file) => `${file.name}__${file.size}`;
+
+// ── ZIP helpers ───────────────────────────────────────────────────────────────
+// All Office Open XML files (.docx, .xlsx, .pptx, …) are ZIP archives.
+// The correct way to parse a ZIP is:
+//   1. Find the End-of-Central-Directory (EOCD) record at the tail of the file.
+//   2. Read the central-directory offset from the EOCD.
+//   3. Walk only the real central-directory entries — never scan raw bytes
+//      for the signature, because compressed payloads can contain it too.
+
+/** Find the EOCD offset. Returns -1 if not a valid ZIP. */
+const findEOCD = (view, length) => {
+  // EOCD signature: PK\x05\x06 = 0x06054B50 (little-endian)
+  // Minimum file size with EOCD is 22 bytes; comment can be up to 65535 bytes.
+  const start = Math.max(0, length - 22 - 65535);
+  for (let i = length - 22; i >= start; i--) {
+    if (view.getUint32(i, true) === 0x06054B50) return i;
   }
+  return -1;
+};
+
+/** Count central-directory entries whose filename starts with `prefix`. */
+const countZipFilesByPrefix = (bytes, prefix) => {
+  const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+  const eocd = findEOCD(view, bytes.length);
+  if (eocd === -1) return 0;
+
+  const numEntries = view.getUint16(eocd + 8,  true); // total entries
+  let   pos        = view.getUint32(eocd + 16, true); // central-dir offset
+  const enc        = new TextEncoder().encode(prefix);
+  let   count      = 0;
+
+  for (let e = 0; e < numEntries && pos + 46 <= bytes.length; e++) {
+    if (view.getUint32(pos, true) !== 0x02014B50) break; // PK\x01\x02
+    const fnLen      = view.getUint16(pos + 28, true);
+    const extraLen   = view.getUint16(pos + 30, true);
+    const commentLen = view.getUint16(pos + 32, true);
+
+    if (fnLen >= enc.length) {
+      let match = true;
+      for (let j = 0; j < enc.length; j++) {
+        if (bytes[pos + 46 + j] !== enc[j]) { match = false; break; }
+      }
+      if (match) count++;
+    }
+    pos += 46 + fnLen + extraLen + commentLen;
+  }
+  return count;
+};
+
+/** Decompress and return the text content of a named entry in a ZIP archive. */
+const readZipEntry = async (bytes, targetName) => {
+  const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+  const eocd = findEOCD(view, bytes.length);
+  if (eocd === -1) return null;
+
+  const numEntries = view.getUint16(eocd + 8,  true);
+  let   pos        = view.getUint32(eocd + 16, true);
+
+  for (let e = 0; e < numEntries && pos + 46 <= bytes.length; e++) {
+    if (view.getUint32(pos, true) !== 0x02014B50) break;
+    const compMethod  = view.getUint16(pos + 10, true);
+    const compSize    = view.getUint32(pos + 20, true);
+    const fnLen       = view.getUint16(pos + 28, true);
+    const extraLen    = view.getUint16(pos + 30, true);
+    const commentLen  = view.getUint16(pos + 32, true);
+    const localOffset = view.getUint32(pos + 42, true);
+    const name        = new TextDecoder().decode(bytes.slice(pos + 46, pos + 46 + fnLen));
+
+    if (name === targetName) {
+      // Jump to the local file header to get the exact data start
+      const localFNLen  = view.getUint16(localOffset + 26, true);
+      const localExtLen = view.getUint16(localOffset + 28, true);
+      const dataStart   = localOffset + 30 + localFNLen + localExtLen;
+      const compData    = bytes.slice(dataStart, dataStart + compSize);
+
+      if (compMethod === 0) {
+        // Stored – no compression
+        return new TextDecoder().decode(compData);
+      }
+      if (compMethod === 8 && typeof DecompressionStream !== 'undefined') {
+        // DEFLATE – decompress with browser-native API
+        const ds     = new DecompressionStream('deflate-raw');
+        const writer = ds.writable.getWriter();
+        writer.write(compData);
+        writer.close();
+        const reader = ds.readable.getReader();
+        const chunks = [];
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          chunks.push(value);
+        }
+        const out = new Uint8Array(chunks.reduce((s, c) => s + c.length, 0));
+        let off = 0;
+        for (const c of chunks) { out.set(c, off); off += c.length; }
+        return new TextDecoder().decode(out);
+      }
+      return null; // unsupported compression method
+    }
+    pos += 46 + fnLen + extraLen + commentLen;
+  }
+  return null;
+};
+// ── End ZIP helpers ───────────────────────────────────────────────────────────
+
+// Async: extract real page / slide / sheet count using only browser-native APIs.
+const computePageCount = async (file) => {
+  const ext = file.name.split('.').pop().toLowerCase();
+  try {
+    // ── PDF ──────────────────────────────────────────────────────────────────
+    if (ext === 'pdf') {
+      const buf  = await file.arrayBuffer();
+      const text = new TextDecoder('latin1').decode(buf);
+      // Each page dictionary has "/Type /Page" (not "/Pages" which is the tree root)
+      const matches = text.match(/\/Type\s*\/Page[^s]/g);
+      const count   = matches ? matches.length : 0;
+      return count > 0 ? { count, unit: count === 1 ? 'page' : 'pages' } : null;
+    }
+
+    // ── Office Open XML (ZIP) ─────────────────────────────────────────────────
+    if (['pptx', 'ppt', 'xlsx', 'xls', 'docx', 'doc'].includes(ext)) {
+      const buf   = await file.arrayBuffer();
+      const bytes = new Uint8Array(buf);
+
+      if (ext === 'pptx' || ext === 'ppt') {
+        // Each slide is a separate file: ppt/slides/slide1.xml, slide2.xml, …
+        const count = countZipFilesByPrefix(bytes, 'ppt/slides/slide');
+        return count > 0 ? { count, unit: count === 1 ? 'slide' : 'slides' } : null;
+      }
+
+      if (ext === 'xlsx' || ext === 'xls') {
+        // Each worksheet is a separate file: xl/worksheets/sheet1.xml, …
+        const count = countZipFilesByPrefix(bytes, 'xl/worksheets/sheet');
+        return count > 0 ? { count, unit: count === 1 ? 'sheet' : 'sheets' } : null;
+      }
+
+      if (ext === 'docx' || ext === 'doc') {
+        // docProps/app.xml (written by Word) stores <Pages>N</Pages>
+        const xml   = await readZipEntry(bytes, 'docProps/app.xml');
+        const match = xml && xml.match(/<Pages>(\d+)<\/Pages>/i);
+        if (match) {
+          const count = parseInt(match[1], 10);
+          return count > 0 ? { count, unit: count === 1 ? 'page' : 'pages' } : null;
+        }
+        return null;
+      }
+    }
+  } catch (_) {
+    // Silently fall back to showing only file size
+  }
+  return null;
+};
+
+const getFileDetails = (file, pageInfo) => {
+  const sizeStr = formatFileSize(file.size);
+  if (pageInfo) return `${sizeStr} \u00b7 ${pageInfo.count} ${pageInfo.unit}`;
   return sizeStr;
 };
+
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -121,6 +264,7 @@ const Dashboard = () => {
 
   const [newlyCreatedBusiness, setNewlyCreatedBusiness] = useState(null);
   const [selectedFiles, setSelectedFiles] = useState([]);
+  const [filePageCounts, setFilePageCounts] = useState({});
   const [isUploadingFiles, setIsUploadingFiles] = useState(false);
   const fileInputRef = useRef(null);
   const [businessFormData, setBusinessFormData] = useState({
@@ -187,6 +331,20 @@ const Dashboard = () => {
   const [businessToDelete, setBusinessToDelete] = useState(null);
   const [isProcessingDelete, setIsProcessingDelete] = useState(false);
   const [activeSlide, setActiveSlide] = useState(0);
+
+  // Compute real page/slide/sheet counts asynchronously whenever files are added
+  useEffect(() => {
+    let cancelled = false;
+    const newFiles = selectedFiles.filter(f => !(fileKey(f) in filePageCounts));
+    if (newFiles.length === 0) return;
+    newFiles.forEach(async (file) => {
+      const info = await computePageCount(file);
+      if (cancelled) return;
+      setFilePageCounts(prev => ({ ...prev, [fileKey(file)]: info }));
+    });
+    return () => { cancelled = true; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedFiles]);
 
   const [accessModalMessage, setAccessModalMessage] = useState('');
   const [accessModalSubMessage, setAccessModalSubMessage] = useState('');
@@ -377,6 +535,7 @@ const Dashboard = () => {
         has_no_website: false
       });
       setSelectedFiles([]);
+      setFilePageCounts({});
 
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['businesses'] }),
@@ -433,6 +592,7 @@ const Dashboard = () => {
       has_no_website: false
     });
     setSelectedFiles([]);
+    setFilePageCounts({});
     clearErrors();
     setFormErrors({});
   }, [clearErrors, closeModal]);
@@ -476,7 +636,17 @@ const Dashboard = () => {
   }, [addToast]);
 
   const handleRemoveFile = useCallback((indexToRemove) => {
-    setSelectedFiles(prev => prev.filter((_, idx) => idx !== indexToRemove));
+    setSelectedFiles(prev => {
+      const removed = prev[indexToRemove];
+      if (removed) {
+        setFilePageCounts(counts => {
+          const next = { ...counts };
+          delete next[fileKey(removed)];
+          return next;
+        });
+      }
+      return prev.filter((_, idx) => idx !== indexToRemove);
+    });
   }, []);
 
   const handleSubmitBusiness = useCallback((e) => {
@@ -852,7 +1022,7 @@ const Dashboard = () => {
             <Modal.Header closeButton={!(isCreatingBusiness || isUploadingFiles)}>
               <Modal.Title>{t('create_new_business', 'Create New Business')}</Modal.Title>
             </Modal.Header>
-            <Form onSubmit={handleSubmitBusiness} noValidate>
+            <Form onSubmit={handleSubmitBusiness} noValidate className="form-modal">
               <fieldset disabled={isCreatingBusiness || isUploadingFiles}>
                 <Modal.Body>
                   <Form.Group className="mb-3">
@@ -910,15 +1080,14 @@ const Dashboard = () => {
                         {t('i_dont_have_website', "I don't have a website yet")}
                       </label>
                     </div>
-                    <div className="info-box-blue mt-2 w-100">
+                    {/* <div className="info-box-blue mt-2 w-100">
                       <strong>{t('trax_will_read_your_website_bold', 'Trax will read your website')}</strong> {t('trax_will_read_your_website_rest', "and ask only for what's still missing.")}
-                    </div>
+                    </div> */}
                   </Form.Group>
 
-                  <div className="create-business-doc-upload mt-4">
+                  <div className="create-business-doc-upload mt-2">
                     <div className="doc-upload-header d-flex justify-content-between align-items-center">
-                      <div className="d-flex align-items-center gap-2">
-                        <FileText size={16} className="text-primary" />
+                      <div className="d-flex align-items-center gap-2"> 
                         <span className="doc-upload-title">{t('add_documents_optional', 'Add documents (optional)')}</span>
                         {selectedFiles.length > 0 && (
                           <span className="files-count-badge">
@@ -930,7 +1099,7 @@ const Dashboard = () => {
                     
                     <div className="doc-upload-body mt-2">
                       <div className="info-box-blue mb-3">
-                        <strong>Trax values context.</strong> Upload your annual plan, board deck, or financials and Trax will auto-fill the questions below — the more it has, the sharper the diagnosis.
+                        Upload your annual plan, board deck, or financials and Trax will auto-fill the questions below — the more it has, the sharper the diagnosis.
                       </div>
                       
                       {selectedFiles.length > 0 && (
@@ -948,7 +1117,7 @@ const Dashboard = () => {
                                       {file.name}
                                     </span>
                                     <span className="selected-file-meta">
-                                      {getFileDetails(file)}
+                                      {getFileDetails(file, filePageCounts[fileKey(file)])}
                                     </span>
                                   </div>
                                 </div>
@@ -992,19 +1161,23 @@ const Dashboard = () => {
 
                   {businessError && <Alert variant="danger" className="mb-3">{businessError}</Alert>}
                 </Modal.Body>
-                <Modal.Footer>
-                  <button type="button" className="btn-cancel" onClick={handleCloseCreateModal}>
-                    {t('cancel', 'Cancel')}
-                  </button>
-                  <button 
-                    type="submit" 
-                    className="btn-continue" 
-                    disabled={isCreatingBusiness || isUploadingFiles || !businessFormData.business_name.trim() || (!businessFormData.has_no_website && !businessFormData.website.trim())}
-                  >
-                    {isCreatingBusiness || isUploadingFiles ? <Spinner size="sm" /> : (t('continue_with_trax', 'Continue with Trax') + ' →')}
-                  </button>
-                </Modal.Footer>
               </fieldset>
+              <Modal.Footer>
+                <button type="button" className="btn-cancel" onClick={handleCloseCreateModal}>
+                  {t('cancel', 'Cancel')}
+                </button>
+                <button
+                  type="button"
+                  className="btn-continue"
+                  disabled={isCreatingBusiness || isUploadingFiles || !businessFormData.business_name.trim() || (!businessFormData.has_no_website && !businessFormData.website.trim())}
+                  onClick={() => {
+                    if (!validateForm()) return;
+                    createBusiness();
+                  }}
+                >
+                  {isCreatingBusiness || isUploadingFiles ? <Spinner size="sm" /> : (t('letsBegin', `Let's Begin`) + ' \u2192')}
+                </button>
+              </Modal.Footer>
             </Form>
           </Modal>
 
@@ -1035,6 +1208,3 @@ const Dashboard = () => {
 };
 
 export default Dashboard;
-
-
-
