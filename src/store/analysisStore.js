@@ -43,6 +43,12 @@ const initialState = {
   lastFetchedBusinessId: null,
   lastSkipFinancial: false,
   lastSkipQuestions: false,
+  // Regeneration/streaming flags — must be reset on business switch so the
+  // "Generating Insights" loading state from a previous business does not
+  // bleed into a newly selected business's insights page.
+  regenerating: {},
+  streamingText: {},
+  isStreaming: {},
 };
 
 const getApiService = () => {

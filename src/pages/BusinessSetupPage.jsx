@@ -202,8 +202,7 @@ const BusinessSetupPage = () => {
     fullSwotData, competitiveAdvantage, strategicData, expandedCapability,
     strategicRadar, productivityData, maturityData, competitiveLandscape,
     coreAdjacency, profitabilityData, growthTrackerData, liquidityEfficiencyData,
-    investmentPerformanceData, leverageRiskData,
-    isRegenerating: isTypeRegenerating,
+    investmentPerformanceData, leverageRiskData, regenerating,
   } = useAnalysisStore(useShallow(state => ({
     questions: state.questions,
     questionsLoaded: state.questionsLoaded,
@@ -232,13 +231,14 @@ const BusinessSetupPage = () => {
     liquidityEfficiencyData: state.liquidityEfficiencyData,
     investmentPerformanceData: state.investmentPerformanceData,
     leverageRiskData: state.leverageRiskData,
-    isRegenerating: state.isRegenerating,
+    regenerating: state.regenerating,
     setQuestionsLoaded: state.setQuestionsLoaded,
     initializeBusinessData: state.initializeBusinessData,
     resetAnalysis: state.resetAnalysis,
   })));
 
   // Regenerating flag aliases
+  const isTypeRegenerating = (type) => regenerating[type] || false;
   const isAnalysisRegenerating = isTypeRegenerating('swot') || isTypeRegenerating('porters') || isTypeRegenerating('pestel') || isTypeRegenerating('initial') || isTypeRegenerating('essential') || isTypeRegenerating('advanced');
   const isStrategicRegenerating = isTypeRegenerating('strategic');
   const isFullSwotRegenerating = isTypeRegenerating('fullSwot');
@@ -353,6 +353,19 @@ const BusinessSetupPage = () => {
   useEffect(() => {
     if (selectedBusinessId) {
       resetAnalysis(); // Reset old business analysis data immediately on business change
+      
+      // Clear global API loading states so spinners from the previous business don't carry over
+      const uiStore = useUIStore.getState();
+      const analysisKeys = [
+        'find', 'porter-analysis', 'pestel-analysis', 'full-swot-portfolio', 
+        'competitive-advantage', 'expanded-capability-heatmap', 'strategic-positioning-radar', 
+        'productivity-metrics', 'maturity-scoring', 'simple-swot-portfolio', 'core-adjacency', 
+        'excel-analysis-profitability', 'excel-analysis-growth', 'excel-analysis-liquidity', 
+        'excel-analysis-investment', 'excel-analysis-leverage'
+      ];
+      analysisKeys.forEach(key => {
+        if (uiStore.loadingStates[key]) uiStore.setLoading(key, false);
+      });
       // Clear the local fetch cache when business changes so we re-fetch everything for the new business
       fetchedAnalysisKeys.current.clear();
       // Only fetch if questions are NOT going to be fetched by the question loader (optimization)
@@ -785,7 +798,10 @@ const BusinessSetupPage = () => {
         mergedAnswers.uploadedFile = uploadedFileForAnalysis;
       }
  
+      const currentBizId = selectedBusinessId;
       await storeRegeneratePhase(targetPhase, storeQuestions, mergedAnswers, selectedBusinessId, showToastMessage);
+      
+      if (useBusinessStore.getState().selectedBusinessId !== currentBizId) return;
       if (alsoRegenerateStrategic) {
         await handleStrategicAnalysisRegenerate(true);
       }
@@ -875,6 +891,7 @@ const BusinessSetupPage = () => {
       }
 
       isRegeneratingRef.current = true;
+      const currentBizId = selectedBusinessId;
       try {
         if (options?.onlyFinancial) {
           await handleRegeneratePhase('financial', false, { ...options, skipConfirmation: true });
@@ -914,6 +931,7 @@ const BusinessSetupPage = () => {
  
         // 1. Regenerate unlocked phases sequentially
         for (const phase of phasesToRegenerate) { 
+          if (useBusinessStore.getState().selectedBusinessId !== currentBizId) return;
           await handleRegeneratePhase(phase, false, { skipConfirmation: true });
         }
  
@@ -932,15 +950,18 @@ const BusinessSetupPage = () => {
           );
  
         if (shouldIncludeFinancial) { 
+          if (useBusinessStore.getState().selectedBusinessId !== currentBizId) return;
           await handleRegeneratePhase('financial', false, { ...options, skipConfirmation: true });
         }
  
         // 3. Finally, regenerate strategic analysis if requested (e.g. for "Apply All")
         if (options?.alsoRegenerateStrategic) { 
+          if (useBusinessStore.getState().selectedBusinessId !== currentBizId) return;
           await handleStrategicAnalysisRegenerate(true);
         }
         
         // Final sync to ensure UI is perfectly updated with all regenerated results
+        if (useBusinessStore.getState().selectedBusinessId !== currentBizId) return;
         await fetchAnalysisData(selectedBusinessId, true, true, true);
         
         //showToastMessage(t('regeneration_completed'), 'success');

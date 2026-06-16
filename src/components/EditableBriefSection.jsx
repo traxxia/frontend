@@ -11,6 +11,7 @@ import '../styles/CompanyManagement.css';
 import '../styles/docIntelligence.css';
 import { useAuthStore } from '../store/authStore';
 import { useAnalysisStore } from '../store/analysisStore';
+import { useBusinessStore } from '../store/businessStore';
 import DOMPurify from 'dompurify';
 import RichTextEditor from './RichTextEditor';
 import { markdownToHtml } from '../utils/markdownHelper';
@@ -1350,6 +1351,12 @@ const EditableBriefSection = ({
         }
       });
 
+      const currentStoreBusinessId = useBusinessStore.getState().selectedBusinessId;
+      
+      if (currentStoreBusinessId !== selectedBusinessId) {
+        return;
+      }
+
       if (onAnalysisRegenerate) {
         onAnalysisRegenerate({
           updatedQuestionIds,
@@ -1557,6 +1564,12 @@ const EditableBriefSection = ({
             : f
         )
       );
+
+      const currentStoreBusinessId = useBusinessStore.getState().selectedBusinessId;
+      
+      if (currentStoreBusinessId !== selectedBusinessId) {
+        return;
+      }
 
       // 3. Trigger full insights & strategic & financial regeneration
       if (onAnalysisRegenerate) {

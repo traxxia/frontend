@@ -55,7 +55,8 @@
   display: flex;
   overflow: visible !important;
   height: auto !important;
-  max-width: 1400px;
+  max-width: 1200px;
+  width: 100%;
   margin: 0 auto;
 }
 
@@ -68,6 +69,7 @@
 
 .ob-flow-right-panel {
   flex: 1;
+  min-width: 0;
   padding: 24px 0px;
   overflow-y: visible;
 }
@@ -180,13 +182,10 @@
   margin-bottom: 20px;
 }
 
-.ob-flow-sublabel-mb {
+.ob-flow-sublabel-mb, .ob-flow-sublabel-mb-24  {
   margin-bottom: 16px;
-}
-
-.ob-flow-sublabel-mb-24 {
-  margin-bottom: 24px;
-}
+  margin-top: 10px;
+} 
 
 .ob-flow-row {
   display: flex;
@@ -227,7 +226,7 @@
 }
 .ob-flow-submit-section{
     margin-top: 6px;
-    padding: 18px;
+    padding: 18px 0px 0px;
     background: white;
     border: 1px solid var(--color-border);
     border-radius: 12px;

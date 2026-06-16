@@ -21,7 +21,7 @@ const OnboardingFlowPage = () => {
   const pmfData = location.state?.pmfData;
   const [expandedSection, setExpandedSection] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isOnboardingStarted, setIsOnboardingStarted] = useState(!!pmfData?.letsBeginClicked || false);
+  const [isOnboardingStarted, setIsOnboardingStarted] = useState(true);
   
   // Step 1
   const [purpose, setPurpose] = useState(pmfData?.businessPurpose?.purpose || '');
@@ -210,9 +210,9 @@ const OnboardingFlowPage = () => {
     setCompeteOptions(prev => {
       const isChecked = prev[option];
       if (!isChecked) {
-        // Enforce max 2
+        // Enforce max 3
         const selectedCount = Object.values(prev).filter(Boolean).length;
-        if (selectedCount >= 2) return prev;
+        if (selectedCount >= 3) return prev;
       }
       return { ...prev, [option]: !isChecked };
     });
@@ -381,10 +381,10 @@ const OnboardingFlowPage = () => {
               <div className="onboarding-chat-message">
                 <div className="bubble-avatar">TX</div>
                 <div className="bubble-content">
-                  You can fill out the questions yourself — or add documents (annual plan, board deck, financials) and I'll read them and auto-fill what I can.
+                  Here are the 5 questions I need to draft your diagnosis. Take a look and review them in any order.
                 </div>
               </div>
-              <div className="onboarding-chat-highlight-card">
+              {/* <div className="onboarding-chat-highlight-card">
                 <strong>I value context.</strong> The more you share, the sharper the diagnosis. Upload anything you have.
               </div>
               <div className="onboarding-chat-message">
@@ -392,7 +392,7 @@ const OnboardingFlowPage = () => {
                 <div className="bubble-content">
                   Great. Here are the 5 questions I need to draft your diagnosis. Answer in any order — or add documents and I'll auto-fill what I can.
                 </div>
-              </div>
+              </div> */}
               {chatMessages.map((msg, idx) => (
                 <div key={idx} className={`onboarding-chat-message ${msg.role === 'user' ? 'user-message' : ''}`}>
                   <div className="bubble-avatar">
@@ -621,7 +621,7 @@ const OnboardingFlowPage = () => {
                 </div>
                 {expandedSection === 5 && (
                   <div className="ob-question-body">
-                    <div className="ob-sublabel ob-flow-sublabel-mb">Select up to 2. These are the dimensions you'd say you actually win on today — not aspirations.</div>
+                    <div className="ob-sublabel ob-flow-sublabel-mb">Select up to 3. These are the dimensions you'd say you actually win on today — not aspirations.</div>
                     <div className="ob-flow-compete-list">
                       {Object.entries({
                         price: 'Price',
