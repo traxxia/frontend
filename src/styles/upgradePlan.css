@@ -183,8 +183,12 @@
 }
 
 .pricing-card.recommended {
-  border: 2px solid #0277bd;
+  border: 1px solid #0284c7;
   margin-top: -12px; /* Pull it up slightly to emphasize */
+}
+
+.pricing-card.recommended .plan-name {
+  color: #0284c7;
 }
 
 .card-top-badge {
@@ -211,11 +215,18 @@
 .plan-name {
   font-size: 12px;
   font-weight: 700;
-  color: #6b7280;
+  color: #334155;
   letter-spacing: 1.5px;
   margin: 0 0 16px 0;
 }
-
+.plan-name::after {
+  content: "";
+  display: block;
+  width: 26px;
+  height: 2px;
+  background: #0284c7;
+  margin-top: 9px;
+}
 .plan-tagline {
   display: inline-flex;
   align-items: center;
@@ -231,13 +242,7 @@
   white-space: nowrap;
 }
 
-.plan-tagline .dot {
-  width: 5px;
-  height: 5px;
-  background-color: #0284c7;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
+
 
 .plan-pricing {
   margin-bottom: 24px;
@@ -323,7 +328,7 @@
 
 .feature-text {
   font-size: 13px;
-  color: #4b5563;
+  color: #111827;
   line-height: 1.4;
 }
 
@@ -401,7 +406,7 @@
 
 .comparison-subtitle {
   font-size: 14px;
-  color: #6b7280;
+  color: #4b5563;
   margin: 0;
 }
 
@@ -443,7 +448,7 @@
 .comparison-table td:first-child {
   text-align: left;
   font-size: 13px;
-  color: #374151;
+  color: #111827;
   padding-left: 24px;
 }
 
@@ -453,6 +458,11 @@
 
 .comparison-table .plan-col {
   width: 16.25%;
+}
+
+.comparison-table .plan-name::after {
+  margin-left: auto;
+  margin-right: auto;
 }
 
 /* The Pro column highlight */
@@ -534,11 +544,13 @@
 
 .comparison-table td {
   font-size: 13px;
-  color: #4b5563;
+  color: #111827;
 }
 
 .comparison-table .feature-check {
-  color: #10b981; /* Green check */
+  color: #166534;
+  font-size: 15px;
+  font-weight: 700;
 }
 
 .comparison-table .feature-dash {
