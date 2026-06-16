@@ -456,7 +456,7 @@ const OnboardingFlowPage = () => {
                 <div className="ob-question-header" onClick={() => setExpandedSection(expandedSection === 1 ? null : 1)}>
                   <div className="ob-question-left">
                     <div className={`ob-radio-circle ${(purpose) ? 'answered' : ''}`}>
-                      {(purpose) && <Check size={14} color="#fff" strokeWidth={3} />}
+
                     </div>
                     <span className="ob-question-num">1</span>
                     <span className="ob-question-text">What does the business actually do?</span>
@@ -468,11 +468,11 @@ const OnboardingFlowPage = () => {
                     <div className="ob-form-group ob-flow-form-group margin-b-20">
                       <label>Business purpose <span className="required">*</span></label>
                       <div className="ob-sublabel">One line — what you do and for whom.</div>
-                      <input 
-                        type="text" 
+                      <textarea 
                         value={purpose}
                         onChange={(e) => setPurpose(e.target.value)}
                         placeholder="e.g. We make premium ice cream sold through grocery and convenience channels in the US."
+                        rows={2}
                       />
                     </div>
                     <div className="ob-form-group">
@@ -494,7 +494,7 @@ const OnboardingFlowPage = () => {
                 <div className="ob-question-header" onClick={() => setExpandedSection(expandedSection === 2 ? null : 2)}>
                   <div className="ob-question-left">
                     <div className={`ob-radio-circle ${(country) ? 'answered' : ''}`}>
-                      {(country) && <Check size={14} color="#fff" strokeWidth={3} />}
+
                     </div>
                     <span className="ob-question-num">2</span>
                     <span className="ob-question-text">Where is the business based?</span>
@@ -533,7 +533,7 @@ const OnboardingFlowPage = () => {
                 <div className="ob-question-header" onClick={() => setExpandedSection(expandedSection === 3 ? null : 3)}>
                   <div className="ob-question-left">
                     <div className={`ob-radio-circle ${(primaryIndustry) ? 'answered' : ''}`}>
-                      {(primaryIndustry) && <Check size={14} color="#fff" strokeWidth={3} />}
+
                     </div>
                     <span className="ob-question-num">3</span>
                     <span className="ob-question-text">What industry is the business in?</span>
@@ -561,7 +561,7 @@ const OnboardingFlowPage = () => {
                 <div className="ob-question-header" onClick={() => setExpandedSection(expandedSection === 4 ? null : 4)}>
                   <div className="ob-question-left">
                     <div className={`ob-radio-circle ${step4Completed ? 'answered' : ''}`}>
-                      {step4Completed && <Check size={14} color="#fff" strokeWidth={3} />}
+
                     </div>
                     <span className="ob-question-num">4</span>
                     <span className="ob-question-text">What is your core?</span>
@@ -612,7 +612,7 @@ const OnboardingFlowPage = () => {
                 <div className="ob-question-header" onClick={() => setExpandedSection(expandedSection === 5 ? null : 5)}>
                   <div className="ob-question-left">
                     <div className={`ob-radio-circle ${(Object.values(competeOptions).some(Boolean)) ? 'answered' : ''}`}>
-                      {(Object.values(competeOptions).some(Boolean)) && <Check size={14} color="#fff" strokeWidth={3} />}
+
                     </div>
                     <span className="ob-question-num">5</span>
                     <span className="ob-question-text">Where do you compete?</span>
@@ -632,28 +632,34 @@ const OnboardingFlowPage = () => {
                         scale: 'Scale',
                         brand: 'Brand',
                         other: 'Other'
-                      }).map(([key, label]) => (
-                        <div key={key} className="ob-checkbox-wrapper">
-                          <label className="ob-checkbox-container ob-flow-checkbox-container m-0">
-                            <input 
-                              type="checkbox" 
-                              className="ob-flow-checkbox-input"
-                              checked={competeOptions[key]} 
-                              onChange={() => handleCompeteToggle(key)} 
-                            />
-                            <span className="ob-flow-checkbox-label">{label}</span>
-                          </label>
-                          {key === 'other' && competeOptions.other && (
-                            <input 
-                              type="text" 
-                              className="ob-flow-input mt-2" 
-                              placeholder="Please specify" 
-                              value={otherCompeteValue}
-                              onChange={(e) => setOtherCompeteValue(e.target.value)}
-                            />
-                          )}
-                        </div>
-                      ))}
+                      }).map(([key, label]) => {
+                        const isSelected = competeOptions[key];
+                        const selectedCount = Object.values(competeOptions).filter(Boolean).length;
+                        const isFaded = selectedCount >= 3 && !isSelected;
+
+                        return (
+                          <div key={key} className="ob-checkbox-wrapper" style={{ opacity: isFaded ? 0.4 : 1, pointerEvents: isFaded ? 'none' : 'auto', transition: 'opacity 0.2s ease' }}>
+                            <label className="ob-checkbox-container ob-flow-checkbox-container m-0">
+                              <input 
+                                type="checkbox" 
+                                className="ob-flow-checkbox-input"
+                                checked={competeOptions[key]} 
+                                onChange={() => handleCompeteToggle(key)} 
+                              />
+                              <span className="ob-flow-checkbox-label">{label}</span>
+                            </label>
+                            {key === 'other' && competeOptions.other && (
+                              <input 
+                                type="text" 
+                                className="ob-flow-input mt-2" 
+                                placeholder="Please specify" 
+                                value={otherCompeteValue}
+                                onChange={(e) => setOtherCompeteValue(e.target.value)}
+                              />
+                            )}
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
                 )}

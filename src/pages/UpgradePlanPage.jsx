@@ -131,7 +131,7 @@ const UpgradePlanPage = () => {
       id: 'pro',
       name: 'PRO',
       badge: 'RECOMMENDED',
-      tagline: 'FOUNDING MEMBER - FIRST 20',
+      tagline: '• FOUNDING MEMBER · FIRST 20',
       priceMonthly: 245,
       priceAnnual: 225,
       originalPriceMonthly: 325,
@@ -151,7 +151,7 @@ const UpgradePlanPage = () => {
     {
       id: 'strategist',
       name: 'STRATEGIST',
-      tagline: 'FOUNDING MEMBER - FIRST 20',
+      tagline: '• FOUNDING MEMBER · FIRST 20',
       priceMonthly: 495,
       priceAnnual: 454,
       originalPriceMonthly: 660,
@@ -243,7 +243,7 @@ const UpgradePlanPage = () => {
                 
                 {plan.tagline && (
                   <div className="plan-tagline">
-                    <span className="dot"></span> {plan.tagline}
+                    {plan.tagline}
                   </div>
                 )}
 
@@ -376,59 +376,59 @@ const UpgradePlanPage = () => {
                 </tr>
                 <tr>
                   <td>Executive Summary (AHA, Where, How)</td>
-                  <td><Check size={16} className="feature-check" strokeWidth={3} /></td>
-                  <td className="pro-col"><Check size={16} className="feature-check" strokeWidth={3} /></td>
-                  <td><Check size={16} className="feature-check" strokeWidth={3} /></td>
-                  <td><Check size={16} className="feature-check" strokeWidth={3} /></td>
+                  <td><span className="feature-check">✓</span></td>
+                  <td className="pro-col"><span className="feature-check">✓</span></td>
+                  <td><span className="feature-check">✓</span></td>
+                  <td><span className="feature-check">✓</span></td>
                 </tr>
                 <tr>
                   <td>Top 5 strategic priorities</td>
-                  <td><Check size={16} className="feature-check" strokeWidth={3} /></td>
-                  <td className="pro-col"><Check size={16} className="feature-check" strokeWidth={3} /></td>
-                  <td><Check size={16} className="feature-check" strokeWidth={3} /></td>
-                  <td><Check size={16} className="feature-check" strokeWidth={3} /></td>
+                  <td><span className="feature-check">✓</span></td>
+                  <td className="pro-col"><span className="feature-check">✓</span></td>
+                  <td><span className="feature-check">✓</span></td>
+                  <td><span className="feature-check">✓</span></td>
                 </tr>
                 <tr>
                   <td>S.T.R.A.T.E.G.I.C. diagnostic</td>
-                  <td><Check size={16} className="feature-check" strokeWidth={3} /></td>
-                  <td className="pro-col"><Check size={16} className="feature-check" strokeWidth={3} /></td>
-                  <td><Check size={16} className="feature-check" strokeWidth={3} /></td>
-                  <td><Check size={16} className="feature-check" strokeWidth={3} /></td>
+                  <td><span className="feature-check">✓</span></td>
+                  <td className="pro-col"><span className="feature-check">✓</span></td>
+                  <td><span className="feature-check">✓</span></td>
+                  <td><span className="feature-check">✓</span></td>
                 </tr>
                 <tr>
                   <td>Basic SWOT</td>
-                  <td><Check size={16} className="feature-check" strokeWidth={3} /></td>
-                  <td className="pro-col"><Check size={16} className="feature-check" strokeWidth={3} /></td>
-                  <td><Check size={16} className="feature-check" strokeWidth={3} /></td>
-                  <td><Check size={16} className="feature-check" strokeWidth={3} /></td>
+                  <td><span className="feature-check">✓</span></td>
+                  <td className="pro-col"><span className="feature-check">✓</span></td>
+                  <td><span className="feature-check">✓</span></td>
+                  <td><span className="feature-check">✓</span></td>
                 </tr>
                 <tr>
                   <td>PESTEL Analysis</td>
                   <td className="feature-dash">—</td>
-                  <td className="pro-col"><Check size={16} className="feature-check" strokeWidth={3} /></td>
-                  <td><Check size={16} className="feature-check" strokeWidth={3} /></td>
-                  <td><Check size={16} className="feature-check" strokeWidth={3} /></td>
+                  <td className="pro-col"><span className="feature-check">✓</span></td>
+                  <td><span className="feature-check">✓</span></td>
+                  <td><span className="feature-check">✓</span></td>
                 </tr>
                 <tr>
                   <td>Porter's Five Forces</td>
                   <td className="feature-dash">—</td>
-                  <td className="pro-col"><Check size={16} className="feature-check" strokeWidth={3} /></td>
-                  <td><Check size={16} className="feature-check" strokeWidth={3} /></td>
-                  <td><Check size={16} className="feature-check" strokeWidth={3} /></td>
+                  <td className="pro-col"><span className="feature-check">✓</span></td>
+                  <td><span className="feature-check">✓</span></td>
+                  <td><span className="feature-check">✓</span></td>
                 </tr>
                 <tr>
                   <td>NPS & Customer Journey</td>
                   <td className="feature-dash">—</td>
-                  <td className="pro-col"><Check size={16} className="feature-check" strokeWidth={3} /></td>
-                  <td><Check size={16} className="feature-check" strokeWidth={3} /></td>
-                  <td><Check size={16} className="feature-check" strokeWidth={3} /></td>
+                  <td className="pro-col"><span className="feature-check">✓</span></td>
+                  <td><span className="feature-check">✓</span></td>
+                  <td><span className="feature-check">✓</span></td>
                 </tr>
                 <tr>
                   <td>BCG Matrix</td>
                   <td className="feature-dash">—</td>
-                  <td className="pro-col"><Check size={16} className="feature-check" strokeWidth={3} /></td>
-                  <td><Check size={16} className="feature-check" strokeWidth={3} /></td>
-                  <td><Check size={16} className="feature-check" strokeWidth={3} /></td>
+                  <td className="pro-col"><span className="feature-check">✓</span></td>
+                  <td><span className="feature-check">✓</span></td>
+                  <td><span className="feature-check">✓</span></td>
                 </tr>
                 <tr>
                   <td>Insights History (archived snapshots)</td>
@@ -439,10 +439,10 @@ const UpgradePlanPage = () => {
                 </tr>
                 <tr>
                   <td>PDF export</td>
-                  <td><Check size={16} className="feature-check" strokeWidth={3} /></td>
-                  <td className="pro-col"><Check size={16} className="feature-check" strokeWidth={3} /></td>
-                  <td><Check size={16} className="feature-check" strokeWidth={3} /></td>
-                  <td><Check size={16} className="feature-check" strokeWidth={3} /></td>
+                  <td><span className="feature-check">✓</span></td>
+                  <td className="pro-col"><span className="feature-check">✓</span></td>
+                  <td><span className="feature-check">✓</span></td>
+                  <td><span className="feature-check">✓</span></td>
                 </tr>
 
                 {/* EXECUTION */}
@@ -456,30 +456,30 @@ const UpgradePlanPage = () => {
                 <tr>
                   <td>Strategic Bets with owners</td>
                   <td className="feature-dash">—</td>
-                  <td className="pro-col"><Check size={16} className="feature-check" strokeWidth={3} /></td>
-                  <td><Check size={16} className="feature-check" strokeWidth={3} /></td>
-                  <td><Check size={16} className="feature-check" strokeWidth={3} /></td>
+                  <td className="pro-col"><span className="feature-check">✓</span></td>
+                  <td><span className="feature-check">✓</span></td>
+                  <td><span className="feature-check">✓</span></td>
                 </tr>
                 <tr>
                   <td>Cadences (MBR, QBR, Annual Planning, Daily Briefing)</td>
                   <td className="feature-dash">—</td>
-                  <td className="pro-col"><Check size={16} className="feature-check" strokeWidth={3} /></td>
-                  <td><Check size={16} className="feature-check" strokeWidth={3} /></td>
-                  <td><Check size={16} className="feature-check" strokeWidth={3} /></td>
+                  <td className="pro-col"><span className="feature-check">✓</span></td>
+                  <td><span className="feature-check">✓</span></td>
+                  <td><span className="feature-check">✓</span></td>
                 </tr>
                 <tr>
                   <td>AI-assisted review</td>
                   <td className="feature-dash">—</td>
-                  <td className="pro-col"><Check size={16} className="feature-check" strokeWidth={3} /></td>
-                  <td><Check size={16} className="feature-check" strokeWidth={3} /></td>
-                  <td><Check size={16} className="feature-check" strokeWidth={3} /></td>
+                  <td className="pro-col"><span className="feature-check">✓</span></td>
+                  <td><span className="feature-check">✓</span></td>
+                  <td><span className="feature-check">✓</span></td>
                 </tr>
                 <tr>
                   <td>Progress history</td>
                   <td className="feature-dash">—</td>
-                  <td className="pro-col"><Check size={16} className="feature-check" strokeWidth={3} /></td>
-                  <td><Check size={16} className="feature-check" strokeWidth={3} /></td>
-                  <td><Check size={16} className="feature-check" strokeWidth={3} /></td>
+                  <td className="pro-col"><span className="feature-check">✓</span></td>
+                  <td><span className="feature-check">✓</span></td>
+                  <td><span className="feature-check">✓</span></td>
                 </tr>
 
                 {/* COLLABORATION & SUPPORT */}
@@ -502,7 +502,7 @@ const UpgradePlanPage = () => {
                   <td className="feature-dash">—</td>
                   <td className="pro-col feature-dash">—</td>
                   <td className="feature-dash">—</td>
-                  <td><Check size={16} className="feature-check" strokeWidth={3} /></td>
+                  <td><span className="check">✓</span></td>
                 </tr>
               </tbody>
             </table>

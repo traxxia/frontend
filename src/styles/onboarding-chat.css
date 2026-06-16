@@ -704,9 +704,13 @@
 /* Completed state for Question Card */
 .ob-question-card.completed {
   border: 1px solid #86efac;
+  background-color: #f0fdf4;
 }
 .ob-question-card.completed .ob-question-header {
-  background-color: #f0fdf4;
+  background-color: transparent;
+}
+.ob-question-card.completed .ob-question-num {
+  color: #16a34a;
 }
 .ob-radio-circle.answered {
   background-color: #16a34a;
@@ -714,6 +718,12 @@
   display: flex;
   align-items: center;
   justify-content: center;
+}
+.ob-radio-circle.answered::after {
+  content: '✓';
+  color: white;
+  font-size: 10px;
+  font-weight: 800;
 }
 
 /* Progress bar */
