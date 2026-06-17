@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
-  Edit3, Check, X, Loader, AlertCircle, Sparkles, Wand2, Upload, FileText, Database, RefreshCw,
-  ChevronDown, ChevronUp, ChevronLeft, ChevronRight, CheckCircle, FileSpreadsheet, HelpCircle, Eye, ArrowRight, BookOpen, Trash2
+  Edit3, Check, X, Loader, Loader2, AlertCircle, Sparkles, Wand2, Upload, FileText, Database, RefreshCw,
+  ChevronDown, ChevronUp, ChevronLeft, ChevronRight, CheckCircle, FileSpreadsheet, HelpCircle, Eye, ArrowRight, BookOpen, Trash2, Maximize2, Minimize2
 } from 'lucide-react';
 import { AnalysisApiService } from '../services/analysisApiService';
 import { answerService } from '../services/answerService';
@@ -144,30 +144,34 @@ const SimpleQuestionCard = ({
   return (
     <div
       ref={el => fieldRefs.current[field.key] = el}
-      className={`sqc-row ${isHighlighted ? 'highlighted' : ''} ${isEditing ? 'sqc-editing' : ''} ${effectiveExpanded ? 'sqc-expanded' : ''}`}
+      className={`sqc-row ${hasValue ? 'answered' : ''} ${isHighlighted ? 'highlighted' : ''} ${isEditing ? 'sqc-editing' : ''} ${effectiveExpanded ? 'sqc-expanded' : ''}`}
     >
       {/* Compact summary row — always visible */}
       <div className="sqc-summary" style={{ display: 'grid', gridTemplateColumns: '36px 1fr auto', alignItems: 'start', gap: '8px', minHeight: '46px' }} onClick={() => !isEditing && setIsExpanded(prev => !prev)}>
         {/* Left: number + status dot */}
-        <div className="sqc-left" style={{ display: 'flex', alignItems: 'center', alignSelf: 'start', marginTop: '5px', gap: '6px', flexShrink: 0 }}>
-          <span className="sqc-num">{field.sequentialNumber}</span>
+        <div className="sqc-left" style={{ display: 'flex', alignItems: 'center', alignSelf: 'start', marginTop: '3px', gap: '10px', flexShrink: 0 }}>
           {hasValue ? (
-            <span className="sqc-status-dot" style={{ backgroundColor: isAI ? '#a855f7' : (isRefinedAI ? '#475569' : '#3b82f6') }} title={isAI ? 'AI Answer' : (isRefinedAI ? 'Refined Answer' : 'Edited')} />
+            <div style={{ width: '16px', height: '16px', minWidth: '16px', minHeight: '16px', flexShrink: 0, borderRadius: '50%', background: '#22c55e', display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: '2px' }} title="Answered">
+              <Check size={10} color="#ffffff" strokeWidth={4} />
+            </div>
           ) : (
-            <span className="sqc-status-dot sqc-dot-empty" title="No answer yet" />
+            <div style={{ width: '16px', height: '16px', minWidth: '16px', minHeight: '16px', flexShrink: 0, borderRadius: '50%', border: '1.5px solid #cbd5e1', background: 'transparent', marginTop: '2px' }} title="Unanswered" />
           )}
+          <span className="sqc-num" style={{ fontWeight: '500', color: hasValue ? '#22c55e' : '#475569', fontSize: '15px' }}>{field.sequentialNumber}</span>
         </div>
 
         {/* Center: question label + answer preview */}
-        <div className="sqc-center">
-          <span className="sqc-question-text">{field.label}</span>
-          {hasValue && !effectiveExpanded && !isEditing && (
-            <span className={`sqc-answer-preview ${isAI ? 'sqc-preview-ai' : 'sqc-preview-user'}`}>
-              {previewText}
-            </span>
-          )}
+        <div className="sqc-center" style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
+            <span className="sqc-question-text" style={{ fontSize: '15px', color: '#0f172a', fontWeight: '600' }}>{field.label}</span>
+            {hasValue && isAI && !effectiveExpanded && !isEditing && (
+              <span style={{ fontSize: '11px', background: '#e0f2fe', color: '#0369a1', padding: '2px 8px', borderRadius: '12px', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <Sparkles size={10} /> auto-filled
+              </span>
+            )}
+          </div>
           {!hasValue && !effectiveExpanded && (
-            <span className="sqc-answer-preview sqc-preview-empty">No answer yet — click to add</span>
+            <span className="sqc-answer-preview sqc-preview-empty" style={{ marginTop: '2px' }}>No answer yet — click to add</span>
           )}
         </div>
 
@@ -316,7 +320,9 @@ const EditableBriefSection = ({
   answerIds = {},
   setAnswerIds,
   hasPmfAccess = false,
-  isLoading = false
+  isLoading = false,
+  isAdvancedMode = false,
+  setActiveTab
 }) => {
   const answersDetails = useAnalysisStore(state => state.answersDetails || {});
   const lastFetchedBusinessId = useAnalysisStore(state => state.lastFetchedBusinessId);
@@ -442,6 +448,10 @@ const EditableBriefSection = ({
   const canEdit = !isViewer;
 
   const [isPmfCompleted, setIsPmfCompleted] = useState(false);
+
+  useEffect(() => {
+    setActivePhaseTab('initial');
+  }, [isAdvancedMode]);
 
   useEffect(() => {
     let active = true;
@@ -676,9 +686,9 @@ const EditableBriefSection = ({
 
   // Sync to Core Product
   const handleSyncFinancial = async () => {
-    if (!docIntelSession) return;
     
     try {
+      setIsAnalyzingFinancial(true);
       showToastMessage("Syncing Document Intelligence financial data...", "info");
       const result = await answerService.syncFinancial(selectedBusinessId);
       
@@ -699,6 +709,8 @@ const EditableBriefSection = ({
       showToastMessage("Extracted metrics synchronized!", "success");
     } catch (err) {
       showToastMessage(`Sync failed: ${err.message}`, "error");
+    } finally {
+      setIsAnalyzingFinancial(false);
     }
   };
 
@@ -1024,8 +1036,10 @@ const EditableBriefSection = ({
     // 1. Add all valid file objects to the queue at once so they render simultaneously!
     setUploadedFiles(prev => [...prev, ...newFileObjs]);
 
+    const successfulFiles = [];
+
     // 2. Upload all valid files concurrently
-    const uploadPromises = validFiles.map(async ({ file, fileId }) => {
+    const uploadPromises = validFiles.map(async ({ file, fileId }, index) => {
       // Progress animation
       let progressVal = 15;
       const progressInterval = setInterval(() => {
@@ -1041,15 +1055,19 @@ const EditableBriefSection = ({
           onUploadedFileUpdate(file);
         }
 
-        clearInterval(progressInterval);
-        setUploadedFiles(prev => prev.map(f => f.id === fileId ? { 
-          ...f, 
-          id: `db-strategic-${strategicResult.document.filename}`,
+        const newId = `db-strategic-${strategicResult.document.filename}`;
+        const successFileObj = { 
+          ...newFileObjs[index], 
+          id: newId,
           progress: 100, 
           status: 'success', 
           fileObject: file 
-        } : f));
-        showToastMessage(`File "${file.name}" uploaded successfully! Click "Analyze Document" to process.`, 'success');
+        };
+        successfulFiles.push(successFileObj);
+
+        clearInterval(progressInterval);
+        setUploadedFiles(prev => prev.map(f => f.id === fileId ? successFileObj : f));
+        showToastMessage(`File "${file.name}" uploaded successfully! Click Analyze to process it.`, 'success');
       } catch (error) {
         clearInterval(progressInterval);
         setUploadedFiles(prev => prev.map(f => f.id === fileId ? { ...f, status: 'failed', errorMessage: error.message } : f));
@@ -1058,6 +1076,48 @@ const EditableBriefSection = ({
     });
 
     await Promise.all(uploadPromises);
+
+    if (successfulFiles.length > 0) {
+      // Just set to success, do not trigger analysis automatically
+      setUploadedFiles(prev =>
+        prev.map(f =>
+          successfulFiles.some(fa => fa.id === f.id)
+            ? { ...f, status: 'success', progress: 100, isNewSessionFile: true }
+            : f
+        )
+      );
+    }
+  };
+
+  const handleAnalyzeFilesBulk = async (filesToAnalyze) => {
+    const fileIds = filesToAnalyze.map(f => f.id);
+    // Set to analyzing state
+    setUploadedFiles(prev =>
+      prev.map(f =>
+        fileIds.includes(f.id)
+          ? { ...f, status: 'analyzing', progress: 30 }
+          : f
+      )
+    );
+
+    const hasSpreadsheet = filesToAnalyze.some(f => f.type === 'spreadsheet' || f.name.endsWith('.xlsx') || 
+    f.name.endsWith('.xls') || f.name.endsWith('.csv'));
+    
+    const apiPromises = [handleAnalyzeDocuments(filesToAnalyze)];
+    if (hasSpreadsheet) {
+      apiPromises.push(handleSyncFinancial());
+    }
+
+    await Promise.all(apiPromises);
+
+    // Finally set to success
+    setUploadedFiles(prev =>
+      prev.map(f =>
+        fileIds.includes(f.id)
+          ? { ...f, status: 'success', progress: 100, isNewSessionFile: false }
+          : f
+      )
+    );
   };
 
   const handleFileUpload = async (event) => {
@@ -1107,14 +1167,7 @@ const EditableBriefSection = ({
       if (onUploadedFileUpdate) {
         onUploadedFileUpdate(file);
       }
-      if (onAnalysisRegenerate) {
-        setIsFinancialRegenerating(true);
-        onAnalysisRegenerate({
-          onlyFinancial: true,
-          uploadedFile: file,
-          skipConfirmation: true
-        });
-      }
+      // Disabled automatic regeneration on file upload as per new flow
       showToastMessage(`File "${file.name}" ingested successfully!`, 'success');
     } catch (error) {
       console.error('File upload/validation error:', error);
@@ -1357,14 +1410,7 @@ const EditableBriefSection = ({
         return;
       }
 
-      if (onAnalysisRegenerate) {
-        onAnalysisRegenerate({
-          updatedQuestionIds,
-          alsoRegenerateStrategic: true,
-          skipConfirmation: true,
-          skipFinancial: true
-        });
-      }
+      // Disabled automatic regeneration on enriched answers update as per new flow
     } catch (error) {
       console.error('Apply enrichment error:', error);
       showToastMessage('Failed to apply enriched answers', 'error');
@@ -1435,9 +1481,9 @@ const EditableBriefSection = ({
 
   // Multiple File Strategic Document Ingestion & Bulk Save Flow
   // Multiple File Unified Document Ingestion & Bulk Save Flow
-  const handleAnalyzeDocuments = async () => {
-    // Find all documents in the upload section (strategic) — matches exactly what is shown in the UI
-    const filesToAnalyze = uploadedFiles.filter(f => f.section === 'strategic' && f.isNewSessionFile);
+  const handleAnalyzeDocuments = async (explicitFilesToAnalyze = null) => {
+    // Find all documents in the upload section (strategic) - matches exactly what is shown in the UI
+    const filesToAnalyze = explicitFilesToAnalyze || uploadedFiles.filter(f => f.section === 'strategic' && f.isNewSessionFile);
 
     if (filesToAnalyze.length === 0) {
       showToastMessage('No documents in the queue to analyze.', 'info');
@@ -1450,15 +1496,6 @@ const EditableBriefSection = ({
       if (fileUploadSectionRef.current) {
         fileUploadSectionRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }
-
-      // Update status of queued files to 'analyzing'
-      setUploadedFiles(prev =>
-        prev.map(f =>
-          filesToAnalyze.some(fa => fa.id === f.id)
-            ? { ...f, status: 'analyzing', progress: 30 }
-            : f
-        )
-      );
 
       // 1. Download ALL files from Azure Cloud (via Backend strategic download)
       const fetchedFiles = [];
@@ -1556,31 +1593,13 @@ const EditableBriefSection = ({
       // 2. Call the financial analysis API (financial-summary-extract) with all documents in queue
       await triggerSSEAnalysis(selectedBusinessId, fetchedFiles);
 
-      // Set file status to success
-      setUploadedFiles(prev =>
-        prev.map(f =>
-          filesToAnalyze.some(fa => fa.id === f.id)
-            ? { ...f, status: 'success', progress: 100, isNewSessionFile: false }
-            : f
-        )
-      );
-
       const currentStoreBusinessId = useBusinessStore.getState().selectedBusinessId;
       
       if (currentStoreBusinessId !== selectedBusinessId) {
         return;
       }
 
-      // 3. Trigger full insights & strategic & financial regeneration
-      if (onAnalysisRegenerate) {
-        const hasStrategicAnswers = Object.values(useAnalysisStore.getState().userAnswers || {}).some(ans => ans && ans.trim());
-        onAnalysisRegenerate({
-          alsoRegenerateStrategic: hasStrategicAnswers,
-          includeFinancial: true,
-          onlyFinancial: !hasStrategicAnswers,
-          skipConfirmation: true
-        });
-      }
+      // 3. Automatic regeneration disabled. User must click "Generate Advanced Insights" manually.
 
     } catch (err) {
       console.error('Unified dual analysis error:', err);
@@ -1671,7 +1690,7 @@ const EditableBriefSection = ({
   const successfulIngestionCount = uploadedFiles.filter(f => f.section === 'strategic' && f.status === 'success').length;
   const uploadedFilesCount = uploadedFiles.filter(f => f.status === 'uploaded').length;
 
-  const strategyFiles = uploadedFiles.filter(f => f.section === 'strategic' && f.isNewSessionFile);
+  const strategyFiles = uploadedFiles.filter(f => f.section === 'strategic');
 
   const initialCountStr = `${initialFields.filter(f => cleanValue(f.value).trim() !== '').length}/${initialFields.length}`;
   const essentialCountStr = `${essentialFields.filter(f => cleanValue(f.value).trim() !== '').length}/${essentialFields.length}`;
@@ -1682,6 +1701,20 @@ const EditableBriefSection = ({
     : activePhaseTab === 'essential'
       ? essentialFields
       : advancedFields;
+
+  const hasAnyAnswer = [...initialFields, ...essentialFields, ...advancedFields].some(f => cleanValue(f.value).trim() !== '');
+  let hasAnyFinancial = false;
+  if (docIntelSession?.financialMetrics) {
+    const cats = Object.keys(docIntelSession.financialMetrics).filter(k => k !== 'meta');
+    for (const cat of cats) {
+        const metrics = docIntelSession.financialMetrics[cat];
+        if (metrics && Object.values(metrics).some(m => m && m.value !== undefined && m.value !== null && String(m.value).trim() !== '')) {
+            hasAnyFinancial = true;
+            break;
+        }
+    }
+  }
+  const hasAnyValidData = hasAnyAnswer || hasAnyFinancial;
 
   const isAnyApiActive = isEnriching || isApplyingEnrichment || isAnalyzingDocs || isAnalyzingFinancial;
   const isAnyFileUploading = uploadedFiles.some(f => f.status === 'uploading');
@@ -1697,428 +1730,177 @@ const EditableBriefSection = ({
         </div>
       )}
 
-      <div className="brief-split-layout">
-        {/* Left Side: Uploads & AI Refinement */}
-        <div className="brief-left-column">
+      <div className="brief-advanced-layout" style={{ display: 'flex', flexDirection: 'column',padding: '0 10px', maxWidth: '1000px', margin: '0 auto', width: '100%' }}>
+        
 
-          {/* 1. Refine AI Answers Section */}
-          {isPmfCompleted && (
-            <div className="brief-card refine-ai-card">
-              <div 
-                className={`brief-card-header accordion-header ${!leftPanelExpanded.refineAi ? 'collapsed' : ''}`}
-                onClick={() => { if (isAnyApiActive) return; setLeftPanelExpanded(prev => ({ ...prev, refineAi: !prev.refineAi })); }}
-                style={{ cursor: isAnyApiActive ? 'not-allowed' : 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <Sparkles size={16} style={{ color: '#4f46e5' }} />
-                  <h4 className="brief-card-title">Refine AI Answers</h4>
-                </div>
-                {leftPanelExpanded.refineAi ? <ChevronUp size={16} style={{ color: '#64748b' }} /> : <ChevronDown size={16} style={{ color: '#64748b' }} />}
-              </div>
-              {leftPanelExpanded.refineAi && (
-                <div className="brief-card-body">
-                  {isEnriching ? (
-                    <div className="in-page-loading-wrapper" style={{ padding: '20px 10px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', textAlign: 'center' }}>
-                      <div className="spinner-container" style={{ display: 'inline-flex' }}>
-                        <Loader size={28} className="animate-spin" style={{ color: '#4f46e5' }} />
-                      </div>
-                      <div style={{ color: '#1e293b', fontWeight: '500', fontSize: '14px' }}>
-                        Generating AI answers based on PMF onboarding data...
-                      </div>
-                      <div style={{ color: '#64748b', fontSize: '12px' }}>
-                        This may take a moment as our LLM pipeline compiles your strategic insights.
-                      </div>
-                    </div>
-                  ) : (
-                    <>
-                      <p className="brief-card-description">
-                        Refine and pre-populate your strategic brief answers using AI-generated suggestions compiled from your onboarding setup details.
-                      </p>
-
-                      <button
-                        onClick={() => {
-                          if (!canEdit || isAnyApiActive) return;
-                          setConfirmModalConfig({
-                            title: t('Confirm AI Refinement') || 'Refine AI Answers',
-                            message: 'By doing this, this will overwrite all the existing answers and it will regenerate the insights and strategic analysis. Are you sure you want to proceed?',
-                            onConfirm: () => {
-                              handleGenerateEnrichment();
-                            }
-                          });
-                          setShowConfirmModal(true);
-                        }}
-                        disabled={isAnyApiActive || !canEdit}
-                        className="btn-refine-action"
-                      >
-                        <Sparkles size={14} />
-                        <span>Refine Answers with AI</span>
-                      </button>
-                    </>
-                  )}
-              </div>
-            )}
-          </div>
-          )}
 
           {/* 2. Unified Ingestion Dropzone Section */}
-          <div ref={fileUploadSectionRef} className="brief-card upload-docs-card">
+          <div ref={fileUploadSectionRef} className="brief-card upload-docs-card" style={{ padding: 0, overflow: 'hidden', border: '1px solid #e2e8f0', borderTopLeftRadius: '8px', borderTopRightRadius: '8px', borderBottomLeftRadius: '0', borderBottomRightRadius: '0', marginBottom: 0 }}>
             <div 
               className={`brief-card-header accordion-header ${!leftPanelExpanded.fileUpload ? 'collapsed' : ''}`}
               onClick={() => { if (isAnyApiActive) return; setLeftPanelExpanded(prev => ({ ...prev, fileUpload: !prev.fileUpload })); }}
-              style={{ cursor: isAnyApiActive ? 'not-allowed' : 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}
+              style={{ cursor: isAnyApiActive ? 'not-allowed' : 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', padding: '16px', background: 'white' }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Upload size={16} style={{ color: '#2563eb' }} />
-                <h4 className="brief-card-title">Documents Upload</h4>
+                <FileText size={16} style={{ color: '#0ea5e9' }} />
+                <h4 className="brief-card-title" style={{ fontWeight: '600', margin: 0, fontSize: '15px', color: '#0f172a' }}>Add documents <span style={{ color: '#94a3b8', fontWeight: 'normal', fontStyle: 'italic' }}>(optional)</span> {strategyFiles.length > 0 && <span style={{ color: '#0ea5e9', fontSize: '13px', marginLeft: '8px', fontWeight: '500' }}>{strategyFiles.length} file{strategyFiles.length > 1 ? 's' : ''}</span>}</h4>
               </div>
-              {leftPanelExpanded.fileUpload ? <ChevronUp size={16} style={{ color: '#64748b' }} /> : <ChevronDown size={16} style={{ color: '#64748b' }} />}
+              {leftPanelExpanded.fileUpload ? <ChevronUp size={16} style={{ color: '#94a3b8' }} /> : <ChevronDown size={16} style={{ color: '#94a3b8' }} />}
             </div>
+            
             {leftPanelExpanded.fileUpload && (
-              <div className="brief-card-body">
-                {(isAnalyzingDocs || isAnalyzingFinancial) && (
-                  <div className="brief-loading-top-banner">
-                    <div className="brief-loading-top-content">
-                      <div className="brief-loading-top-icon-wrapper">
-                        <Loader className="brief-loading-top-spinner animate-spin" size={18} />
-                      </div>
-                      <div className="brief-loading-top-text">
-                        <h5 className="brief-loading-top-title">Analyzing Documents</h5>
-                        <p className="brief-loading-top-subtitle">Running deep QA semantic mapping and financial indicator extraction...</p>
-                      </div>
-                    </div> 
-                  </div>
-                )}
-                <p className="brief-card-description">
-                  Upload PDF, DOCX, XLSX or XLS documents. The AI will extract answers for your strategic questionnaire and financial indicator ledger.
-                </p>
-
-                <div 
-                  className={`sidebar-dropzone ${isDragActive ? 'drag-active' : ''} ${isAnyApiActive ? 'disabled-dropzone' : ''}`}
-                  onDragEnter={(e) => { if (isAnyApiActive || !canEdit) return; handleDrag(e); }}
-                  onDragOver={(e) => { if (isAnyApiActive || !canEdit) return; handleDrag(e); }}
-                  onDragLeave={(e) => { if (isAnyApiActive || !canEdit) return; handleDrag(e); }}
-                  onDrop={(e) => { if (isAnyApiActive || !canEdit) return; handleDrop(e); }}
-                  onClick={() => { if (isAnyApiActive || !canEdit) return; triggerFileInput(); }}
-                  style={{
-                    cursor: (isAnyApiActive || !canEdit) ? 'not-allowed' : 'pointer',
-                    opacity: (isAnyApiActive || !canEdit) ? 0.6 : 1
-                  }}
-                >
-                  <div className="sidebar-dropzone-icon">
-                    <Upload size={20} />
-                  </div>
-                  <p className="sidebar-dropzone-text" style={{ fontSize: '11.5px', padding: '0 4px' }}>
-                    Drag & drop files or click to browse
+              <div className="brief-card-body" style={{ padding: '0 16px 16px 16px', background: 'white' }}>
+                <div style={{ background: '#f0f9ff', border: '1px solid #e0f2fe', borderRadius: '8px', padding: '16px', marginBottom: '16px' }}>
+                  <p style={{ margin: 0, fontSize: '13px', color: '#64748b', lineHeight: '1.5' }}>
+                    <strong style={{ color: '#0284c7' }}>Trax values context.</strong> Upload financials, a board deck, or a market report and Trax will auto-fill what it can across all four sections — the more it has, the sharper the analysis.
                   </p>
-                  <p style={{ fontSize: '10.5px', color: '#64748b', margin: '2px 0 0 0' }}>
-                    Supports: PDF, DOCX, XLSX, XLS
-                  </p>
-                  <input 
-                    type="file" 
-                    multiple 
-                    ref={fileInputRef} 
-                    style={{ display: 'none' }} 
-                    onChange={handleFileInputChange}
-                    accept=".pdf,.docx,.doc,.xlsx,.xls,.csv"
-                    disabled={isAnyApiActive || !canEdit}
-                  />
                 </div>
 
+                <input 
+                  type="file" 
+                  multiple 
+                  ref={fileInputRef} 
+                  style={{ display: 'none' }} 
+                  onChange={handleFileInputChange}
+                  accept=".pdf,.docx,.doc,.xlsx,.xls,.csv"
+                  disabled={isAnyApiActive || !canEdit}
+                />
+
                 {strategyFiles.length > 0 && (
-                  <div className="sidebar-file-list">
-                    <div className="sidebar-list-header">Uploaded Documents</div>
-                    {strategyFiles.map(file => (
-                      <div key={file.id} className="sidebar-file-item">
-                        <div className="sidebar-file-info">
-                          {file.type === 'pdf' || file.name.toLowerCase().endsWith('.pdf') ? (
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
-                              <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7l-5-5z" fill="rgba(239, 68, 68, 0.05)" />
-                              <path d="M15 2v5h5" />
-                              <line x1="8" y1="15" x2="16" y2="15" stroke="rgba(239, 68, 68, 0.4)" strokeWidth="1.5" />
-                              <line x1="8" y1="17.5" x2="16" y2="17.5" stroke="rgba(239, 68, 68, 0.4)" strokeWidth="1.5" />
-                              <line x1="8" y1="20" x2="16" y2="20" stroke="rgba(239, 68, 68, 0.4)" strokeWidth="1.5" />
-                              <rect x="1.5" y="7.5" width="13.5" height="7" rx="1.2" fill="#ef4444" stroke="none" />
-                              <text x="8.25" y="11" fill="white" fontSize="5.2" fontWeight="900" fontFamily="system-ui, -apple-system, sans-serif" stroke="none" textAnchor="middle" dominantBaseline="central">PDF</text>
-                            </svg>
-                          ) : file.type === 'docx' || file.type === 'doc' || file.name.toLowerCase().endsWith('.docx') || file.name.toLowerCase().endsWith('.doc') ? (
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
-                              <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7l-5-5z" fill="rgba(37, 99, 235, 0.05)" />
-                              <path d="M15 2v5h5" />
-                              <line x1="8" y1="15" x2="16" y2="15" stroke="rgba(37, 99, 235, 0.4)" strokeWidth="1.5" />
-                              <line x1="8" y1="17.5" x2="16" y2="17.5" stroke="rgba(37, 99, 235, 0.4)" strokeWidth="1.5" />
-                              <line x1="8" y1="20" x2="16" y2="20" stroke="rgba(37, 99, 235, 0.4)" strokeWidth="1.5" />
-                              <rect x="1.5" y="7.5" width="13.5" height="7" rx="1.2" fill="#2563eb" stroke="none" />
-                              <text x="8.25" y="11" fill="white" fontSize="5.2" fontWeight="900" fontFamily="system-ui, -apple-system, sans-serif" stroke="none" textAnchor="middle" dominantBaseline="central">DOC</text>
-                            </svg>
-                          ) : file.type === 'spreadsheet' || ['xlsx', 'xls', 'csv'].includes(file.type) || file.name.toLowerCase().endsWith('.xlsx') || file.name.toLowerCase().endsWith('.xls') || file.name.toLowerCase().endsWith('.csv') ? (
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
-                              <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7l-5-5z" fill="rgba(22, 163, 74, 0.05)" />
-                              <path d="M15 2v5h5" />
-                              <line x1="8" y1="15" x2="16" y2="15" stroke="rgba(22, 163, 74, 0.4)" strokeWidth="1.5" />
-                              <line x1="8" y1="17.5" x2="16" y2="17.5" stroke="rgba(22, 163, 74, 0.4)" strokeWidth="1.5" />
-                              <line x1="8" y1="20" x2="16" y2="20" stroke="rgba(22, 163, 74, 0.4)" strokeWidth="1.5" />
-                              <rect x="1.5" y="7.5" width="13.5" height="7" rx="1.2" fill="#16a34a" stroke="none" />
-                              <text x="8.25" y="11" fill="white" fontSize="5.2" fontWeight="900" fontFamily="system-ui, -apple-system, sans-serif" stroke="none" textAnchor="middle" dominantBaseline="central">XLS</text>
-                            </svg>
-                          ) : (
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#64748b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
-                              <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7l-5-5z" fill="rgba(100, 116, 139, 0.05)" />
-                              <path d="M15 2v5h5" />
-                              <line x1="8" y1="15" x2="16" y2="15" stroke="rgba(100, 116, 139, 0.4)" strokeWidth="1.5" />
-                              <line x1="8" y1="17.5" x2="16" y2="17.5" stroke="rgba(100, 116, 139, 0.4)" strokeWidth="1.5" />
-                              <line x1="8" y1="20" x2="16" y2="20" stroke="rgba(100, 116, 139, 0.4)" strokeWidth="1.5" />
-                              <rect x="1.5" y="7.5" width="13.5" height="7" rx="1.2" fill="#64748b" stroke="none" />
-                              <text x="8.25" y="11" fill="white" fontSize="4.5" fontWeight="900" fontFamily="system-ui, -apple-system, sans-serif" stroke="none" textAnchor="middle" dominantBaseline="central">FILE</text>
-                            </svg>
-                          )}
-                          <span className="sidebar-file-name" title={file.name}>{file.name}</span>
+                  <div className="sidebar-file-list" style={{ marginBottom: '16px' }}>
+                    {strategyFiles.map(file => {
+                      const ext = (file.name || '').split('.').pop().toUpperCase();
+                      let badgeColor = '#64748b';
+                      let badgeBg = '#f1f5f9';
+                      if (['XLSX', 'XLS', 'CSV'].includes(ext)) { badgeColor = '#16a34a'; badgeBg = '#dcfce7'; }
+                      else if (['PDF'].includes(ext)) { badgeColor = '#ef4444'; badgeBg = '#fee2e2'; }
+                      else if (['DOCX', 'DOC'].includes(ext)) { badgeColor = '#2563eb'; badgeBg = '#dbeafe'; }
+
+                      return (
+                        <div key={file.id} className="sidebar-file-item" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '3px 8px' }}>
+                          <div className="sidebar-file-info" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                            <span style={{ color: badgeColor, fontWeight: '800', fontSize: '10px', background: badgeBg, padding: '4px 8px', borderRadius: '4px' }}>{ext || 'FILE'}</span>
+                            <div style={{ display: 'flex', flexDirection: 'column' }}>
+                              <span className="sidebar-file-name" title={file.name} style={{ fontWeight: '500', fontSize: '14px', color: '#1e293b' }}>{file.name}</span>
+                              <span style={{ fontSize: '12px', color: '#64748b' }}>{file.size ? Math.round(file.size / 1024) + ' KB' : ''}</span>
+                            </div>
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <span className={`file-status-badge ${file.status}`} style={{ fontSize: '10px', padding: '2px 6px' }}>
+                                {file.status === 'uploading' ? `${file.progress}%` : (
+                                  file.status === 'analyzing' ? (
+                                    <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                      <Loader2 size={12} className="animate-spin" /> Analyzing...
+                                    </span>
+                                  ) : file.status
+                                )}
+                              </span>
+                            </div>
                         </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                          <span className={`file-status-badge ${file.status}`} style={{ fontSize: '8px', padding: '1px 4px' }}>
-                            {file.status === 'uploading' ? `${file.progress}%` : file.status}
-                          </span>
-                          <button
-                            className="sidebar-file-remove"
-                            onClick={() => {
-                              if (isAnyApiActive || !canEdit) return;
-                              handleRemoveFile(file.id, file.name);
-                            }}
-                            disabled={isAnyApiActive || !canEdit}
-                            style={{
-                              cursor: (isAnyApiActive || !canEdit) ? 'not-allowed' : 'pointer',
-                              opacity: (isAnyApiActive || !canEdit) ? 0.5 : 1,
-                              padding: '4px',
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              justifyContent: 'center'
-                            }}
-                            title="Remove file"
-                          >
-                            <Trash2 size={14} />
-                          </button>
-                        </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
 
-                <button
-                  ref={analyzeBtnRef}
-                  onClick={() => {
-                    if (!canEdit || strategyFiles.length === 0 || isAnyApiActive || isAnyFileUploading) return;
-                    setConfirmModalConfig({
-                      title: t('Confirm Document Analysis') || 'Analyze Strategic Documents',
-                      message: 'Uploading this document will update the current answer based on the newly uploaded document(s) while preserving the existing context.',
-                      onConfirm: () => {
-                        handleAnalyzeDocuments();
-                      }
-                    });
-                    setShowConfirmModal(true);
-                  }}
-                  disabled={isAnyApiActive || !canEdit || strategyFiles.length === 0 || isAnyFileUploading}
-                  className="btn-analyze-docs"
-                  style={{ marginTop: '12px', width: '100%' }}
-                >
-                  {(isAnalyzingDocs || isAnalyzingFinancial) ? (
-                    <>
-                      <span>Analyzing Documents & Extrapolating Insights...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Sparkles size={14} />
-                      <span>Analyze Document</span>
-                    </>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <button 
+                    onClick={() => { if (!isAnyApiActive && canEdit) triggerFileInput(); }}
+                    disabled={isAnyApiActive || !canEdit}
+                    style={{ width: 'auto', background: 'white', border: '1px dashed #cbd5e1', borderRadius: '8px', padding: '3px 8px', color: '#64748b', fontSize: '14px', fontWeight: '500', display: 'flex', alignItems: 'center', gap: '8px', cursor: (isAnyApiActive || !canEdit) ? 'not-allowed' : 'pointer' }}
+                  >
+                    <span style={{ fontSize: '18px', fontWeight: '300' }}>+</span> Add file
+                  </button>
+
+                  {strategyFiles.some(f => f.status === 'success') && (
+                    <button
+                      className="sidebar-file-analyze-btn"
+                      onClick={() => {
+                        if (isAnyApiActive || !canEdit) return;
+                        const filesToAnalyze = strategyFiles.filter(f => f.status === 'success');
+                        handleAnalyzeFilesBulk(filesToAnalyze);
+                      }}
+                      disabled={isAnyApiActive || !canEdit}
+                      style={{
+                        cursor: (isAnyApiActive || !canEdit) ? 'not-allowed' : 'pointer',
+                        opacity: (isAnyApiActive || !canEdit) ? 0.5 : 1,
+                        padding: '6px 16px',
+                        background: 'var(--color-primary',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '6px',
+                        fontSize: '14px',
+                        fontWeight: '600'
+                      }}
+                      title="Analyze all files"
+                    >
+                      Analyze
+                    </button>
                   )}
-                </button>
+                </div>
               </div>
             )}
           </div>
+          
+          <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderTop: 'none', borderTopLeftRadius: '0', borderTopRightRadius: '0', borderBottomLeftRadius: '8px', borderBottomRightRadius: '8px', padding: '12px 16px', display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '24px' }}>
+            <span style={{ fontSize: '14px' }}>🔒</span>
+            <p style={{ margin: 0, fontSize: '13px', color: '#16a34a' }}>
+              <strong>Your documents stay private.</strong> Encrypted at rest and isolated to your workspace.
+            </p>
+          </div>
 
-          {/* All Uploaded Documents History */}
-          {(() => {
-            const allUploadedDocuments = uploadedFiles.filter(f => f.section === 'strategic' && f.status === 'success');
-            return (
-              <div className="brief-card uploaded-docs-history-card" style={{ marginTop: '16px' }}>
-                <div 
-                  className={`brief-card-header accordion-header ${!leftPanelExpanded.docsHistory ? 'collapsed' : ''}`}
-                  onClick={() => { if (isAnyApiActive) return; setLeftPanelExpanded(prev => ({ ...prev, docsHistory: !prev.docsHistory })); }}
-                  style={{ 
-                    cursor: isAnyApiActive ? 'not-allowed' : 'pointer', 
-                    display: 'flex', 
-                    justifyContent: 'space-between', 
-                    alignItems: 'center', 
-                    width: '100%',
-                    gap: '8px'
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: 0, flex: 1 }}>
-                    <FileText size={16} style={{ color: '#16a34a', flexShrink: 0 }} />
-                    <h4 className="brief-card-title" style={{ margin: 0, fontSize: '13px', fontWeight: '700', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title="All Uploaded Documents">
-                      All Uploaded Documents
-                    </h4>
-                    {allUploadedDocuments.length > 0 && (
-                      <span className="phase-tab-badge" style={{ background: '#e2e8f0', color: '#475569', marginLeft: '4px', flexShrink: 0 }}>
-                        {allUploadedDocuments.length}
-                      </span>
-                    )}
-                  </div>
-                  {leftPanelExpanded.docsHistory ? <ChevronUp size={16} style={{ color: '#64748b', flexShrink: 0 }} /> : <ChevronDown size={16} style={{ color: '#64748b', flexShrink: 0 }} />}
-                </div>
-                {leftPanelExpanded.docsHistory && (
-                  <div className="brief-card-body" style={{ padding: '12px 8px' }}>
-                    <p className="brief-card-description" style={{ fontSize: '12px', color: '#64748b', marginBottom: '12px', marginTop: 0 }}>
-                      Successfully uploaded strategy and financial documents.
-                    </p>
-                    
-                    {allUploadedDocuments.length > 0 ? (
-                      <div className="sidebar-file-list" style={{ border: 'none', padding: 0, margin: 0 }}>
-                        {allUploadedDocuments.map(file => (
-                          <div key={file.id} className="sidebar-file-item" style={{ padding: '8px 10px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', marginBottom: '8px' }}>
-                            <div className="sidebar-file-info" style={{ display: 'flex', alignItems: 'center', gap: '8px', overflow: 'hidden' }}>
-                              {file.type === 'pdf' || file.name.toLowerCase().endsWith('.pdf') ? (
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
-                                  <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7l-5-5z" fill="rgba(239, 68, 68, 0.05)" />
-                                  <path d="M15 2v5h5" />
-                                  <line x1="8" y1="15" x2="16" y2="15" stroke="rgba(239, 68, 68, 0.4)" strokeWidth="1.5" />
-                                  <line x1="8" y1="17.5" x2="16" y2="17.5" stroke="rgba(239, 68, 68, 0.4)" strokeWidth="1.5" />
-                                  <line x1="8" y1="20" x2="16" y2="20" stroke="rgba(239, 68, 68, 0.4)" strokeWidth="1.5" />
-                                  <rect x="1.5" y="7.5" width="13.5" height="7" rx="1.2" fill="#ef4444" stroke="none" />
-                                  <text x="8.25" y="11" fill="white" fontSize="5.2" fontWeight="900" fontFamily="system-ui, -apple-system, sans-serif" stroke="none" textAnchor="middle" dominantBaseline="central">PDF</text>
-                                </svg>
-                              ) : file.type === 'docx' || file.type === 'doc' || file.name.toLowerCase().endsWith('.docx') || file.name.toLowerCase().endsWith('.doc') ? (
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
-                                  <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7l-5-5z" fill="rgba(37, 99, 235, 0.05)" />
-                                  <path d="M15 2v5h5" />
-                                  <line x1="8" y1="15" x2="16" y2="15" stroke="rgba(37, 99, 235, 0.4)" strokeWidth="1.5" />
-                                  <line x1="8" y1="17.5" x2="16" y2="17.5" stroke="rgba(37, 99, 235, 0.4)" strokeWidth="1.5" />
-                                  <line x1="8" y1="20" x2="16" y2="20" stroke="rgba(37, 99, 235, 0.4)" strokeWidth="1.5" />
-                                  <rect x="1.5" y="7.5" width="13.5" height="7" rx="1.2" fill="#2563eb" stroke="none" />
-                                  <text x="8.25" y="11" fill="white" fontSize="5.2" fontWeight="900" fontFamily="system-ui, -apple-system, sans-serif" stroke="none" textAnchor="middle" dominantBaseline="central">DOC</text>
-                                </svg>
-                              ) : file.type === 'spreadsheet' || ['xlsx', 'xls', 'csv'].includes(file.type) || file.name.toLowerCase().endsWith('.xlsx') || file.name.toLowerCase().endsWith('.xls') || file.name.toLowerCase().endsWith('.csv') ? (
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
-                                  <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7l-5-5z" fill="rgba(22, 163, 74, 0.05)" />
-                                  <path d="M15 2v5h5" />
-                                  <line x1="8" y1="15" x2="16" y2="15" stroke="rgba(22, 163, 74, 0.4)" strokeWidth="1.5" />
-                                  <line x1="8" y1="17.5" x2="16" y2="17.5" stroke="rgba(22, 163, 74, 0.4)" strokeWidth="1.5" />
-                                  <line x1="8" y1="20" x2="16" y2="20" stroke="rgba(22, 163, 74, 0.4)" strokeWidth="1.5" />
-                                  <rect x="1.5" y="7.5" width="13.5" height="7" rx="1.2" fill="#16a34a" stroke="none" />
-                                  <text x="8.25" y="11" fill="white" fontSize="5.2" fontWeight="900" fontFamily="system-ui, -apple-system, sans-serif" stroke="none" textAnchor="middle" dominantBaseline="central">XLS</text>
-                                </svg>
-                              ) : (
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#64748b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
-                                  <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7l-5-5z" fill="rgba(100, 116, 139, 0.05)" />
-                                  <path d="M15 2v5h5" />
-                                  <line x1="8" y1="15" x2="16" y2="15" stroke="rgba(100, 116, 139, 0.4)" strokeWidth="1.5" />
-                                  <line x1="8" y1="17.5" x2="16" y2="17.5" stroke="rgba(100, 116, 139, 0.4)" strokeWidth="1.5" />
-                                  <line x1="8" y1="20" x2="16" y2="20" stroke="rgba(100, 116, 139, 0.4)" strokeWidth="1.5" />
-                                  <rect x="1.5" y="7.5" width="13.5" height="7" rx="1.2" fill="#64748b" stroke="none" />
-                                  <text x="8.25" y="11" fill="white" fontSize="4.5" fontWeight="900" fontFamily="system-ui, -apple-system, sans-serif" stroke="none" textAnchor="middle" dominantBaseline="central">FILE</text>
-                                </svg>
-                              )}
-                              <span className="sidebar-file-name" title={file.name} style={{ fontSize: '12px', fontWeight: '500', color: '#1e293b', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                {file.name}
-                              </span>
-                            </div>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                              <span className="file-status-badge success" style={{ fontSize: '9px', padding: '2px 6px', background: '#dcfce7', color: '#16a34a', borderRadius: '4px', fontWeight: '500' }}>
-                                success
-                              </span>
-                              <button
-                                className="sidebar-file-remove"
-                                onClick={() => {
-                                  if (isAnyApiActive || !canEdit) return;
-                                  setConfirmModalConfig({
-                                    title: t('Delete Document') || 'Delete Document',
-                                    message: `Are you sure you want to delete "${file.name}"? This will also remove any AI citations associated with this document.`,
-                                    onConfirm: () => {
-                                      handleRemoveFile(file.id, file.name);
-                                    }
-                                  });
-                                  setShowConfirmModal(true);
-                                }}
-                                disabled={isAnyApiActive || !canEdit}
-                                style={{
-                                  cursor: (isAnyApiActive || !canEdit) ? 'not-allowed' : 'pointer',
-                                  opacity: (isAnyApiActive || !canEdit) ? 0.5 : 1,
-                                  padding: '4px',
-                                  display: 'inline-flex',
-                                  alignItems: 'center',
-                                  justifyContent: 'center'
-                                }}
-                                title="Delete document"
-                              >
-                                <Trash2 size={14} />
-                              </button>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <div style={{ textAlign: 'center', padding: '16px', color: '#64748b', fontSize: '12px', border: '1px dashed #e2e8f0', borderRadius: '8px', background: '#f8fafc' }}>
-                        No uploaded documents yet.
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            );
-          })()}
-
-        </div>
-
-        {/* Right Side: Questions & Answers with 3 Tabs */}
-        <div className="brief-right-column">
-
+          {/* Phase Tabs */}
           <div className="sqc-header-bar">
-            <div className="phase-tabs-container">
-              <button
-                className={`phase-tab-btn ${activePhaseTab === 'initial' ? 'active' : ''}`}
-                onClick={() => { setActivePhaseTab('initial'); setExpandAll(false); }}
-              >
-                <span className="phase-tab-title">Initial</span>
-                <span className="phase-tab-badge">{initialCountStr}</span>
-              </button>
-              <button
-                className={`phase-tab-btn ${activePhaseTab === 'essential' ? 'active' : ''}`}
-                onClick={() => { setActivePhaseTab('essential'); setExpandAll(false); }}
-              >
-                <span className="phase-tab-title">Essential</span>
-                <span className="phase-tab-badge">{essentialCountStr}</span>
-              </button>
-              <button
-                className={`phase-tab-btn ${activePhaseTab === 'advanced' ? 'active' : ''}`}
-                onClick={() => { setActivePhaseTab('advanced'); setExpandAll(false); }}
-              >
-                <span className="phase-tab-title">Advanced</span>
-                <span className="phase-tab-badge">{advancedCountStr}</span>
-              </button>
-              {docIntelSession && docIntelSession.financialMetrics && (
+              <div className="phase-tabs-container">
+                <button
+                  className={`phase-tab-btn ${activePhaseTab === 'initial' ? 'active' : ''}`}
+                  onClick={() => { setActivePhaseTab('initial'); setExpandAll(false); }}
+                >
+                  <span className="phase-tab-title">Initial</span>
+                  <span className="phase-tab-badge">{initialCountStr}</span>
+                </button>
+                <button
+                  className={`phase-tab-btn ${activePhaseTab === 'essential' ? 'active' : ''}`}
+                  onClick={() => { setActivePhaseTab('essential'); setExpandAll(false); }}
+                >
+                  <span className="phase-tab-title">Essential</span>
+                  <span className="phase-tab-badge">{essentialCountStr}</span>
+                </button>
+                <button
+                  className={`phase-tab-btn ${activePhaseTab === 'advanced' ? 'active' : ''}`}
+                  onClick={() => { setActivePhaseTab('advanced'); setExpandAll(false); }}
+                >
+                  <span className="phase-tab-title">Advanced</span>
+                  <span className="phase-tab-badge">{advancedCountStr}</span>
+                </button>
                 <button
                   className={`phase-tab-btn ${activePhaseTab === 'financial' ? 'active' : ''}`}
                   onClick={() => { setActivePhaseTab('financial'); setExpandAll(false); }}
                 >
                   <span className="phase-tab-title">Financial Data</span> 
                 </button>
-              )}
+              </div>
+              {/* <div className="sqc-header-actions">
+                <button 
+                  className="expand-all-btn" 
+                  onClick={() => setExpandAll(!expandAll)}
+                  style={{ background: 'white' }}
+                >
+                  {expandAll ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
+                  <span>{expandAll ? 'Collapse all' : 'Expand all'}</span>
+                </button>
+              </div> */}
             </div>
-            <div className="sqc-meta-bar">
-              {activePhaseTab === 'financial' ? (
-                <span className="sqc-meta-count">
-                  <span style={{ color: '#16a34a', fontWeight: 700 }}>
-                    {Object.keys(docIntelSession?.financialMetrics || {}).filter(k => k !== "meta").reduce((acc, cat) => acc + Object.keys(docIntelSession.financialMetrics[cat]).length, 0)}
-                  </span>
-                  /19 metrics extracted
-                </span>
-              ) : (
+
+          <div className="sqc-meta-bar">
+              {activePhaseTab === 'financial' ? null : (
                 <span className="sqc-meta-count">
                   <span style={{ color: '#4f46e5', fontWeight: 700 }}>
                     {currentTabFields.filter(f => cleanValue(f.value).trim() !== '').length}
                   </span>
-                  /{currentTabFields.length} answered
+                  /{currentTabFields.length} completed
                 </span>
               )}
-              {activePhaseTab !== 'financial' && (
+              {/* {activePhaseTab !== 'financial' && (
                 <button
                   className={`sqc-expand-all-btn ${expandAll ? 'sqc-expand-all-active' : ''}`}
                   disabled={isAnyApiActive}
@@ -2130,14 +1912,13 @@ const EditableBriefSection = ({
                     : <><ChevronDown size={12} /> Expand All</>
                   }
                 </button>
-              )}
+              )} */}
             </div>
-          </div>
 
           <div className="phase-tab-content-list">
             {activePhaseTab === 'financial' ? (
               docIntelSession && docIntelSession.financialMetrics ? (
-                <div className="doc-intel-ledger" style={{ marginTop: '0', border: 'none', boxShadow: 'none', background: 'transparent', padding: '24px' }}>
+                <div className="doc-intel-ledger" style={{ marginTop: '0', border: 'none', boxShadow: 'none', background: 'transparent', padding: '10px 0px' }}>
                   <div className="ledger-category-header" style={{ marginBottom: '15px', color: '#16a34a', borderBottom: '1px solid rgba(0,0,0,0.06)', paddingBottom: '8px' }}>
                     <Database size={16} />
                     <span>Extracted Ledger Workspace</span>
@@ -2369,7 +2150,50 @@ const EditableBriefSection = ({
             )}
           </div>
 
-        </div>
+          {/* Generate Advanced Insights Button */}
+          <div style={{ marginTop: '32px', marginBottom: '32px', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '15px 24px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'transparent' }}>
+            <button
+              onClick={() => {
+                if (!canEdit || isAnyApiActive) return;
+                setConfirmModalConfig({
+                  title: t('Generate Advanced Insights') || 'Generate Advanced Insights',
+                  message: 'This will regenerate all insights and strategic analysis based on your answers. Are you sure you want to proceed?',
+                  onConfirm: () => {
+                    if (onAnalysisRegenerate) {
+                      onAnalysisRegenerate({
+                        alsoRegenerateStrategic: true,
+                        includeFinancial: true,
+                        skipConfirmation: true
+                      });
+                      if (setActiveTab) {
+                        setActiveTab('insights');
+                      }
+                    }
+                  }
+                });
+                setShowConfirmModal(true);
+              }}
+              disabled={isAnyApiActive || !canEdit || !hasAnyValidData}
+              className="btn-refine-action"
+              style={{ width: 'auto', padding: '12px 32px', background: (isAnyApiActive || !canEdit || !hasAnyValidData) ? '#93c5fd' : '#0c71b9', color: '#fff', fontSize: '15px', fontWeight: '600', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '8px', border: 'none', cursor: (isAnyApiActive || !canEdit || !hasAnyValidData) ? 'not-allowed' : 'pointer', opacity: (isAnyApiActive || !canEdit || !hasAnyValidData) ? 0.6 : 1 }}
+            >
+              {(isAnalysisRegenerating || isStrategicRegenerating) ? (
+                <>
+                  <Loader size={16} className="animate-spin" />
+                  <span>Generating Insights...</span>
+                </>
+              ) : (
+                <>
+                  <span>Generate Advanced analysis</span>
+                  <span style={{ fontSize: '16px' }}>&rarr;</span>
+                </>
+              )}
+            </button>
+            <p style={{ marginTop: '16px', marginBottom: '0', color: '#94a3b8', fontSize: '13px' }}>
+              All sections complete — generate your Advanced analysis.
+            </p>
+          </div>
+
       </div>
 
       {/* Side Reference Drawer with z-index 999999 to float above sticky navigation headers */}

@@ -179,16 +179,21 @@ export const useAnalysisStore = create((set, get) => ({
     if (key) set({ [key]: data });
   },
 
-  setRegenerating: (type, isRegenerating) => set((state) => ({
-    regenerating: { ...state.regenerating, [type]: isRegenerating }
+  setRegenerating: (type, isRegenerating, businessId) => set((state) => ({
+    regenerating: { ...state.regenerating, [`${businessId || state.lastFetchedBusinessId}_${type}`]: isRegenerating }
   })),
 
-  setStreaming: (type, text, isStreaming) => set((state) => ({
-    streamingText: { ...state.streamingText, [type]: text },
-    isStreaming: { ...state.isStreaming, [type]: isStreaming }
+  setStreaming: (type, text, isStreaming, businessId) => set((state) => ({
+    streamingText: { ...state.streamingText, [`${businessId || state.lastFetchedBusinessId}_${type}`]: text },
+    isStreaming: { ...state.isStreaming, [`${businessId || state.lastFetchedBusinessId}_${type}`]: isStreaming }
   })),
 
-  resetAnalysis: () => set(initialState),
+  resetAnalysis: () => set((state) => ({
+    ...initialState,
+    regenerating: state.regenerating,
+    streamingText: state.streamingText,
+    isStreaming: state.isStreaming
+  })),
 
   fetchAnalysisData: async (businessId, skipLoadingFlag = false, forceRefresh = false, skipReset = false) => {
     if (!businessId) return;
@@ -365,8 +370,8 @@ export const useAnalysisStore = create((set, get) => ({
   regeneratePhase: async (phase, questions, userAnswers, businessId, onToast) => {
     if (!businessId || !phase) return;
     const phaseTypes = PHASE_API_CONFIG[phase] || [];
-    const regenerationUpdates = { [phase]: true };
-    phaseTypes.forEach(type => { regenerationUpdates[type] = true; });
+    const regenerationUpdates = { [`${businessId}_${phase}`]: true };
+    phaseTypes.forEach(type => { regenerationUpdates[`${businessId}_${type}`] = true; });
 
     set((state) => ({
       regenerating: { ...state.regenerating, ...regenerationUpdates }
@@ -390,7 +395,7 @@ export const useAnalysisStore = create((set, get) => ({
         }
       });
 
-      stateSetters.setRegenerating = (type, isRegenerating) => get().setRegenerating(type, isRegenerating);
+      stateSetters.setRegenerating = (type, isRegenerating) => get().setRegenerating(type, isRegenerating, businessId);
       if (userAnswers && userAnswers.uploadedFile) {
         stateSetters.uploadedFile = userAnswers.uploadedFile;
       }
@@ -408,8 +413,8 @@ export const useAnalysisStore = create((set, get) => ({
       onToast?.(`Failed to regenerate ${phase} phase.`, "error");
     } finally {
       const phaseTypes = PHASE_API_CONFIG[phase] || [];
-      const completionUpdates = { [phase]: false };
-      phaseTypes.forEach(type => { completionUpdates[type] = false; });
+      const completionUpdates = { [`${businessId}_${phase}`]: false };
+      phaseTypes.forEach(type => { completionUpdates[`${businessId}_${type}`] = false; });
 
       set((state) => ({
         regenerating: { ...state.regenerating, ...completionUpdates }
@@ -421,7 +426,7 @@ export const useAnalysisStore = create((set, get) => ({
     if (!businessId || !types || types.length === 0) return;
     
     const regenerationUpdates = {};
-    types.forEach(type => { regenerationUpdates[type] = true; });
+    types.forEach(type => { regenerationUpdates[`${businessId}_${type}`] = true; });
 
     set((state) => ({
       regenerating: { ...state.regenerating, ...regenerationUpdates }
@@ -445,7 +450,7 @@ export const useAnalysisStore = create((set, get) => ({
         }
       });
 
-      stateSetters.setRegenerating = (type, isRegenerating) => get().setRegenerating(type, isRegenerating);
+      stateSetters.setRegenerating = (type, isRegenerating) => get().setRegenerating(type, isRegenerating, businessId);
 
       await apiService.handleCustomTypesCompletion(
         types,
@@ -460,7 +465,7 @@ export const useAnalysisStore = create((set, get) => ({
       onToast?.(`Failed to regenerate insights.`, "error");
     } finally {
       const completionUpdates = {};
-      types.forEach(type => { completionUpdates[type] = false; });
+      types.forEach(type => { completionUpdates[`${businessId}_${type}`] = false; });
 
       set((state) => ({
         regenerating: { ...state.regenerating, ...completionUpdates }
@@ -470,7 +475,7 @@ export const useAnalysisStore = create((set, get) => ({
 
   regenerateIndividualAnalysis: async (type, questions, userAnswers, businessId, onToast, uploadedFile = null) => {
     if (!businessId || !type) return;
-    set((state) => ({ regenerating: { ...state.regenerating, [type]: true } }));
+    set((state) => ({ regenerating: { ...state.regenerating, [`${businessId}_${type}`]: true } }));
     try {
       const apiService = getApiService();
       const stateSetters = {};
@@ -498,7 +503,7 @@ export const useAnalysisStore = create((set, get) => ({
       console.error(`Failed to regenerate ${type}:`, err);
       onToast?.(`Failed to regenerate ${type}.`, "error");
     } finally {
-      set((state) => ({ regenerating: { ...state.regenerating, [type]: false } }));
+      set((state) => ({ regenerating: { ...state.regenerating, [`${businessId}_${type}`]: false } }));
     }
   },
 
@@ -527,7 +532,7 @@ export const useAnalysisStore = create((set, get) => ({
   },
 
   answeredCount: () => Object.keys(get().userAnswers).length,
-  isRegenerating: (type) => get().regenerating[type] || false,
-  isStreamingType: (type) => get().isStreaming[type] || false,
-  getStreamingText: (type) => get().streamingText[type] || '',
+  isRegenerating: (type) => get().regenerating[`${get().lastFetchedBusinessId}_${type}`] || false,
+  isStreamingType: (type) => get().isStreaming[`${get().lastFetchedBusinessId}_${type}`] || false,
+  getStreamingText: (type) => get().streamingText[`${get().lastFetchedBusinessId}_${type}`] || '',
 }));

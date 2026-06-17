@@ -630,8 +630,15 @@ const ExecutiveSummary = ({ hideNextStep }) => {
             </div>
           </div>
 
-          <button className="exc-create-project-btn mt-4" onClick={() => navigate(`/business/${businessId || 'default'}/advanced-insights`)}>
-            <span className="ms-1" style={{ fontSize: '14px' }}>🔒</span> {t("Continue to Advanced Insights")} <ArrowRight size={16} />
+          <button className="exc-create-project-btn mt-4" onClick={() => {
+            const hasPlan = userPlan && userPlan.trim().toLowerCase() !== "no plan" && userPlan.trim().toLowerCase() !== "none";
+            if (hasPlan) {
+              navigate('/businesspage', { state: { businessId: businessId, initialTab: 'advanced' } });
+            } else {
+              navigate(`/business/${businessId || 'default'}/advanced-insights`);
+            }
+          }}>
+            {(!userPlan || userPlan.trim().toLowerCase() === "no plan" || userPlan.trim().toLowerCase() === "none") && <span className="ms-1" style={{ fontSize: '14px' }}>🔒</span>} {t("Continue to Advanced Insights")} <ArrowRight size={16} />
           </button>
         </div>
         )}

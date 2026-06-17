@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Lock, Check, X, Bell } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import MenuBar from '../components/MenuBar';
-import { useBusinessStore } from '../store';
+import { useBusinessStore, useAuthStore } from '../store';
 import '../styles/upgradePlan.css';
 
 /* ─── Pilot Feedback Modal ─────────────────────────────────────── */
@@ -17,9 +17,36 @@ const PilotFeedbackModal = ({ plan, onClose, onAccept }) => {
   const [selectedPlan, setSelectedPlan] = useState(plan);
   const [rating, setRating] = useState(8);
   const [comment, setComment] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const token = useAuthStore((state) => state.token);
 
-  const handleAccept = () => {
-    onAccept();
+  const handleAccept = async () => {
+    try {
+      setIsSubmitting(true);
+      const baseUrl = import.meta.env.VITE_BACKEND_URL || '';
+      
+      const response = await fetch(`${baseUrl}/api/pilot-feedback`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          plan: selectedPlan,
+          rating,
+          feedback: comment
+        })
+      });
+
+      if (!response.ok) {
+        console.error('Failed to submit pilot feedback');
+      }
+    } catch (error) {
+      console.error('Error submitting feedback:', error);
+    } finally {
+      setIsSubmitting(false);
+      onAccept();
+    }
   };
 
   return (
@@ -84,7 +111,9 @@ const PilotFeedbackModal = ({ plan, onClose, onAccept }) => {
           <span>The moment the product is ready, we'll notify you so you can try it with the launch discount you were offered.</span>
         </div>
 
-        <button className="pfm-accept-btn" onClick={handleAccept}>Accept</button>
+        <button className="pfm-accept-btn" onClick={handleAccept} disabled={isSubmitting}>
+          {isSubmitting ? 'Accepting...' : 'Accept'}
+        </button>
       </div>
     </div>
   );

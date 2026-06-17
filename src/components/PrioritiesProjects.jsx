@@ -3,7 +3,7 @@ import { Card, Button, Form, Badge, Spinner, Modal, ProgressBar } from "react-bo
 import { ChevronRight, ArrowRight, Zap } from "lucide-react";
 import { Folder, CheckCircle, Rocket, Info, AlertTriangle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useAuthStore, useAnalysisStore, useProjectStore } from "../store";
+import { useAuthStore, useAnalysisStore, useProjectStore, useBusinessStore } from "../store";
 import { useTranslation } from "../hooks/useTranslation";
 import { usePlanDetails } from "../hooks/useQueries";
 import PlanLimitModal from "./PlanLimitModal";
@@ -38,6 +38,9 @@ const PrioritiesProjects = ({
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [lastKickstartedCount, setLastKickstartedCount] = useState(0);
   const [showNoCollaboratorsModal, setShowNoCollaboratorsModal] = useState(false);
+  const businesses = useBusinessStore(state => state.businesses);
+  const fetchBusinesses = useBusinessStore(state => state.fetchBusinesses);
+  const currentBusiness = useMemo(() => businesses.find(b => b._id === selectedBusinessId), [businesses, selectedBusinessId]);
   const {
     data: usageData
   } = usePlanDetails();
@@ -76,7 +79,9 @@ const PrioritiesProjects = ({
       globalProgressPercent: percent
     };
   }, [priorities]);
-  const anyProjectKickstarted = useMemo(() => priorities.some(p => p.isKickstarted || p.actions && p.actions.some(a => a.isKickstarted)), [priorities]);
+  const anyProjectKickstarted = useMemo(() => {
+    return currentBusiness?.is_bets_built || kickstartData?.is_bets_built || priorities.some(p => p.isKickstarted || p.actions && p.actions.some(a => a.isKickstarted));
+  }, [priorities, currentBusiness, kickstartData]);
   useEffect(() => {
     const fetchData = async () => {
       if (!selectedBusinessId) return;
@@ -102,18 +107,16 @@ const PrioritiesProjects = ({
       setKickstarting(true);
       const selectedPriorities = selected.map(idx => priorities[idx]);
       let totalProjectsCreated = 0;
-      for (const priority of selectedPriorities) {
-        const response = await kickstartProject({
-          businessId: selectedBusinessId,
-          priority: priority
-        });
-        if (response && response.projectIds) {
-          totalProjectsCreated += response.projectIds.length;
-        } else if (priority.actions) {
-          totalProjectsCreated += priority.actions.length;
-        }
+      const response = await kickstartProject({
+        businessId: selectedBusinessId,
+        priorities: selectedPriorities
+      });
+      if (response && response.projectIds) {
+        totalProjectsCreated = response.projectIds.length;
       }
-      await fetchKickstartData(selectedBusinessId);
+      await fetchKickstartData(selectedBusinessId, true);
+      await fetchBusinesses();
+      setPriorities(prev => prev.map((p, i) => selected.includes(i) ? { ...p, isKickstarted: true } : p));
       setSelected([]);
       setLastKickstartedCount(totalProjectsCreated);
       setShowSuccessModal(true);
@@ -177,31 +180,33 @@ const PrioritiesProjects = ({
   }
 
   return (
-    <div className="container my-5" style={{ margin: '0 auto' }}>
+    <div className="container my-3" style={{ margin: '0 auto' }}>
       
       {/* Header Section */}
-      <div className="mb-4 text-center">
-        <div className="d-flex align-items-center justify-content-center gap-2 mb-2" style={{ fontSize: '0.75rem', fontWeight: 'bold', letterSpacing: '1.5px', color: '#0ea5e9' }}>
+      <div className="mb-4 text-left">
+        <div className="d-flex align-items-left justify-content-left gap-2 mb-2" style={{ fontSize: '0.75rem', fontWeight: 'bold', letterSpacing: '1.5px', color: '#0ea5e9' }}>
           <Zap size={14} fill="#0ea5e9" stroke="none" />
           <span>COMMIT - THE PROMOTION MOMENT</span>
         </div>
         <h1 className="fw-bold mb-3" style={{ color: '#0f172a', fontSize: '2rem' }}>
           Build your <span style={{ color: '#0ea5e9' }}>Bets</span>
         </h1>
-        <p className="text-muted mx-auto" style={{ maxWidth: '600px', fontSize: '0.95rem', lineHeight: '1.6' }}>
+        <p className="text-muted" style={{ maxWidth: '600px', fontSize: '0.95rem', lineHeight: '1.6' }}>
           These are the five things you're choosing to bet on this period. Edit anything that doesn't read right — once you lock them in, they become Bets you'll execute and review. The commitment is what matters.
         </p>
       </div>
 
       {/* Info Alert */}
-      <div className="d-flex align-items-center p-3 mb-4 rounded" style={{ backgroundColor: '#f0f9ff', border: '1px solid #bae6fd' }}>
-        <div className="d-flex align-items-center justify-content-center rounded-circle text-white fw-bold me-3" style={{ width: '32px', height: '32px', backgroundColor: '#3b82f6', flexShrink: 0, fontSize: '10px' }}>
-          TX
+      {!anyProjectKickstarted && (
+        <div className="d-flex align-items-center p-3 mb-4 rounded" style={{ backgroundColor: '#f0f9ff', border: '1px solid #bae6fd' }}>
+          <div className="d-flex align-items-center justify-content-center rounded-circle text-white fw-bold me-3" style={{ width: '32px', height: '32px', backgroundColor: '#3b82f6', flexShrink: 0, fontSize: '10px' }}>
+            TX
+          </div>
+          <p className="mb-0" style={{ fontSize: '0.9rem', color: '#334155' }}>
+            <strong style={{ color: '#0369a1' }}>One last edit, then they're yours.</strong> Anything you change here also updates the Top 5 in Insights Basic — this is your final draft of the diagnosis. After lock-in, bets evolve on their own.
+          </p>
         </div>
-        <p className="mb-0" style={{ fontSize: '0.9rem', color: '#334155' }}>
-          <strong style={{ color: '#0369a1' }}>One last edit, then they're yours.</strong> Anything you change here also updates the Top 5 in Insights Basic — this is your final draft of the diagnosis. After lock-in, bets evolve on their own.
-        </p>
-      </div>
+      )}
 
       {/* Priority Cards */}
       <div className="d-flex flex-column gap-3 mb-4">
@@ -230,8 +235,17 @@ const PrioritiesProjects = ({
       </div>
 
       {/* Build Bets Button */}
-      {!anyProjectKickstarted && (
-        <div className="d-flex justify-content-end">
+      <div className="d-flex justify-content-end">
+        {anyProjectKickstarted ? (
+          <Button 
+            variant="primary" 
+            className="d-flex align-items-center gap-2 px-4 py-2 fw-semibold rounded-3" 
+            style={{ backgroundColor: '#0284c7', border: 'none' }}
+            onClick={() => navigate(`/businesspage?business=${selectedBusinessId}&tab=bets`)}
+          >
+            {t("Go to bets")} <ArrowRight size={16} />
+          </Button>
+        ) : (
           <Button 
             variant="primary" 
             className="d-flex align-items-center gap-2 px-4 py-2 fw-semibold rounded-3" 
@@ -242,8 +256,8 @@ const PrioritiesProjects = ({
             {kickstarting ? <Spinner size="sm" /> : null}
             {kickstarting ? t("Building...") : t("Build bets")} <ArrowRight size={16} />
           </Button>
-        </div>
-      )}
+        )}
+      </div>
 
       <PlanLimitModal show={showPlanLimitModal} onHide={() => setShowPlanLimitModal(false)} title={t("no_access_modal_title")} message={t("no_access_modal_msg")} subMessage={t(isAdmin ? "no_access_modal_sub_admin" : "no_access_modal_sub_user")} plan={usage?.plan} limit={usage?.project?.limit} isAdmin={isAdmin} />
 
@@ -281,26 +295,18 @@ const PrioritiesProjects = ({
           </div>
           <h4 className="fw-bold mb-2">{t("Build Bets?")}</h4>
           <div className="text-muted mb-4">
-            <p>
-              {t("Are you sure you want to lock in these priorities? This will trigger AI generation for bet details.")}
+            <p className="mb-0">
+              {t("This will create bets and the business will move to the execution phase. Is it ok to proceed?")}
             </p>
-            {isAdmin && !hasCollaborators && !anyProjectKickstarted && projects.length === 0 && <p className="mb-0 small text-info">
-                {t("Note: You are proceeding without collaborators. You can also continue without any participants for nowâ€”this is perfectly fine, and you can always add them later.")}
-              </p>}
           </div>
-          <div className="d-grid gap-2">
-            <Button variant="success" onClick={confirmKickstart} disabled={kickstarting} className="d-flex align-items-center justify-content-center gap-2 py-2 fw-semibold" style={{ backgroundColor: '#0284c7', border: 'none' }}>
-              {kickstarting ? <Spinner size="sm" /> : null}
-              {kickstarting ? t("Building...") : t("Confirm Build Bets")}
+          <div className="d-flex justify-content-center gap-3">
+            <Button variant="outline-secondary" onClick={() => setShowNoCollaboratorsModal(false)} disabled={kickstarting} className="w-50 py-2 fw-semibold">
+              {t("No")}
             </Button>
-            {!kickstarting && <>
-                {isAdmin && !hasCollaborators && !anyProjectKickstarted && projects.length === 0 && <Button variant="outline-secondary" onClick={() => navigate('/admin?tab=user_management')} className="py-2">
-                    {t("Add Collaborators First")}
-                  </Button>}
-                <Button variant="outline-secondary" onClick={() => setShowNoCollaboratorsModal(false)} className="py-2">
-                  {t("Cancel")}
-                </Button>
-              </>}
+            <Button variant="success" onClick={confirmKickstart} disabled={kickstarting} className="w-50 d-flex align-items-center justify-content-center gap-2 py-2 fw-semibold" style={{ backgroundColor: '#0284c7', border: 'none' }}>
+              {kickstarting ? <Spinner size="sm" /> : null}
+              {kickstarting ? t("Building...") : t("Yes")}
+            </Button>
           </div>
         </Modal.Body>
       </Modal>

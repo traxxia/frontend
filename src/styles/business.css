@@ -1,7 +1,6 @@
 .modern-analysis-container {
   background: #fff !important;
-  min-height: 100vh;
-  padding: 10px;
+  min-height: 100vh; 
 }
 
 [data-theme="dark"] .modern-analysis-container {
@@ -9,8 +8,7 @@
 }
 
 .modern-analysis-content {
-  max-width: 99%;
-  margin: 10px auto;
+  max-width: 99%; 
 }
 
 .modern-phase-section {
@@ -1016,8 +1014,7 @@
 .six-cs-framework-overview {
   background: white;
   border-radius: 12px;
-  padding: 20px 24px;
-  margin: 10px;
+  padding: 20px 24px; 
   border: 1px solid #e2e8f0;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
