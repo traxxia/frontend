@@ -1051,10 +1051,6 @@ const BusinessSetupPage = () => {
   };
 
   const handleBack = () => {
-    if (activeTab === 'advanced') {
-      setActiveTab('insights');
-      return;
-    }
     navigate("/dashboard");
   };
 
@@ -1515,9 +1511,7 @@ const BusinessSetupPage = () => {
               <button className="back-button" onClick={handleBack} aria-label="Back" style={{ display: 'contents', alignItems: 'center', gap: '8px' }}>
                 <ArrowLeft size={16} style={{margin: '4px 10px'}}/>
                 <span>
-                  {activeTab === 'advanced'
-                    ? (t("Back to Insights") || "Back to Insights")
-                    : (t("backToDashboard_B3") || "Back to Dashboard")}
+                  {t("backToDashboard_B3") || "Back to Dashboard"}
                 </span>
               </button>
               <div className="business-breadcrumb">
@@ -1790,9 +1784,7 @@ const BusinessSetupPage = () => {
                       >
                         <ArrowLeft size={18} />
                         <span className="breadcrumb-back">
-                          {activeTab === 'advanced' 
-                            ? (t("Back to Insights") || "Back to Insights") 
-                            : (t("backToDashboard_B3") || "Back to Dashboard")}
+                          {t("backToDashboard_B3") || "Back to Dashboard"}
                         </span>
                       </button>
                       {selectedBusinessName && (

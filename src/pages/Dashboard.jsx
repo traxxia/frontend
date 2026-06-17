@@ -23,7 +23,7 @@ import "../styles/dashboard.css";
 import { useTranslation } from '../hooks/useTranslation';
 
 import PlanLimitModal from '../components/PlanLimitModal';
-import { useAuthStore, useBusinessStore, useUIStore } from '../store';
+import { useAuthStore, useBusinessStore, useUIStore, useAnalysisStore } from '../store';
 import { useBusinesses, usePlanDetails } from '../hooks/useQueries';
 import { useQueryClient } from '@tanstack/react-query';
 
@@ -224,6 +224,7 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const ENABLE_PMF = getUserLimits().pmf;
+  const regenerating = useAnalysisStore(state => state.regenerating);
   const {
     isCreating: isCreatingBusiness,
     isDeleting: isDeletingBusiness,
@@ -678,6 +679,7 @@ const Dashboard = () => {
   
     selectBusiness(business);
 
+    let hasAdvancedAnalysis = false;
     const businessId = business?._id || business?.id;
     if (businessId) {
       try {
@@ -685,10 +687,12 @@ const Dashboard = () => {
         const API_BASE_URL = import.meta.env.VITE_BACKEND_URL;
         const getAuthToken = () => useAuthStore.getState().token;
         const analysisService = new AnalysisApiService(ML_API_BASE_URL, API_BASE_URL, getAuthToken);
-        
         console.log(`[DEBUG] handleInsightsClick: Fetching PMF for businessId=${businessId}`);
         const result = await analysisService.getPMFAnalysis(businessId, true);
         console.log(`[DEBUG] handleInsightsClick: result from getPMFAnalysis=`, result);
+        
+        const analysisData = await analysisService.fetchAnalysisDataThroughBackend(businessId, true);
+        hasAdvancedAnalysis = analysisData && analysisData.length > 0;
         
         const hasOnboarding = (result?.onboarding_data && Object.keys(result.onboarding_data).length > 0) || 
                               (result?.onboarding && Object.keys(result.onboarding).length > 0);
@@ -704,7 +708,7 @@ const Dashboard = () => {
           const execResult = await analysisService.getPMFExecutiveSummary(businessId);
           const summaryContent = execResult?.summary || execResult;
           hasExecSummary = !!summaryContent && (typeof summaryContent === 'string' ? summaryContent.trim().length > 0 : Object.keys(summaryContent).length > 0);
-        } catch (err) {
+} catch (err) {
           console.warn("Failed to check Executive Summary status:", err);
         }
 
@@ -730,8 +734,11 @@ const Dashboard = () => {
     const isPaidPlan = userPlan && userPlan.toLowerCase() !== 'explorer' && userPlan.toLowerCase() !== 'free' && userPlan.toLowerCase() !== 'none';
     const limits = getUserLimits();
     
+    const isTypeRegenerating = (type) => regenerating[`${businessId}_${type}`] || false;
+    const isAnalysisRegenerating = isTypeRegenerating('swot') || isTypeRegenerating('porters') || isTypeRegenerating('pestel') || isTypeRegenerating('initial') || isTypeRegenerating('essential') || isTypeRegenerating('advanced');
+
     if (isPaidPlan) {
-      initialTab = 'insights';
+      initialTab = (hasAdvancedAnalysis || isAnalysisRegenerating) ? 'insights' : 'advanced';
     } else if (limits.pmf) {
       initialTab = 'executive';
     } else if (limits.insight) {
@@ -744,7 +751,7 @@ const Dashboard = () => {
     navigate(`/businesspage?business=${businessSlug}&tab=${initialTab}`, { 
       state: { business, initialTab } 
     });
-  }, [selectBusiness, navigate, t, userRole, openModal]);
+  }, [selectBusiness, navigate, t, userRole, openModal, regenerating]);
 
   const handleExecutionClick = useCallback((business) => {
     if (business.status === 'deleted') return;

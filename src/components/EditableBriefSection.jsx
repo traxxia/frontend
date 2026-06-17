@@ -1067,7 +1067,7 @@ const EditableBriefSection = ({
 
         clearInterval(progressInterval);
         setUploadedFiles(prev => prev.map(f => f.id === fileId ? successFileObj : f));
-        showToastMessage(`File "${file.name}" uploaded successfully! Analyzing...`, 'success');
+        showToastMessage(`File "${file.name}" uploaded successfully! Click Analyze to process it.`, 'success');
       } catch (error) {
         clearInterval(progressInterval);
         setUploadedFiles(prev => prev.map(f => f.id === fileId ? { ...f, status: 'failed', errorMessage: error.message } : f));
@@ -1078,33 +1078,46 @@ const EditableBriefSection = ({
     await Promise.all(uploadPromises);
 
     if (successfulFiles.length > 0) {
-      // Set to analyzing state
+      // Just set to success, do not trigger analysis automatically
       setUploadedFiles(prev =>
         prev.map(f =>
           successfulFiles.some(fa => fa.id === f.id)
-            ? { ...f, status: 'analyzing', progress: 30 }
-            : f
-        )
-      );
-
-      const hasSpreadsheet = successfulFiles.some(f => f.type === 'spreadsheet' || f.name.endsWith('.xlsx') || f.name.endsWith('.xls') || f.name.endsWith('.csv'));
-      
-      const apiPromises = [handleAnalyzeDocuments(successfulFiles)];
-      if (hasSpreadsheet) {
-        apiPromises.push(handleSyncFinancial());
-      }
-
-      await Promise.all(apiPromises);
-
-      // Finally set to success
-      setUploadedFiles(prev =>
-        prev.map(f =>
-          successfulFiles.some(fa => fa.id === f.id)
-            ? { ...f, status: 'success', progress: 100, isNewSessionFile: false }
+            ? { ...f, status: 'success', progress: 100, isNewSessionFile: true }
             : f
         )
       );
     }
+  };
+
+  const handleAnalyzeFilesBulk = async (filesToAnalyze) => {
+    const fileIds = filesToAnalyze.map(f => f.id);
+    // Set to analyzing state
+    setUploadedFiles(prev =>
+      prev.map(f =>
+        fileIds.includes(f.id)
+          ? { ...f, status: 'analyzing', progress: 30 }
+          : f
+      )
+    );
+
+    const hasSpreadsheet = filesToAnalyze.some(f => f.type === 'spreadsheet' || f.name.endsWith('.xlsx') || 
+    f.name.endsWith('.xls') || f.name.endsWith('.csv'));
+    
+    const apiPromises = [handleAnalyzeDocuments(filesToAnalyze)];
+    if (hasSpreadsheet) {
+      apiPromises.push(handleSyncFinancial());
+    }
+
+    await Promise.all(apiPromises);
+
+    // Finally set to success
+    setUploadedFiles(prev =>
+      prev.map(f =>
+        fileIds.includes(f.id)
+          ? { ...f, status: 'success', progress: 100, isNewSessionFile: false }
+          : f
+      )
+    );
   };
 
   const handleFileUpload = async (event) => {
@@ -1774,40 +1787,56 @@ const EditableBriefSection = ({
                           </div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                             <span className={`file-status-badge ${file.status}`} style={{ fontSize: '10px', padding: '2px 6px' }}>
-                              {file.status === 'uploading' ? `${file.progress}%` : (
-                                file.status === 'analyzing' ? (
-                                  <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                    <Loader2 size={12} className="animate-spin" /> Analyzing...
-                                  </span>
-                                ) : file.status
-                              )}
-                            </span>
-                            {/* <button
-                              className="sidebar-file-remove"
-                              onClick={() => {
-                                if (isAnyApiActive || !canEdit) return;
-                                handleRemoveFile(file.id, file.name);
-                              }}
-                              disabled={isAnyApiActive || !canEdit}
-                              style={{ cursor: (isAnyApiActive || !canEdit) ? 'not-allowed' : 'pointer', opacity: (isAnyApiActive || !canEdit) ? 0.5 : 1, padding: '4px', background: 'none', border: 'none', color: '#94a3b8' }}
-                              title="Remove file"
-                            >
-                              <Trash2 size={16} />
-                            </button> */}
-                          </div>
+                                {file.status === 'uploading' ? `${file.progress}%` : (
+                                  file.status === 'analyzing' ? (
+                                    <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                      <Loader2 size={12} className="animate-spin" /> Analyzing...
+                                    </span>
+                                  ) : file.status
+                                )}
+                              </span>
+                            </div>
                         </div>
                       );
                     })}
                   </div>
                 )}
 
-                <button 
-                  onClick={() => { if (!isAnyApiActive && canEdit) triggerFileInput(); }}
-                  disabled={isAnyApiActive || !canEdit}
-                  style={{ width: 'auto', background: 'white', border: '1px dashed #cbd5e1', borderRadius: '8px', padding: '3px 8px', color: '#64748b', fontSize: '14px', fontWeight: '500', display: 'flex', alignItems: 'center', gap: '8px', cursor: (isAnyApiActive || !canEdit) ? 'not-allowed' : 'pointer' }}
-                >
-                  <span style={{ fontSize: '18px', fontWeight: '300' }}>+</span> Add file
-                </button>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <button 
+                    onClick={() => { if (!isAnyApiActive && canEdit) triggerFileInput(); }}
+                    disabled={isAnyApiActive || !canEdit}
+                    style={{ width: 'auto', background: 'white', border: '1px dashed #cbd5e1', borderRadius: '8px', padding: '3px 8px', color: '#64748b', fontSize: '14px', fontWeight: '500', display: 'flex', alignItems: 'center', gap: '8px', cursor: (isAnyApiActive || !canEdit) ? 'not-allowed' : 'pointer' }}
+                  >
+                    <span style={{ fontSize: '18px', fontWeight: '300' }}>+</span> Add file
+                  </button>
+
+                  {strategyFiles.some(f => f.status === 'success') && (
+                    <button
+                      className="sidebar-file-analyze-btn"
+                      onClick={() => {
+                        if (isAnyApiActive || !canEdit) return;
+                        const filesToAnalyze = strategyFiles.filter(f => f.status === 'success');
+                        handleAnalyzeFilesBulk(filesToAnalyze);
+                      }}
+                      disabled={isAnyApiActive || !canEdit}
+                      style={{
+                        cursor: (isAnyApiActive || !canEdit) ? 'not-allowed' : 'pointer',
+                        opacity: (isAnyApiActive || !canEdit) ? 0.5 : 1,
+                        padding: '6px 16px',
+                        background: 'var(--color-primary',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '6px',
+                        fontSize: '14px',
+                        fontWeight: '600'
+                      }}
+                      title="Analyze all files"
+                    >
+                      Analyze
+                    </button>
+                  )}
+                </div>
               </div>
             )}
           </div>
@@ -1843,14 +1872,12 @@ const EditableBriefSection = ({
                   <span className="phase-tab-title">Advanced</span>
                   <span className="phase-tab-badge">{advancedCountStr}</span>
                 </button>
-                {docIntelSession && docIntelSession.financialMetrics && (
-                  <button
-                    className={`phase-tab-btn ${activePhaseTab === 'financial' ? 'active' : ''}`}
-                    onClick={() => { setActivePhaseTab('financial'); setExpandAll(false); }}
-                  >
-                    <span className="phase-tab-title">Financial Data</span> 
-                  </button>
-                )}
+                <button
+                  className={`phase-tab-btn ${activePhaseTab === 'financial' ? 'active' : ''}`}
+                  onClick={() => { setActivePhaseTab('financial'); setExpandAll(false); }}
+                >
+                  <span className="phase-tab-title">Financial Data</span> 
+                </button>
               </div>
               {/* <div className="sqc-header-actions">
                 <button 
@@ -1865,19 +1892,12 @@ const EditableBriefSection = ({
             </div>
 
           <div className="sqc-meta-bar">
-              {activePhaseTab === 'financial' ? (
-                <span className="sqc-meta-count">
-                  <span style={{ color: '#16a34a', fontWeight: 700 }}>
-                    {Object.keys(docIntelSession?.financialMetrics || {}).filter(k => k !== "meta").reduce((acc, cat) => acc + Object.keys(docIntelSession.financialMetrics[cat]).length, 0)}
-                  </span>
-                  /19 metrics extracted
-                </span>
-              ) : (
+              {activePhaseTab === 'financial' ? null : (
                 <span className="sqc-meta-count">
                   <span style={{ color: '#4f46e5', fontWeight: 700 }}>
                     {currentTabFields.filter(f => cleanValue(f.value).trim() !== '').length}
                   </span>
-                  /{currentTabFields.length} answered
+                  /{currentTabFields.length} completed
                 </span>
               )}
               {/* {activePhaseTab !== 'financial' && (
@@ -1898,7 +1918,7 @@ const EditableBriefSection = ({
           <div className="phase-tab-content-list">
             {activePhaseTab === 'financial' ? (
               docIntelSession && docIntelSession.financialMetrics ? (
-                <div className="doc-intel-ledger" style={{ marginTop: '0', border: 'none', boxShadow: 'none', background: 'transparent', padding: '24px' }}>
+                <div className="doc-intel-ledger" style={{ marginTop: '0', border: 'none', boxShadow: 'none', background: 'transparent', padding: '10px 0px' }}>
                   <div className="ledger-category-header" style={{ marginBottom: '15px', color: '#16a34a', borderBottom: '1px solid rgba(0,0,0,0.06)', paddingBottom: '8px' }}>
                     <Database size={16} />
                     <span>Extracted Ledger Workspace</span>
