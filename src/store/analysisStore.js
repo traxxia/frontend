@@ -520,6 +520,30 @@ export const useAnalysisStore = create((set, get) => ({
     }
   },
 
+  updatePriorityName: async (businessId, priorityIndex, newTitle) => {
+    if (!businessId) return;
+    try {
+      const apiService = getApiService();
+      await apiService.updatePriorityName(businessId, priorityIndex, newTitle);
+      
+      // Update local kickstartData state optimistically
+      set(state => {
+        if (state.kickstartData && state.kickstartData.priorities && state.kickstartData.priorities[priorityIndex]) {
+          const updatedPriorities = [...state.kickstartData.priorities];
+          updatedPriorities[priorityIndex] = {
+            ...updatedPriorities[priorityIndex],
+            title: newTitle
+          };
+          return { kickstartData: { ...state.kickstartData, priorities: updatedPriorities } };
+        }
+        return state;
+      });
+    } catch (err) {
+      console.error('Failed to update priority name:', err);
+      throw err;
+    }
+  },
+
   kickstartProject: async (payload) => {
     try {
       const apiService = getApiService();

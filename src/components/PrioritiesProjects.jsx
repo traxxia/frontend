@@ -28,6 +28,7 @@ const PrioritiesProjects = ({
   const kickstartData = useAnalysisStore(state => state.kickstartData);
   const fetchKickstartData = useAnalysisStore(state => state.fetchKickstartData);
   const kickstartProject = useAnalysisStore(state => state.kickstartProject);
+  const updatePriorityName = useAnalysisStore(state => state.updatePriorityName);
   const clearProjectCache = useProjectStore(state => state.clearCache);
   const projects = useProjectStore(state => state.projects);
   const [selected, setSelected] = useState([]);
@@ -59,6 +60,14 @@ const PrioritiesProjects = ({
       return updated;
     });
   }, []);
+
+  const handleTitleBlur = useCallback(async (idx, title) => {
+    try {
+      await updatePriorityName(selectedBusinessId, idx, title);
+    } catch (err) {
+      console.error("Failed to update title in DB", err);
+    }
+  }, [selectedBusinessId, updatePriorityName]);
   const hasCollaborators = kickstartData?.hasCollaborators ?? true;
   const {
     totalActions,
@@ -192,7 +201,15 @@ const PrioritiesProjects = ({
           Build your <span style={{ color: '#0ea5e9' }}>Bets</span>
         </h1>
         <p className="text-muted" style={{ maxWidth: '600px', fontSize: '0.95rem', lineHeight: '1.6' }}>
-          These are the five things you're choosing to bet on this period. Edit anything that doesn't read right — once you lock them in, they become Bets you'll execute and review. The commitment is what matters.
+          {(() => {
+            const numberWords = ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten"];
+            const countWord = numberWords[priorities.length] || priorities.length;
+            return (
+              <>
+                These are the <span>{countWord}</span> things you're choosing to bet on this period. Edit anything that doesn't read right — once you lock them in, they become Bets you'll execute and review. The commitment is what matters.
+              </>
+            );
+          })()}
         </p>
       </div>
 
@@ -225,6 +242,7 @@ const PrioritiesProjects = ({
                   className="fw-bold w-100 priority-edit-input"
                   value={item.title}
                   onChange={(e) => handleTitleChange(idx, e.target.value)}
+                  onBlur={(e) => handleTitleBlur(idx, e.target.value)}
                   placeholder="Enter your bet name..."
                   readOnly={anyProjectKickstarted}
                 />

@@ -23,10 +23,10 @@ const clearAnswersCache = (business_id) => {
 
 export const answerService = {
 
-    async analyzeStrategicDocumentsBackend(business_id, answers) {
+    async analyzeStrategicDocumentsBackend(business_id, answers, analyzed_files = []) {
         try {
             clearAnswersCache(business_id);
-            const response = await axios.post(`${API_BASE_URL}/api/businesses/${business_id}/strategic-document/analyze`, { answers }, {
+            const response = await axios.post(`${API_BASE_URL}/api/businesses/${business_id}/strategic-document/analyze`, { answers, analyzed_files }, {
                 headers: getAuthHeaders()
             });
             return response.data;

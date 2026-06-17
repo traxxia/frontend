@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
   Edit3, Check, X, Loader, Loader2, AlertCircle, Sparkles, Wand2, Upload, FileText, Database, RefreshCw,
-  ChevronDown, ChevronUp, ChevronLeft, ChevronRight, CheckCircle, FileSpreadsheet, HelpCircle, Eye, ArrowRight, BookOpen, Trash2, Maximize2, Minimize2
+  ChevronDown, ChevronUp, ChevronLeft, ChevronRight, CheckCircle, FileSpreadsheet, HelpCircle, Eye, ArrowRight, BookOpen, Trash2, Maximize2, Minimize2,
+  Activity, DollarSign, Calendar
 } from 'lucide-react';
 import { AnalysisApiService } from '../services/analysisApiService';
 import { answerService } from '../services/answerService';
@@ -17,6 +18,7 @@ import RichTextEditor from './RichTextEditor';
 import { markdownToHtml } from '../utils/markdownHelper';
 import ConfirmationModal from './ConfirmationModal';
 import { formatCurrencyValue } from '../utils/currencyUtils';
+import { computePageCount, getFileDetails } from '../utils/fileUtils';
 
 let globalLimitsPromise = null;
 const sessionCache = new Map();
@@ -47,11 +49,14 @@ const getQuestionIntelligence = (field, docName, details) => {
     };
   }
 
-  const original = details.ai_answer !== undefined && details.ai_answer !== null && details.ai_answer !== ''
+  // Protection against corrupted DB records from before the fix
+  const isCorrupted = details.status === 'EDITED' && details.ai_answer === details.user_answer && !details.previous_answer;
+
+  const original = isCorrupted ? null : (details.ai_answer !== undefined && details.ai_answer !== null && details.ai_answer !== ''
     ? details.ai_answer
     : (field.value && field.value.startsWith('[AI Extraction]')
       ? field.value
-      : null);
+      : null));
 
   if (details.status === 'FOUND') {
     const conf = details.confidence >= 0.7 ? 'High' : details.confidence >= 0.5 ? 'Medium' : 'Low';
@@ -135,6 +140,7 @@ const SimpleQuestionCard = ({
 
   // Auto-expand when editing starts
   const handleEditClick = () => {
+    if (showOriginal) return;
     if (canEdit && !isSaving) {
       setIsExpanded(true);
       handleEdit(field);
@@ -282,9 +288,11 @@ const SimpleQuestionCard = ({
                     <Eye size={11} /> Citation
                   </button>
                 )}
-                <button className="simple-text-toggle sqc-edit-btn" onClick={handleEditClick}>
-                  <Edit3 size={11} /> Edit
-                </button>
+                {!showOriginal && (
+                  <button className="simple-text-toggle sqc-edit-btn" onClick={handleEditClick}>
+                    <Edit3 size={11} /> Edit
+                  </button>
+                )}
               </div>
             </div>
           )}
@@ -299,6 +307,38 @@ const SimpleQuestionCard = ({
       )}
     </div>
   );
+};
+const DEFAULT_MAX_RETRIES = 12;
+
+const defaultFinancialMetrics = {
+  meta: { document_currency: "USD", reporting_period: "N/A", extraction_confidence: "N/A" },
+  financial_performance: {
+    revenue: { value: null },
+    gross_profit: { value: null },
+    ebitda: { value: null },
+    net_income: { value: null },
+    revenue_growth_yoy: { value: null }
+  },
+  financial_health: {
+    current_ratio: { value: null },
+    quick_ratio: { value: null },
+    debt_to_equity: { value: null },
+    interest_coverage: { value: null },
+    cash_and_equivalents: { value: null }
+  },
+  operational_efficiency: {
+    gross_margin: { value: null },
+    operating_margin: { value: null },
+    net_margin: { value: null },
+    roe: { value: null },
+    roa: { value: null }
+  },
+  cost_efficiency: {
+    cogs: { value: null },
+    opex: { value: null },
+    rd_spend: { value: null },
+    capex: { value: null }
+  }
 };
 
 const EditableBriefSection = ({
@@ -644,7 +684,22 @@ const EditableBriefSection = ({
   const handleUpdateMetric = async (category, metricKey, newValue) => {
     if (!docIntelSession) return;
     
-    const oldValue = docIntelSession.financialMetrics?.[category]?.[metricKey]?.value;
+    const currentMetrics = (() => {
+      if (!docIntelSession?.financialMetrics) return defaultFinancialMetrics;
+      const merged = JSON.parse(JSON.stringify(defaultFinancialMetrics));
+      if (docIntelSession.financialMetrics.meta) merged.meta = { ...merged.meta, ...docIntelSession.financialMetrics.meta };
+      const cats = ["financial_performance", "financial_health", "operational_efficiency", "cost_efficiency"];
+      cats.forEach(cat => {
+        if (docIntelSession.financialMetrics[cat]) {
+          Object.keys(docIntelSession.financialMetrics[cat]).forEach(k => {
+            if (k !== 'meta') merged[cat][k] = docIntelSession.financialMetrics[cat][k];
+          });
+        }
+      });
+      return merged;
+    })();
+      
+    const oldValue = currentMetrics?.[category]?.[metricKey]?.value;
     
     const trimmed = String(newValue || '').trim();
     let parsedNewValue = null;
@@ -662,7 +717,8 @@ const EditableBriefSection = ({
       return;
     }
     
-    const updatedMetrics = { ...docIntelSession.financialMetrics };
+    // Deep copy currentMetrics
+    const updatedMetrics = JSON.parse(JSON.stringify(currentMetrics));
     if (updatedMetrics[category] && updatedMetrics[category][metricKey]) {
       updatedMetrics[category][metricKey].value = parsedNewValue;
     }
@@ -754,7 +810,7 @@ const EditableBriefSection = ({
               type: type,
               section: 'strategic',
               progress: 100,
-              isNewSessionFile: false
+              isNewSessionFile: !doc.is_analyzed
             };
           });
           return [...nonDbStrategic, ...dbStrategic];
@@ -791,10 +847,17 @@ const EditableBriefSection = ({
       return (a.order || 0) - (b.order || 0);
     });
 
-    let sequentialNumber = 1;
+    const sequentialNumberByPhase = {
+      initial: 1,
+      essential: 1,
+      advanced: 1
+    };
+    
     sortedQuestions.forEach(question => {
       const qId = question._id || question.question_id;
       const answer = userAnswers[qId] || '';
+      const phase = (question.phase || 'initial').toLowerCase();
+      
       fields.push({
         key: `question_${qId}`,
         label: question.question_text,
@@ -803,7 +866,7 @@ const EditableBriefSection = ({
         phase: question.phase,
         severity: question.severity,
         order: question.order,
-        sequentialNumber: sequentialNumber++
+        sequentialNumber: sequentialNumberByPhase[phase] ? sequentialNumberByPhase[phase]++ : 1
       });
     });
     setBriefFields(fields);
@@ -826,9 +889,14 @@ const EditableBriefSection = ({
       const existingAnswerId = answerIds[questionId];
       let response;
       if (existingAnswerId) {
-        response = await answerService.updateAnswer(existingAnswerId, newAnswer);
+        response = await answerService.updateAnswer(existingAnswerId, newAnswer, {
+          user_answer: newAnswer,
+          status: 'EDITED'
+        });
       } else {
         response = await answerService.createAnswer(selectedBusinessId, questionId, newAnswer, {
+          user_answer: newAnswer,
+          ai_answer: '',
           status: 'EDITED',
           confidence: 0,
           evidence: []
@@ -1014,10 +1082,13 @@ const EditableBriefSection = ({
 
       const fileId = `file-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
       
+      const pageInfo = await computePageCount(file);
+
       const newFileObj = {
         id: fileId,
         name: file.name,
         size: file.size,
+        pageInfo: pageInfo,
         uploadDate: new Date().toLocaleDateString(),
         status: 'uploading',
         progress: 15,
@@ -1521,7 +1592,8 @@ const EditableBriefSection = ({
       }
 
       // 3. Pass responses to backend to save in the database
-      const result = await answerService.analyzeStrategicDocumentsBackend(selectedBusinessId, mlResult.answers);
+      const analyzedFileNames = filesToAnalyze.map(f => f.id.replace('db-strategic-', ''));
+      const result = await answerService.analyzeStrategicDocumentsBackend(selectedBusinessId, mlResult.answers, analyzedFileNames);
       
       if (!result || !Array.isArray(result.answers)) {
         throw new Error(result?.error || 'Failed to save analysis answers to backend.');
@@ -1696,6 +1768,39 @@ const EditableBriefSection = ({
   const essentialCountStr = `${essentialFields.filter(f => cleanValue(f.value).trim() !== '').length}/${essentialFields.length}`;
   const advancedCountStr = `${advancedFields.filter(f => cleanValue(f.value).trim() !== '').length}/${advancedFields.length}`;
 
+  const displayFinancialMetrics = (() => {
+    if (!docIntelSession?.financialMetrics) return defaultFinancialMetrics;
+    const merged = JSON.parse(JSON.stringify(defaultFinancialMetrics));
+    if (docIntelSession.financialMetrics.meta) merged.meta = { ...merged.meta, ...docIntelSession.financialMetrics.meta };
+    const cats = ["financial_performance", "financial_health", "operational_efficiency", "cost_efficiency"];
+    cats.forEach(cat => {
+      if (docIntelSession.financialMetrics[cat]) {
+        Object.keys(docIntelSession.financialMetrics[cat]).forEach(k => {
+          if (k !== 'meta') merged[cat][k] = docIntelSession.financialMetrics[cat][k];
+        });
+      }
+    });
+    return merged;
+  })();
+
+  const financialCountStr = (() => {
+    if (!displayFinancialMetrics) return "0/0";
+    let total = 0;
+    let filled = 0;
+    const cats = ["financial_performance", "financial_health", "operational_efficiency", "cost_efficiency"];
+    cats.forEach(catKey => {
+      const metricsMap = displayFinancialMetrics[catKey] || {};
+      const metricsEntries = Object.entries(metricsMap).filter(([k]) => k !== "meta");
+      total += metricsEntries.length;
+      metricsEntries.forEach(([k, v]) => {
+        if (v && v.value !== undefined && v.value !== null && String(v.value).trim() !== '') {
+          filled++;
+        }
+      });
+    });
+    return `${filled}/${total}`;
+  })();
+
   const currentTabFields = activePhaseTab === 'initial'
     ? initialFields
     : activePhaseTab === 'essential'
@@ -1704,10 +1809,10 @@ const EditableBriefSection = ({
 
   const hasAnyAnswer = [...initialFields, ...essentialFields, ...advancedFields].some(f => cleanValue(f.value).trim() !== '');
   let hasAnyFinancial = false;
-  if (docIntelSession?.financialMetrics) {
-    const cats = Object.keys(docIntelSession.financialMetrics).filter(k => k !== 'meta');
+  if (displayFinancialMetrics) {
+    const cats = Object.keys(displayFinancialMetrics).filter(k => k !== 'meta');
     for (const cat of cats) {
-        const metrics = docIntelSession.financialMetrics[cat];
+        const metrics = displayFinancialMetrics[cat];
         if (metrics && Object.values(metrics).some(m => m && m.value !== undefined && m.value !== null && String(m.value).trim() !== '')) {
             hasAnyFinancial = true;
             break;
@@ -1766,43 +1871,107 @@ const EditableBriefSection = ({
                   disabled={isAnyApiActive || !canEdit}
                 />
 
-                {strategyFiles.length > 0 && (
-                  <div className="sidebar-file-list" style={{ marginBottom: '16px' }}>
-                    {strategyFiles.map(file => {
-                      const ext = (file.name || '').split('.').pop().toUpperCase();
-                      let badgeColor = '#64748b';
-                      let badgeBg = '#f1f5f9';
-                      if (['XLSX', 'XLS', 'CSV'].includes(ext)) { badgeColor = '#16a34a'; badgeBg = '#dcfce7'; }
-                      else if (['PDF'].includes(ext)) { badgeColor = '#ef4444'; badgeBg = '#fee2e2'; }
-                      else if (['DOCX', 'DOC'].includes(ext)) { badgeColor = '#2563eb'; badgeBg = '#dbeafe'; }
+                {strategyFiles.length > 0 && (() => {
+                  const renderFile = (file) => {
+                    const ext = (file.name || '').split('.').pop().toUpperCase();
+                    let badgeColor = '#64748b';
+                    let badgeBg = '#f1f5f9';
+                    if (['XLSX', 'XLS', 'CSV'].includes(ext)) { badgeColor = '#16a34a'; badgeBg = '#dcfce7'; }
+                    else if (['PDF'].includes(ext)) { badgeColor = '#ef4444'; badgeBg = '#fee2e2'; }
+                    else if (['DOCX', 'DOC'].includes(ext)) { badgeColor = '#2563eb'; badgeBg = '#dbeafe'; }
 
-                      return (
-                        <div key={file.id} className="sidebar-file-item" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '3px 8px' }}>
-                          <div className="sidebar-file-info" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                            <span style={{ color: badgeColor, fontWeight: '800', fontSize: '10px', background: badgeBg, padding: '4px 8px', borderRadius: '4px' }}>{ext || 'FILE'}</span>
-                            <div style={{ display: 'flex', flexDirection: 'column' }}>
-                              <span className="sidebar-file-name" title={file.name} style={{ fontWeight: '500', fontSize: '14px', color: '#1e293b' }}>{file.name}</span>
-                              <span style={{ fontSize: '12px', color: '#64748b' }}>{file.size ? Math.round(file.size / 1024) + ' KB' : ''}</span>
-                            </div>
+                    return (
+                      <div key={file.id} className="sidebar-file-item" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '3px 8px', marginBottom: '8px' }}>
+                        <div className="sidebar-file-info" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                          <span style={{ color: badgeColor, fontWeight: '800', fontSize: '10px', background: badgeBg, padding: '4px 8px', borderRadius: '4px' }}>{ext || 'FILE'}</span>
+                          <div style={{ display: 'flex', flexDirection: 'column' }}>
+                            <span className="sidebar-file-name" title={file.name} style={{ fontWeight: '500', fontSize: '14px', color: '#1e293b' }}>{file.name}</span>
+                            <span style={{ fontSize: '12px', color: '#64748b' }}>{getFileDetails(file, file.pageInfo)}</span>
                           </div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                            <span className={`file-status-badge ${file.status}`} style={{ fontSize: '10px', padding: '2px 6px' }}>
-                                {file.status === 'uploading' ? `${file.progress}%` : (
-                                  file.status === 'analyzing' ? (
-                                    <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                      <Loader2 size={12} className="animate-spin" /> Analyzing...
-                                    </span>
-                                  ) : file.status
-                                )}
-                              </span>
-                            </div>
                         </div>
-                      );
-                    })}
-                  </div>
-                )}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <span className={`file-status-badge ${file.status}`} style={{ fontSize: '10px', padding: '2px 6px' }}>
+                              {file.status === 'uploading' ? `${file.progress}%` : (
+                                file.status === 'analyzing' ? (
+                                  <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                    <Loader2 size={12} className="animate-spin" /> Analyzing...
+                                  </span>
+                                ) : file.status
+                              )}
+                            </span>
+                            {file.isNewSessionFile && (
+                              <button
+                                className="sidebar-file-delete-btn"
+                                onClick={(e) => { e.stopPropagation(); handleRemoveFile(file.id, file.name); }}
+                                style={{
+                                  background: 'transparent',
+                                  border: 'none',
+                                  cursor: 'pointer',
+                                  padding: '2px',
+                                  color: '#ef4444',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center'
+                                }}
+                                title="Delete file"
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            )}
+                          </div>
+                      </div>
+                    );
+                  };
 
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  const newFiles = strategyFiles.filter(f => f.isNewSessionFile);
+                  const analyzedFiles = strategyFiles.filter(f => !f.isNewSessionFile);
+
+                  return (
+                    <div style={{ marginBottom: '16px' }}>
+                      {newFiles.length > 0 && (
+                        <div className="sidebar-file-list">
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                            <h5 style={{ fontSize: '12px', color: '#475569', margin: '0' }}>Not Analyzed Yet</h5>
+                            {strategyFiles.some(f => f.status === 'success' && f.isNewSessionFile) && (
+                              <button
+                                className="sidebar-file-analyze-btn"
+                                onClick={() => {
+                                  if (isAnyApiActive || !canEdit) return;
+                                  const filesToAnalyze = strategyFiles.filter(f => f.status === 'success' && f.isNewSessionFile);
+                                  handleAnalyzeFilesBulk(filesToAnalyze);
+                                }}
+                                disabled={isAnyApiActive || !canEdit}
+                                style={{
+                                  cursor: (isAnyApiActive || !canEdit) ? 'not-allowed' : 'pointer',
+                                  opacity: (isAnyApiActive || !canEdit) ? 0.5 : 1,
+                                  padding: '4px 12px',
+                                  background: 'var(--color-primary)',
+                                  color: 'white',
+                                  border: 'none',
+                                  borderRadius: '6px',
+                                  fontSize: '12px',
+                                  fontWeight: '600'
+                                }}
+                                title="Analyze new files"
+                              >
+                                Analyze
+                              </button>
+                            )}
+                          </div>
+                          {newFiles.map(renderFile)}
+                        </div>
+                      )}
+                      {analyzedFiles.length > 0 && (
+                        <div className="sidebar-file-list" style={{ marginTop: newFiles.length > 0 ? '16px' : '0' }}>
+                          <h5 style={{ fontSize: '12px', color: '#475569', marginBottom: '8px', marginTop: '0' }}>Analyzed Documents</h5>
+                          {analyzedFiles.map(renderFile)}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
+
+                <div style={{ display: 'flex', justifyContent: 'flex-start', alignItems: 'center' }}>
                   <button 
                     onClick={() => { if (!isAnyApiActive && canEdit) triggerFileInput(); }}
                     disabled={isAnyApiActive || !canEdit}
@@ -1810,32 +1979,6 @@ const EditableBriefSection = ({
                   >
                     <span style={{ fontSize: '18px', fontWeight: '300' }}>+</span> Add file
                   </button>
-
-                  {strategyFiles.some(f => f.status === 'success') && (
-                    <button
-                      className="sidebar-file-analyze-btn"
-                      onClick={() => {
-                        if (isAnyApiActive || !canEdit) return;
-                        const filesToAnalyze = strategyFiles.filter(f => f.status === 'success');
-                        handleAnalyzeFilesBulk(filesToAnalyze);
-                      }}
-                      disabled={isAnyApiActive || !canEdit}
-                      style={{
-                        cursor: (isAnyApiActive || !canEdit) ? 'not-allowed' : 'pointer',
-                        opacity: (isAnyApiActive || !canEdit) ? 0.5 : 1,
-                        padding: '6px 16px',
-                        background: 'var(--color-primary',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '6px',
-                        fontSize: '14px',
-                        fontWeight: '600'
-                      }}
-                      title="Analyze all files"
-                    >
-                      Analyze
-                    </button>
-                  )}
                 </div>
               </div>
             )}
@@ -1877,6 +2020,7 @@ const EditableBriefSection = ({
                   onClick={() => { setActivePhaseTab('financial'); setExpandAll(false); }}
                 >
                   <span className="phase-tab-title">Financial Data</span> 
+                  <span className="phase-tab-badge">{financialCountStr}</span>
                 </button>
               </div>
               {/* <div className="sqc-header-actions">
@@ -1916,8 +2060,9 @@ const EditableBriefSection = ({
             </div>
 
           <div className="phase-tab-content-list">
+            {/* FINANCIAL DATA (LEDGER VIEW) */}
             {activePhaseTab === 'financial' ? (
-              docIntelSession && docIntelSession.financialMetrics ? (
+              displayFinancialMetrics ? (
                 <div className="doc-intel-ledger" style={{ marginTop: '0', border: 'none', boxShadow: 'none', background: 'transparent', padding: '10px 0px' }}>
                   <div className="ledger-category-header" style={{ marginBottom: '15px', color: '#16a34a', borderBottom: '1px solid rgba(0,0,0,0.06)', paddingBottom: '8px' }}>
                     <Database size={16} />
@@ -1941,17 +2086,17 @@ const EditableBriefSection = ({
                   <div className="ledger-meta-grid">
                     <div className="meta-pill">
                       <span className="meta-pill-lbl">CURRENCY</span>
-                      <span className="meta-pill-val">{docIntelSession.financialMetrics.meta?.document_currency || "USD"}</span>
+                      <span className="meta-pill-val">{displayFinancialMetrics.meta?.document_currency || "USD"}</span>
                     </div>
                     <div className="meta-pill">
                       <span className="meta-pill-lbl">REPORT PERIOD</span>
-                      <span className="meta-pill-val">{docIntelSession.financialMetrics.meta?.reporting_period || "FY2024"}</span>
+                      <span className="meta-pill-val">{displayFinancialMetrics.meta?.reporting_period || "FY2024"}</span>
                     </div>
                     <div className="meta-pill">
                       <span className="meta-pill-lbl">CONFIDENCE</span>
                       <span className="meta-pill-val confidence-high" style={{ textTransform: 'uppercase' }}>
                         <CheckCircle size={12} />
-                        {docIntelSession.financialMetrics.meta?.extraction_confidence || "HIGH"}
+                        {displayFinancialMetrics.meta?.extraction_confidence || "HIGH"}
                       </span>
                     </div>
                   </div>
@@ -1963,7 +2108,7 @@ const EditableBriefSection = ({
                     "operational_efficiency": { icon: "⚙️", label: "Operational Efficiency" },
                     "cost_efficiency": { icon: "💰", label: "Cost & CAPEX Efficiency" }
                   }).map(([catKey, catInfo]) => {
-                    const metricsMap = docIntelSession.financialMetrics[catKey] || {};
+                    const metricsMap = displayFinancialMetrics[catKey] || {};
                     const metricsEntries = Object.entries(metricsMap).filter(([k]) => k !== "meta");
                     
                     return (
@@ -1977,18 +2122,16 @@ const EditableBriefSection = ({
                         <div className="ledger-metrics-grid">
                           {metricsEntries.map(([metricKey, mData]) => {
                             const isEditing = editingMetric?.category === catKey && editingMetric?.key === metricKey;
+                            const lowerKey = metricKey.toLowerCase();
+                            const isPercentage = 
+                              lowerKey.includes('growth') || 
+                              lowerKey.includes('margin') || 
+                              lowerKey === 'roa' || 
+                              lowerKey === 'roe';
+                              
                             const displayValue = (() => {
                               if (mData?.value === null || mData?.value === undefined) return "N/A";
                               
-                              const lowerKey = metricKey.toLowerCase();
-                              
-                              // Percentage (%) -> Growth, Margins, ROA, ROE
-                              const isPercentage = 
-                                lowerKey.includes('growth') || 
-                                lowerKey.includes('margin') || 
-                                lowerKey === 'roa' || 
-                                lowerKey === 'roe';
-                                
                               if (isPercentage) {
                                 return `${(mData.value * 100).toFixed(1)}%`;
                               }
@@ -2062,12 +2205,20 @@ const EditableBriefSection = ({
                                         }
                                       }}
                                       onBlur={() => {
-                                        handleUpdateMetric(catKey, metricKey, editMetricValue);
+                                        let finalValue = editMetricValue;
+                                        if (isPercentage && editMetricValue !== '' && !isNaN(parseFloat(editMetricValue))) {
+                                          finalValue = String(parseFloat(editMetricValue) / 100);
+                                        }
+                                        handleUpdateMetric(catKey, metricKey, finalValue);
                                         setEditingMetric(null);
                                       }}
                                       onKeyDown={(e) => {
                                         if (e.key === "Enter") {
-                                          handleUpdateMetric(catKey, metricKey, editMetricValue);
+                                          let finalValue = editMetricValue;
+                                          if (isPercentage && editMetricValue !== '' && !isNaN(parseFloat(editMetricValue))) {
+                                            finalValue = String(parseFloat(editMetricValue) / 100);
+                                          }
+                                          handleUpdateMetric(catKey, metricKey, finalValue);
                                           setEditingMetric(null);
                                         } else if (e.key === "Escape") {
                                           setEditingMetric(null);
@@ -2081,7 +2232,11 @@ const EditableBriefSection = ({
                                       onClick={() => {
                                         if (!canEdit || isAnyApiActive) return;
                                         setEditingMetric({ category: catKey, key: metricKey });
-                                        setEditMetricValue(mData?.value !== null ? String(mData.value) : '');
+                                        if (mData?.value !== null && mData?.value !== undefined) {
+                                          setEditMetricValue(isPercentage ? String(mData.value * 100) : String(mData.value));
+                                        } else {
+                                          setEditMetricValue('');
+                                        }
                                       }}
                                       style={{ cursor: (!canEdit || isAnyApiActive) ? 'not-allowed' : 'pointer' }}
                                     >
@@ -2095,11 +2250,19 @@ const EditableBriefSection = ({
                                     onClick={() => {
                                       if (!canEdit || isAnyApiActive) return;
                                       if (isEditing) {
-                                        handleUpdateMetric(catKey, metricKey, editMetricValue);
+                                        let finalValue = editMetricValue;
+                                        if (isPercentage && editMetricValue !== '' && !isNaN(parseFloat(editMetricValue))) {
+                                          finalValue = String(parseFloat(editMetricValue) / 100);
+                                        }
+                                        handleUpdateMetric(catKey, metricKey, finalValue);
                                         setEditingMetric(null);
                                       } else {
                                         setEditingMetric({ category: catKey, key: metricKey });
-                                        setEditMetricValue(mData?.value !== null ? String(mData.value) : '');
+                                        if (mData?.value !== null && mData?.value !== undefined) {
+                                          setEditMetricValue(isPercentage ? String(mData.value * 100) : String(mData.value));
+                                        } else {
+                                          setEditMetricValue('');
+                                        }
                                       }
                                     }}
                                   >
@@ -2184,7 +2347,7 @@ const EditableBriefSection = ({
                 </>
               ) : (
                 <>
-                  <span>Generate Advanced analysis</span>
+                  <span>Generate Advanced Insights</span>
                   <span style={{ fontSize: '16px' }}>&rarr;</span>
                 </>
               )}

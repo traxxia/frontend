@@ -206,7 +206,7 @@
 }
 
 .btn-sync-ledger {
-  background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%);
+  background: var(--color-primary);
   color: #ffffff;
   font-weight: 600;
   font-size: 13px;
