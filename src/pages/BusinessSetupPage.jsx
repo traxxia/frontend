@@ -51,6 +51,7 @@ import CustomTooltip from "../components/CustomTooltip";
 import { BusinessSetupContext } from "../context/BusinessSetupContext";
 import PlanLimitModal from "../components/PlanLimitModal";
 import OnboardingChat from "../components/OnboardingChat";
+import TraxSidebar from "../components/TraxSidebar";
 
 const CARD_TO_CATEGORY_MAP = {
   "profitability-analysis": "costs-financial",
@@ -1488,8 +1489,8 @@ const BusinessSetupPage = () => {
         </div>
       )}
 
-      {activeTab === 'onboarding' ? (
-        !isOnboardingStarted ? (
+      {activeTab === 'onboarding' || activeTab === 'advanced' ? (
+        activeTab === 'onboarding' && !isOnboardingStarted ? (
           <OnboardingChat
             userName={userName}
             businessName={selectedBusinessName}
@@ -1512,96 +1513,42 @@ const BusinessSetupPage = () => {
                 <span className="breadcrumb-separator">/</span>
                 <span className="business-header-name">{selectedBusinessName}</span>
                 <span className="breadcrumb-separator">/</span>
-                <span className="business-header-name">Onboarding</span>
+                <span className="business-header-name">{activeTab === 'advanced' ? 'Advanced Insights' : 'Onboarding'}</span>
               </div>
             </div>
+            {/* Advanced Insights Header - Shared across both panels */}
+            {activeTab === 'advanced' && (
+              <div className="advanced-insights-shared-header" style={{ maxWidth: '1200px', margin: '20px auto 24px auto', width: '100%', padding: '0 16px' }}>
+                <h5 style={{ color: '#4f46e5', fontSize: '11px', fontWeight: '700', letterSpacing: '0.5px', margin: '0 0 8px 0', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <span style={{ fontSize: '12px', background: '#fef08a', borderRadius: '2px', padding: '1px 3px' }}>🔒</span> ADVANCED INSIGHTS - PRO
+                </h5>
+                <h2 style={{ fontSize: '24px', fontWeight: '700', color: '#0f172a', margin: '0 0 8px 0' }}>Go <span style={{ color: '#0ea5e9' }}>deeper</span> before you commit</h2>
+                <p style={{ fontSize: '14px', color: '#475569', margin: '0', lineHeight: '1.5', maxWidth: '800px' }}>
+                  A few more questions let Trax build the full picture — the 6 C's and the S.T.R.A.T.E.G.I.C. scorecard your Bets are built from.
+                </p>
+              </div>
+            )}
 
             {/* Split layout: Left chat sidebar + Right questionnaire */}
             <div className="split-onboarding-container">
               {/* Left: Docked Trax chat sidebar */}
               <div className="split-onboarding-left">
-                <div className="docked-onboarding-chat">
-                  <div className="onboarding-chat-header">
-                    <div className="avatar-wrapper">
-                      <div className="avatar-circle">TX</div>
-                    </div>
-                    <div className="header-info">
-                      <h3 className="header-title">Trax</h3>
-                      <span className="header-subtitle">{t("Strategy Consultant") || "Strategy Consultant"}</span>
-                    </div>
-                  </div>
-                  <div className="docked-chat-body">
-                    <div className="onboarding-chat-message">
-                      <div className="bubble-avatar">TX</div>
-                      <div className="bubble-content">
-                        Hi {userName} — I'm Trax, your strategy consultant. To draft a real diagnosis for <strong>{selectedBusinessName}</strong>, I'll need a feel for the business.
-                      </div>
-                    </div>
-                    <div className="onboarding-chat-message">
-                      <div className="bubble-avatar">TX</div>
-                      <div className="bubble-content">
-                        You can fill out the questions yourself — or add documents (annual plan, board deck, financials) and I'll read them and auto-fill what I can.
-                      </div>
-                    </div>
-                    <div className="onboarding-chat-highlight-card">
-                      <strong>I value context.</strong> The more you share, the sharper the diagnosis. Upload anything you have.
-                    </div>
-                    <div className="onboarding-chat-message">
-                      <div className="bubble-avatar">TX</div>
-                      <div className="bubble-content">
-                        Great. Here are the {questions?.length || 6} questions I need to draft your diagnosis. Answer in any order — or add documents and I'll auto-fill what I can.
-                      </div>
-                    </div>
-                    {chatMessages.map((msg, idx) => (
-                      <div key={idx} className={`onboarding-chat-message ${msg.role === 'user' ? 'user-message' : ''}`}>
-                        <div className="bubble-avatar">
-                          {msg.role === 'user' ? (userName?.charAt(0) || 'U') : 'TX'}
-                        </div>
-                        <div className="bubble-content">
-                          {msg.content}
-                        </div>
-                      </div>
-                    ))}
-                    {isChatLoading && (
-                      <div className="onboarding-chat-message">
-                        <div className="bubble-avatar">TX</div>
-                        <div className="bubble-content">
-                          <div className="typing-indicator" style={{ display: 'flex', gap: '4px', alignItems: 'center', height: '100%', padding: '4px 0' }}>
-                            <span style={{ width: '6px', height: '6px', backgroundColor: '#94a3b8', borderRadius: '50%', animation: 'blink 1.4s infinite both', animationDelay: '0s' }}></span>
-                            <span style={{ width: '6px', height: '6px', backgroundColor: '#94a3b8', borderRadius: '50%', animation: 'blink 1.4s infinite both', animationDelay: '0.2s' }}></span>
-                            <span style={{ width: '6px', height: '6px', backgroundColor: '#94a3b8', borderRadius: '50%', animation: 'blink 1.4s infinite both', animationDelay: '0.4s' }}></span>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                    <div ref={chatEndRef} />
-                  </div>
-                  {/* Input bar */}
-                  <div className="onboarding-chat-input-bar">
-                    <form onSubmit={handleSendMessage} className="onboarding-chat-input-wrapper">
-                      <input
-                        type="text"
-                        className="onboarding-chat-input-field"
-                        placeholder={t("Type a message to Trax...") || "Type a message to Trax..."}
-                        value={chatInput}
-                        onChange={(e) => setChatInput(e.target.value)}
-                      />
-                      <button type="submit" className="onboarding-chat-send-btn" aria-label="Send">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <line x1="22" y1="2" x2="11" y2="13" />
-                          <polygon points="22 2 15 22 11 13 2 9 22 2" />
-                        </svg>
-                      </button>
-                    </form>
-                  </div>
-
-                </div>
+                <TraxSidebar 
+                  selectedBusinessId={selectedBusinessId}
+                  selectedBusinessName={selectedBusinessName}
+                  userName={userName}
+                  userAnswers={userAnswers}
+                  questions={questions}
+                  currentPageContext={activeTab === 'advanced' ? 'Advanced Insights' : 'Business Setup Onboarding'}
+                  pageDescriptionContext={activeTab === 'advanced' ? 'User is reviewing advanced insights.' : 'User is filling out the 5-step PMF onboarding form to generate insights.'}
+                />
               </div>
 
               {/* Right: Questionnaire */}
               <div className="split-onboarding-right">
                 <EditableBriefSection
                   selectedBusinessId={selectedBusinessId}
+                  isAdvancedMode={activeTab === 'advanced'}
                   questions={questions}
                   userAnswers={userAnswers}
                   businessData={businessData}

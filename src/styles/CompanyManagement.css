@@ -2576,6 +2576,11 @@ body.modal-open {
   color: #b45309;
 }
 
+.file-status-badge.analyzing {
+  background: #e0f2fe;
+  color: #0284c7;
+}
+
 .file-status-badge.success {
   background: #dcfce7;
   color: #15803d;
@@ -3118,7 +3123,7 @@ body.modal-open {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 2px;
+  padding: 15px 2px 0px 2px;
   margin-bottom: 4px;
 }
 
@@ -3187,7 +3192,7 @@ body.modal-open {
   gap: 6px;
   background: transparent;
   border: none;
-  padding: 6px 10px;
+  padding: 15px;
   border-radius: 7px;
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
@@ -3199,18 +3204,18 @@ body.modal-open {
 }
 
 .phase-tab-btn.active {
-  background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%);
-  box-shadow: 0 3px 8px rgba(37, 99, 235, 0.15);
+  background: white;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .phase-tab-title {
-  font-size: 15px;
-  font-weight: 700;
-  color: #475569;
+  font-size: 13px;
+  font-weight: 600;
+  color: #64748b;
 }
 
 .phase-tab-btn.active .phase-tab-title {
-  color: white;
+  color: #0f172a;
 }
 
 .phase-tab-badge {
@@ -3226,18 +3231,13 @@ body.modal-open {
 }
 
 .phase-tab-btn.active .phase-tab-badge {
-  background: rgba(255, 255, 255, 0.2);
-  color: white;
+  background: #e0f2fe;
+  color: #0284c7;
 }
 
 .phase-tab-content-list {
   display: flex;
   flex-direction: column;
-  gap: 0;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  overflow: hidden;
-  background: white;
 }
 
 .empty-phase-questions {
@@ -3257,14 +3257,19 @@ body.modal-open {
 
 /* Each question is a compact row with divider */
 .sqc-row {
-  border-bottom: 1px solid #f1f5f9;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: white;
   transition: background 0.15s ease;
   contain: layout;  /* isolates repaints so sibling rows don't vibrate */
+  margin-bottom: 12px;
 }
 
-.sqc-row:last-child {
-  border-bottom: none;
+.sqc-row.answered {
+  border: 1px solid #22c55e;
 }
+
+
 
 .sqc-row.highlighted {
   background: #fffbeb;
@@ -3282,7 +3287,7 @@ body.modal-open {
 /* Summary row — always visible, clickable to expand */
 .sqc-summary {
   display: grid;
-  grid-template-columns: 36px 1fr auto;
+  grid-template-columns: 42px 1fr auto;
   align-items: start;
   gap: 8px;
   padding: 10px 14px;
@@ -3336,6 +3341,7 @@ body.modal-open {
   gap: 2px;
   min-width: 0;
   overflow: hidden;
+  margin-left: 20px;
 }
 
 .sqc-question-text {
@@ -3357,12 +3363,11 @@ body.modal-open {
 }
 
 .sqc-preview-ai {
-  color: #7c3aed;
-  font-style: italic;
+  color: #6366f1;
 }
 
 .sqc-preview-user {
-  color: #1d4ed8;
+  color: #6366f1;
 }
 
 .sqc-preview-empty {
@@ -3622,7 +3627,7 @@ body.modal-open {
 /* Accordion Header collapsed states to remove unwanted border and spaces */
 .brief-card-header.collapsed {
   margin-bottom: 0 !important;
-  padding-bottom: 0 !important;
+  padding-bottom: 5px !important;
   border-bottom: none !important;
 }
 

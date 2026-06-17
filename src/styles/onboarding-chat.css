@@ -22,6 +22,8 @@
   margin: 50px auto;
 }
 
+
+
 /* Header */
 .onboarding-chat-header {
   background-color: var(--color-primary, #0C71B9);
@@ -271,7 +273,7 @@
   display: flex;
   flex-direction: column;
   min-height: calc(100vh - 70px);
-  background-color: #f1f5f9;
+  background-color: #fff;
   font-family: 'Montserrat', 'Helvetica Neue', Arial, sans-serif;
   width: 100%;
   box-sizing: border-box;
@@ -316,36 +318,39 @@
 /* Horizontal flex container */
 .split-onboarding-container {
   display: flex;
-  flex: 1;
-  gap: 0;
-  overflow: hidden;
-  height: calc(100vh - 70px - 53px);
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+  gap: 5px;
+  overflow: visible;
+  height: auto; /* Let it grow naturally with the page */
+  align-items: stretch; /* Both panels will stretch to match the taller one */
 }
 
 /* -- Left Panel -- */
 .split-onboarding-left {
-  width: 340px;
-  min-width: 300px;
-  max-width: 360px;
+  width: 320px;
+  min-width: 320px;
+  max-width: 320px;
   flex-shrink: 0;
-  background: #fff; 
   display: flex;
   flex-direction: column;
-  overflow: hidden;
-  padding: 16px;
-  box-sizing: border-box;
+  height: auto; /* Stretch to container */
 }
 
 /* Docked chat card */
 .docked-onboarding-chat {
   display: flex;
   flex-direction: column;
-  height: 100%;
+  height: fit-content;
+  max-height: calc(100vh - 120px);
   overflow: hidden;
   border-radius: 12px;
   border: 1px solid #e2e8f0;
   box-shadow: 0 1px 4px rgba(0,0,0,0.07);
   background: #ffffff;
+  position: sticky;
+  top: 24px;
 }
 
 /* Docked header */
@@ -402,11 +407,10 @@
 /* -- Right Panel -- */
 .split-onboarding-right {
   flex: 1;
-  overflow-y: auto;
-  background: #fff;
-  scrollbar-width: thin;
-  scrollbar-color: #cbd5e1 transparent;
+  overflow: visible; /* No separate scrollbar, scroll with page */
   min-width: 0;
+  height: auto; /* Grow to content */
+  padding-right: 0; 
 }
 
 .split-onboarding-right::-webkit-scrollbar { width: 5px; }
