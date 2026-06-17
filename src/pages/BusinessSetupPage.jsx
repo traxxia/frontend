@@ -471,10 +471,11 @@ const BusinessSetupPage = () => {
 
     const isStrategicTab = ["aha", "executive", "priorities"].includes(activeTab);
     const isDisabled = isStrategicTab && !isPmfOnboardingComplete;
+    const isHidden = ["onboarding", "advanced"].includes(activeTab);
 
     window.dispatchEvent(
       new CustomEvent("ai_context_changed", {
-        detail: { pageContext: contextPayload, isArchived, isDisabled }
+        detail: { pageContext: contextPayload, isArchived, isDisabled, isHidden }
       })
     );
   }, [activeTab, questions, userAnswers, isArchived, isPmfOnboardingComplete]);
