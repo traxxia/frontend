@@ -177,18 +177,18 @@ const PrioritiesProjects = ({
   }
 
   return (
-    <div className="container my-5" style={{ margin: '0 auto' }}>
+    <div className="container my-3" style={{ margin: '0 auto' }}>
       
       {/* Header Section */}
-      <div className="mb-4 text-center">
-        <div className="d-flex align-items-center justify-content-center gap-2 mb-2" style={{ fontSize: '0.75rem', fontWeight: 'bold', letterSpacing: '1.5px', color: '#0ea5e9' }}>
+      <div className="mb-4 text-left">
+        <div className="d-flex align-items-left justify-content-left gap-2 mb-2" style={{ fontSize: '0.75rem', fontWeight: 'bold', letterSpacing: '1.5px', color: '#0ea5e9' }}>
           <Zap size={14} fill="#0ea5e9" stroke="none" />
           <span>COMMIT - THE PROMOTION MOMENT</span>
         </div>
         <h1 className="fw-bold mb-3" style={{ color: '#0f172a', fontSize: '2rem' }}>
           Build your <span style={{ color: '#0ea5e9' }}>Bets</span>
         </h1>
-        <p className="text-muted mx-auto" style={{ maxWidth: '600px', fontSize: '0.95rem', lineHeight: '1.6' }}>
+        <p className="text-muted" style={{ maxWidth: '600px', fontSize: '0.95rem', lineHeight: '1.6' }}>
           These are the five things you're choosing to bet on this period. Edit anything that doesn't read right — once you lock them in, they become Bets you'll execute and review. The commitment is what matters.
         </p>
       </div>

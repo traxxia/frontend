@@ -321,7 +321,8 @@ const EditableBriefSection = ({
   setAnswerIds,
   hasPmfAccess = false,
   isLoading = false,
-  isAdvancedMode = false
+  isAdvancedMode = false,
+  setActiveTab
 }) => {
   const answersDetails = useAnalysisStore(state => state.answersDetails || {});
   const lastFetchedBusinessId = useAnalysisStore(state => state.lastFetchedBusinessId);
@@ -2141,8 +2142,12 @@ const EditableBriefSection = ({
                     if (onAnalysisRegenerate) {
                       onAnalysisRegenerate({
                         alsoRegenerateStrategic: true,
-                        includeFinancial: true
+                        includeFinancial: true,
+                        skipConfirmation: true
                       });
+                      if (setActiveTab) {
+                        setActiveTab('insights');
+                      }
                     }
                   }
                 });

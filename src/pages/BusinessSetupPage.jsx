@@ -3,6 +3,7 @@ import axios from "axios";
 import {
   ArrowLeft,
   Loader,
+  Loader2,
   RefreshCw,
   ChevronDown,
   AlertTriangle,
@@ -239,7 +240,7 @@ const BusinessSetupPage = () => {
   })));
 
   // Regenerating flag aliases
-  const isTypeRegenerating = (type) => regenerating[type] || false;
+  const isTypeRegenerating = (type) => regenerating[`${selectedBusinessId}_${type}`] || false;
   const isAnalysisRegenerating = isTypeRegenerating('swot') || isTypeRegenerating('porters') || isTypeRegenerating('pestel') || isTypeRegenerating('initial') || isTypeRegenerating('essential') || isTypeRegenerating('advanced');
   const isStrategicRegenerating = isTypeRegenerating('strategic');
   const isFullSwotRegenerating = isTypeRegenerating('fullSwot');
@@ -842,7 +843,7 @@ const BusinessSetupPage = () => {
     onAnalysisGeneration: () => handleRegeneratePhase('initial', true, { skipConfirmation: true }),
     onFullSwotGeneration: () => handleRegeneratePhase('essential', true, { skipConfirmation: true }),
     onGoodPhaseGeneration: () => handleRegeneratePhase('good', true, { skipConfirmation: true }),
-    onAdvancedPhaseGeneration: () => handleRegeneratePhase('advanced', true, { skipConfirmation: true }),
+    onAdvancedPhaseGeneration: () => handleRegenerateAllAnalysis({ skipConfirmation: true, alsoRegenerateStrategic: true, includeFinancial: true }),
     onAnalysisDataLoad: loadExistingAnalysisData,
     API_BASE_URL, getAuthToken, apiService, stateSetters, showToastMessage
   });
@@ -1552,6 +1553,7 @@ const BusinessSetupPage = () => {
                   questions={questions}
                   userAnswers={userAnswers}
                   businessData={businessData}
+                  setActiveTab={setActiveTab}
                   isLoading={!questionsLoaded}
                   onBusinessDataUpdate={handleBusinessDataUpdate}
                   onAnswerUpdate={async (questionId, newAnswer) => {
@@ -1988,6 +1990,7 @@ const BusinessSetupPage = () => {
                           userAnswers={userAnswers}
                           businessData={businessData}
                           isLoading={!questionsLoaded}
+                          setActiveTab={setActiveTab}
                           onBusinessDataUpdate={handleBusinessDataUpdate}
                           onAnswerUpdate={async (questionId, newAnswer) => {
                             handleAnswerUpdate(questionId, newAnswer);
@@ -2254,6 +2257,7 @@ const BusinessSetupPage = () => {
                       userAnswers={userAnswers}
                       businessData={businessData}
                       isLoading={!questionsLoaded}
+                      setActiveTab={setActiveTab}
                       onBusinessDataUpdate={handleBusinessDataUpdate}
                       onAnswerUpdate={async (questionId, newAnswer) => {
                         handleAnswerUpdate(questionId, newAnswer);
@@ -2413,6 +2417,7 @@ const BusinessSetupPage = () => {
                     userAnswers={userAnswers}
                     businessData={businessData}
                     isLoading={!questionsLoaded}
+                    setActiveTab={setActiveTab}
                     onBusinessDataUpdate={handleBusinessDataUpdate}
                     onAnswerUpdate={async (questionId, newAnswer) => {
                       handleAnswerUpdate(questionId, newAnswer);
