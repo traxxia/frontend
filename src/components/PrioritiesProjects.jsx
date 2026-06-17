@@ -230,8 +230,17 @@ const PrioritiesProjects = ({
       </div>
 
       {/* Build Bets Button */}
-      {!anyProjectKickstarted && (
-        <div className="d-flex justify-content-end">
+      <div className="d-flex justify-content-end">
+        {anyProjectKickstarted ? (
+          <Button 
+            variant="primary" 
+            className="d-flex align-items-center gap-2 px-4 py-2 fw-semibold rounded-3" 
+            style={{ backgroundColor: '#0284c7', border: 'none' }}
+            onClick={() => navigate(`/businesspage?business=${selectedBusinessId}&tab=bets`)}
+          >
+            {t("Go to bets")} <ArrowRight size={16} />
+          </Button>
+        ) : (
           <Button 
             variant="primary" 
             className="d-flex align-items-center gap-2 px-4 py-2 fw-semibold rounded-3" 
@@ -242,8 +251,8 @@ const PrioritiesProjects = ({
             {kickstarting ? <Spinner size="sm" /> : null}
             {kickstarting ? t("Building...") : t("Build bets")} <ArrowRight size={16} />
           </Button>
-        </div>
-      )}
+        )}
+      </div>
 
       <PlanLimitModal show={showPlanLimitModal} onHide={() => setShowPlanLimitModal(false)} title={t("no_access_modal_title")} message={t("no_access_modal_msg")} subMessage={t(isAdmin ? "no_access_modal_sub_admin" : "no_access_modal_sub_user")} plan={usage?.plan} limit={usage?.project?.limit} isAdmin={isAdmin} />
 

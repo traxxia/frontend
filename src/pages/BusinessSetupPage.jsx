@@ -931,10 +931,14 @@ const BusinessSetupPage = () => {
           phasesToRegenerate = [currentPhase];
         }
  
-        // 1. Regenerate unlocked phases sequentially
+        const regenerationTasks = [];
+
+        // 1. Regenerate unlocked phases concurrently
         for (const phase of phasesToRegenerate) { 
-          if (useBusinessStore.getState().selectedBusinessId !== currentBizId) return;
-          await handleRegeneratePhase(phase, false, { skipConfirmation: true });
+          regenerationTasks.push((async () => {
+            if (useBusinessStore.getState().selectedBusinessId !== currentBizId) return;
+            await handleRegeneratePhase(phase, false, { skipConfirmation: true });
+          })());
         }
  
         // 2. Include financial insights if explicitly requested, or if a document exists, or if we have existing financial data
@@ -952,15 +956,21 @@ const BusinessSetupPage = () => {
           );
  
         if (shouldIncludeFinancial) { 
-          if (useBusinessStore.getState().selectedBusinessId !== currentBizId) return;
-          await handleRegeneratePhase('financial', false, { ...options, skipConfirmation: true });
+          regenerationTasks.push((async () => {
+            if (useBusinessStore.getState().selectedBusinessId !== currentBizId) return;
+            await handleRegeneratePhase('financial', false, { ...options, skipConfirmation: true });
+          })());
         }
  
         // 3. Finally, regenerate strategic analysis if requested (e.g. for "Apply All")
         if (options?.alsoRegenerateStrategic) { 
-          if (useBusinessStore.getState().selectedBusinessId !== currentBizId) return;
-          await handleStrategicAnalysisRegenerate(true);
+          regenerationTasks.push((async () => {
+            if (useBusinessStore.getState().selectedBusinessId !== currentBizId) return;
+            await handleStrategicAnalysisRegenerate(true);
+          })());
         }
+        
+        await Promise.all(regenerationTasks);
         
         // Final sync to ensure UI is perfectly updated with all regenerated results
         if (useBusinessStore.getState().selectedBusinessId !== currentBizId) return;
@@ -2020,7 +2030,7 @@ const BusinessSetupPage = () => {
                       <div className="analysis-section">
                         <div className="analysis-content">
                           <div className="insights-header-actions mb-4 d-flex justify-content-end gap-3">
-                            <button className="view-edit-inputs-btn" onClick={() => { setCameFromInsights(true); setActiveTab('executive'); }}>
+                            <button className="view-edit-inputs-btn" onClick={() => navigate(`/business/${selectedBusinessId}/history`)}>
                               <i className="lucide-history" /> {t("History") || "History"}
                             </button>
                             <button className="view-edit-inputs-btn" onClick={() => setActiveTab('advanced')}>
@@ -2306,7 +2316,7 @@ const BusinessSetupPage = () => {
                   <div className="analysis-section">
                     <div className="analysis-content">
                       <div className="insights-header-actions mb-4 d-flex justify-content-end gap-3">
-                        <button className="view-edit-inputs-btn" onClick={() => { setCameFromInsights(true); setActiveTab('executive'); }}>
+                        <button className="view-edit-inputs-btn" onClick={() => navigate(`/business/${selectedBusinessId}/history`)}>
                           <i className="lucide-history" /> {t("History") || "History"}
                         </button>
                         <button className="view-edit-inputs-btn" onClick={() => setActiveTab('advanced')}>
@@ -2465,7 +2475,7 @@ const BusinessSetupPage = () => {
                 <div className="analysis-section">
                   <div className="analysis-content">
                     <div className="insights-header-actions mb-4 d-flex justify-content-end gap-3">
-                      <button className="view-edit-inputs-btn" onClick={() => { setCameFromInsights(true); setActiveTab('executive'); }}>
+                      <button className="view-edit-inputs-btn" onClick={() => navigate(`/business/${selectedBusinessId}/history`)}>
                         <i className="lucide-history" /> {t("History") || "History"}
                       </button>
                       <button className="view-edit-inputs-btn" onClick={() => setActiveTab('advanced')}>

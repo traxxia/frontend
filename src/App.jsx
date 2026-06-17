@@ -69,6 +69,7 @@ const OnboardingFlowPage = React.lazy(() => import('./pages/OnboardingFlowPage')
 const AdvancedInsightsPage = React.lazy(() => import('./pages/AdvancedInsightsPage'));
 const UpgradePlanPage = React.lazy(() => import('./pages/UpgradePlanPage'));
 const ExecutionPage = React.lazy(() => import('./pages/ExecutionPage'));
+const HistoryPage = React.lazy(() => import('./pages/HistoryPage'));
 
 const App = () => {
   const theme = useUIStore((state) => state.theme);
@@ -146,6 +147,16 @@ const App = () => {
                 <ProtectedRoute>
                   <React.Suspense fallback={<div className="p-5 text-center"><div className="spinner-border text-primary" role="status"><span className="visually-hidden">Loading...</span></div></div>}>
                     <ExecutionPage />
+                  </React.Suspense>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/business/:businessId/history"
+              element={
+                <ProtectedRoute>
+                  <React.Suspense fallback={<div className="p-5 text-center"><div className="spinner-border text-primary" role="status"><span className="visually-hidden">Loading...</span></div></div>}>
+                    <HistoryPage />
                   </React.Suspense>
                 </ProtectedRoute>
               }
