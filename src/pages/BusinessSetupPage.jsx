@@ -471,10 +471,11 @@ const BusinessSetupPage = () => {
 
     const isStrategicTab = ["aha", "executive", "priorities"].includes(activeTab);
     const isDisabled = isStrategicTab && !isPmfOnboardingComplete;
+    const isHidden = ["onboarding", "advanced"].includes(activeTab);
 
     window.dispatchEvent(
       new CustomEvent("ai_context_changed", {
-        detail: { pageContext: contextPayload, isArchived, isDisabled }
+        detail: { pageContext: contextPayload, isArchived, isDisabled, isHidden }
       })
     );
   }, [activeTab, questions, userAnswers, isArchived, isPmfOnboardingComplete]);
@@ -2026,7 +2027,7 @@ const BusinessSetupPage = () => {
                               <i className="lucide-history" /> {t("History") || "History"}
                             </button>
                             <button className="view-edit-inputs-btn" onClick={() => setActiveTab('advanced')}>
-                              <i className="lucide-edit-3" /> {t("Edit") || "Edit"}
+                              <i className="lucide-edit-3" /> {t("viewedit") || "Edit"}
                             </button>
                           </div>
                           <div className="insights-segmented-toggle mb-4">

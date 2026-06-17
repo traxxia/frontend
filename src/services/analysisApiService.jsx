@@ -192,6 +192,14 @@ export class AnalysisApiService {
     return res;
   }
 
+  async updatePriorityName(businessId, priorityIndex, newTitle) {
+    const res = await this.pmfService.updatePriorityName(businessId, priorityIndex, newTitle);
+    pmfExecutiveSummaryCache.delete(`exec-${businessId}`);
+    pmfAnalysisCache.delete(`pmf-${businessId}`);
+    kickstartRequestCache.delete(`kickstart-${businessId}`);
+    return res;
+  }
+
   async getKickstartData(businessId, forceRefresh = false) {
     if (!businessId) return null;
 

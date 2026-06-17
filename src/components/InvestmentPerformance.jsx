@@ -49,12 +49,30 @@ const formatCurrencyValue = (val, currency) => {
   if (val === null || val === undefined || val === '') return '-';
   const num = typeof val === 'string' ? parseFloat(val.replace(/[,$%]/g, '')) : val;
   if (isNaN(num)) return val;
-  const formatter = new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: currency || 'USD',
-    maximumFractionDigits: 0
-  });
-  return formatter.format(num);
+  
+  let validCurrency = 'USD';
+  let suffix = '';
+  if (currency && typeof currency === 'string') {
+    const trimmed = currency.trim();
+    const match = trimmed.match(/^([A-Za-z]{3})(.*)$/);
+    if (match) {
+      validCurrency = match[1].toUpperCase();
+      suffix = match[2];
+    } else {
+      suffix = ' ' + trimmed;
+    }
+  }
+
+  try {
+    const formatter = new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: validCurrency,
+      maximumFractionDigits: 0
+    });
+    return formatter.format(num) + suffix;
+  } catch (e) {
+    return `${currency || '$'} ${num.toLocaleString('en-US', { maximumFractionDigits: 0 })}`;
+  }
 };
 
 const formatPercentageValue = (val) => {

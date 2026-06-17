@@ -44,6 +44,14 @@ export class PmfService extends BaseApiService {
     });
   }
 
+  async updatePriorityName(businessId, priorityIndex, newTitle) {
+    pmfCache.delete(`exec-${businessId}`);
+    return await this.request(`/api/pmf-analysis/${businessId}/executive-summary/priority`, {
+      method: 'PUT',
+      body: JSON.stringify({ priorityIndex, newTitle })
+    });
+  }
+
   async getPMFExecutiveSummary(businessId, force = false) {
     if (!businessId) return null;
     const cacheKey = `exec-${businessId}`;

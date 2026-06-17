@@ -382,7 +382,7 @@ const ExecutiveSummary = ({ hideNextStep }) => {
                     <p className="exc-move-subtitle">{adj.recommendation_basis || "Strategic expansion"}</p>
                     <p className="exc-move-body">{adj.rationale}</p>
                     
-                    {isCompanyAdmin && (() => {
+                    {/* {isCompanyAdmin && (() => {
                         const exists = isAlreadyProject(adj);
                         if (!isPaidPlan) return null;
                         return (
@@ -395,7 +395,7 @@ const ExecutiveSummary = ({ hideNextStep }) => {
                           <span>{exists ? t("Already in Bets") : t("Create Strategic Bet")}</span>
                         </button>
                       );
-                    })()}
+                    })()} */}
                   </div>
                 )) || <p className="exc-content-text exc-italic">{t("Analyzing potential adjacencies")}...</p>}
               </div>
@@ -552,12 +552,11 @@ const ExecutiveSummary = ({ hideNextStep }) => {
                 return (
                   <div className="exc-prio-card" key={idx}>
                     <div className="exc-prio-card-header">
-                      <div className="exc-prio-header-left">
-                        <span className="exc-prio-number">{idx + 1}.</span>
-                        <h4 className="exc-prio-title">{item.title || item.action || item.Action || item.Title}</h4>
-                        {/* <span className="exc-prio-badge">
-                          <CheckCircle2 size={10} strokeWidth={3} /> {t("BET")} #{idx + 1}
-                        </span> */}
+                      <div className="exc-prio-header-left d-flex align-items-center gap-2">
+                        <h4 className="exc-prio-title mb-0">{item.title || item.action || item.Action || item.Title}</h4>
+                        <span className="exc-prio-badge" style={{ fontSize: '11px', fontWeight: 600 }}>
+                          <CheckCircle2 size={12} strokeWidth={3} /> {t("BET")} #{idx + 1}
+                        </span>
                       </div>
                     </div>
 

@@ -125,9 +125,7 @@ export const useAnalysisStore = create((set, get) => ({
 
     newDetails[questionId] = {
       ...currentDetail,
-      ai_answer: currentDetail.ai_answer !== undefined && currentDetail.ai_answer !== null && currentDetail.ai_answer !== ''
-        ? currentDetail.ai_answer
-        : (oldAnswer || ''),
+      ai_answer: currentDetail.ai_answer || '',
       previous_answer: newPreviousAnswer,
       user_answer: newUserAnswer,
       status: currentDetail.status || 'EDITED',
@@ -516,6 +514,30 @@ export const useAnalysisStore = create((set, get) => ({
       return data;
     } catch (err) {
       console.error('Failed to fetch kickstart data:', err);
+      throw err;
+    }
+  },
+
+  updatePriorityName: async (businessId, priorityIndex, newTitle) => {
+    if (!businessId) return;
+    try {
+      const apiService = getApiService();
+      await apiService.updatePriorityName(businessId, priorityIndex, newTitle);
+      
+      // Update local kickstartData state optimistically
+      set(state => {
+        if (state.kickstartData && state.kickstartData.priorities && state.kickstartData.priorities[priorityIndex]) {
+          const updatedPriorities = [...state.kickstartData.priorities];
+          updatedPriorities[priorityIndex] = {
+            ...updatedPriorities[priorityIndex],
+            title: newTitle
+          };
+          return { kickstartData: { ...state.kickstartData, priorities: updatedPriorities } };
+        }
+        return state;
+      });
+    } catch (err) {
+      console.error('Failed to update priority name:', err);
       throw err;
     }
   },

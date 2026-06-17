@@ -113,7 +113,7 @@ const ProjectsTable = ({
                   {isAdmin && !isArchived && !isTerminal && project.launch_status !== 'launched' && <input type="checkbox" checked={selectedProjectIds.includes(project._id)} onChange={() => onToggleSelection(project._id)} onClick={e => e.stopPropagation()} />}
                 </td>
                 <td className="col-index">
-                  <div className="index-badge">{displayRank || "-"}</div>
+                  <div className="index-badge">{index + 1}</div>
                 </td>
                 <td className="col-bets">
                   <div className="bet-name-wrapper">

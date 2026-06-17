@@ -62,7 +62,7 @@
 
 .ob-flow-container .split-onboarding-left {
   position: sticky;
-  top: 100px;
+  top: 117px;
   height: calc(100vh - 90px);
   align-self: flex-start;
 }

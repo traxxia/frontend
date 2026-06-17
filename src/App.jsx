@@ -10,7 +10,7 @@ import ToastNotifications from './components/ToastNotifications';
 import { useUIStore } from './store/uiStore';
 import { useLanguageStore } from './store/languageStore';
 const AI_EXCLUDED_EXACT_PATHS = ['/', '/login', '/register', '/dashboard', '/admin', '/super-admin', '/super-admin/observatory', '/forgot-password', '/reset-password'];
-const AI_EXCLUDED_PREFIX_PATHS = ['/academy', '/onboarding', '/businesspage'];
+const AI_EXCLUDED_PREFIX_PATHS = ['/academy', '/onboarding'];
 
 const GlobalAiAssistant = () => {
   const location = useLocation();
@@ -18,6 +18,7 @@ const GlobalAiAssistant = () => {
   const [pageContext, setPageContext] = useState(null);
   const [isArchived, setIsArchived] = useState(false);
   const [isDisabled, setIsDisabled] = useState(false);
+  const [isHidden, setIsHidden] = useState(false);
   useEffect(() => {
     const handleContextChange = (event) => {
       if (event.detail && event.detail.projectId !== undefined) {
@@ -32,6 +33,9 @@ const GlobalAiAssistant = () => {
       if (event.detail && event.detail.isDisabled !== undefined) {
         setIsDisabled(event.detail.isDisabled);
       }
+      if (event.detail && event.detail.isHidden !== undefined) {
+        setIsHidden(event.detail.isHidden);
+      }
     };
 
     window.addEventListener('ai_context_changed', handleContextChange);
@@ -45,10 +49,11 @@ const GlobalAiAssistant = () => {
     setPageContext(null);
     setIsArchived(false);
     setIsDisabled(false);
+    setIsHidden(false);
   }, [location.pathname]);
 
   const isExcluded =
-    isArchived ||
+    isArchived || isHidden ||
     AI_EXCLUDED_EXACT_PATHS.includes(location.pathname) ||
     AI_EXCLUDED_PREFIX_PATHS.some((prefix) => location.pathname.startsWith(prefix));
 
