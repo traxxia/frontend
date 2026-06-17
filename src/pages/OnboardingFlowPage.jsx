@@ -185,7 +185,7 @@ const OnboardingFlowPage = () => {
             segments: [seg1, seg2, seg3].filter(Boolean),
             products: [prod1, prod2, prod3].filter(Boolean),
             channels: [chan1, chan2, chan3].filter(Boolean),
-            differentiation: Object.keys(competeOptions).filter(k => competeOptions[k])
+            differentiation: getSelectedDifferentiation()
           }
         })
       });
@@ -250,7 +250,7 @@ const OnboardingFlowPage = () => {
           constraint: {
             primary: "N/A" 
           },
-          usp: Object.keys(competeOptions).filter(k => competeOptions[k])
+          usp: getSelectedDifferentiation()
         }
       };
 
@@ -261,7 +261,7 @@ const OnboardingFlowPage = () => {
          customerSegment1: seg1, customerSegment2: seg2, customerSegment3: seg3,
          productService1: prod1, productService2: prod2, productService3: prod3,
          channel1: chan1, channel2: chan2, channel3: chan3,
-         differentiation: Object.keys(competeOptions).filter(k => competeOptions[k])
+         differentiation: getSelectedDifferentiation()
       };
       
       try {
@@ -296,12 +296,23 @@ const OnboardingFlowPage = () => {
     (prod1.trim() !== '' || prod2.trim() !== '' || prod3.trim() !== '') &&
     (chan1.trim() !== '' || chan2.trim() !== '' || chan3.trim() !== '');
 
+  const step5SelectedCount = Object.values(competeOptions).filter(Boolean).length;
+  const step5Completed = step5SelectedCount > 0 && (!(competeOptions.other && step5SelectedCount === 1) || otherCompeteValue.trim() !== '');
+
+  const getSelectedDifferentiation = useCallback(() => {
+    const selected = Object.keys(competeOptions).filter(k => k !== 'other' && competeOptions[k]);
+    if (competeOptions.other && otherCompeteValue.trim()) {
+      selected.push(otherCompeteValue.trim());
+    }
+    return selected;
+  }, [competeOptions, otherCompeteValue]);
+
   const answeredCount = [
     purpose.trim() !== '',
     country.trim() !== '',
     primaryIndustry.trim() !== '',
     step4Completed,
-    Object.values(competeOptions).some(Boolean)
+    step5Completed
   ].filter(Boolean).length;
 
   const formDataRef = useRef({});
@@ -316,7 +327,7 @@ const OnboardingFlowPage = () => {
       customerSegment1: seg1, customerSegment2: seg2, customerSegment3: seg3,
       productService1: prod1, productService2: prod2, productService3: prod3,
       channel1: chan1, channel2: chan2, channel3: chan3,
-      differentiation: Object.keys(competeOptions).filter(k => competeOptions[k])
+      differentiation: getSelectedDifferentiation()
     });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -351,7 +362,7 @@ const OnboardingFlowPage = () => {
       customerSegment1: seg1, customerSegment2: seg2, customerSegment3: seg3,
       productService1: prod1, productService2: prod2, productService3: prod3,
       channel1: chan1, channel2: chan2, channel3: chan3,
-      differentiation: Object.keys(competeOptions).filter(k => competeOptions[k])
+      differentiation: getSelectedDifferentiation()
     };
 
     const timeoutId = setTimeout(() => {
@@ -362,7 +373,7 @@ const OnboardingFlowPage = () => {
   }, [
     businessName, purpose, description, country, city, primaryIndustry,
     geo1, geo2, geo3, seg1, seg2, seg3, prod1, prod2, prod3, chan1, chan2, chan3,
-    competeOptions, handleAutoSave
+    getSelectedDifferentiation, handleAutoSave
   ]);
 
   const handleBackToDashboard = async () => {
@@ -675,10 +686,10 @@ const OnboardingFlowPage = () => {
               </div>
 
               {/* Q5 */}
-              <div className={`ob-question-card ${expandedSection === 5 ? 'expanded' : ''} ${(Object.values(competeOptions).some(Boolean)) ? 'completed' : ''}`}>
+              <div className={`ob-question-card ${expandedSection === 5 ? 'expanded' : ''} ${step5Completed ? 'completed' : ''}`}>
                 <div className="ob-question-header" onClick={() => setExpandedSection(expandedSection === 5 ? null : 5)}>
                   <div className="ob-question-left">
-                    <div className={`ob-radio-circle ${(Object.values(competeOptions).some(Boolean)) ? 'answered' : ''}`}>
+                    <div className={`ob-radio-circle ${step5Completed ? 'answered' : ''}`}>
 
                     </div>
                     <span className="ob-question-num">5</span>
@@ -723,6 +734,7 @@ const OnboardingFlowPage = () => {
                                   placeholder="Please specify" 
                                   value={otherCompeteValue}
                                   onChange={(e) => setOtherCompeteValue(e.target.value)}
+                                  required={selectedCount === 1}
                                 />
                               </div>
                             )}

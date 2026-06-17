@@ -134,6 +134,10 @@ const SimpleQuestionCard = ({
   const hasValue = field.value && field.value !== '[Question Skipped]';
   const cleanVal = cleanValue(field.value);
 
+  const hasDifferentOriginal = !!(intel.original && cleanValue(intel.original) !== cleanVal);
+  const hasDifferentPrevious = !!(details && details.previous_answer && cleanValue(details.previous_answer) !== cleanVal);
+  const shouldShowCompare = hasDifferentOriginal || hasDifferentPrevious;
+
   // Compact inline preview (first 90 chars)
   const cleanValPlain = stripMarkdown(cleanVal);
   const previewText = cleanValPlain ? (cleanValPlain.length > 90 ? cleanValPlain.slice(0, 90) + '…' : cleanValPlain) : null;
@@ -273,7 +277,7 @@ const SimpleQuestionCard = ({
                 )}
               </div>
               <div className="card-bottom-actions">
-                {((!isAI && !isRefinedAI) || (details && details.previous_answer && cleanValue(details.previous_answer) !== cleanValue(field.value))) && (
+                {shouldShowCompare && (
                   <button className="simple-text-toggle" onClick={() => setShowOriginal(!showOriginal)}>
                     <Sparkles size={11} />
                     {showOriginal ? (isRefinedAI ? 'Show Refined' : 'Show Current') : 'Compare'}

@@ -64,10 +64,11 @@ const PrioritiesProjects = ({
   const handleTitleBlur = useCallback(async (idx, title) => {
     try {
       await updatePriorityName(selectedBusinessId, idx, title);
+      clearProjectCache(selectedBusinessId);
     } catch (err) {
       console.error("Failed to update title in DB", err);
     }
-  }, [selectedBusinessId, updatePriorityName]);
+  }, [selectedBusinessId, updatePriorityName, clearProjectCache]);
   const hasCollaborators = kickstartData?.hasCollaborators ?? true;
   const {
     totalActions,
@@ -114,7 +115,7 @@ const PrioritiesProjects = ({
   const confirmKickstart = useCallback(async () => {
     try {
       setKickstarting(true);
-      const selectedPriorities = selected.map(idx => priorities[idx]);
+      const selectedPriorities = selected.map(idx => ({...priorities[idx], priorityIndex: idx}));
       let totalProjectsCreated = 0;
       const response = await kickstartProject({
         businessId: selectedBusinessId,

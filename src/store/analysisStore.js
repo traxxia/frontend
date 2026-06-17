@@ -125,9 +125,7 @@ export const useAnalysisStore = create((set, get) => ({
 
     newDetails[questionId] = {
       ...currentDetail,
-      ai_answer: currentDetail.ai_answer !== undefined && currentDetail.ai_answer !== null && currentDetail.ai_answer !== ''
-        ? currentDetail.ai_answer
-        : (oldAnswer || ''),
+      ai_answer: currentDetail.ai_answer || '',
       previous_answer: newPreviousAnswer,
       user_answer: newUserAnswer,
       status: currentDetail.status || 'EDITED',

@@ -196,6 +196,7 @@ export class AnalysisApiService {
     const res = await this.pmfService.updatePriorityName(businessId, priorityIndex, newTitle);
     pmfExecutiveSummaryCache.delete(`exec-${businessId}`);
     pmfAnalysisCache.delete(`pmf-${businessId}`);
+    kickstartRequestCache.delete(`kickstart-${businessId}`);
     return res;
   }
 
