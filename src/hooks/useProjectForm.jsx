@@ -25,6 +25,10 @@ export const useProjectForm = () => {
   const [keyAssumptions, setKeyAssumptions] = useState(["", "", ""]);
   const [successCriteria, setSuccessCriteria] = useState("");
   const [killCriteria, setKillCriteria] = useState("");
+  const [recommendRoles, setRecommendRoles] = useState([]);
+  const [agreeRoles, setAgreeRoles] = useState([]);
+  const [performRoles, setPerformRoles] = useState([]);
+  const [inputRoles, setInputRoles] = useState([]);
   const [reviewCadence, setReviewCadence] = useState("");
   const [learningState, setLearningState] = useState("");
   const [status, setStatus] = useState("Draft");
@@ -51,6 +55,10 @@ export const useProjectForm = () => {
     setKeyAssumptions(["", "", ""]);
     setSuccessCriteria("");
     setKillCriteria("");
+    setRecommendRoles([]);
+    setAgreeRoles([]);
+    setPerformRoles([]);
+    setInputRoles([]);
     setReviewCadence("");
     setLearningState("");
     setStatus("Draft");
@@ -86,6 +94,10 @@ export const useProjectForm = () => {
     setKeyAssumptions(project.key_assumptions && project.key_assumptions.length > 0 ? project.key_assumptions : ["", "", ""]);
     setSuccessCriteria(project.success_criteria || "");
     setKillCriteria(project.kill_criteria || "");
+    setRecommendRoles(project.recommend_roles || []);
+    setAgreeRoles(project.agree_roles || []);
+    setPerformRoles(project.perform_roles || []);
+    setInputRoles(project.input_roles || []);
     setReviewCadence(project.review_cadence || "");
     const rawLearning = (project.learning_state || "").toLowerCase();
     let normalizedLearning = "";
@@ -131,6 +143,10 @@ export const useProjectForm = () => {
       key_assumptions: keyAssumptions.filter(a => a.trim() !== ""),
       success_criteria: successCriteria,
       kill_criteria: killCriteria,
+      recommend_roles: recommendRoles,
+      agree_roles: agreeRoles,
+      perform_roles: performRoles,
+      input_roles: inputRoles,
       review_cadence: reviewCadence,
       learning_state: learningState,
       status: status,
@@ -157,6 +173,10 @@ export const useProjectForm = () => {
       keyAssumptions,
       successCriteria,
       killCriteria,
+      recommendRoles,
+      agreeRoles,
+      performRoles,
+      inputRoles,
       reviewCadence,
       learningState,
       status,
@@ -165,7 +185,7 @@ export const useProjectForm = () => {
   );
 
   const validateForm = useCallback((options = {}) => {
-    const { isNew = true } = options;
+    const { isNew = true, skipStrictRequired = false } = options;
     const newErrors = {};
 
     const isEmpty = (val) => !val || val.trim().length === 0;
@@ -177,7 +197,9 @@ export const useProjectForm = () => {
       const { minLength = 3, label = "Field", required = false, skipStrict = false } = options;
       const trimmed = (val || "").trim();
 
-      if (required && isEmpty(trimmed)) {
+      const isActuallyRequired = required && (!skipStrictRequired || fieldKey === "projectName");
+
+      if (isActuallyRequired && isEmpty(trimmed)) {
         newErrors[fieldKey] = t(`${label} is required`);
       } else if (!isEmpty(trimmed)) {
         if (trimmed.length < minLength) {
@@ -197,7 +219,7 @@ export const useProjectForm = () => {
     }
     validateField(description, "description", { label: "Description", minLength: 10, required: true });
     validateField(importance, "importance", { label: "Why This Matters", minLength: 10, required: true });
-    validateField(strategicDecision, "strategicDecision", { label: "Strategic Decision", minLength: 10, required: true });
+    // removed strategicDecision validation
     validateField(accountableOwner, "accountableOwner", { label: "Accountable Owner", minLength: 2, required: true, skipStrict: true });
     validateField(successCriteria, "successCriteria", { label: "Success criteria", minLength: 10, required: true });
     validateField(killCriteria, "killCriteria", { label: "Kill criteria", minLength: 10, required: true });
@@ -212,27 +234,23 @@ export const useProjectForm = () => {
       }
     });
 
-    if (isEmpty(status)) {
+    if (isEmpty(status) && !skipStrictRequired) {
       newErrors.status = t("Status is required");
     }
 
-    if (isEmpty(reviewCadence)) {
-      newErrors.reviewCadence = t("Review cadence is required");
-    }
-
-    if (isEmpty(accountableOwnerId)) {
+    if (isEmpty(accountableOwnerId) && !skipStrictRequired) {
       newErrors.accountableOwnerId = t("Owner selection is required");
     }
 
-    if (isEmpty(successCriteria)) {
+    if (isEmpty(successCriteria) && !skipStrictRequired) {
       newErrors.successCriteria = t("Success criteria is required");
     }
 
-    if (isEmpty(killCriteria)) {
+    if (isEmpty(killCriteria) && !skipStrictRequired) {
       newErrors.killCriteria = t("Kill criteria is required");
     }
 
-    if (isEmpty(learningState)) {
+    if (isEmpty(learningState) && !skipStrictRequired) {
       newErrors.learningState = t("Learning state is required");
     }
 
@@ -272,6 +290,10 @@ export const useProjectForm = () => {
       keyAssumptions,
       successCriteria,
       killCriteria,
+      recommendRoles,
+      agreeRoles,
+      performRoles,
+      inputRoles,
       reviewCadence,
       learningState,
       status,
@@ -299,6 +321,10 @@ export const useProjectForm = () => {
       setKeyAssumptions,
       setSuccessCriteria,
       setKillCriteria,
+      setRecommendRoles,
+      setAgreeRoles,
+      setPerformRoles,
+      setInputRoles,
       setReviewCadence,
       setLearningState,
       setStatus,

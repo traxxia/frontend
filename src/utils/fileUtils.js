@@ -121,13 +121,31 @@ export const computePageCount = async (file) => {
       }
 
       if (ext === 'docx' || ext === 'doc') {
-        const xml   = await readZipEntry(bytes, 'docProps/app.xml');
-        const match = xml && xml.match(/<Pages>(\d+)<\/Pages>/i);
-        if (match) {
-          const count = parseInt(match[1], 10);
-          return count > 0 ? { count, unit: count === 1 ? 'page' : 'pages' } : null;
+        let count = 0;
+        const xml = await readZipEntry(bytes, 'docProps/app.xml');
+        if (xml) {
+          const match = xml.match(/<[^>:]*:?Pages[^>]*>\s*(\d+)\s*<\/[^>:]*:?Pages>/i);
+          if (match) count = parseInt(match[1], 10);
         }
-        return null;
+        
+        // If count is 1 (often inaccurate) or 0, fallback to precise rendering markers or word count estimation
+        if (count <= 1 && ext === 'docx') {
+          const docXml = await readZipEntry(bytes, 'word/document.xml');
+          if (docXml) {
+            const renderedBreaks = (docXml.match(/<w:lastRenderedPageBreak/g) || []).length;
+            if (renderedBreaks > 0) {
+              count = renderedBreaks + 1;
+            } else {
+              const textContent = docXml.replace(/<[^>]+>/g, ' ');
+              const words = textContent.split(/\s+/).filter(w => w.length > 0).length;
+              if (words > 250) {
+                count = Math.max(1, Math.ceil(words / 250));
+              }
+            }
+          }
+        }
+        
+        return count > 0 ? { count, unit: count === 1 ? 'page' : 'pages' } : null;
       }
     }
   } catch (_) {

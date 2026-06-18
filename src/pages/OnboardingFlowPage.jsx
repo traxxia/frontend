@@ -445,7 +445,6 @@ const OnboardingFlowPage = () => {
               </div>
               <div className="header-info">
                 <h2 className="header-title">Trax</h2>
-                <p className="header-subtitle">Strategy Consultant</p>
               </div>
             </div>
             
@@ -456,6 +455,24 @@ const OnboardingFlowPage = () => {
                   Hi {userName} — I'm Trax, your strategy consultant. To draft a real diagnosis for <strong>{businessName}</strong>, I'll need a feel for the business.
                 </div>
               </div>
+              
+              {location.state?.uploadedFiles && location.state.uploadedFiles.length > 0 && (
+                <div className="onboarding-chat-message">
+                  <div className="bubble-avatar">TX</div>
+                  <div className="bubble-content">
+                    <div style={{ marginBottom: '8px' }}>I've received your documents and gone through them.</div>
+                    {location.state.uploadedFiles.map((fileName, idx) => (
+                      <div key={idx} style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', marginTop: '6px', color: '#0f172a', fontWeight: '500', fontSize: '13px', width: '100%' }}>
+                        <FileText size={16} color="#3b82f6" style={{ flexShrink: 0, marginTop: '2px' }} />
+                        <span style={{ overflowWrap: 'anywhere', wordBreak: 'break-word' }}>
+                          {fileName}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               <div className="onboarding-chat-message">
                 <div className="bubble-avatar">TX</div>
                 <div className="bubble-content">

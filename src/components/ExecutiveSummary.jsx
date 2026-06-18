@@ -279,9 +279,9 @@ const ExecutiveSummary = ({ hideNextStep }) => {
               return <div key={idx} className="exc-aha-tile full-width">
                       <div className="exc-aha-tile-header d-flex justify-content-between align-items-center">
                         <span className="exc-aha-tile-category">{insight.type || t("Insight")}</span>
-                        {insight.confidence && <span className={`badge rounded-pill ${confBg} ${confText} px-3 py-2 fw-semibold`}>
+                        {/* {insight.confidence && <span className={`badge rounded-pill ${confBg} ${confText} px-3 py-2 fw-semibold`}>
                             {t("Confidence")}: {insight.confidence.charAt(0).toUpperCase() + insight.confidence.slice(1)}
-                          </span>}
+                          </span>} */}
                       </div>
                       <h5 className="exc-aha-tile-title">{insight.title}</h5>
                       <ul className="exc-aha-tile-details">

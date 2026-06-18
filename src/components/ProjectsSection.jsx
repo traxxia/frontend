@@ -473,6 +473,24 @@ const ProjectsSection = ({
     setReviewType("adhoc");
     openModal('projectReview');
   }, [openModal]);
+  
+  const handleDirectUpdate = useCallback(async (projectId, payload) => {
+    try {
+      const { success, error } = await updateProject(projectId, payload);
+      if (success) {
+        handleShowToast("Project updated successfully!", "success");
+        clearCache(selectedBusinessId);
+        queryClient.invalidateQueries({ queryKey: ["projects", selectedBusinessId] });
+        queryClient.invalidateQueries({ queryKey: ["teamRankings", selectedBusinessId] });
+        await refreshAllData();
+      } else {
+        handleShowToast(error || "Failed to process update", "error");
+      }
+    } catch (err) {
+      console.error("Direct update error:", err);
+      handleShowToast("Failed to process update", "error");
+    }
+  }, [updateProject, selectedBusinessId, clearCache, queryClient, refreshAllData, handleShowToast]);
   const handleFieldFocus = useCallback(fieldName => {
     lockFieldSafe(currentProject?._id, fieldName);
   }, [currentProject?._id]);
@@ -500,18 +518,25 @@ const ProjectsSection = ({
     setCurrentProject(null);
     resetForm();
   }, [currentProject?._id, resetForm]);
-  const handleCreate = useCallback(async () => {
-    const validation = validateForm();
+  const handleCreate = useCallback(async (options = {}) => {
+    const { statusOverride, isKickstart } = options;
+    const skipStrict = !isKickstart; // For new projects, it's always draft initially
+    const validation = validateForm({ isNew: true, skipStrictRequired: skipStrict });
     if (!validation.isValid) return;
     setIsSubmitting(true);
     try {
       const userId = useAuthStore.getState().userId;
       const payload = getPayload(userId, selectedBusinessId);
+      if (statusOverride || isKickstart) payload.status = statusOverride || "Active";
       const {
         success,
-        error
+        error,
+        data
       } = await createProject(payload);
       if (success) {
+        if (isKickstart && data?._id) {
+          await launchProjects([data._id]);
+        }
         handleShowToast("Project created successfully!", "success");
         await unlockAllFieldsSafe(currentProject?._id);
         clearCache(selectedBusinessId);
@@ -559,18 +584,23 @@ const ProjectsSection = ({
       setIsSubmitting(false);
     }
   }, [updateProject, currentProject?._id, refreshAllData, handleBackToList, handleShowToast]);
-  const handleSave = useCallback(async () => {
+  const handleSave = useCallback(async (options = {}) => {
+    const { statusOverride, isKickstart } = options;
     if (!canEditProject(currentProject, isEditor, myUserId, businessStatus, apiIsArchived)) {
       handleShowToast("You are not allowed to edit this project", "error");
       return;
     }
     if (!currentProject?._id) return;
-    const validation = validateForm();
+    const isDraft = (currentProject.status || "Draft").toLowerCase() === "draft";
+    const skipStrict = !isKickstart && isDraft;
+    const validation = validateForm({ isNew: false, skipStrictRequired: skipStrict });
     if (!validation.isValid) return;
     try {
       const userId = useAuthStore.getState().userId;
       const payload = getPayload(userId, selectedBusinessId);
-      const oldStatus = (currentProject.status || "Draft").toLowerCase();
+      if (statusOverride || isKickstart) payload.status = statusOverride || "Active";
+      
+      const oldStatus = isDraft ? "draft" : (currentProject.status || "Draft").toLowerCase();
       const newStatus = (payload.status || "Draft").toLowerCase();
       const oldLearningState = (currentProject.learning_state || "Testing").toLowerCase();
       const newLearningState = (payload.learning_state || "Testing").toLowerCase();
@@ -597,10 +627,16 @@ const ProjectsSection = ({
         setPendingSavePayload(payload);
         setPendingStateChanges(changes);
         openModal('stateChange');
+        if (isKickstart) {
+          await launchProjects([currentProject._id]);
+        }
         setIsSubmitting(false);
         return;
       }
       await executeSave(payload);
+      if (isKickstart) {
+        await launchProjects([currentProject._id]);
+      }
     } catch (err) {
       console.error("Error in prepare save:", err);
       setIsSubmitting(false);
@@ -701,7 +737,7 @@ const ProjectsSection = ({
             </h2>
 
             <div className="bet-ledger-actions d-flex align-items-center gap-3">
-              {}
+              {/* Dropdown for STATUS filter */}
               <div className="status-dropdown-wrapper">
                 <div className="status-dropdown-btn" onClick={() => setIsStatusDropdownOpen(!isStatusDropdownOpen)}>
                   <div className="status-label-group">
@@ -741,7 +777,7 @@ const ProjectsSection = ({
             </div>
           </div>
 
-          <ProjectsList isLoading={isLoadingProjects} sortedProjects={sortedProjects} rankMap={rankMap} finalizeCompleted={finalizeCompleted} launched={launched} isViewer={isViewer} isAdmin={isSuperAdmin} isEditor={isEditor} isDraft={isDraft} projectCreationLocked={projectCreationLocked} isFinalizedView={isFinalizedView} canEditProject={project => canEditProject(project, isEditor, myUserId, businessStatus, apiIsArchived, isSuperAdmin)} onEdit={project => handleEditProject(project, "edit")} onView={project => handleEditProject(project, "view")} onDelete={handleDelete} onPerformReview={handlePerformReview} onAdhocUpdate={handleAdhocUpdate} canReviewProject={canReviewProject} myUserId={myUserId} selectedCategories={selectedCategories} isArchived={apiIsArchived} selectedProjectIds={selectedProjectIds} onToggleSelection={toggleProjectSelection} selectionDisabled={isGeneratingAIRankings || businessStatus !== "draft"} />
+          <ProjectsList isLoading={isLoadingProjects} sortedProjects={sortedProjects} rankMap={rankMap} finalizeCompleted={finalizeCompleted} launched={launched} isViewer={isViewer} isAdmin={isSuperAdmin} isEditor={isEditor} isDraft={isDraft} projectCreationLocked={projectCreationLocked} isFinalizedView={isFinalizedView} canEditProject={project => canEditProject(project, isEditor, myUserId, businessStatus, apiIsArchived, isSuperAdmin)} onEdit={project => handleEditProject(project, "edit")} onView={project => handleEditProject(project, "view")} onDelete={handleDelete} onPerformReview={handlePerformReview} onAdhocUpdate={handleAdhocUpdate} onDirectUpdate={handleDirectUpdate} canReviewProject={canReviewProject} myUserId={myUserId} selectedCategories={selectedCategories} isArchived={apiIsArchived} selectedProjectIds={selectedProjectIds} onToggleSelection={toggleProjectSelection} selectionDisabled={isGeneratingAIRankings || businessStatus !== "draft"} />
         </div>
       </>;
   };

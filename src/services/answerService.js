@@ -280,10 +280,11 @@ export const answerService = {
         }
     },
 
-    async uploadStrategicDocument(business_id, file) {
+    async uploadStrategicDocument(business_id, file, page_count) {
         try {
             const formData = new FormData();
             formData.append('document', file);
+            if (page_count) formData.append('page_count', page_count);
             const response = await axios.put(`${API_BASE_URL}/api/businesses/${business_id}/strategic-document`, formData, {
                 headers: {
                     ...getAuthHeaders(),
