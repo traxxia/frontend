@@ -3526,6 +3526,7 @@ body {
   justify-content: center;
   position: relative;
   z-index: 999 !important;
+  color: #fff;
 }
 
 .custom-tooltip-content {
@@ -3743,16 +3744,18 @@ body {
 .view-edit-inputs-btn {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   padding: 6px 16px;
   border: 1px solid #e2e8f0;
   border-radius: 20px;
   background: #ffffff;
   color: #000;
-  font-size: 0.85rem;
+  font-size: 13px;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
+  white-space: nowrap;
+  box-shadow: none;
 }
 
 .view-edit-inputs-btn:hover {

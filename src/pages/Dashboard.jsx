@@ -308,7 +308,8 @@ const Dashboard = () => {
         if (selectedFiles.length > 0) {
           for (const file of selectedFiles) {
             try {
-              await answerService.uploadStrategicDocument(newBusinessId, file);
+              const count = filePageCounts[fileKey(file)]?.count;
+              await answerService.uploadStrategicDocument(newBusinessId, file, count);
             } catch (uploadErr) {
               console.error(`Error uploading file ${file.name}:`, uploadErr);
             }
@@ -360,8 +361,9 @@ const Dashboard = () => {
       closeModal('createBusiness');
       addToast({ message: t('business_created_successfully'), type: 'success' });
 
+      const uploadedFileNames = selectedFiles.map(file => file.name);
       navigate(`/onboarding/${newBusinessId}`, {
-        state: { business, initialTab: 'onboarding', pmfData }
+        state: { business, initialTab: 'onboarding', pmfData, uploadedFiles: uploadedFileNames }
       });
 
       setBusinessFormData({
@@ -466,6 +468,11 @@ const Dashboard = () => {
       
       if (validFiles.length > 0) {
         setSelectedFiles(prev => [...prev, ...validFiles]);
+      }
+
+      // Reset the input so the same file can be re-selected after being removed
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
       }
     }
   }, [addToast]);

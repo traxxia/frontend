@@ -50,7 +50,18 @@ const PrioritiesProjects = ({
   const [priorities, setPriorities] = useState([]);
 
   useEffect(() => {
-    setPriorities(initialPriorities.map(p => ({ ...p })));
+    setPriorities(prev => {
+      if (prev.length === 0 || prev.length !== initialPriorities.length) {
+        return initialPriorities.map(p => ({ ...p }));
+      }
+      return initialPriorities.map((initialP, idx) => {
+        const localP = prev[idx];
+        return {
+          ...initialP,
+          title: localP ? localP.title : initialP.title
+        };
+      });
+    });
   }, [initialPriorities]);
 
   const handleTitleChange = useCallback((idx, newTitle) => {
@@ -62,13 +73,23 @@ const PrioritiesProjects = ({
   }, []);
 
   const handleTitleBlur = useCallback(async (idx, title) => {
+    if (!title || title.trim() === "") {
+      return;
+    }
+    
+    const titleLower = title.trim().toLowerCase();
+    const isDuplicate = priorities.some((p, i) => i !== idx && p.title?.trim().toLowerCase() === titleLower);
+    if (isDuplicate) {
+      return;
+    }
+
     try {
       await updatePriorityName(selectedBusinessId, idx, title);
       clearProjectCache(selectedBusinessId);
     } catch (err) {
       console.error("Failed to update title in DB", err);
     }
-  }, [selectedBusinessId, updatePriorityName, clearProjectCache]);
+  }, [selectedBusinessId, updatePriorityName, clearProjectCache, priorities]);
   const hasCollaborators = kickstartData?.hasCollaborators ?? true;
   const {
     totalActions,
@@ -92,6 +113,13 @@ const PrioritiesProjects = ({
   const anyProjectKickstarted = useMemo(() => {
     return currentBusiness?.is_bets_built || kickstartData?.is_bets_built || priorities.some(p => p.isKickstarted || p.actions && p.actions.some(a => a.isKickstarted));
   }, [priorities, currentBusiness, kickstartData]);
+  const hasEmptyTitle = useMemo(() => {
+    return priorities.some(p => !p.title || p.title.trim() === "");
+  }, [priorities]);
+  const hasDuplicateTitle = useMemo(() => {
+    const titles = priorities.map(p => p.title?.trim().toLowerCase()).filter(t => t);
+    return new Set(titles).size !== titles.length;
+  }, [priorities]);
   useEffect(() => {
     const fetchData = async () => {
       if (!selectedBusinessId) return;
@@ -254,6 +282,11 @@ const PrioritiesProjects = ({
       </div>
 
       {/* Build Bets Button */}
+      {hasDuplicateTitle && !anyProjectKickstarted && (
+        <div className="text-danger mb-2 text-end" style={{ fontSize: '0.85rem', fontWeight: 'bold' }}>
+          {t("Bet names must be unique. Please resolve duplicates before proceeding.")}
+        </div>
+      )}
       <div className="d-flex justify-content-end">
         {anyProjectKickstarted ? (
           <Button 
@@ -268,9 +301,9 @@ const PrioritiesProjects = ({
           <Button 
             variant="primary" 
             className="d-flex align-items-center gap-2 px-4 py-2 fw-semibold rounded-3" 
-            style={{ backgroundColor: '#0284c7', border: 'none' }}
+            style={{ backgroundColor: '#0284c7', border: 'none', opacity: (kickstarting || hasEmptyTitle || hasDuplicateTitle) ? 0.6 : 1 }}
             onClick={handleKickstart}
-            disabled={kickstarting}
+            disabled={kickstarting || hasEmptyTitle || hasDuplicateTitle}
           >
             {kickstarting ? <Spinner size="sm" /> : null}
             {kickstarting ? t("Building...") : t("Build bets")} <ArrowRight size={16} />

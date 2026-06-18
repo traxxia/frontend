@@ -110,7 +110,6 @@ const TraxSidebar = ({
         </div>
         <div className="header-info">
           <h3 className="header-title">Trax</h3>
-          <span className="header-subtitle">{t("Strategy Consultant") || "Strategy Consultant"}</span>
         </div>
       </div>
       <div className="docked-chat-body">

@@ -814,7 +814,8 @@ const EditableBriefSection = ({
               type: type,
               section: 'strategic',
               progress: 100,
-              isNewSessionFile: !doc.is_analyzed
+              isNewSessionFile: !doc.is_analyzed,
+              pageInfo: doc.page_count ? { count: doc.page_count, unit: doc.page_count === 1 ? 'page' : 'pages' } : null
             };
           });
           return [...nonDbStrategic, ...dbStrategic];
@@ -1019,12 +1020,12 @@ const EditableBriefSection = ({
   };
 
 
-  const saveStrategicFileToDatabase = async (file) => {
+  const saveStrategicFileToDatabase = async (file, page_count) => {
     try {
       strategicDocsCache.delete(selectedBusinessId);
       if (!selectedBusinessId) throw new Error('No business selected');
 
-      const result = await answerService.uploadStrategicDocument(selectedBusinessId, file);
+      const result = await answerService.uploadStrategicDocument(selectedBusinessId, file, page_count);
       return result;
     } catch (error) {
       console.error('Strategic database save error:', error);
@@ -1124,7 +1125,7 @@ const EditableBriefSection = ({
 
       try {
         // Upload via the single unified endpoint!
-        const strategicResult = await saveStrategicFileToDatabase(file);
+        const strategicResult = await saveStrategicFileToDatabase(file, newFileObjs[index].pageInfo?.count);
 
         if (onUploadedFileUpdate) {
           onUploadedFileUpdate(file);

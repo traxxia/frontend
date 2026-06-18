@@ -76,7 +76,7 @@
 }
 
 .premium-table th {
-  background-color: var(--color-bg-light, #f8f9fc);
+  background-color: #ffffff;
   padding: 16px 12px;
   text-align: left;
   font-size: 11px;
@@ -113,11 +113,7 @@
   background-color: var(--color-bg-hover, #fcfdfe);
 }
 
-.col-selection {
-  width: 40px;
-  text-align: center !important;
-  padding-right: 0 !important;
-}
+
 
 .col-index {
   width: 50px;
@@ -128,13 +124,9 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
-  background-color: var(--color-bg-light, #edf2f7);
-  color: var(--color-text-secondary, #4a5568);
-  border-radius: 50%;
-  font-size: 12px;
-  font-weight: 700;
+  color: #475569;
+  font-size: 13px;
+  font-weight: 600;
 }
 
 .col-bets {
@@ -181,9 +173,9 @@
 }
 
 .badge-draft {
-  background-color: var(--color-bg-light, #f3f4f6);
-  color: var(--color-text-secondary, #4b5563);
-  border: 1px solid var(--color-border-light, #6b728033);
+  background-color: #ffffff;
+  color: #64748b;
+  border: 1px solid #e2e8f0;
 }
 
 .badge-completed {
@@ -308,6 +300,25 @@
 .actions-dropdown-btn:hover {
   background-color: var(--color-bg-hover, #f7fafc);
   border-color: var(--color-border-dark, #cbd5e0);
+}
+
+.actions-setup-btn {
+  background-color: #0c71b9 !important;
+  border-color: #0c71b9 !important;
+  color: #ffffff !important;
+}
+
+.actions-setup-btn:hover {
+  background-color: #0a5f9e !important;
+  border-color: #0a5f9e !important;
+}
+
+.text-cadence-blue {
+  color: #0c71b9 !important;
+}
+
+.actions-setup-btn::after {
+  display: none !important;
 }
 
 .premium-table input[type="checkbox"] {
