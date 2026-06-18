@@ -2038,7 +2038,7 @@ const BusinessSetupPage = () => {
                                     <i className="lucide-history" /> {t("History") || "History"}
                                   </button>
                                   <button className="view-edit-inputs-btn" onClick={() => setActiveTab('advanced')}>
-                                    <i className="lucide-edit-3" /> {t("Edit") || "Edit"}
+                                    <i className="lucide-edit-3" /> {t("ViewEdit") || "View / Edit Inputs"}
                                   </button>
                                 </div>
                                 <div className="insights-segmented-toggle mb-4">

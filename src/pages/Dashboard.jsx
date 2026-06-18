@@ -469,6 +469,11 @@ const Dashboard = () => {
       if (validFiles.length > 0) {
         setSelectedFiles(prev => [...prev, ...validFiles]);
       }
+
+      // Reset the input so the same file can be re-selected after being removed
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
     }
   }, [addToast]);
 
