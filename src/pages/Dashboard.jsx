@@ -361,8 +361,9 @@ const Dashboard = () => {
       closeModal('createBusiness');
       addToast({ message: t('business_created_successfully'), type: 'success' });
 
+      const uploadedFileNames = selectedFiles.map(file => file.name);
       navigate(`/onboarding/${newBusinessId}`, {
-        state: { business, initialTab: 'onboarding', pmfData }
+        state: { business, initialTab: 'onboarding', pmfData, uploadedFiles: uploadedFileNames }
       });
 
       setBusinessFormData({

@@ -15,7 +15,7 @@ const PilotFeedbackModal = ({ plan, onClose, onAccept }) => {
     { label: 'Custom — Get a quote', value: 'custom' },
   ];
   const [selectedPlan, setSelectedPlan] = useState(plan);
-  const [rating, setRating] = useState(8);
+  const [rating, setRating] = useState('');
   const [comment, setComment] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const token = useAuthStore((state) => state.token);

@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useMemo } from 'react';
-import { FileDown, Loader } from 'lucide-react';
+import { FileDown, Download, Loader } from 'lucide-react';
 import { useTranslation } from "../hooks/useTranslation";
 import { useAnalysisStore } from '../store';
 const PHASE_COMPONENTS = {
@@ -329,6 +329,24 @@ const PDFExportButton = ({
         body.generating-pdf .modern-analysis-card {
           margin-bottom: 40px !important;
         }
+        body.generating-pdf .text-muted,
+        body.generating-pdf .text-secondary,
+        body.generating-pdf .modern-card-content,
+        body.generating-pdf .modern-phase-content,
+        body.generating-pdf p,
+        body.generating-pdf li,
+        body.generating-pdf span,
+        body.generating-pdf div {
+          color: #000000 !important;
+        }
+        body.generating-pdf .text-primary,
+        body.generating-pdf .text-success,
+        body.generating-pdf .text-danger,
+        body.generating-pdf .text-warning,
+        body.generating-pdf .text-info,
+        body.generating-pdf [class*="score"] {
+          color: inherit;
+        }
       `;
       document.head.appendChild(forceStyle);
       await new Promise(resolve => setTimeout(resolve, 1500));
@@ -346,9 +364,71 @@ const PDFExportButton = ({
         selector: '[data-component="strategic-sustainability"]',
         name: 'Sustainability & Reinforcement'
       }] : PHASE_COMPONENTS[exportPhase] || [];
-      const components = rawComponents.filter(comp => {
+            const validComponents = rawComponents.filter(comp => {
         const el = document.querySelector(comp.selector);
         return el !== null;
+      });
+      const components = [];
+      validComponents.forEach(comp => {
+        const el = document.querySelector(comp.selector);
+        if (!el) return;
+        
+        if (comp.selector === '[data-component="executive-priorities"]') {
+          const cards = el.querySelectorAll('.exc-prio-card');
+          if (cards && cards.length > 0) {
+            Array.from(cards).forEach((card, idx) => {
+              const tempId = `temp-pdf-prio-${idx}`;
+              card.id = tempId;
+              components.push({
+                selector: `#${tempId}`,
+                name: idx === 0 ? comp.name : `${comp.name} (continued)`,
+                isChunk: idx !== 0
+              });
+            });
+          } else {
+            components.push(comp);
+          }
+        } else if (comp.selector === '[data-component="executive-where"]') {
+          const horizons = el.querySelector('.exc-horizons-container');
+          if (horizons) {
+            horizons.id = 'temp-pdf-where-hor';
+            components.push({
+              selector: `#temp-pdf-where-hor`,
+              name: comp.name
+            });
+          }
+          const moves = el.querySelectorAll('.exc-move-card');
+          if (moves && moves.length > 0) {
+            Array.from(moves).forEach((move, idx) => {
+              const tempId = `temp-pdf-move-${idx}`;
+              move.id = tempId;
+              components.push({
+                selector: `#${tempId}`,
+                name: `${comp.name} (continued)`,
+                isChunk: true
+              });
+            });
+          } else if (!horizons) {
+            components.push(comp);
+          }
+        } else if (comp.selector === '[data-component="executive-how"]') {
+          const blocks = el.querySelectorAll('.exc-how-block');
+          if (blocks && blocks.length > 0) {
+            Array.from(blocks).forEach((block, idx) => {
+              const tempId = `temp-pdf-how-${idx}`;
+              block.id = tempId;
+              components.push({
+                selector: `#${tempId}`,
+                name: idx === 0 ? comp.name : `${comp.name} (continued)`,
+                isChunk: idx !== 0
+              });
+            });
+          } else {
+            components.push(comp);
+          }
+        } else {
+          components.push(comp);
+        }
       });
       if (components.length === 0) {
         console.warn("[PDF Export] No components found to export!");
@@ -391,27 +471,26 @@ const PDFExportButton = ({
           sectionName: `Capturing ${comp.name}...`
         });
         const element = document.querySelector(comp.selector);
-        if (element) {
-          element.scrollIntoView({
-            block: 'center'
-          });
+                if (element) {
+          element.scrollIntoView({ block: 'center' });
           await new Promise(resolve => setTimeout(resolve, 1000));
         }
         const result = await captureComponent(comp.selector, comp.name, html2canvas);
-        if (result) capturedResults.push(result);
+        if (result) {
+          result.isChunk = comp.isChunk;
+          capturedResults.push(result);
+        }
       }
+      
       let yOffset = 75;
       for (let i = 0; i < capturedResults.length; i++) {
-        const {
-          name,
-          canvas,
-          imgData
-        } = capturedResults[i];
+        const { name, canvas, imgData, isChunk } = capturedResults[i];
         setExportProgress({
           current: i + 1,
           total: capturedResults.length,
           sectionName: `Adding ${name} to PDF...`
         });
+        
         const margin = 15;
         const availableWidth = pageWidth - margin * 2;
         const imgWidth = availableWidth;
@@ -419,28 +498,47 @@ const PDFExportButton = ({
         let sY = 0;
         let remainingImgHeight = fullImgHeight;
         let isFirstSlice = true;
+        
         while (remainingImgHeight > 0.1) {
           let spaceLeftOnPage = pageHeight - yOffset - 15;
-          if (spaceLeftOnPage < 20) {
+          if (isFirstSlice && remainingImgHeight > spaceLeftOnPage && remainingImgHeight <= (pageHeight - 35)) {
+            pdf.addPage();
+            yOffset = 20;
+            spaceLeftOnPage = pageHeight - yOffset - 15;
+          } else if (spaceLeftOnPage < 20) {
             pdf.addPage();
             yOffset = 20;
             spaceLeftOnPage = pageHeight - yOffset - 15;
           }
+          
           const sliceHeightOnPage = Math.min(remainingImgHeight, spaceLeftOnPage);
           const sourceSliceHeight = sliceHeightOnPage * canvas.width / imgWidth;
+          
           if (isFirstSlice) {
-            pdf.setFontSize(14);
-            pdf.setFont('helvetica', 'bold');
-            pdf.setTextColor(26, 115, 232);
-            pdf.text(name, margin, yOffset);
-            yOffset += 7;
+            if (isChunk) {
+              if (yOffset === 20) {
+                pdf.setFontSize(10);
+                pdf.setFont('helvetica', 'italic');
+                pdf.setTextColor(150, 150, 150);
+                pdf.text(name, margin, yOffset);
+                yOffset += 7;
+              }
+            } else {
+              pdf.setFontSize(14);
+              pdf.setFont('helvetica', 'bold');
+              pdf.setTextColor(26, 115, 232);
+              pdf.text(name, margin, yOffset);
+              yOffset += 7;
+            }
           } else {
             pdf.setFontSize(10);
             pdf.setFont('helvetica', 'italic');
             pdf.setTextColor(150, 150, 150);
-            pdf.text(`${name} (continued)`, margin, yOffset);
+            const printName = name.includes('(continued)') ? name : `${name} (continued)`;
+            pdf.text(printName, margin, yOffset);
             yOffset += 7;
           }
+          
           try {
             const tempCanvas = document.createElement('canvas');
             tempCanvas.width = canvas.width;
@@ -494,13 +592,14 @@ const PDFExportButton = ({
         </div>}
 
       <button onClick={handleDownload} disabled={disabled || isExportingPDF} className={`${className} p-d-f-export-button--s7`} style={{
-      padding: showText ? "10px 18px" : "10px",
+      padding: showText ? "6px 14px" : "10px",
       width: showText ? "auto" : "40px",
       cursor: disabled || isExportingPDF ? "not-allowed" : "pointer",
+      color: showText ? "#334155" : "inherit",
       ...style
     }}>
-        <FileDown size={18} />
-        {showText && <span>{t("Export_PDF")}</span>}
+        {showText ? <Download size={16} /> : <FileDown size={18} />}
+        {showText && <span style={{ marginLeft: "6px", fontWeight: "500" }}>{t("Export PDF") || "Export PDF"}</span>}
       </button>
 
       <style>{`
@@ -509,3 +608,5 @@ const PDFExportButton = ({
     </>;
 };
 export default PDFExportButton;
+
+

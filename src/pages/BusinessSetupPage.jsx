@@ -1687,7 +1687,7 @@ const BusinessSetupPage = () => {
                             liquidityEfficiencyData={liquidityEfficiencyData}
                             investmentPerformanceData={investmentPerformanceData}
                             leverageRiskData={leverageRiskData}
-                          />
+                            />
                         </CustomTooltip>
 
                         {canShowRegenerateButtons && unlockedFeatures.analysis && hasInsightAccess && (
@@ -1750,11 +1750,13 @@ const BusinessSetupPage = () => {
                     {activeTab === "executive" && (
                       <CustomTooltip align="right" message={t("download_executive_tooltip") || "Export the executive summary into PDF report."}>
                         <PDFExportButton
-                          className="pdf-export-button"
+                            className="view-edit-inputs-btn"
+                            style={{ borderRadius: '6px' }}
                           businessName={businessData.name}
                           onToastMessage={showToastMessage}
                           exportType="executive"
-                        />
+                            showText={true}
+                          />
                       </CustomTooltip>
                     )}
                   </div>
@@ -1882,7 +1884,7 @@ const BusinessSetupPage = () => {
 
                               <CustomTooltip align="right" message={t("download_insights_tooltip") || "Export the insights into PDF report."}>
                                 <PDFExportButton
-                                  className="pdf-export-button"
+                            className="pdf-export-button"
                                   businessName={businessData.name}
                                   onToastMessage={showToastMessage}
                                   currentPhase={currentPhase}
@@ -1955,11 +1957,13 @@ const BusinessSetupPage = () => {
                           {activeTab === "executive" && (
                             <CustomTooltip align="right" message={t("download_executive_tooltip") || "Export the executive summary into PDF report."}>
                               <PDFExportButton
-                                className="pdf-export-button"
+                            className="view-edit-inputs-btn"
+                            style={{ borderRadius: '6px' }}
                                 businessName={businessData.name}
                                 onToastMessage={showToastMessage}
                                 exportType="executive"
-                              />
+                            showText={true}
+                          />
                             </CustomTooltip>
                           )}
 
@@ -2629,3 +2633,6 @@ const BusinessSetupPage = () => {
 };
 
 export default BusinessSetupPage;
+
+
+
