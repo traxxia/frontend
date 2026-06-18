@@ -193,8 +193,6 @@ const ProjectDetails = ({
             </div>
           </div>
         </div>
-
-        <hr className="my-4" style={{ borderColor: '#e2e8f0', opacity: 1 }} />
       </div>
 
             {}
