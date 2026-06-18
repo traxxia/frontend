@@ -308,7 +308,8 @@ const Dashboard = () => {
         if (selectedFiles.length > 0) {
           for (const file of selectedFiles) {
             try {
-              await answerService.uploadStrategicDocument(newBusinessId, file);
+              const count = filePageCounts[fileKey(file)]?.count;
+              await answerService.uploadStrategicDocument(newBusinessId, file, count);
             } catch (uploadErr) {
               console.error(`Error uploading file ${file.name}:`, uploadErr);
             }

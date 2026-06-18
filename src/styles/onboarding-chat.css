@@ -699,6 +699,12 @@
   transition: all 0.2s ease;
 }
 
+.ob-generate-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
 .ob-generate-subtext {
   margin-top: 12px;
   font-size: 13px;

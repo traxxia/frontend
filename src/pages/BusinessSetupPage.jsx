@@ -2103,7 +2103,7 @@ const BusinessSetupPage = () => {
                             />
                           )}
                           {activeTab === "cadences" && hasProjectAccess && (
-                            <CadencesSection cadences={[]} />
+                            <CadencesSection businessId={selectedBusinessId} />
                           )}
                           {activeTab === "ranking" && hasProjectAccess && (
                             <RankingSection
