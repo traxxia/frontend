@@ -208,6 +208,8 @@ const TextAreaField = forwardRef(({
 const ProjectForm = ({
   mode,
   readOnly = false,
+  canEdit = false,
+  onEdit,
   projectName,
   setProjectName,
   description,
@@ -697,7 +699,7 @@ setSuccessMetrics,
     onSubmit({ isKickstart });
   };
   return <>
-    <fieldset disabled={isSubmitting || isReadOnly} className="project-form--s6">
+    <div className="project-form--s6">
 
       { }
       <div className="project-custom-header-wrapper" ref={breadcrumbRef}>
@@ -736,6 +738,11 @@ setSuccessMetrics,
                     </button>
                   </>
                 )}
+                {isReadOnly && canEdit && !["completed", "scaled", "killed"].includes(initialStatusLower) && (
+                  <button type="button" className="btn-edit d-flex align-items-center gap-2" onClick={onEdit} style={{ backgroundColor: '#0c71b9', color: '#ffffff', border: 'none', borderRadius: '6px', fontSize: '13px', fontWeight: '600', padding: '6px 16px', cursor: 'pointer' }}>
+                    <Edit2 size={14} strokeWidth={2.5} /> {t("Edit")}
+                  </button>
+                )}
               </div>
             );
           })()}
@@ -762,6 +769,8 @@ setSuccessMetrics,
 
         <hr className="my-4" style={{ borderColor: '#e2e8f0', opacity: 1 }} />
       </div>
+      
+      <fieldset disabled={isSubmitting || isReadOnly} style={{ border: 'none', padding: 0, margin: 0 }}>
 
       {!isLaunched && initialStatusLower === "draft" && (
         <div className="kickstart-banner mt-4">
@@ -1414,6 +1423,7 @@ setSuccessMetrics,
         </Accordion.Item>
       </Accordion>
     </fieldset>
+    </div>
   </>;
 };
 export default ProjectForm;
