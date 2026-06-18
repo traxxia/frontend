@@ -14,6 +14,7 @@ const ProjectsTable = ({
   onDelete,
   onPerformReview,
   onAdhocUpdate,
+  onDirectUpdate,
   showMenuId,
   setShowMenuId,
   selectedProjectIds = [],
@@ -49,15 +50,15 @@ const ProjectsTable = ({
   };
 
   const handleSaveCadences = async (project, cadencesString) => {
-    if (onAdhocUpdate) {
-      await onAdhocUpdate(project._id, { review_cadence: cadencesString, cadence: cadencesString });
+    if (onDirectUpdate) {
+      await onDirectUpdate(project._id, { review_cadence: cadencesString, cadence: cadencesString });
     }
     setShowCadencesModal(false);
   };
 
   const handleSaveDecider = async (project, ownerId, ownerName) => {
-    if (onAdhocUpdate) {
-      await onAdhocUpdate(project._id, { accountable_owner_id: ownerId, accountable_owner: ownerName });
+    if (onDirectUpdate) {
+      await onDirectUpdate(project._id, { accountable_owner_id: ownerId, accountable_owner: ownerName });
     }
     setShowDeciderModal(false);
   };

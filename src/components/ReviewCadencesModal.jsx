@@ -2,52 +2,65 @@ import React, { useState, useEffect } from "react";
 import { Modal, Button, Form } from "react-bootstrap";
 import { X, Plus } from "lucide-react";
 import { useTranslation } from "../hooks/useTranslation";
+import axios from "axios";
+import { useAuthStore, useBusinessStore } from "../store";
 import "../styles/ProjectsTable.css";
-
-const PREDEFINED_CADENCES = [
-  { id: "mbr", name: "MBR · Monthly Business Review", frequency: "Monthly" },
-  { id: "qbr", name: "QBR · Quarterly Business Review", frequency: "Quarterly" },
-  { id: "annual", name: "Annual Planning", frequency: "Annually" }
-];
 
 const ReviewCadencesModal = ({ show, onHide, project, onSave }) => {
   const { t } = useTranslation();
   
-  // Combine predefined cadences with any newly created ones in this session
-  const [availableCadences, setAvailableCadences] = useState(PREDEFINED_CADENCES);
+  const selectedBusinessId = useBusinessStore((state) => state.selectedBusinessId);
+  
+  const [availableCadences, setAvailableCadences] = useState([]);
   const [selectedCadences, setSelectedCadences] = useState([]);
   
-  // States for creating a new cadence
   const [isCreating, setIsCreating] = useState(false);
   const [newCadenceName, setNewCadenceName] = useState("");
   const [newCadenceFrequency, setNewCadenceFrequency] = useState("Monthly");
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
-  // Initialize selected cadences from project.review_cadence (comma separated string)
+  const fetchCadences = async () => {
+    if (!selectedBusinessId) return;
+    try {
+      const token = useAuthStore.getState().token;
+      const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL || "http://localhost:5000"}/api/cadences?business_id=${selectedBusinessId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setAvailableCadences(response.data || []);
+    } catch (err) {
+      console.error("Failed to fetch cadences:", err);
+    }
+  };
+
+  useEffect(() => {
+    if (show) {
+      fetchCadences();
+    }
+  }, [show, selectedBusinessId]);
+
   useEffect(() => {
     if (show && project) {
       const cadenceStr = project.review_cadence || project.cadence || "";
       const selectedNames = cadenceStr.split(",").map(s => s.trim()).filter(Boolean);
       
-      const initialSelected = [];
-      const dynamicCadences = [...PREDEFINED_CADENCES];
+      const initialSelectedIds = [];
       
       selectedNames.forEach(name => {
-        let match = dynamicCadences.find(c => c.name === name);
-        if (!match) {
-          // If a project has a custom cadence already, add it to the available list
-          match = { id: `custom-${Date.now()}-${Math.random()}`, name, frequency: "Custom" };
-          dynamicCadences.push(match);
+        const match = availableCadences.find(c => c.name === name);
+        if (match) {
+          initialSelectedIds.push(match._id);
         }
-        initialSelected.push(match.id);
       });
       
-      setAvailableCadences(dynamicCadences);
-      setSelectedCadences(initialSelected);
+      if (availableCadences.length > 0) {
+        setSelectedCadences(initialSelectedIds);
+      }
       setIsCreating(false);
       setNewCadenceName("");
       setNewCadenceFrequency("Monthly");
     }
-  }, [show, project]);
+  }, [show, project, availableCadences.length]);
 
   const handleToggle = (id) => {
     setSelectedCadences(prev => 
@@ -55,30 +68,42 @@ const ReviewCadencesModal = ({ show, onHide, project, onSave }) => {
     );
   };
 
-  const handleCreateNew = () => {
-    if (!newCadenceName.trim()) return;
-    
-    const newCadence = {
-      id: `custom-${Date.now()}`,
-      name: newCadenceName.trim(),
-      frequency: newCadenceFrequency
-    };
-    
-    setAvailableCadences(prev => [...prev, newCadence]);
-    setSelectedCadences(prev => [...prev, newCadence.id]);
-    setIsCreating(false);
-    setNewCadenceName("");
-    setNewCadenceFrequency("Monthly");
+  const handleCreateNew = async () => {
+    if (!newCadenceName.trim() || !selectedBusinessId) return;
+    setIsLoading(true);
+    try {
+      const token = useAuthStore.getState().token;
+      const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL || "http://localhost:5000"}/api/cadences`, {
+        name: newCadenceName.trim(),
+        frequency: newCadenceFrequency,
+        business_id: selectedBusinessId
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      const newCadence = response.data;
+      setAvailableCadences(prev => [...prev, newCadence]);
+      setSelectedCadences(prev => [...prev, newCadence._id]);
+      
+      setIsCreating(false);
+      setNewCadenceName("");
+      setNewCadenceFrequency("Monthly");
+    } catch (err) {
+      console.error("Failed to create cadence:", err);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleSave = () => {
-    // Map selected IDs back to a comma-separated string of names
+  const handleSave = async () => {
+    setIsSaving(true);
     const selectedNames = selectedCadences
-      .map(id => availableCadences.find(c => c.id === id)?.name)
+      .map(id => availableCadences.find(c => c._id === id)?.name)
       .filter(Boolean)
       .join(", ");
       
-    onSave(project, selectedNames);
+    await onSave(project, selectedNames);
+    setIsSaving(false);
   };
 
   return (
@@ -97,17 +122,17 @@ const ReviewCadencesModal = ({ show, onHide, project, onSave }) => {
         <div className="cadences-list d-flex flex-column gap-2 mb-3">
           {availableCadences.map((cadence) => (
             <div 
-              key={cadence.id}
-              className={`cadence-item border rounded p-3 d-flex align-items-center justify-content-between ${selectedCadences.includes(cadence.id) ? 'bg-light' : ''}`}
-              style={{ cursor: 'pointer', transition: 'all 0.2s', borderColor: selectedCadences.includes(cadence.id) ? '#0c71b9' : '' }}
-              onClick={() => handleToggle(cadence.id)}
+              key={cadence._id}
+              className={`cadence-item border rounded p-3 d-flex align-items-center justify-content-between ${selectedCadences.includes(cadence._id) ? 'bg-light' : ''}`}
+              style={{ cursor: 'pointer', transition: 'all 0.2s', borderColor: selectedCadences.includes(cadence._id) ? '#0c71b9' : '#e2e8f0' }}
+              onClick={() => handleToggle(cadence._id)}
             >
               <div className="d-flex align-items-center gap-3">
                 <Form.Check 
                   type="checkbox"
-                  checked={selectedCadences.includes(cadence.id)}
+                  checked={selectedCadences.includes(cadence._id)}
                   onChange={() => {}} // handled by parent div onClick
-                  className="cadence-checkbox m-0"
+                  className="cadence-checkbox m-0 shadow-none"
                   style={{ pointerEvents: 'none' }}
                 />
                 <span className="fw-bold text-dark">{cadence.name}</span>
@@ -115,6 +140,11 @@ const ReviewCadencesModal = ({ show, onHide, project, onSave }) => {
               <span className="text-muted" style={{ fontSize: '12px' }}>{cadence.frequency}</span>
             </div>
           ))}
+          {availableCadences.length === 0 && !isCreating && (
+            <div className="text-center p-3 border rounded border-dashed text-muted">
+              {t("No cadences available. Create a new one below.")}
+            </div>
+          )}
         </div>
 
         {!isCreating ? (
@@ -163,16 +193,16 @@ const ReviewCadencesModal = ({ show, onHide, project, onSave }) => {
               <p className="text-muted mb-3" style={{ fontSize: '12px' }}>{t("Audience can be set later from Manage.")}</p>
               
               <div className="d-flex justify-content-end gap-2">
-                <Button variant="link" className="text-secondary text-decoration-none fw-bold" onClick={() => setIsCreating(false)}>
+                <Button variant="link" className="text-secondary text-decoration-none fw-bold shadow-none" onClick={() => setIsCreating(false)}>
                   Cancel
                 </Button>
                 <Button 
-                  disabled={!newCadenceName.trim()}
+                  disabled={!newCadenceName.trim() || isLoading}
                   onClick={handleCreateNew}
-                  className="fw-bold border-0 text-white"
-                  style={!newCadenceName.trim() ? { backgroundColor: '#cbd5e1', color: '#475569' } : { backgroundColor: '#0c71b9' }}
+                  className="fw-bold border-0 text-white shadow-none"
+                  style={(!newCadenceName.trim() || isLoading) ? { backgroundColor: '#cbd5e1', color: '#475569' } : { backgroundColor: '#0c71b9' }}
                 >
-                  Create & select
+                  {isLoading ? t("Creating...") : t("Create & select")}
                 </Button>
               </div>
             </div>
@@ -185,11 +215,18 @@ const ReviewCadencesModal = ({ show, onHide, project, onSave }) => {
           {selectedCadences.length === 0 ? "NONE SELECTED" : `${selectedCadences.length} SELECTED`}
         </span>
         <div className="d-flex gap-2">
-          <Button variant="outline-secondary" className="border shadow-sm bg-white text-dark fw-bold" onClick={onHide}>
+          <Button variant="outline-secondary" className="border shadow-sm bg-white text-dark fw-bold rounded-pill px-4" onClick={onHide} disabled={isSaving}>
             Cancel
           </Button>
-          <Button className="fw-bold px-4 text-white border-0" style={{ backgroundColor: '#0c71b9' }} onClick={handleSave}>
-            Save
+          <Button className="fw-bold px-4 rounded-pill text-white border-0 shadow-none d-flex align-items-center gap-2" style={{ backgroundColor: '#0c71b9' }} onClick={handleSave} disabled={isSaving}>
+            {isSaving ? (
+              <>
+                <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                {t("Saving...")}
+              </>
+            ) : (
+              t("Save")
+            )}
           </Button>
         </div>
       </Modal.Footer>

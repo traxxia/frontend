@@ -473,6 +473,24 @@ const ProjectsSection = ({
     setReviewType("adhoc");
     openModal('projectReview');
   }, [openModal]);
+  
+  const handleDirectUpdate = useCallback(async (projectId, payload) => {
+    try {
+      const { success, error } = await updateProject(projectId, payload);
+      if (success) {
+        handleShowToast("Project updated successfully!", "success");
+        clearCache(selectedBusinessId);
+        queryClient.invalidateQueries({ queryKey: ["projects", selectedBusinessId] });
+        queryClient.invalidateQueries({ queryKey: ["teamRankings", selectedBusinessId] });
+        await refreshAllData();
+      } else {
+        handleShowToast(error || "Failed to process update", "error");
+      }
+    } catch (err) {
+      console.error("Direct update error:", err);
+      handleShowToast("Failed to process update", "error");
+    }
+  }, [updateProject, selectedBusinessId, clearCache, queryClient, refreshAllData, handleShowToast]);
   const handleFieldFocus = useCallback(fieldName => {
     lockFieldSafe(currentProject?._id, fieldName);
   }, [currentProject?._id]);
@@ -759,7 +777,7 @@ const ProjectsSection = ({
             </div>
           </div>
 
-          <ProjectsList isLoading={isLoadingProjects} sortedProjects={sortedProjects} rankMap={rankMap} finalizeCompleted={finalizeCompleted} launched={launched} isViewer={isViewer} isAdmin={isSuperAdmin} isEditor={isEditor} isDraft={isDraft} projectCreationLocked={projectCreationLocked} isFinalizedView={isFinalizedView} canEditProject={project => canEditProject(project, isEditor, myUserId, businessStatus, apiIsArchived, isSuperAdmin)} onEdit={project => handleEditProject(project, "edit")} onView={project => handleEditProject(project, "view")} onDelete={handleDelete} onPerformReview={handlePerformReview} onAdhocUpdate={handleAdhocUpdate} canReviewProject={canReviewProject} myUserId={myUserId} selectedCategories={selectedCategories} isArchived={apiIsArchived} selectedProjectIds={selectedProjectIds} onToggleSelection={toggleProjectSelection} selectionDisabled={isGeneratingAIRankings || businessStatus !== "draft"} />
+          <ProjectsList isLoading={isLoadingProjects} sortedProjects={sortedProjects} rankMap={rankMap} finalizeCompleted={finalizeCompleted} launched={launched} isViewer={isViewer} isAdmin={isSuperAdmin} isEditor={isEditor} isDraft={isDraft} projectCreationLocked={projectCreationLocked} isFinalizedView={isFinalizedView} canEditProject={project => canEditProject(project, isEditor, myUserId, businessStatus, apiIsArchived, isSuperAdmin)} onEdit={project => handleEditProject(project, "edit")} onView={project => handleEditProject(project, "view")} onDelete={handleDelete} onPerformReview={handlePerformReview} onAdhocUpdate={handleAdhocUpdate} onDirectUpdate={handleDirectUpdate} canReviewProject={canReviewProject} myUserId={myUserId} selectedCategories={selectedCategories} isArchived={apiIsArchived} selectedProjectIds={selectedProjectIds} onToggleSelection={toggleProjectSelection} selectionDisabled={isGeneratingAIRankings || businessStatus !== "draft"} />
         </div>
       </>;
   };

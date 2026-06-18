@@ -26,6 +26,7 @@ const ProjectsList = ({
   selectionDisabled = false,
   onPerformReview,
   onAdhocUpdate,
+  onDirectUpdate,
   canReviewProject,
   myUserId
 }) => {
@@ -65,7 +66,7 @@ const ProjectsList = ({
         </div>
       );
     }
-    return <ProjectsTable projects={projects} rankMap={rankMap} onEdit={onEdit} onView={onView} onDelete={onDelete} onPerformReview={onPerformReview} onAdhocUpdate={onAdhocUpdate} showMenuId={showMenuId} setShowMenuId={setShowMenuId} selectedProjectIds={selectedProjectIds} onToggleSelection={onToggleSelection} isAdmin={isAdmin} isArchived={isArchived} isViewer={isViewer} canReviewProject={canReviewProject} canEditProject={canEditProject} myUserId={myUserId} />;
+    return <ProjectsTable projects={projects} rankMap={rankMap} onEdit={onEdit} onView={onView} onDelete={onDelete} onPerformReview={onPerformReview} onAdhocUpdate={onAdhocUpdate} onDirectUpdate={onDirectUpdate} showMenuId={showMenuId} setShowMenuId={setShowMenuId} selectedProjectIds={selectedProjectIds} onToggleSelection={onToggleSelection} isAdmin={isAdmin} isArchived={isArchived} isViewer={isViewer} canReviewProject={canReviewProject} canEditProject={canEditProject} myUserId={myUserId} />;
   };
   const getFilteredGroups = () => {
     if (isLoading) {
