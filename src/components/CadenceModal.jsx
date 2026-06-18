@@ -137,7 +137,7 @@ const CadenceModal = ({ show, onHide, onSave, businessId, existingCadence = null
         <Button variant="outline-secondary" className="border shadow-sm bg-white text-dark fw-bold px-4 rounded-pill" onClick={onHide}>
           Cancel
         </Button>
-        <Button variant="secondary" className="text-white fw-bold px-4 rounded-pill border-0" disabled={!name.trim() || isSubmitting} onClick={handleSave} style={{ backgroundColor: '#cbd5e1' }}>
+        <Button variant="primary" className="text-white fw-bold px-4 rounded-pill border-0" disabled={!name.trim() || isSubmitting} onClick={handleSave}>
           {existingCadence ? t("Save changes") : t("Add cadence")}
         </Button>
       </Modal.Footer>

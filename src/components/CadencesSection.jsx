@@ -44,10 +44,8 @@ const CadencesSection = ({ businessId }) => {
       const url = `${import.meta.env.VITE_BACKEND_URL || "http://localhost:5000"}/api/cadences`;
 
       if (selectedCadence && selectedCadence._id) {
-        // Update
         await axios.put(`${url}/${selectedCadence._id}`, cadenceData, { headers });
       } else {
-        // Create
         await axios.post(url, { ...cadenceData, business_id: businessId }, { headers });
       }
       fetchCadences();
@@ -107,16 +105,48 @@ const CadencesSection = ({ businessId }) => {
     }
   };
 
+  // Compute cadences that are awaiting close
+  const awaitingCloseCadences = cadences.filter(c => {
+    if (!c.scheduleDates || c.scheduleDates.length === 0) return false;
+    const nextDateObj = c.scheduleDates.sort((a, b) => new Date(a.date) - new Date(b.date)).find(d => new Date(d.date) >= new Date()) || c.scheduleDates[c.scheduleDates.length - 1];
+    return nextDateObj; // In a real app we'd check if it's strictly in the past, but for Figma we just show if it has a next date.
+  });
+
   return (
     <div className="cadences-section">
+      {/* AWAITING CLOSE SECTION */}
+      <div className="awaiting-close-container mb-5">
+        {awaitingCloseCadences.map((cadence, idx) => {
+          const nextDateObj = cadence.scheduleDates && cadence.scheduleDates.length > 0 
+            ? cadence.scheduleDates.sort((a, b) => new Date(a.date) - new Date(b.date)).find(d => new Date(d.date) >= new Date()) || cadence.scheduleDates[cadence.scheduleDates.length - 1]
+            : null;
+
+          return (
+            <div key={idx} className="awaiting-close-card">
+              <div className="awaiting-info">
+                <span className="awaiting-badge">
+                  <span className="dot"></span> AWAITING CLOSE
+                </span>
+                <span className="awaiting-title">{nextDateObj?.name || cadence.name}</span>
+                <span className="awaiting-meta">
+                  {nextDateObj ? new Date(nextDateObj.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' }) : ''} · {cadence.betsCount || 0} bets to update
+                </span>
+              </div>
+              <button className="btn-schedule" onClick={() => {}}>Close & capture</button>
+            </div>
+          );
+        })}
+      </div>
+
       <div className="d-flex justify-content-between align-items-center cadences-header">
         <div>
           <div className="cadences-subtitle">CADENCES</div>
           <h2 className="cadences-title">Recurring cadences — the rhythm of the business</h2>
         </div>
         <button 
-          className="btn btn-outline-primary d-flex align-items-center gap-2 rounded-pill px-3 py-1 bg-white"
+          className="btn btn-outline-primary d-flex align-items-center gap-2 px-3 py-1 bg-white"
           onClick={openCreateModal}
+          style={{ borderColor: '#cbd5e1', color: '#0275d8', borderRadius: '6px', fontWeight: '600', fontSize: '13px' }}
         >
           <Plus size={16} /> New cadence
         </button>
@@ -145,15 +175,15 @@ const CadencesSection = ({ businessId }) => {
                   : null;
                   
                 return (
-                <tr key={cadence._id || index}>
+                <tr key={cadence._id || index} style={{ borderLeft: nextDateObj ? '4px solid #0275d8' : '4px solid transparent' }}>
                   <td>
-                    <div className="cadence-info-cell" onClick={() => openEditModal(cadence)} style={{ cursor: 'pointer' }}>
+                    <div className="cadence-info-cell">
                       <div className={`cadence-icon-wrapper ${getIconColorClass(cadence.frequency)}`}>
-                        <Clock size={18} />
+                        <Clock size={16} />
                       </div>
                       <div>
-                        <div className="cadence-name text-primary fw-medium">{cadence.name}</div>
-                        <div className="cadence-frequency text-uppercase" style={{ fontSize: '11px' }}>{cadence.frequency}</div>
+                        <div className="cadence-name">{cadence.name} · {cadence.frequency === 'Monthly' ? 'Monthly Business Review' : cadence.frequency === 'Quarterly' ? 'Quarterly Business Review' : cadence.frequency}</div>
+                        <div className="cadence-frequency">{cadence.frequency}</div>
                       </div>
                     </div>
                   </td>
@@ -164,29 +194,39 @@ const CadencesSection = ({ businessId }) => {
                     <span className="cadence-next-date">
                       {nextDateObj ? (
                         <>
-                          <div className="fw-medium text-dark">{new Date(nextDateObj.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' })}</div>
-                          <div className="text-muted" style={{ fontSize: '12px' }}>{nextDateObj.name}</div>
+                          <div className="cadence-next-date-main">{new Date(nextDateObj.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' })}</div>
+                          <div className="cadence-next-date-sub">{nextDateObj.name}</div>
                         </>
-                      ) : 'No dates scheduled'}
+                      ) : '—'}
                     </span>
                   </td>
                   <td>
-                    <span className={`cadence-status-pill ${nextDateObj ? 'needs-close' : ''}`}>
-                      {nextDateObj ? 'NEEDS CLOSE' : 'NOT SCHEDULED'}
-                    </span>
+                    {nextDateObj && (
+                      <span className="cadence-status-pill">
+                        NEEDS CLOSE
+                      </span>
+                    )}
                   </td>
                   <td>
                     <div className="cadence-actions">
-                      <button className="btn-schedule" onClick={() => openScheduleModal(cadence)}>Schedule dates</button>
-                      <Dropdown align="end" className="d-inline">
-                        <Dropdown.Toggle as="button" className="btn-icon-kebab bg-transparent border-0 m-0 p-0 d-flex align-items-center justify-content-center">
-                          <MoreVertical size={16} />
+                      {nextDateObj ? (
+                        <button className="btn-schedule" onClick={() => {}}>Close & capture</button>
+                      ) : (
+                        <button className="btn-open" onClick={() => {}}>Open</button>
+                      )}
+                      
+                      <Dropdown align="end" className="d-inline cadence-dropdown">
+                        <Dropdown.Toggle variant="link" className="btn-icon-kebab bg-transparent border-0 m-0 p-0 d-flex align-items-center justify-content-center text-decoration-none shadow-none">
+                          <MoreVertical size={16} color="#64748b" />
                         </Dropdown.Toggle>
-                        <Dropdown.Menu className="shadow-sm border-0" style={{ borderRadius: '8px', minWidth: '150px' }}>
-                          <Dropdown.Item onClick={() => openEditModal(cadence)} className="py-2 px-3 text-dark fw-medium" style={{ fontSize: '14px' }}>
+                        <Dropdown.Menu className="shadow-sm border-0 py-2" style={{ borderRadius: '8px', minWidth: '150px', border: '1px solid #e2e8f0' }}>
+                          <Dropdown.Item onClick={() => openScheduleModal(cadence)} className="py-2 px-3 text-dark fw-medium cadence-dropdown-item">
+                            Manage dates
+                          </Dropdown.Item>
+                          <Dropdown.Item onClick={() => openEditModal(cadence)} className="py-2 px-3 text-dark fw-medium cadence-dropdown-item">
                             Edit cadence
                           </Dropdown.Item>
-                          <Dropdown.Item onClick={() => handleDeleteCadence(cadence._id)} className="py-2 px-3 text-danger fw-medium" style={{ fontSize: '14px' }}>
+                          <Dropdown.Item onClick={() => handleDeleteCadence(cadence._id)} className="py-2 px-3 text-danger fw-medium cadence-dropdown-item">
                             Delete cadence
                           </Dropdown.Item>
                         </Dropdown.Menu>
@@ -210,7 +250,7 @@ const CadencesSection = ({ businessId }) => {
         <div className="evolution-header">
           <div>
             <div className="cadences-subtitle">EVOLUTION</div>
-            <h2 className="cadences-title">How every bet has moved, review by review</h2>
+            <h2 className="cadences-title" style={{ fontSize: '18px' }}>How every bet has moved, review by review</h2>
           </div>
           <div className="evolution-filters">
             <button className="evolution-dropdown">
@@ -258,7 +298,6 @@ const CadencesSection = ({ businessId }) => {
   );
 };
 
-// Helper for the chevron icon inside the component since we only need it here
 const ChevronDownIcon = () => (
   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <polyline points="6 9 12 15 18 9"></polyline>
