@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, forwardRef } from "react";
 import { useTranslation } from "../hooks/useTranslation";
-import { Breadcrumb } from "react-bootstrap";
+import { Breadcrumb, Accordion } from "react-bootstrap";
 import { TrendingUp, Zap, AlertTriangle, Circle, Diamond, Rocket, Bolt, Lightbulb, Heart, Shield, Boxes, Clock, DollarSign, Lock, CheckCircle, XCircle, Edit2, ShieldCheck, Users, Info } from "lucide-react";
 import { validateField } from "../utils/validation";
 import "../styles/NewProjectPage.css";
@@ -27,17 +27,17 @@ const effortOptions = [{
   value: "Medium",
   label: "Medium - 3–6 months",
   icon: <div className="project-form--s1">
-        <Diamond size={14} fill="black" color="black" />
-        <Diamond size={14} fill="black" color="black" />
-      </div>
+    <Diamond size={14} fill="black" color="black" />
+    <Diamond size={14} fill="black" color="black" />
+  </div>
 }, {
   value: "Large",
   label: "Large - 6+ months",
   icon: <div className="project-form--s1">
-        <Diamond size={14} fill="black" color="black" />
-        <Diamond size={14} fill="black" color="black" />
-        <Diamond size={14} fill="black" color="black" />
-      </div>
+    <Diamond size={14} fill="black" color="black" />
+    <Diamond size={14} fill="black" color="black" />
+    <Diamond size={14} fill="black" color="black" />
+  </div>
 }];
 const riskOptions = [{
   value: "Low",
@@ -108,13 +108,13 @@ const SelectField = forwardRef(({
   }, [open, setOpen]);
   return <div className="sf-wrapper" ref={node => {
     dropdownRef.current = node;
-    if (typeof ref === "function") ref(node);else if (ref) ref.current = node;
+    if (typeof ref === "function") ref(node); else if (ref) ref.current = node;
   }} tabIndex={-1}>
-      {label && <label className="sf-label">
-          {icon} {label} {required && <span className="required">*</span>}
-        </label>}
-      <div className="sf-dropdown-wrapper">
-        <div className={`sf-dropdown-header ${error ? "error" : ""}`} onClick={() => {
+    {label && <label className="sf-label">
+      {label} {required && <span className="required">*</span>}
+    </label>}
+    <div className="sf-dropdown-wrapper">
+      <div className={`sf-dropdown-header ${error ? "error" : ""}`} onClick={() => {
         if (disabled) return;
         onFieldFocus?.(fieldName);
         onFieldEdit?.(fieldName);
@@ -124,14 +124,14 @@ const SelectField = forwardRef(({
         opacity: disabled ? 0.6 : 1,
         backgroundColor: disabled ? "#f5f5f5" : "#fff"
       }}>
-          <span className="project-form--s2">
-            {selectedOption?.icon}
-            {selectedOption?.label || t("Select_option")}
-          </span>
-          <span className={`sf-arrow ${open ? "open" : ""}`}>▼</span>
-        </div>
-        {open && !disabled && <div className="sf-options-container">
-            {options.map(item => <div key={item.value} className={`sf-option ${item.disabled ? 'disabled' : ''}`} onClick={() => {
+        <span className="project-form--s2">
+          {selectedOption?.icon}
+          {selectedOption?.label || t("Select_option")}
+        </span>
+        <span className={`sf-arrow ${open ? "open" : ""}`}>▼</span>
+      </div>
+      {open && !disabled && <div className="sf-options-container">
+        {options.map(item => <div key={item.value} className={`sf-option ${item.disabled ? 'disabled' : ''}`} onClick={() => {
           if (item.disabled) return;
           onChange(item.value);
           onFieldEdit?.(fieldName);
@@ -141,12 +141,12 @@ const SelectField = forwardRef(({
           opacity: item.disabled ? 0.6 : 1,
           pointerEvents: item.disabled ? 'none' : 'auto'
         }}>
-                {item.icon} {item.label}
-              </div>)}
-          </div>}
-      </div>
-      {error && <small className="error-text project-form--s3">{error}</small>}
-    </div>;
+          {item.icon} {item.label}
+        </div>)}
+      </div>}
+    </div>
+    {error && <small className="error-text project-form--s3">{error}</small>}
+  </div>;
 });
 const InputField = forwardRef(({
   label,
@@ -163,18 +163,18 @@ const InputField = forwardRef(({
   type = "text"
 }, ref) => {
   return <div className="field-row">
-      <div className="field-label-row">
-        <label className="field-label">
-          {label} {required && <span className="required">*</span>}
-          {subLabel && <small className="field-sub-label project-form--s4">{subLabel}</small>}
-        </label>
-        {maxLength && <small className="text-muted project-form--s5">
-            {(value || '').length}/{maxLength}
-          </small>}
-      </div>
-      <input ref={ref} type={type} value={value || ""} onChange={onChange} placeholder={placeholder} className={`field-input ${error ? "error" : ""}`} readOnly={readOnly} onFocus={() => onFocus?.(fieldName)} />
-      {error && <small className="error-text">{error}</small>}
-    </div>;
+    <div className="field-label-row">
+      <label className="field-label">
+        {label} {required && <span className="required">*</span>}
+        {subLabel && <small className="field-sub-label project-form--s4">{subLabel}</small>}
+      </label>
+      {maxLength && <small className="text-muted project-form--s5">
+        {(value || '').length}/{maxLength}
+      </small>}
+    </div>
+    <input ref={ref} type={type} value={value || ""} onChange={onChange} placeholder={placeholder} className={`field-input ${error ? "error" : ""}`} readOnly={readOnly} onFocus={() => onFocus?.(fieldName)} />
+    {error && <small className="error-text">{error}</small>}
+  </div>;
 });
 const TextAreaField = forwardRef(({
   label,
@@ -192,18 +192,18 @@ const TextAreaField = forwardRef(({
   transparent = false
 }, ref) => {
   return <div className="field-row">
-      <div className="field-label-row">
-        <label className="field-label">
-          {label} {required && <span className="required">*</span>}
-          {subLabel && <small className="field-sub-label project-form--s4">{subLabel}</small>}
-        </label>
-        {maxLength && <small className="text-muted project-form--s5">
-            {(value || '').length}/{maxLength}
-          </small>}
-      </div>
-      <textarea ref={ref} value={value || ""} onChange={onChange} placeholder={placeholder} rows={rows} className={`field-textarea ${transparent ? "transparent" : ""} ${error ? "error" : ""}`} readOnly={readOnly} onFocus={() => onFocus?.(fieldName)} />
-      {error && <small className="error-text">{error}</small>}
-    </div>;
+    <div className="field-label-row">
+      <label className="field-label">
+        {label} {required && <span className="required">*</span>}
+        {subLabel && <small className="field-sub-label project-form--s4">{subLabel}</small>}
+      </label>
+      {maxLength && <small className="text-muted project-form--s5">
+        {(value || '').length}/{maxLength}
+      </small>}
+    </div>
+    <textarea ref={ref} value={value || ""} onChange={onChange} placeholder={placeholder} rows={rows} className={`field-textarea ${transparent ? "transparent" : ""} ${error ? "error" : ""}`} readOnly={readOnly} onFocus={() => onFocus?.(fieldName)} />
+    {error && <small className="error-text">{error}</small>}
+  </div>;
 });
 const ProjectForm = ({
   mode,
@@ -231,7 +231,7 @@ const ProjectForm = ({
   outcome,
   setOutcome,
   successMetrics,
-  setSuccessMetrics,
+setSuccessMetrics,
   timeline,
   setTimeline,
   budget,
@@ -244,12 +244,18 @@ const ProjectForm = ({
   getLockOwnerForField,
   onFieldFocus,
   onFieldEdit,
-  strategicDecision,
-  setStrategicDecision,
   accountableOwner,
   setAccountableOwner,
   accountableOwnerId,
   setAccountableOwnerId,
+  recommendRoles = [],
+  setRecommendRoles,
+  agreeRoles = [],
+  setAgreeRoles,
+  inputRoles = [],
+  setInputRoles,
+  performRoles = [],
+  setPerformRoles,
   keyAssumptions,
   setKeyAssumptions,
   successCriteria,
@@ -348,7 +354,6 @@ const ProjectForm = ({
   const descriptionRef = useRef(null);
   const importanceRef = useRef(null);
   const budgetRef = useRef(null);
-  const strategicDecisionRef = useRef(null);
   const accountableOwnerRef = useRef(null);
   const successCriteriaRef = useRef(null);
   const killCriteriaRef = useRef(null);
@@ -371,7 +376,36 @@ const ProjectForm = ({
         return t("Project");
     }
   };
-  const isFieldDisabled = field => isReadOnly || isSubmitting || isLockedByOther?.(field) || isTerminal;
+  const hasDecider = !!accountableOwnerId;
+  const isFieldDisabled = field => isReadOnly || isSubmitting || isLockedByOther?.(field) || isTerminal || (!hasDecider && field !== "accountable_owner");
+
+  const isDeciderAssigned = !!accountableOwnerId;
+  const isRequiredInfo = !!projectName && !!description && !!importance;
+  const isKeyAssumptions = keyAssumptions.some(a => a && a.trim().length > 0) && !!successCriteria && !!killCriteria;
+  const depsArray = dependencies === "[NONE]" ? [] : (dependencies || "").split("\n");
+  const isDependenciesSet = dependencies === "[NONE]" || depsArray.some(d => d.trim().length > 0);
+  const isStrategicContext = !!selectedImpact && !!selectedEffort && !!selectedRisk && !!selectedTheme && !!learningState && isDependenciesSet;
+
+  const isMomentSet = !!reviewCadence;
+  
+  const kickstartItems = [
+    { label: "Decider assigned", done: isDeciderAssigned },
+    { label: "Moment set", done: isMomentSet },
+    { label: "Bet overview", done: isRequiredInfo },
+    { label: "Key assumptions", done: isKeyAssumptions },
+    { label: "Strategic context", done: isStrategicContext }
+  ];
+  const kickstartCompleted = kickstartItems.filter(i => i.done).length;
+  const canKickstart = kickstartCompleted === kickstartItems.length;
+
+  const handleKickstart = (e) => {
+    e.preventDefault();
+    if (!canKickstart) return;
+
+    // Call handleSubmit with isKickstart = true to enforce full validation
+    handleSubmit(null, true);
+  };
+
   const handleFieldFocus = field => {
     if (isFieldDisabled(field)) return;
     setOpenDropdown(null);
@@ -385,8 +419,8 @@ const ProjectForm = ({
     const owner = getLockOwnerForField?.(field);
     if (!owner) return null;
     return <span className="field-lock-indicator">
-        <Lock size={14} /> {owner} {t("is_editing")}
-      </span>;
+      <Lock size={14} /> {owner} {t("is_editing")}
+    </span>;
   };
   const initialStatusLower = (initialStatus || "").toLowerCase();
   const isLaunched = (launchStatus || "").toLowerCase() === "launched" || ["active", "at risk", "paused", "completed", "scaled"].includes((status || "").toLowerCase());
@@ -661,78 +695,140 @@ const ProjectForm = ({
     }
     handleFieldEdit("key_assumptions");
   };
-  const handleSubmit = () => {
+  const handleSubmit = (e, isKickstart = false) => {
+    if (e && e.preventDefault) e.preventDefault();
+    const skipStrict = !isKickstart && initialStatusLower === "draft";
     const validation = validateForm({
-      isNew: mode === "new"
+      isNew: mode === "new",
+      skipStrictRequired: skipStrict
     });
     const errors = validation.errors || {};
     setFieldErrors(errors);
     setShowErrors(true);
     const hasErrors = Object.keys(errors).length > 0;
     if (hasErrors) {
-      if (errors.projectName) scrollToError(projectNameRef);else if (errors.description) scrollToError(descriptionRef);else if (errors.importance) scrollToError(importanceRef);else if (errors.strategicDecision) scrollToError(strategicDecisionRef);else if (errors.accountableOwnerId || errors.accountableOwner) scrollToError(accountableOwnerRef);else if (errors.successCriteria) scrollToError(successCriteriaRef);else if (errors.killCriteria) scrollToError(killCriteriaRef);else if (errors.status) scrollToError(statusRef);else if (errors.dependencies) scrollToError(dependenciesRef);else if (errors.highLevelReq) scrollToError(highLevelReqRef);else if (errors.scope) scrollToError(scopeRef);else if (errors.outcome) scrollToError(outcomeRef);else if (errors.successMetrics) scrollToError(successMetricsRef);else if (errors.keyAssumptions_0) scrollToError(keyAssumptionsRefs[0]);else if (errors.keyAssumptions_1) scrollToError(keyAssumptionsRefs[1]);else if (errors.keyAssumptions_2) scrollToError(keyAssumptionsRefs[2]);else if (errors.learningState) {
-        scrollToError(statusRef);
-      } else if (errors.reviewCadence) {
+      if (errors.projectName) scrollToError(projectNameRef); else if (errors.description) scrollToError(descriptionRef); else if (errors.importance) scrollToError(importanceRef); else if (errors.strategicDecision) scrollToError(strategicDecisionRef); else if (errors.accountableOwnerId || errors.accountableOwner) scrollToError(accountableOwnerRef); else if (errors.successCriteria) scrollToError(successCriteriaRef); else if (errors.killCriteria) scrollToError(killCriteriaRef); else if (errors.status) scrollToError(statusRef); else if (errors.dependencies) scrollToError(dependenciesRef); else if (errors.highLevelReq) scrollToError(highLevelReqRef); else if (errors.scope) scrollToError(scopeRef); else if (errors.outcome) scrollToError(outcomeRef); else if (errors.successMetrics) scrollToError(successMetricsRef); else if (errors.keyAssumptions_0) scrollToError(keyAssumptionsRefs[0]); else if (errors.keyAssumptions_1) scrollToError(keyAssumptionsRefs[1]); else if (errors.keyAssumptions_2) scrollToError(keyAssumptionsRefs[2]); else if (errors.learningState) {
         scrollToError(statusRef);
       } else if (errors.budget) scrollToError(budgetRef);
       return;
     }
-    onSubmit();
+    onSubmit({ isKickstart });
   };
   return <>
-      <fieldset disabled={isSubmitting || isReadOnly} className="project-form--s6">
-        {isTerminal && <div className="terminal-status-banner project-form--s7">
-            <Info size={18} color="#2563eb" className="project-form--s8" />
-            <div className="project-form--s9">
-              <span className="project-form--s10">
-                {(() => {
+    <fieldset disabled={isSubmitting || isReadOnly} className="project-form--s6">
+      {isTerminal && <div className="terminal-status-banner project-form--s7">
+        <Info size={18} color="#2563eb" className="project-form--s8" />
+        <div className="project-form--s9">
+          <span className="project-form--s10">
+            {(() => {
               if (initialStatusLower === "completed") return "Project reached Completed state cannot be edited further.";
               if (initialStatusLower === "scaled") return "Project reached Scaled state cannot be edited further.";
               if (initialStatusLower === "killed") return "Project reached Killed state cannot be edited further.";
               return "Project reached a final state cannot be edited further.";
             })()}
-              </span>
-              {decisionLog && decisionLog.length > 0 && (() => {
+          </span>
+          {decisionLog && decisionLog.length > 0 && (() => {
             const latestTerminalLog = [...decisionLog].reverse().find(log => (log.to_status || "").toLowerCase() === initialStatusLower);
             if (latestTerminalLog) {
               return <>
-                      <span className="project-form--s11">•</span>
-                      <span className="project-form--s12">
-                        "{latestTerminalLog.justification || t("No_justification_provided")}"
-                      </span>
-                    </>;
+                <span className="project-form--s11">•</span>
+                <span className="project-form--s12">
+                  "{latestTerminalLog.justification || t("No_justification_provided")}"
+                </span>
+              </>;
             }
             return null;
           })()}
-            </div>
-          </div>}
-        {}
-        <div className="projects-breadcrumb" ref={breadcrumbRef}>
-
-          <Breadcrumb className="project-form--s13">
-            <Breadcrumb.Item onClick={onBack} className="project-form--s14">
-              {t("Projects")}
-            </Breadcrumb.Item>
-            <Breadcrumb.Item active>{getTitle()}</Breadcrumb.Item>
-          </Breadcrumb>
-
-          {}
-          {!isReadOnly && <div className="actions-row-top">
-              <button type="button" className="btn-cancel project-form--s15" onClick={onBack}>
-                {t("cancel")}
-              </button>
-              <button type="button" className="btn-create project-form--s15" onClick={handleSubmit} disabled={isSubmitting || isTerminal}>
-                {getSubmitButtonText()}
-              </button>
-            </div>}
         </div>
+      </div>}
+      { }
+      <div className="project-custom-header" ref={breadcrumbRef}>
+        <div className="project-custom-header-top">
+          <span className="project-custom-header-bet">BET {projectId ? `#${projectId.slice(-4).toUpperCase()}` : '#NEW'}</span>
+        </div>
+        <div className="project-custom-header-title-row">
+          <h1 className="project-custom-header-title">{projectName || "New Bet"}</h1>
+          {!isReadOnly && <div className="actions-row-top">
+            <button type="button" className="btn-cancel project-form--s15" onClick={onBack}>
+              {t("cancel")}
+            </button>
+            <button type="button" className="btn-create project-form--s15" onClick={(e) => handleSubmit(e, false)} disabled={isSubmitting || isTerminal}>
+              {getSubmitButtonText()}
+            </button>
+          </div>}
+        </div>
+        <div className="project-custom-header-meta">
+          <div className="meta-item">
+            <span className="meta-label">DECIDER</span>
+            <span className="meta-value text-dark fw-bold">{accountableOwner || "Not assigned"}</span>
+          </div>
+          <div className="meta-item">
+            <span className="meta-label">CADENCE</span>
+            <span className="meta-value text-dark fw-bold">{reviewCadence || "Not set"}</span>
+          </div>
+        </div>
+      </div>
 
-        {}
-        <div className="center-row">
-          <div className="form-card">
-            <h3 className="section-title">{t("Required_Information")}</h3>
+      {!isLaunched && initialStatusLower === "draft" && (
+        <div className="kickstart-banner mt-4">
+          <div className="kickstart-header">
+            <span className="kickstart-badge">DRAFT · NOT IN PLAY YET</span>
+          </div>
+          <div className="kickstart-title-row">
+            <div>
+              <h2 className="kickstart-title">Complete the essentials to kickstart · {kickstartCompleted}/{kickstartItems.length}</h2>
+              <p className="kickstart-subtitle">A bet joins its Cadences for review only once it's kickstarted to Active.</p>
+            </div>
+            <button className={`btn-kickstart ${canKickstart ? 'active' : ''}`} onClick={handleKickstart} disabled={!canKickstart}>
+              Kickstart Bet &rarr;
+            </button>
+          </div>
+          <div className="kickstart-items">
+            {kickstartItems.map((item, index) => (
+              <div key={index} className={`kickstart-item ${item.done ? 'done' : ''}`}>
+                {item.done ? (
+                  <CheckCircle size={16} color="white" fill="#10b981" />
+                ) : (
+                  <Circle size={16} color="#cbd5e0" fill="#cbd5e0" />
+                )}
+                <span>{item.label}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
-            {}
+      {!hasDecider && (
+        <div className="decider-warning-banner mt-4">
+          <div className="decider-warning-content">
+            <div className="decider-warning-title">
+              <AlertTriangle size={14} color="#d97706" /> DECIDER NOT ASSIGNED
+            </div>
+            <div className="decider-warning-main">Pick a decider to start configuring this bet</div>
+            <div className="decider-warning-sub">Only the decider can fill in the bet's details. Until one is assigned, the form below is locked.</div>
+            <button className="btn btn-primary mt-3 btn-assign-decider" style={{ backgroundColor: '#0c71b9', border: 'none' }} onClick={(e) => {
+              e.preventDefault();
+              if (accountableOwnerRef.current) {
+                accountableOwnerRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              }
+            }}>
+              Assign decider &rarr;
+            </button>
+          </div>
+        </div>
+      )}
+
+      <Accordion alwaysOpen defaultActiveKey={['0', '1', '2', '3', '4']} className="mt-4 form-accordion">
+        <Accordion.Item eventKey="0" className="mb-3 border rounded form-accordion-item">
+          <Accordion.Header>
+            <div className="d-flex justify-content-between align-items-center w-100 pe-3">
+              <span className="fw-bold text-dark">1. {t('Required_Information')}</span>
+              <span className="badge-required">REQUIRED</span>
+            </div>
+          </Accordion.Header>
+          <Accordion.Body className="bg-white">
+
+            { }
             <div className="field-row">
               <div className="field-label-row">
                 <label className="field-label">
@@ -741,16 +837,16 @@ const ProjectForm = ({
                 {mode !== "new" && renderLockBadge("project_name")}
               </div>
               {mode === "new" ? <>
-                  <input ref={projectNameRef} type="text" value={projectName || ""} onChange={handleProjectNameChange} placeholder="Enter project name (minimum 3 characters)" className={`field-input ${showErrors && fieldErrors.projectName ? "error" : ""}`} readOnly={isReadOnly} onFocus={() => handleFieldFocus("project_name")} maxLength={100} disabled={isSubmitting} />
-                  <div className="project-form--s16">
-                    {showErrors && fieldErrors.projectName && <small className="error-text">{fieldErrors.projectName}</small>}
-                    <small className="text-muted project-form--s17">
-                      {(projectName || '').length}/100 {t("characters")}
-                    </small>
-                  </div>
-                </> : projectName && <div className="project-name-display-inline">
-                    {projectName}
-                  </div>}
+                <input ref={projectNameRef} type="text" value={projectName || ""} onChange={handleProjectNameChange} placeholder="Enter project name (minimum 3 characters)" className={`field-input ${showErrors && fieldErrors.projectName ? "error" : ""}`} readOnly={isReadOnly} onFocus={() => handleFieldFocus("project_name")} maxLength={100} disabled={isSubmitting} />
+                <div className="project-form--s16">
+                  {showErrors && fieldErrors.projectName && <small className="error-text">{fieldErrors.projectName}</small>}
+                  <small className="text-muted project-form--s17">
+                    {(projectName || '').length}/100 {t("characters")}
+                  </small>
+                </div>
+              </> : projectName && <div className="project-name-display-inline">
+                {projectName}
+              </div>}
             </div>
 
             <div className="field-row">
@@ -770,247 +866,517 @@ const ProjectForm = ({
             </div>
 
             <TextAreaField ref={importanceRef} label={t("Why_This_Matters")} value={importance} onChange={handleImportanceChange} placeholder={t("Why_This_Matters_Placeholder")} error={showErrors && fieldErrors.importance} readOnly={isFieldDisabled("why_this_matters")} onFocus={handleFieldFocus} fieldName="why_this_matters" required />
-          </div>
-        </div>
-
-        {}
-        <div className="center-row">
-          <div className="form-card">
-            <h3 className="section-title">{t("Strategic_Core")}</h3>
-
-            {}
-            <TextAreaField ref={strategicDecisionRef} label={t("Strategic_Decision_Bet")} value={strategicDecision} onChange={handleStrategicDecisionChange} placeholder={t("Strategic_Decision_Placeholder")} error={showErrors && fieldErrors.strategicDecision} readOnly={isFieldDisabled("strategic_decision")} onFocus={handleFieldFocus} fieldName="strategic_decision" required />
-
-            {}
-            {}
-            <SelectField ref={accountableOwnerRef} label={t("Accountable_Owner")} icon={<Zap size={14} />} options={eligibleOwners.map(o => ({
-            value: o._id,
-            label: o.name,
-            icon: o.role === 'company_admin' || o.role === 'super_admin' ? <ShieldCheck size={14} color="#2563eb" /> : o.role === 'collaborator' ? <Users size={14} color="#64748b" /> : <Circle size={14} color="gray" />
-          }))} value={accountableOwnerId} onChange={val => {
-            setAccountableOwnerId(val);
-            const obj = eligibleOwners.find(o => o._id === val);
-            if (obj) setAccountableOwner(obj.name);
-            handleFieldEdit("accountable_owner");
-            if (showErrors) {
-              setFieldErrors(prev => ({
-                ...prev,
-                accountableOwnerId: val ? null : t("Owner selection is required")
-              }));
-            }
-          }} open={openDropdown === "accountable_owner"} setOpen={() => setOpenDropdown(openDropdown === "accountable_owner" ? null : "accountable_owner")} fieldName="accountable_owner" onFieldFocus={handleFieldFocus} onFieldEdit={handleFieldEdit} required error={showErrors && fieldErrors.accountableOwnerId} disabled={isFieldDisabled("accountable_owner")} />
-
-            {}
+          </Accordion.Body>
+        </Accordion.Item>
+          <Accordion.Item eventKey="1" className="mb-3 border rounded form-accordion-item">
+            <Accordion.Header>
+              <div className="d-flex justify-content-between align-items-center w-100 pe-3">
+                <span className="fw-bold text-dark">2. Key Assumptions</span>
+                <span className="badge-required">REQUIRED</span>
+              </div>
+            </Accordion.Header>
+            <Accordion.Body className="bg-white">
             <div className="field-row">
               <div className="field-label-row">
                 <label className="field-label">
-                  {t("Key_Assumptions_Tested")}
+                  {t("Key_Assumptions_Tested")} <span className="required">*</span>
                 </label>
               </div>
+              <p className="text-muted small mb-2 project-form--s17">The beliefs this bet is testing — at least one. If any turns out false, the bet's case weakens.</p>
               <div className="project-form--s18">
                 {[0, 1, 2].map(idx => <React.Fragment key={idx}>
-                    <input ref={keyAssumptionsRefs[idx]} type="text" value={keyAssumptions[idx] || ""} onChange={e => handleKeyAssumptionChange(idx, e.target.value)} placeholder={`${t("Assumption_Placeholder")} ${idx + 1}...`} className={`field-input ${showErrors && fieldErrors[`keyAssumptions_${idx}`] ? "error" : ""}`} readOnly={isFieldDisabled("key_assumptions")} onFocus={() => handleFieldFocus("key_assumptions")} />
-                    {showErrors && fieldErrors[`keyAssumptions_${idx}`] && <small className="error-text">{fieldErrors[`keyAssumptions_${idx}`]}</small>}
-                  </React.Fragment>)}
+                  <input ref={keyAssumptionsRefs[idx]} type="text" value={keyAssumptions[idx] || ""} onChange={e => handleKeyAssumptionChange(idx, e.target.value)} placeholder={`${t("Assumption_Placeholder")} ${idx + 1}...`} className={`field-input ${showErrors && fieldErrors[`keyAssumptions_${idx}`] ? "error" : ""}`} readOnly={isFieldDisabled("key_assumptions")} onFocus={() => handleFieldFocus("key_assumptions")} />
+                  {showErrors && fieldErrors[`keyAssumptions_${idx}`] && <small className="error-text">{fieldErrors[`keyAssumptions_${idx}`]}</small>}
+                </React.Fragment>)}
               </div>
             </div>
 
-            {}
+            { }
             <div className="grid-2">
-              <TextAreaField ref={successCriteriaRef} label={t("Continue_If_Label")} value={successCriteria} onChange={handleSuccessCriteriaChange} placeholder={t("Success_Criteria_Placeholder")} error={showErrors && fieldErrors.successCriteria} readOnly={isFieldDisabled("success_criteria") || isSubmitting} onFocus={handleFieldFocus} fieldName="success_criteria" required isSubmitting={isSubmitting} />
-              <TextAreaField ref={killCriteriaRef} label={t("Stop_If_Label")} value={killCriteria} onChange={handleKillCriteriaChange} placeholder={t("Kill_Criteria_Placeholder")} error={showErrors && fieldErrors.killCriteria} readOnly={isFieldDisabled("kill_criteria") || isSubmitting} onFocus={handleFieldFocus} fieldName="kill_criteria" required isSubmitting={isSubmitting} />
+              <TextAreaField ref={successCriteriaRef} label={t("Continue_If_Label")} subLabel="Conditions that confirm the bet is working." value={successCriteria} onChange={handleSuccessCriteriaChange} placeholder={t("Success_Criteria_Placeholder")} error={showErrors && fieldErrors.successCriteria} readOnly={isFieldDisabled("success_criteria") || isSubmitting} onFocus={handleFieldFocus} fieldName="success_criteria" required isSubmitting={isSubmitting} />
+              <TextAreaField ref={killCriteriaRef} label={t("Stop_If_Label")} subLabel="Conditions that would make you kill the bet." value={killCriteria} onChange={handleKillCriteriaChange} placeholder={t("Kill_Criteria_Placeholder")} error={showErrors && fieldErrors.killCriteria} readOnly={isFieldDisabled("kill_criteria") || isSubmitting} onFocus={handleFieldFocus} fieldName="kill_criteria" required isSubmitting={isSubmitting} />
             </div>
+            </Accordion.Body>
+          </Accordion.Item>
 
-            {}
-            <div className="grid-3 project-form--s19">
-              <SelectField label={t("Review_Cadence")} icon={<Clock size={16} />} options={[{
-              value: "Weekly",
-              label: t("Weekly"),
-              icon: <Clock size={14} />
-            }, {
-              value: "Monthly",
-              label: t("Monthly"),
-              icon: <Clock size={14} />
-            }, {
-              value: "Quarterly",
-              label: t("Quarterly"),
-              icon: <Clock size={14} />
-            }]} value={reviewCadence} onChange={val => {
-              setReviewCadence(val);
-              handleFieldEdit("review_cadence");
-              if (showErrors) {
-                setFieldErrors(prev => ({
-                  ...prev,
-                  reviewCadence: val ? null : t("Review cadence is required")
-                }));
-              }
-            }} open={openDropdown === "reviewCadence"} setOpen={() => setOpenDropdown(openDropdown === "reviewCadence" ? null : "reviewCadence")} disabled={isFieldDisabled("review_cadence") || isSubmitting} fieldName="review_cadence" onFieldFocus={handleFieldFocus} onFieldEdit={handleFieldEdit} required error={showErrors && fieldErrors.reviewCadence} />
-
-              <SelectField ref={statusRef} label={t("Status")} icon={<TrendingUp size={16} />} options={(() => {
-              const currentStatus = (status || "").toLowerCase();
-              const isLaunched = (launchStatus || "").toLowerCase() === "launched" || ["active", "at risk", "paused", "completed", "scaled"].includes(currentStatus);
-              const createOption = (val, label, icon, isDisabled) => ({
-                value: val,
-                label: isDisabled && val.toLowerCase() !== currentStatus ? <span className="project-form--s20">
-                        {label} <Lock size={12} color="#94a3b8" />
-                      </span> : label,
-                icon,
-                disabled: isDisabled && val.toLowerCase() !== currentStatus
-              });
-              const baseOptions = [{
-                key: 'draft',
-                value: "Draft",
-                label: t("Draft"),
-                icon: <Circle size={14} color="gray" fill="gray" />
-              }, {
-                key: 'active',
-                value: "Active",
-                label: t("Active"),
-                icon: <Circle size={14} color="green" fill="green" />
-              }, {
-                key: 'at risk',
-                value: "At Risk",
-                label: t("At Risk"),
-                icon: <Circle size={14} color="red" fill="red" />
-              }, {
-                key: 'paused',
-                value: "Paused",
-                label: t("Paused"),
-                icon: <Circle size={14} color="orange" fill="orange" />
-              }, {
-                key: 'killed',
-                value: "Killed",
-                label: t("Killed"),
-                icon: <Circle size={14} color="black" fill="black" />
-              }, {
-                key: 'completed',
-                value: "Completed",
-                label: t("Completed"),
-                icon: <CheckCircle size={14} color="blue" />
-              }, {
-                key: 'scaled',
-                value: "Scaled",
-                label: t("Scaled"),
-                icon: <Circle size={14} color="purple" fill="purple" />
-              }];
-              if (isTerminal) {
-                return baseOptions.map(opt => createOption(opt.value, opt.label, opt.icon, true));
-              }
-              return baseOptions.map(opt => {
-                let isDisabled = true;
-                const target = opt.key;
-                if (target === currentStatus) {
-                  isDisabled = false;
-                } else if (!isLaunched) {
-                  if (mode === "new") {
-                    if (['draft'].includes(target)) isDisabled = false;
-                  } else {
-                    if (['draft', 'killed'].includes(target)) isDisabled = false;
-                  }
-                } else {
-                  if (currentStatus === 'active' || currentStatus === 'at risk') {
-                    if (['active', 'at risk', 'paused', 'completed', 'killed', 'scaled'].includes(target)) isDisabled = false;
-                  } else if (currentStatus === 'paused') {
-                    if (['active', 'killed'].includes(target)) isDisabled = false;
-                  } else if (currentStatus === 'killed' && isAdmin) {
-                    if (isLaunched) {
-                      if (['active', 'at risk', 'paused'].includes(target)) isDisabled = false;
-                    } else {
-                      if (['draft', 'active'].includes(target)) isDisabled = false;
-                    }
-                  }
-                }
-                return createOption(opt.value, opt.label, opt.icon, isDisabled);
-              });
-            })()} value={status} onChange={val => {
-              setStatus(val);
-              handleFieldEdit("status");
-              if (showErrors) {
-                setFieldErrors(prev => ({
-                  ...prev,
-                  status: val && val.trim() ? null : t("Status is required")
-                }));
-              }
-            }} open={openDropdown === "status"} setOpen={() => setOpenDropdown(openDropdown === "status" ? null : "status")} disabled={isReadOnly || isTerminal} fieldName="status" onFieldFocus={handleFieldFocus} onFieldEdit={handleFieldEdit} required error={showErrors && fieldErrors.status} />
-
-              <SelectField label={t("Learning_State")} icon={<Zap size={16} />} options={(() => {
-              const isLaunched = launchStatus === "launched";
-              const currentLearningState = (learningState || "").toLowerCase();
-              const createOption = (val, label, icon, isDisabled) => ({
-                value: val,
-                label: isDisabled && val.toLowerCase() !== currentLearningState ? <span className="project-form--s20">
-                        {label} <Lock size={12} color="#94a3b8" />
-                      </span> : label,
-                icon,
-                disabled: isDisabled && val.toLowerCase() !== currentLearningState
-              });
-              return [createOption("Testing", t("Testing"), <Clock size={14} color="blue" />, false), createOption("Validated", t("Validated"), <CheckCircle size={14} color="green" />, !isLaunched || isTerminal), createOption("Invalidated", t("Invalidated"), <XCircle size={14} color="red" />, !isLaunched || isTerminal)];
-            })()} value={learningState} onChange={val => {
-              setLearningState(val);
-              handleFieldEdit("learning_state");
-              if (showErrors) {
-                setFieldErrors(prev => ({
-                  ...prev,
-                  learningState: val ? null : t("Learning state is required")
-                }));
-              }
-            }} open={openDropdown === "learning_state"} setOpen={() => setOpenDropdown(openDropdown === "learning_state" ? null : "learning_state")} disabled={isFieldDisabled("learning_state") || isSubmitting || isTerminal} fieldName="learning_state" onFieldFocus={handleFieldFocus} onFieldEdit={handleFieldEdit} required error={showErrors && fieldErrors.learningState} />
-            </div>
-
-          </div>
-        </div>
-
-        {}
-        <div className="center-row">
-          <div className="form-card">
-            <h3 className="section-title">{t("Strategic_Context")}</h3>
-            <div className="grid-3">
-              <SelectField label={t("Impact")} icon={<TrendingUp size={16} />} options={impactOptions} value={selectedImpact} onChange={setSelectedImpact} open={openDropdown === "impact"} setOpen={() => setOpenDropdown(openDropdown === "impact" ? null : "impact")} disabled={isFieldDisabled("impact")} fieldName="impact" onFieldFocus={handleFieldFocus} onFieldEdit={handleFieldEdit} />
-
-              <SelectField label={t("Effort")} icon={<Zap size={16} />} options={effortOptions} value={selectedEffort} onChange={setSelectedEffort} open={openDropdown === "effort"} setOpen={() => setOpenDropdown(openDropdown === "effort" ? null : "effort")} disabled={isFieldDisabled("effort")} fieldName="effort" onFieldFocus={handleFieldFocus} onFieldEdit={handleFieldEdit} />
-
-            </div> <br></br>
-
-            <div className="grid-3">
-              <SelectField label={t("Risk")} icon={<AlertTriangle size={16} />} options={riskOptions} value={selectedRisk} onChange={setSelectedRisk} open={openDropdown === "risk"} setOpen={() => setOpenDropdown(openDropdown === "risk" ? null : "risk")} disabled={isFieldDisabled("risk")} fieldName="risk" onFieldFocus={handleFieldFocus} onFieldEdit={handleFieldEdit} />
-
-              <SelectField label={t("Strategic_Theme_Horizon")} icon={<Lock size={16} />} options={themeOptions} value={selectedTheme} onChange={setSelectedTheme} open={openDropdown === "theme"} setOpen={() => setOpenDropdown(openDropdown === "theme" ? null : "theme")} disabled={isFieldDisabled("theme")} fieldName="theme" onFieldFocus={handleFieldFocus} onFieldEdit={handleFieldEdit} />
-
-            </div> <br></br>
-
-            <div className="field-row">
-              <div className="field-label-row">
-                <label className="field-label">{t("Dependencies")}</label>
-                {renderLockBadge("dependencies")}
+          <Accordion.Item eventKey="2" className="mb-3 border rounded form-accordion-item">
+            <Accordion.Header>
+              <div className="d-flex justify-content-between align-items-center w-100 pe-3">
+                <span className="fw-bold text-dark">3. {t('Strategic_Context')}</span>
+                <span className="badge-required">REQUIRED</span>
               </div>
-              <textarea ref={dependenciesRef} placeholder="List dependencies (one per line)" rows={3} className={`field-textarea transparent ${showErrors && fieldErrors.dependencies ? "error" : ""}`} value={dependencies || ""} onChange={e => {
-              setDependencies(e.target.value);
-              handleFieldEdit("dependencies");
-            }} readOnly={isFieldDisabled("dependencies")} onFocus={() => handleFieldFocus("dependencies")} />
-              {showErrors && fieldErrors.dependencies && <small className="error-text">{fieldErrors.dependencies}</small>}
-            </div>
-          </div>
-        </div>
+            </Accordion.Header>
+            <Accordion.Body className="bg-white">
+              
+              { }
+              <div className="grid-3 project-form--s19 mb-3">
+                {(!isLaunched && (status || "").toLowerCase() === "draft") ? (
+                  <div className="sf-wrapper" ref={statusRef}>
+                    <label className="sf-label">
+                      {t("Status")}
+                    </label>
+                    <div className="d-flex align-items-center">
+                      <div className="border rounded px-3 py-2 bg-white text-secondary fw-bold text-uppercase d-inline-block shadow-sm" style={{ fontSize: '0.85rem', borderColor: '#e2e8f0' }}>
+                        DRAFT
+                      </div>
+                      <span className="ms-3 text-muted fst-italic" style={{ fontSize: '0.85rem' }}>
+                        Kickstart to activate
+                      </span>
+                    </div>
+                  </div>
+                ) : (
+                  <SelectField ref={statusRef} label={t("Status")} icon={<TrendingUp size={16} />} options={(() => {
+                    const currentStatus = (status || "").toLowerCase();
+                    const isLaunchedLocal = (launchStatus || "").toLowerCase() === "launched" || ["active", "at risk", "paused", "completed", "scaled"].includes(currentStatus);
+                    const createOption = (val, label, icon, isDisabled) => ({
+                      value: val,
+                      label: isDisabled && val.toLowerCase() !== currentStatus ? <span className="project-form--s20">
+                        {label} <Lock size={12} color="#94a3b8" />
+                      </span> : label,
+                      icon,
+                      disabled: isDisabled && val.toLowerCase() !== currentStatus
+                    });
+                    const baseOptions = [{
+                      key: 'draft',
+                      value: "Draft",
+                      label: t("Draft"),
+                      icon: <Circle size={14} color="gray" fill="gray" />
+                    }, {
+                      key: 'active',
+                      value: "Active",
+                      label: t("Active"),
+                      icon: <Circle size={14} color="green" fill="green" />
+                    }, {
+                      key: 'at risk',
+                      value: "At Risk",
+                      label: t("At Risk"),
+                      icon: <Circle size={14} color="red" fill="red" />
+                    }, {
+                      key: 'paused',
+                      value: "Paused",
+                      label: t("Paused"),
+                      icon: <Circle size={14} color="orange" fill="orange" />
+                    }, {
+                      key: 'killed',
+                      value: "Killed",
+                      label: t("Killed"),
+                      icon: <Circle size={14} color="black" fill="black" />
+                    }, {
+                      key: 'completed',
+                      value: "Completed",
+                      label: t("Completed"),
+                      icon: <CheckCircle size={14} color="blue" />
+                    }, {
+                      key: 'scaled',
+                      value: "Scaled",
+                      label: t("Scaled"),
+                      icon: <Circle size={14} color="purple" fill="purple" />
+                    }];
+                    if (isTerminal) {
+                      return baseOptions.map(opt => createOption(opt.value, opt.label, opt.icon, true));
+                    }
+                    return baseOptions.map(opt => {
+                      let isDisabled = true;
+                      const target = opt.key;
+                      if (target === currentStatus) {
+                        isDisabled = false;
+                      } else if (!isLaunchedLocal) {
+                        if (mode === "new") {
+                          if (['draft'].includes(target)) isDisabled = false;
+                        } else {
+                          if (['draft', 'killed'].includes(target)) isDisabled = false;
+                        }
+                      } else {
+                        if (currentStatus === 'active' || currentStatus === 'at risk') {
+                          if (['active', 'at risk', 'paused', 'completed', 'killed', 'scaled'].includes(target)) isDisabled = false;
+                        } else if (currentStatus === 'paused') {
+                          if (['active', 'killed'].includes(target)) isDisabled = false;
+                        } else if (currentStatus === 'killed' && isAdmin) {
+                          if (isLaunchedLocal) {
+                            if (['active', 'at risk', 'paused'].includes(target)) isDisabled = false;
+                          } else {
+                            if (['draft', 'active'].includes(target)) isDisabled = false;
+                          }
+                        }
+                      }
+                      return createOption(opt.value, opt.label, opt.icon, isDisabled);
+                    });
+                  })()} value={status} onChange={val => {
+                    setStatus(val);
+                    handleFieldEdit("status");
+                    if (showErrors) {
+                      setFieldErrors(prev => ({
+                        ...prev,
+                        status: val && val.trim() ? null : t("Status is required")
+                      }));
+                    }
+                  }} open={openDropdown === "status"} setOpen={() => setOpenDropdown(openDropdown === "status" ? null : "status")} disabled={isReadOnly || isTerminal} fieldName="status" onFieldFocus={handleFieldFocus} onFieldEdit={handleFieldEdit} required error={showErrors && fieldErrors.status} />
+                )}
 
-        {}
-        <div className="center-row">
-          <div className="form-card">
-            <h3 className="section-title">{t("Detailed_Planning")}</h3>
+                <SelectField label={t("Learning_State")} icon={<Zap size={16} />} options={(() => {
+                  const isLaunched = launchStatus === "launched";
+                  const currentLearningState = (learningState || "").toLowerCase();
+                  const createOption = (val, label, icon, isDisabled) => ({
+                    value: val,
+                    label: isDisabled && val.toLowerCase() !== currentLearningState ? <span className="project-form--s20">
+                      {label} <Lock size={12} color="#94a3b8" />
+                    </span> : label,
+                    icon,
+                    disabled: isDisabled && val.toLowerCase() !== currentLearningState
+                  });
+                  return [createOption("Testing", t("Testing"), <Clock size={14} color="blue" />, false), createOption("Validated", t("Validated"), <CheckCircle size={14} color="green" />, !isLaunched || isTerminal), createOption("Invalidated", t("Invalidated"), <XCircle size={14} color="red" />, !isLaunched || isTerminal)];
+                })()} value={learningState} onChange={val => {
+                  setLearningState(val);
+                  handleFieldEdit("learning_state");
+                  if (showErrors) {
+                    setFieldErrors(prev => ({
+                      ...prev,
+                      learningState: val ? null : t("Learning state is required")
+                    }));
+                  }
+                }} open={openDropdown === "learning_state"} setOpen={() => setOpenDropdown(openDropdown === "learning_state" ? null : "learning_state")} disabled={isFieldDisabled("learning_state") || isSubmitting || isTerminal} fieldName="learning_state" onFieldFocus={handleFieldFocus} onFieldEdit={handleFieldEdit} required error={showErrors && fieldErrors.learningState} />
+
+                <SelectField label={t("Strategic_Theme_Horizon")} icon={<Lock size={16} />} options={themeOptions} value={selectedTheme} onChange={setSelectedTheme} open={openDropdown === "theme"} setOpen={() => setOpenDropdown(openDropdown === "theme" ? null : "theme")} disabled={isFieldDisabled("theme")} fieldName="theme" onFieldFocus={handleFieldFocus} onFieldEdit={handleFieldEdit} />
+              </div>
+
+              { }
+              <div className="grid-3 mb-3">
+                <SelectField label={t("Impact")} icon={<TrendingUp size={16} />} options={impactOptions} value={selectedImpact} onChange={setSelectedImpact} open={openDropdown === "impact"} setOpen={() => setOpenDropdown(openDropdown === "impact" ? null : "impact")} disabled={isFieldDisabled("impact")} fieldName="impact" onFieldFocus={handleFieldFocus} onFieldEdit={handleFieldEdit} />
+                <SelectField label={t("Effort")} icon={<Zap size={16} />} options={effortOptions} value={selectedEffort} onChange={setSelectedEffort} open={openDropdown === "effort"} setOpen={() => setOpenDropdown(openDropdown === "effort" ? null : "effort")} disabled={isFieldDisabled("effort")} fieldName="effort" onFieldFocus={handleFieldFocus} onFieldEdit={handleFieldEdit} />
+                <SelectField label={t("Risk")} icon={<AlertTriangle size={16} />} options={riskOptions} value={selectedRisk} onChange={setSelectedRisk} open={openDropdown === "risk"} setOpen={() => setOpenDropdown(openDropdown === "risk" ? null : "risk")} disabled={isFieldDisabled("risk")} fieldName="risk" onFieldFocus={handleFieldFocus} onFieldEdit={handleFieldEdit} />
+              </div>
+
+              <div className="field-row">
+                <div className="field-label-row">
+                  <label className="field-label">{t("Dependencies")} <span className="required">*</span></label>
+                  {renderLockBadge("dependencies")}
+                </div>
+                <p className="text-muted small mb-2 project-form--s17">Bets, decisions, or external events this one depends on. Add at least one — or check "No external dependencies" if there are none.</p>
+                
+                <div className="project-form--s18">
+                  {dependencies !== "[NONE]" && (() => {
+                    const localDeps = depsArray.length === 0 ? [""] : depsArray;
+                    return localDeps.map((dep, idx) => (
+                      <div key={idx} className="d-flex align-items-center mb-2">
+                        <span className="me-2 text-muted" style={{ fontSize: '20px', lineHeight: '1' }}>•</span>
+                        <input
+                          type="text"
+                          className="field-input m-0"
+                          placeholder="A bet, decision, or external event..."
+                          value={dep}
+                          onChange={(e) => {
+                            const newDeps = [...localDeps];
+                            newDeps[idx] = e.target.value;
+                            setDependencies(newDeps.join("\n"));
+                            handleFieldEdit("dependencies");
+                          }}
+                          readOnly={isFieldDisabled("dependencies")}
+                          onFocus={() => handleFieldFocus("dependencies")}
+                        />
+                        <button 
+                          type="button" 
+                          className="btn btn-link text-muted p-0 ms-2"
+                          style={{ textDecoration: 'none', fontSize: '18px' }}
+                          onClick={() => {
+                            const newDeps = [...localDeps];
+                            newDeps.splice(idx, 1);
+                            setDependencies(newDeps.join("\n"));
+                            handleFieldEdit("dependencies");
+                          }}
+                          disabled={isFieldDisabled("dependencies")}
+                        >
+                          ×
+                        </button>
+                      </div>
+                    ));
+                  })()}
+                </div>
+                
+                {dependencies !== "[NONE]" && (
+                  <button
+                    type="button"
+                    className="btn btn-outline-secondary btn-sm mt-2 mb-3"
+                    style={{ borderRadius: '20px', fontSize: '13px', fontWeight: '500' }}
+                    onClick={() => {
+                      const newDeps = depsArray.length === 0 ? [""] : [...depsArray];
+                      newDeps.push("");
+                      setDependencies(newDeps.join("\n"));
+                      handleFieldEdit("dependencies");
+                    }}
+                    disabled={isFieldDisabled("dependencies")}
+                  >
+                    + Add a dependency
+                  </button>
+                )}
+
+                <div className="d-flex align-items-center">
+                  <input
+                    type="checkbox"
+                    id="no-dependencies"
+                    className="form-check-input me-2 mt-0"
+                    checked={dependencies === "[NONE]"}
+                    onChange={(e) => {
+                      setDependencies(e.target.checked ? "[NONE]" : "");
+                      handleFieldEdit("dependencies");
+                    }}
+                    disabled={isFieldDisabled("dependencies")}
+                  />
+                  <label htmlFor="no-dependencies" className="fw-bold mb-0" style={{ cursor: 'pointer', fontSize: '14px' }}>
+                    No external dependencies
+                  </label>
+                </div>
+                
+                {showErrors && !isDependenciesSet && <small className="error-text mt-2 d-block">Dependencies are required.</small>}
+              </div>
+            </Accordion.Body>
+          </Accordion.Item>
+
+          <Accordion.Item eventKey="3" className="mb-3 border rounded form-accordion-item">
+            <Accordion.Header>
+              <div className="d-flex justify-content-between align-items-center w-100 pe-3">
+                <span className="fw-bold text-dark">4. RAPID roles</span>
+                <span className="badge bg-light text-muted border project-form--s21">OPTIONAL</span>
+              </div>
+            </Accordion.Header>
+            <Accordion.Body className="bg-white">
+
+              <div className="d-flex align-items-start p-3 mb-4 rounded" style={{ backgroundColor: '#eff6ff', border: '1px solid #bfdbfe' }}>
+                <Info size={20} className="text-primary me-2 mt-1 flex-shrink-0" />
+                <p className="mb-0 text-muted" style={{ fontSize: '0.9rem', lineHeight: '1.5' }}>
+                  <strong className="text-dark">Bain's RAPID® framework</strong> clarifies who has the power to decide and who provides input. 
+                  The <strong className="text-dark">D</strong> is the only required role; the others sharpen accountability without diluting it.
+                </p>
+              </div>
+
+              {/* DECIDER (D) - REQUIRED */}
+              <div className="rapid-card border rounded p-3 mb-3" style={{ backgroundColor: accountableOwnerId ? '#eff6ff' : 'white', borderColor: accountableOwnerId ? '#bfdbfe' : '#dee2e6' }}>
+                <div className="d-flex justify-content-between align-items-start mb-3">
+                  <div className="d-flex align-items-start text-dark">
+                    <div className={`rounded-circle d-flex justify-content-center align-items-center me-2 ${accountableOwnerId ? 'text-white shadow-sm' : 'bg-light text-dark'}`} style={{width: '28px', height: '28px', flexShrink: 0, backgroundColor: accountableOwnerId ? '#0c71b9' : '', border: accountableOwnerId ? 'none' : '1px solid #e2e8f0', fontSize: '0.85rem', fontWeight: 'bold'}}>D</div>
+                    <div>
+                      <div className="fw-bold lh-1 mb-1">Decide</div>
+                      <div className="text-muted fw-normal" style={{fontSize: '12px', lineHeight: '1.4'}}>The accountable — single person who owns the call.</div>
+                    </div>
+                  </div>
+                  <span className="badge-required">REQUIRED</span>
+                </div>
+                <SelectField ref={accountableOwnerRef} label="" icon={<Zap size={14} />} options={eligibleOwners.map(o => ({
+                  value: o._id,
+                  label: o.name,
+                  icon: o.role === 'company_admin' || o.role === 'super_admin' ? <ShieldCheck size={14} color="#2563eb" /> : o.role === 'collaborator' ? <Users size={14} color="#64748b" /> : <Circle size={14} color="gray" />
+                }))} value={accountableOwnerId} onChange={val => {
+                  setAccountableOwnerId(val);
+                  const obj = eligibleOwners.find(o => o._id === val);
+                  if (obj) setAccountableOwner(obj.name);
+                  handleFieldEdit("accountable_owner");
+                  if (showErrors) {
+                    setFieldErrors(prev => ({
+                      ...prev,
+                      accountableOwnerId: val ? null : t("Owner selection is required")
+                    }));
+                  }
+                }} open={openDropdown === "accountable_owner"} setOpen={() => setOpenDropdown(openDropdown === "accountable_owner" ? null : "accountable_owner")} fieldName="accountable_owner" onFieldFocus={handleFieldFocus} onFieldEdit={handleFieldEdit} required error={showErrors && fieldErrors.accountableOwnerId} disabled={isFieldDisabled("accountable_owner")} />
+              </div>
+
+              {/* RECOMMEND (R) */}
+              <div className="rapid-card border rounded p-3 mb-3" style={{ backgroundColor: recommendRoles.some(r => r) ? '#eff6ff' : 'white', borderColor: recommendRoles.some(r => r) ? '#bfdbfe' : '#dee2e6' }}>
+                <div className="d-flex justify-content-between align-items-start mb-2">
+                  <div className="d-flex align-items-start text-dark">
+                    <div className={`rounded-circle d-flex justify-content-center align-items-center me-2 ${recommendRoles.some(r => r) ? 'text-white shadow-sm' : 'bg-light text-dark'}`} style={{width: '28px', height: '28px', flexShrink: 0, backgroundColor: recommendRoles.some(r => r) ? '#0c71b9' : '', border: recommendRoles.some(r => r) ? 'none' : '1px solid #e2e8f0', fontSize: '0.85rem', fontWeight: 'bold'}}>R</div>
+                    <div>
+                      <div className="fw-bold lh-1 mb-1">Recommend</div>
+                      <div className="text-muted fw-normal" style={{fontSize: '12px', lineHeight: '1.4'}}>Proposes the decision and gathers the case.</div>
+                    </div>
+                  </div>
+                  <span className="badge bg-light text-muted border project-form--s21">OPTIONAL</span>
+                </div>
+                {recommendRoles.map((roleId, idx) => (
+                  <div className="d-flex align-items-center mb-2" key={`R-${idx}`}>
+                    <div className="flex-grow-1">
+                      <SelectField 
+                        options={eligibleOwners.map(o => ({
+                          value: o._id,
+                          label: o.name,
+                          icon: o.role === 'company_admin' || o.role === 'super_admin' ? <ShieldCheck size={14} color="#2563eb" /> : o.role === 'collaborator' ? <Users size={14} color="#64748b" /> : <Circle size={14} color="gray" />
+                        }))}
+                        value={roleId}
+                        onChange={val => {
+                          const newArray = [...recommendRoles];
+                          newArray[idx] = val;
+                          setRecommendRoles(newArray);
+                          handleFieldEdit("rapid_roles");
+                        }}
+                        open={openDropdown === `R_${idx}`}
+                        setOpen={() => setOpenDropdown(openDropdown === `R_${idx}` ? null : `R_${idx}`)}
+                        disabled={isFieldDisabled("rapid_roles")}
+                      />
+                    </div>
+                    <button className="btn btn-sm btn-link text-danger ms-2 text-decoration-none fw-bold" onClick={(e) => { e.preventDefault(); const newArray = [...recommendRoles]; newArray.splice(idx, 1); setRecommendRoles(newArray); handleFieldEdit("rapid_roles"); }} disabled={isFieldDisabled("rapid_roles")}>×</button>
+                  </div>
+                ))}
+                {!isFieldDisabled("rapid_roles") && (
+                  <button className="btn btn-sm text-primary p-0 d-flex align-items-center mt-2 fw-semibold" onClick={(e) => { e.preventDefault(); setRecommendRoles([...recommendRoles, ""]); handleFieldEdit("rapid_roles"); }} style={{fontSize: '0.85rem'}}>
+                    <span className="me-1 fw-bold fs-5" style={{lineHeight: '0'}}>+</span> Add a recommender
+                  </button>
+                )}
+              </div>
+
+              {/* AGREE (A) */}
+              <div className="rapid-card border rounded p-3 mb-3" style={{ backgroundColor: agreeRoles.some(r => r) ? '#eff6ff' : 'white', borderColor: agreeRoles.some(r => r) ? '#bfdbfe' : '#dee2e6' }}>
+                <div className="d-flex justify-content-between align-items-start mb-2">
+                  <div className="d-flex align-items-start text-dark">
+                    <div className={`rounded-circle d-flex justify-content-center align-items-center me-2 ${agreeRoles.some(r => r) ? 'text-white shadow-sm' : 'bg-light text-dark'}`} style={{width: '28px', height: '28px', flexShrink: 0, backgroundColor: agreeRoles.some(r => r) ? '#0c71b9' : '', border: agreeRoles.some(r => r) ? 'none' : '1px solid #e2e8f0', fontSize: '0.85rem', fontWeight: 'bold'}}>A</div>
+                    <div>
+                      <div className="fw-bold lh-1 mb-1">Agree</div>
+                      <div className="text-muted fw-normal" style={{fontSize: '12px', lineHeight: '1.4'}}>Has veto power on the recommendation.</div>
+                    </div>
+                  </div>
+                  <span className="badge bg-light text-muted border project-form--s21">OPTIONAL</span>
+                </div>
+                {agreeRoles.map((roleId, idx) => (
+                  <div className="d-flex align-items-center mb-2" key={`A-${idx}`}>
+                    <div className="flex-grow-1">
+                      <SelectField 
+                        options={eligibleOwners.map(o => ({
+                          value: o._id,
+                          label: o.name,
+                          icon: o.role === 'company_admin' || o.role === 'super_admin' ? <ShieldCheck size={14} color="#2563eb" /> : o.role === 'collaborator' ? <Users size={14} color="#64748b" /> : <Circle size={14} color="gray" />
+                        }))}
+                        value={roleId}
+                        onChange={val => {
+                          const newArray = [...agreeRoles];
+                          newArray[idx] = val;
+                          setAgreeRoles(newArray);
+                          handleFieldEdit("rapid_roles");
+                        }}
+                        open={openDropdown === `A_${idx}`}
+                        setOpen={() => setOpenDropdown(openDropdown === `A_${idx}` ? null : `A_${idx}`)}
+                        disabled={isFieldDisabled("rapid_roles")}
+                      />
+                    </div>
+                    <button className="btn btn-sm btn-link text-danger ms-2 text-decoration-none fw-bold" onClick={(e) => { e.preventDefault(); const newArray = [...agreeRoles]; newArray.splice(idx, 1); setAgreeRoles(newArray); handleFieldEdit("rapid_roles"); }} disabled={isFieldDisabled("rapid_roles")}>×</button>
+                  </div>
+                ))}
+                {!isFieldDisabled("rapid_roles") && (
+                  <button className="btn btn-sm text-primary p-0 d-flex align-items-center mt-2 fw-semibold" onClick={(e) => { e.preventDefault(); setAgreeRoles([...agreeRoles, ""]); handleFieldEdit("rapid_roles"); }} style={{fontSize: '0.85rem'}}>
+                    <span className="me-1 fw-bold fs-5" style={{lineHeight: '0'}}>+</span> Add an agree-er
+                  </button>
+                )}
+              </div>
+
+              {/* INPUT (I) */}
+              <div className="rapid-card border rounded p-3 mb-3" style={{ backgroundColor: inputRoles.some(r => r) ? '#eff6ff' : 'white', borderColor: inputRoles.some(r => r) ? '#bfdbfe' : '#dee2e6' }}>
+                <div className="d-flex justify-content-between align-items-start mb-1">
+                  <div className="d-flex align-items-start text-dark">
+                    <div className={`rounded-circle d-flex justify-content-center align-items-center me-2 ${inputRoles.some(r => r) ? 'text-white shadow-sm' : 'bg-light text-dark'}`} style={{width: '28px', height: '28px', flexShrink: 0, backgroundColor: inputRoles.some(r => r) ? '#0c71b9' : '', border: inputRoles.some(r => r) ? 'none' : '1px solid #e2e8f0', fontSize: '0.85rem', fontWeight: 'bold'}}>I</div>
+                    <div>
+                      <div className="fw-bold lh-1 mb-1">Input</div>
+                      <div className="text-muted fw-normal" style={{fontSize: '12px', lineHeight: '1.4'}}>Is consulted (no veto, informed opinion).</div>
+                    </div>
+                  </div>
+                  <span className="badge bg-light text-muted border project-form--s21">OPTIONAL</span>
+                </div>
+
+                {inputRoles.map((roleId, idx) => (
+                  <div className="d-flex align-items-center mb-2" key={`I-${idx}`}>
+                    <div className="flex-grow-1">
+                      <SelectField 
+                        options={eligibleOwners.map(o => ({
+                          value: o._id,
+                          label: o.name,
+                          icon: o.role === 'company_admin' || o.role === 'super_admin' ? <ShieldCheck size={14} color="#2563eb" /> : o.role === 'collaborator' ? <Users size={14} color="#64748b" /> : <Circle size={14} color="gray" />
+                        }))}
+                        value={roleId}
+                        onChange={val => {
+                          const newArray = [...inputRoles];
+                          newArray[idx] = val;
+                          setInputRoles(newArray);
+                          handleFieldEdit("rapid_roles");
+                        }}
+                        open={openDropdown === `I_${idx}`}
+                        setOpen={() => setOpenDropdown(openDropdown === `I_${idx}` ? null : `I_${idx}`)}
+                        disabled={isFieldDisabled("rapid_roles")}
+                      />
+                    </div>
+                    <button className="btn btn-sm btn-link text-danger ms-2 text-decoration-none fw-bold" onClick={(e) => { e.preventDefault(); const newArray = [...inputRoles]; newArray.splice(idx, 1); setInputRoles(newArray); handleFieldEdit("rapid_roles"); }} disabled={isFieldDisabled("rapid_roles")}>×</button>
+                  </div>
+                ))}
+                {!isFieldDisabled("rapid_roles") && (
+                  <button className="btn btn-sm text-primary p-0 d-flex align-items-center mt-2 fw-semibold" onClick={(e) => { e.preventDefault(); setInputRoles([...inputRoles, ""]); handleFieldEdit("rapid_roles"); }} style={{fontSize: '0.85rem'}}>
+                    <span className="me-1 fw-bold fs-5" style={{lineHeight: '0'}}>+</span> Add an input
+                  </button>
+                )}
+              </div>
+
+              {/* PERFORM (P) */}
+              <div className="rapid-card border rounded p-3 mb-2" style={{ backgroundColor: performRoles.some(r => r) ? '#eff6ff' : 'white', borderColor: performRoles.some(r => r) ? '#bfdbfe' : '#dee2e6' }}>
+                <div className="d-flex justify-content-between align-items-start mb-2">
+                  <div className="d-flex align-items-start text-dark">
+                    <div className={`rounded-circle d-flex justify-content-center align-items-center me-2 ${performRoles.some(r => r) ? 'text-white shadow-sm' : 'bg-light text-dark'}`} style={{width: '28px', height: '28px', flexShrink: 0, backgroundColor: performRoles.some(r => r) ? '#0c71b9' : '', border: performRoles.some(r => r) ? 'none' : '1px solid #e2e8f0', fontSize: '0.85rem', fontWeight: 'bold'}}>P</div>
+                    <div>
+                      <div className="fw-bold lh-1 mb-1">Perform</div>
+                      <div className="text-muted fw-normal" style={{fontSize: '12px', lineHeight: '1.4'}}>Executes once the decision is made.</div>
+                    </div>
+                  </div>
+                  <span className="badge bg-light text-muted border project-form--s21">OPTIONAL</span>
+                </div>
+                {performRoles.map((roleId, idx) => (
+                  <div className="d-flex align-items-center mb-2" key={`P-${idx}`}>
+                    <div className="flex-grow-1">
+                      <SelectField 
+                        options={eligibleOwners.map(o => ({
+                          value: o._id,
+                          label: o.name,
+                          icon: o.role === 'company_admin' || o.role === 'super_admin' ? <ShieldCheck size={14} color="#2563eb" /> : o.role === 'collaborator' ? <Users size={14} color="#64748b" /> : <Circle size={14} color="gray" />
+                        }))}
+                        value={roleId}
+                        onChange={val => {
+                          const newArray = [...performRoles];
+                          newArray[idx] = val;
+                          setPerformRoles(newArray);
+                          handleFieldEdit("rapid_roles");
+                        }}
+                        open={openDropdown === `P_${idx}`}
+                        setOpen={() => setOpenDropdown(openDropdown === `P_${idx}` ? null : `P_${idx}`)}
+                        disabled={isFieldDisabled("rapid_roles")}
+                      />
+                    </div>
+                    <button className="btn btn-sm btn-link text-danger ms-2 text-decoration-none fw-bold" onClick={(e) => { e.preventDefault(); const newArray = [...performRoles]; newArray.splice(idx, 1); setPerformRoles(newArray); handleFieldEdit("rapid_roles"); }} disabled={isFieldDisabled("rapid_roles")}>×</button>
+                  </div>
+                ))}
+                {!isFieldDisabled("rapid_roles") && (
+                  <button className="btn btn-sm text-primary p-0 d-flex align-items-center mt-2 fw-semibold" onClick={(e) => { e.preventDefault(); setPerformRoles([...performRoles, ""]); handleFieldEdit("rapid_roles"); }} style={{fontSize: '0.85rem'}}>
+                    <span className="me-1 fw-bold fs-5" style={{lineHeight: '0'}}>+</span> Add a performer
+                  </button>
+                )}
+              </div>
+
+            </Accordion.Body>
+          </Accordion.Item>
+
+          <Accordion.Item eventKey="4" className="mb-3 border rounded form-accordion-item">
+          <Accordion.Header>
+            <div className="d-flex justify-content-between align-items-center w-100 pe-3">
+              <span className="fw-bold text-dark">5. {t('Detailed_Planning')}</span>
+              <span className="badge-optional">OPTIONAL</span>
+            </div>
+          </Accordion.Header>
+          <Accordion.Body className="bg-white">
 
             <TextAreaField ref={highLevelReqRef} label={t("Constraints_Non_Negotiables")} value={highLevelReq} onChange={e => {
-            setHighLevelReq(e.target.value);
-            handleFieldEdit("high_level_requirements");
-          }} placeholder={t("what_are_the_main_requirements_or_constraints")} error={showErrors && fieldErrors.highLevelReq} readOnly={isFieldDisabled("high_level_requirements")} onFocus={handleFieldFocus} fieldName="high_level_requirements" />
+              setHighLevelReq(e.target.value);
+              handleFieldEdit("high_level_requirements");
+            }} placeholder={t("what_are_the_main_requirements_or_constraints")} error={showErrors && fieldErrors.highLevelReq} readOnly={isFieldDisabled("high_level_requirements")} onFocus={handleFieldFocus} fieldName="high_level_requirements" />
 
             <TextAreaField ref={scopeRef} label={t("Explicitly_Out_of_Scope")} value={scope} onChange={e => {
-            setScope(e.target.value);
-            handleFieldEdit("scope_definition");
-          }} placeholder={t("define_what_is_not_included_in_this_project")} error={showErrors && fieldErrors.scope} readOnly={isFieldDisabled("scope_definition")} onFocus={handleFieldFocus} fieldName="scope_definition" />
+              setScope(e.target.value);
+              handleFieldEdit("scope_definition");
+            }} placeholder={t("define_what_is_not_included_in_this_project")} error={showErrors && fieldErrors.scope} readOnly={isFieldDisabled("scope_definition")} onFocus={handleFieldFocus} fieldName="scope_definition" />
 
             <TextAreaField ref={outcomeRef} label={t("Expected_Outcome")} value={outcome} onChange={e => {
-            setOutcome(e.target.value);
-            handleFieldEdit("expected_outcome");
-          }} placeholder={t("what_is_the_end_result_use_outcome_based_wording")} error={showErrors && fieldErrors.outcome} readOnly={isFieldDisabled("expected_outcome")} onFocus={handleFieldFocus} fieldName="expected_outcome" />
+              setOutcome(e.target.value);
+              handleFieldEdit("expected_outcome");
+            }} placeholder={t("what_is_the_end_result_use_outcome_based_wording")} error={showErrors && fieldErrors.outcome} readOnly={isFieldDisabled("expected_outcome")} onFocus={handleFieldFocus} fieldName="expected_outcome" />
 
             <div className="field-row">
               <div className="field-label-row">
@@ -1018,9 +1384,9 @@ const ProjectForm = ({
                 {renderLockBadge("success_metrics")}
               </div>
               <textarea ref={successMetricsRef} placeholder={t("success_metrics_placeholder")} rows={3} className={`field-textarea ${showErrors && fieldErrors.successMetrics ? "error" : ""}`} value={successMetrics || ""} onChange={e => {
-              setSuccessMetrics(e.target.value);
-              handleFieldEdit("success_metrics");
-            }} readOnly={isFieldDisabled("success_metrics")} onFocus={() => handleFieldFocus("success_metrics")} />
+                setSuccessMetrics(e.target.value);
+                handleFieldEdit("success_metrics");
+              }} readOnly={isFieldDisabled("success_metrics")} onFocus={() => handleFieldFocus("success_metrics")} />
               {showErrors && fieldErrors.successMetrics && <small className="error-text">{fieldErrors.successMetrics}</small>}
             </div>
 
@@ -1028,20 +1394,20 @@ const ProjectForm = ({
               <div>
                 <div className="field-label-row">
                   <label className="field-label">
-                    <Clock size={16} /> {t("Estimated_Timeline")}
+                    {t("Estimated_Timeline")}
                   </label>
                   {renderLockBadge("estimated_timeline")}
                 </div>
                 <input type="text" placeholder="e.g., 3–6 months" className="field-input" value={timeline || ""} onChange={e => {
-                setTimeline(e.target.value);
-                handleFieldEdit("estimated_timeline");
-              }} readOnly={isFieldDisabled("estimated_timeline")} onFocus={() => handleFieldFocus("estimated_timeline")} />
+                  setTimeline(e.target.value);
+                  handleFieldEdit("estimated_timeline");
+                }} readOnly={isFieldDisabled("estimated_timeline")} onFocus={() => handleFieldFocus("estimated_timeline")} />
               </div>
 
               <div>
                 <div className="field-label-row">
                   <label className="field-label">
-                    <DollarSign size={16} /> {t("Budget_Estimate")}
+                    {t("Budget_Estimate")}
                   </label>
                   {renderLockBadge("budget_estimate")}
                 </div>
@@ -1049,10 +1415,10 @@ const ProjectForm = ({
                 {showErrors && fieldErrors.budget && <small className="error-text">{fieldErrors.budget}</small>}
               </div>
             </div>
-          </div>
-        </div>
-
-      </fieldset>
-    </>;
+          </Accordion.Body>
+        </Accordion.Item>
+      </Accordion>
+    </fieldset>
+  </>;
 };
 export default ProjectForm;
