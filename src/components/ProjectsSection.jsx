@@ -11,7 +11,7 @@ import { AI_PAGE_CONTEXTS } from "../utils/aiContexts";
 import { useAuthStore, useProjectStore, useUIStore, useBusinessStore } from "../store";
 import { useProjects } from "../hooks/useQueries";
 import { useQueryClient } from "@tanstack/react-query";
-import { Users, CheckCircle, Plus, ListOrdered, Rocket, Menu, BarChart4, ChevronDown, Check, List } from "lucide-react";
+import { Users, CheckCircle, Plus, ListOrdered, Rocket, Menu, BarChart4, ChevronDown, Check, List, Clock } from "lucide-react";
 import RankProjectsPanel from "../components/RankProjectsPanel";
 import TeamRankingsView from "../components/TeamRankingsView";
 import ProjectsList from "../components/ProjectsList";
@@ -473,7 +473,7 @@ const ProjectsSection = ({
     setReviewType("adhoc");
     openModal('projectReview');
   }, [openModal]);
-  
+
   const handleDirectUpdate = useCallback(async (projectId, payload) => {
     try {
       const { success, error } = await updateProject(projectId, payload);
@@ -599,7 +599,7 @@ const ProjectsSection = ({
       const userId = useAuthStore.getState().userId;
       const payload = getPayload(userId, selectedBusinessId);
       if (statusOverride || isKickstart) payload.status = statusOverride || "Active";
-      
+
       const oldStatus = isDraft ? "draft" : (currentProject.status || "Draft").toLowerCase();
       const newStatus = (payload.status || "Draft").toLowerCase();
       const oldLearningState = (currentProject.learning_state || "Testing").toLowerCase();
@@ -687,10 +687,19 @@ const ProjectsSection = ({
     };
   }, []);
   const renderProjectForm = () => {
+    let sNo = null;
+    if (currentProject) {
+      const index = sortedProjects.findIndex(p => String(p._id) === String(currentProject._id));
+      if (index !== -1) {
+        const displayRank = rankMap?.[String(currentProject._id)] ?? currentProject.rank ?? currentProject.ai_rank;
+        sNo = displayRank ? displayRank : index + 1;
+      }
+    }
+
     if (activeView === "view") {
       return <ProjectDetails project={currentProject} onBack={handleBackToList} onEdit={project => handleEditProject(project, "edit")} onPerformReview={handlePerformReview} onAdhocUpdate={handleAdhocUpdate} canEdit={currentProject && canEditProject(currentProject, isEditor, myUserId, businessStatus, apiIsArchived)} canReview={currentProject && canReviewProject(currentProject, isSuperAdmin, myUserId, apiIsArchived)} />;
     }
-    return <ProjectForm mode={activeView} readOnly={activeView === "view" || currentProject && !canEditProject(currentProject, isEditor, myUserId, businessStatus, apiIsArchived, isSuperAdmin)} {...formState} {...formSetters} accountableOwnerId={formState.accountableOwnerId} setAccountableOwnerId={formSetters.setAccountableOwnerId} onBack={handleBackToList} onSubmit={activeView === "new" ? handleCreate : handleSave} isLockedByOther={isLockedByOther} getLockOwnerForField={getLockOwnerForField} onFieldFocus={handleFieldFocus} onFieldEdit={handleFieldEdit} isSubmitting={isSubmitting} selectedBusinessId={selectedBusinessId} projectId={currentProject?._id} launchStatus={currentProject?.launch_status} initialStatus={currentProject?.status} decisionLog={currentProject?.decision_log} isAdmin={isSuperAdmin} validateForm={validateForm} />;
+    return <ProjectForm mode={activeView} readOnly={activeView === "view" || currentProject && !canEditProject(currentProject, isEditor, myUserId, businessStatus, apiIsArchived, isSuperAdmin)} {...formState} {...formSetters} accountableOwnerId={formState.accountableOwnerId} setAccountableOwnerId={formSetters.setAccountableOwnerId} onBack={handleBackToList} onSubmit={activeView === "new" ? handleCreate : handleSave} isLockedByOther={isLockedByOther} getLockOwnerForField={getLockOwnerForField} onFieldFocus={handleFieldFocus} onFieldEdit={handleFieldEdit} isSubmitting={isSubmitting} selectedBusinessId={selectedBusinessId} projectId={currentProject?._id} sNo={sNo} launchStatus={currentProject?.launch_status} initialStatus={currentProject?.status} decisionLog={currentProject?.decision_log} isAdmin={isSuperAdmin} validateForm={validateForm} />;
   };
   const [isStatusDropdownOpen, setIsStatusDropdownOpen] = useState(false);
   useEffect(() => {
@@ -726,65 +735,84 @@ const ProjectsSection = ({
         return statusValue === catId.toLowerCase();
       });
     }).length;
+    const kickstartedCount = projects.filter(p => {
+      const s = (p.status || "").toLowerCase();
+      return s === "active" || s === "completed" || s === "scaled";
+    }).length;
     return <>
-        {}
+      { }
 
 
-        <div className="bet-ledger-container premium-card">
-          <div className="bet-ledger-header d-flex justify-content-between align-items-center flex-wrap gap-3">
-            <h2 className="bet-ledger-title">
-              {t("BET LEDGER")} — <span className="text-muted text-uppercase projects-section--s2">{t("ALL INITIATIVES")}</span>
-            </h2>
+      <div className="bet-ledger-container premium-card">
+        <div className="bet-ledger-header d-flex justify-content-between align-items-center flex-wrap gap-3">
+          <h2 className="bet-ledger-title text-uppercase">
+            {t("BET LEDGER")} - {t("ALL INITIATIVES")}
+          </h2>
 
-            <div className="bet-ledger-actions d-flex align-items-center gap-3">
-              {/* Dropdown for STATUS filter */}
-              <div className="status-dropdown-wrapper">
-                <div className="status-dropdown-btn" onClick={() => setIsStatusDropdownOpen(!isStatusDropdownOpen)}>
-                  <div className="status-label-group">
-                    <span className="status-label-prefix">{t("STATUS")}</span>
-                    <span className="status-label-current">
-                      {t(selectedCategoryLabel)} · {totalCount}
-                    </span>
-                  </div>
-                  <ChevronDown size={14} color="#1e40af" />
+          <div className="bet-ledger-actions d-flex align-items-center gap-3">
+            {/* Dropdown for STATUS filter */}
+            <div className="status-dropdown-wrapper">
+              <div className="status-dropdown-btn" onClick={() => setIsStatusDropdownOpen(!isStatusDropdownOpen)}>
+                <span className="status-label-prefix">{t("STATUS")}</span>
+                <div className="status-dropdown-inner">
+                  <span className="status-label-current">
+                    {t(selectedCategoryLabel)} · {totalCount}
+                  </span>
+                  <ChevronDown size={14} color="#0c71b9" style={{ strokeWidth: 2.5 }} />
                 </div>
-
-                {isStatusDropdownOpen && <div className="status-dropdown-menu">
-                    {CATEGORIES.map(cat => <div key={cat.id} className="status-menu-item" onClick={e => {
-                  e.stopPropagation();
-                  toggleCategory(cat.id);
-                }}>
-                        <div className="status-menu-left">
-                          <div className={`status-checkbox ${selectedCategories.includes(cat.id) ? "checked" : ""}`}>
-                            {selectedCategories.includes(cat.id) && <Check size={12} color="white" />}
-                          </div>
-                          <span className="status-name-text">{t(cat.label)}</span>
-                        </div>
-                        <span className="status-count-text">{categoryCounts[cat.id] || 0}</span>
-                      </div>)}
-                  </div>}
               </div>
 
-              {!isViewer && !isArchived && getUserLimits().project && <button onClick={handleNewProject} className="btn-new-project-premium">
-                  <Plus size={18} />
-                  {t("New Bet")}
-                </button>}
+              {isStatusDropdownOpen && <div className="status-dropdown-menu">
+                {CATEGORIES.map(cat => (
+                  <React.Fragment key={cat.id}>
+                    <div className="status-menu-item" onClick={e => {
+                      e.stopPropagation();
+                      toggleCategory(cat.id);
+                    }}>
+                      <div className="status-menu-left">
+                        <div className={`status-checkbox ${selectedCategories.includes(cat.id) ? "checked" : ""}`}>
+                          {selectedCategories.includes(cat.id) && <Check size={12} color="white" style={{ strokeWidth: 3 }} />}
+                        </div>
+                        <span className="status-name-text">{t(cat.label)}</span>
+                      </div>
+                      <span className="status-count-text">{categoryCounts[cat.id] || 0}</span>
+                    </div>
+                    {cat.id === "All" && <div className="status-menu-divider"></div>}
+                  </React.Fragment>
+                ))}
+              </div>}
+            </div>
 
-              {selectedProjectIds.length > 0 && !isViewer && !isArchived && getUserLimits().project && isSuperAdmin && <button onClick={handleLaunchProjects} disabled={isSubmitting} className="btn-launch-premium">
-                  <Rocket size={18} />
-                  {isSubmitting ? t("Launching...") : `${t("Launch")} (${selectedProjectIds.length})`}
-                </button>}
+            {!isViewer && !isArchived && getUserLimits().project && <button onClick={handleNewProject} className="btn-new-project-premium">
+              <Plus size={18} />
+              {t("New Bet")}
+            </button>}
+
+            {selectedProjectIds.length > 0 && !isViewer && !isArchived && getUserLimits().project && isSuperAdmin && <button onClick={handleLaunchProjects} disabled={isSubmitting} className="btn-launch-premium">
+              <Rocket size={18} />
+              {isSubmitting ? t("Launching...") : `${t("Launch")} (${selectedProjectIds.length})`}
+            </button>}
+          </div>
+        </div>
+
+        <div className="kickstarted-banner-wrapper">
+          <div className="kickstarted-banner">
+            <Clock size={20} color="#0c71b9" className="kickstarted-banner-icon" />
+            <div>
+              <h6 className="kickstarted-banner-title">{kickstartedCount} of {projects.length} kickstarted</h6>
+              <p className="kickstarted-banner-text">{projects.length - kickstartedCount} bets still in Draft. A bet is kickstarted once its required sections are complete.</p>
             </div>
           </div>
-
-          <ProjectsList isLoading={isLoadingProjects} sortedProjects={sortedProjects} rankMap={rankMap} finalizeCompleted={finalizeCompleted} launched={launched} isViewer={isViewer} isAdmin={isSuperAdmin} isEditor={isEditor} isDraft={isDraft} projectCreationLocked={projectCreationLocked} isFinalizedView={isFinalizedView} canEditProject={project => canEditProject(project, isEditor, myUserId, businessStatus, apiIsArchived, isSuperAdmin)} onEdit={project => handleEditProject(project, "edit")} onView={project => handleEditProject(project, "view")} onDelete={handleDelete} onPerformReview={handlePerformReview} onAdhocUpdate={handleAdhocUpdate} onDirectUpdate={handleDirectUpdate} canReviewProject={canReviewProject} myUserId={myUserId} selectedCategories={selectedCategories} isArchived={apiIsArchived} selectedProjectIds={selectedProjectIds} onToggleSelection={toggleProjectSelection} selectionDisabled={isGeneratingAIRankings || businessStatus !== "draft"} />
         </div>
-      </>;
+
+        <ProjectsList isLoading={isLoadingProjects} sortedProjects={sortedProjects} rankMap={rankMap} finalizeCompleted={finalizeCompleted} launched={launched} isViewer={isViewer} isAdmin={isSuperAdmin} isEditor={isEditor} isDraft={isDraft} projectCreationLocked={projectCreationLocked} isFinalizedView={isFinalizedView} canEditProject={project => canEditProject(project, isEditor, myUserId, businessStatus, apiIsArchived, isSuperAdmin)} onEdit={project => handleEditProject(project, "edit")} onView={project => handleEditProject(project, "view")} onDelete={handleDelete} onPerformReview={handlePerformReview} onAdhocUpdate={handleAdhocUpdate} onDirectUpdate={handleDirectUpdate} canReviewProject={canReviewProject} myUserId={myUserId} selectedCategories={selectedCategories} isArchived={apiIsArchived} selectedProjectIds={selectedProjectIds} onToggleSelection={toggleProjectSelection} selectionDisabled={isGeneratingAIRankings || businessStatus !== "draft"} />
+      </div>
+    </>;
   };
   return <>
-      <ConfirmationModal show={showMissingRankModal} onHide={() => setShowMissingRankModal(false)} onConfirm={executeLaunchProjects} title={t("Missing Rankings")} message={t("One or more selected projects are not ranked. Are you sure you want to proceed without ranking?")} confirmText={t("Proceed")} cancelText={t("Cancel")} confirmVariant="warning" />
+    <ConfirmationModal show={showMissingRankModal} onHide={() => setShowMissingRankModal(false)} onConfirm={executeLaunchProjects} title={t("Missing Rankings")} message={t("One or more selected projects are not ranked. Are you sure you want to proceed without ranking?")} confirmText={t("Proceed")} cancelText={t("Cancel")} confirmVariant="warning" />
 
-      <StateChangeModal show={isModalOpen('stateChange')} onHide={() => {
+    <StateChangeModal show={isModalOpen('stateChange')} onHide={() => {
       closeModal('stateChange');
       setPendingSavePayload(null);
       setPendingStateChanges([]);
@@ -796,21 +824,21 @@ const ProjectsSection = ({
       setPendingStateChanges([]);
     }} changes={pendingStateChanges} />
 
-      {isGeneratingAIRankings && <div className="projects-section--s3">
-          <div className="projects-section--s4">
-            <div className="spinner-border text-primary mb-3" role="status">
-              <span className="visually-hidden">Loading...</span>
-            </div>
-            <h5>Generating AI Rankings...</h5>
-            <p className="text-muted mb-0">Please wait while we analyze your projects</p>
-          </div>
-        </div>}
+    {isGeneratingAIRankings && <div className="projects-section--s3">
+      <div className="projects-section--s4">
+        <div className="spinner-border text-primary mb-3" role="status">
+          <span className="visually-hidden">Loading...</span>
+        </div>
+        <h5>Generating AI Rankings...</h5>
+        <p className="text-muted mb-0">Please wait while we analyze your projects</p>
+      </div>
+    </div>}
 
-      <Container fluid className="projects-wrapper" ref={containerRef}>
-        {activeView === "list" ? renderProjectList() : renderProjectForm()}
-      </Container>
+    <Container fluid className={`projects-wrapper ${activeView !== 'list' ? 'is-editing' : ''}`} ref={containerRef}>
+      {activeView === "list" ? renderProjectList() : renderProjectForm()}
+    </Container>
 
-      <ProjectReviewModal isOpen={isModalOpen('projectReview')} onClose={() => closeModal('projectReview')} project={selectedReviewProject} type={reviewType} onSubmit={submitReview} />
-    </>;
+    <ProjectReviewModal isOpen={isModalOpen('projectReview')} onClose={() => closeModal('projectReview')} project={selectedReviewProject} type={reviewType} onSubmit={submitReview} />
+  </>;
 };
 export default ProjectsSection;

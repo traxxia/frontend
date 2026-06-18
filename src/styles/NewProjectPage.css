@@ -6,6 +6,7 @@
   letter-spacing: 0.3px;
   word-break: break-word;
 }
+
 .project-name-label {
   font-size: 12px;
   font-weight: 600;
@@ -33,7 +34,7 @@
 }
 
 [data-theme="dark"] .form-card {
-    background-color: var(--color-bg-card, #1a1d23) !important;
+  background-color: var(--color-bg-card, #1a1d23) !important;
 }
 
 .form-card:hover {
@@ -43,12 +44,13 @@
 .center-row {
   margin: 0 auto;
 }
-.expanded-analysis-main{
-    background: var(--color-bg-card, #fff);
+
+.expanded-analysis-main {
+  background: var(--color-bg-card, #fff);
 }
 
 [data-theme="dark"] .expanded-analysis-main {
-    background-color: var(--color-bg-card, #1a1d23) !important;
+  background-color: var(--color-bg-card, #1a1d23) !important;
 }
 
 .section-title {
@@ -114,9 +116,9 @@
 
 [data-theme="dark"] .field-input,
 [data-theme="dark"] .field-textarea {
-    background-color: var(--color-bg-card, #1a1d23) !important;
-    color: var(--color-text-primary, #ffffff) !important;
-    border-color: var(--color-border-dark, #4a5568) !important;
+  background-color: var(--color-bg-card, #1a1d23) !important;
+  color: var(--color-text-primary, #ffffff) !important;
+  border-color: var(--color-border-dark, #4a5568) !important;
 }
 
 .field-input:focus,
@@ -186,6 +188,7 @@
 }
 
 @media (max-width: 768px) {
+
   .grid-2,
   .grid-3 {
     grid-template-columns: 1fr;
@@ -224,8 +227,8 @@
 }
 
 [data-theme="dark"] .sf-dropdown-header {
-    background-color: var(--color-bg-card, #1a1d23) !important;
-    color: var(--color-text-primary, #ffffff) !important;
+  background-color: var(--color-bg-card, #1a1d23) !important;
+  color: var(--color-text-primary, #ffffff) !important;
 }
 
 .sf-dropdown-header:hover:not([style*="cursor: not-allowed"]) {
@@ -263,8 +266,8 @@
 }
 
 [data-theme="dark"] .sf-options-container {
-    background-color: var(--color-bg-card, #1a1d23) !important;
-    color: var(--color-text-primary, #ffffff) !important;
+  background-color: var(--color-bg-card, #1a1d23) !important;
+  color: var(--color-text-primary, #ffffff) !important;
 }
 
 .sf-option {
@@ -350,7 +353,7 @@
 
 .btn-create {
   background: var(--color-primary, rgb(26, 115, 232));
-  color: var(--color-text-white, #ffffff); 
+  color: var(--color-text-white, #ffffff);
 }
 
 .btn-create:hover {
@@ -421,7 +424,8 @@
     font-size: 13px;
     border-radius: 8px;
   }
-  .btn-cancel{
+
+  .btn-cancel {
     height: 32px;
     padding: 3px 14px;
     font-size: 13px;
@@ -661,15 +665,16 @@
 
 .form-accordion .accordion-button {
   padding: 16px 20px;
-  background-color: #ffffff;
+  background-color: transparent !important;
   color: #0f172a;
   font-size: 16px;
   box-shadow: none !important;
 }
 
 .form-accordion .accordion-button:not(.collapsed) {
-  background-color: #ffffff;
+  background-color: transparent !important;
   border-bottom: 1px solid #e2e8f0;
+  box-shadow: none !important;
 }
 
 .form-accordion .accordion-body {
@@ -698,7 +703,7 @@
 
 /* ── Kickstart Banner ── */
 .kickstart-banner {
-  background-color: #fffdf0;
+  background: linear-gradient(135deg, #fffdf6, #fff8e8);
   border: 1px solid #fde68a;
   border-radius: 12px;
   padding: 24px;
@@ -774,5 +779,83 @@
 }
 
 .kickstart-item.done {
+  color: #0f172a;
+}
+
+/* ── RAPID Roles Styles ── */
+.rapid-card {
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 16px;
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+}
+
+.rapid-card.rapid-card-decide {
+  background-color: #eff6ff;
+  border-color: #dbeafe;
+}
+
+.rapid-icon {
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  border-radius: 8px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 14px;
+  font-weight: 700;
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  color: #0f172a;
+}
+
+.rapid-icon.rapid-icon-decide {
+  background-color: #0c71b9;
+  border: none;
+  color: #ffffff;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+
+.rapid-title {
+  font-weight: 700;
+  line-height: 1;
+  margin-bottom: 4px;
+  color: #0f172a;
+}
+
+.rapid-subtitle {
+  color: #64748b;
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.4;
+}
+
+.rapid-banner {
+  display: flex;
+  align-items: flex-start;
+  padding: 16px;
+  margin-bottom: 24px;
+  border-radius: 8px;
+  background-color: #eff6ff;
+  border: 1px solid #dbeafe;
+}
+
+.rapid-banner-icon {
+  color: #0c71b9;
+  margin-right: 12px;
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+
+.rapid-banner-text {
+  margin-bottom: 0;
+  color: #64748b;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.rapid-banner-text strong {
   color: #0f172a;
 }

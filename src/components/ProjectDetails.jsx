@@ -148,18 +148,7 @@ const ProjectDetails = ({
                 </Breadcrumb>
             </div>
 
-            {terminalStatusInfo?.isTerminal && <div className="terminal-status-banner project-details--s3">
-                    <Info size={18} color="#2563eb" className="project-details--s4" />
-                    <div className="project-details--s5">
-                        <span className="project-details--s6">{terminalStatusInfo.message}</span>
-                        {terminalStatusInfo.justification && <>
-                                <span className="project-details--s7">•</span>
-                                <span className="project-details--s8">
-                                    "{terminalStatusInfo.justification || t("No_justification_provided")}"
-                                </span>
-                            </>}
-                    </div>
-                </div>}
+
 
             {}
             <div className="details-header mb-4">
