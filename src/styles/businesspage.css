@@ -157,7 +157,7 @@ body {
   align-items: center;
   gap: 0px;
   background: #fff;
-  padding: 2px 4px;   
+  padding: 2px 4px;
 }
 
 .business-breadcrumb {
@@ -181,6 +181,10 @@ body {
 
 .business-header-name:hover {
   /* No hover effect needed for plain text breadcrumb */
+}
+
+.info-panel:has(.projects-wrapper.is-editing) .desktop-tabs {
+  display: none !important;
 }
 
 .header-spacer {
@@ -356,7 +360,7 @@ body {
   display: flex;
   align-items: center;
   gap: 0px;
-  flex-shrink: 0; 
+  flex-shrink: 0;
 }
 
 .business-breadcrumb {
@@ -3667,7 +3671,7 @@ body {
 
 .toggle-option.active {
   background: #ffffff;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   color: #0f172a;
 }
 
@@ -3772,67 +3776,76 @@ body {
 .continue-to-execution-btn:hover {
   background-color: #0369a1 !important;
 }
+
 .hist-io-label {
-    font-family: 'Geist Mono', ui-monospace, monospace;
-    font-size: 10.5px;
-    font-weight: 700;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    color: var(--text-muted);
-    margin: 6px 0 10px;
+  font-family: 'Geist Mono', ui-monospace, monospace;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin: 6px 0 10px;
 }
+
 .hist-inputs-title {
-    font-size: 14px;
-    font-weight: 700;
-    color: var(--color-text-primary);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-text-primary);
 }
+
 .hist-type-badge {
-    flex-shrink: 0;
-    font-family: 'Geist Mono', ui-monospace, monospace;
-    font-size: 10.5px;
-    font-weight: 700;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    color: var(--color-primary); 
-    padding: 4px 9px;
-    border-radius: 6px;
+  flex-shrink: 0;
+  font-family: 'Geist Mono', ui-monospace, monospace;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-primary);
+  padding: 4px 9px;
+  border-radius: 6px;
 }
-.row-title-div{
+
+.row-title-div {
   margin: 0px 15px;
 }
+
 .hist-row-title {
-    font-size: 14px;
-    font-weight: 700;
-    color: var(--text-primary);
-    margin: 0px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0px;
 }
+
 .hist-inputs-sub {
-    font-size: 12px;
-    color: var(--color-text-muted);
-    margin-top: 1px;
+  font-size: 12px;
+  color: var(--color-text-muted);
+  margin-top: 1px;
 }
+
 .hist-row-date {
-    font-size: 12px;
-    color: var(--color-text-muted);
-    margin-top: 1px;
+  font-size: 12px;
+  color: var(--color-text-muted);
+  margin-top: 1px;
 }
+
 .hist-qa-a {
-    font-size: 13px;
-    color: var(--color-text-secondary);
-    line-height: 1.5;
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  line-height: 1.5;
 }
+
 .hist-qa-q {
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--color-text-primary);
-    margin-bottom: 3px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin-bottom: 3px;
 }
 
 .hist-qa:first-of-type {
-    border-top: none;
+  border-top: none;
 }
 
 .hist-qa {
-    padding: 10px 0;
-    border-top: 1px solid var(--color-border);
+  padding: 10px 0;
+  border-top: 1px solid var(--color-border);
 }

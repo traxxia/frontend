@@ -2,6 +2,22 @@
   padding: 20px;
 }
 
+.projects-wrapper.is-editing {
+  padding: 20px 80px;
+}
+
+@media (max-width: 992px) {
+  .projects-wrapper.is-editing {
+    padding: 20px 40px;
+  }
+}
+
+@media (max-width: 576px) {
+  .projects-wrapper.is-editing {
+    padding: 20px 16px;
+  }
+}
+
 .validation-toast-wrapper {
   position: fixed;
   top: 50px;
@@ -2291,6 +2307,12 @@
   padding: 0;
 }
 
+.expanded-analysis-main .premium-card,
+[data-theme="dark"] .expanded-analysis-main .premium-card {
+  border: none !important;
+  box-shadow: none !important;
+}
+
 .bet-ledger-header {
   padding: 15px 32px;
   border-bottom: 1px solid #f7fafc;
@@ -2299,8 +2321,9 @@
 .bet-ledger-title {
   margin: 0;
   font-size: 14px;
-  font-weight: 700;
-  color: #2d3748;
+  font-weight: 600;
+  color: #6b7280;
+  font-family: 'Geist Mono', ui-monospace, monospace;
   letter-spacing: 0.05em;
 }
 
@@ -2311,33 +2334,41 @@
 .status-dropdown-btn {
   display: flex;
   align-items: center;
-  gap: 20px;
-  background-color: #eff6ff;
-  border: 1.5px solid #bfdbfe;
-  border-radius: 10px;
-  padding: 7px 16px;
+  gap: 12px;
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 4px 4px 4px 12px;
   cursor: pointer;
   min-width: 160px;
   justify-content: space-between;
-}
-
-.status-label-group {
-  display: flex;
-  align-items: center;
-  gap: 12px;
+  height: 36px;
+  box-sizing: border-box;
 }
 
 .status-label-prefix {
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
   color: #64748b;
+  font-family: 'Geist Mono', ui-monospace, monospace;
   text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.status-dropdown-inner {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background-color: #eff6ff;
+  border-radius: 6px;
+  padding: 0 10px;
+  height: 100%;
 }
 
 .status-label-current {
-  font-size: 13px;
-  font-weight: 700;
-  color: #1e40af;
+  font-size: 14px;
+  font-weight: 600;
+  color: #0c71b9;
 }
 
 .status-dropdown-menu {
@@ -2385,8 +2416,14 @@
 }
 
 .status-checkbox.checked {
-  background-color: #4f46e5;
-  border-color: #4f46e5;
+  background-color: #0c71b9;
+  border-color: #0c71b9;
+}
+
+.status-menu-divider {
+  height: 1px;
+  background-color: #e2e8f0;
+  margin: 6px 12px;
 }
 
 .status-name-text {
@@ -2405,7 +2442,9 @@
   background-color: #0c71b9;
   color: white;
   border: none;
-  padding: 7px 24px;
+  padding: 0 24px;
+  height: 36px;
+  box-sizing: border-box;
   border-radius: 6px;
   display: flex;
   align-items: center;
@@ -2424,8 +2463,10 @@
   background-color: #9333ea;
   color: white;
   border: none;
-  padding: 7px 24px;
-  border-radius: 10px;
+  padding: 0 24px;
+  height: 36px;
+  box-sizing: border-box;
+  border-radius: 6px;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -2644,6 +2685,7 @@
 [data-theme="dark"] .btn-new-project-premium:hover {
   background-color: #0a5f9e;
 }
+
 /* Bets / Cadences segmented toggle */
 .execution-segmented-toggle {
   display: flex;
@@ -2665,5 +2707,37 @@
 .execution-segmented-toggle .toggle-option.active {
   background-color: #fff;
   color: #111827;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+/* Kickstarted Banner Styles */
+.kickstarted-banner-wrapper {
+  padding: 0 32px 16px 32px;
+}
+
+.kickstarted-banner {
+  background-color: #eff6ff;
+  border-radius: 8px;
+  padding: 16px;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  border: 1px solid #dbeafe;
+}
+
+.kickstarted-banner-icon {
+  margin-top: 2px;
+}
+
+.kickstarted-banner-title {
+  color: #0c71b9;
+  font-weight: 700;
+  margin: 0 0 4px 0;
+  font-size: 14px;
+}
+
+.kickstarted-banner-text {
+  color: #6b7280;
+  margin: 0;
+  font-size: 13px;
 }

@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, forwardRef } from "react";
 import { useTranslation } from "../hooks/useTranslation";
 import { Breadcrumb, Accordion } from "react-bootstrap";
-import { TrendingUp, Zap, AlertTriangle, Circle, Diamond, Rocket, Bolt, Lightbulb, Heart, Shield, Boxes, Clock, DollarSign, Lock, CheckCircle, XCircle, Edit2, ShieldCheck, Users, Info } from "lucide-react";
+import { TrendingUp, Zap, AlertTriangle, Circle, Diamond, Rocket, Bolt, Lightbulb, Heart, Shield, Boxes, Clock, DollarSign, Lock, CheckCircle, XCircle, Edit2, ShieldCheck, Users, Info, ChevronLeft, Check } from "lucide-react";
 import { validateField } from "../utils/validation";
 import "../styles/NewProjectPage.css";
 import { useAuthStore } from '../store/authStore';
@@ -208,6 +208,8 @@ const TextAreaField = forwardRef(({
 const ProjectForm = ({
   mode,
   readOnly = false,
+  canEdit = false,
+  onEdit,
   projectName,
   setProjectName,
   description,
@@ -276,7 +278,8 @@ setSuccessMetrics,
   initialStatus,
   decisionLog,
   errors: hookErrors,
-  validateForm
+  validateForm,
+  sNo
 }) => {
   const {
     t
@@ -470,7 +473,6 @@ setSuccessMetrics,
     if (showErrors || customError) {
       const validation = validateField('Project Name', value, {
         required: true,
-        minLength: 3,
         maxLength: 100,
         requiresText: true
       });
@@ -487,7 +489,6 @@ setSuccessMetrics,
     if (showErrors) {
       const validation = validateField('Description', value, {
         required: true,
-        minLength: 10,
         maxLength: 500,
         requiresText: true
       });
@@ -504,7 +505,6 @@ setSuccessMetrics,
     if (showErrors) {
       const validation = validateField('Why This Matters', value, {
         required: true,
-        minLength: 10,
         maxLength: 1000,
         requiresText: true
       });
@@ -521,7 +521,6 @@ setSuccessMetrics,
     if (showErrors) {
       const validation = validateField('Strategic Decision', value, {
         required: true,
-        minLength: 10,
         requiresText: true
       });
       setFieldErrors(prev => ({
@@ -544,7 +543,6 @@ setSuccessMetrics,
     if (showErrors || customError) {
       const validation = validateField('Accountable Owner', value, {
         required: true,
-        minLength: 2,
         requiresText: true,
         skipStrict: true
       });
@@ -561,7 +559,6 @@ setSuccessMetrics,
     if (showErrors) {
       const validation = validateField('Success Criteria', value, {
         required: true,
-        minLength: 10,
         requiresText: true
       });
       setFieldErrors(prev => ({
@@ -577,7 +574,6 @@ setSuccessMetrics,
     if (showErrors) {
       const validation = validateField('Kill Criteria', value, {
         required: true,
-        minLength: 10,
         requiresText: true
       });
       setFieldErrors(prev => ({
@@ -614,9 +610,7 @@ setSuccessMetrics,
     const value = e.target.value;
     setDependencies(value);
     if (showErrors) {
-      const validation = validateField('Dependencies', value, {
-        minLength: 10
-      });
+      const validation = validateField('Dependencies', value, {});
       setFieldErrors(prev => ({
         ...prev,
         dependencies: validation.isValid ? null : t(validation.message)
@@ -628,9 +622,7 @@ setSuccessMetrics,
     const value = e.target.value;
     setSuccessMetrics(value);
     if (showErrors) {
-      const validation = validateField('Success Metrics (KPIs)', value, {
-        minLength: 10
-      });
+      const validation = validateField('Success Metrics (KPIs)', value, {});
       setFieldErrors(prev => ({
         ...prev,
         successMetrics: validation.isValid ? null : t(validation.message)
@@ -642,9 +634,7 @@ setSuccessMetrics,
     const value = e.target.value;
     setHighLevelReq(value);
     if (showErrors) {
-      const validation = validateField('Constraints / Non-Negotiables', value, {
-        minLength: 10
-      });
+      const validation = validateField('Constraints / Non-Negotiables', value, {});
       setFieldErrors(prev => ({
         ...prev,
         highLevelReq: validation.isValid ? null : t(validation.message)
@@ -656,9 +646,7 @@ setSuccessMetrics,
     const value = e.target.value;
     setScope(value);
     if (showErrors) {
-      const validation = validateField('Explicitly Out of Scope', value, {
-        minLength: 10
-      });
+      const validation = validateField('Explicitly Out of Scope', value, {});
       setFieldErrors(prev => ({
         ...prev,
         scope: validation.isValid ? null : t(validation.message)
@@ -670,9 +658,7 @@ setSuccessMetrics,
     const value = e.target.value;
     setOutcome(value);
     if (showErrors) {
-      const validation = validateField('Expected Outcome', value, {
-        minLength: 10
-      });
+      const validation = validateField('Expected Outcome', value, {});
       setFieldErrors(prev => ({
         ...prev,
         outcome: validation.isValid ? null : t(validation.message)
@@ -685,9 +671,7 @@ setSuccessMetrics,
     newAssumptions[idx] = value;
     setKeyAssumptions(newAssumptions);
     if (showErrors && value.trim().length > 0) {
-      const validation = validateField(`Assumption ${idx + 1}`, value, {
-        minLength: 10
-      });
+      const validation = validateField(`Assumption ${idx + 1}`, value, {});
       setFieldErrors(prev => ({
         ...prev,
         [`keyAssumptions_${idx}`]: validation.isValid ? null : t(validation.message)
@@ -715,85 +699,127 @@ setSuccessMetrics,
     onSubmit({ isKickstart });
   };
   return <>
-    <fieldset disabled={isSubmitting || isReadOnly} className="project-form--s6">
-      {isTerminal && <div className="terminal-status-banner project-form--s7">
-        <Info size={18} color="#2563eb" className="project-form--s8" />
-        <div className="project-form--s9">
-          <span className="project-form--s10">
-            {(() => {
-              if (initialStatusLower === "completed") return "Project reached Completed state cannot be edited further.";
-              if (initialStatusLower === "scaled") return "Project reached Scaled state cannot be edited further.";
-              if (initialStatusLower === "killed") return "Project reached Killed state cannot be edited further.";
-              return "Project reached a final state cannot be edited further.";
-            })()}
-          </span>
-          {decisionLog && decisionLog.length > 0 && (() => {
-            const latestTerminalLog = [...decisionLog].reverse().find(log => (log.to_status || "").toLowerCase() === initialStatusLower);
-            if (latestTerminalLog) {
-              return <>
-                <span className="project-form--s11">•</span>
-                <span className="project-form--s12">
-                  "{latestTerminalLog.justification || t("No_justification_provided")}"
-                </span>
-              </>;
-            }
-            return null;
+    <div className="project-form--s6">
+
+      { }
+      <div className="project-custom-header-wrapper" ref={breadcrumbRef}>
+        <div className="d-flex justify-content-between align-items-center mb-4 pb-2">
+          <button type="button" className="d-flex align-items-center gap-2" onClick={onBack} style={{ border: '1px solid #0c71b9', color: '#0c71b9', fontSize: '13px', fontWeight: '600', padding: '6px 14px', borderRadius: '8px', backgroundColor: '#ffffff', cursor: 'pointer' }}>
+            <ChevronLeft size={14} strokeWidth={2.5} /> Back to Bets
+          </button>
+          
+          {(() => {
+            const getBadgeStyle = (status) => {
+              const s = (status || "draft").toLowerCase();
+              switch (s) {
+                case "active": return { bg: "#dcfce7", text: "#15803d", border: "#bbf7d0" };
+                case "at risk":
+                case "at_risk": return { bg: "#ffedd5", text: "#c2410c", border: "#fed7aa" };
+                case "paused": return { bg: "#fef3c7", text: "#b45309", border: "#fde68a" };
+                case "killed": return { bg: "#fee2e2", text: "#b91c1c", border: "#fecaca" };
+                case "completed": return { bg: "#dbeafe", text: "#1d4ed8", border: "#bfdbfe" };
+                case "scaled": return { bg: "#f3e8ff", text: "#7e22ce", border: "#e9d5ff" };
+                default: return { bg: "#f8fafc", text: "#64748b", border: "#e2e8f0" };
+              }
+            };
+            const badgeStyle = getBadgeStyle(initialStatusLower);
+            return (
+              <div className="d-flex align-items-center gap-2">
+                <div style={{ border: `1px solid ${badgeStyle.border}`, color: badgeStyle.text, fontSize: '12px', fontWeight: '700', padding: '6px 12px', borderRadius: '4px', backgroundColor: badgeStyle.bg, letterSpacing: '0.5px', display: 'flex', alignItems: 'center', justifyContent: 'center', textTransform: 'uppercase' }}>
+                  {initialStatusLower || "draft"}
+                </div>
+                {!isReadOnly && (
+                  <>
+                    <button type="button" onClick={onBack} style={{ border: '1px solid #e2e8f0', color: '#475569', fontSize: '13px', fontWeight: '600', padding: '6px 16px', borderRadius: '6px', backgroundColor: '#ffffff', cursor: 'pointer' }}>
+                      {t("Cancel")}
+                    </button>
+                    <button type="button" className="d-flex align-items-center gap-2" onClick={(e) => handleSubmit(e, false)} disabled={isSubmitting || isTerminal} style={{ backgroundColor: '#0c71b9', color: '#ffffff', border: 'none', borderRadius: '6px', fontSize: '13px', fontWeight: '600', padding: '6px 16px', cursor: 'pointer', opacity: (isSubmitting || isTerminal) ? 0.6 : 1 }}>
+                      <Check size={14} strokeWidth={2.5} /> Save changes
+                    </button>
+                  </>
+                )}
+                {isReadOnly && canEdit && !["completed", "scaled", "killed"].includes(initialStatusLower) && (
+                  <button type="button" className="btn-edit d-flex align-items-center gap-2" onClick={onEdit} style={{ backgroundColor: '#0c71b9', color: '#ffffff', border: 'none', borderRadius: '6px', fontSize: '13px', fontWeight: '600', padding: '6px 16px', cursor: 'pointer' }}>
+                    <Edit2 size={14} strokeWidth={2.5} /> {t("Edit")}
+                  </button>
+                )}
+              </div>
+            );
           })()}
         </div>
-      </div>}
-      { }
-      <div className="project-custom-header" ref={breadcrumbRef}>
-        <div className="project-custom-header-top">
-          <span className="project-custom-header-bet">BET {projectId ? `#${projectId.slice(-4).toUpperCase()}` : '#NEW'}</span>
-        </div>
-        <div className="project-custom-header-title-row">
-          <h1 className="project-custom-header-title">{projectName || "New Bet"}</h1>
-          {!isReadOnly && <div className="actions-row-top">
-            <button type="button" className="btn-cancel project-form--s15" onClick={onBack}>
-              {t("cancel")}
-            </button>
-            <button type="button" className="btn-create project-form--s15" onClick={(e) => handleSubmit(e, false)} disabled={isSubmitting || isTerminal}>
-              {getSubmitButtonText()}
-            </button>
-          </div>}
-        </div>
-        <div className="project-custom-header-meta">
-          <div className="meta-item">
-            <span className="meta-label">DECIDER</span>
-            <span className="meta-value text-dark fw-bold">{accountableOwner || "Not assigned"}</span>
+
+        <div className="project-custom-header">
+          <div className="project-custom-header-top">
+            <span className="project-custom-header-bet" style={{ color: '#0c71b9', fontWeight: 'bold', fontSize: '12px', letterSpacing: '0.5px' }}>BET {sNo ? `#${sNo}` : '#NEW'}</span>
           </div>
-          <div className="meta-item">
-            <span className="meta-label">CADENCE</span>
-            <span className="meta-value text-dark fw-bold">{reviewCadence || "Not set"}</span>
+          <div className="project-custom-header-title-row">
+            <h1 className="project-custom-header-title" style={{ fontSize: '28px', fontWeight: 'bold', color: '#0f172a', margin: '8px 0' }}>{projectName || "New bet"}</h1>
+          </div>
+          <div className="project-custom-header-meta" style={{ display: 'flex', gap: '48px', marginTop: '16px', marginBottom: '24px' }}>
+            <div className="meta-item" style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+              <span className="meta-label" style={{ fontSize: '11px', fontWeight: '700', color: '#64748b', letterSpacing: '0.5px' }}>DECIDER</span>
+              <span className="meta-value text-dark" style={{ fontSize: '15px' }}>
+                {(() => {
+                  if (!accountableOwnerId) return "Not assigned";
+                  const owner = eligibleOwners.find(o => o._id === accountableOwnerId);
+                  if (owner) {
+                    return <><span style={{ fontWeight: '500' }}>{owner.name}</span> <span style={{ color: '#475569' }}>· {owner.email}</span></>;
+                  }
+                  return <span style={{ fontWeight: '500' }}>{accountableOwner || "Not assigned"}</span>;
+                })()}
+              </span>
+            </div>
+            <div className="meta-item" style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+              <span className="meta-label" style={{ fontSize: '11px', fontWeight: '700', color: '#64748b', letterSpacing: '0.5px' }}>CADENCE</span>
+              <span className="meta-value text-dark" style={{ fontSize: '15px', fontWeight: '500' }}>{reviewCadence || "Not set"}</span>
+            </div>
           </div>
         </div>
+ 
       </div>
+      
+      <fieldset disabled={isSubmitting || isReadOnly} style={{ border: 'none', padding: 0, margin: 0 }}>
+
+      {!isLaunched && initialStatusLower === "draft" && hasDecider && (
+        <div className="decider-info-banner mt-4 mb-3" style={{ backgroundColor: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '8px', padding: '16px', color: '#1e3a8a', fontSize: '15px' }}>
+          <strong style={{ color: '#1d4ed8' }}>Awaiting {accountableOwner}.</strong> <span style={{ color: '#475569' }}>The fields below will be completed by the assigned decider. You'll see them here once filled.</span>
+        </div>
+      )}
 
       {!isLaunched && initialStatusLower === "draft" && (
-        <div className="kickstart-banner mt-4">
-          <div className="kickstart-header">
-            <span className="kickstart-badge">DRAFT · NOT IN PLAY YET</span>
-          </div>
-          <div className="kickstart-title-row">
-            <div>
-              <h2 className="kickstart-title">Complete the essentials to kickstart · {kickstartCompleted}/{kickstartItems.length}</h2>
-              <p className="kickstart-subtitle">A bet joins its Cadences for review only once it's kickstarted to Active.</p>
-            </div>
-            <button className={`btn-kickstart ${canKickstart ? 'active' : ''}`} onClick={handleKickstart} disabled={!canKickstart}>
-              Kickstart Bet &rarr;
-            </button>
-          </div>
-          <div className="kickstart-items">
-            {kickstartItems.map((item, index) => (
-              <div key={index} className={`kickstart-item ${item.done ? 'done' : ''}`}>
-                {item.done ? (
-                  <CheckCircle size={16} color="white" fill="#10b981" />
-                ) : (
-                  <Circle size={16} color="#cbd5e0" fill="#cbd5e0" />
-                )}
-                <span>{item.label}</span>
+        <div className="kickstart-banner" style={{ backgroundColor: '#fffbeb', border: '1px solid #fde68a', borderRadius: '12px', padding: '24px', marginBottom: '24px' }}>
+          <div className="d-flex justify-content-between align-items-center">
+            <div style={{ flex: 1 }}>
+              <div className="kickstart-header" style={{ marginBottom: '8px' }}>
+                <span className="kickstart-badge" style={{ color: '#d97706', fontSize: '12px', fontWeight: '700', letterSpacing: '0.5px' }}>DRAFT · NOT IN PLAY YET</span>
               </div>
-            ))}
+              <h2 className="kickstart-title" style={{ fontSize: '18px', fontWeight: 'bold', color: '#0f172a', margin: '0 0 4px 0' }}>Complete the essentials to kickstart · {kickstartCompleted}/{kickstartItems.length}</h2>
+              <p className="kickstart-subtitle" style={{ color: '#64748b', fontSize: '14px', margin: 0 }}>A bet joins its Cadences for review only once it's kickstarted to Active.</p>
+              
+              <div className="kickstart-items" style={{ marginTop: '20px', display: 'flex', flexWrap: 'wrap', gap: '16px 24px' }}>
+                {kickstartItems.map((item, index) => (
+                  <div key={index} className={`kickstart-item ${item.done ? 'done' : ''}`} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    {item.done ? (
+                      <CheckCircle size={18} color="white" fill="#10b981" />
+                    ) : (
+                      <Circle size={18} color="#cbd5e0" fill="#cbd5e0" />
+                    )}
+                    <span style={{ color: item.done ? '#1f2937' : '#64748b', fontWeight: item.done ? '600' : '500', fontSize: '14px' }}>{item.label}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="flex-shrink-0 ms-4 d-flex align-items-center justify-content-end" style={{ width: '220px' }}>
+              {canKickstart ? (
+                <button className={`btn-kickstart active`} onClick={handleKickstart} style={{ backgroundColor: '#10b981', color: 'white', padding: '10px 20px', borderRadius: '8px', border: 'none', fontWeight: '600' }}>
+                  Kickstart Bet &rarr;
+                </button>
+              ) : (
+                <div style={{ color: '#94a3b8', fontStyle: 'italic', fontSize: '15px', textAlign: 'right', lineHeight: '1.4' }}>
+                  Awaiting the decider to complete and kickstart this bet.
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}
@@ -819,20 +845,20 @@ setSuccessMetrics,
       )}
 
       <Accordion alwaysOpen defaultActiveKey={['0', '1', '2', '3', '4']} className="mt-4 form-accordion">
-        <Accordion.Item eventKey="0" className="mb-3 border rounded form-accordion-item">
+        <Accordion.Item eventKey="0" className="mb-2 border rounded form-accordion-item">
           <Accordion.Header>
             <div className="d-flex justify-content-between align-items-center w-100 pe-3">
-              <span className="fw-bold text-dark">1. {t('Required_Information')}</span>
-              <span className="badge-required">REQUIRED</span>
+              <span className="fw-bold text-dark" style={{ fontSize: '16px' }}>1. Bet Overview</span>
+              <span className="badge-required" style={{ color: '#ef4444', border: '1px solid #fca5a5', backgroundColor: '#fef2f2', padding: '4px 8px', borderRadius: '4px', fontSize: '10px', fontWeight: 'bold', letterSpacing: '0.5px' }}>REQUIRED</span>
             </div>
           </Accordion.Header>
-          <Accordion.Body className="bg-white">
+          <Accordion.Body className="bg-white" style={{ padding: '12px 16px' }}>
 
             { }
-            <div className="field-row">
+            <div className="field-row" style={{ display: 'none' }}>
               <div className="field-label-row">
                 <label className="field-label">
-                  {t("Project_Name")} <span className="required">*</span>
+                  {t("Project_Name")} <span className="required" style={{ color: '#ef4444' }}>*</span>
                 </label>
                 {mode !== "new" && renderLockBadge("project_name")}
               </div>
@@ -849,30 +875,40 @@ setSuccessMetrics,
               </div>}
             </div>
 
-            <div className="field-row">
-              <div className="field-label-row">
-                <label className="field-label">
-                  {t("Project_Description")} <span className="required">*</span>
+            <div className="field-row" style={{ margin: '0 0 16px 0' }}>
+              <div className="field-label-row" style={{ marginBottom: '2px' }}>
+                <label className="field-label" style={{ fontWeight: 'bold', color: '#334155', fontSize: '14px', margin: 0 }}>
+                  What this bet is about <span className="required" style={{ color: '#ef4444' }}>*</span>
                 </label>
                 {renderLockBadge("project_description")}
               </div>
-              <textarea ref={descriptionRef} value={description || ""} onChange={handleDescriptionChange} placeholder="Launch digital wallet product and achieve market penetration (minimum 10 characters)" rows={3} className={`field-textarea ${showErrors && fieldErrors.description ? "error" : ""}`} readOnly={isFieldDisabled("project_description")} onFocus={() => handleFieldFocus("project_description")} maxLength={500} />
+              <p className="text-muted small mb-2 project-form--s17" style={{ color: '#64748b', fontSize: '13px', margin: '0 0 8px 0' }}>A clear paragraph describing what this bet is and what it sets out to do.</p>
+              <textarea ref={descriptionRef} value={description || ""} onChange={handleDescriptionChange} placeholder="Launch digital wallet product and achieve market penetration..." rows={3} className={`field-textarea ${showErrors && fieldErrors.description ? "error" : ""}`} readOnly={isFieldDisabled("project_description")} onFocus={() => handleFieldFocus("project_description")} maxLength={500} style={{ backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '12px', width: '100%', outline: 'none' }} />
               <div className="project-form--s16">
                 {showErrors && fieldErrors.description && <small className="error-text">{fieldErrors.description}</small>}
-                <small className="text-muted project-form--s17">
-                  {(description || '').length}/500 {t("characters")}
-                </small>
               </div>
             </div>
 
-            <TextAreaField ref={importanceRef} label={t("Why_This_Matters")} value={importance} onChange={handleImportanceChange} placeholder={t("Why_This_Matters_Placeholder")} error={showErrors && fieldErrors.importance} readOnly={isFieldDisabled("why_this_matters")} onFocus={handleFieldFocus} fieldName="why_this_matters" required />
+            <div className="field-row" style={{ margin: '0' }}>
+              <div className="field-label-row" style={{ marginBottom: '2px' }}>
+                <label className="field-label" style={{ fontWeight: 'bold', color: '#334155', fontSize: '14px', margin: 0 }}>
+                  Why this matters <span className="required" style={{ color: '#ef4444' }}>*</span>
+                </label>
+                {renderLockBadge("why_this_matters")}
+              </div>
+              <p className="text-muted small mb-2 project-form--s17" style={{ color: '#64748b', fontSize: '13px', margin: '0 0 8px 0' }}>The strategic importance — why this bet earns a slot in your top 5.</p>
+              <textarea ref={importanceRef} value={importance || ""} onChange={handleImportanceChange} placeholder="Explain the strategic importance..." rows={3} className={`field-textarea ${showErrors && fieldErrors.importance ? "error" : ""}`} readOnly={isFieldDisabled("why_this_matters")} onFocus={() => handleFieldFocus("why_this_matters")} style={{ backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '12px', width: '100%', outline: 'none' }} />
+              <div className="project-form--s16">
+                {showErrors && fieldErrors.importance && <small className="error-text">{fieldErrors.importance}</small>}
+              </div>
+            </div>
           </Accordion.Body>
         </Accordion.Item>
-          <Accordion.Item eventKey="1" className="mb-3 border rounded form-accordion-item">
+          <Accordion.Item eventKey="1" className="mb-2 border rounded form-accordion-item">
             <Accordion.Header>
               <div className="d-flex justify-content-between align-items-center w-100 pe-3">
-                <span className="fw-bold text-dark">2. Key Assumptions</span>
-                <span className="badge-required">REQUIRED</span>
+                <span className="fw-bold text-dark" style={{ fontSize: '16px' }}>2. Key Assumptions</span>
+                <span className="badge-required" style={{ color: '#ef4444', border: '1px solid #fca5a5', backgroundColor: '#fef2f2', padding: '4px 8px', borderRadius: '4px', fontSize: '10px', fontWeight: 'bold', letterSpacing: '0.5px' }}>REQUIRED</span>
               </div>
             </Accordion.Header>
             <Accordion.Body className="bg-white">
@@ -899,11 +935,11 @@ setSuccessMetrics,
             </Accordion.Body>
           </Accordion.Item>
 
-          <Accordion.Item eventKey="2" className="mb-3 border rounded form-accordion-item">
+          <Accordion.Item eventKey="2" className="mb-2 border rounded form-accordion-item">
             <Accordion.Header>
               <div className="d-flex justify-content-between align-items-center w-100 pe-3">
-                <span className="fw-bold text-dark">3. {t('Strategic_Context')}</span>
-                <span className="badge-required">REQUIRED</span>
+                <span className="fw-bold text-dark" style={{ fontSize: '16px' }}>3. Strategic Context</span>
+                <span className="badge-required" style={{ color: '#ef4444', border: '1px solid #fca5a5', backgroundColor: '#fef2f2', padding: '4px 8px', borderRadius: '4px', fontSize: '10px', fontWeight: 'bold', letterSpacing: '0.5px' }}>REQUIRED</span>
               </div>
             </Accordion.Header>
             <Accordion.Body className="bg-white">
@@ -1131,34 +1167,32 @@ setSuccessMetrics,
             </Accordion.Body>
           </Accordion.Item>
 
-          <Accordion.Item eventKey="3" className="mb-3 border rounded form-accordion-item">
+          <Accordion.Item eventKey="3" className="mb-2 border rounded form-accordion-item">
             <Accordion.Header>
               <div className="d-flex justify-content-between align-items-center w-100 pe-3">
-                <span className="fw-bold text-dark">4. RAPID roles</span>
-                <span className="badge bg-light text-muted border project-form--s21">OPTIONAL</span>
+                <span className="fw-bold text-dark" style={{ fontSize: '16px' }}>4. RAPID roles</span>
+                <span className="badge-optional" style={{ color: '#64748b', border: '1px solid #e2e8f0', backgroundColor: '#f8fafc', padding: '4px 8px', borderRadius: '4px', fontSize: '10px', fontWeight: 'bold', letterSpacing: '0.5px' }}>OPTIONAL</span>
               </div>
             </Accordion.Header>
             <Accordion.Body className="bg-white">
 
-              <div className="d-flex align-items-start p-3 mb-4 rounded" style={{ backgroundColor: '#eff6ff', border: '1px solid #bfdbfe' }}>
-                <Info size={20} className="text-primary me-2 mt-1 flex-shrink-0" />
-                <p className="mb-0 text-muted" style={{ fontSize: '0.9rem', lineHeight: '1.5' }}>
-                  <strong className="text-dark">Bain's RAPID® framework</strong> clarifies who has the power to decide and who provides input. 
-                  The <strong className="text-dark">D</strong> is the only required role; the others sharpen accountability without diluting it.
+              <div className="rapid-banner">
+                <Info size={20} className="rapid-banner-icon" />
+                <p className="rapid-banner-text">
+                  A clear-decision framework from Bain. The <strong>D</strong> is the only required role; the others sharpen accountability without diluting it.
                 </p>
               </div>
 
               {/* DECIDER (D) - REQUIRED */}
-              <div className="rapid-card border rounded p-3 mb-3" style={{ backgroundColor: accountableOwnerId ? '#eff6ff' : 'white', borderColor: accountableOwnerId ? '#bfdbfe' : '#dee2e6' }}>
+              <div className="rapid-card rapid-card-decide">
                 <div className="d-flex justify-content-between align-items-start mb-3">
                   <div className="d-flex align-items-start text-dark">
-                    <div className={`rounded-circle d-flex justify-content-center align-items-center me-2 ${accountableOwnerId ? 'text-white shadow-sm' : 'bg-light text-dark'}`} style={{width: '28px', height: '28px', flexShrink: 0, backgroundColor: accountableOwnerId ? '#0c71b9' : '', border: accountableOwnerId ? 'none' : '1px solid #e2e8f0', fontSize: '0.85rem', fontWeight: 'bold'}}>D</div>
+                    <div className="rapid-icon rapid-icon-decide me-3">D</div>
                     <div>
-                      <div className="fw-bold lh-1 mb-1">Decide</div>
-                      <div className="text-muted fw-normal" style={{fontSize: '12px', lineHeight: '1.4'}}>The accountable — single person who owns the call.</div>
+                      <div className="rapid-title">Decide</div>
+                      <div className="rapid-subtitle">The accountable — single person who owns the call.</div>
                     </div>
                   </div>
-                  <span className="badge-required">REQUIRED</span>
                 </div>
                 <SelectField ref={accountableOwnerRef} label="" icon={<Zap size={14} />} options={eligibleOwners.map(o => ({
                   value: o._id,
@@ -1179,16 +1213,16 @@ setSuccessMetrics,
               </div>
 
               {/* RECOMMEND (R) */}
-              <div className="rapid-card border rounded p-3 mb-3" style={{ backgroundColor: recommendRoles.some(r => r) ? '#eff6ff' : 'white', borderColor: recommendRoles.some(r => r) ? '#bfdbfe' : '#dee2e6' }}>
+              {/* RECOMMEND (R) */}
+              <div className="rapid-card">
                 <div className="d-flex justify-content-between align-items-start mb-2">
                   <div className="d-flex align-items-start text-dark">
-                    <div className={`rounded-circle d-flex justify-content-center align-items-center me-2 ${recommendRoles.some(r => r) ? 'text-white shadow-sm' : 'bg-light text-dark'}`} style={{width: '28px', height: '28px', flexShrink: 0, backgroundColor: recommendRoles.some(r => r) ? '#0c71b9' : '', border: recommendRoles.some(r => r) ? 'none' : '1px solid #e2e8f0', fontSize: '0.85rem', fontWeight: 'bold'}}>R</div>
+                    <div className="rapid-icon me-3">R</div>
                     <div>
-                      <div className="fw-bold lh-1 mb-1">Recommend</div>
-                      <div className="text-muted fw-normal" style={{fontSize: '12px', lineHeight: '1.4'}}>Proposes the decision and gathers the case.</div>
+                      <div className="rapid-title">Recommend</div>
+                      <div className="rapid-subtitle">Proposes the decision and gathers the case.</div>
                     </div>
                   </div>
-                  <span className="badge bg-light text-muted border project-form--s21">OPTIONAL</span>
                 </div>
                 {recommendRoles.map((roleId, idx) => (
                   <div className="d-flex align-items-center mb-2" key={`R-${idx}`}>
@@ -1222,16 +1256,16 @@ setSuccessMetrics,
               </div>
 
               {/* AGREE (A) */}
-              <div className="rapid-card border rounded p-3 mb-3" style={{ backgroundColor: agreeRoles.some(r => r) ? '#eff6ff' : 'white', borderColor: agreeRoles.some(r => r) ? '#bfdbfe' : '#dee2e6' }}>
+              {/* AGREE (A) */}
+              <div className="rapid-card">
                 <div className="d-flex justify-content-between align-items-start mb-2">
                   <div className="d-flex align-items-start text-dark">
-                    <div className={`rounded-circle d-flex justify-content-center align-items-center me-2 ${agreeRoles.some(r => r) ? 'text-white shadow-sm' : 'bg-light text-dark'}`} style={{width: '28px', height: '28px', flexShrink: 0, backgroundColor: agreeRoles.some(r => r) ? '#0c71b9' : '', border: agreeRoles.some(r => r) ? 'none' : '1px solid #e2e8f0', fontSize: '0.85rem', fontWeight: 'bold'}}>A</div>
+                    <div className="rapid-icon me-3">A</div>
                     <div>
-                      <div className="fw-bold lh-1 mb-1">Agree</div>
-                      <div className="text-muted fw-normal" style={{fontSize: '12px', lineHeight: '1.4'}}>Has veto power on the recommendation.</div>
+                      <div className="rapid-title">Agree</div>
+                      <div className="rapid-subtitle">Has veto power on the recommendation.</div>
                     </div>
                   </div>
-                  <span className="badge bg-light text-muted border project-form--s21">OPTIONAL</span>
                 </div>
                 {agreeRoles.map((roleId, idx) => (
                   <div className="d-flex align-items-center mb-2" key={`A-${idx}`}>
@@ -1265,16 +1299,16 @@ setSuccessMetrics,
               </div>
 
               {/* INPUT (I) */}
-              <div className="rapid-card border rounded p-3 mb-3" style={{ backgroundColor: inputRoles.some(r => r) ? '#eff6ff' : 'white', borderColor: inputRoles.some(r => r) ? '#bfdbfe' : '#dee2e6' }}>
+              {/* INPUT (I) */}
+              <div className="rapid-card">
                 <div className="d-flex justify-content-between align-items-start mb-1">
                   <div className="d-flex align-items-start text-dark">
-                    <div className={`rounded-circle d-flex justify-content-center align-items-center me-2 ${inputRoles.some(r => r) ? 'text-white shadow-sm' : 'bg-light text-dark'}`} style={{width: '28px', height: '28px', flexShrink: 0, backgroundColor: inputRoles.some(r => r) ? '#0c71b9' : '', border: inputRoles.some(r => r) ? 'none' : '1px solid #e2e8f0', fontSize: '0.85rem', fontWeight: 'bold'}}>I</div>
+                    <div className="rapid-icon me-3">I</div>
                     <div>
-                      <div className="fw-bold lh-1 mb-1">Input</div>
-                      <div className="text-muted fw-normal" style={{fontSize: '12px', lineHeight: '1.4'}}>Is consulted (no veto, informed opinion).</div>
+                      <div className="rapid-title">Input</div>
+                      <div className="rapid-subtitle">Is consulted (no veto, informed opinion).</div>
                     </div>
                   </div>
-                  <span className="badge bg-light text-muted border project-form--s21">OPTIONAL</span>
                 </div>
 
                 {inputRoles.map((roleId, idx) => (
@@ -1309,16 +1343,16 @@ setSuccessMetrics,
               </div>
 
               {/* PERFORM (P) */}
-              <div className="rapid-card border rounded p-3 mb-2" style={{ backgroundColor: performRoles.some(r => r) ? '#eff6ff' : 'white', borderColor: performRoles.some(r => r) ? '#bfdbfe' : '#dee2e6' }}>
+              {/* PERFORM (P) */}
+              <div className="rapid-card mb-2">
                 <div className="d-flex justify-content-between align-items-start mb-2">
                   <div className="d-flex align-items-start text-dark">
-                    <div className={`rounded-circle d-flex justify-content-center align-items-center me-2 ${performRoles.some(r => r) ? 'text-white shadow-sm' : 'bg-light text-dark'}`} style={{width: '28px', height: '28px', flexShrink: 0, backgroundColor: performRoles.some(r => r) ? '#0c71b9' : '', border: performRoles.some(r => r) ? 'none' : '1px solid #e2e8f0', fontSize: '0.85rem', fontWeight: 'bold'}}>P</div>
+                    <div className="rapid-icon me-3">P</div>
                     <div>
-                      <div className="fw-bold lh-1 mb-1">Perform</div>
-                      <div className="text-muted fw-normal" style={{fontSize: '12px', lineHeight: '1.4'}}>Executes once the decision is made.</div>
+                      <div className="rapid-title">Perform</div>
+                      <div className="rapid-subtitle">Executes once the decision is made.</div>
                     </div>
                   </div>
-                  <span className="badge bg-light text-muted border project-form--s21">OPTIONAL</span>
                 </div>
                 {performRoles.map((roleId, idx) => (
                   <div className="d-flex align-items-center mb-2" key={`P-${idx}`}>
@@ -1354,11 +1388,11 @@ setSuccessMetrics,
             </Accordion.Body>
           </Accordion.Item>
 
-          <Accordion.Item eventKey="4" className="mb-3 border rounded form-accordion-item">
+          <Accordion.Item eventKey="4" className="mb-2 border rounded form-accordion-item">
           <Accordion.Header>
             <div className="d-flex justify-content-between align-items-center w-100 pe-3">
-              <span className="fw-bold text-dark">5. {t('Detailed_Planning')}</span>
-              <span className="badge-optional">OPTIONAL</span>
+              <span className="fw-bold text-dark" style={{ fontSize: '16px' }}>5. Detailed Planning</span>
+              <span className="badge-optional" style={{ color: '#64748b', border: '1px solid #e2e8f0', backgroundColor: '#f8fafc', padding: '4px 8px', borderRadius: '4px', fontSize: '10px', fontWeight: 'bold', letterSpacing: '0.5px' }}>OPTIONAL</span>
             </div>
           </Accordion.Header>
           <Accordion.Body className="bg-white">
@@ -1419,6 +1453,7 @@ setSuccessMetrics,
         </Accordion.Item>
       </Accordion>
     </fieldset>
+    </div>
   </>;
 };
 export default ProjectForm;
