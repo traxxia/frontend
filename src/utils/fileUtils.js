@@ -143,23 +143,56 @@ export const computePageCount = async (file) => {
           if (match) metaCount = parseInt(match[1], 10);
         }
 
-        // Step 2: for .docx, always scan word/document.xml for Word's own page-break markers
-        // These are inserted by Word's layout engine and are the most reliable page count source
+        // Step 2: for .docx, scan word/document.xml using a 4-tier strategy:
+        //   Tier 1 — <w:lastRenderedPageBreak>   : Word layout engine markers (most accurate)
+        //   Tier 2 — <w:br w:type="page"/>       : Explicit/forced page breaks
+        //   Tier 3 — <w:sectPr> section breaks   : Section-based page divisions (common in topic docs)
+        //   Tier 4 — word count ÷ 350            : Estimation fallback
         let docCount = 0;
         if (ext === 'docx') {
           const docXml = await readZipEntry(bytes, 'word/document.xml');
           if (docXml) {
+            // Tier 1: Word layout engine markers (added when Word renders the document)
             const renderedBreaks = (docXml.match(/<w:lastRenderedPageBreak/g) || []).length;
+
+            // Tier 2: Explicit forced page breaks e.g. <w:br w:type="page"/>
+            const explicitBreaks = (docXml.match(/<w:br\b[^>]*w:type=["']page["'][^>]*\/?>/g) || []).length;
+
+            // Tier 3: Section breaks — each <w:sectPr> in a paragraph marks a section division.
+            // Total <w:sectPr> count minus 1 (the body-level default sectPr at end of document)
+            // minus any "continuous" type sections (those don't create a new page).
+            const allSectPr = (docXml.match(/<w:sectPr[\s>\/]/g) || []).length;
+            const continuousSects = (docXml.match(/<w:type\s+w:val=["']continuous["']/gi) || []).length;
+            const sectionBreaks = Math.max(0, allSectPr - 1 - continuousSects);
+
             if (renderedBreaks > 0) {
-              // Each break represents the END of a page, so total pages = breaks + 1
+              // Most accurate: Word's own page layout markers
               docCount = renderedBreaks + 1;
-            } else if (metaCount === 0) {
-              // No breaks and no metadata — last resort: estimate from word count
-              // (Only triggered when we have zero information, avoids inflating real 1-page docs)
-              const textContent = docXml.replace(/<[^>]+>/g, ' ');
-              const words = textContent.split(/\s+/).filter(w => w.length > 0).length;
-              if (words > 0) {
-                docCount = Math.max(1, Math.ceil(words / 350));
+            } else {
+              // Structural: combine explicit page breaks + section breaks
+              // (they represent different separator mechanisms, both create new pages)
+              const structuralBreaks = explicitBreaks + sectionBreaks;
+              if (structuralBreaks > 0) {
+                docCount = structuralBreaks + 1;
+              } else {
+                // Tier 4: Layout-aware estimation — accounts for formatting overhead,
+                // not just raw word count (which ignores headings, line breaks, spacing).
+                //
+                // Formula: total "line units" / lines_per_page
+                //   - textLines     : raw word content (≈10 words per line)
+                //   - lineBreaks    : explicit <w:br/> (shift-enter) — each is a full line
+                //   - paragraphs×0.5: each paragraph has top/bottom spacing
+                //   - headings×1.5  : Heading styles add ~1.5 extra lines of spacing
+                //   - 45 lines/page : typical single-spaced A4/Letter page
+                const textContent = docXml.replace(/<[^>]+>/g, ' ');
+                const words = textContent.split(/\s+/).filter(w => w.length > 0).length;
+                const paragraphs = (docXml.match(/<w:p[ >]/g) || []).length;
+                const lineBreaks = (docXml.match(/<w:br\s*\/?>/g) || []).length; // plain <w:br/> only, not page/col breaks
+                const headings = (docXml.match(/w:val=["']Heading\d["']/gi) || []).length;
+
+                const textLines  = Math.ceil(words / 10);
+                const lineUnits  = textLines + lineBreaks + (paragraphs * 0.5) + (headings * 1.5);
+                docCount = Math.max(1, Math.ceil(lineUnits / 45));
               }
             }
           }
