@@ -813,7 +813,9 @@ const EditableBriefSection = ({
           const nonDbStrategic = prev.filter(f => !f.id.startsWith('db-strategic-'));
           const dbStrategic = (data.documents || []).map(doc => {
             const ext = doc.original_name.toLowerCase().split('.').pop();
-            const type = ['xlsx', 'xls', 'csv'].includes(ext) ? 'spreadsheet' : ext;
+            const type = ['xlsx', 'xls', 'csv'].includes(ext) ? 'spreadsheet'
+              : ['pptx', 'ppt'].includes(ext) ? 'presentation'
+              : ext;
             return {
               id: `db-strategic-${doc.filename}`,
               name: doc.original_name,
@@ -1088,9 +1090,10 @@ const EditableBriefSection = ({
       const fileExt = file.name.split('.').pop().toLowerCase();
       const isSpreadsheet = ['xlsx', 'xls'].includes(fileExt);
       const isDoc = ['pdf', 'docx', 'doc'].includes(fileExt);
+      const isPresentation = ['pptx', 'ppt'].includes(fileExt);
 
-      if (!isSpreadsheet && !isDoc) {
-        showToastMessage(`File "${file.name}" format is unsupported. Please upload Excel, PDF, or Word files.`, 'error');
+      if (!isSpreadsheet && !isDoc && !isPresentation) {
+        showToastMessage(`File "${file.name}" format is unsupported. Please upload Excel, PDF, Word, or PowerPoint files.`, 'error');
         continue;
       }
 
@@ -1106,7 +1109,7 @@ const EditableBriefSection = ({
         uploadDate: new Date().toLocaleDateString(),
         status: 'uploading',
         progress: 15,
-        type: isSpreadsheet ? 'spreadsheet' : (fileExt === 'pdf' ? 'pdf' : 'docx'),
+        type: isSpreadsheet ? 'spreadsheet' : isPresentation ? 'presentation' : (fileExt === 'pdf' ? 'pdf' : 'docx'),
         section: 'strategic',
         fileObject: file,
         isNewSessionFile: true
