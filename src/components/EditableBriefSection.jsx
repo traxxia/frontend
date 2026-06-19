@@ -20,6 +20,15 @@ import ConfirmationModal from './ConfirmationModal';
 import { formatCurrencyValue } from '../utils/currencyUtils';
 import { computePageCount, getFileDetails } from '../utils/fileUtils';
 
+// Derives the correct unit label from a file extension for already-stored documents
+const getPageUnit = (ext, count) => {
+  if (['xlsx', 'xls'].includes(ext)) return count === 1 ? 'sheet' : 'sheets';
+  if (['pptx', 'ppt'].includes(ext)) return count === 1 ? 'slide' : 'slides';
+  if (ext === 'csv') return count === 1 ? 'row' : 'rows';
+  if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'svg'].includes(ext)) return 'image';
+  return count === 1 ? 'page' : 'pages';
+};
+
 let globalLimitsPromise = null;
 const sessionCache = new Map();
 const strategicDocsCache = new Map();
@@ -815,7 +824,7 @@ const EditableBriefSection = ({
               section: 'strategic',
               progress: 100,
               isNewSessionFile: !doc.is_analyzed,
-              pageInfo: doc.page_count ? { count: doc.page_count, unit: doc.page_count === 1 ? 'page' : 'pages' } : null
+              pageInfo: doc.page_count ? { count: doc.page_count, unit: getPageUnit(ext, doc.page_count) } : null
             };
           });
           return [...nonDbStrategic, ...dbStrategic];
