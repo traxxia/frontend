@@ -6,7 +6,7 @@ import { useAuthStore, useBusinessStore, useUIStore } from '../store';
 import '../styles/onboarding-chat.css';
 import '../styles/onboarding-flow.css';
 import { AnalysisApiService } from '../services/analysisApiService';
-import { ChevronDown, ChevronUp, Lock, FileText, ArrowRight, Check } from 'lucide-react';
+import { ChevronDown, ChevronUp, Lock, File, ArrowRight, Check } from 'lucide-react';
 import OnboardingChat from '../components/OnboardingChat';
 
 const OnboardingFlowPage = () => {
@@ -15,7 +15,7 @@ const OnboardingFlowPage = () => {
   const location = useLocation();
   const business = location.state?.business || useBusinessStore.getState().selectedBusiness;
   const addToast = useUIStore(state => state.addToast);
-  
+
   const userName = useAuthStore(state => state.userName) || 'User';
   const businessName = business?.business_name || 'your business';
 
@@ -23,18 +23,18 @@ const OnboardingFlowPage = () => {
   const [expandedSection, setExpandedSection] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isOnboardingStarted, setIsOnboardingStarted] = useState(true);
-  
+
   // Step 1
   const [purpose, setPurpose] = useState(pmfData?.businessPurpose?.purpose || pmfData?.purpose || '');
   const [description, setDescription] = useState(pmfData?.businessPurpose?.description || pmfData?.description || '');
-  
+
   // Step 2
   const [country, setCountry] = useState(pmfData?.location?.country || pmfData?.country || '');
   const [city, setCity] = useState(pmfData?.location?.city || pmfData?.city || '');
-  
+
   // Step 3
   const [primaryIndustry, setPrimaryIndustry] = useState(pmfData?.industry?.primaryIndustry || pmfData?.primaryIndustry || '');
-  
+
   // Step 4
   const [geo1, setGeo1] = useState(pmfData?.core?.geographies?.[0] || pmfData?.geography1 || '');
   const [geo2, setGeo2] = useState(pmfData?.core?.geographies?.[1] || pmfData?.geography2 || '');
@@ -48,7 +48,7 @@ const OnboardingFlowPage = () => {
   const [chan1, setChan1] = useState(pmfData?.core?.channels?.[0] || pmfData?.channel1 || '');
   const [chan2, setChan2] = useState(pmfData?.core?.channels?.[1] || pmfData?.channel2 || '');
   const [chan3, setChan3] = useState(pmfData?.core?.channels?.[2] || pmfData?.channel3 || '');
-  
+
   // Step 5
   const [competeOptions, setCompeteOptions] = useState(() => {
     const selected = pmfData?.competitiveDimensions?.selected || pmfData?.differentiation || [];
@@ -126,7 +126,7 @@ const OnboardingFlowPage = () => {
             `${import.meta.env.VITE_BACKEND_URL}/ai-chat/history/${targetBusinessId}`,
             { headers: { Authorization: `Bearer ${token}` } }
           );
-          
+
           if (response.data.history && response.data.history.length > 0) {
             setChatMessages(response.data.history.map((msg) => ({ role: msg.role, content: msg.text })));
           }
@@ -160,13 +160,13 @@ const OnboardingFlowPage = () => {
   const handleSendMessage = async (e) => {
     if (e) e.preventDefault();
     if (!chatInput.trim()) return;
-    
+
     const userMessage = chatInput;
     setChatMessages(prev => [...prev, { role: 'user', content: userMessage }]);
     setChatInput('');
     setIsChatLoading(true);
     await saveMessageToHistory('user', userMessage);
-    
+
     try {
       const targetBusinessId = business?._id || business?.id || businessId;
       const response = await fetch(import.meta.env.VITE_AI_CHAT_URL || 'http://localhost:4111/api/chat', {
@@ -189,9 +189,9 @@ const OnboardingFlowPage = () => {
           }
         })
       });
-      
+
       const data = await response.json();
-      
+
       if (response.ok && data.response) {
         setChatMessages(prev => [...prev, { role: 'trax', content: data.response }]);
         await saveMessageToHistory('assistant', data.response);
@@ -248,22 +248,22 @@ const OnboardingFlowPage = () => {
           },
           objective: purpose,
           constraint: {
-            primary: "N/A" 
+            primary: "N/A"
           },
           usp: getSelectedDifferentiation()
         }
       };
 
       const dataToSave = {
-         companyName: businessName,
-         purpose, description, country, city, primaryIndustry,
-         geography1: geo1, geography2: geo2, geography3: geo3,
-         customerSegment1: seg1, customerSegment2: seg2, customerSegment3: seg3,
-         productService1: prod1, productService2: prod2, productService3: prod3,
-         channel1: chan1, channel2: chan2, channel3: chan3,
-         differentiation: getSelectedDifferentiation()
+        companyName: businessName,
+        purpose, description, country, city, primaryIndustry,
+        geography1: geo1, geography2: geo2, geography3: geo3,
+        customerSegment1: seg1, customerSegment2: seg2, customerSegment3: seg3,
+        productService1: prod1, productService2: prod2, productService3: prod3,
+        channel1: chan1, channel2: chan2, channel3: chan3,
+        differentiation: getSelectedDifferentiation()
       };
-      
+
       try {
         await analysisService.savePMFOnboardingData(targetBusinessId, dataToSave);
       } catch (err) {
@@ -290,9 +290,9 @@ const OnboardingFlowPage = () => {
     }
   };
 
-  const step4Completed = 
-    (geo1.trim() !== '' || geo2.trim() !== '' || geo3.trim() !== '') && 
-    (seg1.trim() !== '' || seg2.trim() !== '' || seg3.trim() !== '') && 
+  const step4Completed =
+    (geo1.trim() !== '' || geo2.trim() !== '' || geo3.trim() !== '') &&
+    (seg1.trim() !== '' || seg2.trim() !== '' || seg3.trim() !== '') &&
     (prod1.trim() !== '' || prod2.trim() !== '' || prod3.trim() !== '') &&
     (chan1.trim() !== '' || chan2.trim() !== '' || chan3.trim() !== '');
 
@@ -334,7 +334,7 @@ const OnboardingFlowPage = () => {
   const handleAutoSave = useCallback(async () => {
     const currentData = formDataRef.current;
     if (Object.keys(currentData).length === 0) return;
-    
+
     const currentDataStr = JSON.stringify(currentData);
     if (lastSavedDataRef.current === currentDataStr) return;
 
@@ -346,7 +346,7 @@ const OnboardingFlowPage = () => {
 
       const targetBusinessId = business?._id || business?.id || businessId;
       await analysisService.savePMFOnboardingData(targetBusinessId, currentData);
-      
+
       lastSavedDataRef.current = currentDataStr;
       addToast({ message: "Auto-saved successfully", type: "success" });
     } catch (err) {
@@ -389,12 +389,12 @@ const OnboardingFlowPage = () => {
       const API_BASE_URL = import.meta.env.VITE_BACKEND_URL;
       const analysisService = new AnalysisApiService(ML_API_BASE_URL, API_BASE_URL, getAuthToken);
       const targetBusinessId = business?._id || business?.id || businessId;
-      
+
       const dataToSave = {
         ...(pmfData || {}),
         letsBeginClicked: true
       };
-      
+
       await analysisService.savePMFOnboardingData(targetBusinessId, dataToSave);
     } catch (err) {
       console.error("Failed to save letsBeginClicked state", err);
@@ -421,10 +421,10 @@ const OnboardingFlowPage = () => {
     <div className="dashboard-layout ob-flow-layout">
       <div style={{ position: 'sticky', top: 0, zIndex: 100, backgroundColor: '#fff', borderBottom: '1px solid #e2e8f0' }}>
         <MenuBar />
-        
+
         <div className="split-onboarding-header ob-flow-header" style={{ borderBottom: 'none' }}>
-          <button 
-            onClick={handleBackToDashboard} 
+          <button
+            onClick={handleBackToDashboard}
             className="ob-flow-back-btn"
           >
             &larr; Back to Dashboard
@@ -447,7 +447,7 @@ const OnboardingFlowPage = () => {
                 <h2 className="header-title">Trax</h2>
               </div>
             </div>
-            
+
             <div className="docked-chat-body">
               <div className="onboarding-chat-message">
                 <div className="bubble-avatar">TX</div>
@@ -455,7 +455,7 @@ const OnboardingFlowPage = () => {
                   Hi {userName} — I'm Trax, your strategy consultant. To draft a real diagnosis for <strong>{businessName}</strong>, I'll need a feel for the business.
                 </div>
               </div>
-              
+
               {location.state?.uploadedFiles && location.state.uploadedFiles.length > 0 && (
                 <div className="onboarding-chat-message">
                   <div className="bubble-avatar">TX</div>
@@ -463,7 +463,7 @@ const OnboardingFlowPage = () => {
                     <div style={{ marginBottom: '8px' }}>I've received your documents and gone through them.</div>
                     {location.state.uploadedFiles.map((fileName, idx) => (
                       <div key={idx} style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', marginTop: '6px', color: '#0f172a', fontWeight: '500', fontSize: '13px', width: '100%' }}>
-                        <FileText size={16} color="#3b82f6" style={{ flexShrink: 0, marginTop: '2px' }} />
+                        <File size={16} color="#3b82f6" style={{ flexShrink: 0, marginTop: '2px' }} />
                         <span style={{ overflowWrap: 'anywhere', wordBreak: 'break-word' }}>
                           {fileName}
                         </span>
@@ -512,19 +512,19 @@ const OnboardingFlowPage = () => {
               )}
               <div ref={chatEndRef} />
             </div>
-            
+
             <div className="onboarding-chat-input-bar">
               <form onSubmit={handleSendMessage} className="onboarding-chat-input-wrapper">
-                <input 
-                  type="text" 
-                  className="onboarding-chat-input-field" 
-                  placeholder="Type a message to Trax..." 
+                <input
+                  type="text"
+                  className="onboarding-chat-input-field"
+                  placeholder="Type a message to Trax..."
                   value={chatInput}
                   onChange={(e) => setChatInput(e.target.value)}
                   disabled={isSubmitting}
                 />
                 <button type="submit" className="onboarding-chat-send-btn" disabled={isSubmitting}>
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13" /><polygon points="22 2 15 22 11 13 2 9 22 2" /></svg>
                 </button>
               </form>
             </div>
@@ -543,9 +543,9 @@ const OnboardingFlowPage = () => {
               </div>
             </div>
 
-          
+
             <div className="ob-flow-questions" style={{ pointerEvents: isSubmitting ? 'none' : 'auto', opacity: isSubmitting ? 0.6 : 1, transition: 'opacity 0.2s ease' }}>
-              
+
               {/* Q1 */}
               <div className={`ob-question-card ${expandedSection === 1 ? 'expanded' : ''} ${(purpose) ? 'completed' : ''}`}>
                 <div className="ob-question-header" onClick={() => setExpandedSection(expandedSection === 1 ? null : 1)}>
@@ -563,7 +563,7 @@ const OnboardingFlowPage = () => {
                     <div className="ob-form-group ob-flow-form-group margin-b-20">
                       <label>Business purpose <span className="required">*</span></label>
                       <div className="ob-sublabel">One line — what you do and for whom.</div>
-                      <textarea 
+                      <textarea
                         value={purpose}
                         onChange={(e) => setPurpose(e.target.value)}
                         placeholder="e.g. We make premium ice cream sold through grocery and convenience channels in the US."
@@ -573,7 +573,7 @@ const OnboardingFlowPage = () => {
                     <div className="ob-form-group">
                       <label>Description <span className="optional">(optional)</span></label>
                       <div className="ob-sublabel">Operations, goals, unique value — anything that gives Trax a fuller picture.</div>
-                      <textarea 
+                      <textarea
                         value={description}
                         onChange={(e) => setDescription(e.target.value)}
                         placeholder="What sets this business apart? Where is it headed?"
@@ -602,8 +602,8 @@ const OnboardingFlowPage = () => {
                     <div className="ob-flow-row">
                       <div className="ob-form-group ob-flow-col">
                         <label>Country <span className="required">*</span></label>
-                        <input 
-                          type="text" 
+                        <input
+                          type="text"
                           value={country}
                           onChange={(e) => setCountry(e.target.value)}
                           placeholder="e.g. United States"
@@ -611,8 +611,8 @@ const OnboardingFlowPage = () => {
                       </div>
                       <div className="ob-form-group ob-flow-col">
                         <label>City <span className="optional">(optional)</span></label>
-                        <input 
-                          type="text" 
+                        <input
+                          type="text"
                           value={city}
                           onChange={(e) => setCity(e.target.value)}
                           placeholder="e.g. Austin"
@@ -640,8 +640,8 @@ const OnboardingFlowPage = () => {
                     <div className="ob-sublabel ob-flow-sublabel-mb">Helps Trax map competitors, regulatory frameworks, and industry-specific dynamics.</div>
                     <div className="ob-form-group">
                       <label>Primary industry <span className="required">*</span></label>
-                      <input 
-                        type="text" 
+                      <input
+                        type="text"
                         value={primaryIndustry}
                         onChange={(e) => setPrimaryIndustry(e.target.value)}
                         placeholder="e.g. Food & Beverage"
@@ -666,7 +666,7 @@ const OnboardingFlowPage = () => {
                 {expandedSection === 4 && (
                   <div className="ob-question-body">
                     <div className="ob-sublabel ob-flow-sublabel-mb-24">The base of the business — where you sell, to whom, and what you offer. Trax uses this to ground every recommendation.</div>
-                    
+
                     <div className="ob-form-group ob-flow-form-group">
                       <label className="ob-flow-label-lg">Geographies (max 3)</label>
                       <div className="ob-sublabel ob-flow-sublabel-sm">e.g., United States, LATAM, Southeast Asia</div>
@@ -735,20 +735,20 @@ const OnboardingFlowPage = () => {
                         return (
                           <div key={key} className={`ob-flow-checkbox-wrapper ${isSelected ? 'selected' : ''}`} style={{ opacity: isFaded ? 0.4 : 1, pointerEvents: isFaded ? 'none' : 'auto' }}>
                             <label className="ob-flow-checkbox-label-container m-0">
-                              <input 
-                                type="checkbox" 
+                              <input
+                                type="checkbox"
                                 className="ob-flow-checkbox-input"
-                                checked={competeOptions[key]} 
-                                onChange={() => handleCompeteToggle(key)} 
+                                checked={competeOptions[key]}
+                                onChange={() => handleCompeteToggle(key)}
                               />
                               <span className="ob-flow-checkbox-label">{label}</span>
                             </label>
                             {key === 'other' && competeOptions.other && (
                               <div className="ob-flow-other-input-container">
-                                <input 
-                                  type="text" 
-                                  className="ob-flow-other-input" 
-                                  placeholder="Please specify" 
+                                <input
+                                  type="text"
+                                  className="ob-flow-other-input"
+                                  placeholder="Please specify"
                                   value={otherCompeteValue}
                                   onChange={(e) => setOtherCompeteValue(e.target.value)}
                                   required={selectedCount === 1}
@@ -765,29 +765,29 @@ const OnboardingFlowPage = () => {
 
             </div>
 
-              <div className="ob-flow-submit-section">
-                <button 
-                  className="ob-generate-btn ob-flow-generate-btn" 
-                  onClick={handleGenerateInsights}
-                  style={{ opacity: isSubmitting ? 0.7 : 1 }}
-                  disabled={isSubmitting || answeredCount < 5}
-                >
-                  {isSubmitting ? (
-                    <span style={{ display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'center', width: '100%' }}>
-                      Generating
-                      <div className="typing-indicator" style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
-                        <span style={{ width: '4px', height: '4px', backgroundColor: '#94a3b8', borderRadius: '50%', animation: 'blink 1.4s infinite both', animationDelay: '0s' }}></span>
-                        <span style={{ width: '4px', height: '4px', backgroundColor: '#94a3b8', borderRadius: '50%', animation: 'blink 1.4s infinite both', animationDelay: '0.2s' }}></span>
-                        <span style={{ width: '4px', height: '4px', backgroundColor: '#94a3b8', borderRadius: '50%', animation: 'blink 1.4s infinite both', animationDelay: '0.4s' }}></span>
-                      </div>
-                    </span>
-                  ) : (
-                    <>Generate Insights <ArrowRight size={18} /></>
-                  )}
-                </button>
-                <p className="ob-flow-generate-subtext">Answer every question to generate your strategy draft.</p>
-              </div>
-            
+            <div className="ob-flow-submit-section">
+              <button
+                className="ob-generate-btn ob-flow-generate-btn"
+                onClick={handleGenerateInsights}
+                style={{ opacity: isSubmitting ? 0.7 : 1 }}
+                disabled={isSubmitting || answeredCount < 5}
+              >
+                {isSubmitting ? (
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'center', width: '100%' }}>
+                    Generating
+                    <div className="typing-indicator" style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+                      <span style={{ width: '4px', height: '4px', backgroundColor: '#94a3b8', borderRadius: '50%', animation: 'blink 1.4s infinite both', animationDelay: '0s' }}></span>
+                      <span style={{ width: '4px', height: '4px', backgroundColor: '#94a3b8', borderRadius: '50%', animation: 'blink 1.4s infinite both', animationDelay: '0.2s' }}></span>
+                      <span style={{ width: '4px', height: '4px', backgroundColor: '#94a3b8', borderRadius: '50%', animation: 'blink 1.4s infinite both', animationDelay: '0.4s' }}></span>
+                    </div>
+                  </span>
+                ) : (
+                  <>Generate Insights <ArrowRight size={18} /></>
+                )}
+              </button>
+              <p className="ob-flow-generate-subtext">Answer every question to generate your strategy draft.</p>
+            </div>
+
           </div>
         </div>
       </div>

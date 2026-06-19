@@ -297,7 +297,7 @@ const Aiassistant = ({ businessId: propBusinessId, projectId, pageContext, isDis
 
   return (
     <>
-      {}
+      { }
       <button
         className={`ai-fab${open ? " ai-fab--hidden" : ""}`}
         onClick={() => !isDisabled && setOpen(true)}
@@ -309,12 +309,12 @@ const Aiassistant = ({ businessId: propBusinessId, projectId, pageContext, isDis
         <span className="ai-fab-dot-orange">!</span>
       </button>
 
-      {}
+      { }
       {open && <div className="ai-backdrop" onClick={() => setOpen(false)} />}
 
-      {}
+      { }
       <div className={`ai-panel ${open ? "ai-panel--open" : ""}`}>
-        {}
+        { }
         <div className="ai-header">
           <div className="ai-header__left">
             <div className="ai-header__icon">
@@ -340,7 +340,7 @@ const Aiassistant = ({ businessId: propBusinessId, projectId, pageContext, isDis
           </div>
         </div>
 
-        {}
+        { }
         <div className="ai-messages">
           {messages.map((m, idx) => {
             const isPushback = m.text.includes('PUSHBACK');
@@ -381,19 +381,18 @@ const Aiassistant = ({ businessId: propBusinessId, projectId, pageContext, isDis
           <div ref={chatEndRef} />
         </div>
 
-        {}
-        <div className="ai-suggestions">
-          <p className="ai-suggestions__label">Suggestions</p>
-          <div className="ai-suggestions__list">
-            {suggestedQuestions.map((q, i) => (
-              <button key={i} className="ai-suggestion-chip" onClick={() => handleSend(q)}>
-                {q}
-              </button>
-            ))}
+        {messages.length === 1 && (
+          <div className="ai-suggestions">
+            <p className="ai-suggestions__label">Try asking</p>
+            <div className="ai-suggestions__list">
+              {suggestedQuestions.map((q, i) => (
+                <button key={i} className="ai-suggestion-chip" onClick={() => handleSend(q)}>
+                  {q}
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
-
-        {}
+        )}
         <div className="ai-input-row">
           {quotaStatus.exceeded ? (
             <div className="ai-limit-reached">
@@ -423,7 +422,7 @@ const Aiassistant = ({ businessId: propBusinessId, projectId, pageContext, isDis
         </div>
       </div>
 
-      {}
+      { }
       {showClearConfirm && (
         <div className="ai-modal-overlay">
           <div className="ai-modal">
