@@ -194,7 +194,7 @@ export const useProjectForm = () => {
     const hasTooManyConsecutiveSpecial = (val) => /[^A-Za-z0-9\s]{5,}/.test(val);
 
     const validateField = (val, fieldKey, options = {}) => {
-      const { minLength = 3, label = "Field", required = false, skipStrict = false } = options;
+      const { label = "Field", required = false, skipStrict = false } = options;
       const trimmed = (val || "").trim();
 
       const isActuallyRequired = required && (!skipStrictRequired || fieldKey === "projectName");
@@ -202,9 +202,7 @@ export const useProjectForm = () => {
       if (isActuallyRequired && isEmpty(trimmed)) {
         newErrors[fieldKey] = t(`${label} is required`);
       } else if (!isEmpty(trimmed)) {
-        if (trimmed.length < minLength) {
-          newErrors[fieldKey] = t(`${label} must be at least ${minLength} characters`);
-        } else if (!hasLetter(trimmed)) {
+        if (!hasLetter(trimmed)) {
           newErrors[fieldKey] = t(`${label} must contain at least one letter`);
         } else if (!skipStrict && hasTooManyConsecutiveNumbers(trimmed)) {
           newErrors[fieldKey] = t("Too many consecutive numbers are not allowed");
@@ -215,22 +213,22 @@ export const useProjectForm = () => {
     };
 
     if (isNew) {
-      validateField(projectName, "projectName", { label: "Project name", minLength: 3, required: true });
+      validateField(projectName, "projectName", { label: "Project name", required: true });
     }
-    validateField(description, "description", { label: "Description", minLength: 10, required: true });
-    validateField(importance, "importance", { label: "Why This Matters", minLength: 10, required: true });
+    validateField(description, "description", { label: "Description", required: true });
+    validateField(importance, "importance", { label: "Why This Matters", required: true });
     // removed strategicDecision validation
-    validateField(accountableOwner, "accountableOwner", { label: "Accountable Owner", minLength: 2, required: true, skipStrict: true });
-    validateField(successCriteria, "successCriteria", { label: "Success criteria", minLength: 10, required: true });
-    validateField(killCriteria, "killCriteria", { label: "Kill criteria", minLength: 10, required: true });
-    validateField(dependencies, "dependencies", { label: "Dependencies", minLength: 10, required: false });
-    validateField(highLevelReq, "highLevelReq", { label: "Constraints / Non-Negotiables", minLength: 10, required: false });
-    validateField(scope, "scope", { label: "Explicitly Out of Scope", minLength: 10, required: false });
-    validateField(outcome, "outcome", { label: "Expected Outcome", minLength: 10, required: false });
-    validateField(successMetrics, "successMetrics", { label: "Success Metrics (KPIs)", minLength: 10, required: false });
+    validateField(accountableOwner, "accountableOwner", { label: "Accountable Owner", required: true, skipStrict: true });
+    validateField(successCriteria, "successCriteria", { label: "Success criteria", required: true });
+    validateField(killCriteria, "killCriteria", { label: "Kill criteria", required: true });
+    validateField(dependencies, "dependencies", { label: "Dependencies", required: false });
+    validateField(highLevelReq, "highLevelReq", { label: "Constraints / Non-Negotiables", required: false });
+    validateField(scope, "scope", { label: "Explicitly Out of Scope", required: false });
+    validateField(outcome, "outcome", { label: "Expected Outcome", required: false });
+    validateField(successMetrics, "successMetrics", { label: "Success Metrics (KPIs)", required: false });
     keyAssumptions.forEach((assumption, index) => {
       if (assumption && assumption.trim().length > 0) {
-        validateField(assumption, `keyAssumptions_${index}`, { label: `${t("Assumption")} ${index + 1}`, minLength: 10 });
+        validateField(assumption, `keyAssumptions_${index}`, { label: `${t("Assumption")} ${index + 1}` });
       }
     });
 

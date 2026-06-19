@@ -101,8 +101,22 @@ export const computePageCount = async (file) => {
     if (ext === 'pdf') {
       const buf  = await file.arrayBuffer();
       const text = new TextDecoder('latin1').decode(buf);
-      const matches = text.match(/\/Type\s*\/Page[^s]/g);
-      const count   = matches ? matches.length : 0;
+
+      // Primary: find the largest /Count N in the PDF (root Pages tree node holds total count)
+      // This works even when page objects are inside compressed cross-reference streams
+      let countFromCount = 0;
+      const countRegex = /\/Count\s+(\d+)/g;
+      let m;
+      while ((m = countRegex.exec(text)) !== null) {
+        const val = parseInt(m[1], 10);
+        if (val > countFromCount && val < 100000) countFromCount = val;
+      }
+
+      // Fallback: count individual /Type /Page dictionary occurrences (uncompressed PDFs)
+      const pageMatches = text.match(/\/Type\s*\/Page[^s]/g);
+      const countFromType = pageMatches ? pageMatches.length : 0;
+
+      const count = countFromCount || countFromType;
       return count > 0 ? { count, unit: count === 1 ? 'page' : 'pages' } : null;
     }
 
@@ -121,33 +135,68 @@ export const computePageCount = async (file) => {
       }
 
       if (ext === 'docx' || ext === 'doc') {
-        let count = 0;
-        const xml = await readZipEntry(bytes, 'docProps/app.xml');
-        if (xml) {
-          const match = xml.match(/<[^>:]*:?Pages[^>]*>\s*(\d+)\s*<\/[^>:]*:?Pages>/i);
-          if (match) count = parseInt(match[1], 10);
+        // Step 1: read page count from app.xml metadata (can be stale if doc not re-saved)
+        let metaCount = 0;
+        const appXml = await readZipEntry(bytes, 'docProps/app.xml');
+        if (appXml) {
+          const match = appXml.match(/<[^>:]*:?Pages[^>]*>\s*(\d+)\s*<\/[^>:]*:?Pages>/i);
+          if (match) metaCount = parseInt(match[1], 10);
         }
-        
-        // If count is 1 (often inaccurate) or 0, fallback to precise rendering markers or word count estimation
-        if (count <= 1 && ext === 'docx') {
+
+        // Step 2: for .docx, always scan word/document.xml for Word's own page-break markers
+        // These are inserted by Word's layout engine and are the most reliable page count source
+        let docCount = 0;
+        if (ext === 'docx') {
           const docXml = await readZipEntry(bytes, 'word/document.xml');
           if (docXml) {
             const renderedBreaks = (docXml.match(/<w:lastRenderedPageBreak/g) || []).length;
             if (renderedBreaks > 0) {
-              count = renderedBreaks + 1;
-            } else {
+              // Each break represents the END of a page, so total pages = breaks + 1
+              docCount = renderedBreaks + 1;
+            } else if (metaCount === 0) {
+              // No breaks and no metadata — last resort: estimate from word count
+              // (Only triggered when we have zero information, avoids inflating real 1-page docs)
               const textContent = docXml.replace(/<[^>]+>/g, ' ');
               const words = textContent.split(/\s+/).filter(w => w.length > 0).length;
-              if (words > 250) {
-                count = Math.max(1, Math.ceil(words / 250));
+              if (words > 0) {
+                docCount = Math.max(1, Math.ceil(words / 350));
               }
             }
           }
         }
-        
+
+        // Take the best (highest reliable) count we found
+        const count = Math.max(metaCount, docCount);
         return count > 0 ? { count, unit: count === 1 ? 'page' : 'pages' } : null;
       }
     }
+
+    // ── CSV: count data rows (lines minus the header row) ──────────────────────
+    if (ext === 'csv') {
+      const text  = await file.text();
+      const lines = text.split(/\r?\n/).filter(l => l.trim().length > 0);
+      const rows  = Math.max(0, lines.length - 1); // subtract header row
+      return rows > 0 ? { count: rows, unit: rows === 1 ? 'row' : 'rows' } : null;
+    }
+
+    // ── Plain text / RTF: estimate pages from word count ───────────────────────
+    if (ext === 'txt' || ext === 'rtf') {
+      const raw  = await file.text();
+      // For RTF strip control words so we count only real words
+      const text = ext === 'rtf'
+        ? raw.replace(/\\\w+\s?/g, ' ').replace(/[{}]/g, ' ')
+        : raw;
+      const words = text.split(/\s+/).filter(w => w.length > 0).length;
+      if (words === 0) return null;
+      const count = Math.max(1, Math.ceil(words / 350));
+      return { count, unit: count === 1 ? 'page' : 'pages' };
+    }
+
+    // ── Images: always 1 page ─────────────────────────────────────────────────
+    if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'svg'].includes(ext)) {
+      return { count: 1, unit: 'image' };
+    }
+
   } catch (_) {
     // Silently fall back
   }

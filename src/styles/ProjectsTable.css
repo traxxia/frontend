@@ -76,11 +76,12 @@
 }
 
 .premium-table th {
-  background-color: #ffffff;
+  background-color: #f8f9fe;
   padding: 16px 12px;
   text-align: left;
   font-size: 11px;
-  font-weight: 700;
+  font-family: 'Geist Mono', ui-monospace, monospace;
+  font-weight: 600;
   color: var(--color-text-muted, #a0aec0);
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -92,9 +93,17 @@
   padding-left: 32px;
 }
 
+.premium-table th:first-child {
+  border-top-left-radius: 8px;
+}
+
 .premium-table th:last-child,
 .premium-table td:last-child {
   padding-right: 32px;
+}
+
+.premium-table th:last-child {
+  border-top-right-radius: 8px;
 }
 
 .premium-table td {
@@ -110,7 +119,7 @@
 }
 
 .premium-table tr:hover td {
-  background-color: var(--color-bg-hover, #fcfdfe);
+  background-color: #f8f9fe;
 }
 
 
@@ -140,7 +149,7 @@
   display: inline-flex;
   align-items: center;
   padding: 4px 12px;
-  border-radius: 20px;
+  border-radius: 5px;
   font-size: 11px;
   font-weight: 700;
   text-transform: uppercase;
@@ -312,6 +321,21 @@
   background-color: #0a5f9e !important;
   border-color: #0a5f9e !important;
 }
+.actions-open-btn {
+  background-color: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  color: #4b5563 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  font-size: 13px !important;
+  white-space: nowrap !important;
+  gap: 4px;
+}
+
+.actions-open-btn:hover {
+  background-color: #f8fafc !important;
+  border-color: #cbd5e1 !important;
+}
 
 .text-cadence-blue {
   color: #0c71b9 !important;
@@ -474,6 +498,7 @@
 }
 
 @media (max-width: 768px) {
+
   .premium-table th,
   .premium-table td {
     padding: 12px 10px;
@@ -523,9 +548,9 @@
 }
 
 .bet-name-text {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--color-text-primary, #1e293b);
+  font-weight: 500;
+  max-width: 360px;
+  color: #111827;
   line-height: 1.4;
 }
 
@@ -557,4 +582,3 @@
 .footer-status-premium svg {
   flex-shrink: 0;
 }
-

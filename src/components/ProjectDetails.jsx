@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { Breadcrumb } from "react-bootstrap";
 import { useTranslation } from "../hooks/useTranslation";
-import { Circle, Diamond, Rocket, Bolt, Lightbulb, Heart, Shield, Boxes, Clock, ArrowLeft, Edit3, AlertTriangle, XCircle, CheckCircle, Edit2, Info, Zap, TrendingUp, Lock, DollarSign } from "lucide-react";
+import { ChevronLeft, Circle, Diamond, Rocket, Bolt, Lightbulb, Heart, Shield, Boxes, Clock, ArrowLeft, Edit3, AlertTriangle, XCircle, CheckCircle, Edit2, Info, Zap, TrendingUp, Lock, DollarSign } from "lucide-react";
 import "../styles/ProjectDetails.css";
 const getImpactIcon = impact => {
   const normalizedImpact = !impact ? "" : impact.charAt(0).toUpperCase() + impact.slice(1).toLowerCase();
@@ -69,6 +69,7 @@ const getThemeIcon = theme => {
 };
 const ProjectDetails = ({
   project,
+  sNo,
   onBack,
   onEdit,
   onPerformReview,
@@ -137,39 +138,62 @@ const ProjectDetails = ({
             </div>;
   }
   return <div className="project-details-container">
-            {}
-            <div className="projects-breadcrumb" ref={breadcrumbRef}>
-
-                <Breadcrumb>
-                    <Breadcrumb.Item onClick={onBack} className="project-details--s2">
-                        {t("Projects")}
-                    </Breadcrumb.Item>
-                    <Breadcrumb.Item active>{project.project_name}</Breadcrumb.Item>
-                </Breadcrumb>
-            </div>
-
-            {terminalStatusInfo?.isTerminal && <div className="terminal-status-banner project-details--s3">
-                    <Info size={18} color="#2563eb" className="project-details--s4" />
-                    <div className="project-details--s5">
-                        <span className="project-details--s6">{terminalStatusInfo.message}</span>
-                        {terminalStatusInfo.justification && <>
-                                <span className="project-details--s7">•</span>
-                                <span className="project-details--s8">
-                                    "{terminalStatusInfo.justification || t("No_justification_provided")}"
-                                </span>
-                            </>}
-                    </div>
-                </div>}
-
-            {}
-            <div className="details-header mb-4">
-                <h1 className="details-title">{project.project_name}</h1>
-                <div className="details-actions">
-                    {canEdit && !["completed", "scaled", "killed"].includes(project.status?.toLowerCase()) && <button className="btn-edit" onClick={() => onEdit(project)}>
-                            <Edit2 size={16} /> {t("Edit")}
-                        </button>}
+      <div className="project-custom-header-wrapper" ref={breadcrumbRef}>
+        <div className="d-flex justify-content-between align-items-center mb-4 pb-2">
+          <button type="button" className="d-flex align-items-center gap-2" onClick={onBack} style={{ border: '1px solid #0c71b9', color: '#0c71b9', fontSize: '13px', fontWeight: '600', padding: '6px 14px', borderRadius: '8px', backgroundColor: '#ffffff', cursor: 'pointer' }}>
+            <ChevronLeft size={14} strokeWidth={2.5} /> Back to Bets
+          </button>
+          
+          {(() => {
+            const getBadgeStyle = (status) => {
+              const s = (status || "draft").toLowerCase();
+              switch (s) {
+                case "active": return { bg: "#dcfce7", text: "#15803d", border: "#bbf7d0" };
+                case "at risk":
+                case "at_risk": return { bg: "#ffedd5", text: "#c2410c", border: "#fed7aa" };
+                case "paused": return { bg: "#fef3c7", text: "#b45309", border: "#fde68a" };
+                case "killed": return { bg: "#fee2e2", text: "#b91c1c", border: "#fecaca" };
+                case "completed": return { bg: "#dbeafe", text: "#1d4ed8", border: "#bfdbfe" };
+                case "scaled": return { bg: "#f3e8ff", text: "#7e22ce", border: "#e9d5ff" };
+                default: return { bg: "#f8fafc", text: "#64748b", border: "#e2e8f0" };
+              }
+            };
+            const initialStatusLower = (project.status || "draft").toLowerCase();
+            const badgeStyle = getBadgeStyle(initialStatusLower);
+            return (
+              <div className="d-flex align-items-center gap-2">
+                <div style={{ border: `1px solid ${badgeStyle.border}`, color: badgeStyle.text, fontSize: '12px', fontWeight: '700', padding: '6px 12px', borderRadius: '4px', backgroundColor: badgeStyle.bg, letterSpacing: '0.5px', display: 'flex', alignItems: 'center', justifyContent: 'center', textTransform: 'uppercase' }}>
+                  {initialStatusLower || "draft"}
                 </div>
+                {canEdit && !["completed", "scaled", "killed"].includes(initialStatusLower) && (
+                  <button type="button" className="btn-edit d-flex align-items-center gap-2" onClick={() => onEdit(project)} style={{ backgroundColor: '#0c71b9', color: '#ffffff', border: 'none', borderRadius: '6px', fontSize: '13px', fontWeight: '600', padding: '6px 16px', cursor: 'pointer' }}>
+                    <Edit2 size={14} strokeWidth={2.5} /> {t("Edit")}
+                  </button>
+                )}
+              </div>
+            );
+          })()}
+        </div>
+
+        <div className="project-custom-header">
+          <div className="project-custom-header-top">
+            <span className="project-custom-header-bet">BET {sNo ? `#${sNo}` : '#NEW'}</span>
+          </div>
+          <div className="project-custom-header-title-row">
+            <h1 className="project-custom-header-title">{project.project_name || "New Bet"}</h1>
+          </div>
+          <div className="project-custom-header-meta">
+            <div className="meta-item">
+              <span className="meta-label">DECIDER</span>
+              <span className="meta-value text-dark fw-bold">{project.accountable_owner || project.created_by || "Not assigned"}</span>
             </div>
+            <div className="meta-item">
+              <span className="meta-label">CADENCE</span>
+              <span className="meta-value text-dark fw-bold">{project.review_cadence || "Not set"}</span>
+            </div>
+          </div>
+        </div>
+      </div>
 
             {}
             <div className="form-card">

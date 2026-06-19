@@ -1,6 +1,6 @@
 import React from "react";
 import { Dropdown, OverlayTrigger } from "react-bootstrap";
-import { ChevronDown, Info, AlertTriangle, Clock, Eye, Edit2, Trash2, CheckCircle } from "lucide-react";
+import { ChevronDown, ChevronRight, Info, AlertTriangle, Clock, Eye, Edit2, Trash2, CheckCircle } from "lucide-react";
 import { useTranslation } from "../hooks/useTranslation";
 import ReviewCadencesModal from "./ReviewCadencesModal";
 import AssignDeciderModal from "./AssignDeciderModal";
@@ -203,13 +203,25 @@ const ProjectsTable = ({
               )}
             </td>
             <td className="text-end">
-              <button
-                className="btn btn-primary btn-sm rounded px-3 fw-bold actions-setup-btn"
-                style={{ fontSize: '13px', border: 'none', whiteSpace: 'nowrap' }}
-                onClick={() => isTerminal ? onView(project) : (canEditProject && canEditProject(project) ? onEdit(project) : onView(project))}
-              >
-                {t("Set up")}
-              </button>
+              {(() => {
+                const isDraft = !project.status || project.status.toLowerCase() === "draft";
+                return isDraft ? (
+                  <button
+                    className="btn btn-primary btn-sm rounded px-3 fw-bold actions-setup-btn"
+                    style={{ fontSize: '13px', border: 'none', whiteSpace: 'nowrap' }}
+                    onClick={() => isTerminal ? onView(project) : (canEditProject && canEditProject(project) ? onEdit(project) : onView(project))}
+                  >
+                    {t("Set up")}
+                  </button>
+                ) : (
+                  <button
+                    className="btn btn-sm rounded px-3 fw-bold actions-open-btn"
+                    onClick={() => isTerminal ? onView(project) : (canEditProject && canEditProject(project) ? onEdit(project) : onView(project))}
+                  >
+                    {t("Open")} <ChevronRight size={14} className="text-muted" style={{ marginLeft: '2px' }} />
+                  </button>
+                );
+              })()}
             </td>
           </tr>;
         })}
