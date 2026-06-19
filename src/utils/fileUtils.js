@@ -1,9 +1,9 @@
 export const formatFileSize = (bytes) => {
   if (bytes === 0) return '0 Bytes';
-  const k = 1024;
-  const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+  if (bytes < 1024) return bytes + ' Bytes';
+  // Match Windows Explorer: always show KB with comma-separated thousands (e.g. 1,395 KB)
+  if (bytes < 1024 * 1024 * 1024) return Math.ceil(bytes / 1024).toLocaleString() + ' KB';
+  return parseFloat((bytes / (1024 * 1024 * 1024)).toFixed(1)) + ' GB';
 };
 
 export const fileKey = (file) => `${file.name}__${file.size}`;
@@ -102,8 +102,24 @@ export const computePageCount = async (file) => {
       const buf  = await file.arrayBuffer();
       const text = new TextDecoder('latin1').decode(buf);
 
-      // Primary: find the largest /Count N in the PDF (root Pages tree node holds total count)
-      // This works even when page objects are inside compressed cross-reference streams
+      // Strategy 1: XMP metadata — uncompressed, reliable even in compressed PDFs
+      // e.g. <xmpTPg:NPages>23</xmpTPg:NPages>
+      const xmpMatch = text.match(/<[^>]*:?NPages[^>]*>\s*(\d+)\s*<\/[^>]*:?NPages>/i)
+                    || text.match(/xmpTPg:NPages[^>]*>(\d+)/i);
+      if (xmpMatch) {
+        const count = parseInt(xmpMatch[1], 10);
+        if (count > 0) return { count, unit: count === 1 ? 'page' : 'pages' };
+      }
+
+      // Strategy 2: Linearized PDF hint — /N gives total page count in the hint dict
+      // e.g. /Linearized 1 ... /N 23
+      const linearMatch = text.match(/\/Linearized\s+[\d.]+[^>]*\/N\s+(\d+)/);
+      if (linearMatch) {
+        const count = parseInt(linearMatch[1], 10);
+        if (count > 0) return { count, unit: count === 1 ? 'page' : 'pages' };
+      }
+
+      // Strategy 3: Largest /Count N in the body (root Pages tree node)
       let countFromCount = 0;
       const countRegex = /\/Count\s+(\d+)/g;
       let m;
@@ -111,13 +127,14 @@ export const computePageCount = async (file) => {
         const val = parseInt(m[1], 10);
         if (val > countFromCount && val < 100000) countFromCount = val;
       }
+      if (countFromCount > 0) return { count: countFromCount, unit: countFromCount === 1 ? 'page' : 'pages' };
 
-      // Fallback: count individual /Type /Page dictionary occurrences (uncompressed PDFs)
+      // Strategy 4: Count /Type /Page occurrences (uncompressed PDFs only)
       const pageMatches = text.match(/\/Type\s*\/Page[^s]/g);
       const countFromType = pageMatches ? pageMatches.length : 0;
+      if (countFromType > 0) return { count: countFromType, unit: countFromType === 1 ? 'page' : 'pages' };
 
-      const count = countFromCount || countFromType;
-      return count > 0 ? { count, unit: count === 1 ? 'page' : 'pages' } : null;
+      return null;
     }
 
     if (['pptx', 'ppt', 'xlsx', 'xls', 'docx', 'doc'].includes(ext)) {
@@ -125,13 +142,55 @@ export const computePageCount = async (file) => {
       const bytes = new Uint8Array(buf);
 
       if (ext === 'pptx' || ext === 'ppt') {
-        const count = countZipFilesByPrefix(bytes, 'ppt/slides/slide');
-        return count > 0 ? { count, unit: count === 1 ? 'slide' : 'slides' } : null;
+        // Primary: count ppt/slides/slide*.xml files in ZIP central directory
+        const zipCount = countZipFilesByPrefix(bytes, 'ppt/slides/slide');
+        if (zipCount > 0) return { count: zipCount, unit: zipCount === 1 ? 'slide' : 'slides' };
+
+        // Fallback: read ppt/presentation.xml and count <p:sldId entries
+        const presXml = await readZipEntry(bytes, 'ppt/presentation.xml');
+        if (presXml) {
+          const slideMatches = presXml.match(/<p:sldId\b/gi);
+          if (slideMatches && slideMatches.length > 0) {
+            const count = slideMatches.length;
+            return { count, unit: count === 1 ? 'slide' : 'slides' };
+          }
+        }
+        return null;
       }
 
       if (ext === 'xlsx' || ext === 'xls') {
-        const count = countZipFilesByPrefix(bytes, 'xl/worksheets/sheet');
-        return count > 0 ? { count, unit: count === 1 ? 'sheet' : 'sheets' } : null;
+        console.log('[fileUtils] xlsx detected, size=', bytes.length, 'file=', file.name);
+
+        // Primary: count xl/worksheets/sheet*.xml files in ZIP central directory
+        const zipCount = countZipFilesByPrefix(bytes, 'xl/worksheets/sheet');
+        console.log('[fileUtils] zipCount (xl/worksheets/sheet)=', zipCount);
+
+        if (zipCount > 0) return { count: zipCount, unit: zipCount === 1 ? 'sheet' : 'sheets' };
+
+        // Fallback: read xl/workbook.xml and count <sheet elements
+        const workbookXml = await readZipEntry(bytes, 'xl/workbook.xml');
+        console.log('[fileUtils] workbookXml found=', !!workbookXml, workbookXml ? workbookXml.substring(0, 300) : '');
+        if (workbookXml) {
+          const sheetMatches = workbookXml.match(/<sheet\b/gi);
+          console.log('[fileUtils] sheetMatches=', sheetMatches);
+          if (sheetMatches && sheetMatches.length > 0) {
+            const count = sheetMatches.length;
+            return { count, unit: count === 1 ? 'sheet' : 'sheets' };
+          }
+        }
+
+        // Last resort: scan raw bytes for sheet XML entry names
+        const decoder = new TextDecoder('latin1');
+        const raw = decoder.decode(bytes);
+        const sheetFileMatches = raw.match(/xl\/worksheets\/sheet\d+\.xml/g);
+        console.log('[fileUtils] raw scan sheet files=', sheetFileMatches);
+        if (sheetFileMatches) {
+          const unique = new Set(sheetFileMatches);
+          const count = unique.size;
+          if (count > 0) return { count, unit: count === 1 ? 'sheet' : 'sheets' };
+        }
+
+        return null;
       }
 
       if (ext === 'docx' || ext === 'doc') {

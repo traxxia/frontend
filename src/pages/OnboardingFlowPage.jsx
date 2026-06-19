@@ -461,14 +461,26 @@ const OnboardingFlowPage = () => {
                   <div className="bubble-avatar">TX</div>
                   <div className="bubble-content">
                     <div style={{ marginBottom: '8px' }}>I've received your documents and gone through them.</div>
-                    {location.state.uploadedFiles.map((fileName, idx) => (
-                      <div key={idx} style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', marginTop: '6px', color: '#0f172a', fontWeight: '500', fontSize: '13px', width: '100%' }}>
-                        <File size={16} color="#3b82f6" style={{ flexShrink: 0, marginTop: '2px' }} />
-                        <span style={{ overflowWrap: 'anywhere', wordBreak: 'break-word' }}>
-                          {fileName}
-                        </span>
-                      </div>
-                    ))}
+                    {location.state.uploadedFiles.map((fileObj, idx) => {
+                      const isString = typeof fileObj === 'string';
+                      const fileName = isString ? fileObj : fileObj.name;
+                      const fileMeta = isString ? null : fileObj.meta;
+                      return (
+                        <div key={idx} style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', marginTop: '6px', color: '#0f172a', fontWeight: '500', fontSize: '13px', width: '100%' }}>
+                          <File size={16} color="#3b82f6" style={{ flexShrink: 0, marginTop: '2px' }} />
+                          <div style={{ display: 'flex', flexDirection: 'column' }}>
+                            <span style={{ overflowWrap: 'anywhere', wordBreak: 'break-word' }}>
+                              {fileName}
+                            </span>
+                            {fileMeta && (
+                              <span style={{ fontSize: '11px', color: '#64748b', marginTop: '2px' }}>
+                                {fileMeta}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               )}
