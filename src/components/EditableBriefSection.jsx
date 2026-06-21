@@ -19,6 +19,7 @@ import { markdownToHtml } from '../utils/markdownHelper';
 import ConfirmationModal from './ConfirmationModal';
 import { formatCurrencyValue } from '../utils/currencyUtils';
 import { computePageCount, getFileDetails } from '../utils/fileUtils';
+import AnalysisContentManager from './AnalysisContentManager';
 
 // Derives the correct unit label from a file extension for already-stored documents
 const getPageUnit = (ext, count) => {
@@ -396,6 +397,7 @@ const EditableBriefSection = ({
   const [uploadedFiles, setUploadedFiles] = useState([]);
   const [isDragActive, setIsDragActive] = useState(false);
   const [activePhaseTab, setActivePhaseTab] = useState('initial');
+  const [financialTabMode, setFinancialTabMode] = useState('data');
   const [leftPanelExpanded, setLeftPanelExpanded] = useState({
     refineAi: true,
     fileUpload: false,
@@ -625,8 +627,24 @@ const EditableBriefSection = ({
         formData.append('files', file, file.name);
       });
 
-      const financialMetrics = await answerService.extractFinancialSummary(formData, businessId);
-      console.log("=== extracted financial metrics ===", financialMetrics);
+      const mlResponse = await answerService.extractFinancialSummary(formData, businessId);
+      console.log("=== extracted ML response ===", mlResponse);
+
+      // ── Normalise ML response: new shape has { timeline: [...], meta }
+      //    Legacy shape is a flat metrics object. Support both.
+      let financialTimeline = null;
+      let financialMetrics  = null;
+
+      if (mlResponse && Array.isArray(mlResponse.timeline) && mlResponse.timeline.length > 0) {
+        // New FinancialTimelineResponse shape
+        financialTimeline = mlResponse.timeline; // full array of period objects
+        // Latest period's derived metrics → backward-compat flat financialMetrics
+        const sortedTimeline = [...financialTimeline].sort((a, b) => a.period.localeCompare(b.period));
+        financialMetrics = sortedTimeline[sortedTimeline.length - 1] || null;
+      } else {
+        // Legacy flat metrics shape
+        financialMetrics = mlResponse;
+      }
 
       setSseLogs(prev => [...prev, {
         timestamp: new Date().toLocaleTimeString(),
@@ -635,7 +653,7 @@ const EditableBriefSection = ({
         type: "progress"
       }]);
 
-      await answerService.saveRawSession(businessId, "completed", financialMetrics);
+      await answerService.saveRawSession(businessId, "completed", financialMetrics, financialTimeline);
 
       setSseLogs(prev => [...prev, {
         timestamp: new Date().toLocaleTimeString(),
@@ -1800,6 +1818,24 @@ const EditableBriefSection = ({
     return merged;
   })();
 
+  const handleTabModeChange = (mode) => {
+    setFinancialTabMode(mode);
+    if (mode === 'analysis') {
+      const state = useAnalysisStore.getState();
+      const hasFinancialAnalysis = state.profitabilityData || state.growthTrackerData || state.liquidityEfficiencyData || state.investmentPerformanceData || state.leverageRiskData;
+      const hasMetrics = !!docIntelSession?.financialMetrics;
+      
+      // Auto-trigger financial generation if not yet generated but data exists
+      if (!hasFinancialAnalysis && hasMetrics && onAnalysisRegenerate) {
+        onAnalysisRegenerate({
+          alsoRegenerateStrategic: false,
+          includeFinancial: true,
+          skipConfirmation: true
+        });
+      }
+    }
+  };
+
   const financialCountStr = (() => {
     if (!displayFinancialMetrics) return "0/0";
     let total = 0;
@@ -2079,12 +2115,31 @@ const EditableBriefSection = ({
           <div className="phase-tab-content-list">
             {/* FINANCIAL DATA (LEDGER VIEW) */}
             {activePhaseTab === 'financial' ? (
-              displayFinancialMetrics ? (
-                <div className="doc-intel-ledger" style={{ marginTop: '0', border: 'none', boxShadow: 'none', background: 'transparent', padding: '10px 0px' }}>
-                  <div className="ledger-category-header" style={{ marginBottom: '15px', color: '#16a34a', borderBottom: '1px solid rgba(0,0,0,0.06)', paddingBottom: '8px' }}>
-                    <Database size={16} />
-                    <span>Extracted Ledger Workspace</span>
+              <>
+                <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '20px' }}>
+                  <div className="custom-toggle-container" style={{ display: 'inline-flex', background: '#f1f5f9', borderRadius: '8px', padding: '4px' }}>
+                    <button 
+                      onClick={() => handleTabModeChange('data')}
+                      style={{ padding: '8px 16px', borderRadius: '6px', border: 'none', background: financialTabMode === 'data' ? 'white' : 'transparent', color: financialTabMode === 'data' ? '#0f172a' : '#64748b', fontWeight: financialTabMode === 'data' ? '600' : '500', boxShadow: financialTabMode === 'data' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none', cursor: 'pointer', transition: 'all 0.2s ease' }}
+                    >
+                      Data
+                    </button>
+                    <button 
+                      onClick={() => handleTabModeChange('analysis')}
+                      style={{ padding: '8px 16px', borderRadius: '6px', border: 'none', background: financialTabMode === 'analysis' ? 'white' : 'transparent', color: financialTabMode === 'analysis' ? '#0f172a' : '#64748b', fontWeight: financialTabMode === 'analysis' ? '600' : '500', boxShadow: financialTabMode === 'analysis' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none', cursor: 'pointer', transition: 'all 0.2s ease' }}
+                    >
+                      Analysis
+                    </button>
                   </div>
+                </div>
+
+                {financialTabMode === 'data' ? (
+                  displayFinancialMetrics ? (
+                    <div className="doc-intel-ledger" style={{ marginTop: '0', border: 'none', boxShadow: 'none', background: 'transparent', padding: '10px 0px' }}>
+                      <div className="ledger-category-header" style={{ marginBottom: '15px', color: '#16a34a', borderBottom: '1px solid rgba(0,0,0,0.06)', paddingBottom: '8px' }}>
+                        <Database size={16} />
+                        <span>Extracted Ledger Workspace</span>
+                      </div>
 
                   {/* Sync ledger button moved to the top */}
                   <div className="sync-ledger-footer" style={{ marginBottom: '20px', marginTop: '5px' }}>
@@ -2300,7 +2355,11 @@ const EditableBriefSection = ({
                   No financial data available.
                 </div>
               )
-            ) : currentTabFields.length === 0 ? (
+            ) : (
+              <AnalysisContentManager singleCategory="costs-financial" selectedBusinessId={selectedBusinessId} />
+            )}
+          </>
+        ) : currentTabFields.length === 0 ? (
               <div className="empty-phase-questions">
                 No questions found for this phase.
               </div>

@@ -225,13 +225,14 @@ export const answerService = {
         }
     },
 
-    async saveRawSession(businessId, status, financialMetrics) {
+    async saveRawSession(businessId, status, financialMetrics, financialTimeline = null) {
         try {
             const response = await axios.post(`${API_BASE_URL}/api/sessions/save-raw`, {
                 businessId,
                 status,
                 strategicAnswers: [],
-                financialMetrics
+                financialMetrics,
+                ...(financialTimeline ? { financialTimeline } : {})
             }, {
                 headers: getAuthHeaders()
             });

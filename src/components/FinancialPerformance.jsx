@@ -128,8 +128,19 @@ const FinancialPerformance = ({
         }
     }, []);
 
-    const quarterlyData = useMemo(() => {
-        return analysisData?.financialPerformance?.quarterlyTrend || [];
+    const timelineData = useMemo(() => {
+        const fp = analysisData?.financialPerformance;
+        if (!fp) return [];
+        if (fp.timelineTrend && fp.timelineTrend.length > 0) {
+            return fp.timelineTrend.map(t => ({
+                label: t.period || t.quarter,
+                revenue: t.revenue || 0
+            }));
+        }
+        return (fp.quarterlyTrend || []).map(t => ({
+            label: t.quarter || t.period,
+            revenue: t.revenue || 0
+        }));
     }, [analysisData]);
 
     const comparisonData = useMemo(() => {
@@ -159,14 +170,14 @@ const FinancialPerformance = ({
         ];
     }, [analysisData]);
 
-    const QuarterlyTooltip = React.memo(({ active, payload, label }) => {
+    const TimelineTooltip = React.memo(({ active, payload, label }) => {
         if (active && payload && payload.length) {
             const value = payload[0].value;
             return (
                 <div className="ch-tooltip">
                     <div className="ch-tooltip-header">{label}</div>
                     <div className="ch-tooltip-content">
-                        <div>Revenue: ${value.toLocaleString()}</div>
+                        <div>Revenue: ${value?.toLocaleString()}</div>
                     </div>
                 </div>
             );
@@ -286,14 +297,14 @@ const FinancialPerformance = ({
 
                         <div className="ch-charts-grid">
                             <div className="ch-chart-section">
-                                <h4>Quarterly Revenue Trend</h4>
+                                <h4>Historical Revenue Trend</h4>
                                 <div className="ch-chart-wrapper">
                                     <ResponsiveContainer width="100%" height={300}>
-                                        <LineChart data={quarterlyData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                                        <LineChart data={timelineData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
                                             <CartesianGrid strokeDasharray="3 3" />
-                                            <XAxis dataKey="quarter" />
+                                            <XAxis dataKey="label" />
                                             <YAxis />
-                                            <Tooltip content={<QuarterlyTooltip />} />
+                                            <Tooltip content={<TimelineTooltip />} />
                                             <Line
                                                 type="monotone"
                                                 dataKey="revenue"

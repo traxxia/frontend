@@ -1,5 +1,6 @@
 import React, { useState, useRef, useCallback, useMemo } from 'react';
-import { TrendingUp, Loader, AlertCircle, Info } from 'lucide-react';
+import { Target, Loader, AlertCircle, Info, TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import { LineChart, Line, ComposedChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import '../styles/goodPhase.css';
 import { useTranslation } from "../hooks/useTranslation";
 import { useAnalysisStore } from "../store";
@@ -90,19 +91,63 @@ const formatPercentageValue = (val) => {
 
 const getNormalizedData = data => {
   if (!data) return null;
-  if (data.growth_trends) return data.growth_trends;
-  if (data.revenue && data.revenue.value !== undefined) return data;
+  // New timeline format: { timeline: [{period, growth_trends: {...}}, ...] }
+  if (data.timeline && Array.isArray(data.timeline) && data.timeline.length > 0) {
+    const sorted = [...data.timeline].sort((a, b) => (a.period || '').localeCompare(b.period || ''));
+    
+    for (let i = sorted.length - 1; i >= 0; i--) {
+      const gt = sorted[i].growth_trends || sorted[i].growth;
+      if (!gt) continue;
+      
+      const hasValid = Object.keys(gt).some(k => {
+        if (k === 'period') return false;
+        const parsed = parseMetric(gt[k]);
+        return parsed.value !== null && parsed.value !== undefined && parsed.value !== '' && !isNaN(parseFloat(parsed.value));
+      });
+      
+      if (hasValid) return gt;
+    }
+    
+    const latest = sorted[sorted.length - 1];
+    return latest?.growth_trends || latest?.growth || null;
+  }
+  if (data.growth) return data.growth;
+  if (data.revenue_growth && data.gross_profit_growth) return data;
   const wrapper = data.growthTracker || data.growth_tracker || data.GrowthTracker;
-  if (wrapper) return wrapper.growth_trends || wrapper;
+  if (wrapper) return wrapper.growth || wrapper;
   return null;
+};
+
+/** Extract multi-period growth trend */
+const getTimelineChartData = data => {
+  if (!data?.timeline || !Array.isArray(data.timeline) || data.timeline.length < 2) return null;
+  const sorted = [...data.timeline].sort((a, b) => (a.period || '').localeCompare(b.period || ''));
+  return sorted.map(p => {
+    const gt = p.growth_trends || p.growth || {};
+    return {
+      period: p.period,
+      revenue_growth: gt.revenue_growth_yoy?.value != null ? +(gt.revenue_growth_yoy.value * 100).toFixed(2) : null,
+      user_growth: gt.user_growth?.value != null ? +(gt.user_growth.value * 100).toFixed(2) : null,
+      revenue: gt.revenue?.value != null ? +(gt.revenue.value / 1e6).toFixed(2) : null,
+      net_margin: gt.net_margin?.value != null ? +(gt.net_margin.value * 100).toFixed(2) : null,
+    };
+  });
+};
+
+/** Trend arrow: compare latest vs previous period metric value */
+const TrendArrow = ({ latest, prev }) => {
+  if (latest == null || prev == null) return null;
+  if (latest > prev) return <TrendingUp size={14} style={{ color: '#10b981', display: 'inline', marginLeft: 4 }} />;
+  if (latest < prev) return <TrendingDown size={14} style={{ color: '#ef4444', display: 'inline', marginLeft: 4 }} />;
+  return <Minus size={14} style={{ color: '#6b7280', display: 'inline', marginLeft: 4 }} />;
 };
 
 const isGrowthDataIncomplete = data => {
   const normalized = getNormalizedData(data);
   if (!normalized) return true;
   
-  // If the three percentage ratios are all empty, treat as incomplete/empty state
-  const ratioMetrics = ['revenue_growth_yoy', 'gross_margin', 'net_margin'];
+  // If the percentage ratios and base revenue are all empty, treat as incomplete/empty state
+  const ratioMetrics = ['revenue_growth_yoy', 'gross_margin', 'net_margin', 'revenue', 'net_income'];
   const hasValidRatio = ratioMetrics.some(key => {
     const parsed = parseMetric(normalized[key]);
     return parsed.value !== null && parsed.value !== undefined && parsed.value !== '' && !isNaN(parseFloat(parsed.value));
@@ -199,7 +244,8 @@ const GrowthTracker = ({
     if (!rawData) return null;
     const normalized = getNormalizedData(rawData);
     return normalized ? {
-      growth_trends: normalized
+      growth: normalized,
+      _raw: rawData
     } : null;
   }, [growthData, growthTrackerData, storeGrowthData]);
 
@@ -350,6 +396,11 @@ const GrowthTracker = ({
       ...chartRows.map(r => Math.abs(r.actualValue) || 0),
       1.0
     );
+
+    // Extract timeline chart data if multiple periods available
+    const timelineData = getTimelineChartData(analysisData._raw || growthData || growthTrackerData || storeGrowthData);
+    const hasTimeline = timelineData && timelineData.length >= 2;
+    const prevPeriodData = hasTimeline ? timelineData[timelineData.length - 2] : null;
 
     return (
       <div className="ch-heatmap-container" style={{ width: '100%' }}>
@@ -585,6 +636,30 @@ const GrowthTracker = ({
         `}} />
         <div className="ch-heatmap-scroll" style={{ padding: '4px', width: '100%' }}>
           
+          {/* Multi-period Growth Line Chart */}
+          {hasTimeline && (
+            <div className="growth-tracker__chart-card" style={{ marginBottom: 16 }}>
+              <div className="growth-tracker__chart-header">
+                <h3 className="growth-tracker__chart-title">
+                  {t('growth_trends', 'Growth Trends — Multi-Period')}
+                </h3>
+              </div>
+              <ResponsiveContainer width="100%" height={280}>
+                <ComposedChart data={timelineData} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                  <XAxis dataKey="period" tick={{ fontSize: 11 }} />
+                  <YAxis yAxisId="left" tickFormatter={v => `$${v}M`} tick={{ fontSize: 11 }} />
+                  <YAxis yAxisId="right" orientation="right" tickFormatter={v => `${v}%`} tick={{ fontSize: 11 }} />
+                  <Tooltip formatter={(v, n) => [v != null ? (n === 'Revenue' ? `$${v}M` : `${v}%`) : '–', n]} />
+                  <Legend wrapperStyle={{ fontSize: 12 }} />
+                  <Bar yAxisId="left" dataKey="revenue" name="Revenue" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+                  <Line yAxisId="right" type="monotone" dataKey="revenue_growth" name="Revenue Growth" stroke="#6366f1" strokeWidth={2} dot={{ r: 4 }} connectNulls={false} />
+                  <Line yAxisId="right" type="monotone" dataKey="net_margin" name="Net Margin" stroke="#10b981" strokeWidth={2} dot={{ r: 4 }} connectNulls={false} />
+                </ComposedChart>
+              </ResponsiveContainer>
+            </div>
+          )}
+
           <div className="growth-tracker__chart-card">
             <div className="growth-tracker__chart-header">
               <h3 className="growth-tracker__chart-title">
@@ -616,6 +691,9 @@ const GrowthTracker = ({
                     )}
                     <span className={`growth-tracker__bar-value growth-tracker__bar-value--actual-${row.colorClass}`}>
                       {row.actualValue !== null ? formatPercentageValue(row.actualValue) : '-'}
+                      {hasTimeline && prevPeriodData && (
+                        <TrendArrow latest={row.actualValue} prev={prevPeriodData[row.key]} />
+                      )}
                     </span>
                   </div>
                 </div>
