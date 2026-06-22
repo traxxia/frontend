@@ -4,6 +4,7 @@ import { useAuthStore } from '../store/authStore';
 import { useTranslation } from '../hooks/useTranslation';
 
 import { useAnalysisStore } from '../store/analysisStore';
+import AiMessageRenderer from './AiMessageRenderer';
 
 const TraxSidebar = ({
   selectedBusinessId,
@@ -211,14 +212,18 @@ const TraxSidebar = ({
           </>
         )}
         {chatMessages.map((msg, idx) => (
-          <div key={idx} className={`onboarding-chat-message ${msg.role === 'user' ? 'user-message' : ''}`}>
-            <div className="bubble-avatar">
-              {msg.role === 'user' ? (userName?.charAt(0) || 'U') : 'TX'}
+            <div key={idx} className={`onboarding-chat-message ${msg.role === 'user' ? 'user-message' : ''}`}>
+              <div className="bubble-avatar">
+                {msg.role === 'user' ? (userName?.charAt(0)?.toUpperCase() || 'U') : 'TX'}
+              </div>
+              <div className="bubble-content">
+                {msg.role === 'trax' || msg.role === 'assistant' ? (
+                  <AiMessageRenderer text={msg.content} role={msg.role} isBare={true} />
+                ) : (
+                  msg.content
+                )}
+              </div>
             </div>
-            <div className="bubble-content">
-              {msg.content}
-            </div>
-          </div>
         ))}
         {isChatLoading && (
           <div className="onboarding-chat-message">
@@ -237,12 +242,26 @@ const TraxSidebar = ({
       {/* Input bar */}
       <div className="onboarding-chat-input-bar">
         <form onSubmit={handleSendMessage} className="onboarding-chat-input-wrapper">
-          <input
-            type="text"
-            className="onboarding-chat-input-field"
+          <textarea
+            className="onboarding-chat-input-field ai-textarea"
             placeholder={t("Type a message to Trax...") || "Type a message to Trax..."}
             value={chatInput}
-            onChange={(e) => setChatInput(e.target.value)}
+            onChange={(e) => {
+              setChatInput(e.target.value);
+              e.target.style.height = 'auto';
+              e.target.style.height = `${Math.min(e.target.scrollHeight, 150)}px`;
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                handleSendMessage(e);
+              }
+            }}
+            rows={1}
+            style={{
+              resize: 'none',
+              overflowY: 'auto'
+            }}
           />
           <button type="submit" className="onboarding-chat-send-btn" aria-label="Send">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
