@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { Activity, Loader, AlertCircle, Info } from 'lucide-react';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ReferenceLine, ResponsiveContainer } from 'recharts';
 import '../styles/goodPhase.css';
 import { useTranslation } from "../hooks/useTranslation";
 import { useAnalysisStore } from "../store";
@@ -83,6 +84,26 @@ const formatCurrencyValue = (val, currency) => {
 
 const getNormalizedData = data => {
   if (!data) return null;
+  // New timeline format: { timeline: [{period, liquidity: {...}}, ...] }
+  if (data.timeline && Array.isArray(data.timeline) && data.timeline.length > 0) {
+    const sorted = [...data.timeline].sort((a, b) => (a.period || '').localeCompare(b.period || ''));
+    
+    for (let i = sorted.length - 1; i >= 0; i--) {
+      const liq = sorted[i].liquidity;
+      if (!liq) continue;
+      
+      const hasValid = Object.keys(liq).some(k => {
+        if (k === 'period') return false;
+        const parsed = parseMetric(liq[k]);
+        return parsed.value !== null && parsed.value !== undefined && parsed.value !== '' && !isNaN(parseFloat(parsed.value));
+      });
+      
+      if (hasValid) return liq;
+    }
+    
+    const latest = sorted[sorted.length - 1];
+    return latest?.liquidity || null;
+  }
   if (data.liquidity) return data.liquidity;
   if (data.current_ratio && data.quick_ratio) return data;
   const wrapper = data.liquidityEfficiency || data.liquidity_efficiency || data.LiquidityEfficiency;
@@ -90,12 +111,25 @@ const getNormalizedData = data => {
   return null;
 };
 
+/** Extract multi-period liquidity trend */
+const getTimelineChartData = data => {
+  if (!data?.timeline || !Array.isArray(data.timeline) || data.timeline.length < 2) return null;
+  const sorted = [...data.timeline].sort((a, b) => (a.period || '').localeCompare(b.period || ''));
+  return sorted.map(p => ({
+    period: p.period,
+    current_ratio: p.liquidity?.current_ratio?.value ?? null,
+    quick_ratio: p.liquidity?.quick_ratio?.value ?? null,
+    cash_and_equivalents: p.liquidity?.cash_and_equivalents?.value != null
+      ? +(p.liquidity.cash_and_equivalents.value / 1e6).toFixed(2) : null,
+  }));
+};
+
 const isLiquidityDataIncomplete = data => {
   const normalized = getNormalizedData(data);
   if (!normalized) return true;
   
   // Check if at least one ratio has a valid value. If all 3 ratios are empty, treat as incomplete/empty state.
-  const ratioMetrics = ['current_ratio', 'quick_ratio', 'cash_ratio'];
+  const ratioMetrics = ['current_ratio', 'quick_ratio', 'cash_ratio', 'cash_and_equivalents'];
   const hasValidRatio = ratioMetrics.some(key => {
     const parsed = parseMetric(normalized[key]);
     return parsed.value !== null && parsed.value !== undefined && parsed.value !== '' && !isNaN(parseFloat(parsed.value));
@@ -192,7 +226,8 @@ const LiquidityEfficiency = ({
     if (!rawData) return null;
     const normalized = getNormalizedData(rawData);
     return normalized ? {
-      liquidity: normalized
+      liquidity: normalized,
+      _raw: rawData
     } : null;
   }, [liquidityData, liquidityEfficiencyData, storeLiquidityData]);
 
@@ -345,6 +380,10 @@ const LiquidityEfficiency = ({
       ...chartRows.map(r => r.actualValue || 0),
       3.0
     );
+
+    // Extract timeline chart data if multiple periods available
+    const timelineData = getTimelineChartData(analysisData._raw || liquidityData || liquidityEfficiencyData || storeLiquidityData);
+    const hasTimeline = timelineData && timelineData.length >= 2;
 
     return (
       <div className="ch-heatmap-container" style={{ width: '100%' }}>
@@ -588,6 +627,31 @@ const LiquidityEfficiency = ({
         `}} />
         <div className="ch-heatmap-scroll" style={{ padding: '4px', width: '100%' }}>
           
+          {/* Multi-period Liquidity Line Chart */}
+          {hasTimeline && (
+            <div className="liquidity-efficiency__chart-card" style={{ marginBottom: 16 }}>
+              <div className="liquidity-efficiency__chart-header">
+                <h3 className="liquidity-efficiency__chart-title">
+                  {t('liquidity_trends', 'Liquidity Trends — Multi-Period')}
+                </h3>
+              </div>
+              <ResponsiveContainer width="100%" height={220}>
+                <LineChart data={timelineData} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                  <XAxis dataKey="period" tick={{ fontSize: 11 }} />
+                  <YAxis yAxisId="ratio" tick={{ fontSize: 11 }} />
+                  <YAxis yAxisId="cash" orientation="right" tickFormatter={v => `${v}M`} tick={{ fontSize: 11 }} />
+                  <Tooltip formatter={(v, n) => [v != null ? (n === 'Cash (M)' ? `${v}M` : v.toFixed(2)) : '–', n]} />
+                  <Legend wrapperStyle={{ fontSize: 12 }} />
+                  <ReferenceLine yAxisId="ratio" y={1} stroke="#ef4444" strokeDasharray="4 4" label={{ value: 'Min', fontSize: 10 }} />
+                  <Line yAxisId="ratio" type="monotone" dataKey="current_ratio" name="Current Ratio" stroke="#6366f1" strokeWidth={2} dot={{ r: 4 }} connectNulls={false} />
+                  <Line yAxisId="ratio" type="monotone" dataKey="quick_ratio" name="Quick Ratio" stroke="#10b981" strokeWidth={2} dot={{ r: 4 }} connectNulls={false} />
+                  <Line yAxisId="cash" type="monotone" dataKey="cash_and_equivalents" name="Cash (M)" stroke="#f59e0b" strokeWidth={2} dot={{ r: 4 }} connectNulls={false} />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          )}
+
           <div className="liquidity-efficiency__chart-card">
             <div className="liquidity-efficiency__chart-header">
               <h3 className="liquidity-efficiency__chart-title">

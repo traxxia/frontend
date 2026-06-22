@@ -1,5 +1,6 @@
 import React, { useState, useRef, useCallback, useMemo } from 'react';
 import { TrendingUp, Loader, AlertCircle, Info } from 'lucide-react';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import '../styles/goodPhase.css';
 import { useTranslation } from "../hooks/useTranslation";
 import { useAnalysisStore } from "../store";
@@ -94,6 +95,26 @@ const formatCardValue = (metricKey, val, currency) => {
 
 const getNormalizedData = data => {
   if (!data) return null;
+  // New timeline format: { timeline: [{period, investment: {...}}, ...] }
+  if (data.timeline && Array.isArray(data.timeline) && data.timeline.length > 0) {
+    const sorted = [...data.timeline].sort((a, b) => (a.period || '').localeCompare(b.period || ''));
+    
+    for (let i = sorted.length - 1; i >= 0; i--) {
+      const inv = sorted[i].investment;
+      if (!inv) continue;
+      
+      const hasValid = Object.keys(inv).some(k => {
+        if (k === 'period') return false;
+        const parsed = parseMetric(inv[k]);
+        return parsed.value !== null && parsed.value !== undefined && parsed.value !== '' && !isNaN(parseFloat(parsed.value));
+      });
+      
+      if (hasValid) return inv;
+    }
+    
+    const latest = sorted[sorted.length - 1];
+    return latest?.investment || null;
+  }
   if (data.investment) return data.investment;
   if (data.roa || data.roe || data.capex) return data;
   const wrapper = data.investmentPerformance || data.investment_performance || data.InvestmentPerformance;
@@ -101,12 +122,23 @@ const getNormalizedData = data => {
   return null;
 };
 
+/** Extract multi-period investment trend */
+const getTimelineChartData = data => {
+  if (!data?.timeline || !Array.isArray(data.timeline) || data.timeline.length < 2) return null;
+  const sorted = [...data.timeline].sort((a, b) => (a.period || '').localeCompare(b.period || ''));
+  return sorted.map(p => ({
+    period: p.period,
+    roe: p.investment?.roe?.value != null ? +(p.investment.roe.value * 100).toFixed(2) : null,
+    roa: p.investment?.roa?.value != null ? +(p.investment.roa.value * 100).toFixed(2) : null,
+  }));
+};
+
 const isInvestmentDataIncomplete = data => {
   const normalized = getNormalizedData(data);
   if (!normalized) return true;
   
-  // If roe and roa are both missing, treat as incomplete/empty state
-  const ratioMetrics = ['roe', 'roa'];
+  // If roe, roa and base investment metrics are all missing, treat as incomplete/empty state
+  const ratioMetrics = ['roe', 'roa', 'capex', 'free_cash_flow', 'operating_cash_flow'];
   const hasValidRatio = ratioMetrics.some(key => {
     const parsed = parseMetric(normalized[key]);
     return parsed.value !== null && parsed.value !== undefined && parsed.value !== '' && !isNaN(parseFloat(parsed.value));
@@ -204,7 +236,8 @@ const InvestmentPerformance = ({
     if (!rawData) return null;
     const normalized = getNormalizedData(rawData);
     return normalized ? {
-      investment: normalized
+      investment: normalized,
+      _raw: rawData
     } : null;
   }, [investmentData, investmentPerformanceData, storeInvestmentData]);
 
@@ -348,6 +381,10 @@ const InvestmentPerformance = ({
       ...chartRows.map(r => Math.abs(r.actualValue) || 0),
       1.0
     );
+
+    // Extract timeline chart data if multiple periods available
+    const timelineData = getTimelineChartData(analysisData._raw || investmentData || investmentPerformanceData || storeInvestmentData);
+    const hasTimeline = timelineData && timelineData.length >= 2;
 
     return (
       <div className="ch-heatmap-container" style={{ width: '100%' }}>
@@ -583,6 +620,28 @@ const InvestmentPerformance = ({
         `}} />
         <div className="ch-heatmap-scroll" style={{ padding: '4px', width: '100%' }}>
           
+          {/* Multi-period Investment Line Chart */}
+          {hasTimeline && (
+            <div className="investment-performance__chart-card" style={{ marginBottom: 16 }}>
+              <div className="investment-performance__chart-header">
+                <h3 className="investment-performance__chart-title">
+                  {t('investment_trends', 'Investment Returns — Multi-Period')}
+                </h3>
+              </div>
+              <ResponsiveContainer width="100%" height={220}>
+                <LineChart data={timelineData} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                  <XAxis dataKey="period" tick={{ fontSize: 11 }} />
+                  <YAxis tickFormatter={v => `${v}%`} tick={{ fontSize: 11 }} />
+                  <Tooltip formatter={(v, n) => [v != null ? `${v}%` : '–', n]} />
+                  <Legend wrapperStyle={{ fontSize: 12 }} />
+                  <Line type="monotone" dataKey="roe" name="ROE" stroke="#6366f1" strokeWidth={2} dot={{ r: 4 }} connectNulls={false} />
+                  <Line type="monotone" dataKey="roa" name="ROA" stroke="#10b981" strokeWidth={2} dot={{ r: 4 }} connectNulls={false} />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          )}
+
           <div className="investment-performance__chart-card">
             <div className="investment-performance__chart-header">
               <h3 className="investment-performance__chart-title">

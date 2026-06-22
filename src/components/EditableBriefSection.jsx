@@ -19,6 +19,7 @@ import { markdownToHtml } from '../utils/markdownHelper';
 import ConfirmationModal from './ConfirmationModal';
 import { formatCurrencyValue } from '../utils/currencyUtils';
 import { computePageCount, getFileDetails } from '../utils/fileUtils';
+import AnalysisContentManager from './AnalysisContentManager';
 
 // Derives the correct unit label from a file extension for already-stored documents
 const getPageUnit = (ext, count) => {
@@ -396,6 +397,7 @@ const EditableBriefSection = ({
   const [uploadedFiles, setUploadedFiles] = useState([]);
   const [isDragActive, setIsDragActive] = useState(false);
   const [activePhaseTab, setActivePhaseTab] = useState('initial');
+  const [financialTabMode, setFinancialTabMode] = useState('data');
   const [leftPanelExpanded, setLeftPanelExpanded] = useState({
     refineAi: true,
     fileUpload: false,
@@ -625,8 +627,24 @@ const EditableBriefSection = ({
         formData.append('files', file, file.name);
       });
 
-      const financialMetrics = await answerService.extractFinancialSummary(formData, businessId);
-      console.log("=== extracted financial metrics ===", financialMetrics);
+      const mlResponse = await answerService.extractFinancialSummary(formData, businessId);
+      console.log("=== extracted ML response ===", mlResponse);
+
+      // ── Normalise ML response: new shape has { timeline: [...], meta }
+      //    Legacy shape is a flat metrics object. Support both.
+      let financialTimeline = null;
+      let financialMetrics  = null;
+
+      if (mlResponse && Array.isArray(mlResponse.timeline) && mlResponse.timeline.length > 0) {
+        // New FinancialTimelineResponse shape
+        financialTimeline = mlResponse.timeline; // full array of period objects
+        // Latest period's derived metrics → backward-compat flat financialMetrics
+        const sortedTimeline = [...financialTimeline].sort((a, b) => a.period.localeCompare(b.period));
+        financialMetrics = sortedTimeline[sortedTimeline.length - 1] || null;
+      } else {
+        // Legacy flat metrics shape
+        financialMetrics = mlResponse;
+      }
 
       setSseLogs(prev => [...prev, {
         timestamp: new Date().toLocaleTimeString(),
@@ -635,7 +653,7 @@ const EditableBriefSection = ({
         type: "progress"
       }]);
 
-      await answerService.saveRawSession(businessId, "completed", financialMetrics);
+      await answerService.saveRawSession(businessId, "completed", financialMetrics, financialTimeline);
 
       setSseLogs(prev => [...prev, {
         timestamp: new Date().toLocaleTimeString(),
@@ -1206,6 +1224,7 @@ const EditableBriefSection = ({
           : f
       )
     );
+    window.dispatchEvent(new CustomEvent('strategicDocumentsAnalyzed'));
   };
 
   const handleFileUpload = async (event) => {
@@ -1355,6 +1374,7 @@ const EditableBriefSection = ({
       }
 
       setUploadedFiles(prev => prev.filter(f => f.id !== fileId));
+      window.dispatchEvent(new CustomEvent('strategicDocumentsAnalyzed'));
     } catch (error) {
       console.error('Error removing file:', error);
       showToastMessage(`Failed to remove file: ${error.message || 'Error occurred.'}`, 'error');
@@ -1800,6 +1820,24 @@ const EditableBriefSection = ({
     return merged;
   })();
 
+  const handleTabModeChange = (mode) => {
+    setFinancialTabMode(mode);
+    if (mode === 'analysis') {
+      const state = useAnalysisStore.getState();
+      const hasFinancialAnalysis = state.profitabilityData || state.growthTrackerData || state.liquidityEfficiencyData || state.investmentPerformanceData || state.leverageRiskData;
+      const hasMetrics = !!docIntelSession?.financialMetrics;
+      
+      // Auto-trigger financial generation if not yet generated but data exists
+      if (!hasFinancialAnalysis && hasMetrics && onAnalysisRegenerate) {
+        onAnalysisRegenerate({
+          alsoRegenerateStrategic: false,
+          includeFinancial: true,
+          skipConfirmation: true
+        });
+      }
+    }
+  };
+
   const financialCountStr = (() => {
     if (!displayFinancialMetrics) return "0/0";
     let total = 0;
@@ -1940,50 +1978,61 @@ const EditableBriefSection = ({
                     );
                   };
 
-                  const newFiles = strategyFiles.filter(f => f.isNewSessionFile);
-                  const analyzedFiles = strategyFiles.filter(f => !f.isNewSessionFile);
-
                   return (
                     <div style={{ marginBottom: '16px' }}>
-                      {newFiles.length > 0 && (
-                        <div className="sidebar-file-list">
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                            <h5 style={{ fontSize: '12px', color: '#475569', margin: '0' }}>Not Analyzed Yet</h5>
-                            {strategyFiles.some(f => f.status === 'success' && f.isNewSessionFile) && (
-                              <button
-                                className="sidebar-file-analyze-btn"
-                                onClick={() => {
-                                  if (isAnyApiActive || !canEdit) return;
-                                  const filesToAnalyze = strategyFiles.filter(f => f.status === 'success' && f.isNewSessionFile);
-                                  handleAnalyzeFilesBulk(filesToAnalyze);
-                                }}
-                                disabled={isAnyApiActive || !canEdit}
-                                style={{
-                                  cursor: (isAnyApiActive || !canEdit) ? 'not-allowed' : 'pointer',
-                                  opacity: (isAnyApiActive || !canEdit) ? 0.5 : 1,
-                                  padding: '4px 12px',
-                                  background: 'var(--color-primary)',
-                                  color: 'white',
-                                  border: 'none',
-                                  borderRadius: '6px',
-                                  fontSize: '12px',
-                                  fontWeight: '600'
-                                }}
-                                title="Analyze new files"
-                              >
-                                Analyze
-                              </button>
-                            )}
-                          </div>
-                          {newFiles.map(renderFile)}
-                        </div>
-                      )}
-                      {analyzedFiles.length > 0 && (
-                        <div className="sidebar-file-list" style={{ marginTop: newFiles.length > 0 ? '16px' : '0' }}>
-                          <h5 style={{ fontSize: '12px', color: '#475569', marginBottom: '8px', marginTop: '0' }}>Analyzed Documents</h5>
-                          {analyzedFiles.map(renderFile)}
-                        </div>
-                      )}
+                      <div className="sidebar-file-list">
+                        {(() => {
+                          const unanalyzedFiles = strategyFiles.filter(f => f.isNewSessionFile);
+                          const analyzedFiles = strategyFiles.filter(f => !f.isNewSessionFile);
+                          
+                          return (
+                            <>
+                              {unanalyzedFiles.length > 0 && (
+                                <div style={{ marginBottom: analyzedFiles.length > 0 ? '16px' : '0' }}>
+                                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                                    <h5 style={{ margin: 0, fontSize: '13px', color: '#475569', fontWeight: '600' }}>Not Analyzed</h5>
+                                    {unanalyzedFiles.some(f => f.status === 'success') && (
+                                      <button
+                                        className="sidebar-file-analyze-btn"
+                                        onClick={() => {
+                                          if (isAnyApiActive || !canEdit) return;
+                                          const filesToAnalyze = unanalyzedFiles.filter(f => f.status === 'success');
+                                          handleAnalyzeFilesBulk(filesToAnalyze);
+                                        }}
+                                        disabled={isAnyApiActive || !canEdit}
+                                        style={{
+                                          cursor: (isAnyApiActive || !canEdit) ? 'not-allowed' : 'pointer',
+                                          opacity: (isAnyApiActive || !canEdit) ? 0.5 : 1,
+                                          padding: '4px 12px',
+                                          background: 'var(--color-primary)',
+                                          color: 'white',
+                                          border: 'none',
+                                          borderRadius: '6px',
+                                          fontSize: '12px',
+                                          fontWeight: '600'
+                                        }}
+                                        title="Analyze new files"
+                                      >
+                                        Analyze
+                                      </button>
+                                    )}
+                                  </div>
+                                  {unanalyzedFiles.map(renderFile)}
+                                </div>
+                              )}
+
+                              {analyzedFiles.length > 0 && (
+                                <div>
+                                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                                    <h5 style={{ margin: 0, fontSize: '13px', color: '#475569', fontWeight: '600' }}>Analyzed</h5>
+                                  </div>
+                                  {analyzedFiles.map(renderFile)}
+                                </div>
+                              )}
+                            </>
+                          );
+                        })()}
+                      </div>
                     </div>
                   );
                 })()}
@@ -2079,12 +2128,31 @@ const EditableBriefSection = ({
           <div className="phase-tab-content-list">
             {/* FINANCIAL DATA (LEDGER VIEW) */}
             {activePhaseTab === 'financial' ? (
-              displayFinancialMetrics ? (
-                <div className="doc-intel-ledger" style={{ marginTop: '0', border: 'none', boxShadow: 'none', background: 'transparent', padding: '10px 0px' }}>
-                  <div className="ledger-category-header" style={{ marginBottom: '15px', color: '#16a34a', borderBottom: '1px solid rgba(0,0,0,0.06)', paddingBottom: '8px' }}>
-                    <Database size={16} />
-                    <span>Extracted Ledger Workspace</span>
+              <>
+                <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '20px' }}>
+                  <div className="custom-toggle-container" style={{ display: 'inline-flex', background: '#f1f5f9', borderRadius: '8px', padding: '4px' }}>
+                    <button 
+                      onClick={() => handleTabModeChange('data')}
+                      style={{ padding: '8px 16px', borderRadius: '6px', border: 'none', background: financialTabMode === 'data' ? 'white' : 'transparent', color: financialTabMode === 'data' ? '#0f172a' : '#64748b', fontWeight: financialTabMode === 'data' ? '600' : '500', boxShadow: financialTabMode === 'data' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none', cursor: 'pointer', transition: 'all 0.2s ease' }}
+                    >
+                      Data
+                    </button>
+                    <button 
+                      onClick={() => handleTabModeChange('analysis')}
+                      style={{ padding: '8px 16px', borderRadius: '6px', border: 'none', background: financialTabMode === 'analysis' ? 'white' : 'transparent', color: financialTabMode === 'analysis' ? '#0f172a' : '#64748b', fontWeight: financialTabMode === 'analysis' ? '600' : '500', boxShadow: financialTabMode === 'analysis' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none', cursor: 'pointer', transition: 'all 0.2s ease' }}
+                    >
+                      Analysis
+                    </button>
                   </div>
+                </div>
+
+                {financialTabMode === 'data' ? (
+                  displayFinancialMetrics ? (
+                    <div className="doc-intel-ledger" style={{ marginTop: '0', border: 'none', boxShadow: 'none', background: 'transparent', padding: '10px 0px' }}>
+                      <div className="ledger-category-header" style={{ marginBottom: '15px', color: '#16a34a', borderBottom: '1px solid rgba(0,0,0,0.06)', paddingBottom: '8px' }}>
+                        <Database size={16} />
+                        <span>Extracted Ledger Workspace</span>
+                      </div>
 
                   {/* Sync ledger button moved to the top */}
                   <div className="sync-ledger-footer" style={{ marginBottom: '20px', marginTop: '5px' }}>
@@ -2300,7 +2368,11 @@ const EditableBriefSection = ({
                   No financial data available.
                 </div>
               )
-            ) : currentTabFields.length === 0 ? (
+            ) : (
+              <AnalysisContentManager singleCategory="costs-financial" selectedBusinessId={selectedBusinessId} />
+            )}
+          </>
+        ) : currentTabFields.length === 0 ? (
               <div className="empty-phase-questions">
                 No questions found for this phase.
               </div>
@@ -2331,48 +2403,50 @@ const EditableBriefSection = ({
           </div>
 
           {/* Generate Advanced Insights Button */}
-          <div style={{ marginTop: '32px', marginBottom: '32px', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '15px 24px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'transparent' }}>
-            <button
-              onClick={() => {
-                if (!canEdit || isAnyApiActive) return;
-                setConfirmModalConfig({
-                  title: t('Generate Advanced Insights') || 'Generate Advanced Insights',
-                  message: 'This will regenerate all insights and strategic analysis based on your answers. Are you sure you want to proceed?',
-                  onConfirm: () => {
-                    if (onAnalysisRegenerate) {
-                      onAnalysisRegenerate({
-                        alsoRegenerateStrategic: true,
-                        includeFinancial: true,
-                        skipConfirmation: true
-                      });
-                      if (setActiveTab) {
-                        setActiveTab('insights');
+          {!(activePhaseTab === 'financial' && financialTabMode === 'analysis') && (
+            <div style={{ marginTop: '32px', marginBottom: '32px', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '15px 24px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'transparent' }}>
+              <button
+                onClick={() => {
+                  if (!canEdit || isAnyApiActive) return;
+                  setConfirmModalConfig({
+                    title: t('Generate Advanced Insights') || 'Generate Advanced Insights',
+                    message: 'This will regenerate all insights and strategic analysis based on your answers. Are you sure you want to proceed?',
+                    onConfirm: () => {
+                      if (onAnalysisRegenerate) {
+                        onAnalysisRegenerate({
+                          alsoRegenerateStrategic: true,
+                          includeFinancial: true,
+                          skipConfirmation: true
+                        });
+                        if (setActiveTab) {
+                          setActiveTab('insights');
+                        }
                       }
                     }
-                  }
-                });
-                setShowConfirmModal(true);
-              }}
-              disabled={isAnyApiActive || !canEdit || !hasAnyValidData}
-              className="btn-refine-action"
-              style={{ width: 'auto', padding: '12px 32px', background: (isAnyApiActive || !canEdit || !hasAnyValidData) ? '#93c5fd' : '#0c71b9', color: '#fff', fontSize: '15px', fontWeight: '600', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '8px', border: 'none', cursor: (isAnyApiActive || !canEdit || !hasAnyValidData) ? 'not-allowed' : 'pointer', opacity: (isAnyApiActive || !canEdit || !hasAnyValidData) ? 0.6 : 1 }}
-            >
-              {(isAnalysisRegenerating || isStrategicRegenerating) ? (
-                <>
-                  <Loader size={16} className="animate-spin" />
-                  <span>Generating Insights...</span>
-                </>
-              ) : (
-                <>
-                  <span>Generate Advanced Insights</span>
-                  <span style={{ fontSize: '16px' }}>&rarr;</span>
-                </>
-              )}
-            </button>
-            <p style={{ marginTop: '16px', marginBottom: '0', color: '#94a3b8', fontSize: '13px' }}>
-              All sections complete — generate your Advanced analysis.
-            </p>
-          </div>
+                  });
+                  setShowConfirmModal(true);
+                }}
+                disabled={isAnyApiActive || !canEdit || !hasAnyValidData}
+                className="btn-refine-action"
+                style={{ width: 'auto', padding: '12px 32px', background: (isAnyApiActive || !canEdit || !hasAnyValidData) ? '#93c5fd' : '#0c71b9', color: '#fff', fontSize: '15px', fontWeight: '600', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '8px', border: 'none', cursor: (isAnyApiActive || !canEdit || !hasAnyValidData) ? 'not-allowed' : 'pointer', opacity: (isAnyApiActive || !canEdit || !hasAnyValidData) ? 0.6 : 1 }}
+              >
+                {(isAnalysisRegenerating || isStrategicRegenerating) ? (
+                  <>
+                    <Loader size={16} className="animate-spin" />
+                    <span>Generating Insights...</span>
+                  </>
+                ) : (
+                  <>
+                    <span>Generate Advanced Insights</span>
+                    <span style={{ fontSize: '16px' }}>&rarr;</span>
+                  </>
+                )}
+              </button>
+              <p style={{ marginTop: '16px', marginBottom: '0', color: '#94a3b8', fontSize: '13px' }}>
+                All sections complete — generate your Advanced analysis.
+              </p>
+            </div>
+          )}
 
       </div>
 

@@ -128,6 +128,9 @@ const AnalysisContentManager = (props) => {
   } = useTranslation();
   const contextFromProvider = React.useContext(BusinessSetupContext) || {};
   const context = { ...contextFromProvider, ...props };
+  const [includeFullTimeline, setIncludeFullTimeline] = React.useState(false);
+  const [localExpandedCards, setLocalExpandedCards] = React.useState(new Set());
+  const [localCollapsedCategories, setLocalCollapsedCategories] = React.useState(new Set());
   const CATEGORIES = useMemo(() => [{
     id: 'current-strategy',
     title: t('Current Strategy'),
@@ -220,7 +223,7 @@ const AnalysisContentManager = (props) => {
       refKey: "leverageRiskRef",
       pdfComponent: "leverage-risk"
     },
-    productivityMetrics: {
+    /* productivityMetrics: {
       slug: "productivity",
       component: ProductivityMetrics,
       title: t("Productivity_Metrics"),
@@ -229,7 +232,7 @@ const AnalysisContentManager = (props) => {
       dataKey: "productivityData",
       refKey: "productivityRef",
       pdfComponent: "productivity"
-    },
+    }, */
     fullSwot: {
       slug: "full-swot",
       component: FullSWOTPortfolio,
@@ -329,7 +332,7 @@ const AnalysisContentManager = (props) => {
     'competitive-advantage': 'competitiveAdvantage',
     'expanded-capability-heatmap': 'expandedCapability',
     'strategic-positioning-radar': 'strategicRadar',
-    'productivity-metrics': 'productivityMetrics',
+    // 'productivity-metrics': 'productivityMetrics',
     'maturity-scoring': 'maturityScore',
     'simple-swot-portfolio': 'competitiveLandscape',
     'core-adjacency': 'coreAdjacency',
@@ -342,10 +345,10 @@ const AnalysisContentManager = (props) => {
   const {
     phaseManager,
     apiLoadingStates = {},
-    expandedCards,
-    setExpandedCards,
-    collapsedCategories,
-    setCollapsedCategories,
+    expandedCards = localExpandedCards,
+    setExpandedCards = setLocalExpandedCards,
+    collapsedCategories = localCollapsedCategories,
+    setCollapsedCategories = setLocalCollapsedCategories,
     highlightedCard,
     hideRegenerateButtons = false,
     hasInsightAccess = true,
@@ -375,7 +378,7 @@ const AnalysisContentManager = (props) => {
     leverageRiskData: propsLeverageRiskData,
     strategicData: propsStrategicData,
     questionsLoaded,
-    canRegenerate,
+    canRegenerate = true,
     hideImproveButton,
     showImproveButton,
     readOnly,
@@ -386,7 +389,7 @@ const AnalysisContentManager = (props) => {
     setActiveTab,
     hasUploadedDocument,
     documentInfo,
-    showToastMessage,
+    showToastMessage = () => {},
     swotRef,
     portersRef,
     pestelRef,
@@ -478,7 +481,7 @@ const AnalysisContentManager = (props) => {
     const sectionName = config?.title || t("Analysis");
     const onConfirm = () => {
       streamingManager.startStreaming(cardId);
-      regenerateIndividualAnalysis(analysisKey, questions, userAnswers, selectedBusinessId, showToastMessage, uploadedFileForAnalysis);
+      regenerateIndividualAnalysis(analysisKey, questions, userAnswers, selectedBusinessId, showToastMessage, uploadedFileForAnalysis, { includeFullTimeline });
     };
     if (triggerConfirmation) {
       triggerConfirmation(t("confirm_regeneration_title"), t("confirm_regeneration_message", {
@@ -553,10 +556,20 @@ const AnalysisContentManager = (props) => {
   }, [questions, userAnswers, businessName, selectedBusinessId, swotAnalysis, portersData, pestelData, fullSwotData, competitiveAdvantage, strategicData, expandedCapability, strategicRadar, productivityData, maturityData, competitiveLandscape, coreAdjacency, profitabilityData, growthTrackerData, liquidityEfficiencyData, investmentPerformanceData, leverageRiskData, isTypeRegenerating, isAnalysisLoading, expandedCards, highlightedCard, toggleCard, streamingManager, hideRegenerateButtons, canRegenerate, hasInsightAccess, handleRedirectToBrief, createSimpleRegenerationHandler, hideImproveButton, showImproveButton, readOnly, apiService, uploadedFileForAnalysis, onRedirectToChat, isMobile, setActiveTab, hasUploadedDocument, documentInfo, swotRef, portersRef, pestelRef, fullSwotRef, competitiveAdvantageRef, expandedCapabilityRef, strategicRadarRef, productivityRef, maturityScoreRef, profitabilityRef, growthTrackerRef, liquidityEfficiencyRef, investmentPerformanceRef, leverageRiskRef, competitiveLandscapeRef, coreAdjacencyRef, swotAnalysisResult, propsPortersData, propsPestelData, propsFullSwotData, competitiveAdvantageData, expandedCapabilityData, strategicRadarData, propsProductivityData, propsMaturityData, competitiveLandscapeData, coreAdjacencyData, propsProfitabilityData, propsGrowthTrackerData, propsLiquidityEfficiencyData, propsInvestmentPerformanceData, propsLeverageRiskData, propsStrategicData]);
   const unlockedFeatures = useMemo(() => phaseManager?.getUnlockedFeatures?.() || {}, [phaseManager]);
   const currentAnalyses = useMemo(() => {
+    if (props.singleCategory) {
+      const activeAnalyses = new Set();
+      Object.keys(ANALYSIS_CONFIG).forEach(key => {
+        if (ANALYSIS_CONFIG[key].category === props.singleCategory) {
+          activeAnalyses.add(key);
+        }
+      });
+      return Array.from(activeAnalyses);
+    }
+
     const sets = {
       initial: ['swot', 'porters', 'pestel'],
-      essential: ['porters', 'pestel', 'fullSwot', 'competitiveAdvantage', 'expandedCapability', 'strategicRadar', 'productivityMetrics', 'maturityScore', 'competitiveLandscape', 'coreAdjacency'],
-      advanced: ['porters', 'pestel', 'fullSwot', 'competitiveAdvantage', 'expandedCapability', 'strategicRadar', 'productivityMetrics', 'maturityScore', 'competitiveLandscape', 'coreAdjacency'],
+      essential: ['porters', 'pestel', 'fullSwot', 'competitiveAdvantage', 'expandedCapability', 'strategicRadar', 'maturityScore', 'competitiveLandscape', 'coreAdjacency'],
+      advanced: ['porters', 'pestel', 'fullSwot', 'competitiveAdvantage', 'expandedCapability', 'strategicRadar', 'maturityScore', 'competitiveLandscape', 'coreAdjacency'],
       financial: ['profitabilityAnalysis', 'growthTracker', 'liquidityEfficiency', 'investmentPerformance', 'leverageRisk']
     };
     const activeAnalyses = new Set();
@@ -577,7 +590,7 @@ const AnalysisContentManager = (props) => {
     }
 
     return Array.from(activeAnalyses);
-  }, [unlockedFeatures, swotAnalysis, portersData, pestelData, strategicData, competitiveAdvantage, fullSwotData]);
+  }, [unlockedFeatures, swotAnalysis, portersData, pestelData, strategicData, competitiveAdvantage, fullSwotData, props.singleCategory, ANALYSIS_CONFIG]);
   const categorizedAnalyses = useMemo(() => {
     const result = {};
     CATEGORIES.forEach(cat => {
@@ -591,7 +604,7 @@ const AnalysisContentManager = (props) => {
     });
     return result;
   }, [currentAnalyses, renderAnalysisCard, CATEGORIES, ANALYSIS_CONFIG]);
-  if (!questionsLoaded) {
+  if (!questionsLoaded && !props.singleCategory) {
     return <div className="modern-locked-state">
         <Loader size={60} className="modern-locked-icon antigravity-rotating" />
         <h3>{t("Preparing Analysis...")}</h3>
@@ -599,7 +612,7 @@ const AnalysisContentManager = (props) => {
       </div>;
   }
   const hasAnyData = swotAnalysis || portersData || pestelData || strategicData || competitiveAdvantage || fullSwotData;
-  if (!unlockedFeatures.analysis && !hasAnyData) {
+  if (!unlockedFeatures.analysis && !hasAnyData && !props.singleCategory) {
     return <div className="modern-locked-state">
         <Lock size={60} className="modern-locked-icon" />
         <h3>{t("Analysis Locked")}</h3>
@@ -608,7 +621,7 @@ const AnalysisContentManager = (props) => {
   }
   const financialAnalyses = ['profitabilityAnalysis', 'growthTracker', 'liquidityEfficiency', 'investmentPerformance', 'leverageRisk'];
   const isFinancialRegenerating = financialAnalyses.some(type => isAnalysisLoading(type)) || isTypeRegenerating('financial');
-  const isMainAnalysisRegenerating = ['swot', 'porters', 'pestel', 'fullSwot', 'competitiveAdvantage', 'expandedCapability', 'strategicRadar', 'productivityMetrics', 'maturityScore', 'competitiveLandscape', 'coreAdjacency'].some(type => isAnalysisLoading(type)) || isTypeRegenerating('initial') || isTypeRegenerating('essential') || isTypeRegenerating('advanced');
+  const isMainAnalysisRegenerating = ['swot', 'porters', 'pestel', 'fullSwot', 'competitiveAdvantage', 'expandedCapability', 'strategicRadar', 'maturityScore', 'competitiveLandscape', 'coreAdjacency'].some(type => isAnalysisLoading(type)) || isTypeRegenerating('initial') || isTypeRegenerating('essential') || isTypeRegenerating('advanced');
   return <div className="modern-analysis-container">
       {(isFinancialRegenerating || isMainAnalysisRegenerating) && <div className="analysis-regenerating-banner analysis-content-manager--s5">
           <Loader size={16} className="antigravity-rotating" />
@@ -623,49 +636,72 @@ const AnalysisContentManager = (props) => {
              t("Generating Insight...")}
           </span>
         </div>}
-      <div className="six-cs-framework-overview mb-4">
-        <p className="overview-description text-muted mb-4">Your business analyzed across six key dimensions — the starting point for everything that follows.</p>
-        <div className="overview-bullets-grid">
-          <div className="overview-bullet-column">
-            <div className="overview-bullet-item">
-              <span className="bullet-dot"></span>
-              <span className="bullet-title">Current Strategy:</span>
-              <span className="bullet-desc">Core business and growth options.</span>
-            </div>
-            <div className="overview-bullet-item">
-              <span className="bullet-dot"></span>
-              <span className="bullet-title">Context/Industry:</span>
-              <span className="bullet-desc">Market forces and industry dynamics.</span>
-            </div>
-            <div className="overview-bullet-item">
-              <span className="bullet-dot"></span>
-              <span className="bullet-title">Capabilities:</span>
-              <span className="bullet-desc">Internal strengths and maturity.</span>
-            </div>
+
+      {/* {!props.singleCategory && (
+        <div className="timeline-toggle-container mb-4" style={{ display: 'flex', alignItems: 'center', background: '#f8fafc', padding: '12px 16px', borderRadius: '8px', border: '1px solid #e2e8f0', gap: '12px' }}>
+          <input 
+            type="checkbox" 
+            id="includeFullTimelineToggle" 
+            checked={includeFullTimeline} 
+            onChange={(e) => setIncludeFullTimeline(e.target.checked)} 
+            style={{ width: '18px', height: '18px', accentColor: '#2563eb' }}
+          />
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <label htmlFor="includeFullTimelineToggle" style={{ fontWeight: '600', fontSize: '14px', color: '#1e293b', margin: 0, cursor: 'pointer' }}>
+              {t("Include full financial history in strategic analysis")}
+            </label>
+            <span style={{ fontSize: '12px', color: '#64748b' }}>
+              {t("(Default: last 5 periods to optimize prompt size and focus recommendations)")}
+            </span>
           </div>
-          <div className="overview-bullet-column">
-            <div className="overview-bullet-item">
-              <span className="bullet-dot"></span>
-              <span className="bullet-title">Costs/Financial:</span>
-              <span className="bullet-desc">Profitability and financial efficiency.</span>
+        </div>
+      )} */}
+
+      {!props.singleCategory && (
+        <div className="six-cs-framework-overview mb-4">
+          <p className="overview-description text-muted mb-4">Your business analyzed across six key dimensions — the starting point for everything that follows.</p>
+          <div className="overview-bullets-grid">
+            <div className="overview-bullet-column">
+              <div className="overview-bullet-item">
+                <span className="bullet-dot"></span>
+                <span className="bullet-title">Current Strategy:</span>
+                <span className="bullet-desc">Core business and growth options.</span>
+              </div>
+              <div className="overview-bullet-item">
+                <span className="bullet-dot"></span>
+                <span className="bullet-title">Context/Industry:</span>
+                <span className="bullet-desc">Market forces and industry dynamics.</span>
+              </div>
+              <div className="overview-bullet-item">
+                <span className="bullet-dot"></span>
+                <span className="bullet-title">Capabilities:</span>
+                <span className="bullet-desc">Internal strengths and maturity.</span>
+              </div>
             </div>
-            <div className="overview-bullet-item">
-              <span className="bullet-dot"></span>
-              <span className="bullet-title">Customer:</span>
-              <span className="bullet-desc">Loyalty and purchase criteria.</span>
-            </div>
-            <div className="overview-bullet-item">
-              <span className="bullet-dot"></span>
-              <span className="bullet-title">Competition:</span>
-              <span className="bullet-desc">Landscape and market positioning.</span>
+            <div className="overview-bullet-column">
+              <div className="overview-bullet-item">
+                <span className="bullet-dot"></span>
+                <span className="bullet-title">Costs/Financial:</span>
+                <span className="bullet-desc">Profitability and financial efficiency.</span>
+              </div>
+              <div className="overview-bullet-item">
+                <span className="bullet-dot"></span>
+                <span className="bullet-title">Customer:</span>
+                <span className="bullet-desc">Loyalty and purchase criteria.</span>
+              </div>
+              <div className="overview-bullet-item">
+                <span className="bullet-dot"></span>
+                <span className="bullet-title">Competition:</span>
+                <span className="bullet-desc">Landscape and market positioning.</span>
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      )}
       <div className="modern-analysis-content">
 
         <div className="categorized-analysis">
-          {CATEGORIES.map(category => {
+          {CATEGORIES.filter(c => !props.singleCategory || c.id === props.singleCategory).map(category => {
           const analyses = categorizedAnalyses[category.id];
           if (analyses.length === 0) return null;
           return <CategorySection key={category.id} id={category.id} title={category.title} subtitle={category.subtitle} icon={category.icon} isCollapsed={collapsedCategories.has(category.id)} onToggle={toggleCategory}>

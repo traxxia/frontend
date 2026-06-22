@@ -11,9 +11,12 @@ import { useUIStore } from '../store/uiStore';
 import { useAnalysisStore } from "../store/analysisStore";
 import { useBusinessSetupContext } from "../context/BusinessSetupContext";
 import { useQueryClient } from "@tanstack/react-query";
+import PDFExportButton from "./PDFExportButton";
+import CustomTooltip from "./CustomTooltip";
 const ExecutiveSummary = ({ hideNextStep }) => {
   const {
     selectedBusinessId: businessId,
+    businessData,
     openModal,
     pmfRefreshTrigger: refreshTrigger,
     t,
@@ -240,9 +243,21 @@ const ExecutiveSummary = ({ hideNextStep }) => {
     return adjList.map(a => Array.isArray(a[key]) ? a[key].join(", ") : a[key]).filter(Boolean).join(" | ") || "N/A";
   };
   return <div className="exc-executive-summary-container">
-      <div className="exc-executive-content">
+      <div className="exc-executive-content" data-component="executive-content">
+        <div className="d-flex justify-content-end mb-3">
+          <CustomTooltip align="right" message={t("download_executive_tooltip") || "Export the executive summary into PDF report."}>
+            <PDFExportButton
+              className="view-edit-inputs-btn"
+              style={{ borderRadius: '6px' }}
+              businessName={businessData?.name || data?.onboarding_data?.name}
+              onToastMessage={(message, type) => addToast({ title: type === 'error' ? 'Error' : 'Success', message, type })}
+              exportType="executive"
+              showText={true}
+            />
+          </CustomTooltip>
+        </div>
         {}
-        {topAhaInsights.length > 0 && <div className="exc-section-card">
+        {topAhaInsights.length > 0 && <div className="exc-section-card" data-component="executive-aha">
             <div className="exc-section-header" onClick={() => toggleSection("ahaInsights")}>
               <div className="exc-section-title-wrapper">
                 <div className="exc-section-icon exc-aha-icon">
@@ -260,7 +275,7 @@ const ExecutiveSummary = ({ hideNextStep }) => {
               </button>
             </div>
 
-            <div className={`exc-section-body ${expandedSections.ahaInsights ? 'expanded' : 'collapsed'}`} data-component="executive-aha">
+            <div className={`exc-section-body ${expandedSections.ahaInsights ? 'expanded' : 'collapsed'}`}>
               <div className="exc-aha-vertical-tiles">
                 {topAhaInsights.map((insight, idx) => {
               const conf = (insight.confidence || '').toLowerCase();
@@ -303,7 +318,7 @@ const ExecutiveSummary = ({ hideNextStep }) => {
           </div>}
 
         {}
-        <div className="exc-section-card">
+        <div className="exc-section-card" data-component="executive-where">
           <div className="exc-section-header" onClick={() => toggleSection("whereToCompete")}>
             <div className="exc-section-title-wrapper">
               <div className="exc-section-icon exc-where-icon">
@@ -321,7 +336,7 @@ const ExecutiveSummary = ({ hideNextStep }) => {
             </button>
           </div>
 
-          <div className={`exc-section-body ${expandedSections.whereToCompete ? 'expanded' : 'collapsed'}`} data-component="executive-where">
+          <div className={`exc-section-body ${expandedSections.whereToCompete ? 'expanded' : 'collapsed'}`}>
             <div className="exc-horizons-container">
               <div className="exc-horizons-header">
                 <p className="exc-super-title">{t("COMPARISON ACROSS HORIZONS")}</p>
@@ -377,7 +392,7 @@ const ExecutiveSummary = ({ hideNextStep }) => {
                   <div className="exc-move-card" key={idx}>
                     <div className="exc-move-card-header">
                       <h5 className="exc-move-title">{adj.title || adj.name || adj.recommendation_basis || "Adjacency"}</h5>
-                      {adj.strategic_fit_score && <span className="exc-move-score">{t("FIT SCORE")} <strong>{adj.strategic_fit_score}</strong></span>}
+                      {/* {adj.strategic_fit_score && <span className="exc-move-score">{t("FIT SCORE")} <strong>{adj.strategic_fit_score}</strong></span>} */}
                     </div>
                     <p className="exc-move-subtitle">{adj.recommendation_basis || "Strategic expansion"}</p>
                     <p className="exc-move-body">{adj.rationale}</p>
@@ -414,7 +429,7 @@ const ExecutiveSummary = ({ hideNextStep }) => {
         </div>
 
         {}
-        <div className="exc-section-card">
+        <div className="exc-section-card" data-component="executive-how">
           <div className="exc-section-header" onClick={() => toggleSection("howToCompete")}>
             <div className="exc-section-title-wrapper">
               <div className="exc-section-icon exc-how-icon">
@@ -432,7 +447,7 @@ const ExecutiveSummary = ({ hideNextStep }) => {
             </button>
           </div>
 
-          <div className={`exc-section-body ${expandedSections.howToCompete ? 'expanded' : 'collapsed'}`} data-component="executive-how">
+          <div className={`exc-section-body ${expandedSections.howToCompete ? 'expanded' : 'collapsed'}`}>
             
             {}
             {howToCompete?.current_differentiation && (
@@ -488,7 +503,7 @@ const ExecutiveSummary = ({ hideNextStep }) => {
             </div>
 
             {}
-            {alternativeLevers && alternativeLevers.length > 0 && (
+            {alternativeLevers && (!Array.isArray(alternativeLevers) || alternativeLevers.length > 0) && (
               <div className="exc-how-blocks">
                 <p className="exc-super-title">{t("ALTERNATIVE DIFFERENTIATION LEVERS")}</p>
                 <h4 className="exc-horizons-title">{t("Considered but not recommended — ranked by fit")}</h4>
@@ -497,9 +512,9 @@ const ExecutiveSummary = ({ hideNextStep }) => {
                     <div className="exc-alt-card" key={idx}>
                       <div className="exc-alt-card-header">
                         <h5 className="exc-alt-title">{typeof item === 'object' ? item.lever : item}</h5>
-                        {typeof item === 'object' && item.suitability_score && (
+                        {/* {typeof item === 'object' && item.suitability_score && (
                           <span className="exc-alt-score">{t("SCORE")} {item.suitability_score} / 10</span>
-                        )}
+                        )} */}
                       </div>
                       {typeof item === 'object' && item.reason && (
                         <p className="exc-alt-desc">{item.reason}</p>
@@ -527,7 +542,7 @@ const ExecutiveSummary = ({ hideNextStep }) => {
         </div>
 
         {}
-        <div className="exc-section-card">
+        <div className="exc-section-card" data-component="executive-priorities">
           <div className="exc-section-header" onClick={() => toggleSection("topPriorities")}>
             <div className="exc-section-title-wrapper">
               <div className="exc-section-icon exc-priorities-icon">
@@ -545,7 +560,7 @@ const ExecutiveSummary = ({ hideNextStep }) => {
             </button>
           </div>
 
-          <div className={`exc-section-body ${expandedSections.topPriorities ? 'expanded' : 'collapsed'}`} data-component="executive-priorities">
+          <div className={`exc-section-body ${expandedSections.topPriorities ? 'expanded' : 'collapsed'}`}>
             <div className="exc-prio-list">
               {topPriorities?.map((item, idx) => {
                 const actions = item.actions || item.Actions || [];
@@ -608,7 +623,7 @@ const ExecutiveSummary = ({ hideNextStep }) => {
 
         {/* Next Step Card */}
         {!hideNextStep && (
-          <div className="exc-section-card p-4">
+          <div className="exc-section-card p-4 exc-next-step-card">
           <p className="fw-bold text-uppercase mb-2 cta-path-eyebrow">{t("Next step")}</p>
           <h3 className="exc-section-title mb-3 next-step" style={{ fontSize: '19px', textTransform: 'none' }}>{t("Go deeper with Advanced Insights")}</h3>
           <p className="exc-content-text mb-4" style={{ fontSize: '14px' }}>
