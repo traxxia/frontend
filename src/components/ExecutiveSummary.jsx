@@ -250,7 +250,7 @@ const ExecutiveSummary = ({ hideNextStep }) => {
               className="view-edit-inputs-btn"
               style={{ borderRadius: '6px' }}
               businessName={businessData?.name || data?.onboarding_data?.name}
-              onToastMessage={addToast}
+              onToastMessage={(message, type) => addToast({ title: type === 'error' ? 'Error' : 'Success', message, type })}
               exportType="executive"
               showText={true}
             />

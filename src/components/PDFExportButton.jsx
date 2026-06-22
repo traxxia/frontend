@@ -209,6 +209,11 @@ const captureComponent = async (selector, name, html2canvas) => {
             overflow: visible !important;
           }
 
+          /* Force text color to black for better PDF readability */
+          * {
+            color: #000000 !important;
+          }
+
           .recharts-responsive-container, .ch-chart-wrapper, .ch-chart-section {
             width: 900px !important;
             height: 400px !important;
