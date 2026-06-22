@@ -18,9 +18,15 @@ const PilotFeedbackModal = ({ plan, onClose, onAccept }) => {
   const [rating, setRating] = useState('');
   const [comment, setComment] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState('');
   const token = useAuthStore((state) => state.token);
 
   const handleAccept = async () => {
+    if (rating === '') {
+      setError('Please select a rating to continue.');
+      return;
+    }
+    setError('');
     try {
       setIsSubmitting(true);
       const baseUrl = import.meta.env.VITE_BACKEND_URL || '';
@@ -61,7 +67,7 @@ const PilotFeedbackModal = ({ plan, onClose, onAccept }) => {
         </p>
 
         <div className="pfm-field">
-          <label className="pfm-label">The plan you chose</label>
+          <label className="pfm-label">The plan you chose <span style={{ color: '#e11d48' }}>*</span></label>
           <div className="pfm-select-wrapper">
             <select
               className="pfm-select"
@@ -77,13 +83,13 @@ const PilotFeedbackModal = ({ plan, onClose, onAccept }) => {
         </div>
 
         <div className="pfm-field">
-          <label className="pfm-label">How likely are you to recommend Traxxia to a colleague?</label>
+          <label className="pfm-label">How likely are you to recommend Traxxia to a colleague? <span style={{ color: '#e11d48' }}>*</span></label>
           <div className="pfm-nps-row">
             {[1,2,3,4,5,6,7,8,9,10].map((n) => (
               <button
                 key={n}
                 className={`pfm-nps-btn ${rating === n ? 'active' : ''}`}
-                onClick={() => setRating(n)}
+                onClick={() => { setRating(n); setError(''); }}
               >
                 {n}
               </button>
@@ -110,6 +116,8 @@ const PilotFeedbackModal = ({ plan, onClose, onAccept }) => {
           <Bell size={19} className="pfm-notice-icon" />
           <span>The moment the product is ready, we'll notify you so you can try it with the launch discount you were offered.</span>
         </div>
+
+        {error && <div style={{ color: '#e11d48', fontSize: '14px', marginBottom: '16px', textAlign: 'center', fontWeight: '500' }}>{error}</div>}
 
         <button className="pfm-accept-btn" onClick={handleAccept} disabled={isSubmitting}>
           {isSubmitting ? 'Accepting...' : 'Accept'}

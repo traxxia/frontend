@@ -150,17 +150,8 @@ const PHASE_COMPONENTS = {
     name: 'Questions & Answers'
   }],
   executive: [{
-    selector: '[data-component="executive-aha"]',
-    name: 'AHA Insights'
-  }, {
-    selector: '[data-component="executive-where"]',
-    name: 'Where to Compete'
-  }, {
-    selector: '[data-component="executive-how"]',
-    name: 'How to Compete'
-  }, {
-    selector: '[data-component="executive-priorities"]',
-    name: 'Strategic Priorities'
+    selector: '[data-component="executive-content"]',
+    name: 'Executive Summary'
   }]
 };
 const getExportPhase = (unlockedFeatures = {}) => {
@@ -183,6 +174,8 @@ const captureComponent = async (selector, name, html2canvas) => {
       backgroundColor: '#ffffff',
       logging: false,
       imageTimeout: 60000,
+      windowWidth: document.documentElement.scrollWidth,
+      windowHeight: document.documentElement.scrollHeight,
       onclone: clonedDoc => {
         const style = clonedDoc.createElement('style');
         style.innerHTML = `
@@ -200,6 +193,25 @@ const captureComponent = async (selector, name, html2canvas) => {
             height: auto !important;
             display: block !important;
             overflow: visible !important;
+          }
+          .exc-section-body, .exc-section-body.collapsed, .exc-section-body.expanded {
+            display: flex !important;
+            flex-direction: column !important;
+            max-height: none !important;
+            height: auto !important;
+            overflow: visible !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+          }
+          .exc-executive-content {
+            max-height: none !important;
+            height: auto !important;
+            overflow: visible !important;
+          }
+
+          /* Force text color to black for better PDF readability */
+          * {
+            color: #000000 !important;
           }
 
           .recharts-responsive-container, .ch-chart-wrapper, .ch-chart-section {
@@ -229,6 +241,9 @@ const captureComponent = async (selector, name, html2canvas) => {
           }
         `;
         clonedDoc.head.appendChild(style);
+        // Hide the loading overlay so it doesn't appear in the screenshot
+        const loadingOverlay = clonedDoc.querySelector('.p-d-f-export-button--s1');
+        if (loadingOverlay) loadingOverlay.style.display = 'none';
         const clonedEl = clonedDoc.querySelector(selector);
         if (clonedEl) {
           let parent = clonedEl.parentElement;
@@ -256,15 +271,13 @@ const captureComponent = async (selector, name, html2canvas) => {
               parent.style.width = '900px';
             }
           });
-          const uiJunk = clonedEl.querySelectorAll('button, .regenerate-button, .dropdown-button, .help-icon, .tooltip, .modern-expand-btn');
+          const uiJunk = clonedEl.querySelectorAll('button, .regenerate-button, .dropdown-button, .help-icon, .tooltip, .modern-expand-btn, .next-step, .exc-next-step-card, .exc-discuss-footer, .exc-discuss-btn, .p-d-f-export-button--s1, .p-d-f-export-button--s7, [data-component="executive-content"] > div:first-child');
           uiJunk.forEach(el => el.style.display = 'none');
           clonedEl.style.display = 'block';
           clonedEl.style.visibility = 'visible';
           clonedEl.style.maxHeight = 'none';
           clonedEl.style.height = 'auto';
-          clonedEl.style.padding = '40px';
           clonedEl.style.backgroundColor = '#ffffff';
-          clonedEl.style.width = '1000px';
           clonedEl.style.overflow = 'visible';
           const allText = clonedEl.querySelectorAll('text, span, p, h1, h2, h3, h4');
           allText.forEach(t => {
@@ -373,60 +386,20 @@ const PDFExportButton = ({
         const el = document.querySelector(comp.selector);
         if (!el) return;
         
-        if (comp.selector === '[data-component="executive-priorities"]') {
-          const cards = el.querySelectorAll('.exc-prio-card');
-          if (cards && cards.length > 0) {
-            Array.from(cards).forEach((card, idx) => {
-              const tempId = `temp-pdf-prio-${idx}`;
-              card.id = tempId;
-              components.push({
-                selector: `#${tempId}`,
-                name: idx === 0 ? comp.name : `${comp.name} (continued)`,
-                isChunk: idx !== 0
-              });
-            });
-          } else {
-            components.push(comp);
-          }
-        } else if (comp.selector === '[data-component="executive-where"]') {
-          const horizons = el.querySelector('.exc-horizons-container');
-          if (horizons) {
-            horizons.id = 'temp-pdf-where-hor';
-            components.push({
-              selector: `#temp-pdf-where-hor`,
-              name: comp.name
-            });
-          }
-          const moves = el.querySelectorAll('.exc-move-card');
-          if (moves && moves.length > 0) {
-            Array.from(moves).forEach((move, idx) => {
-              const tempId = `temp-pdf-move-${idx}`;
-              move.id = tempId;
-              components.push({
-                selector: `#${tempId}`,
-                name: `${comp.name} (continued)`,
-                isChunk: true
-              });
-            });
-          } else if (!horizons) {
-            components.push(comp);
-          }
-        } else if (comp.selector === '[data-component="executive-how"]') {
-          const blocks = el.querySelectorAll('.exc-how-block');
-          if (blocks && blocks.length > 0) {
-            Array.from(blocks).forEach((block, idx) => {
-              const tempId = `temp-pdf-how-${idx}`;
-              block.id = tempId;
-              components.push({
-                selector: `#${tempId}`,
-                name: idx === 0 ? comp.name : `${comp.name} (continued)`,
-                isChunk: idx !== 0
-              });
-            });
-          } else {
-            components.push(comp);
-          }
+        if (comp.selector === '[data-component="executive-content"]') {
+          const aha = el.querySelector('[data-component="executive-aha"]');
+          if (aha) components.push({ selector: '[data-component="executive-aha"]', name: comp.name });
+          
+          const where = el.querySelector('[data-component="executive-where"]');
+          if (where) components.push({ selector: '[data-component="executive-where"]', name: aha ? `${comp.name} (continued)` : comp.name });
+          
+          const how = el.querySelector('[data-component="executive-how"]');
+          if (how) components.push({ selector: '[data-component="executive-how"]', name: (aha || where) ? `${comp.name} (continued)` : comp.name });
+          
+          const prio = el.querySelector('[data-component="executive-priorities"]');
+          if (prio) components.push({ selector: '[data-component="executive-priorities"]', name: (aha || where || how) ? `${comp.name} (continued)` : comp.name });
         } else {
+          // For non-executive content
           components.push(comp);
         }
       });
@@ -444,12 +417,12 @@ const PDFExportButton = ({
       pdf.setFontSize(24);
       pdf.setFont('helvetica', 'bold');
       pdf.setTextColor(26, 115, 232);
-      pdf.text(exportType === 'strategic' ? 'Strategic Analysis' : 'Insight Analysis Report', pageWidth / 2, 40, {
+      pdf.text(exportType === 'strategic' ? 'Strategic Analysis' : (exportType === 'executive' ? 'Executive Summary' : 'Insight Analysis Report'), pageWidth / 2, 40, {
         align: 'center'
       });
       pdf.setFontSize(16);
       pdf.setTextColor(60, 60, 60);
-      pdf.text(businessName, pageWidth / 2, 55, {
+      pdf.text(businessName ? String(businessName) : '', pageWidth / 2, 55, {
         align: 'center'
       });
       pdf.setFontSize(12);
@@ -471,20 +444,21 @@ const PDFExportButton = ({
           sectionName: `Capturing ${comp.name}...`
         });
         const element = document.querySelector(comp.selector);
-                if (element) {
+                let domHeight = 1;
+        let breakPoints = [];
+        if (element) {
           element.scrollIntoView({ block: 'center' });
           await new Promise(resolve => setTimeout(resolve, 1000));
         }
         const result = await captureComponent(comp.selector, comp.name, html2canvas);
         if (result) {
-          result.isChunk = comp.isChunk;
           capturedResults.push(result);
         }
       }
       
       let yOffset = 75;
       for (let i = 0; i < capturedResults.length; i++) {
-        const { name, canvas, imgData, isChunk } = capturedResults[i];
+        const { name, canvas, imgData } = capturedResults[i];
         setExportProgress({
           current: i + 1,
           total: capturedResults.length,
@@ -511,25 +485,15 @@ const PDFExportButton = ({
             spaceLeftOnPage = pageHeight - yOffset - 15;
           }
           
-          const sliceHeightOnPage = Math.min(remainingImgHeight, spaceLeftOnPage);
-          const sourceSliceHeight = sliceHeightOnPage * canvas.width / imgWidth;
+          let sliceHeightOnPage = Math.min(remainingImgHeight, spaceLeftOnPage);
+          let sourceSliceHeight = sliceHeightOnPage * canvas.width / imgWidth;
           
           if (isFirstSlice) {
-            if (isChunk) {
-              if (yOffset === 20) {
-                pdf.setFontSize(10);
-                pdf.setFont('helvetica', 'italic');
-                pdf.setTextColor(150, 150, 150);
-                pdf.text(name, margin, yOffset);
-                yOffset += 7;
-              }
-            } else {
-              pdf.setFontSize(14);
-              pdf.setFont('helvetica', 'bold');
-              pdf.setTextColor(26, 115, 232);
-              pdf.text(name, margin, yOffset);
-              yOffset += 7;
-            }
+            pdf.setFontSize(14);
+            pdf.setFont('helvetica', 'bold');
+            pdf.setTextColor(26, 115, 232);
+            pdf.text(name, margin, yOffset);
+            yOffset += 7;
           } else {
             pdf.setFontSize(10);
             pdf.setFont('helvetica', 'italic');
@@ -561,7 +525,8 @@ const PDFExportButton = ({
           }
         }
       }
-      const filename = `${businessName.replace(/\s+/g, '_')}_Report_${new Date().toISOString().split('T')[0]}.pdf`;
+      const safeBusinessName = businessName ? String(businessName).replace(/\s+/g, '_') : (exportType === 'executive' ? 'Executive_Summary' : 'Report');
+      const filename = `${safeBusinessName}_${new Date().toISOString().split('T')[0]}.pdf`;
       pdf.save(filename);
       onToastMessage?.('PDF downloaded successfully', 'success');
     } catch (error) {

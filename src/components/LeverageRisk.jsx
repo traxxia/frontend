@@ -1,9 +1,11 @@
 import React, { useState, useRef, useCallback, useMemo } from 'react';
 import { AlertTriangle, Loader, AlertCircle, Info } from 'lucide-react';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ReferenceLine, ResponsiveContainer } from 'recharts';
 import '../styles/goodPhase.css';
 import { useTranslation } from "../hooks/useTranslation";
 import { useAnalysisStore } from "../store";
 import FinancialEmptyState from './FinancialEmptyState';
+import { checkMissingQuestionsAndRedirect, ANALYSIS_TYPES } from '../services/missingQuestionsService';
 
 // Custom normalizer for both old and new response formats
 const parseMetric = (rawVal) => {
@@ -92,6 +94,27 @@ const formatRatioValue = (metricKey, val) => {
 
 const getNormalizedData = data => {
   if (!data) return null;
+  // New timeline format: { timeline: [{period, leverage: {...}}, ...] }
+  if (data.timeline && Array.isArray(data.timeline) && data.timeline.length > 0) {
+    const sorted = [...data.timeline].sort((a, b) => (a.period || '').localeCompare(b.period || ''));
+    
+    // Find latest period that actually has some valid leverage data
+    for (let i = sorted.length - 1; i >= 0; i--) {
+      const lev = sorted[i].leverage;
+      if (!lev) continue;
+      
+      const hasValid = Object.keys(lev).some(k => {
+        if (k === 'period') return false;
+        const parsed = parseMetric(lev[k]);
+        return parsed.value !== null && parsed.value !== undefined && parsed.value !== '' && !isNaN(parseFloat(parsed.value));
+      });
+      
+      if (hasValid) return lev;
+    }
+    
+    const latest = sorted[sorted.length - 1];
+    return latest?.leverage || null;
+  }
   if (data.leverage) return data.leverage;
   if (data.debt_to_equity && data.interest_coverage) return data;
   const wrapper = data.leverageRisk || data.leverage_risk || data.LeverageRisk;
@@ -99,12 +122,24 @@ const getNormalizedData = data => {
   return null;
 };
 
+/** Extract multi-period leverage trend */
+const getTimelineChartData = data => {
+  if (!data?.timeline || !Array.isArray(data.timeline) || data.timeline.length < 2) return null;
+  const sorted = [...data.timeline].sort((a, b) => (a.period || '').localeCompare(b.period || ''));
+  return sorted.map(p => ({
+    period: p.period,
+    debt_to_equity: p.leverage?.debt_to_equity?.value ?? null,
+    debt_to_assets: p.leverage?.debt_to_assets?.value ?? null,
+    interest_coverage: p.leverage?.interest_coverage?.value ?? null,
+  }));
+};
+
 const isLeverageDataIncomplete = data => {
   const normalized = getNormalizedData(data);
   if (!normalized) return true;
   
-  // If the three leverage ratios are all empty, treat as incomplete/empty state
-  const ratioMetrics = ['debt_to_equity', 'debt_to_assets', 'interest_coverage'];
+  // If the leverage ratios and base debt are all empty, treat as incomplete/empty state
+  const ratioMetrics = ['debt_to_equity', 'debt_to_assets', 'interest_coverage', 'total_debt', 'total_liabilities'];
   const hasValidRatio = ratioMetrics.some(key => {
     const parsed = parseMetric(normalized[key]);
     return parsed.value !== null && parsed.value !== undefined && parsed.value !== '' && !isNaN(parseFloat(parsed.value));
@@ -200,7 +235,8 @@ const LeverageRisk = ({
     if (!rawData) return null;
     const normalized = getNormalizedData(rawData);
     return normalized ? {
-      leverage: normalized
+      leverage: normalized,
+      _raw: rawData
     } : null;
   }, [leverageData, leverageRiskData, storeLeverageData]);
 
@@ -345,6 +381,9 @@ const LeverageRisk = ({
       }
     ];
 
+    // Extract timeline chart data if multiple periods available
+    const timelineData = getTimelineChartData(analysisData._raw || leverageData || leverageRiskData || storeLeverageData);
+    const hasTimeline = timelineData && timelineData.length >= 2;
 
     return (
       <div className="ch-heatmap-container" style={{ width: '100%' }}>
@@ -580,6 +619,30 @@ const LeverageRisk = ({
         `}} />
         <div className="ch-heatmap-scroll" style={{ padding: '4px', width: '100%' }}>
           
+          {/* Multi-period Leverage Line Chart */}
+          {hasTimeline && (
+            <div className="leverage-risk__chart-card" style={{ marginBottom: 16 }}>
+              <div className="leverage-risk__chart-header">
+                <h3 className="leverage-risk__chart-title">
+                  {t('leverage_trends', 'Leverage Trends — Multi-Period')}
+                </h3>
+              </div>
+              <ResponsiveContainer width="100%" height={220}>
+                <LineChart data={timelineData} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                  <XAxis dataKey="period" tick={{ fontSize: 11 }} />
+                  <YAxis tick={{ fontSize: 11 }} />
+                  <Tooltip formatter={(v, n) => [v != null ? v.toFixed(2) : '–', n]} />
+                  <Legend wrapperStyle={{ fontSize: 12 }} />
+                  <ReferenceLine y={2} stroke="#f59e0b" strokeDasharray="4 4" label={{ value: 'D/E Caution', fontSize: 9, fill: '#f59e0b' }} />
+                  <Line type="monotone" dataKey="debt_to_equity" name="Debt/Equity" stroke="#ef4444" strokeWidth={2} dot={{ r: 4 }} connectNulls={false} />
+                  <Line type="monotone" dataKey="debt_to_assets" name="Debt/Assets" stroke="#f59e0b" strokeWidth={2} dot={{ r: 4 }} connectNulls={false} />
+                  <Line type="monotone" dataKey="interest_coverage" name="Interest Coverage" stroke="#10b981" strokeWidth={2} dot={{ r: 4 }} connectNulls={false} />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          )}
+
           <div className="leverage-risk__chart-card">
             <div className="leverage-risk__chart-header">
               <h3 className="leverage-risk__chart-title">

@@ -21,15 +21,15 @@ const countZipFilesByPrefix = (bytes, prefix) => {
   const eocd = findEOCD(view, bytes.length);
   if (eocd === -1) return 0;
 
-  const numEntries = view.getUint16(eocd + 8,  true);
-  let   pos        = view.getUint32(eocd + 16, true);
-  const enc        = new TextEncoder().encode(prefix);
-  let   count      = 0;
+  const numEntries = view.getUint16(eocd + 8, true);
+  let pos = view.getUint32(eocd + 16, true);
+  const enc = new TextEncoder().encode(prefix);
+  let count = 0;
 
   for (let e = 0; e < numEntries && pos + 46 <= bytes.length; e++) {
     if (view.getUint32(pos, true) !== 0x02014B50) break;
-    const fnLen      = view.getUint16(pos + 28, true);
-    const extraLen   = view.getUint16(pos + 30, true);
+    const fnLen = view.getUint16(pos + 28, true);
+    const extraLen = view.getUint16(pos + 30, true);
     const commentLen = view.getUint16(pos + 32, true);
 
     if (fnLen >= enc.length) {
@@ -49,30 +49,30 @@ const readZipEntry = async (bytes, targetName) => {
   const eocd = findEOCD(view, bytes.length);
   if (eocd === -1) return null;
 
-  const numEntries = view.getUint16(eocd + 8,  true);
-  let   pos        = view.getUint32(eocd + 16, true);
+  const numEntries = view.getUint16(eocd + 8, true);
+  let pos = view.getUint32(eocd + 16, true);
 
   for (let e = 0; e < numEntries && pos + 46 <= bytes.length; e++) {
     if (view.getUint32(pos, true) !== 0x02014B50) break;
-    const compMethod  = view.getUint16(pos + 10, true);
-    const compSize    = view.getUint32(pos + 20, true);
-    const fnLen       = view.getUint16(pos + 28, true);
-    const extraLen    = view.getUint16(pos + 30, true);
-    const commentLen  = view.getUint16(pos + 32, true);
+    const compMethod = view.getUint16(pos + 10, true);
+    const compSize = view.getUint32(pos + 20, true);
+    const fnLen = view.getUint16(pos + 28, true);
+    const extraLen = view.getUint16(pos + 30, true);
+    const commentLen = view.getUint16(pos + 32, true);
     const localOffset = view.getUint32(pos + 42, true);
-    const name        = new TextDecoder().decode(bytes.slice(pos + 46, pos + 46 + fnLen));
+    const name = new TextDecoder().decode(bytes.slice(pos + 46, pos + 46 + fnLen));
 
     if (name === targetName) {
-      const localFNLen  = view.getUint16(localOffset + 26, true);
+      const localFNLen = view.getUint16(localOffset + 26, true);
       const localExtLen = view.getUint16(localOffset + 28, true);
-      const dataStart   = localOffset + 30 + localFNLen + localExtLen;
-      const compData    = bytes.slice(dataStart, dataStart + compSize);
+      const dataStart = localOffset + 30 + localFNLen + localExtLen;
+      const compData = bytes.slice(dataStart, dataStart + compSize);
 
       if (compMethod === 0) {
         return new TextDecoder().decode(compData);
       }
       if (compMethod === 8 && typeof DecompressionStream !== 'undefined') {
-        const ds     = new DecompressionStream('deflate-raw');
+        const ds = new DecompressionStream('deflate-raw');
         const writer = ds.writable.getWriter();
         writer.write(compData);
         writer.close();
@@ -99,13 +99,13 @@ export const computePageCount = async (file) => {
   const ext = file.name.split('.').pop().toLowerCase();
   try {
     if (ext === 'pdf') {
-      const buf  = await file.arrayBuffer();
+      const buf = await file.arrayBuffer();
       const text = new TextDecoder('latin1').decode(buf);
 
       // Strategy 1: XMP metadata — uncompressed, reliable even in compressed PDFs
       // e.g. <xmpTPg:NPages>23</xmpTPg:NPages>
       const xmpMatch = text.match(/<[^>]*:?NPages[^>]*>\s*(\d+)\s*<\/[^>]*:?NPages>/i)
-                    || text.match(/xmpTPg:NPages[^>]*>(\d+)/i);
+        || text.match(/xmpTPg:NPages[^>]*>(\d+)/i);
       if (xmpMatch) {
         const count = parseInt(xmpMatch[1], 10);
         if (count > 0) return { count, unit: count === 1 ? 'page' : 'pages' };
@@ -138,7 +138,7 @@ export const computePageCount = async (file) => {
     }
 
     if (['pptx', 'ppt', 'xlsx', 'xls', 'docx', 'doc'].includes(ext)) {
-      const buf   = await file.arrayBuffer();
+      const buf = await file.arrayBuffer();
       const bytes = new Uint8Array(buf);
 
       if (ext === 'pptx' || ext === 'ppt') {
@@ -228,31 +228,25 @@ export const computePageCount = async (file) => {
               // Most accurate: Word's own page layout markers
               docCount = renderedBreaks + 1;
             } else {
-              // Structural: combine explicit page breaks + section breaks
-              // (they represent different separator mechanisms, both create new pages)
+              // Structural breaks represent page dividers.
               const structuralBreaks = explicitBreaks + sectionBreaks;
-              if (structuralBreaks > 0) {
-                docCount = structuralBreaks + 1;
-              } else {
-                // Tier 4: Layout-aware estimation — accounts for formatting overhead,
-                // not just raw word count (which ignores headings, line breaks, spacing).
-                //
-                // Formula: total "line units" / lines_per_page
-                //   - textLines     : raw word content (≈10 words per line)
-                //   - lineBreaks    : explicit <w:br/> (shift-enter) — each is a full line
-                //   - paragraphs×0.5: each paragraph has top/bottom spacing
-                //   - headings×1.5  : Heading styles add ~1.5 extra lines of spacing
-                //   - 45 lines/page : typical single-spaced A4/Letter page
-                const textContent = docXml.replace(/<[^>]+>/g, ' ');
-                const words = textContent.split(/\s+/).filter(w => w.length > 0).length;
-                const paragraphs = (docXml.match(/<w:p[ >]/g) || []).length;
-                const lineBreaks = (docXml.match(/<w:br\s*\/?>/g) || []).length; // plain <w:br/> only, not page/col breaks
-                const headings = (docXml.match(/w:val=["']Heading\d["']/gi) || []).length;
 
-                const textLines  = Math.ceil(words / 10);
-                const lineUnits  = textLines + lineBreaks + (paragraphs * 0.5) + (headings * 1.5);
-                docCount = Math.max(1, Math.ceil(lineUnits / 45));
-              }
+              // Layout-aware estimation
+              const textContent = docXml.replace(/<[^>]+>/g, ' ');
+              const words = textContent.split(/\s+/).filter(w => w.length > 0).length;
+              const paragraphs = (docXml.match(/<w:p[ >]/g) || []).length;
+              const lineBreaks = (docXml.match(/<w:br\s*\/?>/g) || []).length; // plain <w:br/> only
+              const headings = (docXml.match(/w:val=["']Heading\d["']/gi) || []).length;
+
+              const textLines = Math.ceil(words / 8);
+              // Paragraphs add slight vertical space. 
+              // Structural breaks prematurely end a page, leaving blank lines uncounted by text. 
+              // We estimate each break leaves ~2 lines blank on average.
+              const lineUnits = textLines + lineBreaks + (paragraphs * 0.5) + (headings * 1.5) + (structuralBreaks * 2);
+              const estimatedTextPages = Math.ceil(lineUnits / 37);
+
+              // Take the maximum of structural layout vs text density
+              docCount = Math.max(structuralBreaks + 1, estimatedTextPages);
             }
           }
         }
@@ -265,15 +259,15 @@ export const computePageCount = async (file) => {
 
     // ── CSV: count data rows (lines minus the header row) ──────────────────────
     if (ext === 'csv') {
-      const text  = await file.text();
+      const text = await file.text();
       const lines = text.split(/\r?\n/).filter(l => l.trim().length > 0);
-      const rows  = Math.max(0, lines.length - 1); // subtract header row
+      const rows = Math.max(0, lines.length - 1); // subtract header row
       return rows > 0 ? { count: rows, unit: rows === 1 ? 'row' : 'rows' } : null;
     }
 
     // ── Plain text / RTF: estimate pages from word count ───────────────────────
     if (ext === 'txt' || ext === 'rtf') {
-      const raw  = await file.text();
+      const raw = await file.text();
       // For RTF strip control words so we count only real words
       const text = ext === 'rtf'
         ? raw.replace(/\\\w+\s?/g, ' ').replace(/[{}]/g, ' ')
@@ -296,7 +290,10 @@ export const computePageCount = async (file) => {
 };
 
 export const getFileDetails = (file, pageInfo) => {
+  return '';
+  /*
   const sizeStr = formatFileSize(file.size);
   if (pageInfo) return `${sizeStr} \u00b7 ${pageInfo.count} ${pageInfo.unit}`;
   return sizeStr;
+  */
 };

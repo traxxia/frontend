@@ -3,6 +3,8 @@ import axios from 'axios';
 import { useAuthStore } from '../store/authStore';
 import { useTranslation } from '../hooks/useTranslation';
 
+import { useAnalysisStore } from '../store/analysisStore';
+
 const TraxSidebar = ({
   selectedBusinessId,
   selectedBusinessName,
@@ -13,11 +15,45 @@ const TraxSidebar = ({
   pageDescriptionContext = 'User is filling out the 5-step PMF onboarding form to generate insights.'
 }) => {
   const { t } = useTranslation();
+  const answersDetails = useAnalysisStore(state => state.answersDetails);
   const [chatInput, setChatInput] = useState('');
   const [chatMessages, setChatMessages] = useState([]);
   const [isChatLoading, setIsChatLoading] = useState(false);
+  const [analyzedDocs, setAnalyzedDocs] = useState([]);
   const chatEndRef = useRef(null);
   const historyFetchedRef = useRef(false);
+
+  useEffect(() => {
+    let active = true;
+    const fetchStrategicDocs = async () => {
+      if (!selectedBusinessId) return;
+      const token = useAuthStore.getState().token;
+      if (!token) return;
+      try {
+        const response = await axios.get(
+          `${import.meta.env.VITE_BACKEND_URL}/api/businesses/${selectedBusinessId}/strategic-documents`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        if (active && response.data && response.data.documents) {
+          setAnalyzedDocs(response.data.documents.filter(doc => doc.is_analyzed === true));
+        }
+      } catch (err) {
+        console.error("Error fetching strategic documents for TraxSidebar:", err);
+      }
+    };
+
+    fetchStrategicDocs();
+
+    const handleDocsUpdate = () => {
+      fetchStrategicDocs();
+    };
+
+    window.addEventListener('strategicDocumentsAnalyzed', handleDocsUpdate);
+    return () => {
+      active = false;
+      window.removeEventListener('strategicDocumentsAnalyzed', handleDocsUpdate);
+    };
+  }, [selectedBusinessId]);
 
   useEffect(() => {
     if (!historyFetchedRef.current && selectedBusinessId) {
@@ -102,6 +138,22 @@ const TraxSidebar = ({
     }
   };
 
+  const renderDocumentMessages = () => {
+    if (!analyzedDocs || analyzedDocs.length === 0) return null;
+    
+    const totalAIFilled = Object.values(answersDetails || {}).filter(d => d?.ai_answer).length;
+    const countStr = totalAIFilled > 0 ? ` ${Math.max(1, Math.floor(totalAIFilled / analyzedDocs.length))} answers` : ' answers';
+    
+    return analyzedDocs.map((doc, idx) => (
+      <div key={`doc-msg-${idx}`} className="onboarding-chat-message">
+        <div className="bubble-avatar">TX</div>
+        <div className="bubble-content" style={{ wordBreak: 'break-word', overflowWrap: 'break-word' }}>
+          Read <strong>{doc.original_name || doc.filename || 'Document'}</strong>. I auto-filled{countStr} across the sections below — please review.
+        </div>
+      </div>
+    ));
+  };
+
   return (
     <div className="docked-onboarding-chat">
       <div className="onboarding-chat-header">
@@ -130,6 +182,7 @@ const TraxSidebar = ({
             <div className="onboarding-chat-highlight-card" style={{ background: '#f0f9ff', border: '1px solid #bae6fd', color: '#0369a1', padding: '12px 16px', borderRadius: '12px', fontSize: '13px', lineHeight: '1.5', margin: '0 0 16px 0' }}>
               <strong>This is what your Bets are built from.</strong> The sharper your inputs, the sharper the diagnosis.
             </div>
+            {renderDocumentMessages()}
           </>
         ) : (
           <>
@@ -154,6 +207,7 @@ const TraxSidebar = ({
                 Great. Here are the {questions?.length || 6} questions I need to draft your diagnosis. Answer in any order — or add documents and I'll auto-fill what I can.
               </div>
             </div>
+            {renderDocumentMessages()}
           </>
         )}
         {chatMessages.map((msg, idx) => (

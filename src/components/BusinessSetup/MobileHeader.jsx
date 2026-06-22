@@ -224,16 +224,7 @@ const MobileHeader = () => {
             </>
           )}
 
-          {activeTab === "executive" && (
-            <CustomTooltip align="right" message={t("download_executive_tooltip") || "Export the executive summary into PDF report."}>
-              <PDFExportButton
-                className="pdf-export-button"
-                businessName={businessData.name}
-                onToastMessage={showToastMessage}
-                exportType="executive"
-              />
-            </CustomTooltip>
-          )}
+
         </div>
       </div>
 

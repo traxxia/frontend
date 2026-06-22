@@ -471,7 +471,7 @@ export const useAnalysisStore = create((set, get) => ({
     }
   },
 
-  regenerateIndividualAnalysis: async (type, questions, userAnswers, businessId, onToast, uploadedFile = null) => {
+  regenerateIndividualAnalysis: async (type, questions, userAnswers, businessId, onToast, uploadedFile = null, options = {}) => {
     if (!businessId || !type) return;
     set((state) => ({ regenerating: { ...state.regenerating, [`${businessId}_${type}`]: true } }));
     try {
@@ -491,7 +491,9 @@ export const useAnalysisStore = create((set, get) => ({
         questions,
         userAnswers,
         selectedBusinessId: businessId,
-        stateSetters
+        stateSetters,
+        includeFullTimeline: options?.includeFullTimeline || false,
+        financialTimeline: options?.financialTimeline || null
       };
 
       const result = await apiService.callAnalysisEndpoint(type, payload);

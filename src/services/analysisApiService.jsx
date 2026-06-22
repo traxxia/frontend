@@ -561,7 +561,8 @@ export class AnalysisApiService {
     userAnswers,
     selectedBusinessId,
     stateSetters,
-    showToastMessage
+    showToastMessage,
+    options = {}
   ) {
     const analysisTypes = PHASE_API_CONFIG[phase];
 
@@ -571,6 +572,8 @@ export class AnalysisApiService {
     }
 
     this.clearPhaseData(phase, stateSetters);
+
+    const { financialTimeline = null, includeFullTimeline = false } = options;
 
     try {
       const { freshAnswers } = await this.getFreshAnswersData(selectedBusinessId);
@@ -582,8 +585,12 @@ export class AnalysisApiService {
       const processItem = (analysisType) => {
         const displayName = this.getDisplayName(analysisType);
 
-        // Pass freshAnswers into generateAnalysis to avoid redundant fetching
-        return this.generateAnalysis(analysisType, questions, userAnswers, selectedBusinessId, { freshAnswers })
+        // Pass freshAnswers and financialTimeline into generateAnalysis
+        return this.generateAnalysis(analysisType, questions, userAnswers, selectedBusinessId, {
+          freshAnswers,
+          financialTimeline,
+          includeFullTimeline
+        })
           .then((res) => {
             status.completed++;
             stateSetters.setRegenerating?.(analysisType, false);
@@ -642,7 +649,8 @@ export class AnalysisApiService {
     userAnswers,
     selectedBusinessId,
     stateSetters,
-    showToastMessage
+    showToastMessage,
+    options = {}
   ) {
     if (!types || types.length === 0) return;
 
@@ -652,6 +660,8 @@ export class AnalysisApiService {
       const setter = stateSetters[setterName];
       if (setter) setter(null);
     });
+
+    const { financialTimeline = null, includeFullTimeline = false } = options;
 
     try {
       const { freshAnswers } = await this.getFreshAnswersData(selectedBusinessId);
@@ -663,8 +673,12 @@ export class AnalysisApiService {
       const processItem = (analysisType) => {
         const displayName = this.getDisplayName(analysisType);
 
-        // Pass freshAnswers into generateAnalysis to avoid redundant fetching
-        return this.generateAnalysis(analysisType, questions, userAnswers, selectedBusinessId, { freshAnswers })
+        // Pass freshAnswers and financialTimeline into generateAnalysis
+        return this.generateAnalysis(analysisType, questions, userAnswers, selectedBusinessId, {
+          freshAnswers,
+          financialTimeline,
+          includeFullTimeline
+        })
           .then((res) => {
             status.completed++;
             stateSetters.setRegenerating?.(analysisType, false);
@@ -1072,7 +1086,13 @@ export class AnalysisApiService {
     return await performCall();
   }
   async generateAnalysis(analysisType, questions, answers, selectedBusinessId, options = {}) {
-    const { uploadedFile = null, onStreamChunk = null, forceRefresh = false } = options;
+    const {
+      uploadedFile = null,
+      onStreamChunk = null,
+      forceRefresh = false,
+      financialTimeline = null,
+      includeFullTimeline = false
+    } = options;
 
     try {
       const endpoint = API_ENDPOINTS[analysisType];
@@ -1091,6 +1111,27 @@ export class AnalysisApiService {
         combinedAnswers,
         analysisType === 'fullSwot' ? (q, ans) => ans[q._id] && ans[q._id].trim() !== '' : null
       );
+
+      // Restrict timeline payload: last 5 periods by default, or full list if requested
+      let timelineToSend = financialTimeline;
+      if (!timelineToSend && selectedBusinessId && !this.isExcelAnalysisType(analysisType)) {
+        try {
+          const token = this.getAuthToken();
+          const sessionRes = await fetch(`${this.API_BASE_URL}/api/sessions/business/${selectedBusinessId}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          if (sessionRes.ok) {
+            const session = await sessionRes.json();
+            timelineToSend = session?.financialTimeline || null;
+          }
+        } catch (e) {
+          console.warn('Failed to fetch financialTimeline for analysis generation:', e);
+        }
+      }
+
+      if (timelineToSend && timelineToSend.length > 5 && !includeFullTimeline) {
+        timelineToSend = timelineToSend.slice(-5);
+      }
 
       // 2. API Call
       let result;
@@ -1111,6 +1152,12 @@ export class AnalysisApiService {
           analysisType
         );
       } else {
+        // Build payload with optional financial_timeline for strategic endpoints
+        const strategicPayload = {
+          questions: questionsArray,
+          answers: answersArray,
+          ...(timelineToSend && timelineToSend.length > 0 ? { financial_timeline: timelineToSend } : {})
+        };
         result = await this.makeAPICall(
           endpoint,
           questionsArray,
@@ -1120,7 +1167,7 @@ export class AnalysisApiService {
           null,
           onStreamChunk,
           null,
-          null,
+          strategicPayload,
           null,
           analysisType
         );
@@ -1157,52 +1204,52 @@ export class AnalysisApiService {
   }
 
   // Wrapper methods for backward compatibility and specific use cases
-  async generateStrategicAnalysis(questions, answers, selectedBusinessId) {
-    return this.generateAnalysis('strategic', questions, answers, selectedBusinessId);
+  async generateStrategicAnalysis(questions, answers, selectedBusinessId, options = {}) {
+    return this.generateAnalysis('strategic', questions, answers, selectedBusinessId, options);
   }
 
-  async generateCompetitiveLandscape(questions, answers, selectedBusinessId) {
-    return this.generateAnalysis('competitiveLandscape', questions, answers, selectedBusinessId);
+  async generateCompetitiveLandscape(questions, answers, selectedBusinessId, options = {}) {
+    return this.generateAnalysis('competitiveLandscape', questions, answers, selectedBusinessId, options);
   }
 
-  async generateSWOTAnalysis(questions, answers, selectedBusinessId) {
-    return this.generateAnalysis('swot', questions, answers, selectedBusinessId);
+  async generateSWOTAnalysis(questions, answers, selectedBusinessId, options = {}) {
+    return this.generateAnalysis('swot', questions, answers, selectedBusinessId, options);
   }
 
-  async generatePortersAnalysis(questions, answers, selectedBusinessId) {
-    return this.generateAnalysis('porters', questions, answers, selectedBusinessId);
+  async generatePortersAnalysis(questions, answers, selectedBusinessId, options = {}) {
+    return this.generateAnalysis('porters', questions, answers, selectedBusinessId, options);
   }
 
-  async generatePestelAnalysis(questions, answers, selectedBusinessId) {
-    return this.generateAnalysis('pestel', questions, answers, selectedBusinessId);
+  async generatePestelAnalysis(questions, answers, selectedBusinessId, options = {}) {
+    return this.generateAnalysis('pestel', questions, answers, selectedBusinessId, options);
   }
 
-  async generateFullSwotPortfolio(questions, answers, selectedBusinessId) {
-    return this.generateAnalysis('fullSwot', questions, answers, selectedBusinessId);
+  async generateFullSwotPortfolio(questions, answers, selectedBusinessId, options = {}) {
+    return this.generateAnalysis('fullSwot', questions, answers, selectedBusinessId, options);
   }
 
-  async generateCompetitiveAdvantage(questions, answers, selectedBusinessId) {
-    return this.generateAnalysis('competitiveAdvantage', questions, answers, selectedBusinessId);
+  async generateCompetitiveAdvantage(questions, answers, selectedBusinessId, options = {}) {
+    return this.generateAnalysis('competitiveAdvantage', questions, answers, selectedBusinessId, options);
   }
 
-  async generateExpandedCapability(questions, answers, selectedBusinessId) {
-    return this.generateAnalysis('expandedCapability', questions, answers, selectedBusinessId);
+  async generateExpandedCapability(questions, answers, selectedBusinessId, options = {}) {
+    return this.generateAnalysis('expandedCapability', questions, answers, selectedBusinessId, options);
   }
 
-  async generateStrategicRadar(questions, answers, selectedBusinessId) {
-    return this.generateAnalysis('strategicRadar', questions, answers, selectedBusinessId);
+  async generateStrategicRadar(questions, answers, selectedBusinessId, options = {}) {
+    return this.generateAnalysis('strategicRadar', questions, answers, selectedBusinessId, options);
   }
 
-  async generateProductivityMetrics(questions, answers, selectedBusinessId) {
-    return this.generateAnalysis('productivityMetrics', questions, answers, selectedBusinessId);
+  async generateProductivityMetrics(questions, answers, selectedBusinessId, options = {}) {
+    return this.generateAnalysis('productivityMetrics', questions, answers, selectedBusinessId, options);
   }
 
-  async generateCoreAdjacency(questions, answers, selectedBusinessId) {
-    return this.generateAnalysis('coreAdjacency', questions, answers, selectedBusinessId);
+  async generateCoreAdjacency(questions, answers, selectedBusinessId, options = {}) {
+    return this.generateAnalysis('coreAdjacency', questions, answers, selectedBusinessId, options);
   }
 
-  async generateMaturityScore(questions, answers, selectedBusinessId) {
-    return this.generateAnalysis('maturityScore', questions, answers, selectedBusinessId);
+  async generateMaturityScore(questions, answers, selectedBusinessId, options = {}) {
+    return this.generateAnalysis('maturityScore', questions, answers, selectedBusinessId, options);
   }
 
   async generateProfitabilityAnalysis(questions, answers, selectedBusinessId, uploadedFile = null) {

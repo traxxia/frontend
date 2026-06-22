@@ -22,6 +22,7 @@ import StateChangeModal from "../components/StateChangeModal";
 import ConfirmationModal from "../components/ConfirmationModal";
 import "../styles/ProjectsSection.css";
 import "../styles/ProjectReviewModal.css";
+import NewBetModal from "../components/NewBetModal";
 const CATEGORIES = [{
   id: "All",
   label: "all"
@@ -149,6 +150,7 @@ const ProjectsSection = ({
   const [selectedProjectIds, setSelectedProjectIds] = useState([]);
   const [isRankingBlinking] = useState(false);
   const [showMissingRankModal, setShowMissingRankModal] = useState(false);
+  const [isNewBetModalOpen, setIsNewBetModalOpen] = useState(false);
   useEffect(() => {
     let pageContext = null;
     if (activeView === "new") {
@@ -434,15 +436,8 @@ const ProjectsSection = ({
     setSelectedProjectIds(prev => prev.includes(projectId) ? prev.filter(id => id !== projectId) : [...prev, projectId]);
   }, []);
   const handleNewProject = useCallback(() => {
-    window.dispatchEvent(new CustomEvent('ai_context_changed', {
-      detail: {
-        projectId: null
-      }
-    }));
-    resetForm();
-    setCurrentProject(null);
-    setActiveView("new");
-  }, [resetForm]);
+    setIsNewBetModalOpen(true);
+  }, []);
   const handleDelete = useCallback(async projectId => {
     if (isViewer || !isSuperAdmin) return;
     const {
@@ -836,6 +831,7 @@ const ProjectsSection = ({
     </Container>
 
     <ProjectReviewModal isOpen={isModalOpen('projectReview')} onClose={() => closeModal('projectReview')} project={selectedReviewProject} type={reviewType} onSubmit={submitReview} />
+    <NewBetModal show={isNewBetModalOpen} onHide={() => setIsNewBetModalOpen(false)} selectedBusinessId={selectedBusinessId} onSuccess={() => refreshAllData()} />
   </>;
 };
 export default ProjectsSection;

@@ -1,5 +1,6 @@
 import React, { useState, useRef, useCallback, useMemo } from 'react';
-import { TrendingUp, Loader, AlertCircle, Info } from 'lucide-react';
+import { TrendingUp, Loader, AlertCircle, Info, TrendingDown, Minus } from 'lucide-react';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import '../styles/goodPhase.css';
 import { useTranslation } from "../hooks/useTranslation";
 import { useAnalysisStore } from "../store";
@@ -102,11 +103,52 @@ const formatCurrencyValue = (val, currency) => {
 
 const getNormalizedData = data => {
   if (!data) return null;
+  // New timeline format: { timeline: [{period, profitability: {...}}, ...] }
+  if (data.timeline && Array.isArray(data.timeline) && data.timeline.length > 0) {
+    const sorted = [...data.timeline].sort((a, b) => (a.period || '').localeCompare(b.period || ''));
+    
+    for (let i = sorted.length - 1; i >= 0; i--) {
+      const prof = sorted[i].profitability;
+      if (!prof) continue;
+      
+      const hasValid = Object.keys(prof).some(k => {
+        if (k === 'period') return false;
+        const parsed = parseMetric(prof[k]);
+        return parsed.value !== null && parsed.value !== undefined && parsed.value !== '' && !isNaN(parseFloat(parsed.value));
+      });
+      
+      if (hasValid) return prof;
+    }
+    
+    const latest = sorted[sorted.length - 1];
+    return latest?.profitability || null;
+  }
   if (data.profitability) return data.profitability;
   if (data.ebitda_margin && data.ebitda_margin.value !== undefined) return data;
   const wrapper = data.profitabilityAnalysis || data.profitability_analysis || data.ProfitabilityAnalysis;
   if (wrapper) return wrapper.profitability || wrapper;
   return null;
+};
+
+/** Extract multi-period trend from the new timeline format */
+const getTimelineChartData = data => {
+  if (!data?.timeline || !Array.isArray(data.timeline) || data.timeline.length < 2) return null;
+  const sorted = [...data.timeline].sort((a, b) => (a.period || '').localeCompare(b.period || ''));
+  return sorted.map(p => ({
+    period: p.period,
+    ebitda_margin: p.profitability?.ebitda_margin?.value != null ? +(p.profitability.ebitda_margin.value * 100).toFixed(2) : null,
+    net_profit_margin: p.profitability?.net_profit_margin?.value != null ? +(p.profitability.net_profit_margin.value * 100).toFixed(2) : null,
+    roe: p.profitability?.roe?.value != null ? +(p.profitability.roe.value * 100).toFixed(2) : null,
+    roa: p.profitability?.roa?.value != null ? +(p.profitability.roa.value * 100).toFixed(2) : null,
+  }));
+};
+
+/** Trend arrow: compare latest vs previous period metric value */
+const TrendArrow = ({ latest, prev }) => {
+  if (latest == null || prev == null) return null;
+  if (latest > prev) return <TrendingUp size={14} style={{ color: '#10b981', display: 'inline', marginLeft: 4 }} />;
+  if (latest < prev) return <TrendingDown size={14} style={{ color: '#ef4444', display: 'inline', marginLeft: 4 }} />;
+  return <Minus size={14} style={{ color: '#6b7280', display: 'inline', marginLeft: 4 }} />;
 };
 
 const isProfitabilityDataIncomplete = data => {
@@ -118,7 +160,9 @@ const isProfitabilityDataIncomplete = data => {
     'net_profit_margin',
     'roe',
     'roce',
-    'roa'
+    'roa',
+    'revenue',
+    'ebitda'
   ];
   
   const hasValidValue = metricsToCheck.some(key => {
@@ -176,7 +220,8 @@ const ProfitabilityAnalysis = ({
     if (!rawData) return null;
     const normalized = getNormalizedData(rawData);
     return normalized ? {
-      profitability: normalized
+      profitability: normalized,
+      _raw: rawData
     } : null;
   }, [profitabilityData, storeProfitabilityData]);
 
@@ -343,6 +388,11 @@ const ProfitabilityAnalysis = ({
       1.0
     );
 
+    // Extract timeline chart data if multiple periods available
+    const timelineData = getTimelineChartData(analysisData._raw || profitabilityData || storeProfitabilityData);
+    const hasTimeline = timelineData && timelineData.length >= 2;
+    const prevPeriodData = hasTimeline ? timelineData[timelineData.length - 2] : null;
+
     return (
       <div className="ch-heatmap-container" style={{ width: '100%' }}>
         <style dangerouslySetInnerHTML={{__html: `
@@ -502,6 +552,30 @@ const ProfitabilityAnalysis = ({
         `}} />
         <div className="ch-heatmap-scroll" style={{ padding: '4px', width: '100%' }}>
           
+          {/* Multi-period Line Chart */}
+          {hasTimeline && (
+            <div className="profitability-analysis__chart-card" style={{ marginBottom: 16 }}>
+              <div className="profitability-analysis__chart-header">
+                <h3 className="profitability-analysis__chart-title">
+                  {t('profitability_trends', 'Profitability Trends — Multi-Period')}
+                </h3>
+              </div>
+              <ResponsiveContainer width="100%" height={220}>
+                <LineChart data={timelineData} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                  <XAxis dataKey="period" tick={{ fontSize: 11 }} />
+                  <YAxis tickFormatter={v => `${v}%`} tick={{ fontSize: 11 }} />
+                  <Tooltip formatter={(v, n) => [v != null ? `${v}%` : '–', n]} />
+                  <Legend wrapperStyle={{ fontSize: 12 }} />
+                  <Line type="monotone" dataKey="ebitda_margin" name="EBITDA Margin" stroke="#6366f1" strokeWidth={2} dot={{ r: 4 }} connectNulls={false} />
+                  <Line type="monotone" dataKey="net_profit_margin" name="Net Margin" stroke="#10b981" strokeWidth={2} dot={{ r: 4 }} connectNulls={false} />
+                  <Line type="monotone" dataKey="roe" name="ROE" stroke="#f59e0b" strokeWidth={2} dot={{ r: 4 }} connectNulls={false} />
+                  <Line type="monotone" dataKey="roa" name="ROA" stroke="#ef4444" strokeWidth={2} dot={{ r: 4 }} connectNulls={false} />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          )}
+
           <div className="profitability-analysis__chart-card">
             <div className="profitability-analysis__chart-header">
               <h3 className="profitability-analysis__chart-title">
@@ -533,6 +607,9 @@ const ProfitabilityAnalysis = ({
                     )}
                     <span className={`profitability-analysis__bar-value profitability-analysis__bar-value--actual-${row.colorClass}`}>
                       {row.actualValue !== null ? formatPercentageValue(row.actualValue) : '-'}
+                      {hasTimeline && prevPeriodData && (
+                        <TrendArrow latest={row.actualValue} prev={prevPeriodData[row.key]} />
+                      )}
                     </span>
                   </div>
                 </div>

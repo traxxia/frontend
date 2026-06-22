@@ -1547,6 +1547,7 @@ const BusinessSetupPage = () => {
                     questions={questions}
                     currentPageContext={activeTab === 'advanced' ? 'Advanced Insights' : 'Business Setup Onboarding'}
                     pageDescriptionContext={activeTab === 'advanced' ? 'User is reviewing advanced insights.' : 'User is filling out the 5-step PMF onboarding form to generate insights.'}
+                    documentInfo={documentInfo}
                   />
                 </div>
 
@@ -1747,18 +1748,7 @@ const BusinessSetupPage = () => {
                       </>
                     )}
 
-                    {activeTab === "executive" && (
-                      <CustomTooltip align="right" message={t("download_executive_tooltip") || "Export the executive summary into PDF report."}>
-                        <PDFExportButton
-                            className="view-edit-inputs-btn"
-                            style={{ borderRadius: '6px' }}
-                          businessName={businessData.name}
-                          onToastMessage={showToastMessage}
-                          exportType="executive"
-                            showText={true}
-                          />
-                      </CustomTooltip>
-                    )}
+
                   </div>
                 </div>
 
@@ -1954,18 +1944,7 @@ const BusinessSetupPage = () => {
                             </>
                           )}
 
-                          {activeTab === "executive" && (
-                            <CustomTooltip align="right" message={t("download_executive_tooltip") || "Export the executive summary into PDF report."}>
-                              <PDFExportButton
-                            className="view-edit-inputs-btn"
-                            style={{ borderRadius: '6px' }}
-                                businessName={businessData.name}
-                                onToastMessage={showToastMessage}
-                                exportType="executive"
-                            showText={true}
-                          />
-                            </CustomTooltip>
-                          )}
+
 
                           {(activeTab === "bets" || activeTab === "cadences") && (
                             <div className="execution-segmented-toggle ms-3" style={{ margin: 0 }}>
