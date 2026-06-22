@@ -150,17 +150,8 @@ const PHASE_COMPONENTS = {
     name: 'Questions & Answers'
   }],
   executive: [{
-    selector: '[data-component="executive-aha"]',
-    name: 'AHA Insights'
-  }, {
-    selector: '[data-component="executive-where"]',
-    name: 'Where to Compete'
-  }, {
-    selector: '[data-component="executive-how"]',
-    name: 'How to Compete'
-  }, {
-    selector: '[data-component="executive-priorities"]',
-    name: 'Strategic Priorities'
+    selector: '[data-component="executive-content"]',
+    name: 'Executive Summary'
   }]
 };
 const getExportPhase = (unlockedFeatures = {}) => {
@@ -183,6 +174,8 @@ const captureComponent = async (selector, name, html2canvas) => {
       backgroundColor: '#ffffff',
       logging: false,
       imageTimeout: 60000,
+      windowWidth: document.documentElement.scrollWidth,
+      windowHeight: document.documentElement.scrollHeight,
       onclone: clonedDoc => {
         const style = clonedDoc.createElement('style');
         style.innerHTML = `
@@ -199,6 +192,20 @@ const captureComponent = async (selector, name, html2canvas) => {
             max-height: none !important;
             height: auto !important;
             display: block !important;
+            overflow: visible !important;
+          }
+          .exc-section-body, .exc-section-body.collapsed, .exc-section-body.expanded {
+            display: flex !important;
+            flex-direction: column !important;
+            max-height: none !important;
+            height: auto !important;
+            overflow: visible !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+          }
+          .exc-executive-content {
+            max-height: none !important;
+            height: auto !important;
             overflow: visible !important;
           }
 
@@ -229,6 +236,9 @@ const captureComponent = async (selector, name, html2canvas) => {
           }
         `;
         clonedDoc.head.appendChild(style);
+        // Hide the loading overlay so it doesn't appear in the screenshot
+        const loadingOverlay = clonedDoc.querySelector('.p-d-f-export-button--s1');
+        if (loadingOverlay) loadingOverlay.style.display = 'none';
         const clonedEl = clonedDoc.querySelector(selector);
         if (clonedEl) {
           let parent = clonedEl.parentElement;
@@ -256,15 +266,13 @@ const captureComponent = async (selector, name, html2canvas) => {
               parent.style.width = '900px';
             }
           });
-          const uiJunk = clonedEl.querySelectorAll('button, .regenerate-button, .dropdown-button, .help-icon, .tooltip, .modern-expand-btn');
+          const uiJunk = clonedEl.querySelectorAll('button, .regenerate-button, .dropdown-button, .help-icon, .tooltip, .modern-expand-btn, .next-step, .exc-next-step-card, .exc-discuss-footer, .exc-discuss-btn, .p-d-f-export-button--s1, .p-d-f-export-button--s7, [data-component="executive-content"] > div:first-child');
           uiJunk.forEach(el => el.style.display = 'none');
           clonedEl.style.display = 'block';
           clonedEl.style.visibility = 'visible';
           clonedEl.style.maxHeight = 'none';
           clonedEl.style.height = 'auto';
-          clonedEl.style.padding = '40px';
           clonedEl.style.backgroundColor = '#ffffff';
-          clonedEl.style.width = '1000px';
           clonedEl.style.overflow = 'visible';
           const allText = clonedEl.querySelectorAll('text, span, p, h1, h2, h3, h4');
           allText.forEach(t => {
@@ -444,12 +452,12 @@ const PDFExportButton = ({
       pdf.setFontSize(24);
       pdf.setFont('helvetica', 'bold');
       pdf.setTextColor(26, 115, 232);
-      pdf.text(exportType === 'strategic' ? 'Strategic Analysis' : 'Insight Analysis Report', pageWidth / 2, 40, {
+      pdf.text(exportType === 'strategic' ? 'Strategic Analysis' : (exportType === 'executive' ? 'Executive Summary' : 'Insight Analysis Report'), pageWidth / 2, 40, {
         align: 'center'
       });
       pdf.setFontSize(16);
       pdf.setTextColor(60, 60, 60);
-      pdf.text(businessName, pageWidth / 2, 55, {
+      pdf.text(businessName ? String(businessName) : '', pageWidth / 2, 55, {
         align: 'center'
       });
       pdf.setFontSize(12);
@@ -561,7 +569,8 @@ const PDFExportButton = ({
           }
         }
       }
-      const filename = `${businessName.replace(/\s+/g, '_')}_Report_${new Date().toISOString().split('T')[0]}.pdf`;
+      const safeBusinessName = businessName ? String(businessName).replace(/\s+/g, '_') : (exportType === 'executive' ? 'Executive_Summary' : 'Report');
+      const filename = `${safeBusinessName}_${new Date().toISOString().split('T')[0]}.pdf`;
       pdf.save(filename);
       onToastMessage?.('PDF downloaded successfully', 'success');
     } catch (error) {
