@@ -3,11 +3,13 @@ import { Sparkles, Send, X, Bot, Zap, Trash2, AlertTriangle, CornerDownLeft } fr
 import axios from "axios";
 import "../styles/Ai.css";
 import { useTranslation } from "../hooks/useTranslation";
+import AiMessageRenderer from "./AiMessageRenderer";
 
 import { useAuthStore, useBusinessStore } from '../store';
 
 const Aiassistant = ({ businessId: propBusinessId, projectId, pageContext, isDisabled }) => {
   const { selectedBusinessId } = useBusinessStore();
+  const userName = useAuthStore((state) => state.userName);
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -342,40 +344,21 @@ const Aiassistant = ({ businessId: propBusinessId, projectId, pageContext, isDis
 
         { }
         <div className="ai-messages">
-          {messages.map((m, idx) => {
-            const isPushback = m.text.includes('PUSHBACK');
-            let displayText = m.text;
-            if (isPushback && m.role === "assistant") {
-              displayText = m.text.replace(/.*?PUSHBACK\s*/, '').trim();
-            }
-
-            return (
-              <div key={idx} className={`ai-msg ai-msg--${m.role}`}>
-                <div className={`ai-msg__avatar ai-msg__avatar--${m.role}`}>
-                  {m.role === "assistant" ? "TX" : "A"}
-                </div>
-                <div className={`ai-msg__bubble ${isPushback && m.role === "assistant" ? 'ai-msg__bubble--pushback' : ''}`}>
-                  {isPushback && m.role === "assistant" && (
-                    <div className="ai-pushback-header">
-                      <AlertTriangle size={12} strokeWidth={3} /> PUSHBACK
-                    </div>
-                  )}
-                  {displayText}
-                </div>
+          {messages.map((m, idx) => (
+            <div key={idx} className={`ai-msg ai-msg--${m.role}`}>
+              <div className={`ai-msg__avatar ai-msg__avatar--${m.role}`}>
+                {m.role === "assistant" ? "TX" : (userName?.charAt(0)?.toUpperCase() || "U")}
               </div>
-            );
-          })}
+              <AiMessageRenderer text={m.text} role={m.role} />
+            </div>
+          ))}
 
           {isLoading && (
             <div className="ai-msg ai-msg--assistant">
               <div className="ai-msg__avatar">
                 <Bot size={14} color="#6f3cff" />
               </div>
-              <div className="ai-msg__bubble ai-msg__bubble--typing">
-                <span className="dot" />
-                <span className="dot" />
-                <span className="dot" />
-              </div>
+              <AiMessageRenderer text="" role="assistant" isTyping={true} />
             </div>
           )}
           <div ref={chatEndRef} />
@@ -393,31 +376,53 @@ const Aiassistant = ({ businessId: propBusinessId, projectId, pageContext, isDis
             </div>
           </div>
         )}
-        <div className="ai-input-row">
-          {quotaStatus.exceeded ? (
-            <div className="ai-limit-reached">
-              <Zap size={14} className="ai-limit-icon" />
-              <span>Limit Reached. Quota Resets At : {quotaStatus.resetAt ? new Date(quotaStatus.resetAt).toLocaleDateString() : 'soon'}</span>
+        
+        <div style={{ display: 'flex', flexDirection: 'column', background: 'var(--bg-panel, #fff)' }}>
+          <div className="ai-input-row">
+            {quotaStatus.exceeded ? (
+              <div className="ai-limit-reached">
+                <Zap size={14} className="ai-limit-icon" />
+                <span>Limit Reached. Quota Resets At : {quotaStatus.resetAt ? new Date(quotaStatus.resetAt).toLocaleDateString() : 'soon'}</span>
+              </div>
+            ) : (
+              <>
+                <textarea
+                  className="ai-textarea"
+                  placeholder="Ask, push back, or correct..."
+                  value={query}
+                  onChange={(e) => {
+                    setQuery(e.target.value);
+                    e.target.style.height = 'auto';
+                    e.target.style.height = Math.min(e.target.scrollHeight, 120) + 'px';
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !e.shiftKey) {
+                      e.preventDefault();
+                      handleSend();
+                      e.target.style.height = 'auto';
+                    }
+                  }}
+                  disabled={isLoading}
+                  rows={1}
+                />
+                <button
+                  className="ai-send-btn"
+                  onClick={() => {
+                    handleSend();
+                    const ta = document.querySelector('.ai-textarea');
+                    if(ta) ta.style.height = 'auto';
+                  }}
+                  disabled={!query.trim() || isLoading}
+                >
+                  <CornerDownLeft size={16} color="#fff" strokeWidth={3} />
+                </button>
+              </>
+            )}
+          </div>
+          {!quotaStatus.exceeded && (
+            <div className="ai-input-hint">
+              Press <strong>Shift + Enter</strong> for a new line
             </div>
-          ) : (
-            <>
-              <input
-                className="ai-input"
-                type="text"
-                placeholder="Ask, push back, or correct..."
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                onKeyDown={handleKeyDown}
-                disabled={isLoading}
-              />
-              <button
-                className="ai-send-btn"
-                onClick={() => handleSend()}
-                disabled={!query.trim() || isLoading}
-              >
-                <CornerDownLeft size={16} color="#fff" strokeWidth={3} />
-              </button>
-            </>
           )}
         </div>
       </div>
