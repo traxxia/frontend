@@ -1547,6 +1547,7 @@ const BusinessSetupPage = () => {
                     questions={questions}
                     currentPageContext={activeTab === 'advanced' ? 'Advanced Insights' : 'Business Setup Onboarding'}
                     pageDescriptionContext={activeTab === 'advanced' ? 'User is reviewing advanced insights.' : 'User is filling out the 5-step PMF onboarding form to generate insights.'}
+                    documentInfo={documentInfo}
                   />
                 </div>
 

@@ -1224,6 +1224,7 @@ const EditableBriefSection = ({
           : f
       )
     );
+    window.dispatchEvent(new CustomEvent('strategicDocumentsAnalyzed'));
   };
 
   const handleFileUpload = async (event) => {
@@ -1373,6 +1374,7 @@ const EditableBriefSection = ({
       }
 
       setUploadedFiles(prev => prev.filter(f => f.id !== fileId));
+      window.dispatchEvent(new CustomEvent('strategicDocumentsAnalyzed'));
     } catch (error) {
       console.error('Error removing file:', error);
       showToastMessage(`Failed to remove file: ${error.message || 'Error occurred.'}`, 'error');
@@ -1976,50 +1978,38 @@ const EditableBriefSection = ({
                     );
                   };
 
-                  const newFiles = strategyFiles.filter(f => f.isNewSessionFile);
-                  const analyzedFiles = strategyFiles.filter(f => !f.isNewSessionFile);
-
                   return (
                     <div style={{ marginBottom: '16px' }}>
-                      {newFiles.length > 0 && (
-                        <div className="sidebar-file-list">
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                            <h5 style={{ fontSize: '12px', color: '#475569', margin: '0' }}>Not Analyzed Yet</h5>
-                            {strategyFiles.some(f => f.status === 'success' && f.isNewSessionFile) && (
-                              <button
-                                className="sidebar-file-analyze-btn"
-                                onClick={() => {
-                                  if (isAnyApiActive || !canEdit) return;
-                                  const filesToAnalyze = strategyFiles.filter(f => f.status === 'success' && f.isNewSessionFile);
-                                  handleAnalyzeFilesBulk(filesToAnalyze);
-                                }}
-                                disabled={isAnyApiActive || !canEdit}
-                                style={{
-                                  cursor: (isAnyApiActive || !canEdit) ? 'not-allowed' : 'pointer',
-                                  opacity: (isAnyApiActive || !canEdit) ? 0.5 : 1,
-                                  padding: '4px 12px',
-                                  background: 'var(--color-primary)',
-                                  color: 'white',
-                                  border: 'none',
-                                  borderRadius: '6px',
-                                  fontSize: '12px',
-                                  fontWeight: '600'
-                                }}
-                                title="Analyze new files"
-                              >
-                                Analyze
-                              </button>
-                            )}
+                      <div className="sidebar-file-list">
+                        {strategyFiles.some(f => f.status === 'success' && f.isNewSessionFile) && (
+                          <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '8px' }}>
+                            <button
+                              className="sidebar-file-analyze-btn"
+                              onClick={() => {
+                                if (isAnyApiActive || !canEdit) return;
+                                const filesToAnalyze = strategyFiles.filter(f => f.status === 'success' && f.isNewSessionFile);
+                                handleAnalyzeFilesBulk(filesToAnalyze);
+                              }}
+                              disabled={isAnyApiActive || !canEdit}
+                              style={{
+                                cursor: (isAnyApiActive || !canEdit) ? 'not-allowed' : 'pointer',
+                                opacity: (isAnyApiActive || !canEdit) ? 0.5 : 1,
+                                padding: '4px 12px',
+                                background: 'var(--color-primary)',
+                                color: 'white',
+                                border: 'none',
+                                borderRadius: '6px',
+                                fontSize: '12px',
+                                fontWeight: '600'
+                              }}
+                              title="Analyze new files"
+                            >
+                              Analyze
+                            </button>
                           </div>
-                          {newFiles.map(renderFile)}
-                        </div>
-                      )}
-                      {analyzedFiles.length > 0 && (
-                        <div className="sidebar-file-list" style={{ marginTop: newFiles.length > 0 ? '16px' : '0' }}>
-                          <h5 style={{ fontSize: '12px', color: '#475569', marginBottom: '8px', marginTop: '0' }}>Analyzed Documents</h5>
-                          {analyzedFiles.map(renderFile)}
-                        </div>
-                      )}
+                        )}
+                        {strategyFiles.map(renderFile)}
+                      </div>
                     </div>
                   );
                 })()}
