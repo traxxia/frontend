@@ -392,7 +392,7 @@ const ExecutiveSummary = ({ hideNextStep }) => {
                   <div className="exc-move-card" key={idx}>
                     <div className="exc-move-card-header">
                       <h5 className="exc-move-title">{adj.title || adj.name || adj.recommendation_basis || "Adjacency"}</h5>
-                      {adj.strategic_fit_score && <span className="exc-move-score">{t("FIT SCORE")} <strong>{adj.strategic_fit_score}</strong></span>}
+                      {/* {adj.strategic_fit_score && <span className="exc-move-score">{t("FIT SCORE")} <strong>{adj.strategic_fit_score}</strong></span>} */}
                     </div>
                     <p className="exc-move-subtitle">{adj.recommendation_basis || "Strategic expansion"}</p>
                     <p className="exc-move-body">{adj.rationale}</p>
@@ -512,9 +512,9 @@ const ExecutiveSummary = ({ hideNextStep }) => {
                     <div className="exc-alt-card" key={idx}>
                       <div className="exc-alt-card-header">
                         <h5 className="exc-alt-title">{typeof item === 'object' ? item.lever : item}</h5>
-                        {typeof item === 'object' && item.suitability_score && (
+                        {/* {typeof item === 'object' && item.suitability_score && (
                           <span className="exc-alt-score">{t("SCORE")} {item.suitability_score} / 10</span>
-                        )}
+                        )} */}
                       </div>
                       {typeof item === 'object' && item.reason && (
                         <p className="exc-alt-desc">{item.reason}</p>

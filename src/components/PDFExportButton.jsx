@@ -386,60 +386,132 @@ const PDFExportButton = ({
         const el = document.querySelector(comp.selector);
         if (!el) return;
         
-        if (comp.selector === '[data-component="executive-priorities"]') {
-          const cards = el.querySelectorAll('.exc-prio-card');
-          if (cards && cards.length > 0) {
-            Array.from(cards).forEach((card, idx) => {
-              const tempId = `temp-pdf-prio-${idx}`;
-              card.id = tempId;
-              components.push({
-                selector: `#${tempId}`,
-                name: idx === 0 ? comp.name : `${comp.name} (continued)`,
-                isChunk: idx !== 0
-              });
-            });
-          } else {
-            components.push(comp);
-          }
-        } else if (comp.selector === '[data-component="executive-where"]') {
-          const horizons = el.querySelector('.exc-horizons-container');
-          if (horizons) {
-            horizons.id = 'temp-pdf-where-hor';
+        if (comp.selector === '[data-component="executive-content"]') {
+          // Extract AHA Insights if present
+          const aha = el.querySelector('[data-component="executive-aha"]');
+          if (aha) {
             components.push({
-              selector: `#temp-pdf-where-hor`,
-              name: comp.name
+              selector: '[data-component="executive-aha"]',
+              name: comp.name,
+              isChunk: false
             });
           }
-          const moves = el.querySelectorAll('.exc-move-card');
-          if (moves && moves.length > 0) {
-            Array.from(moves).forEach((move, idx) => {
-              const tempId = `temp-pdf-move-${idx}`;
-              move.id = tempId;
+
+          // Extract Where to Compete
+          const where = el.querySelector('[data-component="executive-where"]');
+          if (where) {
+            const whereHeader = where.querySelector('.exc-section-header');
+            if (whereHeader) {
+              whereHeader.id = 'temp-pdf-where-header';
               components.push({
-                selector: `#${tempId}`,
+                selector: `#temp-pdf-where-header`,
+                name: aha ? `${comp.name} (continued)` : comp.name,
+                isChunk: !!aha
+              });
+            }
+            
+            const horizons = where.querySelector('.exc-horizons-container');
+            if (horizons) {
+              horizons.id = 'temp-pdf-where-hor';
+              components.push({
+                selector: `#temp-pdf-where-hor`,
                 name: `${comp.name} (continued)`,
                 isChunk: true
               });
-            });
-          } else if (!horizons) {
-            components.push(comp);
-          }
-        } else if (comp.selector === '[data-component="executive-how"]') {
-          const blocks = el.querySelectorAll('.exc-how-block');
-          if (blocks && blocks.length > 0) {
-            Array.from(blocks).forEach((block, idx) => {
-              const tempId = `temp-pdf-how-${idx}`;
-              block.id = tempId;
+            }
+            
+            const recHeader = where.querySelector('.exc-recommended-header');
+            if (recHeader) {
+              recHeader.id = 'temp-pdf-rec-header';
               components.push({
-                selector: `#${tempId}`,
-                name: idx === 0 ? comp.name : `${comp.name} (continued)`,
-                isChunk: idx !== 0
+                selector: `#temp-pdf-rec-header`,
+                name: `${comp.name} (continued)`,
+                isChunk: true
               });
-            });
-          } else {
-            components.push(comp);
+            }
+
+            const moves = where.querySelectorAll('.exc-move-card');
+            if (moves && moves.length > 0) {
+              Array.from(moves).forEach((move, idx) => {
+                const tempId = `temp-pdf-move-${idx}`;
+                move.id = tempId;
+                components.push({
+                  selector: `#${tempId}`,
+                  name: `${comp.name} (continued)`,
+                  isChunk: true
+                });
+              });
+            }
+          }
+
+          // Extract How to Compete
+          const how = el.querySelector('[data-component="executive-how"]');
+          if (how) {
+            const howHeader = how.querySelector('.exc-section-header');
+            if (howHeader) {
+              howHeader.id = 'temp-pdf-how-header';
+              components.push({
+                selector: `#temp-pdf-how-header`,
+                name: (aha || where) ? `${comp.name} (continued)` : comp.name,
+                isChunk: !!(aha || where)
+              });
+            }
+
+            // We can also extract individual exc-how-block inside how
+            const blocks = how.querySelectorAll('.exc-how-block, .exc-how-blocks');
+            if (blocks && blocks.length > 0) {
+              Array.from(blocks).forEach((block, idx) => {
+                const tempId = `temp-pdf-how-${idx}`;
+                block.id = tempId;
+                components.push({
+                  selector: `#${tempId}`,
+                  name: `${comp.name} (continued)`,
+                  isChunk: true
+                });
+              });
+            } else {
+              components.push({
+                selector: '[data-component="executive-how"]',
+                name: `${comp.name} (continued)`,
+                isChunk: true
+              });
+            }
+          }
+
+          // Extract Priorities
+          const priorities = el.querySelector('[data-component="executive-priorities"]');
+          if (priorities) {
+            const prioHeader = priorities.querySelector('.exc-section-header');
+            if (prioHeader) {
+              prioHeader.id = 'temp-pdf-prio-header';
+              components.push({
+                selector: `#temp-pdf-prio-header`,
+                name: (aha || where || how) ? `${comp.name} (continued)` : comp.name,
+                isChunk: !!(aha || where || how)
+              });
+            }
+
+            const cards = priorities.querySelectorAll('.exc-prio-card');
+            if (cards && cards.length > 0) {
+              Array.from(cards).forEach((card, idx) => {
+                const tempId = `temp-pdf-prio-${idx}`;
+                card.id = tempId;
+                components.push({
+                  selector: `#${tempId}`,
+                  name: `${comp.name} (continued)`,
+                  isChunk: true
+                });
+              });
+            } else {
+              components.push({
+                selector: '[data-component="executive-priorities"]',
+                name: `${comp.name} (continued)`,
+                isChunk: true
+              });
+            }
           }
         } else {
+          // For non-executive content
           components.push(comp);
         }
       });
