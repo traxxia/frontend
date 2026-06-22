@@ -2390,48 +2390,50 @@ const EditableBriefSection = ({
           </div>
 
           {/* Generate Advanced Insights Button */}
-          <div style={{ marginTop: '32px', marginBottom: '32px', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '15px 24px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'transparent' }}>
-            <button
-              onClick={() => {
-                if (!canEdit || isAnyApiActive) return;
-                setConfirmModalConfig({
-                  title: t('Generate Advanced Insights') || 'Generate Advanced Insights',
-                  message: 'This will regenerate all insights and strategic analysis based on your answers. Are you sure you want to proceed?',
-                  onConfirm: () => {
-                    if (onAnalysisRegenerate) {
-                      onAnalysisRegenerate({
-                        alsoRegenerateStrategic: true,
-                        includeFinancial: true,
-                        skipConfirmation: true
-                      });
-                      if (setActiveTab) {
-                        setActiveTab('insights');
+          {!(activePhaseTab === 'financial' && financialTabMode === 'analysis') && (
+            <div style={{ marginTop: '32px', marginBottom: '32px', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '15px 24px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'transparent' }}>
+              <button
+                onClick={() => {
+                  if (!canEdit || isAnyApiActive) return;
+                  setConfirmModalConfig({
+                    title: t('Generate Advanced Insights') || 'Generate Advanced Insights',
+                    message: 'This will regenerate all insights and strategic analysis based on your answers. Are you sure you want to proceed?',
+                    onConfirm: () => {
+                      if (onAnalysisRegenerate) {
+                        onAnalysisRegenerate({
+                          alsoRegenerateStrategic: true,
+                          includeFinancial: true,
+                          skipConfirmation: true
+                        });
+                        if (setActiveTab) {
+                          setActiveTab('insights');
+                        }
                       }
                     }
-                  }
-                });
-                setShowConfirmModal(true);
-              }}
-              disabled={isAnyApiActive || !canEdit || !hasAnyValidData}
-              className="btn-refine-action"
-              style={{ width: 'auto', padding: '12px 32px', background: (isAnyApiActive || !canEdit || !hasAnyValidData) ? '#93c5fd' : '#0c71b9', color: '#fff', fontSize: '15px', fontWeight: '600', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '8px', border: 'none', cursor: (isAnyApiActive || !canEdit || !hasAnyValidData) ? 'not-allowed' : 'pointer', opacity: (isAnyApiActive || !canEdit || !hasAnyValidData) ? 0.6 : 1 }}
-            >
-              {(isAnalysisRegenerating || isStrategicRegenerating) ? (
-                <>
-                  <Loader size={16} className="animate-spin" />
-                  <span>Generating Insights...</span>
-                </>
-              ) : (
-                <>
-                  <span>Generate Advanced Insights</span>
-                  <span style={{ fontSize: '16px' }}>&rarr;</span>
-                </>
-              )}
-            </button>
-            <p style={{ marginTop: '16px', marginBottom: '0', color: '#94a3b8', fontSize: '13px' }}>
-              All sections complete — generate your Advanced analysis.
-            </p>
-          </div>
+                  });
+                  setShowConfirmModal(true);
+                }}
+                disabled={isAnyApiActive || !canEdit || !hasAnyValidData}
+                className="btn-refine-action"
+                style={{ width: 'auto', padding: '12px 32px', background: (isAnyApiActive || !canEdit || !hasAnyValidData) ? '#93c5fd' : '#0c71b9', color: '#fff', fontSize: '15px', fontWeight: '600', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '8px', border: 'none', cursor: (isAnyApiActive || !canEdit || !hasAnyValidData) ? 'not-allowed' : 'pointer', opacity: (isAnyApiActive || !canEdit || !hasAnyValidData) ? 0.6 : 1 }}
+              >
+                {(isAnalysisRegenerating || isStrategicRegenerating) ? (
+                  <>
+                    <Loader size={16} className="animate-spin" />
+                    <span>Generating Insights...</span>
+                  </>
+                ) : (
+                  <>
+                    <span>Generate Advanced Insights</span>
+                    <span style={{ fontSize: '16px' }}>&rarr;</span>
+                  </>
+                )}
+              </button>
+              <p style={{ marginTop: '16px', marginBottom: '0', color: '#94a3b8', fontSize: '13px' }}>
+                All sections complete — generate your Advanced analysis.
+              </p>
+            </div>
+          )}
 
       </div>
 

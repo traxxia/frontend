@@ -223,7 +223,7 @@ const AnalysisContentManager = (props) => {
       refKey: "leverageRiskRef",
       pdfComponent: "leverage-risk"
     },
-    productivityMetrics: {
+    /* productivityMetrics: {
       slug: "productivity",
       component: ProductivityMetrics,
       title: t("Productivity_Metrics"),
@@ -232,7 +232,7 @@ const AnalysisContentManager = (props) => {
       dataKey: "productivityData",
       refKey: "productivityRef",
       pdfComponent: "productivity"
-    },
+    }, */
     fullSwot: {
       slug: "full-swot",
       component: FullSWOTPortfolio,
@@ -332,7 +332,7 @@ const AnalysisContentManager = (props) => {
     'competitive-advantage': 'competitiveAdvantage',
     'expanded-capability-heatmap': 'expandedCapability',
     'strategic-positioning-radar': 'strategicRadar',
-    'productivity-metrics': 'productivityMetrics',
+    // 'productivity-metrics': 'productivityMetrics',
     'maturity-scoring': 'maturityScore',
     'simple-swot-portfolio': 'competitiveLandscape',
     'core-adjacency': 'coreAdjacency',
@@ -568,8 +568,8 @@ const AnalysisContentManager = (props) => {
 
     const sets = {
       initial: ['swot', 'porters', 'pestel'],
-      essential: ['porters', 'pestel', 'fullSwot', 'competitiveAdvantage', 'expandedCapability', 'strategicRadar', 'productivityMetrics', 'maturityScore', 'competitiveLandscape', 'coreAdjacency'],
-      advanced: ['porters', 'pestel', 'fullSwot', 'competitiveAdvantage', 'expandedCapability', 'strategicRadar', 'productivityMetrics', 'maturityScore', 'competitiveLandscape', 'coreAdjacency'],
+      essential: ['porters', 'pestel', 'fullSwot', 'competitiveAdvantage', 'expandedCapability', 'strategicRadar', 'maturityScore', 'competitiveLandscape', 'coreAdjacency'],
+      advanced: ['porters', 'pestel', 'fullSwot', 'competitiveAdvantage', 'expandedCapability', 'strategicRadar', 'maturityScore', 'competitiveLandscape', 'coreAdjacency'],
       financial: ['profitabilityAnalysis', 'growthTracker', 'liquidityEfficiency', 'investmentPerformance', 'leverageRisk']
     };
     const activeAnalyses = new Set();
@@ -621,7 +621,7 @@ const AnalysisContentManager = (props) => {
   }
   const financialAnalyses = ['profitabilityAnalysis', 'growthTracker', 'liquidityEfficiency', 'investmentPerformance', 'leverageRisk'];
   const isFinancialRegenerating = financialAnalyses.some(type => isAnalysisLoading(type)) || isTypeRegenerating('financial');
-  const isMainAnalysisRegenerating = ['swot', 'porters', 'pestel', 'fullSwot', 'competitiveAdvantage', 'expandedCapability', 'strategicRadar', 'productivityMetrics', 'maturityScore', 'competitiveLandscape', 'coreAdjacency'].some(type => isAnalysisLoading(type)) || isTypeRegenerating('initial') || isTypeRegenerating('essential') || isTypeRegenerating('advanced');
+  const isMainAnalysisRegenerating = ['swot', 'porters', 'pestel', 'fullSwot', 'competitiveAdvantage', 'expandedCapability', 'strategicRadar', 'maturityScore', 'competitiveLandscape', 'coreAdjacency'].some(type => isAnalysisLoading(type)) || isTypeRegenerating('initial') || isTypeRegenerating('essential') || isTypeRegenerating('advanced');
   return <div className="modern-analysis-container">
       {(isFinancialRegenerating || isMainAnalysisRegenerating) && <div className="analysis-regenerating-banner analysis-content-manager--s5">
           <Loader size={16} className="antigravity-rotating" />
