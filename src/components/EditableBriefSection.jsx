@@ -1981,34 +1981,57 @@ const EditableBriefSection = ({
                   return (
                     <div style={{ marginBottom: '16px' }}>
                       <div className="sidebar-file-list">
-                        {strategyFiles.some(f => f.status === 'success' && f.isNewSessionFile) && (
-                          <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '8px' }}>
-                            <button
-                              className="sidebar-file-analyze-btn"
-                              onClick={() => {
-                                if (isAnyApiActive || !canEdit) return;
-                                const filesToAnalyze = strategyFiles.filter(f => f.status === 'success' && f.isNewSessionFile);
-                                handleAnalyzeFilesBulk(filesToAnalyze);
-                              }}
-                              disabled={isAnyApiActive || !canEdit}
-                              style={{
-                                cursor: (isAnyApiActive || !canEdit) ? 'not-allowed' : 'pointer',
-                                opacity: (isAnyApiActive || !canEdit) ? 0.5 : 1,
-                                padding: '4px 12px',
-                                background: 'var(--color-primary)',
-                                color: 'white',
-                                border: 'none',
-                                borderRadius: '6px',
-                                fontSize: '12px',
-                                fontWeight: '600'
-                              }}
-                              title="Analyze new files"
-                            >
-                              Analyze
-                            </button>
-                          </div>
-                        )}
-                        {strategyFiles.map(renderFile)}
+                        {(() => {
+                          const unanalyzedFiles = strategyFiles.filter(f => f.isNewSessionFile);
+                          const analyzedFiles = strategyFiles.filter(f => !f.isNewSessionFile);
+                          
+                          return (
+                            <>
+                              {unanalyzedFiles.length > 0 && (
+                                <div style={{ marginBottom: analyzedFiles.length > 0 ? '16px' : '0' }}>
+                                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                                    <h5 style={{ margin: 0, fontSize: '13px', color: '#475569', fontWeight: '600' }}>Not Analyzed</h5>
+                                    {unanalyzedFiles.some(f => f.status === 'success') && (
+                                      <button
+                                        className="sidebar-file-analyze-btn"
+                                        onClick={() => {
+                                          if (isAnyApiActive || !canEdit) return;
+                                          const filesToAnalyze = unanalyzedFiles.filter(f => f.status === 'success');
+                                          handleAnalyzeFilesBulk(filesToAnalyze);
+                                        }}
+                                        disabled={isAnyApiActive || !canEdit}
+                                        style={{
+                                          cursor: (isAnyApiActive || !canEdit) ? 'not-allowed' : 'pointer',
+                                          opacity: (isAnyApiActive || !canEdit) ? 0.5 : 1,
+                                          padding: '4px 12px',
+                                          background: 'var(--color-primary)',
+                                          color: 'white',
+                                          border: 'none',
+                                          borderRadius: '6px',
+                                          fontSize: '12px',
+                                          fontWeight: '600'
+                                        }}
+                                        title="Analyze new files"
+                                      >
+                                        Analyze
+                                      </button>
+                                    )}
+                                  </div>
+                                  {unanalyzedFiles.map(renderFile)}
+                                </div>
+                              )}
+
+                              {analyzedFiles.length > 0 && (
+                                <div>
+                                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                                    <h5 style={{ margin: 0, fontSize: '13px', color: '#475569', fontWeight: '600' }}>Analyzed</h5>
+                                  </div>
+                                  {analyzedFiles.map(renderFile)}
+                                </div>
+                              )}
+                            </>
+                          );
+                        })()}
                       </div>
                     </div>
                   );
