@@ -637,7 +637,7 @@ const AnalysisContentManager = (props) => {
           </span>
         </div>}
 
-      {!props.singleCategory && (
+      {/* {!props.singleCategory && (
         <div className="timeline-toggle-container mb-4" style={{ display: 'flex', alignItems: 'center', background: '#f8fafc', padding: '12px 16px', borderRadius: '8px', border: '1px solid #e2e8f0', gap: '12px' }}>
           <input 
             type="checkbox" 
@@ -655,7 +655,7 @@ const AnalysisContentManager = (props) => {
             </span>
           </div>
         </div>
-      )}
+      )} */}
 
       {!props.singleCategory && (
         <div className="six-cs-framework-overview mb-4">
