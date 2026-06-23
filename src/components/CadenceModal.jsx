@@ -113,7 +113,7 @@ const CadenceModal = ({ show, onHide, onSave, businessId, existingCadence = null
           <Form.Label className="text-uppercase text-muted" style={{ fontSize: '11px', letterSpacing: '1px', fontWeight: 'bold' }}>Default Audience</Form.Label>
           <div className="border rounded px-3 py-2" style={{ maxHeight: '180px', overflowY: 'auto', borderColor: '#cbd5e1' }}>
             {eligibleUsers.map((user) => (
-              <div key={user._id} className="d-flex justify-content-between align-items-center py-2 border-bottom" style={{ borderColor: '#f1f5f9' }}>
+              <div key={user._id} className="d-flex justify-content-between align-items-center py-2" style={{ borderColor: '#f1f5f9' }}>
                 <Form.Check 
                   type="checkbox"
                   id={`audience-${user._id}`}
