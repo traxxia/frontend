@@ -8,6 +8,7 @@ import '../styles/onboarding-flow.css';
 import { AnalysisApiService } from '../services/analysisApiService';
 import { ChevronDown, ChevronUp, Lock, File, ArrowRight, Check } from 'lucide-react';
 import OnboardingChat from '../components/OnboardingChat';
+import AiMessageRenderer from '../components/AiMessageRenderer';
 
 const OnboardingFlowPage = () => {
   const { businessId } = useParams();
@@ -503,10 +504,14 @@ const OnboardingFlowPage = () => {
               {chatMessages.map((msg, idx) => (
                 <div key={idx} className={`onboarding-chat-message ${msg.role === 'user' ? 'user-message' : ''}`}>
                   <div className="bubble-avatar">
-                    {msg.role === 'user' ? (userName?.charAt(0) || 'U') : 'TX'}
+                    {msg.role === 'user' ? (userName?.charAt(0)?.toUpperCase() || 'U') : 'TX'}
                   </div>
                   <div className="bubble-content">
-                    {msg.content}
+                    {msg.role === 'trax' || msg.role === 'assistant' ? (
+                      <AiMessageRenderer text={msg.content} role={msg.role} isBare={true} />
+                    ) : (
+                      msg.content
+                    )}
                   </div>
                 </div>
               ))}
@@ -527,13 +532,27 @@ const OnboardingFlowPage = () => {
 
             <div className="onboarding-chat-input-bar">
               <form onSubmit={handleSendMessage} className="onboarding-chat-input-wrapper">
-                <input
-                  type="text"
-                  className="onboarding-chat-input-field"
+                <textarea
+                  className="onboarding-chat-input-field ai-textarea"
                   placeholder="Type a message to Trax..."
                   value={chatInput}
-                  onChange={(e) => setChatInput(e.target.value)}
+                  onChange={(e) => {
+                    setChatInput(e.target.value);
+                    e.target.style.height = 'auto';
+                    e.target.style.height = `${Math.min(e.target.scrollHeight, 150)}px`;
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault();
+                      handleSendMessage(e);
+                    }
+                  }}
+                  rows={1}
                   disabled={isSubmitting}
+                  style={{
+                    resize: 'none',
+                    overflowY: 'auto'
+                  }}
                 />
                 <button type="submit" className="onboarding-chat-send-btn" disabled={isSubmitting}>
                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13" /><polygon points="22 2 15 22 11 13 2 9 22 2" /></svg>
