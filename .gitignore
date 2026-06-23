@@ -10,13 +10,14 @@
 
 # production
 /build
-
+build-check/
 # misc
 .DS_Store
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
+.env
 
 # Traxxia Academy documentation tracking
 /docs/traxxia-academy/

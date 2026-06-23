@@ -1,0 +1,261 @@
+.execution-page-container {
+  min-height: 100vh;
+  background-color: #fff;
+  font-family: 'Inter', system-ui, sans-serif;
+  padding-bottom: 80px;
+}
+
+/* Shared Header Styles */
+.adv-sticky-header {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  background-color: #fff;
+}
+
+.adv-header-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 24px;
+  border-bottom: 1px solid #f3f4f6;
+  background-color: #fff;
+}
+
+.adv-breadcrumbs {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.adv-breadcrumb-link {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #6b7280;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.adv-breadcrumb-link:hover {
+  color: #374151;
+}
+
+.adv-breadcrumb-separator {
+  color: #d1d5db;
+}
+
+.adv-breadcrumb-current {
+  background-color: #f3f4f6;
+  color: #374151;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+.adv-breadcrumb-active {
+  color: #1f2937;
+}
+
+.execution-segmented-toggle {
+  display: flex;
+  background-color: #f3f4f6;
+  border-radius: 8px;
+  padding: 4px;
+}
+
+.execution-segmented-toggle .toggle-option {
+  padding: 6px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #6b7280;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.execution-segmented-toggle .toggle-option.active {
+  background-color: #fff;
+  color: #111827;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+
+.execution-content-wrapper {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 48px 20px;
+}
+
+.execution-hero {
+  margin-bottom: 60px;
+}
+
+.execution-badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 10px;
+  font-weight: 700;
+  color: #0277bd;
+  letter-spacing: 1.5px;
+  margin-bottom: 16px;
+}
+
+.icon-gold {
+  fill: #f59e0b;
+  color: #1e3a8a;
+}
+
+.execution-title {
+  font-size: 36px;
+  font-weight: 800;
+  color: #111827;
+  margin: 0 0 16px 0;
+  letter-spacing: -0.5px;
+}
+
+.text-blue {
+  color: #0277bd;
+}
+
+.execution-subtitle {
+  font-size: 16px;
+  color: #6b7280;
+  line-height: 1.6;
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+.execution-workspace-container {
+  position: relative;
+  min-height: 400px;
+}
+
+.column-header {
+  font-size: 11px;
+  font-weight: 700;
+  color: #6b7280;
+  letter-spacing: 1.5px;
+  margin-bottom: 16px;
+  text-transform: uppercase;
+}
+
+.blurred-content {
+  filter: blur(4px);
+  opacity: 0.7;
+  pointer-events: none;
+  user-select: none;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.mock-card {
+  background-color: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 20px;
+}
+
+.mock-card h5 {
+  font-size: 14px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0 0 8px 0;
+}
+
+.mock-card p {
+  font-size: 12px;
+  color: #6b7280;
+  margin: 0 0 4px 0;
+}
+
+.mock-opacity-low {
+  opacity: 0.5;
+}
+
+.mock-opacity-lowest {
+  opacity: 0.2;
+}
+
+.mock-line {
+  height: 10px;
+  background-color: #e5e7eb;
+  border-radius: 4px;
+}
+
+.execution-paywall-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  /* Very slight overlay gradient for emphasis */
+  background: radial-gradient(circle, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0.8) 100%);
+}
+
+.execution-paywall-box {
+  background-color: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  padding: 32px;
+  max-width: 420px;
+  text-align: center;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.08), 0 1px 3px rgba(0,0,0,0.05);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.lock-icon-container {
+  width: 56px;
+  height: 56px;
+  background-color: #0277bd;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.paywall-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0 0 12px 0;
+}
+
+.paywall-desc {
+  font-size: 14px;
+  color: #6b7280;
+  line-height: 1.5;
+  margin: 0 0 24px 0;
+}
+
+.paywall-upgrade-btn {
+  background-color: #0277bd;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 24px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+}
+
+.paywall-upgrade-btn:hover {
+  background-color: #0264a1;
+}
+
+@media (max-width: 768px) {
+  .execution-columns {
+    flex-direction: column;
+  }
+}

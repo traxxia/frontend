@@ -1,716 +1,650 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Button,
   Container,
   Row,
   Col,
-  Card,
   Spinner,
   Modal,
   Form,
   Alert,
-  Accordion
+  Carousel
 } from "react-bootstrap";
 import {
-  Info, X, Trash2, AlertTriangle, ArrowLeft, Check
+  Info, X, Trash2, Check, ChevronDown, Lock, FileText, Zap, CheckSquare
 } from "lucide-react";
+import { answerService } from '../services/answerService';
+import { AnalysisApiService } from '../services/analysisApiService';
 import MenuBar from "../components/MenuBar";
 import PMFOnboardingModal from "../components/PMFOnboardingModal";
 import PMFInsights from "../components/PMFInsights";
 import "../styles/dashboard.css";
-import { CircularProgressbar, buildStyles } from 'react-circular-progressbar';
-import 'react-circular-progressbar/dist/styles.css';
 import { useTranslation } from '../hooks/useTranslation';
-import UpgradeModal from '../components/UpgradeModal';
-import PlanLimitModal from '../components/PlanLimitModal';
 
-const ENABLE_PMF = process.env.REACT_APP_ENABLE_PMF === 'true';
+import PlanLimitModal from '../components/PlanLimitModal';
+import { useAuthStore, useBusinessStore, useUIStore, useAnalysisStore } from '../store';
+import { useBusinesses, usePlanDetails } from '../hooks/useQueries';
+import { useQueryClient } from '@tanstack/react-query';
+
+import { getUserLimits } from '../utils/authUtils';
+import { fileKey, computePageCount, getFileDetails } from '../utils/fileUtils';
+
+const toSlug = (name = '') => name.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+
+const getStepKeys = (index) => {
+  const keys = [
+    'step_1_login',
+    'step_2_create_business',
+    'step_3_onboarding_pmf',
+    'step_4_new_business',
+    'step_5_exec_summary',
+    'step_6_kickstart_projects',
+    'step_7_project_ranking',
+    'step_8_ai_answers',
+    'step_9_insights_6cs',
+    'step_10_strategic'
+  ];
+  return {
+    title: keys[index],
+    description: `${keys[index]}_description`
+  };
+};
+
+
+
 
 const Dashboard = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const [businesses, setBusinesses] = useState([]);
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [showPMFOnboarding, setShowPMFOnboarding] = useState(false);
-  const [showInsights, setShowInsights] = useState(false);
+  const ENABLE_PMF = getUserLimits().pmf;
+  const regenerating = useAnalysisStore(state => state.regenerating);
+  const {
+    isCreating: isCreatingBusiness,
+    isDeleting: isDeletingBusiness,
+    createError: businessError,
+    deleteError: storeDeleteError,
+    createBusiness: createBusinessAction,
+    deleteBusiness: deleteBusinessAction,
+    setSelectedBusinessId,
+    selectBusiness,
+    selectedBusinessId,
+    clearErrors
+  } = useBusinessStore();
+
+  const queryClient = useQueryClient();
+  const {
+    data: businessesData,
+    isLoading: isLoadingBusinesses
+  } = useBusinesses();
+
+  const {
+    data: planDetailsQuery
+  } = usePlanDetails();
+
+  const usage = planDetailsQuery?.usage;
+
+  // Derive business lists from the query response
+  const ownedBusinesses = businessesData?.businesses || [];
+  const collaboratingBusinesses = businessesData?.collaborating_businesses || [];
+  const deletedBusinesses = businessesData?.deleted_businesses || [];
+  const allBusinessesQuery = [...ownedBusinesses, ...collaboratingBusinesses];
+
+  const {
+    openModal,
+    closeModal,
+    isModalOpen,
+    addToast
+  } = useUIStore();
+
   const [newlyCreatedBusiness, setNewlyCreatedBusiness] = useState(null);
-  const [isCreatingBusiness, setIsCreatingBusiness] = useState(false);
+  const [selectedFiles, setSelectedFiles] = useState([]);
+  const [filePageCounts, setFilePageCounts] = useState({});
+  const [isUploadingFiles, setIsUploadingFiles] = useState(false);
+  const fileInputRef = useRef(null);
   const [businessFormData, setBusinessFormData] = useState({
     business_name: '',
-    business_purpose: '',
-    description: '',
-    city: '',
-    country: ''
+    website: '',
+    has_no_website: false
   });
-  const [businessError, setBusinessError] = useState('');
+  const [statusFilter, setStatusFilter] = useState(['ALL', 'EXECUTION', 'CREATED', 'DELETED']);
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [isHowItWorksExpanded, setIsHowItWorksExpanded] = useState(false);
+
+  const allBusinesses = useMemo(() => {
+    return [...ownedBusinesses, ...collaboratingBusinesses, ...deletedBusinesses];
+  }, [ownedBusinesses, collaboratingBusinesses, deletedBusinesses]);
+
+  const filteredBusinesses = useMemo(() => {
+    return allBusinesses.filter(business => {
+      const state = business.status === 'deleted' ? 'DELETED' : (business.has_projects ? 'EXECUTION' : 'CREATED');
+      return statusFilter.includes(state);
+    });
+  }, [allBusinesses, statusFilter]);
+
+  const statusCounts = useMemo(() => {
+    const counts = { ALL: allBusinesses.length, EXECUTION: 0, CREATED: 0, DELETED: 0 };
+    allBusinesses.forEach(business => {
+      const state = business.status === 'deleted' ? 'DELETED' : (business.has_projects ? 'EXECUTION' : 'CREATED');
+      counts[state]++;
+    });
+    return counts;
+  }, [allBusinesses]);
+
+  const toggleStatusFilter = (status) => {
+    if (status === 'ALL') {
+      if (statusFilter.length === 4) setStatusFilter([]);
+      else setStatusFilter(['ALL', 'EXECUTION', 'CREATED', 'DELETED']);
+      return;
+    }
+
+    setStatusFilter(prev => {
+      let newFilter;
+      if (prev.includes(status)) {
+        newFilter = prev.filter(s => s !== status && s !== 'ALL');
+      } else {
+        newFilter = [...prev, status];
+        if (newFilter.length === 3) {
+          newFilter = ['ALL', 'EXECUTION', 'CREATED', 'DELETED'];
+        }
+      }
+      return newFilter;
+    });
+  };
+
   const [formErrors, setFormErrors] = useState({});
-  const userRole = sessionStorage.getItem("userRole");
-  const isViewer = userRole?.toLowerCase() === "viewer";
+  const userRole = useAuthStore(state => state.userRole);
+  const userName = useAuthStore(state => state.userName);
+  const isViewer = useAuthStore(state => state.isViewer());
   const isCollaborator = userRole?.toLowerCase() === "collaborator";
+  const isAdmin = useAuthStore(state => state.isAdmin);
 
+  const limits = getUserLimits();
+  const hasInsightsAccess = limits.pmf || limits.insight || limits.strategic;
+  const hasProjectAccess = limits.project;
 
-  // Delete business state
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [businessToDelete, setBusinessToDelete] = useState(null);
-  const [isDeletingBusiness, setIsDeletingBusiness] = useState(false);
-  const [deleteError, setDeleteError] = useState('');
-  const [isLoadingBusinesses, setIsLoadingBusinesses] = useState(true);
-
-
-  // Success popup state
-  const [showSuccessPopup, setShowSuccessPopup] = useState(false);
-  const [successMessage, setSuccessMessage] = useState('');
-  const [collaboratingBusinesses, setCollaboratingBusinesses] = useState([]);
-
-  // Deletion cooldown state
-  const [showCooldownModal, setShowCooldownModal] = useState(false);
-  const [cooldownMessage, setCooldownMessage] = useState('');
-
-
-  // Tour modal state
-  const [showHowModal, setShowHowModal] = useState(false);
+  const [isProcessingDelete, setIsProcessingDelete] = useState(false);
   const [activeSlide, setActiveSlide] = useState(0);
 
-  // Plan Limit Modal state
-  const [showPlanLimitModal, setShowPlanLimitModal] = useState(false);
-
-  // Custom menu state for alternatives
-  const [showCustomMenu, setShowCustomMenu] = useState({});
-  const [hoveredItem, setHoveredItem] = useState(null);
-  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
-  const myBusinesses = businesses.filter(
-    b => Boolean(b.has_projects) === false
-  );
-
-  const projectPhaseBusinesses = businesses.filter(
-    b => Boolean(b.has_projects) === true
-  );
-
-  const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
-
-  // Fetch businesses on component mount
+  // Compute real page/slide/sheet counts asynchronously whenever files are added
   useEffect(() => {
-    fetchBusinesses();
-    //fetchSubscriptionDetails();
-  }, []);
-
-  const fetchSubscriptionDetails = async () => {
-    try {
-      const token = sessionStorage.getItem('token');
-      if (!token) return;
-
-      const response = await fetch(`${API_BASE_URL}/api/subscription/plan-details`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        // Show success popup with subscription info
-        const expiryDate = data.expires_at ? new Date(data.expires_at).toLocaleDateString() : 'N/A';
-        setSuccessMessage(`Welcome! Your ${data.plan} plan is active until ${expiryDate}.`);
-        setShowSuccessPopup(true);
-        setTimeout(() => setShowSuccessPopup(false), 5000);
-      }
-    } catch (error) {
-      console.error('Error fetching subscription details:', error);
-    }
-  };
-
-  // API Functions
-  const fetchBusinesses = async () => {
-    try {
-      setIsLoadingBusinesses(true);
-      const token = sessionStorage.getItem('token');
-
-      if (!token) {
-        console.error('No token found in sessionStorage');
-        setBusinessError(t('authentication_required'));
-        navigate('/login');
-        return;
-      }
-
-      const response = await fetch(`${API_BASE_URL}/api/businesses`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        const collabList = data.collaboratingBusinesses || data.collaborating_businesses || [];
-        setBusinesses(data.businesses || []);
-        setCollaboratingBusinesses(Array.isArray(collabList) ? collabList : []);
-        setBusinessError('');
-      } else {
-        const errorData = await response.json();
-        console.error('Failed to fetch businesses:', errorData);
-
-        if (response.status === 401 || response.status === 403) {
-          sessionStorage.clear();
-          navigate('/login');
-        } else {
-          setBusinessError(errorData.error || t('failed_to_load_businesses'));
-        }
-      }
-    } catch (error) {
-      console.error('Error fetching businesses:', error);
-      setBusinessError(t('network_error'));
-    } finally {
-      setIsLoadingBusinesses(false);
-    }
-  };
-
-  // Sync active slide for How It Works carousel
-  useEffect(() => {
-    if (showHowModal) {
-      const carouselEl = document.getElementById('howItWorksCarousel');
-      if (carouselEl) {
-        const handleSlid = (event) => {
-          setActiveSlide(event.to);
-        };
-        carouselEl.addEventListener('slid.bs.carousel', handleSlid);
-        return () => carouselEl.removeEventListener('slid.bs.carousel', handleSlid);
-      }
-    } else {
-      setActiveSlide(0);
-    }
-  }, [showHowModal]);
-
-  const getStepKeys = (index) => {
-    const keys = [
-      'step_1_login',
-      'step_2_create_business',
-      'step_3_onboarding_pmf',
-      'step_4_aha_insights',
-      'step_5_exec_summary',
-      'step_6_kickstart_projects',
-      'step_7_project_ranking',
-      'step_8_ai_answers',
-      'step_9_insights_6cs',
-      'step_10_strategic'
-    ];
-    return {
-      title: keys[index],
-      description: `${keys[index]}_description`
-    };
-  };
-
-  const deleteBusiness = async (businessId) => {
-    try {
-      setIsDeletingBusiness(true);
-      setDeleteError('');
-
-      const token = sessionStorage.getItem('token');
-
-      if (!token) {
-        setDeleteError(t('authentication_required'));
-        navigate('/login');
-        return;
-      }
-
-      const response = await fetch(`${API_BASE_URL}/api/businesses/${businessId}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        await fetchBusinesses();
-        setShowDeleteModal(false);
-        setBusinessToDelete(null);
-
-        setSuccessMessage(t('business_deleted_successfully'));
-        setShowSuccessPopup(true);
-
-        setTimeout(() => {
-          setShowSuccessPopup(false);
-          setSuccessMessage('');
-        }, 4000);
-      } else {
-        console.error('Delete business error:', data);
-
-        if (response.status === 401) {
-          sessionStorage.clear();
-          navigate('/login');
-        } else if (response.status === 403 && data.error && data.error.includes('30 days')) {
-          setCooldownMessage(data.error);
-          setShowCooldownModal(true);
-          setShowDeleteModal(false);
-        } else if (response.status === 403) {
-          sessionStorage.clear();
-          navigate('/login');
-        } else {
-          setDeleteError(data.error || t('failed_to_delete_business'));
-        }
-      }
-    } catch (error) {
-      console.error('Error deleting business:', error);
-      setDeleteError(t('network_error_try_again'));
-    } finally {
-      setIsDeletingBusiness(false);
-    }
-  };
-
-  const createBusiness = async () => {
-    try {
-      setIsCreatingBusiness(true);
-      setBusinessError('');
-
-      const token = sessionStorage.getItem('token');
-
-      if (!token) {
-        setBusinessError(t('authentication_required'));
-        navigate('/login');
-        return;
-      }
-
-      const response = await fetch(`${API_BASE_URL}/api/businesses`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(businessFormData)
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        setNewlyCreatedBusiness(data.business);
-        if (data.business && (data.business._id || data.business.id)) {
-          sessionStorage.setItem('activeBusinessId', data.business._id || data.business.id);
-        }
-        setSuccessMessage(t('business_created_successfully'));
-        setShowSuccessPopup(true);
-
-        setBusinessFormData({
-          business_name: '',
-          business_purpose: '',
-          description: '',
-          city: '',
-          country: ''
-        });
-
-        await fetchBusinesses();
-        setShowCreateModal(false);
-
-        // Show PMF Onboarding modal after successful business creation (only if enabled)
-        setTimeout(() => {
-          setShowSuccessPopup(false);
-          setSuccessMessage('');
-          if (ENABLE_PMF) setShowPMFOnboarding(true);
-        }, 2000);
-      } else {
-        console.error('Create business error:', data);
-
-        if (response.status === 401) {
-          sessionStorage.clear();
-          navigate('/login');
-        } else if (response.status === 403 && data.error && data.error.includes('limit reached')) {
-          handleShowCreateModal();
-          //setShowUpgradeModal(true);
-        } else {
-          setBusinessError(data.error || t('failed_to_create_business'));
-        }
-      }
-    } catch (error) {
-      setBusinessError(t('network_error_try_again'));
-      console.error('Error creating business:', error);
-    } finally {
-      setIsCreatingBusiness(false);
-    }
-  };
-
-  // Validation Functions
-  const validateForm = () => {
-    const errors = {};
-
-    // Business Name validation
-    const businessName = businessFormData.business_name.trim();
-
-if (!businessName) {
-  errors.business_name = t('business_name_cannot_be_empty');
-}
-else if (businessName.length < 3) {
-  errors.business_name = "Business name must be at least 3 characters";
-}
-else if (!/[A-Za-z]/.test(businessName)) {
-  errors.business_name = "Business name must contain at least one letter";
-}
-else if (/[0-9]{5,}/.test(businessName)) {
-  errors.business_name = "Too many consecutive numbers are not allowed";
-}
-else if (/[^A-Za-z0-9\s]{5,}/.test(businessName)) {
-  errors.business_name = "Too many consecutive special characters are not allowed";
-}
-
-    // Business purpose validation
-const businessPurpose = businessFormData.business_purpose.trim();
-
-if (!businessPurpose) {
-  errors.business_purpose = t('business_purpose_required');
-}
-else if (businessPurpose.length < 10) {
-  errors.business_purpose = "Business purpose must be at least 10 characters long";
-}
-else if (!/[A-Za-z]/.test(businessPurpose)) {
-  errors.business_purpose =
-    t('business_purpose_must_contain_alphabetic_characters') ||
-    "Business purpose must contain alphabetic characters";
-}
-else if (/[0-9]{5,}/.test(businessPurpose)) {
-  errors.business_purpose = "Too many consecutive numbers are not allowed";
-}
-else if (/[^A-Za-z0-9\s]{5,}/.test(businessPurpose)) {
-  errors.business_purpose = "Too many consecutive special characters are not allowed";
-}
-
-    // City validation (optional but if provided, must be valid)
-    const cityTrimmed = businessFormData.city.trim();
-    const cityHasSpecialChars = /[^a-zA-ZÀ-ÿ\s.-]/.test(cityTrimmed);
-
-    if (businessFormData.city && cityTrimmed.length === 0) {
-      errors.city = t('city_cannot_contain_only_spaces');
-    } else if (cityTrimmed.length > 0 && cityTrimmed.length < 2) {
-      errors.city = t('city_min_length');
-    } else if (cityTrimmed.length > 20) {
-      errors.city = t('city_max_length');
-    } else if (cityHasSpecialChars) {
-      errors.city = t('city_cannot_contain_special_characters');
-    }
-
-    // Country validation (optional but if provided, must be valid)
-    const countryTrimmed = businessFormData.country.trim();
-    const countryHasSpecialChars = /[^a-zA-ZÀ-ÿ\s.-]/.test(countryTrimmed);
-
-    if (businessFormData.country && countryTrimmed.length === 0) {
-      errors.country = t('country_cannot_contain_only_spaces');
-    } else if (countryTrimmed.length > 0 && countryTrimmed.length < 2) {
-      errors.country = t('country_min_length');
-    } else if (countryTrimmed.length > 20) {
-      errors.country = t('country_max_length');
-    } else if (countryHasSpecialChars) {
-      errors.country = t('country_cannot_contain_special_characters');
-    }
-
-
-    if (businessFormData.description && /\s{3,}/.test(businessFormData.description)) {
-      errors.description = t('description_no_continuous_spaces');
-    }
-
-
-    setFormErrors(errors);
-    return Object.keys(errors).length === 0;
-  };
-
-  const isInvisibleOrEmpty = (str) => {
-    if (!str) return true; // Empty or null
-
-    const normalized = str
-      .replace(/\\u[0-9A-Fa-f]{4}/g, '')
-      .replace(/U\+[0-9A-Fa-f]{4}/g, '');
-
-    const cleaned = normalized.replace(/\s+/g, '');
-    return cleaned.length === 0;
-  }
-
-  const startsWithSymbolOrNumber = (str) => {
-    if (!str) return false;
-    const trimmed = str.trim();
-    // Check if first visible character is NOT a letter
-    return /^[^A-Za-z]/.test(trimmed);
-  }
-
-  // Business Modal Functions
-  const handleShowCreateModal = () => {
-    const userPlan = sessionStorage.getItem("userPlan");
-    const activeBusinessesCount = businesses.filter(b => b.status !== 'deleted').length;
-
-    if (userPlan === 'essential' && activeBusinessesCount >= 1) {
-      setShowPlanLimitModal(true); // Show limit modal instead of upgrade modal directly
-      return;
-    }
-
-    if (userPlan === 'advanced' && activeBusinessesCount >= 3) { // Assuming 3 is the limit for advanced.
-      const features = [
-        "Up to 3 Workspaces",
-        "Initiative to Project Conversion",
-
-      ];
-
-      if (userPlan === 'advanced' && activeBusinessesCount >= 3) {
-        const exhaustedFeatures = features.map((f, i) => `• ${f}`).join('\n');
-
-        setBusinessError(`You have exhausted the plan:\n${exhaustedFeatures}`);
-        setShowSuccessPopup(true); // Using common popup but now it will show as error
-        setTimeout(() => {
-          setShowSuccessPopup(false);
-          setBusinessError('');
-        }, 5000);
-        return;
-      }
-    }
-
-    setShowCreateModal(true);
-    setBusinessError('');
-    setFormErrors({});
-  };
-
-  const handleCloseCreateModal = () => {
-    setShowCreateModal(false);
-    setBusinessFormData({
-      business_name: '',
-      business_purpose: '',
-      description: '',
-      city: '',
-      country: ''
+    let cancelled = false;
+    const newFiles = selectedFiles.filter(f => !(fileKey(f) in filePageCounts));
+    if (newFiles.length === 0) return;
+    newFiles.forEach(async (file) => {
+      const info = await computePageCount(file);
+      if (cancelled) return;
+      setFilePageCounts(prev => ({ ...prev, [fileKey(file)]: info }));
     });
-    setBusinessError('');
-    setFormErrors({});
-  };
+    return () => { cancelled = true; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedFiles]);
 
-  const handleFormChange = (e) => {
-    const { name, value } = e.target;
+  const [accessModalMessage, setAccessModalMessage] = useState('');
+  const [accessModalSubMessage, setAccessModalSubMessage] = useState('');
 
-    const sanitizedValue =
-      name === "business_name"
-        ? value
-          .replace(/\\u[0-9A-Fa-f]{4}/g, '')
-        : value;
-
-    setBusinessFormData((prev) => ({
-      ...prev,
-      [name]: sanitizedValue,
-    }));
-
-    // Clear error for this field when user starts typing
-    if (formErrors[name]) {
-      setFormErrors(prev => ({
-        ...prev,
-        [name]: ''
-      }));
-    }
-  };
-
-  const handleSubmitBusiness = (e) => {
-    e.preventDefault();
-
-    if (!validateForm()) {
-      // Highlight the first error by scrolling to it and focusing
-      const firstErrorField = Object.keys(formErrors)[0];
-      if (firstErrorField) {
-        // Small delay to ensure form errors are rendered
-        setTimeout(() => {
-          const element = document.querySelector(`input[name="${firstErrorField}"], textarea[name="${firstErrorField}"]`);
-          if (element) {
-            element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            element.focus();
-            // Optional: Add a temporary shake class for visual highlight (add CSS for .shake)
-            element.classList.add('shake');
-            setTimeout(() => element.classList.remove('shake'), 500);
-          }
-        }, 100);
-      }
-      return;
-    }
-
-    createBusiness();
-  };
-
-  // Delete Modal Functions
-  const handleShowDeleteModal = (business) => {
-    setBusinessToDelete(business);
-    setShowDeleteModal(true);
-    setDeleteError('');
-    // Close any open custom menus
-    setShowCustomMenu({});
-  };
-
-  const handleCloseDeleteModal = () => {
-    setShowDeleteModal(false);
-    setBusinessToDelete(null);
-    setDeleteError('');
-  };
-
-  const handleConfirmDelete = () => {
-    if (businessToDelete) {
-      deleteBusiness(businessToDelete._id);
-    }
-  };
-
-  // Close custom menu when clicking outside
-  useEffect(() => {
-    const handleClickOutside = () => {
-      setShowCustomMenu({});
-    };
-
-    document.addEventListener('click', handleClickOutside);
-    return () => document.removeEventListener('click', handleClickOutside);
-  }, []);
-
-  // Different delete button alternatives
-  const DeleteButtonAlternatives = ({ business, viewType, canDelete = true }) => {
-    const stats = business.question_statistics || {};
-    const progress = stats.progress_percentage || 0;
-    const completedQuestions = stats.completed_questions || 0;
-    const totalQuestions = stats.total_questions || 0;
-    const remainingQuestions = stats.pending_questions || 0;
-
-    const getStatusInfo = () => {
-      if (business.status === 'deleted') return { label: t('deleted'), className: 'status-deleted' };
-      if (business.access_mode === t('archived') || business.access_mode === 'hidden') return { label: 'Archived', className: 'status-archived' };
-      return { label: t('active'), className: 'status-active' };
-    };
-
-    const statusInfo = getStatusInfo();
-
-    // Alternative 1: Simple Delete Button (Always Visible)
-    const SimpleDeleteButton = () => {
-      if (isViewer) return null; // 👈 HIDE FOR VIEWER
-
-      return (
-        <button
-          className="btn btn-outline-danger btn-sm delete-btn-simple"
-          onClick={(e) => {
-            e.stopPropagation();
-            handleShowDeleteModal(business);
-          }}
-          title={t('delete_business')}
-        >
-          <Trash2 size={16} />
-        </button>
-      );
-    };
-
-    return (
-      <div
-        className="business-item d-flex align-items-center p-3 border-bottom position-relative"
-        onMouseEnter={() => setHoveredItem(business._id)}
-        onMouseLeave={() => setHoveredItem(null)}
-      >
-        <div
-          style={{ width: 60, height: 60, cursor: "pointer" }}
-          className="progress-circle me-3 progress-wrapper"
-          onClick={() => handleBusinessClick(business)}
-        >
-          <CircularProgressbar
-            value={progress}
-            text={`${Math.round(progress)}%`}
-            styles={buildStyles({
-              pathColor: progress === 100 ? "#28a745" : progress > 50 ? "#ffc107" : "#17a2b8",
-              textColor: "#000",
-              trailColor: "#e9ecef",
-              textSize: "28px",
-              pathTransitionDuration: 0.5,
-            })}
-          />
+  const renderHowItWorksCards = (showCreateButton) => (
+    <div className="how-it-works-cards">
+      <div className="hiw-card">
+        <div className="hiw-card-header">
+          <div className="hiw-number yellow">1</div>
+          <div className="hiw-meta">
+            <span className="hiw-subtitle">{t('hiw_create_business_caps') || 'CREATE BUSINESS'}</span>
+            <h3 className="hiw-title">{t('hiw_start_with_business') || 'Start with your business'}</h3>
+          </div>
         </div>
-
-        <div
-          className="flex-grow-1"
-          onClick={() => handleBusinessClick(business)}
-          style={{ cursor: "pointer" }}
-        >
-          <h6 className="mb-1">{business.business_name}</h6>
-          <small className="text-muted">
-            {completedQuestions}/{totalQuestions} {t('questions_completed')}
-            {remainingQuestions > 0 && (
-              <span className="text-warning ms-2 text-grey-custom">
-                • {remainingQuestions} {t('questions_remaining')}
-              </span>
-            )}
-          </small>
+        <p className="hiw-description">
+          {t('hiw_start_with_business_desc') || 'Name your business and answer a few basic questions. Trax turns that into a real diagnosis — add documents for a sharper one.'}
+        </p>
+        {/* <hr className="hiw-divider" /> */}
+        <div className="hiw-list">
+          <div className="hiw-list-item">
+            <strong>{t('hiw_inputs') || 'Inputs'}:</strong> {t('hiw_inputs_details') || 'basic questions · documents (optional)'}
+          </div>
+          <div className="hiw-list-item">
+            <strong>{t('hiw_output') || 'Output'}:</strong> {t('hiw_output_details') || 'insights, strategy draft, and priorities'}
+          </div>
         </div>
-        <div className="right-side d-flex flex-column flex-md-row align-items-end align-items-md-center gap-1">
-          <span className={`status-badge ${statusInfo.className}`}>
-            {statusInfo.label}
-          </span>
-          {canDelete && (
-            <div className="delete-btn-wrapper">
-              <SimpleDeleteButton />
-            </div>
-          )}
+        {showCreateButton && !isCollaborator && !isViewer && (
+          <>
+            <hr className="hiw-divider hiw-card-btn-divider" />
+            <button className="btn-create-business" onClick={handleShowCreateModal} disabled={isLoadingBusinesses}>
+              + {t('create_business') || 'Create Business'}
+            </button>
+          </>
+        )}
+      </div>
+
+      <div className="hiw-card">
+        <div className="hiw-card-header">
+          <div className="hiw-number blue">2</div>
+          <div className="hiw-meta">
+            <span className="hiw-subtitle">{t('hiw_insights_caps') || 'INSIGHTS'}</span>
+            <h3 className="hiw-title">{t('hiw_diagnosis_from_docs') || 'A diagnosis from your documents'}</h3>
+          </div>
+        </div>
+        <p className="hiw-description">
+          {t('hiw_diagnosis_from_docs_desc') || 'Trax reads everything and gives you a structured report at two depths.'}
+        </p> 
+        {/* <hr className="hiw-divider" /> */}
+        <div className="hiw-list">
+          <div className="hiw-list-item">
+            <strong>{t('hiw_basic') || 'Basic'}:</strong> {t('hiw_basic_details') || 'AHA insights, Where & How to compete, Top 5 priorities'}
+          </div>
+          <div className="hiw-list-item">
+            <strong>{t('hiw_advanced') || 'Advanced'}:</strong> {t('hiw_advanced_details') || "PESTEL, Porter's Five Forces, NPS, BCG, S.T.R.A.T.E.G.I.C. scorecard"}
+          </div>
         </div>
       </div>
-    );
-  };
 
-  const BusinessList = ({ businesses, viewType, canDelete = true }) => (
-    <div className={`business-list ${viewType}`}>
-      {isLoadingBusinesses && (
-        <div className="d-flex justify-content-center align-items-center py-5">
-          <Spinner animation="border" role="status" variant="primary" />
-          <span className="ms-2 text-muted">{t('loading_businesses')}</span>
-        </div>
-      )}
-      {!isLoadingBusinesses && businesses.length === 0 && (
-        <div className="text-center text-muted py-5">
-          <p className="mb-2">{t('no_businesses_yet')}</p>
-          <small>{t('get_started_by_creating')}</small>
-        </div>
-      )}
-      {!isLoadingBusinesses && businesses.length > 0 && businesses.map((business, index) => {
-        const isDeleted = business.status === 'deleted';
-        const isArchived = business.access_mode === 'archived' || business.access_mode === 'hidden';
-        return (
-          <div key={business._id || index} className={isDeleted ? 'opacity-50' : ''} style={isDeleted ? { pointerEvents: isDeleted ? 'none' : 'auto' } : {}}>
-            <DeleteButtonAlternatives
-              business={business}
-              viewType={viewType}
-              canDelete={canDelete && !isDeleted && !isArchived}
-            />
+      <div className="hiw-card">
+        <div className="hiw-card-header">
+          <div className="hiw-number green">3</div>
+          <div className="hiw-meta">
+            <span className="hiw-subtitle">{t('hiw_execution_caps') || 'EXECUTION'}</span>
+            <h3 className="hiw-title">{t('hiw_priorities_turn_commitment') || 'Priorities that turn into commitment'}</h3>
           </div>
-        );
-      })}
+        </div>
+        <p className="hiw-description">
+          {t('hiw_priorities_turn_commitment_desc') || 'Each priority becomes a tracked bet — owner, hypothesis, expected results. Anchored to the rituals that move the business forward.'}
+        </p> 
+        {/* <hr className="hiw-divider" /> */}
+        <div className="hiw-list">
+          <div className="hiw-list-item">
+            <strong>{t('hiw_bets') || 'Bets'}:</strong> {t('hiw_bets_details') || 'ledger of active initiatives with status, score, impact, risk'}
+          </div>
+          <div className="hiw-list-item">
+            <strong>{t('hiw_moments') || 'Moments'}:</strong> {t('hiw_moments_details') || 'MBR, QBR, Annual Planning — auto-generated management reports'}
+          </div>
+        </div>
+      </div>
     </div>
   );
 
-  // Event Handlers
-  const handleBusinessClick = (business) => {
-    const businessId = business._id || business.id;
-    if (businessId) {
-      sessionStorage.setItem('activeBusinessId', businessId);
+  useEffect(() => {
+    // Preload all slides for the "How it works" modal
+    const slidesToPreload = Array.from({ length: 10 }, (_, i) => `/slides/slide${i + 1}.webp`);
+    slidesToPreload.forEach(src => {
+      const img = new Image();
+      img.src = src;
+    });
+  }, []);
+
+  const handleSelect = (selectedIndex) => {
+    setActiveSlide(selectedIndex);
+  };
+
+  const deleteBusiness = useCallback(async (businessId) => {
+    try {
+      setIsProcessingDelete(true);
+      clearErrors();
+      await deleteBusinessAction(businessId);
+      
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['businesses'] }),
+        queryClient.invalidateQueries({ queryKey: ['planDetails'] })
+      ]);
+
+      closeModal('deleteBusiness');
+      setBusinessToDelete(null);
+      addToast({ message: t('business_deleted_successfully'), type: 'success' });
+    } catch (error) {
+      console.error('Error deleting business:', error);
+    } finally {
+      setIsProcessingDelete(false);
     }
-    // Navigate directly to business page with AHA tab active
-    navigate('/businesspage', { state: { business, initialTab: 'aha' } });
-  };
+  }, [deleteBusinessAction, t, closeModal, addToast, clearErrors, queryClient]);
 
-  const handleCloseModal = () => {
-    setShowHowModal(false);
-  };
+  const createBusiness = useCallback(async () => {
+    try {
+      const data = await createBusinessAction(businessFormData);
+      const business = data.business;
+      const newBusinessId = business?._id || business?.id;
 
-  // Character counter for business name
-  const businessNameLength = businessFormData.business_name.length;
+      let pmfData = null;
+      if (newBusinessId && (selectedFiles.length > 0 || (businessFormData.website && !businessFormData.has_no_website))) {
+        setIsUploadingFiles(true);
+        if (selectedFiles.length > 0) {
+          for (const file of selectedFiles) {
+            try {
+              const count = filePageCounts[fileKey(file)]?.count;
+              await answerService.uploadStrategicDocument(newBusinessId, file, count);
+            } catch (uploadErr) {
+              console.error(`Error uploading file ${file.name}:`, uploadErr);
+            }
+          }
+        }
+        
+        try {
+          const mlBackendUrl = import.meta.env.VITE_ML_BACKEND_URL || 'http://localhost:8000';
+          const formData = new FormData();
+          if (selectedFiles.length > 0) {
+            formData.append('file', selectedFiles[0]);
+          }
+          if (businessFormData.website && !businessFormData.has_no_website) {
+            formData.append('url', businessFormData.website);
+          }
+          
+          const mlResponse = await fetch(`${mlBackendUrl}/pmf-analysis`, {
+            method: 'POST',
+            headers: {
+              'X-Business-Id': newBusinessId
+            },
+            body: formData
+          });
+          
+          const mlResult = await mlResponse.json();
+          if (mlResult.success && mlResult.data) {
+            pmfData = mlResult.data;
+            try {
+              const getAuthToken = () => useAuthStore.getState().token;
+              const analysisService = new AnalysisApiService(import.meta.env.VITE_ML_BACKEND_URL, import.meta.env.VITE_BACKEND_URL, getAuthToken);
+              await analysisService.savePMFOnboardingData(newBusinessId, pmfData);
+              console.log("Extracted PMF Data saved to DB successfully.");
+            } catch (saveErr) {
+              console.error("Failed to save extracted PMF data to DB:", saveErr);
+            }
+          }
+        } catch (extractErr) {
+          console.warn("ML Analysis failed:", extractErr);
+        }
 
-  // Main render
+        setIsUploadingFiles(false);
+      }
+
+      setNewlyCreatedBusiness(business);
+      if (newBusinessId) {
+        setSelectedBusinessId(newBusinessId);
+      }
+
+      closeModal('createBusiness');
+      addToast({ message: t('business_created_successfully'), type: 'success' });
+
+      const uploadedFilesData = selectedFiles.map(file => ({
+        name: file.name,
+        meta: getFileDetails(file, filePageCounts[fileKey(file)])
+      }));
+      navigate(`/onboarding/${newBusinessId}`, {
+        state: { business, initialTab: 'onboarding', pmfData, uploadedFiles: uploadedFilesData }
+      });
+
+      setBusinessFormData({
+        business_name: '',
+        website: '',
+        has_no_website: false
+      });
+      setSelectedFiles([]);
+      setFilePageCounts({});
+
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['businesses'] }),
+        queryClient.invalidateQueries({ queryKey: ['planDetails'] })
+      ]);
+    } catch (error) {
+      console.error('Error creating business:', error);
+      setIsUploadingFiles(false);
+    }
+  }, [createBusinessAction, businessFormData, selectedFiles, setSelectedBusinessId, t, closeModal, addToast, queryClient, navigate]);
+
+  const validateForm = useCallback(() => {
+    const errors = {};
+    const businessName = businessFormData.business_name.trim();
+
+    if (!businessName) {
+      errors.business_name = t('business_name_cannot_be_empty') || "Business name cannot be empty";
+    } else if (businessName.length < 3) {
+      errors.business_name = "Business name must be at least 3 characters";
+    } else if (!/[A-Za-z]/.test(businessName)) {
+      errors.business_name = "Business name must contain at least one letter";
+    }
+
+    if (!businessFormData.has_no_website) {
+      const website = businessFormData.website.trim();
+      if (!website) {
+        errors.website = t('website_required') || "Website is required";
+      }
+    }
+
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  }, [businessFormData, t]);
+
+  const handleShowCreateModal = useCallback(() => {
+    if (usage) {
+      const current = usage.workspaces?.current || 0;
+      const limit = usage.workspaces?.limit || 0;
+      if (current >= limit) {
+        openModal('planLimit');
+        return;
+      }
+    }
+    openModal('createBusiness');
+    clearErrors();
+    setFormErrors({});
+  }, [usage, clearErrors, openModal]);
+
+  const handleCloseCreateModal = useCallback(() => {
+    closeModal('createBusiness');
+    setBusinessFormData({
+      business_name: '',
+      website: '',
+      has_no_website: false
+    });
+    setSelectedFiles([]);
+    setFilePageCounts({});
+    clearErrors();
+    setFormErrors({});
+  }, [clearErrors, closeModal]);
+
+  const handleFormChange = useCallback((e) => {
+    const { name, value } = e.target;
+    setBusinessFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+    setFormErrors(prev => ({
+      ...prev,
+      [name]: ''
+    }));
+  }, []);
+
+  const handleFileChange = useCallback((e) => {
+    if (e.target.files) {
+      const allowedExtensions = ['.pdf', '.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx', '.txt', '.csv', '.rtf'];
+      const files = Array.from(e.target.files);
+      const validFiles = [];
+      const invalidFiles = [];
+      
+      files.forEach(file => {
+        const ext = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
+        if (allowedExtensions.includes(ext)) {
+          validFiles.push(file);
+        } else {
+          invalidFiles.push(file);
+        }
+      });
+      
+      if (invalidFiles.length > 0) {
+        addToast({ message: 'this is not supported file format', type: 'error' });
+      }
+      
+      if (validFiles.length > 0) {
+        setSelectedFiles(prev => [...prev, ...validFiles]);
+      }
+
+      // Reset the input so the same file can be re-selected after being removed
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  }, [addToast]);
+
+  const handleRemoveFile = useCallback((indexToRemove) => {
+    setSelectedFiles(prev => {
+      const removed = prev[indexToRemove];
+      if (removed) {
+        setFilePageCounts(counts => {
+          const next = { ...counts };
+          delete next[fileKey(removed)];
+          return next;
+        });
+      }
+      return prev.filter((_, idx) => idx !== indexToRemove);
+    });
+  }, []);
+
+  const handleSubmitBusiness = useCallback((e) => {
+    e.preventDefault();
+    if (!validateForm()) return;
+    createBusiness();
+  }, [validateForm, createBusiness]);
+
+  const handleShowDeleteModal = useCallback((business) => {
+    setBusinessToDelete(business);
+    openModal('deleteBusiness');
+    clearErrors();
+  }, [openModal, clearErrors]);
+
+  const handleCloseDeleteModal = useCallback(() => {
+    closeModal('deleteBusiness');
+    setBusinessToDelete(null);
+    clearErrors();
+  }, [closeModal, clearErrors]);
+
+  const handleConfirmDelete = useCallback(() => {
+    if (businessToDelete) {
+      deleteBusiness(businessToDelete._id);
+    }
+  }, [businessToDelete, deleteBusiness]);
+
+  const handleInsightsClick = useCallback(async (business) => {
+    if (business.status === 'deleted') return;
+  
+    selectBusiness(business);
+
+    let hasAdvancedAnalysis = false;
+    const businessId = business?._id || business?.id;
+    if (businessId) {
+      try {
+        const ML_API_BASE_URL = import.meta.env.VITE_ML_BACKEND_URL;
+        const API_BASE_URL = import.meta.env.VITE_BACKEND_URL;
+        const getAuthToken = () => useAuthStore.getState().token;
+        const analysisService = new AnalysisApiService(ML_API_BASE_URL, API_BASE_URL, getAuthToken);
+        console.log(`[DEBUG] handleInsightsClick: Fetching PMF for businessId=${businessId}`);
+        const result = await analysisService.getPMFAnalysis(businessId, true);
+        console.log(`[DEBUG] handleInsightsClick: result from getPMFAnalysis=`, result);
+        
+        const analysisData = await analysisService.fetchAnalysisDataThroughBackend(businessId, true);
+        hasAdvancedAnalysis = analysisData && analysisData.length > 0;
+        
+        const hasOnboarding = (result?.onboarding_data && Object.keys(result.onboarding_data).length > 0) || 
+                              (result?.onboarding && Object.keys(result.onboarding).length > 0);
+        console.log(`[DEBUG] handleInsightsClick: hasOnboarding=${hasOnboarding}`);
+        
+        let hasInsights = false;
+        let hasExecSummary = false;
+
+        const insightsContent = result?.insights;
+          hasInsights = !!insightsContent && (typeof insightsContent === 'string' ? insightsContent.trim().length > 0 : Object.keys(insightsContent).length > 0);
+        
+        try {
+          const execResult = await analysisService.getPMFExecutiveSummary(businessId);
+          const summaryContent = execResult?.summary || execResult;
+          hasExecSummary = !!summaryContent && (typeof summaryContent === 'string' ? summaryContent.trim().length > 0 : Object.keys(summaryContent).length > 0);
+} catch (err) {
+          console.warn("Failed to check Executive Summary status:", err);
+        }
+
+        if (!hasOnboarding || !hasInsights || !hasExecSummary) {
+          console.warn("Missing onboarding, insights, or exec summary. Navigating to onboarding page.");
+          navigate(`/onboarding/${businessId}`, { 
+            state: { 
+              business, 
+              pmfData: result?.onboarding_data || result?.onboarding || null 
+            } 
+          });
+          return;
+        }
+      } catch (err) {
+        console.error("Unexpected error in handleInsightsClick:", err);
+        navigate(`/onboarding/${businessId}`, { state: { business } });
+        return;
+      }
+    }
+
+    let initialTab = 'executive';
+    const userPlan = useAuthStore.getState().userPlan;
+    const isPaidPlan = userPlan && userPlan.toLowerCase() !== 'explorer' && userPlan.toLowerCase() !== 'free' && userPlan.toLowerCase() !== 'none';
+    const limits = getUserLimits();
+    
+    const isTypeRegenerating = (type) => regenerating[`${businessId}_${type}`] || false;
+    const isAnalysisRegenerating = isTypeRegenerating('swot') || isTypeRegenerating('porters') || isTypeRegenerating('pestel') || isTypeRegenerating('initial') || isTypeRegenerating('essential') || isTypeRegenerating('advanced');
+
+    if (isPaidPlan) {
+      initialTab = (hasAdvancedAnalysis || isAnalysisRegenerating) ? 'insights' : 'advanced';
+    } else if (limits.pmf) {
+      initialTab = 'executive';
+    } else if (limits.insight) {
+      initialTab = 'insights';
+    } else if (limits.strategic) {
+      initialTab = 'strategic';
+    }
+
+    const businessSlug = toSlug(business?.business_name || '');
+    navigate(`/businesspage?business=${businessSlug}&tab=${initialTab}`, { 
+      state: { business, initialTab } 
+    });
+  }, [selectBusiness, navigate, t, userRole, openModal, regenerating]);
+
+  const handleExecutionClick = useCallback((business) => {
+    if (business.status === 'deleted') return;
+
+    const limits = getUserLimits();
+    const hasAccess = limits.project;
+
+    const businessSlug = toSlug(business?.business_name || '');
+    const businessId = business?._id || business?.id;
+
+    if (!hasAccess) {
+      navigate(`/business/${businessId || 'default'}/execution`);
+      return;
+    }
+
+    selectBusiness(business);
+
+    const initialTab = 'bets';
+    navigate(`/businesspage?business=${businessSlug}&tab=${initialTab}`, { 
+      state: { business, initialTab } 
+    });
+  }, [selectBusiness, navigate, t, userRole, openModal]);
+
+  const handleCloseHowItWorksModal = useCallback(() => {
+    closeModal('howItWorks');
+  }, [closeModal]);
+
+
+
   return (
     <div className="dashboard-layout">
       <PlanLimitModal
-        show={showPlanLimitModal}
-        onHide={() => setShowPlanLimitModal(false)}
+        show={isModalOpen('planLimit')}
+        onHide={() => closeModal('planLimit')}
+        plan={usage?.plan}
+        limit={usage?.workspaces?.limit}
+        isAdmin={isAdmin}
       />
 
-
-      {/* FULL PAGE PMF INSIGHTS */}
-      {showInsights ? (
+      {isModalOpen('insights') ? (
         ENABLE_PMF ? (
           <PMFInsights
-            businessId={newlyCreatedBusiness?._id || sessionStorage.getItem('activeBusinessId') || businesses[0]?._id}
+            businessId={newlyCreatedBusiness?._id || selectedBusinessId || allBusinessesQuery[0]?._id}
             onContinue={() => {
-              setShowInsights(false);
-              navigate("/businesspage", {
-                state: {
-                  business: newlyCreatedBusiness || businesses.find(b => b._id === (sessionStorage.getItem('activeBusinessId') || businesses[0]?._id)) || businesses[0]
-                }
+              closeModal('insights');
+              const business = newlyCreatedBusiness || allBusinessesQuery.find(b => b._id === (selectedBusinessId || allBusinessesQuery[0]?._id)) || allBusinessesQuery[0];
+              const businessSlug = toSlug(business?.business_name || '');
+              navigate(`/businesspage?business=${businessSlug}&tab=executive`, {
+                state: { business, initialTab: 'executive' }
               });
             }}
           />
@@ -719,632 +653,408 @@ else if (/[^A-Za-z0-9\s]{5,}/.test(businessPurpose)) {
         <>
           <MenuBar />
           <Container fluid className="p-0 main-content">
-            <div className="responsive-view-container">
-              <Row className="h-100 justify-content-center">
-                <Col xs={12} className="p-0">
-                  {/* Mobile View */}
-                  <Card className="mobile-view-card d-md-none">
-                    <Card.Body className="p-0">
-                      <div className="p-4">
-                        <div className="d-flex justify-content-between align-items-center mb-3">
-                          <h5 className="mb-0">{t('welcome_dashboard')}</h5>
+            <div className="dashboard-content">
+              <div className="welcome-section">
+                <h1 className="welcome-title">
+                  {t('welcome')} <span>{userName}</span>
+                </h1>
+                <p className="welcome-description">
+                  {t('dashboard_description_redesign') || "Strategy as an operating system. Traxxia gives you a strategic diagnosis of your business in minutes, then turns each priority into a tracked bet your team actually executes."}
+                </p>
+              </div>
+
+              {isLoadingBusinesses ? (
+                <div className="d-flex justify-content-center py-5">
+                  <Spinner animation="border" variant="primary" />
+                </div>
+              ) : allBusinessesQuery.length === 0 ? (
+                /* FIRST-TIME LOGIN VIEW (3 cards side-by-side) */
+                <div className="first-time-container">
+                  {renderHowItWorksCards(true)}
+                </div>
+              ) : (
+                /* STANDARD LOGIN VIEW */
+                <>
+                  {/* Collapsible Accordion */}
+                  <div className="how-it-works-accordion">
+                    <div 
+                      className="how-it-works-header"
+                      onClick={() => setIsHowItWorksExpanded(!isHowItWorksExpanded)}
+                    >
+                      <span>{t('how_it_works') || 'HOW IT WORKS'}</span>
+                      <ChevronDown 
+                        size={18} 
+                        className={`how-it-works-icon ${isHowItWorksExpanded ? 'expanded' : ''}`} 
+                      />
+                    </div>
+                    {isHowItWorksExpanded && (
+                      <div className="how-it-works-body">
+                        {renderHowItWorksCards(false)}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Businesses Table */}
+                  <div className="businesses-container">
+                    <div className="businesses-header d-flex justify-content-between align-items-center gap-3">
+                      <span class="biz-table-title"><b>{t('your_businesses_all_states')}</b> — all states</span>
+                      
+                      <div className="d-flex align-items-center gap-3">
+                        <div className="status-filter-wrapper">
+                          <button className="status-filter-btn" onClick={() => setIsFilterOpen(!isFilterOpen)}>
+                            <span className="filter-label">{t('state_column') || 'STATE'}</span>
+                            <span className="filter-value">
+                              {statusFilter.length === 4 ? t('ALL') : (statusFilter.length === 1 ? t(statusFilter[0]) : t('multiple_filter') || 'Multiple')} · {filteredBusinesses.length}
+                            </span>
+                            <ChevronDown size={14} className={`ms-2 transition-transform ${isFilterOpen ? 'rotate-180' : ''}`} />
+                          </button>
+
+                          {isFilterOpen && (
+                            <>
+                              <div className="status-filter-overlay" onClick={() => setIsFilterOpen(false)} />
+                              <div className="status-dropdown">
+                              {['ALL', 'EXECUTION', 'CREATED', 'DELETED'].map(status => (
+                                <div key={status} className="dropdown-item" onClick={() => toggleStatusFilter(status)}>
+                                  <div className={`custom-checkbox ${statusFilter.includes(status) ? 'checked' : ''}`}>
+                                    {statusFilter.includes(status) && <Check size={12} color="white" />}
+                                  </div>
+                                  <span className="status-name">{status === 'ALL' ? t('ALL') : t(status)}</span>
+                                  <span className="status-count">{statusCounts[status]}</span>
+                                </div>
+                              ))}
+                              </div>
+                            </>
+                          )}
                         </div>
-                        <p className="text-muted small mb-4">{t('create_business_plans')}</p>
 
-                      </div>
-                      <Accordion className="px-4 mb-4">
-                        {/* My Businesses */}
-                        {!isCollaborator && (
-                          <Accordion.Item eventKey="0">
-                            <Accordion.Header>
-                              <div className="accordion-header-content">
-                                <span className="accordion-title-text">
-                                  {t("my_businesses")}
-                                </span>
-                                <span className="accordion-count-pill">
-                                  {myBusinesses.length}
-                                </span>
-                              </div>
-                            </Accordion.Header>
-
-                            <Accordion.Body>
-                              <BusinessList
-                                businesses={myBusinesses}
-                                viewType="mobile"
-                              />
-                            </Accordion.Body>
-                          </Accordion.Item>
-                        )}
-
-                        {/* Project Phase */}
-                        {!isCollaborator && projectPhaseBusinesses.length > 0 && (
-                          <Accordion.Item eventKey="1">
-                            <Accordion.Header>
-                              <div className="accordion-header-content">
-                                <span className="accordion-title-text">
-                                  {t("Project Phase")}
-                                </span>
-                                <span className="accordion-count-pill">
-                                  {projectPhaseBusinesses.length}
-                                </span>
-                              </div>
-                            </Accordion.Header>
-
-                            <Accordion.Body>
-                              <BusinessList
-                                businesses={projectPhaseBusinesses}
-                                viewType="mobile"
-                                canDelete={false}
-                              />
-                            </Accordion.Body>
-                          </Accordion.Item>
-                        )}
-
-                        {/* Collaborating Businesses */}
-                        {collaboratingBusinesses.length > 0 && (
-                          <Accordion.Item eventKey="2">
-                            <Accordion.Header>
-                              <div className="accordion-header-content">
-                                <span className="accordion-title-text">
-                                  Collaborating Businesses
-                                </span>
-                                <span className="accordion-count-pill">
-                                  {collaboratingBusinesses.length}
-                                </span>
-                              </div>
-                            </Accordion.Header>
-
-                            <Accordion.Body>
-                              <BusinessList
-                                businesses={collaboratingBusinesses}
-                                viewType="mobile"
-                                canDelete={false}
-                              />
-                            </Accordion.Body>
-                          </Accordion.Item>
-                        )}
-
-                      </Accordion>
-
-                      <div className="px-4 pb-4 d-flex flex-wrap gap-2">
                         {!isCollaborator && !isViewer && (
-                          <Button
-                            variant="primary"
-                            className="flex-grow-1 create-business-btn"
-                            onClick={handleShowCreateModal}
-                          >
-                            {t('create_business')}
-                          </Button>
+                          <button className="btn-create-business-header" onClick={handleShowCreateModal} disabled={isLoadingBusinesses}>
+                            + {t('create_business') || 'Create Business'}
+                          </button>
                         )}
-                        <Button
-                          variant="primary"
-                          className="flex-grow-1 create-business-btn"
-                          onClick={() => setShowHowModal(true)}
-                        >
-                          <Info size={18} className="me-2" />
-                          {t('how_it_works')}
-                        </Button>
                       </div>
-                    </Card.Body>
-                  </Card>
+                    </div>
 
-                  {/* Desktop View */}
-                  <Card className="desktop-view-card d-none d-md-block">
-                    <Card.Body className="p-0 h-100">
-                      <Row className="h-100 px-4">
-                        <Col md={6} className="welcome-section">
-                          <div>
-                            <div className="d-flex justify-content-between align-items-start mb-4">
-                              <div>
-                                <h5 className="mb-2">{t('welcome_dashboard')}</h5>
-                              </div>
-                            </div>
-                            <p className="text-muted mb-4">{t('create_business_plans')}</p>
+                    <div className="businesses-table-wrapper">
+                      <table className="businesses-table">
+                        <thead>
+                          <tr>
+                            <th>{t('business_column') || "BUSINESS"}</th>
+                            <th>{t('state_column') || "STATE"}</th>
+                            <th className="th-date">{t('date_of_creation_column') || "DATE OF CREATION"}</th>
+                            <th className="text-center">{t('active_bets_column') || "ACTIVE BETS"}</th>
+                            <th className="text-center">{t('collaborators_column') || "COLLABORATORS"}</th>
+                            <th className="text-end th-actions">{t('actions_column') || "ACTIONS"}</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {filteredBusinesses.length === 0 ? (
+                            <tr>
+                              <td colSpan="6" className="text-center py-5 text-muted">
+                                {t('no_businesses_yet') || 'No businesses yet'}
+                              </td>
+                            </tr>
+                          ) : (
+                            filteredBusinesses.map((business) => {
+                              const isDeleted = business.status === 'deleted';
+                              const state = isDeleted ? 'DELETED' : (business.has_projects ? 'EXECUTION' : 'CREATED');
+                              const date = business.created_at ? new Date(business.created_at).toLocaleDateString('en-US', { 
+                                month: 'short', day: '2-digit', year: 'numeric' 
+                              }) : 'N/A';
+                              
+                              const activeBets = business.project_count || business.question_statistics?.total_projects || 0;
+                              const collaborators = business.collaborators_count ?? (business.company_admin_id?.length || 1);
 
-                            <div className="d-flex flex-wrap gap-2">
-                              {!isCollaborator && !isViewer && (
-                                <Button
-                                  variant="primary"
-                                  className="create-business-btn"
-                                  onClick={handleShowCreateModal}
-                                >
-                                  {t('create_business')}
-                                </Button>
-                              )}
-
-                              <Button
-                                variant="primary"
-                                className="create-business-btn"
-                                onClick={() => setShowHowModal(true)}
-                              >
-                                <Info size={18} className="me-2" />
-                                {t('how_it_works')}
-                              </Button>
-                            </div>
-                          </div>
-                        </Col>
-
-                        {/* RIGHT SIDE - Business List */}
-                        <Col md={6} className="businesses-section">
-                          <Accordion>
-                            {/* My Businesses */}
-                            {!isCollaborator && (
-                              <Accordion.Item eventKey="0">
-                                <Accordion.Header>
-                                  <div className="accordion-header-content">
-                                    <span className="accordion-title-text">
-                                      {t("my_businesses")}
+                              return (
+                                <tr key={business._id || business.id} className={isDeleted ? 'row-deleted' : ''}>
+                                  <td className="business-name-cell">{business.business_name}</td>
+                                  <td>
+                                    <span className={`state-badge state-${state.toLowerCase()}`}>
+                                      {t(state)}
                                     </span>
-                                    <span className="accordion-count-pill">
-                                      {myBusinesses.length}
-                                    </span>
-                                  </div>
-                                </Accordion.Header>
-                                <Accordion.Body>
-                                  <BusinessList
-                                    businesses={myBusinesses}
-                                    viewType="desktop"
-                                  />
-                                </Accordion.Body>
-                              </Accordion.Item>
-                            )}
-
-                            {/* Project Phase */}
-                            {!isCollaborator && projectPhaseBusinesses.length > 0 && (
-                              <Accordion.Item eventKey="1">
-                                <Accordion.Header>
-                                  <div className="accordion-header-content">
-                                    <span className="accordion-title-text">
-                                      {t("Project Phase")}
-                                    </span>
-                                    <span className="accordion-count-pill">
-                                      {projectPhaseBusinesses.length}
-                                    </span>
-                                  </div>
-                                </Accordion.Header>
-                                <Accordion.Body>
-                                  <BusinessList
-                                    businesses={projectPhaseBusinesses}
-                                    viewType="desktop"
-                                    canDelete={false}
-                                  />
-                                </Accordion.Body>
-                              </Accordion.Item>
-                            )}
-
-                            {/* Collaborating Businesses */}
-                            {collaboratingBusinesses.length > 0 && (
-                              <Accordion.Item eventKey="2">
-                                <Accordion.Header>
-                                  <div className="accordion-header-content">
-                                    <span className="accordion-title-text">
-                                      Collaborating Businesses
-                                    </span>
-                                    <span className="accordion-count-pill">
-                                      {collaboratingBusinesses.length}
-                                    </span>
-                                  </div>
-                                </Accordion.Header>
-                                <Accordion.Body>
-                                  <BusinessList
-                                    businesses={collaboratingBusinesses}
-                                    viewType="desktop"
-                                    canDelete={false}
-                                  />
-                                </Accordion.Body>
-                              </Accordion.Item>
-                            )}
-                          </Accordion>
-                        </Col>
-
-                      </Row>
-                    </Card.Body>
-                  </Card>
-                </Col>
-              </Row>
+                                  </td>
+                                  <td className="date-cell">{date}</td>
+                                  <td className="stats-cell text-center">{activeBets}</td>
+                                  <td className="stats-cell text-center">{collaborators}</td>
+                                  <td className="actions-cell">
+                                    <div className="d-flex align-items-center gap-2 justify-content-end" onClick={(e) => e.stopPropagation()}>
+                                      <button 
+                                        className="btn-insights-outline" 
+                                        onClick={() => handleInsightsClick(business)}
+                                        disabled={isDeleted}
+                                        style={isDeleted ? { opacity: 0.5, cursor: 'not-allowed' } : {}}
+                                      >
+                                        <Zap size={14} className="me-2" /> {t('insights') || 'Insights'} 
+                                      </button>
+                                      <button 
+                                        className="btn-execution-outline" 
+                                        onClick={() => handleExecutionClick(business)}
+                                        disabled={isDeleted}
+                                        style={isDeleted ? { opacity: 0.5, cursor: 'not-allowed' } : {}}
+                                      >
+                                        <CheckSquare size={14} className="me-2" /> {t('Execution') || 'Execution'} 
+                                        {!hasProjectAccess && <span className="ms-1" style={{ fontSize: '10px' }}>🔒</span>}
+                                      </button>
+                                      {!isCollaborator && !isViewer && (
+                                        <button 
+                                          className="btn-delete-business-inline" 
+                                          onClick={!isDeleted ? () => handleShowDeleteModal(business) : undefined} 
+                                          title={!isDeleted ? t('delete_business') : undefined}
+                                          style={{ visibility: isDeleted ? 'hidden' : 'visible' }}
+                                          disabled={isDeleted}
+                                        >
+                                          <Trash2 size={15} />
+                                        </button>
+                                      )}
+                                    </div>
+                                  </td>
+                                </tr>
+                              );
+                            })
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
           </Container>
 
-          {/* How It Works Modal */}
-          {showHowModal && (
-            <div className="popup-overlay" onClick={handleCloseModal}>
+          {isModalOpen('howItWorks') && (
+            <div className="popup-overlay" onClick={handleCloseHowItWorksModal}>
               <div className="popup-content large" onClick={(e) => e.stopPropagation()}>
-                <button
-                  className="close-button"
-                  onClick={handleCloseModal}
-                  aria-label="Close modal"
-                >
-                  <X size={20} />
-                </button>
-
+                <button className="close-button" onClick={handleCloseHowItWorksModal} aria-label="Close modal"><X size={20} /></button>
                 <h2 className="mb-4">{t('how_it_works')}</h2>
-
-                <div id="howItWorksCarousel" className="carousel slide" data-bs-ride="carousel" data-bs-interval="5000">
-                  <div className="carousel-indicators">
-                    {[...Array(10)].map((_, i) => (
-                      <button
-                        key={i}
-                        type="button"
-                        data-bs-target="#howItWorksCarousel"
-                        data-bs-slide-to={i}
-                        className={i === 0 ? "active" : ""}
-                        aria-label={`Slide ${i + 1}`}
-                      ></button>
-                    ))}
-                  </div>
-
-                  <div className="carousel-inner">
-                    <div className="carousel-item active">
-                      <img src="/slides/slide1.jpeg" className="d-block w-100" alt={t('step_1_login_alt')} />
-                    </div>
-                    <div className="carousel-item">
-                      <img src="/slides/slide2.jpeg" className="d-block w-100" alt={t('step_2_create_business_alt')} />
-                    </div>
-                    <div className="carousel-item">
-                      <img src="/slides/slide3.jpeg" className="d-block w-100" alt={t('step_3_onboarding_pmf_alt')} />
-                    </div>
-                    <div className="carousel-item">
-                      <img src="/slides/slide4.jpeg" className="d-block w-100" alt={t('step_4_aha_insights_alt')} />
-                    </div>
-                    <div className="carousel-item">
-                      <img src="/slides/slide5.jpeg" className="d-block w-100" alt={t('step_5_exec_summary_alt')} />
-                    </div>
-                    <div className="carousel-item">
-                      <img src="/slides/slide6.jpeg" className="d-block w-100" alt={t('step_6_kickstart_projects_alt')} />
-                    </div>
-                    <div className="carousel-item">
-                      <img src="/slides/slide7.jpeg" className="d-block w-100" alt={t('step_7_project_ranking_alt')} />
-                    </div>
-                    <div className="carousel-item">
-                      <img src="/slides/slide8.jpeg" className="d-block w-100" alt={t('step_8_ai_answers_alt')} />
-                    </div>
-                    <div className="carousel-item">
-                      <img src="/slides/slide9.jpeg" className="d-block w-100" alt={t('step_9_insights_6cs_alt')} />
-                    </div>
-                    <div className="carousel-item">
-                      <img src="/slides/slide10.jpeg" className="d-block w-100" alt={t('step_10_strategic_alt')} />
-                    </div>
-                  </div>
-
-                  <button
-                    className="carousel-control-prev"
-                    type="button"
-                    data-bs-target="#howItWorksCarousel"
-                    data-bs-slide="prev"
-                    aria-label={t('previous')}
-                  >
-                    <span className="carousel-control-prev-icon" aria-hidden="true"></span>
-                    <span className="visually-hidden">{t('previous')}</span>
-                  </button>
-                  <button
-                    className="carousel-control-next"
-                    type="button"
-                    data-bs-target="#howItWorksCarousel"
-                    data-bs-slide="next"
-                    aria-label={t('next')}
-                  >
-                    <span className="carousel-control-next-icon" aria-hidden="true"></span>
-                    <span className="visually-hidden">{t('next')}</span>
-                  </button>
-                </div>
-
+                <Carousel activeIndex={activeSlide} onSelect={handleSelect} interval={5000} indicators={true} controls={true} variant="dark">
+                  {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((num, index) => (
+                    <Carousel.Item key={index}>
+                      <img src={`/slides/slide${num}.webp`} className="d-block w-100" alt={`Slide ${num}`} />
+                    </Carousel.Item>
+                  ))}
+                </Carousel>
                 <div className="carousel-external-caption text-center mt-2">
                   <h5>{t(getStepKeys(activeSlide).title)}</h5>
                   <p className="text-muted">{t(getStepKeys(activeSlide).description)}</p>
                 </div>
-
                 <div className="text-center mt-2">
-                  <Button
-                    variant="primary"
-                    onClick={handleCloseModal}
-                    className="px-4"
-                  >
-                    {t('got_it')}
-                  </Button>
+                  <Button variant="primary" onClick={handleCloseHowItWorksModal} className="px-4">{t('got_it')}</Button>
                 </div>
               </div>
             </div>
           )}
 
-          {/* PMF Onboarding Modal */}
           {ENABLE_PMF && (
             <PMFOnboardingModal
-              show={showPMFOnboarding}
-              onHide={() => setShowPMFOnboarding(false)}
-              businessId={newlyCreatedBusiness?._id || sessionStorage.getItem('activeBusinessId') || businesses[0]?._id}
-              onSubmit={(pmfFormData) => {
-                setShowPMFOnboarding(false);
-                // Instead of showing standalone insights, go straight to the business page
-                // Any "AHA" results will be available in the tabs there
-                setShowInsights(false);
-                navigate("/businesspage", {
-                  state: {
-                    business: newlyCreatedBusiness || businesses.find(b => b._id === (sessionStorage.getItem('activeBusinessId') || businesses[0]?._id))
-                  }
+              show={isModalOpen('pmfOnboarding')}
+              onHide={() => closeModal('pmfOnboarding')}
+              businessId={newlyCreatedBusiness?._id || selectedBusinessId || allBusinessesQuery[0]?._id}
+              onSubmit={() => {
+                closeModal('pmfOnboarding');
+                const business = newlyCreatedBusiness || allBusinessesQuery.find(b => b._id === (selectedBusinessId || allBusinessesQuery[0]?._id));
+                const businessSlug = toSlug(business?.business_name || '');
+                navigate(`/businesspage?business=${businessSlug}&tab=executive`, {
+                  state: { business, initialTab: 'executive' }
                 });
               }}
             />
           )}
 
-          {/* Create Business Modal */}
-          <Modal show={showCreateModal} onHide={handleCloseCreateModal} centered size="lg" backdrop="static">
-            <Modal.Header closeButton>
-              <Modal.Title>{t('create_new_business')}</Modal.Title>
+          <Modal 
+            show={isModalOpen('createBusiness')} 
+            onHide={() => {
+              if (isCreatingBusiness || isUploadingFiles) return;
+              handleCloseCreateModal();
+            }} 
+            centered 
+            dialogClassName="create-business-modal" 
+            backdrop="static"
+          >
+            <Modal.Header closeButton={!(isCreatingBusiness || isUploadingFiles)}>
+              <Modal.Title>{t('create_new_business', 'Create New Business')}</Modal.Title>
             </Modal.Header>
-            <Form onSubmit={handleSubmitBusiness} noValidate>
-              <fieldset disabled={isCreatingBusiness} style={{ border: 'none', padding: 0, margin: 0, minWidth: 0 }}>
+            <Form onSubmit={handleSubmitBusiness} noValidate className="form-modal">
+              <fieldset disabled={isCreatingBusiness || isUploadingFiles}>
                 <Modal.Body>
                   <Form.Group className="mb-3">
-                    <Form.Label>{t('business_name')} <span className="text-danger">*</span></Form.Label>
-                    <Form.Control
-                      type="text"
-                      name="business_name"
-                      value={businessFormData.business_name}
-                      onChange={handleFormChange}
-                      placeholder={t('enter_your_business_name')}
-                      isInvalid={!!formErrors.business_name}
-                      maxLength={100}
+                    <Form.Label>{t('business_name', 'Business Name')} <span>*</span></Form.Label>
+                    <Form.Control 
+                      type="text" 
+                      name="business_name" 
+                      value={businessFormData.business_name} 
+                      onChange={handleFormChange} 
+                      placeholder="e.g. Atlas CPG" 
+                      isInvalid={!!formErrors.business_name} 
+                      maxLength={100} 
                     />
-                    <div className="d-flex justify-content-between align-items-center mt-1">
-                      <div>
-                        {formErrors.business_name && (
-                          <Form.Text className="text-danger">
-                            {formErrors.business_name}
-                          </Form.Text>
+                    {formErrors.business_name && (
+                      <Form.Text className="text-danger mt-1 d-block">{formErrors.business_name}</Form.Text>
+                    )}
+                  </Form.Group>
+                  <Form.Group className="mb-3">
+                    <Form.Label>{t('website', 'Website')}</Form.Label>
+                    <Form.Control 
+                      type="text" 
+                      name="website" 
+                      value={businessFormData.website} 
+                      onChange={handleFormChange} 
+                      placeholder="e.g. atlascpg.com" 
+                      isInvalid={!!formErrors.website}
+                      disabled={businessFormData.has_no_website}
+                    />
+                    {formErrors.website && (
+                      <Form.Text className="text-danger mt-1 d-block">{formErrors.website}</Form.Text>
+                    )}
+                  </Form.Group>
+                  <Form.Group className="mb-3 form-check d-flex flex-column align-items-start gap-1 p-0">
+                    <div className="d-flex align-items-center gap-2">
+                      <input
+                        type="checkbox"
+                        className="form-check-input m-0"
+                        id="has_no_website"
+                        name="has_no_website"
+                        checked={businessFormData.has_no_website}
+                        onChange={(e) => {
+                          const checked = e.target.checked;
+                          setBusinessFormData(prev => ({
+                            ...prev,
+                            has_no_website: checked,
+                            website: checked ? '' : prev.website
+                          }));
+                          setFormErrors(prev => ({
+                            ...prev,
+                            website: ''
+                          }));
+                        }}
+                      />
+                      <label className="form-check-label" htmlFor="has_no_website">
+                        {t('i_dont_have_website', "I don't have a website yet")}
+                      </label>
+                    </div>
+                    {/* <div className="info-box-blue mt-2 w-100">
+                      <strong>{t('trax_will_read_your_website_bold', 'Trax will read your website')}</strong> {t('trax_will_read_your_website_rest', "and ask only for what's still missing.")}
+                    </div> */}
+                  </Form.Group>
+
+                  <div className="create-business-doc-upload mt-2">
+                    <div className="doc-upload-header d-flex justify-content-between align-items-center">
+                      <div className="d-flex align-items-center gap-2"> 
+                        <span className="doc-upload-title">{t('add_documents_optional', 'Add documents (optional)')}</span>
+                        {selectedFiles.length > 0 && (
+                          <span className="files-count-badge">
+                            {selectedFiles.length} {selectedFiles.length === 1 ? t('file', 'file') : t('files', 'files')}
+                          </span>
                         )}
                       </div>
-                      <Form.Text className={businessNameLength > 20 ? 'text-danger' : 'text-muted'}>
-                        {businessNameLength}/20
-                      </Form.Text>
                     </div>
-                  </Form.Group>
+                    
+                    <div className="doc-upload-body mt-2">
+                      <div className="info-box-blue mb-3">
+                        Upload your annual plan, board deck, or financials and Trax will auto-fill the questions below — the more it has, the sharper the diagnosis.
+                      </div>
+                      
+                      {selectedFiles.length > 0 && (
+                        <div className="d-flex flex-column gap-2 mb-3">
+                          {selectedFiles.map((file, idx) => {
+                            const ext = file.name.split('.').pop().toUpperCase();
+                            return (
+                              <div key={idx} className="selected-file-card d-flex align-items-center justify-content-between p-2 rounded">
+                                <div className="d-flex align-items-center gap-3">
+                                  <div className="file-type-badge">
+                                    {ext}
+                                  </div>
+                                  <div className="d-flex flex-column text-start">
+                                    <span className="selected-file-name" title={file.name}>
+                                      {file.name}
+                                    </span>
+                                    <span className="selected-file-meta">
+                                      {getFileDetails(file, filePageCounts[fileKey(file)])}
+                                    </span>
+                                  </div>
+                                </div>
+                                <button 
+                                  type="button" 
+                                  className="btn-remove-selected-file p-1 border-0 bg-transparent text-secondary d-flex align-items-center" 
+                                  onClick={() => handleRemoveFile(idx)}
+                                >
+                                  <X size={16} />
+                                </button>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
 
-                  <Form.Group className="mb-3">
-                    <Form.Label>{t('business_purpose')} <span className="text-danger">*</span></Form.Label>
-                    <Form.Control
-                      type="text"
-                      name="business_purpose"
-                      value={businessFormData.business_purpose}
-                      onChange={handleFormChange}
-                      placeholder={t('brief_description_of_what')}
-                      isInvalid={!!formErrors.business_purpose}
-                    />
-                    {formErrors.business_purpose && (
-                      <Form.Text className="text-danger">
-                        {formErrors.business_purpose}
-                      </Form.Text>
-                    )}
-                  </Form.Group>
+                      <button
+                        type="button"
+                        className={`btn-add-file-dashed py-2 d-flex align-items-center justify-content-center gap-2 ${selectedFiles.length > 0 ? 'btn-add-file-small' : 'w-100'}`}
+                        onClick={() => fileInputRef.current?.click()}
+                      >
+                        <span>+ Add file</span>
+                      </button>
+                      <input 
+                        type="file"
+                        multiple
+                        ref={fileInputRef}
+                        onChange={handleFileChange}
+                        style={{ display: 'none' }}
+                        accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.rtf"
+                      />
 
-                  {/* City and Country Fields Row */}
-                  <Row className="mb-3">
-                    <Col md={6}>
-                      <Form.Group>
-                        <Form.Label>{t('city')} ({t('optional')})</Form.Label>
-                        <Form.Control
-                          type="text"
-                          name="city"
-                          value={businessFormData.city}
-                          onChange={handleFormChange}
-                          placeholder={t('enter_city')}
-                          isInvalid={!!formErrors.city}
-                        />
-                        {formErrors.city && (
-                          <Form.Text className="text-danger">
-                            {formErrors.city}
-                          </Form.Text>
-                        )}
-                      </Form.Group>
-                    </Col>
-                    <Col md={6}>
-                      <Form.Group>
-                        <Form.Label>{t('country')} ({t('optional')})</Form.Label>
-                        <Form.Control
-                          type="text"
-                          name="country"
-                          value={businessFormData.country}
-                          onChange={handleFormChange}
-                          placeholder={t('enter_country')}
-                          isInvalid={!!formErrors.country}
-                        />
-                        {formErrors.country && (
-                          <Form.Text className="text-danger">
-                            {formErrors.country}
-                          </Form.Text>
-                        )}
-                      </Form.Group>
-                    </Col>
-                  </Row>
+                      <div className="info-box-green mt-3">
+                        <Lock size={12} className="text-success flex-shrink-0" />
+                        <span>
+                          <strong>{t('your_documents_stay_private_bold', 'Your documents stay private.')}</strong> {t('your_documents_stay_private_rest', 'Encrypted at rest and isolated to your workspace.')}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
 
-                  <Form.Group className="mb-3">
-                    <Form.Label>{t('description')} ({t('optional')})</Form.Label>
-                    <Form.Control
-                      as="textarea"
-                      className="dark-textarea"
-                      rows={3}
-                      name="description"
-                      value={businessFormData.description}
-                      onChange={handleFormChange}
-                      placeholder={t('detailed_description_of_your_business')}
-                      isInvalid={!!formErrors.description}
-                    />
-                    {formErrors.description && (
-                      <Form.Text className="text-danger">
-                        {formErrors.description}
-                      </Form.Text>
-                    )}
-
-                  </Form.Group>
-                  {businessError && (
-                    <Alert variant="danger" className="mb-3">
-                      {businessError}
-                    </Alert>
-                  )}
+                  {businessError && <Alert variant="danger" className="mb-3">{businessError}</Alert>}
                 </Modal.Body>
-                <Modal.Footer>
-                  <Button
-                    variant="secondary"
-                    className="cancel-button"
-                    onClick={handleCloseCreateModal}
-                  >
-                    {t('cancel')}
-                  </Button>
-                  <Button
-                    variant="primary"
-                    type="submit"
-                    className="create-button"
-                  >
-                    {isCreatingBusiness ? (
-                      <>
-                        <Spinner size="sm" className="me-2" />
-                        {t('creating')}...
-                      </>
-                    ) : (
-                      t('create_business')
-                    )}
-                  </Button>
-                </Modal.Footer>
               </fieldset>
+              <Modal.Footer>
+                <button type="button" className="btn-cancel" onClick={handleCloseCreateModal}>
+                  {t('cancel', 'Cancel')}
+                </button>
+                <button
+                  type="button"
+                  className="btn-continue"
+                  disabled={isCreatingBusiness || isUploadingFiles || !businessFormData.business_name.trim() || (!businessFormData.has_no_website && !businessFormData.website.trim())}
+                  onClick={() => {
+                    if (!validateForm()) return;
+                    createBusiness();
+                  }}
+                >
+                  {isCreatingBusiness || isUploadingFiles ? <Spinner size="sm" /> : (t('letsBegin', `Let's Begin`) + ' \u2192')}
+                </button>
+              </Modal.Footer>
             </Form>
           </Modal>
 
-          {/* Success/Alert Popup */}
-          {showSuccessPopup && (
-            <div className="success-popup-overlay">
-              <div className="success-popup">
-                <div className="success-popup-content">
-                  <div className={`dashboard-success-icon ${businessError ? 'bg-danger' : 'bg-success'}`}>
-                    {businessError ? <AlertTriangle size={36} color="white" strokeWidth={3} /> : <Check size={40} color="white" strokeWidth={3} />}
-                  </div>
-                  <h5 className={`mb-2 ${businessError ? 'text-danger' : ''}`}>
-                    {businessError ? t('alert') : t('success')}
-                  </h5>
-                  <p className="mb-3">{businessError || successMessage}</p>
-                  <Button
-                    variant={businessError ? "danger" : "primary"}
-                    className="px-5 py-2 fw-semibold"
-                    onClick={() => {
-                      setShowSuccessPopup(false);
-                      setSuccessMessage('');
-                      setBusinessError('');
-                    }}
-                  >
-                    {t('ok')}
-                  </Button>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Delete Business Confirmation Modal */}
-          <Modal show={showDeleteModal} onHide={handleCloseDeleteModal} centered>
-            <Modal.Header closeButton>
-              <Modal.Title className="text-danger">
-                <Trash2 size={20} className="me-2" />
-                {t('delete_business')}
-              </Modal.Title>
-            </Modal.Header>
+          <Modal show={isModalOpen('deleteBusiness')} onHide={handleCloseDeleteModal} centered>
+            <Modal.Header closeButton><Modal.Title className="text-danger">{t('delete_business')}</Modal.Title></Modal.Header>
             <Modal.Body>
-              {deleteError && (
-                <Alert variant="danger" className="mb-3">
-                  {deleteError}
-                </Alert>
-              )}
-
-              {businessToDelete && (
-                <div>
-                  <p className="mb-3">
-                    {t('are_you_sure_you_want_to_delete')} <strong>"{businessToDelete.business_name}"</strong>?
-                  </p>
-
-                  <div className="alert alert-danger mb-3">
-                    <h6 className="alert-heading mb-2">⚠️ {t('This_will_permanently_delete')}</h6>
-                    <ul className="mb-2">
-                      <li><strong>{t('All_question_responses_and_conversations')}</strong></li>
-                      <li><strong>{t('All_generated_analysis_reports_and_insights')}</strong></li>
-                      <li><strong>{t('All_progress_data_and_statistics')}</strong></li>
-                      <li><strong>{t('the_business_profile_itself')}</strong></li>
-                    </ul>
-                    <hr className="my-2" />
-                    <p className="mb-0"><strong>{t('This_action_cannot_be_undone')}</strong></p>
-                  </div>
-
-                  <div className="bg-light p-3 rounded delete-popup-purpose">
-                    <p className="mb-1"><strong>{t('business_purpose')}:</strong></p>
-                    <p className="text-muted mb-0">{businessToDelete.business_purpose}</p>
-                  </div>
-                </div>
-              )}
+              {storeDeleteError && <Alert variant="danger">{storeDeleteError}</Alert>}
+              {businessToDelete && <p>{t('are_you_sure_you_want_to_delete')} <strong>"{businessToDelete.business_name}"</strong>?</p>}
             </Modal.Body>
             <Modal.Footer>
-              <Button
-                variant="secondary"
-                onClick={handleCloseDeleteModal}
-                disabled={isDeletingBusiness}
-              >
-                {t('cancel')}
-              </Button>
-              <Button
-                variant="danger"
-                onClick={handleConfirmDelete}
-                disabled={isDeletingBusiness}
-              >
-                {isDeletingBusiness ? (
-                  <>
-                    <Spinner size="sm" className="me-2" />
-                    {t('deleting')}...
-                  </>
-                ) : (
-                  <>
-                    <Trash2 size={16} className="me-2" />
-                    {t('delete_business')}
-                  </>
-                )}
-              </Button>
+              <Button variant="secondary" onClick={handleCloseDeleteModal} disabled={isDeletingBusiness || isProcessingDelete}>{t('cancel')}</Button>
+              <Button variant="danger" onClick={handleConfirmDelete} disabled={isDeletingBusiness || isProcessingDelete}>{isDeletingBusiness || isProcessingDelete ? <Spinner size="sm" /> : t('delete_business')}</Button>
             </Modal.Footer>
           </Modal>
 
-          {/* Deletion Cooldown Error Modal */}
-          <Modal show={showCooldownModal} onHide={() => setShowCooldownModal(false)} centered>
-            <Modal.Header closeButton>
-              <Modal.Title className="text-warning">
-                <Info size={20} className="me-2" />
-                {t('Action Restricted')}
-              </Modal.Title>
-            </Modal.Header>
-            <Modal.Body>
-              <Alert variant="warning">
-                {cooldownMessage || t('You cannot delete by 30 days. Please wait 30 more day(s).')}
-              </Alert>
-              <p>
-                {t('For security and policy reasons, you can only delete one business every 30 days.')}
-              </p>
-            </Modal.Body>
-            <Modal.Footer>
-              <Button
-                variant="primary"
-                onClick={() => setShowCooldownModal(false)}
-              >
-                {t('ok')}
-              </Button>
-            </Modal.Footer>
-          </Modal>
-
-          {/* <UpgradeModal
-            show={showUpgradeModal}
-            onHide={() => setShowUpgradeModal(false)}
-            onUpgradeSuccess={(updatedSub) => {
-              setShowUpgradeModal(false);
-              setSuccessMessage(`Plan updated to ${updatedSub.plan} successfully!`);
-              setShowSuccessPopup(true);
-              setTimeout(() => setShowSuccessPopup(false), 3000);
-            }}
-          /> */}
+          <PlanLimitModal
+            show={isModalOpen('noFeatureAccess')}
+            onHide={() => closeModal('noFeatureAccess')}
+            title={t('no_access_modal_title')}
+            message={accessModalMessage}
+            subMessage={accessModalSubMessage}
+            isAdmin={isAdmin}
+          />
         </>
       )}
     </div>
-
-
   );
 };
 

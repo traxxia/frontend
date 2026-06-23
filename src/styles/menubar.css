@@ -1,8 +1,3 @@
-/* TRAXIA MenuBar Styles */
-/* Import the CSS variables file before using this */
-/* @import 'path/to/css-variables.css'; */
-/* Add these styles to your menubar.css file */
-
 .traxia-navbar .container-fluid>div {
   display: flex;
   align-items: center;
@@ -20,7 +15,6 @@
   --color-text-white: #ffffff;
 }
 
-/* Left section - Company Logo */
 .navbar-left {
   flex: 0 0 auto;
   display: flex;
@@ -33,7 +27,7 @@
   align-items: center;
   justify-content: flex-start;
   height: 44px;
-  /* Slightly larger height for better visibility */
+
   max-width: 140px;
 }
 
@@ -51,7 +45,6 @@
   cursor: pointer;
 }
 
-/* Center section - Traxxia Logo */
 .navbar-center {
   position: absolute;
   left: 50%;
@@ -73,17 +66,15 @@
   text-decoration: none;
 }
 
-/* Right section - User Menu */
 .navbar-right {
   flex: 0 0 auto;
   display: flex;
   align-items: center;
   justify-content: flex-end;
   min-width: 120px;
-  /* Reserve space for user menu */
+
 }
 
-/* Responsive adjustments */
 @media (max-width: 768px) {
   .navbar-left {
     min-width: 80px;
@@ -136,7 +127,6 @@
   max-height: var(--navbar-height);
 }
 
-/* Hamburger Menu */
 .hamburger-menu {
   background: none !important;
   color: var(--color-text-secondary) !important;
@@ -156,7 +146,6 @@
   box-shadow: none !important;
 }
 
-/* TRAXIA Logo */
 .traxia-logo {
   font-weight: var(--font-weight-bold) !important;
   font-size: var(--font-size-lg) !important;
@@ -175,7 +164,6 @@
   transform: scale(1.02);
 }
 
-/* User Menu */
 .user-menu {
   background: none !important;
   color: var(--color-text-secondary) !important;
@@ -195,7 +183,6 @@
   box-shadow: none !important;
 }
 
-/* Dropdown Styles */
 .traxia-dropdown {
   border: 1px solid var(--color-border-light);
   border-radius: var(--border-radius-md);
@@ -236,7 +223,6 @@
   color: var(--color-danger);
 }
 
-/* Navbar Layout */
 .navbar-left,
 .navbar-right {
   min-width: 60px;
@@ -260,13 +246,12 @@
   height: 68px;
 }
 
-/* Dropdown Toggle Arrows - Hide them */
 .hamburger-menu::after,
-.user-menu::after {
+.user-menu::after,
+.notification-menu::after {
   display: none !important;
 }
 
-/* Dropdown Header */
 .traxia-dropdown .dropdown-header {
   padding: var(--spacing-sm) var(--spacing-lg);
   font-size: var(--font-size-xs);
@@ -285,13 +270,11 @@
   color: var(--color-text-white) !important;
 }
 
-/* Dropdown Divider */
 .traxia-dropdown .dropdown-divider {
   margin: var(--spacing-sm) var(--spacing-lg);
   border-color: var(--color-border-light);
 }
 
-/* Responsive adjustments */
 @media (max-width: 576px) {
   .traxia-logo {
     font-size: var(--font-size-md) !important;
@@ -308,7 +291,6 @@
   }
 }
 
-/* Animation for dropdown */
 .traxia-dropdown {
   animation: fadeInDown var(--transition-fast) ease-out;
 }
@@ -325,7 +307,6 @@
   }
 }
 
-/* Focus states for accessibility */
 .hamburger-menu:focus-visible,
 .user-menu:focus-visible {
   outline: 2px solid var(--color-primary);
@@ -337,11 +318,287 @@
   outline-offset: -2px;
 }
 
-/* DROPDOWN ALIGNMENT */
 .traxia-dropdown .dropdown-item-traxia {
   display: flex !important;
   align-items: center !important;
   padding: 6px 18px !important;
   gap: 1px !important;
   width: 100%;
+}
+
+@keyframes emptyStateFloatPulse {
+  0% {
+    transform: translateY(0) scale(1);
+    box-shadow: 0 0 0 0 rgba(0, 0, 0, 0.05);
+  }
+
+  50% {
+    transform: translateY(-6px) scale(1.05);
+    box-shadow: 0 12px 20px -5px rgba(0, 0, 0, 0.08);
+  }
+
+  100% {
+    transform: translateY(0) scale(1);
+    box-shadow: 0 0 0 0 rgba(0, 0, 0, 0.05);
+  }
+}
+
+@keyframes emptyStateSoftSwing {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  25% {
+    transform: rotate(-8deg);
+  }
+
+  50% {
+    transform: rotate(0deg);
+  }
+
+  75% {
+    transform: rotate(8deg);
+  }
+
+  100% {
+    transform: rotate(0deg);
+  }
+}
+
+.notification-empty-bell {
+  animation: emptyStateFloatPulse 3s ease-in-out infinite;
+  transition: all 0.3s ease;
+}
+
+.notification-empty-bell svg {
+  animation: emptyStateSoftSwing 4s ease-in-out infinite;
+}
+
+.notification-bell-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  transition: all 0.2s ease-in-out;
+  background-color: transparent;
+}
+
+.notification-bell-container:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+@keyframes activeBellSwing {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  15% {
+    transform: rotate(15deg);
+  }
+
+  30% {
+    transform: rotate(-10deg);
+  }
+
+  45% {
+    transform: rotate(5deg);
+  }
+
+  60% {
+    transform: rotate(-3deg);
+  }
+
+  75% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(0deg);
+  }
+}
+
+.notification-bell-active svg {
+  animation: activeBellSwing 3s ease-in-out infinite;
+  color: var(--color-primary, #0B5ED7) !important;
+}
+
+@keyframes badgeBlinkPulse {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+
+  50% {
+    transform: scale(1.15);
+    opacity: 0.7;
+    box-shadow: 0 0 8px rgba(220, 53, 69, 0.6);
+  }
+
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.notification-badge-blink {
+  animation: badgeBlinkPulse 1.5s ease-in-out infinite;
+}
+
+
+/* ── Extracted inline styles ── */
+.menu-bar--s1 {
+  height: 24px;
+}
+
+.menu-bar--s2 {
+  gap: 15px;
+}
+
+.menu-bar--s3 {
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-weight: 500;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+
+.menu-bar--s4 {
+  font-size: 16px;
+}
+
+.menu-bar--s5 {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%);
+  color: #4338ca;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 15px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  border: 1px solid #a5b4fc;
+  cursor: pointer;
+}
+
+.menu-bar--s6 {
+  width: 32px;
+  height: 32px;
+  background-color: #e0e7ff;
+}
+
+.menu-bar--s7 {
+  color: #4338ca;
+}
+
+.menu-bar--s8 {
+  font-size: 10px;
+  letter-spacing: 0.5px;
+}
+
+.menu-bar--s9 {
+  font-size: 11px;
+  line-height: 1.2;
+}
+
+.menu-bar--s10 {
+  color: #f59e0b;
+}
+
+/* Notification Dropdown Styles */
+.notif-dropdown-title {
+  color: var(--color-text-primary, #212529);
+}
+
+.notification-item {
+  border-color: var(--color-border-light, #e9ecef) !important;
+}
+
+.notification-item.unread {
+  background-color: var(--color-bg-primary, #ffffff) !important;
+}
+
+.notification-item.read {
+  background-color: var(--color-bg-light, #f8f9fa) !important;
+}
+
+.notification-title {
+  font-size: 0.85rem;
+  padding-right: 20px;
+  color: var(--color-text-primary, #212529);
+}
+
+.notification-item.unread .notification-title {
+  font-weight: 700;
+}
+
+.notification-item.read .notification-title {
+  font-weight: 500;
+  color: var(--color-text-secondary, #6c757d);
+}
+
+.notification-msg {
+  color: var(--color-text-secondary, #4b5563);
+}
+
+.notification-empty-bell {
+  background-color: var(--color-bg-light, #f8f9fa);
+}
+
+.notification-empty-icon {
+  color: var(--color-text-muted, #6b7280);
+  opacity: 0.75;
+}
+
+/* Dark Mode Overrides */
+[data-theme="dark"] .traxia-navbar .notification-bell-container:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+[data-theme="dark"] .traxia-dropdown {
+  background-color: var(--color-bg-card, #1a1d23) !important;
+  border-color: #334155 !important;
+}
+
+[data-theme="dark"] .notif-dropdown-title {
+  color: #fff !important;
+}
+
+[data-theme="dark"] .notification-item {
+  border-color: #334155 !important;
+}
+
+[data-theme="dark"] .notification-item.unread {
+  background-color: var(--color-bg-secondary, #1e293b) !important;
+}
+
+[data-theme="dark"] .notification-item.read {
+  background-color: rgba(30, 41, 59, 0.5) !important;
+}
+
+[data-theme="dark"] .notification-title {
+  color: #e2e8f0 !important;
+}
+
+[data-theme="dark"] .notification-item.read .notification-title {
+  color: #94a3b8 !important;
+}
+
+[data-theme="dark"] .notification-msg {
+  color: #cbd5e1 !important;
+}
+
+[data-theme="dark"] .notification-empty-bell {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+[data-theme="dark"] .notification-empty-icon {
+  color: #94a3b8;
 }

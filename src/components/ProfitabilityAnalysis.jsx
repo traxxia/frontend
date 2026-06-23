@@ -1,19 +1,200 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { TrendingUp, Loader, Info, AlertCircle } from 'lucide-react';
+import React, { useState, useRef, useCallback, useMemo } from 'react';
+import { TrendingUp, Loader, AlertCircle, Info, TrendingDown, Minus } from 'lucide-react';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import '../styles/goodPhase.css';
 import { useTranslation } from "../hooks/useTranslation";
-import AnalysisEmptyState from './AnalysisEmptyState';
+import { useAnalysisStore } from "../store";
 import FinancialEmptyState from './FinancialEmptyState';
-import CitationSource from './CitationSource';
 import { checkMissingQuestionsAndRedirect, ANALYSIS_TYPES } from '../services/missingQuestionsService';
+
+// Custom normalizer for both old and new response formats
+const parseMetric = (rawVal) => {
+  if (rawVal === null || rawVal === undefined) {
+    return { value: null, currency: null, period: null, citation: null };
+  }
+  if (typeof rawVal === 'object') {
+    return {
+      value: rawVal.value !== undefined ? rawVal.value : null,
+      currency: rawVal.currency || null,
+      period: rawVal.period || null,
+      citation: rawVal.citation || null
+    };
+  }
+  return {
+    value: rawVal,
+    currency: null,
+    period: null,
+    citation: null
+  };
+};
+
+const getProfitabilityStatus = (key, value) => {
+  if (value === null || value === undefined) return { label: 'N/A', colorClass: 'null' };
+  
+  if (key === 'ebitda_margin') {
+    if (value >= 0.15) return { label: 'Optimal', colorClass: 'green' };
+    if (value >= 0.08) return { label: 'Adequate', colorClass: 'yellow' };
+    return { label: 'Low', colorClass: 'red' };
+  }
+  
+  if (key === 'net_profit_margin') {
+    if (value >= 0.10) return { label: 'Optimal', colorClass: 'green' };
+    if (value >= 0.05) return { label: 'Adequate', colorClass: 'yellow' };
+    return { label: 'Low', colorClass: 'red' };
+  }
+  
+  if (key === 'roe') {
+    if (value >= 0.15) return { label: 'Optimal', colorClass: 'green' };
+    if (value >= 0.08) return { label: 'Adequate', colorClass: 'yellow' };
+    return { label: 'Low', colorClass: 'red' };
+  }
+  
+  if (key === 'roce') {
+    if (value >= 0.12) return { label: 'Optimal', colorClass: 'green' };
+    if (value >= 0.06) return { label: 'Adequate', colorClass: 'yellow' };
+    return { label: 'Low', colorClass: 'red' };
+  }
+  
+  if (key === 'roa') {
+    if (value >= 0.05) return { label: 'Optimal', colorClass: 'green' };
+    if (value >= 0.02) return { label: 'Adequate', colorClass: 'yellow' };
+    return { label: 'Low', colorClass: 'red' };
+  }
+  
+  return { label: 'N/A', colorClass: 'null' };
+};
+
+const formatPercentageValue = (val) => {
+  if (val === null || val === undefined || val === '') return '-';
+  const num = typeof val === 'string' ? parseFloat(val.replace(/[,$%]/g, '')) : val;
+  if (isNaN(num)) return val;
+  return `${(num * 100).toFixed(2)}%`;
+};
+
+const formatCurrencyValue = (val, currency) => {
+  if (val === null || val === undefined || val === '') return '-';
+  const num = typeof val === 'string' ? parseFloat(val.replace(/[,$%]/g, '')) : val;
+  if (isNaN(num)) return val;
+  
+  let validCurrency = 'USD';
+  let suffix = '';
+  if (currency && typeof currency === 'string') {
+    const trimmed = currency.trim();
+    const match = trimmed.match(/^([A-Za-z]{3})(.*)$/);
+    if (match) {
+      validCurrency = match[1].toUpperCase();
+      suffix = match[2];
+    } else {
+      suffix = ' ' + trimmed;
+    }
+  }
+
+  try {
+    const formatter = new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: validCurrency,
+      maximumFractionDigits: 0
+    });
+    return formatter.format(num) + suffix;
+  } catch (e) {
+    return `${currency || '$'} ${num.toLocaleString('en-US', { maximumFractionDigits: 0 })}`;
+  }
+};
+
+const getNormalizedData = data => {
+  if (!data) return null;
+  // New timeline format: { timeline: [{period, profitability: {...}}, ...] }
+  if (data.timeline && Array.isArray(data.timeline) && data.timeline.length > 0) {
+    const sorted = [...data.timeline].sort((a, b) => (a.period || '').localeCompare(b.period || ''));
+    
+    for (let i = sorted.length - 1; i >= 0; i--) {
+      const prof = sorted[i].profitability;
+      if (!prof) continue;
+      
+      const hasValid = Object.keys(prof).some(k => {
+        if (k === 'period') return false;
+        const parsed = parseMetric(prof[k]);
+        return parsed.value !== null && parsed.value !== undefined && parsed.value !== '' && !isNaN(parseFloat(parsed.value));
+      });
+      
+      if (hasValid) return prof;
+    }
+    
+    const latest = sorted[sorted.length - 1];
+    return latest?.profitability || null;
+  }
+  if (data.profitability) return data.profitability;
+  if (data.ebitda_margin && data.ebitda_margin.value !== undefined) return data;
+  const wrapper = data.profitabilityAnalysis || data.profitability_analysis || data.ProfitabilityAnalysis;
+  if (wrapper) return wrapper.profitability || wrapper;
+  return null;
+};
+
+/** Extract multi-period trend from the new timeline format */
+const getTimelineChartData = data => {
+  if (!data?.timeline || !Array.isArray(data.timeline) || data.timeline.length < 2) return null;
+  const sorted = [...data.timeline].sort((a, b) => (a.period || '').localeCompare(b.period || ''));
+  return sorted.map(p => ({
+    period: p.period,
+    ebitda_margin: p.profitability?.ebitda_margin?.value != null ? +(p.profitability.ebitda_margin.value * 100).toFixed(2) : null,
+    net_profit_margin: p.profitability?.net_profit_margin?.value != null ? +(p.profitability.net_profit_margin.value * 100).toFixed(2) : null,
+    roe: p.profitability?.roe?.value != null ? +(p.profitability.roe.value * 100).toFixed(2) : null,
+    roa: p.profitability?.roa?.value != null ? +(p.profitability.roa.value * 100).toFixed(2) : null,
+  }));
+};
+
+/** Trend arrow: compare latest vs previous period metric value */
+const TrendArrow = ({ latest, prev }) => {
+  if (latest == null || prev == null) return null;
+  if (latest > prev) return <TrendingUp size={14} style={{ color: '#10b981', display: 'inline', marginLeft: 4 }} />;
+  if (latest < prev) return <TrendingDown size={14} style={{ color: '#ef4444', display: 'inline', marginLeft: 4 }} />;
+  return <Minus size={14} style={{ color: '#6b7280', display: 'inline', marginLeft: 4 }} />;
+};
+
+const isProfitabilityDataIncomplete = data => {
+  const normalized = getNormalizedData(data);
+  if (!normalized) return true;
+  
+  const metricsToCheck = [
+    'ebitda_margin',
+    'net_profit_margin',
+    'roe',
+    'roce',
+    'roa',
+    'revenue',
+    'ebitda'
+  ];
+  
+  const hasValidValue = metricsToCheck.some(key => {
+    const parsed = parseMetric(normalized[key]);
+    return parsed.value !== null && parsed.value !== undefined && parsed.value !== '' && !isNaN(parseFloat(parsed.value));
+  });
+  
+  return !hasValidValue;
+};
+
+const MetricCitation = ({ citation }) => {
+  if (!citation || (!citation.filename && !citation.text)) return null;
+  const sourceName = citation.filename || 'Source Document';
+  const pageInfo = citation._metadata?.page ? `Page ${citation._metadata.page}` : '';
+  const sheetInfo = citation._metadata?.sheet ? `Sheet: ${citation._metadata.sheet}` : '';
+  const location = [pageInfo, sheetInfo].filter(Boolean).join(', ');
+  const displaySource = location ? `${sourceName} (${location})` : sourceName;
+
+  return (
+    <div className="profitability-analysis__citation-badge" title={citation.text || ''}>
+      <Info size={12} style={{ display: 'inline', marginRight: '4px', verticalAlign: 'middle' }} />
+      <span>{displaySource}</span>
+    </div>
+  );
+};
 
 const ProfitabilityAnalysis = ({
   questions = [],
   userAnswers = {},
-  businessName = "Your Business",
-  onDataGenerated,
+  businessName,
   onRegenerate,
-  isRegenerating = false,
+  isRegenerating: propIsRegenerating = false,
   canRegenerate = true,
   profitabilityData = null,
   selectedBusinessId,
@@ -24,580 +205,428 @@ const ProfitabilityAnalysis = ({
   hasUploadedDocument = false,
   uploadedFile = null,
   readOnly = false,
-  documentInfo = null,
+  documentInfo = null
 }) => {
-  const [analysisData, setAnalysisData] = useState(profitabilityData);
-  const [error, setError] = useState(null);
-
-  const isMounted = useRef(false);
-  const hasInitialized = useRef(false);
-  const fileInputRef = useRef(null);
   const { t } = useTranslation();
+  const {
+    profitabilityData: storeProfitabilityData,
+    isRegenerating: isTypeRegenerating,
+    regenerateIndividualAnalysis
+  } = useAnalysisStore();
+  const isRegenerating = propIsRegenerating || isTypeRegenerating('profitabilityAnalysis');
+  
+  const analysisData = useMemo(() => {
+    const rawData = profitabilityData || storeProfitabilityData;
+    if (!rawData) return null;
+    const normalized = getNormalizedData(rawData);
+    return normalized ? {
+      profitability: normalized,
+      _raw: rawData
+    } : null;
+  }, [profitabilityData, storeProfitabilityData]);
 
-  const handleRedirectToBrief = (missingQuestionsData = null) => {
+  const [error, setError] = useState(null);
+  const fileInputRef = useRef(null);
+
+  const handleRedirectToBrief = useCallback((missingQuestionsData = null) => {
     if (onRedirectToBrief) {
       onRedirectToBrief(missingQuestionsData);
     }
-  };
+  }, [onRedirectToBrief]);
 
-  const handleMissingQuestionsCheck = async () => {
-    try {
-      const analysisConfig = ANALYSIS_TYPES.profitability || {
-        displayName: 'Profitability Analysis',
-        customMessage: 'Answer more questions to unlock detailed profitability analysis'
-      };
-
-      await checkMissingQuestionsAndRedirect(
-        'profitability',
-        selectedBusinessId,
-        handleRedirectToBrief,
-        {
-          displayName: analysisConfig.displayName,
-          customMessage: analysisConfig.customMessage
-        }
-      );
-    } catch (error) {
-      console.error('Error checking missing questions:', error);
-    }
-  };
-
-  const isProfitabilityDataIncomplete = (data) => {
-    if (!data) return true;
-
-    const profitabilityMetrics = data.profitability || data.profitability_analysis || data.profitabilityAnalysis || data.ProfitabilityAnalysis || (Object.keys(data).length > 0 && !data.profitability ? data : null);
-
-    if (!profitabilityMetrics || typeof profitabilityMetrics !== 'object') {
-      return true;
-    }
-
-    const hasValidMetric = Object.entries(profitabilityMetrics).some(([key, value]) => {
-      if (key.includes('_threshold') || key.includes('threshold') || key === 'citations') {
-        return false;
-      }
-      const isValid = value !== null &&
-        value !== undefined &&
-        value !== '' &&
-        !isNaN(parseFloat(value));
-      return isValid;
+  const handleMissingQuestionsCheck = useCallback(async () => {
+    const analysisConfig = ANALYSIS_TYPES.profitability || {
+      displayName: t('profitability_analysis_display_name', 'Profitability Analysis'),
+      customMessage: t('profitability_efficiency_unlock_msg', 'Answer more questions to unlock detailed profitability analysis')
+    };
+    await checkMissingQuestionsAndRedirect('profitability', selectedBusinessId, handleRedirectToBrief, {
+      displayName: analysisConfig.displayName,
+      customMessage: analysisConfig.customMessage
     });
+  }, [selectedBusinessId, handleRedirectToBrief, t]);
 
-    return !hasValidMetric;
-  };
-
-  const handleRegenerate = async () => {
+  const handleRegenerate = useCallback(async () => {
     if (onRegenerate) {
       try {
         setError(null);
         await onRegenerate();
       } catch (error) {
-        console.error('Error during regeneration:', error);
-        setError('Failed to regenerate analysis. Please try again.');
+        setError(t('failed_to_generate', 'Failed to generate analysis'));
       }
     } else {
-      setAnalysisData(null);
-      setError(null);
-    }
-  };
-
-  // Helper function to get traffic light color based on value vs threshold
-  const getTrafficLightColor = (value, threshold, isHigherBetter = true) => {
-    if (!threshold || threshold === 'NA' || threshold === null || threshold === undefined) {
-      return '#6b7280'; // Gray for NA
-    }
-
-    const numValue = typeof value === 'string' ? parseFloat(value.replace(/[,$%]/g, '')) : value;
-    const numThreshold = typeof threshold === 'string' ? parseFloat(threshold.replace(/[,$%]/g, '')) : threshold;
-
-    if (isNaN(numValue) || isNaN(numThreshold)) {
-      return '#6b7280'; // Gray for invalid values
-    }
-
-    if (isHigherBetter) {
-      if (numValue >= numThreshold * 1.1) return '#10b981'; // Green - 10% above threshold
-      if (numValue >= numThreshold * 0.9) return '#f59e0b'; // Yellow - within 10% of threshold
-      return '#ef4444'; // Red - below threshold
-    } else {
-      if (numValue <= numThreshold * 0.9) return '#10b981'; // Green - 10% below threshold
-      if (numValue <= numThreshold * 1.1) return '#f59e0b'; // Yellow - within 10% of threshold
-      return '#ef4444'; // Red - above threshold
-    }
-  };
-
-  // Helper function to parse percentage values
-  const parsePercentageValue = (value) => {
-    if (value === null || value === undefined || value === '' || value === 'NA') return 0;
-
-    if (typeof value === 'string') {
-      const numValue = parseFloat(value.replace(/[,$%]/g, ''));
-      return isNaN(numValue) ? 0 : numValue;
-    }
-
-    if (typeof value === 'number') {
-      return value;
-    }
-
-    return 0;
-  };
-
-  // Helper function to get citation URL for a metric
-  const getCitationUrl = (metricKey, citations) => {
-    if (!citations) return null;
-
-    // Check for exact match first
-    if (citations[metricKey]) return citations[metricKey];
-
-    // Check for alternative keys
-    const alternativeKeys = {
-      'gross_margin': ['gross_margin'],
-      'operating_margin': ['operating_margin'],
-      'ebitda_margin': ['ebitda_margin', 'ebitda'],
-      'net_margin': ['net_margin']
-    };
-
-    const possibleKeys = alternativeKeys[metricKey] || [metricKey];
-    for (const key of possibleKeys) {
-      if (citations[key]) return citations[key];
-    }
-
-    return null;
-  };
-
-  // Paired Bar Chart Component
-  const PairedBarChart = ({ metrics, thresholds, citations }) => {
-    const [containerWidth, setContainerWidth] = useState(600);
-    const containerRef = useRef(null);
-
-    const chartData = Object.entries(metrics)
-      .filter(([key, value]) => value !== null && value !== undefined && value !== '')
-      .map(([key, value]) => ({
-        metric: key,
-        actualValue: parsePercentageValue(value),
-        benchmarkValue: parsePercentageValue(thresholds[key]),
-        color: getTrafficLightColor(value, thresholds[key], true),
-        hasData: value !== null && value !== undefined && value !== '',
-        citationUrl: getCitationUrl(key.toLowerCase().replace(' ', '_'), citations)
-      }));
-
-    useEffect(() => {
-      const updateWidth = () => {
-        if (containerRef.current) {
-          const width = containerRef.current.offsetWidth - 40;
-          setContainerWidth(Math.max(width, 500));
-        }
-      };
-
-      updateWidth();
-      window.addEventListener('resize', updateWidth);
-      return () => window.removeEventListener('resize', updateWidth);
-    }, []);
-
-    if (chartData.length === 0) {
-      return null;
-    }
-
-    const maxValue = Math.max(
-      ...chartData.map(d => Math.max(d.actualValue, d.benchmarkValue)),
-      10
-    );
-    const chartHeight = chartData.length * 100 + 20;
-    const chartWidth = containerWidth;
-    const leftMargin = 140; // Reduced from 160
-    const rightMargin = 60;
-    const barHeight = 22; // Slightly reduced from 25
-    const groupSpacing = 100; // Reduced from 120
-
-    return (
-      <div
-        ref={containerRef}
-        style={{
-          width: '100%',
-          padding: '20px', // Reduced from 24
-          background: '#fff',
-          borderRadius: '12px',
-          border: '1px solid #e5e7eb',
-          boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
-        }}>
-        <div style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center', // Changed to center for title/legend alignment
-          marginBottom: '16px', // Reduced from 20
-          flexWrap: 'wrap',
-          gap: '12px' // Reduced from 16
-        }}>
-          <h3 style={{
-            margin: 0,
-            color: '#111827',
-            fontSize: '16px', // Slightly reduced from 18
-            fontWeight: '600',
-            letterSpacing: '-0.01em'
-          }}>
-            Profitability Metrics vs Benchmark
-          </h3>
-
-          <div style={{
-            display: 'flex',
-            gap: '12px',
-            background: '#f9fafb',
-            padding: '6px 12px',
-            borderRadius: '16px',
-            border: '1px solid #f3f4f6'
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-              <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#10b981' }}></div>
-              <span style={{ fontSize: '11px', fontWeight: '500', color: '#4b5563' }}>Business</span>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-              <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#94a3b8' }}></div>
-              <span style={{ fontSize: '11px', fontWeight: '500', color: '#4b5563' }}>Benchmark</span>
-            </div>
-          </div>
-        </div>
-
-        <div style={{ overflowX: 'auto' }}>
-          <svg width={chartWidth} height={chartHeight} style={{ minWidth: '500px', width: '100%' }}>
-            <rect width={chartWidth} height={chartHeight} fill="#ffffff" />
-
-            {chartData.map((data, index) => {
-              const y = index * groupSpacing + 10;
-              const barWidth = (chartWidth - leftMargin - rightMargin);
-
-              const actualBarLength = (data.actualValue / maxValue) * barWidth;
-              const benchmarkBarLength = (data.benchmarkValue / maxValue) * barWidth;
-
-              return (
-                <g key={data.metric}>
-                  <text
-                    x={leftMargin - 12}
-                    y={y + 13}
-                    textAnchor="end"
-                    style={{
-                      fontSize: '12px',
-                      fontWeight: '500',
-                      fill: '#374151',
-                      fontFamily: 'Inter, system-ui, sans-serif'
-                    }}
-                  >
-                    {data.metric}
-                  </text>
-
-                  <rect
-                    x={leftMargin}
-                    y={y}
-                    width={actualBarLength}
-                    height={barHeight}
-                    fill={data.color}
-                    rx="3"
-                    opacity={0.9}
-                  />
-
-                  <rect
-                    x={leftMargin}
-                    y={y + barHeight + 4}
-                    width={benchmarkBarLength}
-                    height={barHeight}
-                    fill="#94a3b8"
-                    rx="3"
-                    opacity={0.35}
-                  />
-
-                  <text
-                    x={leftMargin + actualBarLength + 6}
-                    y={y + 15}
-                    style={{
-                      fontSize: '11px',
-                      fontWeight: '600',
-                      fill: data.color
-                    }}
-                  >
-                    {data.actualValue.toFixed(1)}%
-                  </text>
-
-                  <text
-                    x={leftMargin + benchmarkBarLength + 6}
-                    y={y + barHeight + 19}
-                    style={{
-                      fontSize: '11px',
-                      fontWeight: '500',
-                      fill: '#6b7280'
-                    }}
-                  >
-                    {data.benchmarkValue.toFixed(1)}%
-                  </text>
-
-                  <CitationSource
-                    url={data.citationUrl}
-                    x={leftMargin}
-                    y={y + barHeight * 2 + 15}
-                  />
-
-                  {index < chartData.length - 1 && (
-                    <line
-                      x1={0}
-                      y1={y + barHeight * 2 + 32}
-                      x2={chartWidth}
-                      y2={y + barHeight * 2 + 32}
-                      stroke="#f3f4f6"
-                      strokeWidth="1"
-                    />
-                  )}
-                </g>
-              );
-            })}
-          </svg>
-        </div>
-      </div>
-    );
-  };
-
-  useEffect(() => {
-    if (profitabilityData) {
-      const normalized = profitabilityData.profitability || profitabilityData.profitability_analysis || profitabilityData.profitabilityAnalysis || profitabilityData.ProfitabilityAnalysis || (Object.keys(profitabilityData).length > 0 && !profitabilityData.profitability ? profitabilityData : null);
-
-      if (normalized && typeof normalized === 'object') {
-        setAnalysisData({ profitability: normalized });
+      try {
         setError(null);
-
-        if (onDataGenerated) {
-          onDataGenerated({ profitability: normalized });
-        }
+        await regenerateIndividualAnalysis('profitabilityAnalysis', questions, userAnswers, selectedBusinessId);
+      } catch (error) {
+        setError(t('failed_to_generate', 'Failed to generate analysis'));
       }
     }
-  }, [profitabilityData, onDataGenerated]);
+  }, [onRegenerate, regenerateIndividualAnalysis, questions, userAnswers, selectedBusinessId, t]);
 
-  useEffect(() => {
-    if (hasInitialized.current) return;
-
-    isMounted.current = true;
-    hasInitialized.current = true;
-
-    if (profitabilityData) {
-      setAnalysisData(profitabilityData);
-    }
-
-    return () => {
-      isMounted.current = false;
-    };
-  }, [profitabilityData]);
-
-  const handleFileUpload = (file) => {
+  const handleFileUpload = useCallback(file => {
     if (file) {
-      const allowedTypes = [
-        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        'application/vnd.ms-excel',
-        'text/csv'
-      ];
-
+      const allowedTypes = ['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/vnd.ms-excel', 'text/csv'];
       if (allowedTypes.includes(file.type)) {
         setError(null);
       } else {
-        setError('Please upload an Excel or CSV file.');
+        setError(t('upload_excel_csv_error', 'Please upload an Excel or CSV file.'));
       }
     }
-  };
+  }, [t]);
 
-  const removeFile = () => {
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
-  };
+  const removeFile = useCallback(() => {
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  }, []);
 
-  const formatPercentage = (value) => {
-    if (value === null || value === undefined || value === '') return null;
-
-    if (typeof value === 'string') {
-      if (value.includes('%')) return value;
-      const numValue = parseFloat(value);
-      if (isNaN(numValue)) return null;
-      return `${(numValue).toFixed(3)}%`;
-    }
-
-    if (typeof value === 'number') {
-      return `${(value).toFixed(3)}%`;
-    }
-
-    return null;
-  };
-
-  const formatThreshold = (threshold) => {
-    if (!threshold || threshold === 'NA') return 'NA';
-
-    if (typeof threshold === 'string') {
-      if (threshold.includes('%')) return threshold;
-      const numValue = parseFloat(threshold);
-      if (isNaN(numValue)) return 'NA';
-      return `${(numValue).toFixed(1)}%`;
-    }
-
-    if (typeof threshold === 'number') {
-      return `${(threshold).toFixed(1)}%`;
-    }
-
-    return 'NA';
-  };
-
-  const getDisplayName = (key) => {
-    const displayNames = {
-      'gross_margin': 'Gross Margin',
-      'operating_margin': 'Operating Margin',
-      'ebitda_margin': 'EBITDA Margin',
-      'ebitda': 'EBITDA Margin',
-      'net_margin': 'Net Margin'
-    };
-    return displayNames[key] || key.replace('_', ' ').toUpperCase();
-  };
-
-  const extractProfitabilityMetrics = (data) => {
-    if (!data) {
-      return { metrics: {}, thresholds: {}, citations: {} };
-    }
-
-    const profitabilityData = data.profitability || data.profitability_analysis || data.profitabilityAnalysis || data.ProfitabilityAnalysis || (Object.keys(data).length > 0 && !data.profitability ? data : null);
-    if (!profitabilityData) {
-      return { metrics: {}, thresholds: {}, citations: {} };
-    }
-    const metrics = {};
-    const thresholds = {};
-    const citations = profitabilityData.citations || {};
-
-    Object.entries(profitabilityData).forEach(([key, value]) => {
-      if (key === 'citations') {
-        return; // Skip citations object in this loop
-      } else if (key.includes('_threshold') || key.includes('threshold')) {
-        const baseKey = key.replace('_threshold', '').replace('threshold', '');
-        const displayKey = getDisplayName(baseKey);
-        thresholds[displayKey] = value;
-      } else {
-        const displayKey = getDisplayName(key);
-        metrics[displayKey] = value;
-      }
-    });
-
-    return { metrics, thresholds, citations };
-  };
-
-  // Show loading state
   if (isRegenerating) {
     return (
       <div className="channel-heatmap channel-heatmap-container">
         <div className="loading-state">
           <Loader size={24} className="loading-spinner" />
-          <span>Generating profitability analysis...</span>
+          <span>{t('generating_profitability_analysis', 'Generating profitability analysis...')}</span>
         </div>
       </div>
     );
   }
 
   const renderContent = () => {
-    // Show error message within the normal structure if there's an error
     if (error) {
       return (
-        <div className="profitability-warning">
-          <AlertCircle size={20} color="#f59e0b" />
+        <div className="profitability-warning" style={{ display: 'flex', gap: '8px', padding: '12px', background: '#fef2f2', border: '1px solid #fca5a5', borderRadius: '8px', color: '#b91c1c' }}>
+          <AlertCircle size={20} color="#ef4444" />
           <div>
-            <h4 className="profitability-warning-title">Analysis Error</h4>
-            <p className="profitability-warning-text">{error}</p>
+            <h4 className="profitability-warning-title" style={{ margin: 0, fontWeight: 600 }}>{t('analysis_error', 'Analysis Error')}</h4>
+            <p className="profitability-warning-text" style={{ margin: '4px 0 0 0', fontSize: '13px' }}>{error}</p>
           </div>
         </div>
       );
     }
 
-    // Show empty state if no data
     if (!analysisData || isProfitabilityDataIncomplete(analysisData)) {
       return (
-        <FinancialEmptyState
-          analysisType="profitability"
-          analysisDisplayName="Profitability Analysis"
-          icon={TrendingUp}
-          onImproveAnswers={handleMissingQuestionsCheck}
-          onRegenerate={handleRegenerate}
-          isRegenerating={isRegenerating}
-          canRegenerate={canRegenerate}
-          userAnswers={userAnswers}
-          minimumAnswersRequired={3}
-          showFileUpload={true}
-          onFileUpload={handleFileUpload}
-          uploadedFile={uploadedFile}
-          onRemoveFile={removeFile}
-          onRedirectToChat={onRedirectToChat}
-          isMobile={isMobile}
-          setActiveTab={setActiveTab}
-          hasUploadedDocument={hasUploadedDocument}
-          isUploading={false}
-          documentInfo={documentInfo}
-          readOnly={readOnly}
-          fileUploadMessage="Upload Excel or CSV files with financial data for profitability analysis"
-          acceptedFileTypes=".xlsx,.xls,.csv"
-          customMessage=" ."
+        <FinancialEmptyState 
+          analysisType="profitability" 
+          analysisDisplayName={t('profitability_analysis_display_name', 'Profitability Analysis')} 
+          icon={TrendingUp} 
+          onImproveAnswers={handleMissingQuestionsCheck} 
+          onRegenerate={handleRegenerate} 
+          isRegenerating={isRegenerating} 
+          canRegenerate={canRegenerate} 
+          readOnly={readOnly} 
+          userAnswers={userAnswers} 
+          minimumAnswersRequired={3} 
+          showFileUpload={true} 
+          onFileUpload={handleFileUpload} 
+          uploadedFile={uploadedFile} 
+          onRemoveFile={removeFile} 
+          onRedirectToChat={onRedirectToChat} 
+          isMobile={isMobile} 
+          setActiveTab={setActiveTab} 
+          hasUploadedDocument={hasUploadedDocument} 
+          fileUploadMessage={t('profitability_upload_msg', 'Upload Excel or CSV files with financial data for profitability analysis')} 
+          acceptedFileTypes=".xlsx,.xls,.csv" 
+          documentInfo={documentInfo} 
         />
       );
     }
 
-    const { metrics, thresholds, citations } = extractProfitabilityMetrics(analysisData);
+    const normalized = getNormalizedData(analysisData);
+    
+    // Parse all metric fields safely using the unified parseMetric normalizer
+    const ebitdaMargin = parseMetric(normalized.ebitda_margin);
+    const netProfitMargin = parseMetric(normalized.net_profit_margin);
+    const roe = parseMetric(normalized.roe);
+    const roce = parseMetric(normalized.roce);
+    const roa = parseMetric(normalized.roa);
 
-    if (!metrics || typeof metrics !== 'object' || Object.keys(metrics).length === 0) {
-      return (
-        <FinancialEmptyState
-          analysisType="profitability"
-          analysisDisplayName="Profitability Analysis"
-          icon={TrendingUp}
-          onImproveAnswers={handleMissingQuestionsCheck}
-          onRegenerate={handleRegenerate}
-          isRegenerating={isRegenerating}
-          canRegenerate={canRegenerate}
-          userAnswers={userAnswers}
-          minimumAnswersRequired={3}
-          showFileUpload={true}
-          readOnly={readOnly}
-          onFileUpload={handleFileUpload}
-          onRedirectToChat={onRedirectToChat}
-          isMobile={isMobile}
-          setActiveTab={setActiveTab}
-          hasUploadedDocument={hasUploadedDocument}
-          uploadedFile={uploadedFile}
-          onRemoveFile={removeFile}
-          fileUploadMessage="Upload Excel or CSV files with financial data for profitability analysis"
-          acceptedFileTypes=".xlsx,.xls,.csv"
-          documentInfo={documentInfo}
-        />
-      );
-    }
+    const chartRows = [
+      {
+        key: 'ebitda_margin',
+        label: t('ebitda_margin', 'EBITDA Margin'),
+        actualValue: ebitdaMargin.value,
+        colorClass: getProfitabilityStatus('ebitda_margin', ebitdaMargin.value).colorClass,
+        period: ebitdaMargin.period,
+        citation: ebitdaMargin.citation
+      },
+      {
+        key: 'net_profit_margin',
+        label: t('net_profit_margin', 'Net Profit Margin'),
+        actualValue: netProfitMargin.value,
+        colorClass: getProfitabilityStatus('net_profit_margin', netProfitMargin.value).colorClass,
+        period: netProfitMargin.period,
+        citation: netProfitMargin.citation
+      },
+      {
+        key: 'roe',
+        label: t('roe', 'ROE (Return on Equity)'),
+        actualValue: roe.value,
+        colorClass: getProfitabilityStatus('roe', roe.value).colorClass,
+        period: roe.period,
+        citation: roe.citation
+      },
+      {
+        key: 'roce',
+        label: t('roce', 'ROCE (Return on Capital Employed)'),
+        actualValue: roce.value,
+        colorClass: getProfitabilityStatus('roce', roce.value).colorClass,
+        period: roce.period,
+        citation: roce.citation
+      },
+      {
+        key: 'roa',
+        label: t('roa', 'ROA (Return on Assets)'),
+        actualValue: roa.value,
+        colorClass: getProfitabilityStatus('roa', roa.value).colorClass,
+        period: roa.period,
+        citation: roa.citation
+      }
+    ];
 
-    // Show normal analysis content with paired bar chart and citations
+    // Calculate maximum absolute value for chart scaling (cap minimum at 1.0 i.e. 100%)
+    const maxValue = Math.max(
+      ...chartRows.map(r => Math.abs(r.actualValue) || 0),
+      1.0
+    );
+
+    // Extract timeline chart data if multiple periods available
+    const timelineData = getTimelineChartData(analysisData._raw || profitabilityData || storeProfitabilityData);
+    const hasTimeline = timelineData && timelineData.length >= 2;
+    const prevPeriodData = hasTimeline ? timelineData[timelineData.length - 2] : null;
+
     return (
-      <div className="ch-heatmap-container">
-        <div className="ch-heatmap-scroll">
-
-          {Object.values(metrics).every(value => value === null) && (
-            <div className="profitability-warning">
-              <AlertCircle size={20} color="#f59e0b" />
-              <div>
-                <h4 className="profitability-warning-title">
-                  No Financial Data Available
-                </h4>
-                <p className="profitability-warning-text">
-                  Upload an Excel file with financial data or ensure your spreadsheet contains the required profitability metrics.
-                </p>
+      <div className="ch-heatmap-container" style={{ width: '100%' }}>
+        <style dangerouslySetInnerHTML={{__html: `
+          .profitability-analysis__chart-card {
+            background-color: #fff;
+            border-radius: 12px;
+            padding: 16px;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            width: 100%;
+          }
+          [data-theme="dark"] .profitability-analysis__chart-card {
+            background-color: #1f2937;
+            border-color: #374151;
+          }
+          .profitability-analysis__chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+            gap: 16px;
+          }
+          .profitability-analysis__chart-title {
+            font-size: 15px;
+            font-weight: 600;
+            color: #111827;
+            margin: 0;
+          }
+          [data-theme="dark"] .profitability-analysis__chart-title {
+            color: #f3f4f6;
+          }
+          .profitability-analysis__chart-rows {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+          }
+          .profitability-analysis__chart-row {
+            display: grid;
+            grid-template-columns: 180px 1fr;
+            align-items: center;
+            gap: 24px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #f3f4f6;
+          }
+          .profitability-analysis__chart-row:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+          }
+          [data-theme="dark"] .profitability-analysis__chart-row {
+            border-bottom-color: #374151;
+          }
+          .profitability-analysis__row-info {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+          }
+          .profitability-analysis__label-citation {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+          }
+          .profitability-analysis__row-label {
+            font-size: 14px;
+            font-weight: 600;
+            color: #374151;
+            line-height: 1.2;
+          }
+          [data-theme="dark"] .profitability-analysis__row-label {
+            color: #e5e7eb;
+          }
+          .profitability-analysis__row-period {
+            font-size: 11px;
+            color: #6b7280;
+            line-height: 1;
+            margin-top: 2px;
+          }
+          [data-theme="dark"] .profitability-analysis__row-period {
+            color: #9ca3af;
+          }
+          .profitability-analysis__bar-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            width: 100%;
+          }
+          .profitability-analysis__bar {
+            height: 14px;
+            border-radius: 4px;
+            transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            min-width: 4px;
+          }
+          .profitability-analysis__bar--actual-green {
+            background: linear-gradient(90deg, #34d399 0%, #10b981 100%);
+          }
+          .profitability-analysis__bar--actual-yellow {
+            background: linear-gradient(90deg, #fbbf24 0%, #f59e0b 100%);
+          }
+          .profitability-analysis__bar--actual-red {
+            background: linear-gradient(90deg, #f87171 0%, #ef4444 100%);
+          }
+          .profitability-analysis__bar-value {
+            font-size: 11px;
+            font-weight: 600;
+            white-space: nowrap;
+            width: 50px;
+            flex-shrink: 0;
+          }
+          .profitability-analysis__bar-value--actual-green {
+            color: #10b981;
+          }
+          .profitability-analysis__bar-value--actual-yellow {
+            color: #d97706;
+          }
+          [data-theme="dark"] .profitability-analysis__bar-value--actual-yellow {
+            color: #f59e0b;
+          }
+          .profitability-analysis__bar-value--actual-red {
+            color: #ef4444;
+          }
+          .profitability-analysis__bar-value--actual-null {
+            color: #374151;
+            font-size: 14px;
+            font-weight: 700;
+          }
+          [data-theme="dark"] .profitability-analysis__bar-value--actual-null {
+            color: #e5e7eb;
+          }
+          .profitability-analysis__citation-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 11px;
+            color: #3b82f6;
+            background-color: #eff6ff;
+            padding: 4px 8px;
+            border-radius: 4px;
+            width: fit-content;
+            max-width: 100%;
+            cursor: help;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+          }
+          [data-theme="dark"] .profitability-analysis__citation-badge {
+            background-color: rgba(59, 130, 246, 0.1);
+            color: #60a5fa;
+          }
+          @media (max-width: 768px) {
+            .profitability-analysis__chart-row {
+              grid-template-columns: 1fr;
+              gap: 8px;
+              padding-bottom: 12px;
+            }
+          }
+        `}} />
+        <div className="ch-heatmap-scroll" style={{ padding: '4px', width: '100%' }}>
+          
+          {/* Multi-period Line Chart */}
+          {hasTimeline && (
+            <div className="profitability-analysis__chart-card" style={{ marginBottom: 16 }}>
+              <div className="profitability-analysis__chart-header">
+                <h3 className="profitability-analysis__chart-title">
+                  {t('profitability_trends', 'Profitability Trends — Multi-Period')}
+                </h3>
               </div>
+              <ResponsiveContainer width="100%" height={220}>
+                <LineChart data={timelineData} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                  <XAxis dataKey="period" tick={{ fontSize: 11 }} />
+                  <YAxis tickFormatter={v => `${v}%`} tick={{ fontSize: 11 }} />
+                  <Tooltip formatter={(v, n) => [v != null ? `${v}%` : '–', n]} />
+                  <Legend wrapperStyle={{ fontSize: 12 }} />
+                  <Line type="monotone" dataKey="ebitda_margin" name="EBITDA Margin" stroke="#6366f1" strokeWidth={2} dot={{ r: 4 }} connectNulls={false} />
+                  <Line type="monotone" dataKey="net_profit_margin" name="Net Margin" stroke="#10b981" strokeWidth={2} dot={{ r: 4 }} connectNulls={false} />
+                  <Line type="monotone" dataKey="roe" name="ROE" stroke="#f59e0b" strokeWidth={2} dot={{ r: 4 }} connectNulls={false} />
+                  <Line type="monotone" dataKey="roa" name="ROA" stroke="#ef4444" strokeWidth={2} dot={{ r: 4 }} connectNulls={false} />
+                </LineChart>
+              </ResponsiveContainer>
             </div>
           )}
 
-          <PairedBarChart metrics={metrics} thresholds={thresholds} citations={citations} />
+          <div className="profitability-analysis__chart-card">
+            <div className="profitability-analysis__chart-header">
+              <h3 className="profitability-analysis__chart-title">
+                {t('profitability_ratios', 'Profitability Ratios')}
+              </h3>
+            </div>
 
+            <div className="profitability-analysis__chart-rows">
+              {chartRows.map((row) => (
+                <div className="profitability-analysis__chart-row" key={row.key}>
+                  <div className="profitability-efficiency__row-info">
+                    <div className="profitability-analysis__label-citation">
+                      <span className="profitability-analysis__row-label">{row.label}</span>
+                      <MetricCitation citation={row.citation} />
+                    </div>
+                    {row.period && (
+                      <span className="profitability-analysis__row-period">
+                        {t('period', 'Period')}: {row.period}
+                      </span>
+                    )}
+                  </div>
+                  
+                  <div className="profitability-analysis__bar-wrapper">
+                    {row.actualValue !== null && (
+                      <div 
+                        className={`profitability-analysis__bar profitability-analysis__bar--actual-${row.colorClass}`}
+                        style={{ width: `${(Math.abs(row.actualValue) / maxValue) * 100}%` }}
+                      />
+                    )}
+                    <span className={`profitability-analysis__bar-value profitability-analysis__bar-value--actual-${row.colorClass}`}>
+                      {row.actualValue !== null ? formatPercentageValue(row.actualValue) : '-'}
+                      {hasTimeline && prevPeriodData && (
+                        <TrendArrow latest={row.actualValue} prev={prevPeriodData[row.key]} />
+                      )}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+          
         </div>
       </div>
     );
   };
 
   return (
-    <div className="profitability-analysis"
-      data-analysis-type="profitability"
-      data-analysis-name="Profitability Analysis"
-      data-analysis-order="1">
-
+    <div className="profitability-analysis" data-analysis-type="profitability" data-analysis-name="Profitability Analysis" data-analysis-order="1" style={{ width: '100%' }}>
       {renderContent()}
     </div>
   );
 };
 
-export default ProfitabilityAnalysis;
+export default React.memo(ProfitabilityAnalysis);

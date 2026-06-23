@@ -1,15 +1,23 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Sparkles, Send, X, Bot, Zap, Trash2, AlertTriangle } from "lucide-react";
+import { Sparkles, Send, X, Bot, Zap, Trash2, AlertTriangle, CornerDownLeft } from "lucide-react";
 import axios from "axios";
 import "../styles/Ai.css";
 import { useTranslation } from "../hooks/useTranslation";
+import AiMessageRenderer from "./AiMessageRenderer";
 
-const Aiassistant = ({ businessId: propBusinessId, projectId, pageContext }) => {
+import { useAuthStore, useBusinessStore } from '../store';
+
+const Aiassistant = ({ businessId: propBusinessId, projectId, pageContext, isDisabled }) => {
+  const { selectedBusinessId } = useBusinessStore();
+  const userName = useAuthStore((state) => state.userName);
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [messages, setMessages] = useState([
-    { role: "assistant", text: "Hi! How can I help you today? 👋" },
+    {
+      role: "assistant",
+      text: "Hi! 👋 I can help you using your business data, current page insights, and strategy analysis. Ask me anything about risks, strategy, or recommendations."
+    },
   ]);
   const [isLoading, setIsLoading] = useState(false);
   const [quotaStatus, setQuotaStatus] = useState({ exceeded: false, resetAt: null, usedTokens: 0, limit: 3000000 });
@@ -23,69 +31,41 @@ const Aiassistant = ({ businessId: propBusinessId, projectId, pageContext }) => 
     "How to improve strategic justification?",
   ];
 
-  const getBusinessId = () =>
-    propBusinessId || sessionStorage.getItem("activeBusinessId");
+  const getBusinessId = () => propBusinessId || selectedBusinessId;
 
-  const getToken = () => sessionStorage.getItem("token");
-
-  // Auto-scroll to bottom on new messages
+  const getToken = () => useAuthStore.getState().token;
   useEffect(() => {
     if (open) chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, open, isLoading]);
 
   const historyFetchedRef = useRef(false);
-
-  // Reset fetching flag when project changes to allow fresh fetch for new context
   useEffect(() => {
     historyFetchedRef.current = false;
   }, [projectId]);
-
-  // Check quota status and fetch history when panel is opened (lazy — not on mount)
   useEffect(() => {
     if (!open) {
-      // Reset fetch ref when closed so it refetches next time it's opened if needed,
-      // or we can keep it here. But definitely reset on projectId change.
-      return;
+      setQuery("");
     }
+  }, [open]);
 
-    // If projectId changes while open, we should typically refetch.
-    // The dependency array handles the trigger.
+  useEffect(() => {
+    const handleOpenAssistant = () => {
+      if (!isDisabled) {
+        setOpen(true);
+      }
+    };
+    window.addEventListener('open_ai_assistant', handleOpenAssistant);
+    return () => window.removeEventListener('open_ai_assistant', handleOpenAssistant);
+  }, [isDisabled]);
 
-    if (!historyFetchedRef.current) {
-      historyFetchedRef.current = true;
-      const fetchHistory = async () => {
-        const token = getToken();
-        if (!token) return;
-        try {
-          const resolvedProjectId = projectId || 'global';
-          const response = await axios.get(
-            `${process.env.REACT_APP_BACKEND_URL}/ai-chat/history/${resolvedProjectId}`,
-            { headers: { Authorization: `Bearer ${token}` } }
-          );
-          if (response.data.history && response.data.history.length > 0) {
-            setMessages(response.data.history.map((msg) => ({ role: msg.role, text: msg.text })));
-          } else {
-            setMessages([{ role: "assistant", text: "Hi! How can I help you today? 👋" }]);
-          }
-        } catch (error) {
-          console.error("Error fetching AI chat history:", error);
-          setMessages([{ role: "assistant", text: "Hi! How can I help you today? 👋" }]);
-        }
-      };
-      fetchHistory();
-    }
-
-    checkQuota();
-  }, [open, projectId]);
-
-  const checkQuota = async () => {
-    const businessId = getBusinessId();
+  const checkQuota = React.useCallback(async () => {
+    const businessId = propBusinessId || selectedBusinessId;
     const token = getToken();
     if (!token || !businessId) return;
 
     try {
       const response = await axios.get(
-        `${process.env.REACT_APP_BACKEND_URL}/api/companies/ai-usage/${businessId}`,
+        `${import.meta.env.VITE_BACKEND_URL}/api/companies/ai-usage/${businessId}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       if (response.data) {
@@ -99,18 +79,56 @@ const Aiassistant = ({ businessId: propBusinessId, projectId, pageContext }) => 
     } catch (error) {
       console.error("Error checking AI quota:", error);
     }
-  };
+  }, [propBusinessId, selectedBusinessId]);
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+
+    if (!historyFetchedRef.current) {
+      historyFetchedRef.current = true;
+      const fetchHistory = async () => {
+        const token = getToken();
+        if (!token) return;
+        try {
+          const resolvedProjectId = projectId || 'global';
+          const response = await axios.get(
+            `${import.meta.env.VITE_BACKEND_URL}/ai-chat/history/${resolvedProjectId}`,
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+          const introMessage = {
+            role: "assistant",
+            text: "Hi! 👋 I can help you using your business data, current page insights, and strategy analysis. Ask me anything about risks, strategy, or recommendations."
+          };
+
+          if (response.data.history && response.data.history.length > 0) {
+            setMessages([
+              introMessage,
+              ...response.data.history.map((msg) => ({ role: msg.role, text: msg.text }))
+            ]);
+          } else {
+            setMessages([introMessage]);
+          }
+        } catch (error) {
+          console.error("Error fetching AI chat history:", error);
+          setMessages([{ role: "assistant", text: "Hi! 👋 I can help you using your business data, current page insights, and strategy analysis. Ask me anything about risks, strategy, or recommendations." }]);
+        }
+      };
+      fetchHistory();
+    }
+
+    checkQuota();
+  }, [open, projectId, checkQuota]);
 
   const saveMessageToHistory = async (role, text) => {
     const token = getToken();
     if (!token) return;
     try {
-      // Only include project_id if we are in a project context
       const body = { role, text };
       if (projectId) body.project_id = projectId;
 
       await axios.post(
-        `${process.env.REACT_APP_BACKEND_URL}/ai-chat/history`,
+        `${import.meta.env.VITE_BACKEND_URL}/ai-chat/history`,
         body,
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -130,7 +148,7 @@ const Aiassistant = ({ businessId: propBusinessId, projectId, pageContext }) => 
     try {
       const resolvedProjectId = projectId || 'global';
       await axios.delete(
-        `${process.env.REACT_APP_BACKEND_URL}/ai-chat/history/${resolvedProjectId}`,
+        `${import.meta.env.VITE_BACKEND_URL}/ai-chat/history/${resolvedProjectId}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setMessages([{ role: "assistant", text: "Hi! How can I help you today? 👋" }]);
@@ -153,17 +171,16 @@ const Aiassistant = ({ businessId: propBusinessId, projectId, pageContext }) => 
     let assistantText = "";
     const businessId = getBusinessId();
     const token = getToken();
+    const startTime = Date.now();
+    let responseData = null;
 
     try {
-      // 1. Pre-check: Verify AI token status before calling AI Assistant API
       const usageResponse = await axios.get(
-        `${process.env.REACT_APP_BACKEND_URL}/api/companies/ai-usage/${businessId}`,
+        `${import.meta.env.VITE_BACKEND_URL}/api/companies/ai-usage/${businessId}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
       const usageData = usageResponse.data;
-
-      // Update local state to sync UI
       setQuotaStatus({
         exceeded: usageData?.quotaExceed || false,
         resetAt: usageData?.quotaResetAt || null,
@@ -181,8 +198,6 @@ const Aiassistant = ({ businessId: propBusinessId, projectId, pageContext }) => 
         await saveMessageToHistory("assistant", assistantText);
         return;
       }
-
-      // 2. Call AI Assistant API
       const requestBody = { message: userText };
       if (projectId) {
         requestBody.projectId = projectId;
@@ -195,7 +210,7 @@ const Aiassistant = ({ businessId: propBusinessId, projectId, pageContext }) => 
         }
       }
 
-      const response = await fetch(process.env.REACT_APP_AI_CHAT_URL, {
+      const response = await fetch(import.meta.env.VITE_AI_CHAT_URL, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -205,9 +220,9 @@ const Aiassistant = ({ businessId: propBusinessId, projectId, pageContext }) => 
       });
 
       const data = await response.json();
+      responseData = data;
 
       if (!response.ok) {
-        // Handle rate limit or other API errors gracefully
         if (data?.error && data.error.toLowerCase().includes("rate limit")) {
           assistantText = "⚠️ The AI is temporarily unavailable due to rate limits. Please try again in a few minutes.";
         } else {
@@ -215,22 +230,17 @@ const Aiassistant = ({ businessId: propBusinessId, projectId, pageContext }) => 
         }
       } else {
         assistantText = data.response || data.text || "I'm sorry, I couldn't process that request.";
-
-        // 3. Post-update: Log the tokens consumed
-        // Extracting tokens_used from the AI service response
         const tokensUsed = data.usage?.totalTokens || data.usage?.total_tokens || data.tokensUsed || 0;
 
         if (tokensUsed > 0) {
           try {
             await axios.post(
-              `${process.env.REACT_APP_BACKEND_URL}/api/companies/update-ai-usage`,
+              `${import.meta.env.VITE_BACKEND_URL}/api/companies/update-ai-usage`,
               { business_id: businessId, tokens_used: tokensUsed },
               { headers: { Authorization: `Bearer ${token}` } }
             );
-
-            // Refresh usage data after update to show current count
             const updatedUsageResp = await axios.get(
-              `${process.env.REACT_APP_BACKEND_URL}/api/companies/ai-usage/${businessId}`,
+              `${import.meta.env.VITE_BACKEND_URL}/api/companies/ai-usage/${businessId}`,
               { headers: { Authorization: `Bearer ${token}` } }
             );
 
@@ -251,10 +261,30 @@ const Aiassistant = ({ businessId: propBusinessId, projectId, pageContext }) => 
       console.error("AI Assistant API Error:", error);
       assistantText = "Sorry, I encountered a network error. Please check your connection and try again.";
     } finally {
-      // Always show and save the assistant reply — even error messages
       if (assistantText) {
         setMessages((prev) => [...prev, { role: "assistant", text: assistantText }]);
         await saveMessageToHistory("assistant", assistantText);
+        axios.post(
+          `${import.meta.env.VITE_BACKEND_URL}/ai-chat/log-turn`,
+          {
+            user_input: userText,
+            system_prompt: responseData?.systemPrompt || null,
+            assistant_response: assistantText,
+            business_id: businessId,
+            project_id: projectId || null,
+            page_context: pageContext || null,
+            token_usage: {
+              prompt_tokens: responseData?.usage?.promptTokens || responseData?.usage?.prompt_tokens || 0,
+              completion_tokens: responseData?.usage?.completionTokens || responseData?.usage?.completion_tokens || 0,
+              total_tokens: responseData?.usage?.totalTokens || responseData?.usage?.total_tokens || 0
+            },
+            model: responseData?.model,
+            status: assistantText.startsWith('\u26a0\ufe0f') ? 'quota_exceeded' : 'success',
+            latency_ms: Date.now() - startTime,
+            timestamp: new Date().toISOString()
+          },
+          { headers: { Authorization: `Bearer ${token}`, 'x-business-id': businessId } }
+        ).catch(() => { });
       }
       setIsLoading(false);
     }
@@ -269,66 +299,33 @@ const Aiassistant = ({ businessId: propBusinessId, projectId, pageContext }) => 
 
   return (
     <>
-      {/* Floating Trigger Button — hidden when panel is open */}
+      { }
       <button
         className={`ai-fab${open ? " ai-fab--hidden" : ""}`}
-        onClick={() => setOpen(true)}
-        title="AI Assistant"
+        onClick={() => !isDisabled && setOpen(true)}
+        disabled={isDisabled}
+        title={isDisabled ? "Complete onboarding to use AI Assistant" : "AI Assistant"}
       >
-        <Sparkles size={22} color="#fff" />
+        <span className="ai-fab-text">TX</span>
+        <span className="ai-fab-dot-green"></span>
+        <span className="ai-fab-dot-orange">!</span>
       </button>
 
-      {/* Backdrop */}
+      { }
       {open && <div className="ai-backdrop" onClick={() => setOpen(false)} />}
 
-      {/* Panel — slides up from bottom */}
+      { }
       <div className={`ai-panel ${open ? "ai-panel--open" : ""}`}>
-        {/* Header */}
+        { }
         <div className="ai-header">
           <div className="ai-header__left">
             <div className="ai-header__icon">
-              <Sparkles size={16} color="#fff" />
+              <span className="ai-header-icon-text">TX</span>
+              <span className="ai-header-dot-green"></span>
             </div>
             <div className="ai-header__content">
-              <div className="ai-header__title">{t("AI Assistant")}</div>
-              <div className="ai-header__usage-circle-container">
-                {(() => {
-                  const used = quotaStatus.usedTokens || 0;
-                  const limit = quotaStatus.limit || 3000000;
-                  const percentage = Math.min(Math.round((used / limit) * 100), 100);
-                  const radius = 10;
-                  const circumference = 2 * Math.PI * radius;
-                  const offset = circumference - (percentage / 100) * circumference;
-
-                  let colorClass = "usage-low";
-                  if (percentage >= 90) colorClass = "usage-high";
-                  else if (percentage >= 70) colorClass = "usage-medium";
-
-                  return (
-                    <div title={`Used: ${used.toLocaleString()} / ${limit.toLocaleString()}`}>
-                      <div className="ai-usage-circle-wrap">
-                        <svg className="ai-usage-svg" viewBox="0 0 24 24">
-                          <circle
-                            className="ai-usage-bg"
-                            cx="12"
-                            cy="12"
-                            r={radius}
-                          />
-                          <circle
-                            className={`ai-usage-fill ${colorClass}`}
-                            cx="12"
-                            cy="12"
-                            r={radius}
-                            strokeDasharray={circumference}
-                            strokeDashoffset={offset}
-                          />
-                        </svg>
-                        <span className="ai-usage-text">{percentage}%</span>
-                      </div>
-                    </div>
-                  );
-                })()}
-              </div>
+              <div className="ai-header__title">Trax</div>
+              <div className="ai-header__subtitle">1 thing flagged</div>
             </div>
           </div>
           <div className="ai-header__actions">
@@ -345,16 +342,14 @@ const Aiassistant = ({ businessId: propBusinessId, projectId, pageContext }) => 
           </div>
         </div>
 
-        {/* Chat Messages */}
+        { }
         <div className="ai-messages">
           {messages.map((m, idx) => (
             <div key={idx} className={`ai-msg ai-msg--${m.role}`}>
-              {m.role === "assistant" && (
-                <div className="ai-msg__avatar">
-                  <Bot size={14} color="#6f3cff" />
-                </div>
-              )}
-              <div className="ai-msg__bubble">{m.text}</div>
+              <div className={`ai-msg__avatar ai-msg__avatar--${m.role}`}>
+                {m.role === "assistant" ? "TX" : (userName?.charAt(0)?.toUpperCase() || "U")}
+              </div>
+              <AiMessageRenderer text={m.text} role={m.role} />
             </div>
           ))}
 
@@ -363,59 +358,76 @@ const Aiassistant = ({ businessId: propBusinessId, projectId, pageContext }) => 
               <div className="ai-msg__avatar">
                 <Bot size={14} color="#6f3cff" />
               </div>
-              <div className="ai-msg__bubble ai-msg__bubble--typing">
-                <span className="dot" />
-                <span className="dot" />
-                <span className="dot" />
-              </div>
+              <AiMessageRenderer text="" role="assistant" isTyping={true} />
             </div>
           )}
           <div ref={chatEndRef} />
         </div>
 
-        {/* Suggested Questions */}
-        <div className="ai-suggestions">
-          <p className="ai-suggestions__label">Suggestions</p>
-          <div className="ai-suggestions__list">
-            {suggestedQuestions.map((q, i) => (
-              <button key={i} className="ai-suggestion-chip" onClick={() => handleSend(q)}>
-                {q}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Input */}
-        <div className="ai-input-row">
-          {quotaStatus.exceeded ? (
-            <div className="ai-limit-reached">
-              <Zap size={14} className="ai-limit-icon" />
-              <span>Limit Reached. Quota Resets At : {quotaStatus.resetAt ? new Date(quotaStatus.resetAt).toLocaleDateString() : 'soon'}</span>
+        {messages.length === 1 && (
+          <div className="ai-suggestions">
+            <p className="ai-suggestions__label">Try asking</p>
+            <div className="ai-suggestions__list">
+              {suggestedQuestions.map((q, i) => (
+                <button key={i} className="ai-suggestion-chip" onClick={() => handleSend(q)}>
+                  {q}
+                </button>
+              ))}
             </div>
-          ) : (
-            <>
-              <input
-                className="ai-input"
-                type="text"
-                placeholder="Ask anything..."
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                onKeyDown={handleKeyDown}
-                disabled={isLoading}
-              />
-              <button
-                className="ai-send-btn"
-                onClick={() => handleSend()}
-                disabled={!query.trim() || isLoading}
-              >
-                <Send size={15} color="#fff" />
-              </button>
-            </>
+          </div>
+        )}
+        
+        <div style={{ display: 'flex', flexDirection: 'column', background: 'var(--bg-panel, #fff)' }}>
+          <div className="ai-input-row">
+            {quotaStatus.exceeded ? (
+              <div className="ai-limit-reached">
+                <Zap size={14} className="ai-limit-icon" />
+                <span>Limit Reached. Quota Resets At : {quotaStatus.resetAt ? new Date(quotaStatus.resetAt).toLocaleDateString() : 'soon'}</span>
+              </div>
+            ) : (
+              <>
+                <textarea
+                  className="ai-textarea"
+                  placeholder="Ask, push back, or correct..."
+                  value={query}
+                  onChange={(e) => {
+                    setQuery(e.target.value);
+                    e.target.style.height = 'auto';
+                    e.target.style.height = Math.min(e.target.scrollHeight, 120) + 'px';
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !e.shiftKey) {
+                      e.preventDefault();
+                      handleSend();
+                      e.target.style.height = 'auto';
+                    }
+                  }}
+                  disabled={isLoading}
+                  rows={1}
+                />
+                <button
+                  className="ai-send-btn"
+                  onClick={() => {
+                    handleSend();
+                    const ta = document.querySelector('.ai-textarea');
+                    if(ta) ta.style.height = 'auto';
+                  }}
+                  disabled={!query.trim() || isLoading}
+                >
+                  <CornerDownLeft size={16} color="#fff" strokeWidth={3} />
+                </button>
+              </>
+            )}
+          </div>
+          {!quotaStatus.exceeded && (
+            <div className="ai-input-hint">
+              Press <strong>Shift + Enter</strong> for a new line
+            </div>
           )}
         </div>
       </div>
 
-      {/* Clear History Confirmation Modal */}
+      { }
       {showClearConfirm && (
         <div className="ai-modal-overlay">
           <div className="ai-modal">

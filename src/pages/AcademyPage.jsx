@@ -1,29 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { Menu } from 'lucide-react';
 import AcademyNavigation from '../components/AcademyNavigation';
 import MarkdownRenderer from '../components/MarkdownRenderer';
 import AcademyFeedback from '../components/AcademyFeedback';
 import { findArticleById, findCategoryById, getBreadcrumbs, academyStructure, resolveAcademyPath } from '../utils/academyIndex';
+import { useAcademyArticle } from '../hooks/useQueries';
 
 import * as LucideIcons from 'lucide-react';
 import '../styles/academy.css';
 
-/**
- * AcademyPage Component
- * 
- * Main page for Traxxia Academy documentation
- * - Displays markdown content for selected articles
- * - Shows welcome page when no article selected
- * - Includes breadcrumb navigation
- * - Mobile responsive with hamburger menu
- */
 const AcademyPage = () => {
     const { category, article } = useParams();
-    const navigate = useNavigate(); // Hook for navigation
-    const [content, setContent] = useState('');
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState(null);
+    const navigate = useNavigate();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [currentArticle, setCurrentArticle] = useState(null);
     const [searchQuery, setSearchQuery] = useState('');
@@ -31,18 +19,18 @@ const AcademyPage = () => {
     const [prevArticle, setPrevArticle] = useState(null);
     const [nextArticle, setNextArticle] = useState(null);
 
+    const articleData = article ? findArticleById(article) : null;
+    const { data: content = '', isLoading: loading, error: queryError } = useAcademyArticle(articleData?.path);
+
+    const error = queryError ? queryError.message : (article && !articleData ? 'Article not found' : null);
+
     useEffect(() => {
         window.scrollTo(0, 0);
     }, [category, article]);
-
-
-    // Reset search when navigating
     useEffect(() => {
         setSearchQuery('');
         setSearchResults([]);
     }, [category, article]);
-
-    // Search Logic
     useEffect(() => {
         if (!searchQuery.trim()) {
             setSearchResults([]);
@@ -68,28 +56,15 @@ const AcademyPage = () => {
 
     useEffect(() => {
         if (!category || !article) {
-            // Show welcome/home page
             setCurrentArticle(null);
-            setContent('');
-            setError(null);
+            setPrevArticle(null);
+            setNextArticle(null);
             return;
         }
 
-        // Load article content
-        const loadArticle = async () => {
-            setLoading(true);
-            setError(null);
-
-            const articleData = findArticleById(article);
-            if (!articleData) {
-                setError('Article not found');
-                setLoading(false);
-                return;
-            }
-
-            setCurrentArticle(articleData);
-
-            // Find next and previous articles globally across all categories
+        const articleDataObj = findArticleById(article);
+        if (articleDataObj) {
+            setCurrentArticle(articleDataObj);
             const allArticles = academyStructure.categories.flatMap(cat =>
                 cat.articles.map(art => ({ ...art, categoryId: cat.id }))
             );
@@ -99,31 +74,12 @@ const AcademyPage = () => {
                 setPrevArticle(index > 0 ? allArticles[index - 1] : null);
                 setNextArticle(index < allArticles.length - 1 ? allArticles[index + 1] : null);
             }
-
-
-
-            try {
-                // Import markdown file dynamically
-                const response = await fetch(`/academy-content/${articleData.path}`);
-
-                if (!response.ok) {
-                    throw new Error(`Failed to load article: ${response.statusText}`);
-                }
-
-                const text = await response.text();
-                setContent(text);
-            } catch (err) {
-                console.error('Error loading article:', err);
-                setError(`Failed to load article content. ${err.message}`);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        loadArticle();
+        } else {
+            setCurrentArticle(null);
+            setPrevArticle(null);
+            setNextArticle(null);
+        }
     }, [category, article]);
-
-    // Handle internal link clicks to use React Router instead of page reload
     useEffect(() => {
         const handleLinkClick = (e) => {
             const target = e.target.closest('a');
@@ -132,12 +88,8 @@ const AcademyPage = () => {
             const href = target.getAttribute('href');
             const isInternal = target.classList.contains('academy-internal-link') ||
                 target.classList.contains('academy-next-step-card');
-
-            // Check if it's an internal academy link
             if (href && (href.startsWith('/academy/') || isInternal)) {
                 e.preventDefault();
-
-                // Use resolveAcademyPath to standardize the link
                 const finalPath = resolveAcademyPath(href, category);
                 navigate(finalPath);
             }
@@ -149,7 +101,7 @@ const AcademyPage = () => {
             contentDiv.addEventListener('click', handleLinkClick);
             return () => contentDiv.removeEventListener('click', handleLinkClick);
         }
-    }, [content]); // Re-attach when content changes
+    }, [content, category, navigate]);
 
     const breadcrumbs = getBreadcrumbs(category, article);
 
@@ -196,8 +148,6 @@ const AcademyPage = () => {
 
     const renderWelcomePage = () => {
         const categoryData = category ? findCategoryById(category) : null;
-
-        // Search Interface for Home Page
         const renderSearchHeader = () => (
             <div className="welcome-header">
                 <h1>Welcome to Traxxia Academy</h1>
@@ -218,7 +168,6 @@ const AcademyPage = () => {
         );
 
         if (!category) {
-            // Main academy home
             return (
                 <div className="academy-welcome">
                     {renderSearchHeader()}
@@ -242,8 +191,6 @@ const AcademyPage = () => {
                 </div>
             );
         }
-
-        // Category page (no specific article selected)
         if (categoryData) {
             return (
                 <div className="academy-category-page">
@@ -325,7 +272,7 @@ const AcademyPage = () => {
             />
 
             <main className="academy-content">
-                {/* Search Bar for Article Pages (Optional, maybe in header?) - Keeping it simple for now */}
+                {}
 
                 {breadcrumbs.length > 1 && (
                     <nav className="academy-breadcrumbs">
@@ -367,7 +314,7 @@ const AcademyPage = () => {
 
                             {currentArticle && (
                                 <div className="article-header">
-                                    {/* Only show page H1 if markdown doesn't provide its own H1 */}
+                                    {}
                                     {!content.trim().startsWith('# ') && <h1>{currentArticle.title}</h1>}
                                     <div className="article-meta">
                                         {currentArticle.roles.includes('all') ? (
@@ -383,9 +330,9 @@ const AcademyPage = () => {
 
                             <MarkdownRenderer content={content} articleId={article} />
 
-                            {/* <AcademyFeedback articleId={article} /> */}
+                            <AcademyFeedback articleId={currentArticle?.title || article} />
 
-                            {/* Bottom Pagination */}
+                            {}
                             {(prevArticle || nextArticle) && (
                                 <div className="article-pagination-bottom">
                                     {prevArticle ? (
@@ -415,8 +362,6 @@ const AcademyPage = () => {
                                     ) : <div className="pagination-spacer"></div>}
                                 </div>
                             )}
-
-
 
                             {renderRelatedArticles()}
                         </>

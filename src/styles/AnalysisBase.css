@@ -1,0 +1,113 @@
+/* AnalysisBase.css - Shared styles for all Analysis components */
+
+.porters-five-forces,
+.capability-heatmap,
+.channel-heatmap,
+.customer-segmentation,
+.swot-analysis-container,
+.maturity-score-analysis,
+.productivity-metrics-analysis,
+.organizational-culture-analysis,
+.channel-effectiveness-analysis,
+.strategic-positioning-radar,
+.strategic-goals-container,
+.expanded-capability-heatmap,
+.strategic-radar-container,
+.culture-profile,
+.productivity-metrics,
+.maturity-container,
+.pestel-table-container,
+.porters-container,
+.competitive-advantage-container,
+.channel-effectiveness-map,
+.maturity-dashboard,
+.full-swot-container {
+  background: white;
+  border-radius: 16px;
+  box-shadow: none;
+  padding: 0px;
+  transition: none;
+}
+
+.modern-card-content-inner {
+  background: white;
+  border-radius: 0px;
+  box-shadow: none;
+  padding: 10px 20px 10px 10px;
+  transition: none;
+  overflow-x: hidden;
+}
+
+.customer-segmentation,
+.swot-analysis-container {
+  padding: 10px 20px;
+}
+
+.capability-heatmap:hover,
+.channel-heatmap:hover,
+.customer-segmentation:hover {
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25),
+    0 0 0 1px rgba(0, 0, 0, 0.05);
+  transform: translateY(-2px);
+}
+
+.loading-spinner {
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+}
+
+.error-state, .empty-state {
+  text-align: center;
+  padding: 40px 20px;
+}
+
+.error-icon, .empty-icon {
+  font-size: 32px;
+  margin-bottom: 20px;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+}
+
+.error-state h3,
+.empty-state h3 {
+  font-size: 20px;
+  font-weight: 700;
+  color: #1f2937;
+  margin: 20px 0 12px 0;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.error-state p,
+.empty-state p {
+  color: #6b7280;
+  margin-bottom: 20px;
+  line-height: 1.6;
+}
+
+.retry-button,
+.generate-button {
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+[data-theme="dark"] .modern-card-content-inner,
+[data-theme="dark"] .porters-five-forces,
+[data-theme="dark"] .capability-heatmap,
+[data-theme="dark"] .channel-heatmap,
+[data-theme="dark"] .customer-segmentation,
+[data-theme="dark"] .swot-analysis-container,
+[data-theme="dark"] .maturity-score-analysis,
+[data-theme="dark"] .productivity-metrics-analysis,
+[data-theme="dark"] .strategic-positioning-radar,
+[data-theme="dark"] .expanded-capability-heatmap,
+[data-theme="dark"] .strategic-radar-container,
+[data-theme="dark"] .pestel-table-container,
+[data-theme="dark"] .porters-container,
+[data-theme="dark"] .competitive-advantage-container,
+[data-theme="dark"] .full-swot-container {
+  background: transparent !important;
+  color: #ffffff;
+}

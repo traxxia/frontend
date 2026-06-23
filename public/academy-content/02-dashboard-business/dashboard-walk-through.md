@@ -1,32 +1,38 @@
-# Dashboard walkthrough
+# Dashboard Walkthrough
 
-Welcome to the Dashboard walkthrough. In this section, we will explore the various features and functionalities available on your dashboard.
-
-## Overview
-
-The dashboard is the main interface for interacting with Traxxia. It provides a comprehensive view of your business and its performance. The dashboard is divided into several sections, each with its own set of features and functionalities.
+Welcome to the **Traxxia Dashboard**. This guide will walk you through navigating the central workspace where you manage all your organization's business profiles and strategic planning initiatives.
 
 ![Dashboard Overview](/academy-screenshots/getting-started/dashboard.png)
-*Screenshot of Traxxia Dashboard after initial setup*
+*Screenshot of the Traxxia Unified Dashboard Layout*
 
-This is the interface you will see after logging in to Traxxia. on the top left you will see the Traxxia logo and on the top right you will see the userlogo which will take you to the menu which contains user name, role, panel and logout option.
+## 1. Header Navigation
 
-## Section 1:
+The header bar provides continuous access to branding, global notifications, and account settings:
+*   **Logos**: You will see the **Piquota** logo on the left and the **Traxxia** core logo in the center.
+*   **Notification Center**: The bell icon on the top right alerts you to real-time events (such as ranking updates or review warnings), showing a count of pending notifications (e.g., `9+`).
+*   **User Menu**: The profile badge (showing your initials, e.g., **A**) on the top right displays your current credentials, roles, and provides access to your account management, admin options, and secure logout.
+ 
+## 2. Hero & Quick-Action Panel
 
-On the left side you will see the the welcome message along with create business button and How it works button.
+Directly below the header is the **Hero Section** which welcomes you and offers primary actions:
+*   **Greeting**: Displays a dynamic welcome message (e.g., `Welcome adminone !`).
+*   **Strategic Core Summary**: Reminds you to create business plans step-by-step with the **S.T.R.A.T.E.G.I.C.** framework, and activate AI capabilities for strategic analysis.
+*   **Create Business Button**: A prominent blue button `+ Create Business` that opens the business setup interface where you define new company scopes.
+*   **How It Works Button**: A quick-access button that launches the high-level onboarding walkthrough overlay (a condensed version of the Traxxia Academy).
+ 
 
-![Create Business](/academy-screenshots/business-management/business-creation-form.png)
-*Screenshot of Traxxia Dashboard with business creation form*
+## 3. Your Businesses Directory
 
-![How it works](/academy-screenshots/getting-started/how-to-use.png)
-*Screenshot of Traxxia Dashboard with How it works section*
+Below the actions panel is a full-width, unified **Businesses Table** listing all strategic profiles you have created. It contains the following columns for clear governance:
 
-> [!TIP] How it works is the short version of the Traxxia Academy.
+*   **BUSINESS**: The name of your business workspace (e.g. *code refactoring*, *test pmf*). Clicking on a business card opens its strategic planning dashboard.
+*   **STATE**: The current phase of the S.T.R.A.T.E.G.I.C. framework process (e.g. **EXECUTION**).
+*   **DATE OF CREATION**: The calendar date when the business profile was established.
+*   **STATUS**: Shows the operational state of the business (e.g., **Active** green badge, **Archived** orange badge).
+*   **# BETS**: The count of strategic projects/bets defined under that business.
+*   **# COLLABORATORS**: The count of team members assigned to collaborate on that business.
+*   **ACTION**: Contains administration utilities, such as a **Delete** button (trash can icon) to remove or clean up old profiles.
 
-## Section 2:
-
-On the right side you will see the list of all the businesses you have created in the accordion.
-
-![Business List](/academy-screenshots/getting-started/dashboard-with-created-business.png)
-*Screenshot of Traxxia Dashboard with created business list*
-  
+### **State Filters**
+At the top right of the table, you will find the **State Filter Dropdown** (e.g., `STATE: All`). This allows you to quickly filter your directory and display only businesses in specific operational states or phases.
+ 

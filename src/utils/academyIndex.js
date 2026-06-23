@@ -1,10 +1,3 @@
-/**
- * Traxxia Academy - Navigation Structure and Metadata
- * 
- * This file defines the complete navigation structure for the Academy,
- * including all categories and articles with their metadata.
- */
-
 export const academyStructure = {
     categories: [
         {
@@ -28,6 +21,14 @@ export const academyStructure = {
                     phase: 1,
                     roles: ["all"],
                     tags: ["setup", "registration"]
+                },
+                {
+                    id: "forgot-password",
+                    title: "Self-Service Password Reset",
+                    path: "01-auth-onboarding/forgot-password.md",
+                    phase: 1,
+                    roles: ["all"],
+                    tags: ["auth", "login", "password", "security"]
                 }
             ]
         },
@@ -238,6 +239,14 @@ export const academyStructure = {
                     phase: 2,
                     roles: ["all"],
                     tags: ["financial", "insights"]
+                },
+                {
+                    id: "multiple-document-upload",
+                    title: "Multiple Document Upload",
+                    path: "06-ai-questionnaire/multiple-document-upload.md",
+                    phase: 1,
+                    roles: ["all"],
+                    tags: ["ai", "upload", "ingestion", "strategy"]
                 }
             ]
         },
@@ -377,17 +386,9 @@ export const academyStructure = {
                 }
             ]
         }
-
-
-
     ]
 };
 
-/**
- * Helper function to find an article by ID
- * @param {string} articleId - The article ID to find
- * @returns {Object|null} The article object or null if not found
- */
 export const findArticleById = (articleId) => {
     for (const category of academyStructure.categories) {
         const article = category.articles.find(a => a.id === articleId);
@@ -398,21 +399,10 @@ export const findArticleById = (articleId) => {
     return null;
 };
 
-/**
- * Helper function to find a category by ID
- * @param {string} categoryId - The category ID to find
- * @returns {Object|null} The category object or null if not found
- */
 export const findCategoryById = (categoryId) => {
     return academyStructure.categories.find(c => c.id === categoryId) || null;
 };
 
-/**
- * Get breadcrumb data for an article
- * @param {string} categoryId - The category ID
- * @param {string} articleId - The article ID
- * @returns {Array} Breadcrumb array
- */
 export const getBreadcrumbs = (categoryId, articleId) => {
     const breadcrumbs = [
         { label: 'Academy', path: '/academy' }
@@ -438,24 +428,15 @@ export const getBreadcrumbs = (categoryId, articleId) => {
 
     return breadcrumbs;
 };
-/**
- * Resolves a relative or absolute Academy path to a standardized router path
- * @param {string} href - The link href (e.g. "./article.md", "../category/article.md", "/academy/cat/art")
- * @param {string} currentCategoryId - (Optional) Current category context for relative links
- * @returns {string} The resolved /academy/category/article path
- */
+
 export const resolveAcademyPath = (href, currentCategoryId = null) => {
     if (!href) return '/academy';
     if (href.startsWith('/academy/')) return href;
     if (href === '/academy' || href === 'index.md' || href === './index.md') return '/academy';
-
-    // Remove .md extension and clean up ./ prefix
     let routerPath = href.replace(/\.md$/, '');
     if (routerPath.startsWith('./')) {
         routerPath = routerPath.substring(2);
     }
-
-    // Map directory names to actual category IDs
     const categoryMap = {
         '01-auth-onboarding': 'auth-onboarding',
         '02-dashboard-business': 'dashboard-business',
@@ -473,31 +454,21 @@ export const resolveAcademyPath = (href, currentCategoryId = null) => {
     let articleId = null;
 
     if (routerPath.startsWith('../')) {
-        // Parent directory navigation (e.g. ../03-pmf-flow/pmf-foundation)
-        // parts will be ['', '03-pmf-flow', 'pmf-foundation']
         categoryId = parts[1];
         articleId = parts[2];
     } else if (parts.length === 2) {
-        // Cross-category or directory-prefixed link (e.g. 05-project-management/article)
         categoryId = parts[0];
         articleId = parts[1];
     } else {
-        // Same category link (e.g. registration-and-plans)
         articleId = parts[0];
         categoryId = currentCategoryId;
     }
-
-    // Apply category mapping
     if (categoryId && categoryMap[categoryId]) {
         categoryId = categoryMap[categoryId];
     }
-
-    // Clean up article ID (remove number prefix if present)
     if (articleId) {
         articleId = articleId.replace(/^\d+-/, '');
     }
-
-    // If we have an articleId but no categoryId, try to find it
     if (!categoryId && articleId) {
         const article = findArticleById(articleId);
         if (article) {
@@ -511,7 +482,6 @@ export const resolveAcademyPath = (href, currentCategoryId = null) => {
     } else if (categoryId) {
         return `/academy/${categoryId}`;
     } else if (articleId) {
-        // Last-ditch search
         const article = findArticleById(articleId);
         return article ? `/academy/${article.categoryId}/${article.id}` : `/academy/${articleId}`;
     }

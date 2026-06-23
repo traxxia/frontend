@@ -1,13 +1,13 @@
  ## 1. Plan Requirement
-Collaboration is strictly an **Advanced Plan** feature. The **Essential Tier** is designed for individual owner-CEOs and has **0 collaborator seats**.
+Collaboration is a feature available on specific plans. Plans without collaboration seats are designed for individual owner-CEOs and do not support adding team members.
 
 ## 2. Included Collaborator Seats
-In Phase 3, the Advanced Plan includes **3 Collaborator Invites** in its base price. This allows for a total team size of **4 users** (1 Admin + 3 Collaborators).
+The number of collaborator seats available depends on your organizational plan.
 
-> [!NOTE] For Phase 3, the ability to add more than 3 collaborator seats is not yet supported. All Advanced accounts are capped at this base team size.
+> [!NOTE] For Phase 3, the ability to add more than 3 collaborator seats is not yet supported.
 
 ## 3. Inviting Team Members
-As a Company Admin on the Advanced plan:
+As a Company Admin on a plan with collaboration:
 -   Access the **User Management** section in your Admin Panel.
 -   Create 3 collaborators.
 -   Assign them to your active businesses.
@@ -16,5 +16,5 @@ As a Company Admin on the Advanced plan:
 *Screenshot of user management page with highlighted buttons*
  
 ---
-**Why Collaboration?** Attempting to add a team member while on the Essential plan will trigger an upgrade modal, as this feature is the primary driver for turning "Insights" into "Execution."
+**Why Collaboration?** Attempting to add a team member while on a plan without sufficient seats will trigger an upgrade modal.
  

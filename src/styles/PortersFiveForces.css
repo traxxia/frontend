@@ -1,0 +1,85 @@
+/* PortersFiveForces.css */
+@import './AnalysisBase.css';
+
+.porters-container {
+  padding: 10px 20px;
+}
+
+.pff-matrix {
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+  margin-top: 20px;
+}
+
+.pff-central-force {
+  display: flex;
+  justify-content: center;
+}
+
+.pff-outer-forces {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+}
+
+.pff-force-card {
+  padding: 20px;
+  border-radius: 16px;
+  background: white;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+}
+
+.pff-force-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+}
+
+.pff-force-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 15px;
+}
+
+.pff-force-header h3 {
+  font-size: 18px;
+  font-weight: 700;
+  margin: 0;
+}
+
+.pff-intensity-badge {
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.high-intensity { background-color: #fef2f2; color: #ef4444; }
+.medium-intensity { background-color: #fffbeb; color: #f59e0b; }
+.low-intensity { background-color: #f0fdf4; color: #10b981; }
+
+.pff-force-content p {
+  font-size: 14px;
+  color: #4b5563;
+  line-height: 1.6;
+}
+
+.pff-factors-list {
+  margin-top: 15px;
+  padding: 0;
+  list-style: none;
+}
+
+.pff-factor-item {
+  font-size: 13px;
+  padding: 6px 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.pff-factor-item:last-child {
+  border-bottom: none;
+}

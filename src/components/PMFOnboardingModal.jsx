@@ -1,38 +1,34 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Modal, Form, Button, OverlayTrigger, Tooltip } from 'react-bootstrap';
+import { Modal, Form, Button, OverlayTrigger, Tooltip, Alert } from 'react-bootstrap';
 import { X, ChevronLeft, ChevronRight, Clock, HelpCircle } from 'lucide-react';
 import Select from "react-select";
 import { useTranslation } from '../hooks/useTranslation';
-import {
-  COUNTRIES,
-  INDUSTRIES_BY_CATEGORY,
-  STRATEGIC_OBJECTIVES,
-  KEY_CHALLENGES,
-  DIFFERENTIATION_OPTIONS,
-  USAGE_CONTEXT_OPTIONS,
-  TOTAL_STEPS,
-  FIELD_DESCRIPTIONS
-} from '../config/pmfOnboardingConfig';
+import { COUNTRIES, INDUSTRIES_BY_CATEGORY, STRATEGIC_OBJECTIVES, KEY_CHALLENGES, DIFFERENTIATION_OPTIONS, USAGE_CONTEXT_OPTIONS, TOTAL_STEPS, FIELD_DESCRIPTIONS } from '../config/pmfOnboardingConfig';
 import { useNavigate } from "react-router-dom";
-import { PMF_ONBOARDING_CONFIG } from "../config/pmfOnboardingConfig";
 import { AnalysisApiService } from "../services/analysisApiService";
 import '../styles/pmf-onboarding.css';
-
-const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId, onToastMessage }) => {
+import { useAuthStore } from '../store/authStore';
+import { useUIStore } from '../store/uiStore';
+const PMFOnboardingModal = ({
+  show,
+  onHide,
+  onSubmit,
+  onComplete,
+  businessId,
+  onToastMessage
+}) => {
   const navigate = useNavigate();
-  const { t } = useTranslation();
-
+  const {
+    t
+  } = useTranslation();
   const modalBodyRef = useRef(null);
   const errorRef = useRef(null);
-
-  // API Service setup
-  const ML_API_BASE_URL = process.env.REACT_APP_ML_BACKEND_URL;
-  const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
-  const getAuthToken = () => sessionStorage.getItem("token");
+  const ML_API_BASE_URL = import.meta.env.VITE_ML_BACKEND_URL;
+  const API_BASE_URL = import.meta.env.VITE_BACKEND_URL;
+  const getAuthToken = () => useAuthStore.getState().token;
   const analysisService = new AnalysisApiService(ML_API_BASE_URL, API_BASE_URL, getAuthToken);
-
   const [currentStep, setCurrentStep] = useState(1);
-  const [submissionStep, setSubmissionStep] = useState(0); // 0: initial, 1: saving, 2: generating, 3: finalizing
+  const [submissionStep, setSubmissionStep] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     companyName: '',
@@ -62,52 +58,34 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId, onToastMessage
     usageContext: ''
   });
   const [errors, setErrors] = useState({});
+  const [apiError, setApiError] = useState(null);
   const [loadingMessageIndex, setLoadingMessageIndex] = useState(0);
-
   const loadingMessages = [
-    t("Analyzing market conditions...") || "Analyzing market conditions...",
-    t("Getting business information...") || "Getting business information...",
-    t("Checking industry trends...") || "Checking industry trends...",
-    t("Identifying growth opportunities...") || "Identifying growth opportunities...",
-    t("Structuring your strategy...") || "Structuring your strategy...",
-    t("Finalizing your customized insights...") || "Finalizing your customized insights..."
+    t("loading_analyzing_market") || "Analyzing market conditions...",
+    t("loading_getting_info") || "Getting business information...",
+    t("loading_checking_trends") || "Checking industry trends...",
+    t("loading_identifying_growth") || "Identifying growth opportunities...",
+    t("loading_structuring_strategy") || "Structuring your strategy...",
+    t("loading_finalizing_customized") || "Finalizing your customized insights..."
   ];
-
   useEffect(() => {
     let interval;
     if (isSubmitting && submissionStep === 2) {
       interval = setInterval(() => {
-        setLoadingMessageIndex((prev) => (prev + 1) % loadingMessages.length);
+        setLoadingMessageIndex(prev => (prev + 1) % loadingMessages.length);
       }, 6000);
     } else {
       setLoadingMessageIndex(0);
     }
     return () => clearInterval(interval);
   }, [isSubmitting, submissionStep, loadingMessages.length]);
-
-  // Calculate progress based on 9 steps (dots)
-  // Step 1 = 0% progress, 100% to complete
-  // Step 9 = 100% progress, 0% to complete (or close to it)
-  // We use TOTAL_STEPS - 1 to handle 8 intervals between 9 dots
   let completedSteps = currentStep - 1;
-
-  // If we are on last step AND it is completed, count it
-  if (
-    currentStep === TOTAL_STEPS &&
-    formData.usageContext
-  ) {
+  if (currentStep === TOTAL_STEPS && formData.usageContext) {
     completedSteps = TOTAL_STEPS;
   }
-
-  const progressPercentage =
-    (completedSteps / TOTAL_STEPS) * 100;
-
+  const progressPercentage = completedSteps / TOTAL_STEPS * 100;
   const percentToComplete = 100 - Math.round(progressPercentage);
-  const countryOptions = COUNTRIES.map(c => ({
-    value: c,
-    label: t(c) || c
-  }));
-
+  const countryOptions = COUNTRIES;
   const industryOptions = INDUSTRIES_BY_CATEGORY.map(group => ({
     label: t(group.category) || group.category,
     options: group.industries.map(ind => ({
@@ -115,10 +93,11 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId, onToastMessage
       label: t(ind) || ind
     }))
   }));
-
-
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
+  const handleInputChange = e => {
+    const {
+      name,
+      value
+    } = e.target;
     setFormData(prev => ({
       ...prev,
       [name]: value
@@ -130,15 +109,13 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId, onToastMessage
       }));
     }
   };
-
-  const handleRadioSelect = (value) => {
+  const handleRadioSelect = value => {
     setFormData(prev => ({
       ...prev,
       strategicObjective: value,
       strategicObjectiveOther: value === 'Other' ? prev.strategicObjectiveOther : ''
     }));
   };
-
   const handleRadioChange = (field, value) => {
     setFormData(prev => ({
       ...prev,
@@ -148,11 +125,9 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId, onToastMessage
       })
     }));
   };
-
-  const handleDifferentiationChange = (option) => {
+  const handleDifferentiationChange = option => {
     setFormData(prev => {
       const alreadySelected = prev.differentiation.includes(option);
-
       if (alreadySelected) {
         return {
           ...prev,
@@ -160,51 +135,36 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId, onToastMessage
           differentiationOther: option === 'Other' ? '' : prev.differentiationOther
         };
       }
-
       if (prev.differentiation.length >= 2) {
         return prev;
       }
-
       return {
         ...prev,
         differentiation: [...prev.differentiation, option]
       };
     });
   };
-
-
   const validateStep1 = () => {
     const newErrors = {};
     const companyName = formData.companyName.trim();
-
     if (!companyName) {
-      newErrors.companyName =
-         t('company_name_required') || 'Company name is required';
+      newErrors.companyName = t('company_name_required') || 'Company name is required';
+    } else if (!/^[A-Za-z]/.test(companyName)) {
+      newErrors.companyName = t('company_name_start_letter') || 'Company name must start with a letter';
+    } else if (!/[A-Za-z]{2,}/.test(companyName)) {
+      newErrors.companyName = t('company_name_meaningful') || 'Company name must contain meaningful letters';
+    } else if (!/^[A-Za-z][A-Za-z0-9&.,()'’\- ]{1,100}$/.test(companyName)) {
+      newErrors.companyName = t('company_name_invalid_chars') || 'Company name contains invalid characters';
     }
-     else if (!/^[A-Za-z]/.test(companyName)) {
-     newErrors.companyName =
-    'Company name must start with a letter';
-    }
-     else if (!/[A-Za-z]{2,}/.test(companyName)) {
-     newErrors.companyName =
-    'Company name must contain meaningful letters';
-     }
-     else if (!/^[A-Za-z][A-Za-z0-9&.,()'’\- ]{1,100}$/.test(companyName)) {
-     newErrors.companyName =
-    'Company name contains invalid characters';
-    }
-
     if (formData.website.trim()) {
       const urlRegex = /^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([/\w .-]*)*\/?$/;
       if (!urlRegex.test(formData.website.trim())) {
         newErrors.website = t('invalid_url') || 'Please enter a valid URL';
       }
     }
-
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
-
   const validateStep2 = () => {
     const newErrors = {};
     if (!formData.country.trim()) {
@@ -219,16 +179,14 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId, onToastMessage
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
-
   const validateStep3 = () => {
     const newErrors = {};
     if (!formData.primaryIndustry.trim()) {
       newErrors.primaryIndustry = t('primary_industry_required') || 'Primary Industry is required';
     }
-
     if (formData.primaryIndustry === 'Other') {
       if (!formData.primaryIndustryOther.trim()) {
-        newErrors.primaryIndustryOther = t('Please specify');
+        newErrors.primaryIndustryOther = t('please_specify') || 'Please specify';
       } else {
         const nameRegex = /^[a-zA-Z\s]+$/;
         if (!nameRegex.test(formData.primaryIndustryOther.trim())) {
@@ -236,51 +194,41 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId, onToastMessage
         }
       }
     }
-
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
-
   const validateStep4 = () => {
     const newErrors = {};
     const nameRegex = /^[a-zA-Z\s]+$/;
-
-    if (!formData.geography1.trim()) {
+    const hasGeography = formData.geography1.trim() || formData.geography2.trim() || formData.geography3.trim();
+    if (!hasGeography) {
       newErrors.geography1 = t('geography_required') || 'At least one geography is required';
-    } else if (!nameRegex.test(formData.geography1.trim())) {
-      newErrors.geography1 = t('invalid_input_text') || 'This field can only contain letters';
+    } else {
+      if (formData.geography1.trim() && !nameRegex.test(formData.geography1.trim())) {
+        newErrors.geography1 = t('invalid_input_text') || 'This field can only contain letters';
+      }
     }
-
     if (formData.geography2.trim() && !nameRegex.test(formData.geography2.trim())) {
       newErrors.geography2 = t('invalid_input_text') || 'This field can only contain letters';
     }
-
     if (formData.geography3.trim() && !nameRegex.test(formData.geography3.trim())) {
       newErrors.geography3 = t('invalid_input_text') || 'This field can only contain letters';
     }
-
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
-
   const validateStep5 = () => {
-    // Step 5 is now optional and allows alphabets, numbers, and symbols.
-    // No specific validation required for these fields.
     setErrors({});
     return true;
   };
-
   const validateStep6 = () => {
     const newErrors = {};
-
     if (!formData.strategicObjective) {
-      newErrors.strategicObjective = t('Please select an objective');
+      newErrors.strategicObjective = t('strategic_objective_required') || 'Please select an objective';
     }
-
-    if (
-      formData.strategicObjective === 'Other') {
+    if (formData.strategicObjective === 'Other') {
       if (!formData.strategicObjectiveOther.trim()) {
-        newErrors.strategicObjectiveOther = t('Please specify');
+        newErrors.strategicObjectiveOther = t('please_specify') || 'Please specify';
       } else {
         const nameRegex = /^[a-zA-Z\s]+$/;
         if (!nameRegex.test(formData.strategicObjectiveOther.trim())) {
@@ -288,22 +236,17 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId, onToastMessage
         }
       }
     }
-
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
-
   const validateStep7 = () => {
     const newErrors = {};
-
     if (!formData.keyChallenge) {
-      newErrors.keyChallenge = t('Please select a challenge');
+      newErrors.keyChallenge = t('key_challenge_required') || 'Please select a challenge';
     }
-
-    if (
-      formData.keyChallenge === 'Other') {
+    if (formData.keyChallenge === 'Other') {
       if (!formData.keyChallengeOther.trim()) {
-        newErrors.keyChallengeOther = t('Please specify');
+        newErrors.keyChallengeOther = t('please_specify') || 'Please specify';
       } else {
         const nameRegex = /^[a-zA-Z\s]+$/;
         if (!nameRegex.test(formData.keyChallengeOther.trim())) {
@@ -311,22 +254,17 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId, onToastMessage
         }
       }
     }
-
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
-
   const validateStep8 = () => {
     const newErrors = {};
-
     if (formData.differentiation.length === 0) {
-      newErrors.differentiation = t('Select at least one option');
+      newErrors.differentiation = t('differentiation_required') || 'Select at least one option';
     }
-
-    if (
-      formData.differentiation.includes('Other')) {
+    if (formData.differentiation.includes('Other')) {
       if (!formData.differentiationOther.trim()) {
-        newErrors.differentiation = t('Please specify for Other');
+        newErrors.differentiation = t('please_specify_other') || 'Please specify for Other';
       } else {
         const nameRegex = /^[a-zA-Z\s]+$/;
         if (!nameRegex.test(formData.differentiationOther.trim())) {
@@ -334,22 +272,18 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId, onToastMessage
         }
       }
     }
-
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
-
   const validateStep9 = () => {
     const newErrors = {};
     if (!formData.usageContext) {
-      newErrors.usageContext = t('Please select one option');
+      newErrors.usageContext = t('usage_context_required') || 'Please select one option';
     }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
-
   const handleNext = () => {
-    // Validate current step before proceeding
     if (currentStep === 1) {
       if (!validateStep1()) {
         return;
@@ -371,155 +305,127 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId, onToastMessage
         return;
       }
     } else if (currentStep === 6) {
-  if (!validateStep6()) {
-    setTimeout(() => {
-      errorRef.current?.scrollIntoView({
-        behavior: "smooth",
-        block: "center"
-      });
-    }, 100);
-    return;
-  }
-} else if (currentStep === 7) {
-  if (!validateStep7()) {
-    setTimeout(() => {
-      errorRef.current?.scrollIntoView({
-        behavior: "smooth",
-        block: "center"
-      });
-    }, 100);
-    return;
-  }
-} else if (currentStep === 8) {
-  if (!validateStep8()) {
-    setTimeout(() => {
-      errorRef.current?.scrollIntoView({
-        behavior: "smooth",
-        block: "center"
-      });
-    }, 100);
-    return;
-  }
-} else if (currentStep === 9) {
+      if (!validateStep6()) {
+        setTimeout(() => {
+          errorRef.current?.scrollIntoView({
+            behavior: "smooth",
+            block: "center"
+          });
+        }, 100);
+        return;
+      }
+    } else if (currentStep === 7) {
+      if (!validateStep7()) {
+        setTimeout(() => {
+          errorRef.current?.scrollIntoView({
+            behavior: "smooth",
+            block: "center"
+          });
+        }, 100);
+        return;
+      }
+    } else if (currentStep === 8) {
+      if (!validateStep8()) {
+        setTimeout(() => {
+          errorRef.current?.scrollIntoView({
+            behavior: "smooth",
+            block: "center"
+          });
+        }, 100);
+        return;
+      }
+    } else if (currentStep === 9) {
       if (!validateStep9()) return;
     }
-
-
     if (currentStep < TOTAL_STEPS) {
       setCurrentStep(prev => prev + 1);
     } else {
       handleSubmit();
     }
   };
-
   const handleBack = () => {
     if (currentStep > 1) {
       setCurrentStep(prev => prev - 1);
     }
   };
-
-
-
   const handleSubmit = async () => {
     try {
+      setApiError(null);
       setIsSubmitting(true);
-      setSubmissionStep(1); // Saving data
-
-      // 1. Save onboarding data to our backend
+      setSubmissionStep(1);
       const dataToSave = {
         ...formData,
         primaryIndustry: formData.primaryIndustry === "Other" ? formData.primaryIndustryOther : formData.primaryIndustry
       };
-      await analysisService.savePMFOnboardingData(businessId, dataToSave);
-
-      setSubmissionStep(2); // Generating insights (The long part)
-
-      // 2. Prepare payload for ML backend in the new structured "raw" format
+      try {
+        await analysisService.savePMFOnboardingData(businessId, dataToSave);
+      } catch (error) {
+        const errorData = error.response?.data?.error || error.message || "";
+        if (!errorData.toLowerCase().includes("already started pmf")) {
+          throw error;
+        }
+        console.info("PMF Onboarding already exists, continuing with insights generation");
+      }
+      setSubmissionStep(2);
       const rawPayload = {
         company: {
           name: formData.companyName,
           website: formData.website || "N/A",
           location: {
             city: formData.city || "N/A",
-            country: formData.country,
+            country: formData.country
           },
           industry: formData.primaryIndustry === "Other" ? formData.primaryIndustryOther : formData.primaryIndustry,
           geographies: [formData.geography1, formData.geography2, formData.geography3].filter(Boolean),
           profits: {
             source: {
-              [t("Segments")]: [formData.customerSegment1, formData.customerSegment2, formData.customerSegment3].filter(Boolean),
-              [t("Products")]: [formData.productService1, formData.productService2, formData.productService3].filter(Boolean),
-              [t("Channels")]: [formData.channel1, formData.channel2, formData.channel3].filter(Boolean),
+              "Segments": [formData.customerSegment1, formData.customerSegment2, formData.customerSegment3].filter(Boolean),
+              "Products": [formData.productService1, formData.productService2, formData.productService3].filter(Boolean),
+              "Channels": [formData.channel1, formData.channel2, formData.channel3].filter(Boolean)
             }
           },
           objective: formData.strategicObjective === "Other" ? formData.strategicObjectiveOther : formData.strategicObjective,
           constraint: {
-            primary: formData.keyChallenge === "Other" ? formData.keyChallengeOther : formData.keyChallenge,
+            primary: formData.keyChallenge === "Other" ? formData.keyChallengeOther : formData.keyChallenge
           },
-          usp: [...formData.differentiation.filter(d => d !== 'Other'), formData.differentiationOther].filter(Boolean),
+          usp: [...formData.differentiation.filter(d => d !== 'Other'), formData.differentiationOther].filter(Boolean)
         }
       };
-
-      // 3 & 4. Call ML Backend APIs in parallel
-      const [insightResult, summaryResult] = await Promise.all([
-        analysisService.makeAPICall(
-          'aha-insight',
-          null, // No questionsArray needed
-          null, // No answersArray needed
-          businessId,
-          null,
-          null,
-          null,
-          formData.companyName,
-          rawPayload // Passing the structured payload
-        ),
-        analysisService.makeAPICall(
-          'executive-summary',
-          null,
-          null,
-          businessId,
-          null,
-          null,
-          null,
-          formData.companyName,
-          rawPayload
-        )
-      ]);
-
-      setSubmissionStep(3); // Finalizing
-
-      // 5. Save insights to our backend
+      const [insightResult, summaryResult] = await Promise.all([analysisService.makeAPICall('aha-insight', null, null, businessId, null, null, null, formData.companyName, rawPayload), analysisService.makeAPICall('executive-summary', null, null, businessId, null, null, null, formData.companyName, rawPayload)]);
+      setSubmissionStep(3);
       await analysisService.savePMFInsights(businessId, insightResult);
-
-      // 6. Save executive summary to our backend
       await analysisService.savePMFExecutiveSummary(businessId, summaryResult);
-
-      // 7. Fetch final PMF analysis to ensure data is updated
-      await analysisService.getPMFAnalysis(businessId);
-
+      const finalAnalysis = await analysisService.getPMFAnalysis(businessId);
+      const currentUserId = useAuthStore.getState().userId;
+      if (currentUserId && businessId) {
+        console.info(`PMF Save: Setting expectation flag for business ${businessId} and user ${currentUserId}`);
+        useUIStore.getState().setBusinessSetting(businessId, 'pmfExpectingMyData', currentUserId);
+        useUIStore.getState().setBusinessSetting(businessId, 'pmfLastSubmission', null);
+      }
       if (onSubmit) {
         onSubmit(formData);
       }
+      if (onComplete) {
+        onComplete(formData);
+      }
+      setIsSubmitting(false);
       handleClose();
     } catch (error) {
       console.error("Error during PMF onboarding submission:", error);
-      const errorMsg = t("failed_to_complete_onboarding") || "Failed to complete onboarding. Please try again.";
-      if (onToastMessage) {
-        onToastMessage(errorMsg, "error");
-      } else {
-        alert(errorMsg);
+      let backendError = error.response?.data?.error;
+      if (!backendError && error.message && error.message.includes("already started pmf")) {
+        backendError = error.message;
       }
+      const errorMsg = backendError || t("failed_to_complete_onboarding") || "Failed to complete onboarding. Please try again.";
+      setApiError(errorMsg);
     } finally {
       setIsSubmitting(false);
       setSubmissionStep(0);
     }
   };
-
-
-
   const handleClose = () => {
     if (isSubmitting) return;
-
+    setApiError(null);
     setCurrentStep(1);
     setFormData({
       companyName: '',
@@ -551,788 +457,473 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId, onToastMessage
     setErrors({});
     onHide();
   };
-
-  const renderTooltip = (fieldKey) => {
+  const renderTooltip = fieldKey => {
     const description = FIELD_DESCRIPTIONS[fieldKey];
     if (!description) return null;
-
-    return (
-      <OverlayTrigger
-        placement="right"
-        trigger={['hover', 'focus', 'click']}
-        animation={false}
-        overlay={
-          <Tooltip id={`tooltip-${fieldKey}`} className="pmf-tooltip">
-            {description}
-          </Tooltip>
-        }
-      >
-        <span className="pmf-tooltip-icon ms-2">
+    return <OverlayTrigger placement="right" trigger={['hover', 'focus', 'click']} animation={false} overlay={<Tooltip id={`tooltip-${fieldKey}`} className="pmf-tooltip">
+            {t(description)}
+          </Tooltip>}>
+        <span className="pmf-tooltip-icon ms-1">
           <HelpCircle size={16} />
         </span>
-      </OverlayTrigger>
-    );
+      </OverlayTrigger>;
   };
-
   const renderStepContent = () => {
     switch (currentStep) {
       case 1:
-        return (
-          <div className="pmf-step-content">
+        return <div className="pmf-step-content">
             <Form.Group className="mb-4">
-              <Form.Label className="pmf-form-label d-flex align-items-center">
-                <span>{t('Company client name') || 'Company / Client Name'}<span className="text-danger">*</span></span>
-                {renderTooltip('companyName')}
+              <Form.Label className="pmf-form-label d-flex align-items-start">
+                <span>
+                  {t('Company client name') || 'Company / Client Name'}<span className="text-danger">*</span>
+                  {renderTooltip('companyName')}
+                </span>
               </Form.Label>
-              <Form.Control
-                type="text"
-                name="companyName"
-                value={formData.companyName}
-                onChange={handleInputChange}
-                placeholder={t('enter company name') || 'Enter company or client name'}
-                className="pmf-form-control"
-                isInvalid={!!errors.companyName}
-                autoFocus
-              />
-              {errors.companyName && (
-                <Form.Text className="text-danger d-block mt-1">
+              <Form.Control type="text" name="companyName" value={formData.companyName} onChange={handleInputChange} placeholder={t('enter company name') || 'Enter company or client name'} className="pmf-form-control" isInvalid={!!errors.companyName} autoFocus />
+              {errors.companyName && <Form.Text className="text-danger d-block mt-1">
                   {errors.companyName}
-                </Form.Text>
-              )}
+                </Form.Text>}
             </Form.Group>
 
             <Form.Group className="mb-4">
-              <Form.Label className="pmf-form-label d-flex align-items-center">
+              <Form.Label className="pmf-form-label d-flex align-items-start">
                 <span>{t('website') || 'Website'} ({t('optional') || 'optional'})</span>
                 {renderTooltip('website')}
               </Form.Label>
-              <Form.Control
-                type="url"
-                name="website"
-                value={formData.website}
-                onChange={handleInputChange}
-                placeholder="https://example.com"
-                className="pmf-form-control"
-                isInvalid={!!errors.website}
-              />
-              {errors.website && (
-                <Form.Text className="text-danger d-block mt-1">
+              <Form.Control type="url" name="website" value={formData.website} onChange={handleInputChange} placeholder="https://example.com" className="pmf-form-control" isInvalid={!!errors.website} />
+              {errors.website && <Form.Text className="text-danger d-block mt-1">
                   {errors.website}
-                </Form.Text>
-              )}
+                </Form.Text>}
             </Form.Group>
-          </div>
-        );
+          </div>;
       case 2:
-        return (
-          <div className="pmf-step-content">
-            <h5 className="pmf-step-question mb-4 d-flex align-items-center">
-              <span>{t('where_is_business_based') || 'Where is this business primarily based?'}</span>
-              {renderTooltip('city')}
+        return <div className="pmf-step-content">
+            <h5 className="pmf-step-question mb-4 d-flex align-items-start">
+              <span>
+                {t('where_is_business_based') || 'Where is this business primarily based?'}
+                {renderTooltip('city')}
+              </span>
             </h5>
 
             <Form.Group className="mb-4">
-              <Form.Label className="pmf-form-label d-flex align-items-center">
-                <span>{t('country') || 'Country'}<span className="text-danger">*</span></span>
-                {renderTooltip('country')}
+              <Form.Label className="pmf-form-label d-flex align-items-start">
+                <span>
+                  {t('country') || 'Country'}<span className="text-danger">*</span>
+                  {renderTooltip('country')}
+                </span>
               </Form.Label>
-              <Select
-                classNamePrefix="pmf-select"
-                placeholder={t('select country') || 'Select country'}
-                options={countryOptions}
-                value={countryOptions.find(o => o.value === formData.country)}
-                onChange={(selected) => {
-                  setFormData(prev => ({
-                    ...prev,
-                    country: selected?.value || ''
-                  }));
-                  if (errors.country) {
-                    setErrors(prev => ({ ...prev, country: '' }));
-                  }
-                }}
-                menuPortalTarget={document.body}
-                styles={{
-                  menuPortal: base => ({
-                    ...base,
-                    zIndex: 9999
-                  }),
-                  menu: base => ({
-                    ...base,
-                    maxHeight: 200,
-                    overflow: "hidden"
-                  }),
-                  menuList: base => ({
-                    ...base,
-                    maxHeight: 200,
-                    padding: 0,
-                    overflowY: "auto",
-                    WebkitOverflowScrolling: "touch"
-                  }),
-                  option: (base, state) => ({
-                    ...base,
-                    padding: "10px 14px",
-                    fontSize: "14px",
-                    lineHeight: "18px",
-                    backgroundColor: state.isSelected
-                      ? "#217aff"
-                      : state.isFocused
-                        ? "#eef4ff"
-                        : "#fff",
-                    color: state.isSelected ? "#fff" : "#111",
-                    cursor: "pointer"
-                  }),
-                  control: base => ({
-                    ...base,
-                    minHeight: 44,
-                    borderRadius: 6
-                  })
-                }}
+              <Select classNamePrefix="pmf-select" placeholder={t('select country') || 'Select country'} options={countryOptions} value={countryOptions.find(o => o.label === formData.country)} onChange={selected => {
+              setFormData(prev => ({
+                ...prev,
+                country: selected?.label || ''
+              }));
+              if (errors.country) {
+                setErrors(prev => ({
+                  ...prev,
+                  country: ''
+                }));
+              }
+            }} menuPortalTarget={document.body} styles={{
+              menuPortal: base => ({
+                ...base,
+                zIndex: 9999
+              }),
+              menu: base => ({
+                ...base,
+                maxHeight: 200,
+                overflow: "hidden"
+              }),
+              menuList: base => ({
+                ...base,
+                maxHeight: 200,
+                padding: 0,
+                overflowY: "auto",
+                WebkitOverflowScrolling: "touch"
+              }),
+              option: (base, state) => ({
+                ...base,
+                padding: "10px 14px",
+                fontSize: "14px",
+                lineHeight: "18px",
+                backgroundColor: state.isSelected ? "#217aff" : state.isFocused ? "#eef4ff" : "#fff",
+                color: state.isSelected ? "#fff" : "#111",
+                cursor: "pointer"
+              }),
+              control: base => ({
+                ...base,
+                minHeight: 44,
+                borderRadius: 6
+              })
+            }} />
 
-              />
-
-              {errors.country && (
-                <Form.Text className="text-danger d-block mt-1">
+              {errors.country && <Form.Text className="text-danger d-block mt-1">
                   {errors.country}
-                </Form.Text>
-              )}
+                </Form.Text>}
             </Form.Group>
 
             <Form.Group className="mb-4">
-              <Form.Label className="pmf-form-label d-flex align-items-center">
+              <Form.Label className="pmf-form-label d-flex align-items-start">
                 <span>{t('city') || 'City'} ({t('optional') || 'optional'})</span>
                 {renderTooltip('city')}
               </Form.Label>
-              <Form.Control
-                type="text"
-                name="city"
-                value={formData.city}
-                onChange={handleInputChange}
-                placeholder={t('enter_city') || 'Enter city'}
-                className="pmf-form-control"
-                isInvalid={!!errors.city}
-              />
-              {errors.city && (
-                <Form.Text className="text-danger d-block mt-1">
+              <Form.Control type="text" name="city" value={formData.city} onChange={handleInputChange} placeholder={t('enter_city') || 'Enter city'} className="pmf-form-control" isInvalid={!!errors.city} />
+              {errors.city && <Form.Text className="text-danger d-block mt-1">
                   {errors.city}
-                </Form.Text>
-              )}
+                </Form.Text>}
             </Form.Group>
-          </div>
-        );
+          </div>;
       case 3:
-        return (
-          <div className="pmf-step-content">
+        return <div className="pmf-step-content">
             <Form.Group className="mb-4">
-              <Form.Label className="pmf-form-label d-flex align-items-center">
-                <span>{t('primary industry') || 'Primary Industry'}<span className="text-danger">*</span></span>
-                {renderTooltip('primaryIndustry')}
+              <Form.Label className="pmf-form-label d-flex align-items-start">
+                <span>
+                  {t('primary industry') || 'Primary Industry'}<span className="text-danger">*</span>
+                  {renderTooltip('primaryIndustry')}
+                </span>
               </Form.Label>
-              <Select
-                classNamePrefix="pmf-select"
-                placeholder={t('select_industry') || 'Select industry'}
-                options={industryOptions}
-                value={
-                  industryOptions
-                    .flatMap(g => g.options)
-                    .find(o => o.value === formData.primaryIndustry)
-                }
-                onChange={(selected) => {
-                  setFormData(prev => ({
-                    ...prev,
-                    primaryIndustry: selected?.value || ''
-                  }));
-                  if (errors.primaryIndustry) {
-                    setErrors(prev => ({ ...prev, primaryIndustry: '' }));
-                  }
-                }}
-                menuPortalTarget={document.body}
-                styles={{
-                  menuPortal: base => ({
-                    ...base,
-                    zIndex: 9999
-                  }),
-                  menu: base => ({
-                    ...base,
-                    maxHeight: 200,
-                    overflow: "hidden"
-                  }),
-                  menuList: base => ({
-                    ...base,
-                    maxHeight: 200,
-                    padding: 0,
-                    overflowY: "auto",
-                    WebkitOverflowScrolling: "touch"
-                  }),
-                  option: (base, state) => ({
-                    ...base,
-                    padding: "10px 14px",
-                    fontSize: "14px",
-                    lineHeight: "18px",
-                    backgroundColor: state.isSelected
-                      ? "#217aff"
-                      : state.isFocused
-                        ? "#eef4ff"
-                        : "#fff",
-                    color: state.isSelected ? "#fff" : "#111",
-                    cursor: "pointer"
-                  }),
-                  control: base => ({
-                    ...base,
-                    minHeight: 44,
-                    borderRadius: 6
-                  })
-                }}
-              />
+              <Select classNamePrefix="pmf-select" placeholder={t('select_industry') || 'Select industry'} options={industryOptions} value={industryOptions.flatMap(g => g.options).find(o => o.value === formData.primaryIndustry)} onChange={selected => {
+              setFormData(prev => ({
+                ...prev,
+                primaryIndustry: selected?.value || ''
+              }));
+              if (errors.primaryIndustry) {
+                setErrors(prev => ({
+                  ...prev,
+                  primaryIndustry: ''
+                }));
+              }
+            }} menuPortalTarget={document.body} styles={{
+              menuPortal: base => ({
+                ...base,
+                zIndex: 9999
+              }),
+              menu: base => ({
+                ...base,
+                maxHeight: 200,
+                overflow: "hidden"
+              }),
+              menuList: base => ({
+                ...base,
+                maxHeight: 200,
+                padding: 0,
+                overflowY: "auto",
+                WebkitOverflowScrolling: "touch"
+              }),
+              option: (base, state) => ({
+                ...base,
+                padding: "10px 14px",
+                fontSize: "14px",
+                lineHeight: "18px",
+                backgroundColor: state.isSelected ? "#217aff" : state.isFocused ? "#eef4ff" : "#fff",
+                color: state.isSelected ? "#fff" : "#111",
+                cursor: "pointer"
+              }),
+              control: base => ({
+                ...base,
+                minHeight: 44,
+                borderRadius: 6
+              })
+            }} />
 
-              {errors.primaryIndustry && (
-                <Form.Text className="text-danger d-block mt-1">
+              {errors.primaryIndustry && <Form.Text className="text-danger d-block mt-1">
                   {errors.primaryIndustry}
-                </Form.Text>
-              )}
+                </Form.Text>}
             </Form.Group>
 
-            {formData.primaryIndustry === 'Other' && (
-              <Form.Group className="mb-4">
+            {formData.primaryIndustry === 'Other' && <Form.Group className="mb-4">
                 <Form.Label className="pmf-form-label">
                   {t('Please specify industry') || 'Please specify industry'}<span className="text-danger">*</span>
                 </Form.Label>
-                <Form.Control
-                  type="text"
-                  name="primaryIndustryOther"
-                  value={formData.primaryIndustryOther}
-                  onChange={handleInputChange}
-                  placeholder={t('Enter industry name') || 'Enter industry name'}
-                  className="pmf-form-control"
-                  isInvalid={!!errors.primaryIndustryOther}
-                  autoFocus
-                />
-                {errors.primaryIndustryOther && (
-                  <Form.Text className="text-danger d-block mt-1">
+                <Form.Control type="text" name="primaryIndustryOther" value={formData.primaryIndustryOther} onChange={handleInputChange} placeholder={t('Enter industry name') || 'Enter industry name'} className="pmf-form-control" isInvalid={!!errors.primaryIndustryOther} autoFocus />
+                {errors.primaryIndustryOther && <Form.Text className="text-danger d-block mt-1">
                     {errors.primaryIndustryOther}
-                  </Form.Text>
-                )}
-              </Form.Group>
-            )}
-          </div>
-        );
+                  </Form.Text>}
+              </Form.Group>}
+          </div>;
       case 4:
-        return (
-          <div className="pmf-step-content">
-            <h5 className="pmf-step-question mb-3 d-flex align-items-center">
-              <span>{t('which geographies strategic answers') || 'Which geographies do you want strategic answers for?'}<span className="text-danger">*</span></span>
-              {renderTooltip('geographies')}
+        return <div className="pmf-step-content">
+            <h5 className="pmf-step-question mb-2 d-flex align-items-start">
+              <span>
+                {t('which geographies strategic answers') || 'Which geographies do you want strategic answers for?'}<span className="text-danger">*</span>
+                {renderTooltip('geographies')}
+              </span>
             </h5>
-            <p className="text-muted mb-4" style={{ fontSize: '14px' }}>
+            <p className="text-muted mb-4 p-m-f-onboarding-modal--s1">
               {t('enter up to 3 geographies') || "Enter up to 3 specific geographies (e.g., 'United States', 'LATAM', 'Southeast Asia')"}
             </p>
 
             <Form.Group className="mb-3">
-              <Form.Control
-                type="text"
-                name="geography1"
-                value={formData.geography1}
-                onChange={handleInputChange}
-                placeholder={`${t('geography') || 'Geography'} 1`}
-                className="pmf-form-control"
-                isInvalid={!!errors.geography1}
-              />
-              {errors.geography1 && (
-                <Form.Text className="text-danger d-block mt-1">
+              <Form.Control type="text" name="geography1" value={formData.geography1} onChange={handleInputChange} placeholder={t('geography_1') || "Geography 1"} className="pmf-form-control" isInvalid={!!errors.geography1} />
+              {errors.geography1 && <Form.Text className="text-danger d-block mt-1">
                   {errors.geography1}
-                </Form.Text>
-              )}
+                </Form.Text>}
             </Form.Group>
 
             <Form.Group className="mb-3">
-              <Form.Control
-                type="text"
-                name="geography2"
-                value={formData.geography2}
-                onChange={handleInputChange}
-                placeholder={`${t('geography') || 'Geography'} 2`}
-                className="pmf-form-control"
-                isInvalid={!!errors.geography2}
-              />
-              {errors.geography2 && (
-                <Form.Text className="text-danger d-block mt-1">
+              <Form.Control type="text" name="geography2" value={formData.geography2} onChange={handleInputChange} placeholder={t('geography_2') || "Geography 2"} className="pmf-form-control" isInvalid={!!errors.geography2} />
+              {errors.geography2 && <Form.Text className="text-danger d-block mt-1">
                   {errors.geography2}
-                </Form.Text>
-              )}
+                </Form.Text>}
             </Form.Group>
 
             <Form.Group className="mb-4">
-              <Form.Control
-                type="text"
-                name="geography3"
-                value={formData.geography3}
-                onChange={handleInputChange}
-                placeholder={`${t('geography') || 'Geography'} 3`}
-                className="pmf-form-control"
-                isInvalid={!!errors.geography3}
-              />
-              {errors.geography3 && (
-                <Form.Text className="text-danger d-block mt-1">
+              <Form.Control type="text" name="geography3" value={formData.geography3} onChange={handleInputChange} placeholder={t('geography_3') || "Geography 3"} className="pmf-form-control" isInvalid={!!errors.geography3} />
+              {errors.geography3 && <Form.Text className="text-danger d-block mt-1">
                   {errors.geography3}
-                </Form.Text>
-              )}
+                </Form.Text>}
             </Form.Group>
-          </div>
-        );
+          </div>;
       case 5:
-        return (
-          <div className="pmf-step-content">
-            <h5 className="pmf-step-question mb-2 d-flex align-items-center">
-              <span>{t('where does profit come from') || 'Where does most of your profit come from today?'}</span>
-              {renderTooltip('customerSegments')}
+        return <div className="pmf-step-content">
+            <h5 className="pmf-step-question mb-2 d-flex align-items-start">
+              <span>
+                {t('where does profit come from') || 'Where does most of your profit come from today?'}
+                {renderTooltip('customerSegments')}
+              </span>
             </h5>
-            <p className="text-muted mb-4" style={{ fontSize: '14px' }}>
+            <p className="text-muted mb-4 p-m-f-onboarding-modal--s1">
               {t('your best estimate enough') || 'Your best estimate is enough.'}
             </p>
 
             <div className="mb-4">
-              <Form.Label className="pmf-form-label mb-2 d-flex align-items-center">
-                <span>{t('customer segments max 3') || 'Customer segments (max 3)'}</span>
-                {renderTooltip('customerSegments')}
+              <Form.Label className="pmf-form-label mb-2 d-flex align-items-start">
+                <span>
+                  {t('customer segments max 3') || 'Customer segments (max 3)'}
+                  {renderTooltip('customerSegments')}
+                </span>
               </Form.Label>
-              <p className="text-muted mb-3" style={{ fontSize: '13px', marginTop: '-4px' }}>
+              <p className="text-muted mb-3 p-m-f-onboarding-modal--s2">
                 {t('customer segments example') || 'e.g., young adults, SMEs, enterprise'}
               </p>
 
               <Form.Group className="mb-3">
-                <Form.Control
-                  type="text"
-                  name="customerSegment1"
-                  value={formData.customerSegment1}
-                  onChange={handleInputChange}
-                  placeholder={`${t('segment') || 'Segment'} 1`}
-                  className="pmf-form-control"
-                  isInvalid={!!errors.customerSegment1}
-                />
-                {errors.customerSegment1 && (
-                  <Form.Text className="text-danger d-block mt-1">
+                <Form.Control type="text" name="customerSegment1" value={formData.customerSegment1} onChange={handleInputChange} placeholder={t('segment_1') || 'Segment 1'} className="pmf-form-control" isInvalid={!!errors.customerSegment1} />
+                {errors.customerSegment1 && <Form.Text className="text-danger d-block mt-1">
                     {errors.customerSegment1}
-                  </Form.Text>
-                )}
+                  </Form.Text>}
               </Form.Group>
 
               <Form.Group className="mb-3">
-                <Form.Control
-                  type="text"
-                  name="customerSegment2"
-                  value={formData.customerSegment2}
-                  onChange={handleInputChange}
-                  placeholder={`${t('segment') || 'Segment'} 2`}
-                  className="pmf-form-control"
-                  isInvalid={!!errors.customerSegment2}
-                />
-                {errors.customerSegment2 && (
-                  <Form.Text className="text-danger d-block mt-1">
+                <Form.Control type="text" name="customerSegment2" value={formData.customerSegment2} onChange={handleInputChange} placeholder={t('segment_2') || 'Segment 2'} className="pmf-form-control" isInvalid={!!errors.customerSegment2} />
+                {errors.customerSegment2 && <Form.Text className="text-danger d-block mt-1">
                     {errors.customerSegment2}
-                  </Form.Text>
-                )}
+                  </Form.Text>}
               </Form.Group>
 
               <Form.Group className="mb-4">
-                <Form.Control
-                  type="text"
-                  name="customerSegment3"
-                  value={formData.customerSegment3}
-                  onChange={handleInputChange}
-                  placeholder={`${t('segment') || 'Segment'} 3`}
-                  className="pmf-form-control"
-                  isInvalid={!!errors.customerSegment3}
-                />
-                {errors.customerSegment3 && (
-                  <Form.Text className="text-danger d-block mt-1">
+                <Form.Control type="text" name="customerSegment3" value={formData.customerSegment3} onChange={handleInputChange} placeholder={t('segment_3') || 'Segment 3'} className="pmf-form-control" isInvalid={!!errors.customerSegment3} />
+                {errors.customerSegment3 && <Form.Text className="text-danger d-block mt-1">
                     {errors.customerSegment3}
-                  </Form.Text>
-                )}
+                  </Form.Text>}
               </Form.Group>
             </div>
 
             <div className="mb-4">
-              <Form.Label className="pmf-form-label mb-2 d-flex align-items-center">
-                <span>{t('products services max 3') || 'Products / services (max 3)'}</span>
-                {renderTooltip('productServices')}
+              <Form.Label className="pmf-form-label mb-2 d-flex align-items-start">
+                <span>
+                  {t('products services max 3') || 'Products / services (max 3)'}
+                  {renderTooltip('productServices')}
+                </span>
               </Form.Label>
-              <p className="text-muted mb-3" style={{ fontSize: '13px', marginTop: '-4px' }}>
+              <p className="text-muted mb-3 p-m-f-onboarding-modal--s2">
                 {t('products services example') || 'e.g., ice cream, M&A advisory'}
               </p>
 
               <Form.Group className="mb-3">
-                <Form.Control
-                  type="text"
-                  name="productService1"
-                  value={formData.productService1}
-                  onChange={handleInputChange}
-                  placeholder={(t('product service') || 'Product/Service') + ' 1'}
-                  className="pmf-form-control"
-                  isInvalid={!!errors.productService1}
-                />
-                {errors.productService1 && (
-                  <Form.Text className="text-danger d-block mt-1">
+                <Form.Control type="text" name="productService1" value={formData.productService1} onChange={handleInputChange} placeholder={t('product_service_1') || 'Product/Service 1'} className="pmf-form-control" isInvalid={!!errors.productService1} />
+                {errors.productService1 && <Form.Text className="text-danger d-block mt-1">
                     {errors.productService1}
-                  </Form.Text>
-                )}
+                  </Form.Text>}
               </Form.Group>
 
               <Form.Group className="mb-3">
-                <Form.Control
-                  type="text"
-                  name="productService2"
-                  value={formData.productService2}
-                  onChange={handleInputChange}
-                  placeholder={`${t('product service') || 'Product/Service'} 2`}
-                  className="pmf-form-control"
-                  isInvalid={!!errors.productService2}
-                />
-                {errors.productService2 && (
-                  <Form.Text className="text-danger d-block mt-1">
+                <Form.Control type="text" name="productService2" value={formData.productService2} onChange={handleInputChange} placeholder={t('product_service_2') || 'Product/Service 2'} className="pmf-form-control" isInvalid={!!errors.productService2} />
+                {errors.productService2 && <Form.Text className="text-danger d-block mt-1">
                     {errors.productService2}
-                  </Form.Text>
-                )}
+                  </Form.Text>}
               </Form.Group>
 
               <Form.Group className="mb-4">
-                <Form.Control
-                  type="text"
-                  name="productService3"
-                  value={formData.productService3}
-                  onChange={handleInputChange}
-                  placeholder={`${t('product service') || 'Product/Service'} 3`}
-                  className="pmf-form-control"
-                  isInvalid={!!errors.productService3}
-                />
-                {errors.productService3 && (
-                  <Form.Text className="text-danger d-block mt-1">
+                <Form.Control type="text" name="productService3" value={formData.productService3} onChange={handleInputChange} placeholder={t('product_service_3') || 'Product/Service 3'} className="pmf-form-control" isInvalid={!!errors.productService3} />
+                {errors.productService3 && <Form.Text className="text-danger d-block mt-1">
                     {errors.productService3}
-                  </Form.Text>
-                )}
+                  </Form.Text>}
               </Form.Group>
             </div>
 
             <div className="mb-4">
-              <Form.Label className="pmf-form-label mb-2 d-flex align-items-center">
+              <Form.Label className="pmf-form-label mb-2 d-flex align-items-start">
                 <span>{t('channels max 3') || 'Channels (max 3)'}</span>
                 {renderTooltip('channels')}
               </Form.Label>
-              <p className="text-muted mb-3" style={{ fontSize: '13px', marginTop: '-4px' }}>
+              <p className="text-muted mb-3 p-m-f-onboarding-modal--s2">
                 {t('channels example') || 'e.g., convenience stores, direct sales'}
               </p>
 
               <Form.Group className="mb-3">
-                <Form.Control
-                  type="text"
-                  name="channel1"
-                  value={formData.channel1}
-                  onChange={handleInputChange}
-                  placeholder={t("Channel 1")}
-                  className="pmf-form-control"
-                  isInvalid={!!errors.channel1}
-                />
-                {errors.channel1 && (
-                  <Form.Text className="text-danger d-block mt-1">
+                <Form.Control type="text" name="channel1" value={formData.channel1} onChange={handleInputChange} placeholder={t("channel_1") || "Channel 1"} className="pmf-form-control" isInvalid={!!errors.channel1} />
+                {errors.channel1 && <Form.Text className="text-danger d-block mt-1">
                     {errors.channel1}
-                  </Form.Text>
-                )}
+                  </Form.Text>}
               </Form.Group>
 
               <Form.Group className="mb-3">
-                <Form.Control
-                  type="text"
-                  name="channel2"
-                  value={formData.channel2}
-                  onChange={handleInputChange}
-                  placeholder={t("Channel 2")}
-                  className="pmf-form-control"
-                  isInvalid={!!errors.channel2}
-                />
-                {errors.channel2 && (
-                  <Form.Text className="text-danger d-block mt-1">
+                <Form.Control type="text" name="channel2" value={formData.channel2} onChange={handleInputChange} placeholder={t("channel_2") || "Channel 2"} className="pmf-form-control" isInvalid={!!errors.channel2} />
+                {errors.channel2 && <Form.Text className="text-danger d-block mt-1">
                     {errors.channel2}
-                  </Form.Text>
-                )}
+                  </Form.Text>}
               </Form.Group>
 
               <Form.Group className="mb-4">
-                <Form.Control
-                  type="text"
-                  name="channel3"
-                  value={formData.channel3}
-                  onChange={handleInputChange}
-                  placeholder={t("Channel 3")}
-                  className="pmf-form-control"
-                  isInvalid={!!errors.channel3}
-                />
-                {errors.channel3 && (
-                  <Form.Text className="text-danger d-block mt-1">
+                <Form.Control type="text" name="channel3" value={formData.channel3} onChange={handleInputChange} placeholder={t("channel_3") || "Channel 3"} className="pmf-form-control" isInvalid={!!errors.channel3} />
+                {errors.channel3 && <Form.Text className="text-danger d-block mt-1">
                     {errors.channel3}
-                  </Form.Text>
-                )}
+                  </Form.Text>}
               </Form.Group>
             </div>
 
-          </div>
-        );
+          </div>;
       case 6:
-        return (
-          <div className="pmf-step-content">
-            <h5 className="pmf-step-question mb-4 d-flex align-items-center">
-              <span>{t('strategic objective') || 'Strategic Objective'}</span>
-              {renderTooltip('strategicObjective')}
+        return <div className="pmf-step-content">
+            <h5 className="pmf-step-question mb-4 d-flex align-items-start">
+              <span>
+                {t('strategic objective') || 'Strategic Objective'}
+                {renderTooltip('strategicObjective')}
+              </span>
             </h5>
 
-            {STRATEGIC_OBJECTIVES.map((option) => (
-              <div
-                key={option}
-                className={`pmf-radio-card ${formData.strategicObjective === option ? 'selected' : ''
-                  }`}
-                onClick={() => handleRadioSelect(option)}
-              >
-                <Form.Check
-                  type="radio"
-                  id={`strategic-objective-${option.replace(/\s+/g, '-').toLowerCase()}`}
-                  name="strategicObjective"
-                  checked={formData.strategicObjective === option}
-                  onChange={() => handleRadioSelect(option)}
-                  label={
-                    <span className="pmf-radio-label">
+            {STRATEGIC_OBJECTIVES.map(option => <div key={option} className={`pmf-radio-card ${formData.strategicObjective === option ? 'selected' : ''}`} onClick={() => handleRadioSelect(option)}>
+                <Form.Check type="radio" id={`strategic-objective-${option.replace(/\s+/g, '-').toLowerCase()}`} name="strategicObjective" checked={formData.strategicObjective === option} onChange={() => handleRadioSelect(option)} label={<span className="pmf-radio-label">
                       {t(option)}
-                    </span>
-                  }
-                />
-              </div>
-            ))}
+                    </span>} />
+              </div>)}
 
-            {formData.strategicObjective === 'Other' && (
-              <Form.Group className="mt-3">
-                <Form.Control
-                  type="text"
-                  placeholder={t("Please specify")}
-                  value={formData.strategicObjectiveOther}
-                  onChange={(e) =>
-                    setFormData(prev => ({
-                      ...prev,
-                      strategicObjectiveOther: e.target.value
-                    }))
-                  }
-                  className="pmf-form-control"
-                  isInvalid={!!errors.strategicObjectiveOther}
-                />
-                {errors.strategicObjectiveOther && (
-                  <Form.Text className="text-danger">
+            {formData.strategicObjective === 'Other' && <Form.Group className="mt-3">
+                <Form.Control type="text" placeholder={t("please_specify") || "Please specify"} value={formData.strategicObjectiveOther} onChange={e => setFormData(prev => ({
+              ...prev,
+              strategicObjectiveOther: e.target.value
+            }))} className="pmf-form-control" isInvalid={!!errors.strategicObjectiveOther} />
+                {errors.strategicObjectiveOther && <Form.Text className="text-danger">
                     {errors.strategicObjectiveOther}
-                  </Form.Text>
-                )}
-              </Form.Group>
-            )}
+                  </Form.Text>}
+              </Form.Group>}
 
-            {errors.strategicObjective && (
-  <div ref={errorRef} className="text-danger mt-2">
-    {errors.strategicObjective}
-  </div>
-)}
-          </div>
-        );
+            {errors.strategicObjective && <div ref={errorRef} className="text-danger mt-2">
+                {errors.strategicObjective}
+              </div>}
+          </div>;
       case 7:
-        return (
-          <div className="pmf-step-content">
-            <h5 className="pmf-step-question mb-4 d-flex align-items-center">
-              <span>{t("Key challenges / constraints")}</span>
-              {renderTooltip('keyChallenges')}
+        return <div className="pmf-step-content">
+            <h5 className="pmf-step-question mb-4 d-flex align-items-start">
+              <span>
+                {t("Key challenges / constraints")}
+                {renderTooltip('keyChallenges')}
+              </span>
             </h5>
 
-            {KEY_CHALLENGES.map(option => (
-              <div
-                key={option}
-                className={`pmf-radio-card ${formData.keyChallenge === option ? 'selected' : ''
-                  }`}
-                onClick={() => handleRadioChange('keyChallenge', option)}
-              >
-                <Form.Check
-                  type="radio"
-                  id={`key-challenge-${option.replace(/\s+/g, '-').toLowerCase()}`}
-                  name="keyChallenge"
-                  label={
-                    <span className="pmf-radio-label">{t(option)} </span>
-                  }
-                  checked={formData.keyChallenge === option}
-                  onChange={() => handleRadioChange('keyChallenge', option)}
-                />
-              </div>
-            ))}
+            {KEY_CHALLENGES.map(option => <div key={option} className={`pmf-radio-card ${formData.keyChallenge === option ? 'selected' : ''}`} onClick={() => handleRadioChange('keyChallenge', option)}>
+                <Form.Check type="radio" id={`key-challenge-${option.replace(/\s+/g, '-').toLowerCase()}`} name="keyChallenge" label={<span className="pmf-radio-label">{t(option)} </span>} checked={formData.keyChallenge === option} onChange={() => handleRadioChange('keyChallenge', option)} />
+              </div>)}
 
-            {formData.keyChallenge === 'Other' && (
-              <Form.Group className="mt-3">
-                <Form.Control
-                  type="text"
-                  placeholder={t("Please specify")}
-                  value={formData.keyChallengeOther}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    setFormData(prev => ({
-                      ...prev,
-                      keyChallengeOther: val
-                    }));
-                    if (errors.keyChallengeOther) {
-                      setErrors(prev => ({ ...prev, keyChallengeOther: '' }));
-                    }
-                  }}
-                  isInvalid={!!errors.keyChallengeOther}
-                />
+            {formData.keyChallenge === 'Other' && <Form.Group className="mt-3">
+                <Form.Control type="text" placeholder={t("please_specify") || "Please specify"} value={formData.keyChallengeOther} onChange={e => {
+              const val = e.target.value;
+              setFormData(prev => ({
+                ...prev,
+                keyChallengeOther: val
+              }));
+              if (errors.keyChallengeOther) {
+                setErrors(prev => ({
+                  ...prev,
+                  keyChallengeOther: ''
+                }));
+              }
+            }} isInvalid={!!errors.keyChallengeOther} />
                 <Form.Text className="text-danger">
                   {errors.keyChallengeOther}
                 </Form.Text>
-              </Form.Group>
-            )}
+              </Form.Group>}
 
-            {errors.keyChallenge && (
-  <div ref={errorRef} className="text-danger mt-2">
-    {errors.keyChallenge}
-  </div>
-)}
-          </div>
-        );
+            {errors.keyChallenge && <div ref={errorRef} className="text-danger mt-2">
+                {errors.keyChallenge}
+              </div>}
+          </div>;
       case 8:
-        return (
-          <div className="pmf-step-content">
-            <h5 className="pmf-step-question mb-2 d-flex align-items-center">
-              <span>{t("Today, you primarily differentiate through")}:</span>
-              {renderTooltip('differentiation')}
+        return <div className="pmf-step-content">
+            <h5 className="pmf-step-question mb-2 d-flex align-items-start">
+              <span>
+                {t("Today, you primarily differentiate through")}:
+                {renderTooltip('differentiation')}
+              </span>
             </h5>
 
-            <p className="text-muted mb-4" style={{ fontSize: '14px' }}>
+            <p className="text-muted mb-4 p-m-f-onboarding-modal--s1">
               {t("Select up to")} 2
             </p>
 
-            {DIFFERENTIATION_OPTIONS.map(option => (
-              <div
-                key={option}
-                className={`pmf-checkbox-card ${formData.differentiation.includes(option) ? 'selected' : ''
-                  }`}
-                onClick={() => handleDifferentiationChange(option)}
-              >
-                <Form.Check
-                  type="checkbox"
-                  id={`differentiation-${option.replace(/\s+/g, '-').toLowerCase()}`}
-                  label={t(option)}
-                  checked={formData.differentiation.includes(option)}
-                  onChange={() => { }} // Controlled by card onClick
-                  className="pmf-checkbox-input"
-                />
+            {DIFFERENTIATION_OPTIONS.map(option => <div key={option} className={`pmf-checkbox-card ${formData.differentiation.includes(option) ? 'selected' : ''}`} onClick={() => handleDifferentiationChange(option)}>
+                <Form.Check type="checkbox" id={`differentiation-${option.replace(/\s+/g, '-').toLowerCase()}`} label={t(option)} checked={formData.differentiation.includes(option)} onChange={() => {}} className="pmf-checkbox-input" />
 
-                {option === 'Other' &&
-                  formData.differentiation.includes('Other') && (
-                    <Form.Control
-                      type="text"
-                      placeholder={t("Please specify")}
-                      value={formData.differentiationOther}
-                      onClick={(e) => e.stopPropagation()} // Prevent card deselect
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        setFormData(prev => ({
-                          ...prev,
-                          differentiationOther: val
-                        }));
-                        if (errors.differentiation) {
-                          setErrors(prev => ({ ...prev, differentiation: '' }));
-                        }
-                      }}
-                      className="pmf-form-control mt-3"
-                      isInvalid={!!errors.differentiationOther}
-                    />
-                  )}
-              </div>
-            ))}
+                {option === 'Other' && formData.differentiation.includes('Other') && <Form.Control type="text" placeholder={t("please_specify") || "Please specify"} value={formData.differentiationOther} onClick={e => e.stopPropagation()} onChange={e => {
+              const val = e.target.value;
+              setFormData(prev => ({
+                ...prev,
+                differentiationOther: val
+              }));
+              if (errors.differentiation) {
+                setErrors(prev => ({
+                  ...prev,
+                  differentiation: ''
+                }));
+              }
+            }} className="pmf-form-control mt-3" isInvalid={!!errors.differentiationOther} />}
+              </div>)}
 
-            {errors.differentiation && (
-  <div ref={errorRef} className="text-danger mt-2">
-    {errors.differentiation}
-  </div>
-)}
-          </div>
-        );
-
+            {errors.differentiation && <div ref={errorRef} className="text-danger mt-2">
+                {errors.differentiation}
+              </div>}
+          </div>;
       case 9:
-        return (
-          <div className="pmf-step-content">
-            <h5 className="pmf-step-question mb-4 d-flex align-items-center">
-              <span>{t("Usage Context")}</span>
-              {renderTooltip('usageContext')}
+        return <div className="pmf-step-content">
+            <h5 className="pmf-step-question mb-4 d-flex align-items-start">
+              <span>
+                {t("Usage Context")}
+                {renderTooltip('usageContext')}
+              </span>
             </h5>
 
-            {USAGE_CONTEXT_OPTIONS.map(option => (
-              <div
-                key={option}
-                className={`pmf-radio-card ${formData.usageContext === option ? 'selected' : ''
-                  }`}
-                style={{
-                  pointerEvents: isSubmitting ? 'none' : 'auto',
-                  opacity: isSubmitting ? 0.7 : 1
-                }}
-                onClick={() =>
-                  !isSubmitting && setFormData(prev => ({
-                    ...prev,
-                    usageContext: option
-                  }))
-                }
-              >
-                <Form.Check
-                  type="radio"
-                  id={`usage-context-${option.replace(/\s+/g, '-').toLowerCase()}`}
-                  name="usageContext"
-                  label={t(option)}
-                  checked={formData.usageContext === option}
-                  disabled={isSubmitting}
-                  onChange={() =>
-                    !isSubmitting && setFormData(prev => ({
-                      ...prev,
-                      usageContext: option
-                    }))
-                  }
-                />
-              </div>
-            ))}
-          </div>
-        );
-
+            {USAGE_CONTEXT_OPTIONS.map(option => <div key={option} className={`pmf-radio-card ${formData.usageContext === option ? 'selected' : ''}`} style={{
+            pointerEvents: isSubmitting ? 'none' : 'auto',
+            opacity: isSubmitting ? 0.7 : 1
+          }} onClick={() => !isSubmitting && setFormData(prev => ({
+            ...prev,
+            usageContext: option
+          }))}>
+                <Form.Check type="radio" id={`usage-context-${option.replace(/\s+/g, '-').toLowerCase()}`} name="usageContext" label={t(option)} checked={formData.usageContext === option} disabled={isSubmitting} onChange={() => !isSubmitting && setFormData(prev => ({
+              ...prev,
+              usageContext: option
+            }))} />
+              </div>)}
+          </div>;
       default:
-        return (
-          <div className="pmf-step-content">
+        return <div className="pmf-step-content">
             <p>Step {currentStep} content - To be implemented</p>
-          </div>
-        );
+          </div>;
     }
   };
-
   useEffect(() => {
     if (modalBodyRef.current) {
       modalBodyRef.current.scrollTop = 0;
     }
   }, [currentStep]);
-
-  return (
-    <Modal
-      show={show}
-      onHide={handleClose}
-      centered
-      size="lg"
-      backdrop="static"
-      className="pmf-onboarding-modal"
-    >
+  return <Modal show={show} onHide={handleClose} centered size="lg" backdrop="static" className="pmf-onboarding-modal">
       <Modal.Header className="pmf-modal-header">
         <div className="pmf-header-content">
           <Modal.Title className="pmf-modal-title">
             {t('Pmf Onboarding') || 'PMF Onboarding'} - {t('step') || 'Step'} {currentStep} {t('of') || 'of'} {TOTAL_STEPS}
           </Modal.Title>
         </div>
-        <button
-          type="button"
-          className="pmf-close-button"
-          onClick={handleClose}
-          aria-label="Close"
-          disabled={isSubmitting}
-        >
+        <button type="button" className="pmf-close-button" onClick={handleClose} aria-label="Close" disabled={isSubmitting}>
           <X size={20} />
         </button>
       </Modal.Header>
@@ -1344,79 +935,55 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId, onToastMessage
             <span className="pmf-progress-percent-simple">{Math.round(progressPercentage)}%</span>
           </div>
           <div className="pmf-progress-bar-simple">
-            <div
-              className="pmf-progress-fill-simple"
-              style={{ width: `${progressPercentage}%` }}
-            />
+            <div className="pmf-progress-fill-simple" style={{
+            width: `${progressPercentage}%`
+          }} />
           </div>
         </div>
 
+        {apiError && <Alert variant="danger" onClose={() => setApiError(null)} dismissible className="mt-3 mb-4">
+                {apiError}
+            </Alert>}
+
         {renderStepContent()}
-        {isSubmitting && (
-          <div className="pmf-modal-overlay-minimal">
+        {isSubmitting && <div className="pmf-modal-overlay-minimal">
             <div className="pmf-loader-minimal">
               <div className="spinner-border text-primary mb-3" role="status" />
               <div className="pmf-loader-text">
-                {submissionStep === 1 && "Saving your data..."}
-                {submissionStep === 2 && "Analyzing market (60–90s)..."}
-                {submissionStep === 3 && "Finalizing insights..."}
+                {submissionStep === 1 && (t("saving_your_data") || "Saving your data...")}
+                {submissionStep === 2 && (t("analyzing_market_60_90s") || "Analyzing market (60–90s)...")}
+                {submissionStep === 3 && (t("finalizing_insights") || "Finalizing insights...")}
               </div>
               <small className="text-muted">
-                Please wait while we generate insights
+                {t("wait_generate_insights") || "Please wait while we generate insights"}
               </small>
             </div>
-          </div>
-        )}
+          </div>}
       </Modal.Body>
-
 
       <Modal.Footer className="pmf-modal-footer">
 
-
-        {currentStep > 1 && (
-          <Button
-            variant="outline-secondary"
-            onClick={handleBack}
-            disabled={isSubmitting}
-            className="pmf-back-button"
-          >
+        {currentStep > 1 && <Button variant="outline-secondary" onClick={handleBack} disabled={isSubmitting} className="pmf-back-button">
             <ChevronLeft size={18} className="me-1" />
             {t('back') || 'Back'}
-          </Button>
-        )}
+          </Button>}
 
-        <Button
-          variant="primary"
-          onClick={handleNext}
-          className="pmf-next-button"
-          disabled={isSubmitting}
-        >
-          {isSubmitting ? (
-            <div className="d-flex flex-column align-items-center" style={{ minWidth: "160px" }}>
-              <div className="d-flex align-items-center mb-1 text-center">
+        <Button variant="primary" onClick={handleNext} className="pmf-next-button" disabled={isSubmitting}>
+          {isSubmitting ? <div className="d-flex flex-column align-items-start p-m-f-onboarding-modal--s3">
+              <div className="d-flex align-items-start mb-1 text-center">
                 <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                <span style={{ fontSize: "14px" }}>
-                  {submissionStep === 1 && (t("Saving data...") || "Saving data...")}
+                <span className="p-m-f-onboarding-modal--s1">
+                  {submissionStep === 1 && (t("saving_your_data") || "Saving data...")}
                   {submissionStep === 2 && loadingMessages[loadingMessageIndex]}
-                  {submissionStep === 3 && (t("Finalizing...") || "Finalizing...")}
+                  {submissionStep === 3 && (t("finalizing_insights") || "Finalizing...")}
                 </span>
               </div>
-            </div>
-          ) : (
-            <>
-              {currentStep === TOTAL_STEPS
-                ? t('finish')
-                : t('next')}
-              {currentStep < TOTAL_STEPS && (
-                <ChevronRight size={18} className="ms-1" />
-              )}
-            </>
-          )}
+            </div> : <>
+              {currentStep === TOTAL_STEPS ? t('finish') : t('next')}
+              {currentStep < TOTAL_STEPS && <ChevronRight size={18} className="ms-1" />}
+            </>}
         </Button>
       </Modal.Footer>
-    </Modal>
-  );
-
+    </Modal>;
 };
-
 export default PMFOnboardingModal;

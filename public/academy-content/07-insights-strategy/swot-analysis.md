@@ -36,5 +36,5 @@ Once generated, use the following strategies to turn insights into action:
 - **ST Strategies (Strength-Threat)**: Use your strengths to defend against external threats.
 - **WT Strategies (Weakness-Threat)**: Minimize weaknesses to avoid external threats.
 
-> [!TIP] On the **Essential Plan**, you can generate unlimited initiatives based on your SWOT findings to iterate on your strategy.
+> [!TIP] On most plans, you can generate unlimited initiatives based on your SWOT findings to iterate on your strategy.
  

@@ -1,155 +1,102 @@
-import { useState, useCallback } from "react";
-import axios from "axios";
+import { useCallback } from "react";
+import { useProjectStore, useAuthStore } from "../store";
 
 export const useAccessControl = (selectedBusinessId) => {
-  const [userHasRerankAccess, setUserHasRerankAccess] = useState(false);
-  const [userHasProjectEditAccess, setUserHasProjectEditAccess] = useState({});
+  const accessControl = useProjectStore(state => state.accessControl);
+  const userLimits = useAuthStore(state => state.userLimits) || { project: true };
+  const checkAllAccessStable = useCallback(
+    (bizId) => useProjectStore.getState().checkAllAccess(bizId),
+    []
+  );
 
-  // Check access for business level only
   const checkBusinessAccess = useCallback(async () => {
-    try {
-      const token = sessionStorage.getItem("token");
-      const params = {
-        business_id: selectedBusinessId,
-      };
+    return await checkAllAccessStable(selectedBusinessId);
+  }, [selectedBusinessId, checkAllAccessStable]);
 
-      const res = await axios.get(
-        `${process.env.REACT_APP_BACKEND_URL}/api/projects/check-access`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-          params,
-        }
-      );
-
-      setUserHasRerankAccess(res.data.has_rerank_access);
-
-      return res.data;
-    } catch (err) {
-      console.error("Failed to check business access:", err);
-      return {
-        has_rerank_access: false,
-      };
-    }
-  }, [selectedBusinessId]);
-
-  // Batch check access for multiple launched projects at once
   const checkProjectsAccess = useCallback(
     async (projectIds) => {
-      if (!projectIds || projectIds.length === 0) return;
-
-      try {
-        const token = sessionStorage.getItem("token");
-
-        // Make parallel requests for all projects
-        const requests = projectIds.map((projectId) =>
-          axios.get(
-            `${process.env.REACT_APP_BACKEND_URL}/api/projects/check-access`,
-            {
-              headers: { Authorization: `Bearer ${token}` },
-              params: {
-                business_id: selectedBusinessId,
-                project_id: String(projectId),
-              },
-            }
-          )
-        );
-
-        const responses = await Promise.all(requests);
-
-        // Update state with all results at once
-        const accessMap = {};
-        responses.forEach((res, index) => {
-          accessMap[String(projectIds[index])] = res.data.has_project_edit_access;
-        });
-
-        setUserHasProjectEditAccess(accessMap);
-
-        return accessMap;
-      } catch (err) {
-        console.error("Failed to batch check projects access:", err);
-        return {};
-      }
+      const data = await checkAllAccessStable(selectedBusinessId);
+      return data?.projects_edit_access || {};
     },
-    [selectedBusinessId]
+    [selectedBusinessId, checkAllAccessStable]
   );
 
   const canEditProject = useCallback(
     (project, isEditor, myUserId, businessStatus, isArchived) => {
-      // PROMPT: Essential users cannot edit projects (Downgrade Protocol)
-      const userPlan = sessionStorage.getItem("userPlan");
-      if (userPlan === 'essential' || isArchived) return false;
-
+      const limits = userLimits;
+      if (!limits.project || isArchived) return false;
       if (!project) return false;
 
-      // Explicit check: if project is active or launched, only allow if backend says true (which is only for admins)
-      const isProjectLaunched = project.launch_status?.toLowerCase() === 'launched' || project.status?.toLowerCase() === 'launched';
-      const isProjectActive = project.status?.toLowerCase() === 'active';
-
-      if (isProjectActive || isProjectLaunched) {
-         return userHasProjectEditAccess[project._id] === true;
+      const status = project.status?.toLowerCase();
+      if (['completed', 'scaled', 'killed'].includes(status)) return false;
+      const pid = String(project._id || project.id || "");
+      if (pid && accessControl.projectsEditAccess && Object.prototype.hasOwnProperty.call(accessControl.projectsEditAccess, pid)) {
+        return accessControl.projectsEditAccess[pid] === true;
       }
 
-      // Admins and Collaborators can always edit if project is Draft or business is not launched
+      const isProjectLaunched =
+        project.launch_status?.toLowerCase() === 'launched' ||
+        project.launch_status?.toLowerCase() === 'pending_launch' ||
+        project.status?.toLowerCase() === 'launched';
+
+      const isProjectActive = project.status?.toLowerCase() === 'active';
+
+      if (businessStatus === "launched" || isProjectLaunched || isProjectActive) {
+        return false;
+      }
+
       const isProjectDraft = !project.status || project.status.toLowerCase() === 'draft';
       if (isEditor && (businessStatus !== "launched" || isProjectDraft)) return true;
 
-      // For reprioritizing projects
       if (businessStatus === "reprioritizing") {
         if (isEditor) return true;
-
-        if (
-          Array.isArray(project.allowed_collaborators) &&
-          project.allowed_collaborators.includes(myUserId)
-        ) {
+        if (Array.isArray(project.allowed_collaborators) && project.allowed_collaborators.includes(myUserId)) {
           return true;
         }
-      }
-      // For launched projects, check if user has been granted access
-      if (businessStatus === "launched") {
-        return userHasProjectEditAccess[project._id] === true;
       }
 
       return false;
     },
-    [userHasProjectEditAccess]
+    [accessControl.projectsEditAccess, userLimits]
   );
 
   const isReadOnlyMode = useCallback((isArchived) => {
-    const userPlan = sessionStorage.getItem("userPlan");
-    return userPlan === 'essential' || isArchived;
-  }, []);
+    return !userLimits.project || isArchived;
+  }, [userLimits.project]);
 
   const checkAllAccess = useCallback(async () => {
-    try {
-      const token = sessionStorage.getItem("token");
-      const res = await axios.get(
-        `${process.env.REACT_APP_BACKEND_URL}/api/projects/check-all-access`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-          params: { business_id: selectedBusinessId },
-        }
-      );
+    return await checkAllAccessStable(selectedBusinessId);
+  }, [selectedBusinessId, checkAllAccessStable]);
 
-      setUserHasRerankAccess(res.data.has_rerank_access);
-      setUserHasProjectEditAccess(res.data.projects_edit_access || {});
+  const canReviewProject = useCallback(
+    (project, isAdmin, myUserId, isArchived) => {
+      if (isArchived) return false;
+      if (!project) return false;
 
-      return res.data;
-    } catch (err) {
-      console.error("Failed to check all access:", err);
-      return {
-        has_rerank_access: false,
-        projects_edit_access: {},
-      };
-    }
-  }, [selectedBusinessId]);
+      const status = project.status?.toLowerCase();
+      if (['completed', 'scaled', 'killed'].includes(status)) return false;
+
+      const isProjectLaunched =
+        project.launch_status?.toLowerCase() === 'launched' ||
+        project.status?.toLowerCase() === 'launched' ||
+        project.status?.toLowerCase() === 'active';
+      if (!isProjectLaunched) return false;
+
+      const isOwner = project.accountable_owner_id && project.accountable_owner_id.toString() === myUserId;
+      return isOwner === true;
+    },
+    []
+  );
 
   return {
-    userHasRerankAccess,
-    userHasProjectEditAccess,
+    userHasRerankAccess: accessControl.hasRerankAccess,
+    userHasRankingAccess: accessControl.hasRankingAccess,
+    userHasProjectEditAccess: accessControl.projectsEditAccess,
     checkBusinessAccess,
     checkProjectsAccess,
     checkAllAccess,
     canEditProject,
+    canReviewProject,
     isReadOnlyMode,
   };
 };

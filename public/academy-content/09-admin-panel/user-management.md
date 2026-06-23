@@ -41,7 +41,7 @@ Available roles include:
 - Viewer
 - User
 
-![Change Role Menu](/academy-screenshots/admin-panel/change-role.png)
+![Change Role Menu](/academy-screenshots/admin-panel/change-role1.png)
  
 
 ## Confirming Role Changes

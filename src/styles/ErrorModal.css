@@ -1,5 +1,3 @@
-/* ErrorModal.css - Styled to match success popup */
-
 .error-modal-overlay {
     position: fixed !important;
     top: 0 !important;
@@ -117,7 +115,6 @@
     }
 }
 
-/* Dark Mode Support */
 [data-theme="dark"] .error-modal-container {
     background: #1c1c1e !important;
 }

@@ -1,4 +1,3 @@
-/* PMF Onboarding Modal Styles */
 .pmf-onboarding-modal .modal-content {
   border-radius: 12px;
   border: none;
@@ -47,8 +46,6 @@
   padding: 24px;
 }
 
-/* Progress Bar */
-/* Progress Bar */
 .pmf-progress-wrapper {
   margin-bottom: 20px;
 }
@@ -64,7 +61,7 @@
   font-size: 14px;
   font-weight: 700;
   color: #1e3a8a;
-  /* Dark blue/navy color from design */
+
 }
 
 .pmf-progress-percent-simple {
@@ -77,7 +74,7 @@
   width: 100%;
   height: 12px;
   background-color: #f0f7ff;
-  /* Very light blue background */
+
   border-radius: 4px;
   overflow: hidden;
 }
@@ -85,12 +82,11 @@
 .pmf-progress-fill-simple {
   height: 100%;
   background: linear-gradient(90deg, #6366f1, #a855f7);
-  /* Purple to Indigo gradient */
+
   transition: width 0.4s ease;
   border-radius: 4px;
 }
 
-/* Step Content */
 .pmf-step-content {
   min-height: 200px;
 }
@@ -108,8 +104,9 @@
   margin-bottom: 8px;
   font-size: 14px;
   display: flex;
-  align-items: center;
-  gap: 4px;
+  align-items: flex-start;
+  gap: 6px;
+  line-height: 1.4;
 }
 
 .pmf-form-control {
@@ -184,11 +181,10 @@
   margin-bottom: 24px;
   line-height: 1.4;
   display: flex;
-  align-items: center;
-  gap: 8px;
+  align-items: flex-start;
+  gap: 6px;
 }
 
-/* Modal Footer */
 .pmf-modal-footer {
   border-top: 1px solid #e5e7eb;
   padding: 16px 24px;
@@ -253,11 +249,11 @@
 }
 
 .pmf-radio-card:hover {
-  border-color: #4f46e5;
+  border-color: var(--color-primary);
 }
 
 .pmf-radio-card.selected {
-  border-color: #4f46e5;
+  border-color: var(--color-primary);
   background: #eef2ff;
 }
 
@@ -267,16 +263,14 @@
 
 .pmf-radio-label.active {
   font-weight: 600;
-  /* bold */
+
 }
 
-/* default radio border */
 .pmf-radio-card .form-check-input {
   border-color: #6b7280;
   box-shadow: none;
 }
 
-/* inner dot */
 .pmf-radio-card .form-check-input:checked::before {
   background-color: #ffffff;
 }
@@ -306,7 +300,6 @@
 .pmf-checkbox-card.selected .form-check-label {
   font-weight: 600;
 }
-
 
 .pmf-checkbox-card .form-check-input {
   border-color: #6b7280;
@@ -347,8 +340,6 @@
   color: #fff;
 }
 
-
-/* Limit modal height */
 .pmf-onboarding-modal .modal-dialog {
   max-width: 800px;
 }
@@ -374,8 +365,6 @@
   border-radius: 10px;
 }
 
-
-/* Responsive Design */
 @media (max-width: 768px) {
   .pmf-modal-header {
     padding: 16px 20px;
@@ -418,12 +407,6 @@
   }
 }
 
-
-
-
-
-
-
 .pmf-modal-body {
   position: relative;
 }
@@ -449,15 +432,16 @@
   margin-bottom: 4px;
 }
 
-/* Tooltip Styles */
 .pmf-tooltip {
   z-index: 10000 !important;
 }
 
 .pmf-tooltip-icon {
-  color: #6c757d;
-  cursor: pointer !important;
+  color: #9ca3af;
+  cursor: help !important;
   display: inline-flex;
+  align-self: flex-start;
+  margin-top: 3px;
   transition: color 0.2s ease;
 }
 
@@ -465,38 +449,37 @@
   color: #217aff;
 }
 
-
 .pmf-tooltip.tooltip {
-  opacity: 1 !important;
-  background: transparent !important;
+  opacity: 0;
+  transition: opacity 0.2s ease !important;
+  z-index: 10000 !important;
   background-color: transparent !important;
+  background: transparent !important;
   border: none !important;
   box-shadow: none !important;
   padding: 0 !important;
-  z-index: 10000 !important;
-  transition: none !important;
-  margin-left: 6px !important;
-  /* Gap from the icon */
+}
+
+.pmf-tooltip.tooltip.show {
+  opacity: 1 !important;
 }
 
 .pmf-tooltip.tooltip .tooltip-inner {
-  background-color: transparent !important;
-  color: #4f556e !important;
-  /* Changed to darker blue for readability on transparent bg */
-  padding: 0px !important;
-  /* Minimal padding for single line */
-  border-radius: 0px !important;
-  font-size: 11px !important;
-  /* Slightly bigger than 10px for readability */
-  line-height: 1.2 !important;
-  /* Corrected from 0.2 */
-  box-shadow: none !important;
-  border: none !important;
-  max-width: none !important;
+  background-color: #ffffff !important;
+  color: #374151 !important;
+  padding: 4px 8px !important;
+  border-radius: 4px !important;
+  font-size: 12px !important;
+  line-height: 1.4 !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+  border: 1px solid #e5e7eb !important;
+  max-width: 220px !important;
   text-align: left !important;
-  /* Corrected to left for subsequent reading */
-  white-space: nowrap !important;
-  transition: none !important;
+  white-space: normal !important;
+}
+
+.pmf-tooltip.bs-tooltip-end .tooltip-arrow::before {
+  border-right-color: #e5e7eb !important;
 }
 
 .pmf-tooltip.bs-tooltip-top .tooltip-arrow,
@@ -504,4 +487,154 @@
 .pmf-tooltip.bs-tooltip-start .tooltip-arrow,
 .pmf-tooltip.bs-tooltip-end .tooltip-arrow {
   display: none !important;
+}
+
+/* Dark Mode Overrides */
+[data-theme="dark"] .pmf-onboarding-modal .modal-content {
+  background-color: var(--color-bg-card);
+  color: var(--color-text-primary);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+}
+
+[data-theme="dark"] .pmf-modal-header {
+  border-bottom-color: var(--color-border-light);
+}
+
+[data-theme="dark"] .pmf-modal-title {
+  color: var(--color-text-primary);
+}
+
+[data-theme="dark"] .pmf-close-button {
+  color: var(--color-text-muted);
+}
+
+[data-theme="dark"] .pmf-close-button:hover {
+  background-color: var(--color-bg-light);
+  color: var(--color-text-primary);
+}
+
+[data-theme="dark"] .pmf-progress-title-simple,
+[data-theme="dark"] .pmf-progress-percent-simple {
+  color: var(--color-text-primary);
+}
+
+[data-theme="dark"] .pmf-progress-bar-simple {
+  background-color: var(--color-bg-light);
+}
+
+[data-theme="dark"] .pmf-step-question {
+  color: var(--color-text-primary);
+}
+
+[data-theme="dark"] .pmf-form-label {
+  color: var(--color-text-secondary);
+}
+
+[data-theme="dark"] .pmf-form-control {
+  background-color: var(--color-bg-secondary);
+  border-color: var(--color-border-light);
+  color: var(--color-text-primary);
+}
+
+[data-theme="dark"] .pmf-form-control:focus {
+  border-color: var(--color-primary);
+  background-color: var(--color-bg-secondary);
+}
+
+[data-theme="dark"] .pmf-form-control select {
+  background-color: var(--color-bg-secondary);
+  color: var(--color-text-primary);
+  border-color: var(--color-border-light);
+}
+
+[data-theme="dark"] .pmf-form-control optgroup {
+  background-color: var(--color-bg-light);
+  color: var(--color-text-primary);
+}
+
+[data-theme="dark"] .pmf-modal-footer {
+  border-top-color: var(--color-border-light);
+}
+
+[data-theme="dark"] .pmf-back-button {
+  background-color: var(--color-bg-secondary);
+  color: var(--color-text-primary);
+  border-color: var(--color-border-light);
+}
+
+[data-theme="dark"] .pmf-back-button:hover:not(:disabled) {
+  background-color: var(--color-bg-light);
+  border-color: var(--color-border-medium);
+}
+
+[data-theme="dark"] .pmf-radio-card,
+[data-theme="dark"] .pmf-checkbox-card {
+  background-color: var(--color-bg-secondary);
+  border-color: var(--color-border-light);
+  color: var(--color-text-primary);
+}
+
+[data-theme="dark"] .pmf-radio-card:hover,
+[data-theme="dark"] .pmf-checkbox-card:hover {
+  border-color: var(--color-primary);
+}
+
+[data-theme="dark"] .pmf-radio-card.selected,
+[data-theme="dark"] .pmf-checkbox-card.selected {
+  background-color: rgba(99, 102, 241, 0.1);
+  border-color: var(--color-primary);
+}
+
+[data-theme="dark"] .pmf-modal-overlay-minimal {
+  background: rgba(15, 23, 42, 0.85);
+}
+
+[data-theme="dark"] .pmf-loader-text {
+  color: var(--color-text-primary);
+}
+
+[data-theme="dark"] .pmf-tooltip.tooltip .tooltip-inner {
+  color: var(--color-text-secondary) !important;
+}
+
+[data-theme="dark"] .pmf-select__control {
+  background-color: var(--color-bg-secondary);
+  border-color: var(--color-border-light);
+}
+
+[data-theme="dark"] .pmf-select__single-value {
+  color: var(--color-text-primary);
+}
+
+[data-theme="dark"] .pmf-select__menu {
+  background-color: var(--color-bg-card);
+  border-color: var(--color-border-light);
+}
+
+[data-theme="dark"] .pmf-select__option {
+  background-color: transparent;
+  color: var(--color-text-primary);
+}
+
+[data-theme="dark"] .pmf-select__option--is-focused {
+  background-color: var(--color-bg-light);
+}
+
+[data-theme="dark"] .pmf-select__option--is-selected {
+  background-color: var(--color-primary);
+  color: #fff;
+}
+
+/* ── Extracted inline styles ── */
+.p-m-f-onboarding-modal--s1 {
+  font-size: 14px;
+}
+
+.p-m-f-onboarding-modal--s2 {
+  font-size: 13px;
+  margin-top: -4px;
+}
+
+.p-m-f-onboarding-modal--s3 {
+  min-width: 160px;
 }

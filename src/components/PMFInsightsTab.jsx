@@ -1,87 +1,108 @@
 import React, { useState, useEffect } from "react";
 import { Container, Row, Col, Card, Badge, Button, Spinner } from "react-bootstrap";
-import {
-  TrendingUp,
-  Target,
-  Puzzle,
-  AlertCircle,
-  RefreshCw
-} from "lucide-react";
+import { TrendingUp, Target, Puzzle, AlertCircle, RefreshCw } from "lucide-react";
 import { AnalysisApiService } from "../services/analysisApiService";
 import { useTranslation } from "../hooks/useTranslation";
-
-
-const PMFInsightsTab = ({ selectedBusinessId, onStartOnboarding, refreshTrigger }) => {
-  const { t } = useTranslation();
+import { Modal } from "react-bootstrap";
+import { useAuthStore, useBusinessStore, useUIStore } from '../store';
+const PMFInsightsTab = ({
+  onStartOnboarding,
+  refreshTrigger
+}) => {
+  const {
+    selectedBusinessId
+  } = useBusinessStore();
+  const {
+    t
+  } = useTranslation();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
-
-  // API Service setup
-  const ML_API_BASE_URL = process.env.REACT_APP_ML_BACKEND_URL;
-  const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
-  const getAuthToken = () => sessionStorage.getItem("token");
+  const [showOverwriteModal, setShowOverwriteModal] = useState(false);
+  const [overwrittenBy, setOverwrittenBy] = useState("");
+  const userRole = (useAuthStore.getState().userRole || useAuthStore.getState().userRole || "").toLowerCase();
+  const isViewer = userRole === "viewer";
+  const ML_API_BASE_URL = import.meta.env.VITE_ML_BACKEND_URL;
+  const API_BASE_URL = import.meta.env.VITE_BACKEND_URL;
+  const getAuthToken = () => useAuthStore.getState().token;
   const analysisService = new AnalysisApiService(ML_API_BASE_URL, API_BASE_URL, getAuthToken);
-
   useEffect(() => {
     let cancelled = false;
-
     const fetchInsights = async () => {
       let businessId = selectedBusinessId;
-      if (!businessId) {
-        businessId = sessionStorage.getItem('activeBusinessId');
-      }
-
       if (!businessId) {
         console.warn("PMFInsightsTab: No business ID found, skipping fetch.");
         return;
       }
-
       try {
-        setLoading(true);
-        const result = await analysisService.getPMFAnalysis(businessId);
-        if (!cancelled) setData(result);
+        setLoading(prev => data ? false : true);
+        const result = await analysisService.getPMFAnalysis(businessId, refreshTrigger > 0);
+        if (!cancelled) {
+          setData(result);
+          if (result && result.user_id) {
+            const currentUserId = useAuthStore.getState().userId;
+            const bId = String(businessId);
+            const expectedUserId = useUIStore.getState().getBusinessSetting(bId, 'pmfExpectingMyData');
+            if (expectedUserId) {
+              const getStrId = val => {
+                if (!val) return "";
+                if (typeof val === 'string') return val.toLowerCase().trim();
+                if (val.$oid) return val.$oid.toLowerCase().trim();
+                return String(val).toLowerCase().trim();
+              };
+              const dbUserId = getStrId(result.user_id);
+              const expUserId = getStrId(expectedUserId);
+              const currentUser = getStrId(currentUserId);
+              if (dbUserId && expUserId === currentUser && dbUserId !== currentUser) {
+                console.info("PMF Overwrite TRIGGERED", {
+                  dbUserId,
+                  currentUser
+                });
+                try {
+                  const eligibleRes = await analysisService.getEligibleOwners(bId);
+                  const users = eligibleRes.eligible_owners || [];
+                  const updater = users.find(u => getStrId(u._id || u.id) === dbUserId);
+                  setOverwrittenBy(updater ? updater.name || updater.email : t("another_user") || "another user");
+                } catch (e) {
+                  setOverwrittenBy(t("another_user") || "another user");
+                }
+                setShowOverwriteModal(true);
+              }
+            }
+          }
+        }
       } catch (error) {
         console.error("PMFInsightsTab: Error fetching insights:", error);
       } finally {
         if (!cancelled) setLoading(false);
       }
     };
-
     fetchInsights();
-
-    return () => { cancelled = true; };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    const interval = setInterval(() => {
+      if (!showOverwriteModal) {
+        fetchInsights();
+      }
+    }, 30000);
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
   }, [selectedBusinessId, refreshTrigger]);
-
   if (loading) {
-    return (
-      <div className="d-flex justify-content-center align-items-center min-vh-100">
+    return <div className="d-flex justify-content-center align-items-center min-vh-100">
         <Spinner animation="border" variant="primary" />
-      </div>
-    );
+      </div>;
   }
-
   if (!data) {
-    return (
-      <div className="bg-light py-5 min-vh-100 text-center">
+    return <div className="bg-light py-5 min-vh-100 text-center">
         <Container>
           <h3>{t("noInsightsAvailable") || "No insights available yet."}</h3>
           <p>{t("completeOnboardingPrompt") || "Please complete the PMF Onboarding to see results here."}</p>
-          {onStartOnboarding && (
-            <Button
-              variant="primary"
-              className="mt-3 rounded-pill px-4"
-              onClick={onStartOnboarding}
-            >
+          {onStartOnboarding && !isViewer && <Button variant="primary" className="mt-3 rounded-pill px-4" onClick={onStartOnboarding}>
               {t("startPMFOnboarding")}
-            </Button>
-          )}
+            </Button>}
         </Container>
-      </div>
-    );
+      </div>;
   }
-
-  // Robustly extract insights from data
   let rawInsights = [];
   if (data) {
     if (Array.isArray(data)) {
@@ -94,73 +115,67 @@ const PMFInsightsTab = ({ selectedBusinessId, onStartOnboarding, refreshTrigger 
       }
     }
   }
-
-  // Ensure it's an array and handle fields like key_points vs details
   const insights = rawInsights.map(insight => ({
     ...insight,
     details: insight.details || insight.key_points || []
   }));
-
   if (insights.length === 0) {
-    return (
-      <div className="bg-light py-5 min-vh-100 text-center">
+    return <div className="bg-light py-5 min-vh-100 text-center">
         <Container>
           <h3>{t("noInsightsAvailable") || "No insights available yet."}</h3>
           <p>{t("completeOnboardingPrompt") || "Please complete the PMF Onboarding to see results here."}</p>
-          {onStartOnboarding && (
-            <Button
-              variant="primary"
-              className="mt-3 rounded-pill px-4"
-              onClick={onStartOnboarding}
-            >
+          {onStartOnboarding && !isViewer && <Button variant="primary" className="mt-3 rounded-pill px-4" onClick={onStartOnboarding}>
               {t("startPMFOnboarding")}
-            </Button>
-          )}
+            </Button>}
         </Container>
-      </div>
-    );
+      </div>;
   }
-
   const getIcon = (type, index) => {
     const iconType = type?.toLowerCase() || '';
-
-    // First try keyword matching
     if (iconType.includes('market')) return <TrendingUp size={18} color="#2563eb" />;
     if (iconType.includes('core')) return <Target size={18} color="#2563eb" />;
     if (iconType.includes('adjacency')) return <Puzzle size={18} color="#2563eb" />;
     if (iconType.includes('risk') || iconType.includes('constraint')) return <AlertCircle size={18} color="#2563eb" />;
-
-    // Fallback to index-based mapping
     switch (index % 4) {
-      case 0: return <TrendingUp size={18} color="#2563eb" />;
-      case 1: return <Target size={18} color="#2563eb" />;
-      case 2: return <Puzzle size={18} color="#2563eb" />;
-      case 3: default: return <AlertCircle size={18} color="#2563eb" />;
+      case 0:
+        return <TrendingUp size={18} color="#2563eb" />;
+      case 1:
+        return <Target size={18} color="#2563eb" />;
+      case 2:
+        return <Puzzle size={18} color="#2563eb" />;
+      case 3:
+      default:
+        return <AlertCircle size={18} color="#2563eb" />;
     }
   };
-
-  const getBadgeProps = (confidence) => {
+  const getBadgeProps = confidence => {
     const conf = confidence?.toLowerCase() || '';
     if (conf.includes('high')) {
-      return { bg: 'success-subtle', text: 'success' };
+      return {
+        bg: 'success-subtle',
+        text: 'success'
+      };
     } else if (conf.includes('medium')) {
-      return { bg: 'warning-subtle', text: 'warning' };
+      return {
+        bg: 'warning-subtle',
+        text: 'warning'
+      };
     } else if (conf.includes('low')) {
-      return { bg: 'danger-subtle', text: 'danger' };
+      return {
+        bg: 'danger-subtle',
+        text: 'danger'
+      };
     }
-    return { bg: 'secondary-subtle', text: 'secondary' };
+    return {
+      bg: 'secondary-subtle',
+      text: 'secondary'
+    };
   };
-
-  return (
-    <div className="bg-light">
+  return <div className="bg-light">
       <StyleSheet />
-      <Container style={{ maxWidth: "100%" }}>
+      <Container className="p-m-f-insights-tab--s1">
         <div className="text-center mb-3">
-          <Badge
-            bg="primary-subtle"
-            text="primary"
-            className="px-4 py-2 rounded-pill fw-bold fs-5"
-          >
+          <Badge bg="primary-subtle" text="primary" className="px-4 py-2 rounded-pill fw-bold fs-5">
             {t("AHA Insights")}
           </Badge>
 
@@ -172,13 +187,12 @@ const PMFInsightsTab = ({ selectedBusinessId, onStartOnboarding, refreshTrigger 
 
         <Row className="g-4">
           {Array.isArray(insights) ? insights.map((insight, index) => {
-            const badgeProps = getBadgeProps(insight.confidence);
-            return (
-              <Col md={6} key={index}>
+          const badgeProps = getBadgeProps(insight.confidence);
+          return <Col md={6} key={index}>
                 <Card className="h-100 border-0 shadow-sm rounded-4">
                   <Card.Body className="p-4">
                     <div className="d-flex align-items-start gap-3">
-                      <div className="icon-box d-flex align-items-center justify-content-center bg-primary-subtle rounded-3" style={{ width: '40px', height: '40px', flexShrink: 0 }}>
+                      <div className="icon-box d-flex align-items-center justify-content-center bg-primary-subtle rounded-3 p-m-f-insights-tab--s2">
                         {getIcon(insight.type, index)}
                       </div>
 
@@ -187,39 +201,56 @@ const PMFInsightsTab = ({ selectedBusinessId, onStartOnboarding, refreshTrigger 
                           {insight.title}
                         </h6>
 
-                        {insight.confidence && (
-                          <Badge
-                            bg={badgeProps.bg}
-                            text={badgeProps.text}
-                            className="rounded-pill fw-semibold mb-3"
-                          >
+                        {insight.confidence && <Badge bg={badgeProps.bg} text={badgeProps.text} className="rounded-pill fw-semibold mb-3">
                             {t("Confidence")}: {insight.confidence}
-                          </Badge>
-                        )}
+                          </Badge>}
 
-                        <ul className="insight-list mb-0" style={{ paddingLeft: '1.2rem' }}>
-                          {Array.isArray(insight.details) && insight.details.map((detail, dIndex) => (
-                            <li key={dIndex} className="mb-1">{detail}</li>
-                          ))}
+                        <ul className="insight-list mb-0 p-m-f-insights-tab--s3">
+                          {Array.isArray(insight.details) && insight.details.map((detail, dIndex) => <li key={dIndex} className="mb-1">{detail}</li>)}
                         </ul>
                       </div>
                     </div>
                   </Card.Body>
                 </Card>
-              </Col>
-            );
-          }) : (
-            <Col xs={12}>
-              <p className="text-center text-muted">No specific insights found in the data structure.</p>
-            </Col>
-          )}
+              </Col>;
+        }) : <Col xs={12}>
+              <p className="text-center text-muted">{t("no_specific_insights_found") || "No specific insights found in the data structure."}</p>
+            </Col>}
         </Row>
       </Container>
-    </div>
-  );
-};
 
-// Internal styles for the component
+      {}
+      <Modal show={showOverwriteModal} onHide={() => setShowOverwriteModal(false)} centered size="sm" className="pmf-overwrite-modal">
+        <Modal.Header closeButton className="border-0 pb-0">
+          <Modal.Title className="fw-bold fs-6 text-dark">
+            {t("Update Notification")}
+          </Modal.Title>
+        </Modal.Header>
+        <Modal.Body className="pt-2 pb-3 px-3">
+          <div className="d-flex align-items-center gap-3 mb-3">
+            <div className="icon-box bg-warning-subtle rounded-circle p-2 flex-shrink-0">
+              <AlertCircle size={20} color="#92400e" />
+            </div>
+            <p className="mb-0 fs-6 text-dark p-m-f-insights-tab--s4">
+              {t("Your PMF onboarding was updated by")} <strong>{overwrittenBy}</strong>
+            </p>
+          </div>
+          <div className="text-center">
+            <Button variant="primary" size="sm" className="px-4 rounded-3 fw-semibold" onClick={() => {
+            setShowOverwriteModal(false);
+            const bId = String(selectedBusinessId);
+            if (bId) {
+              useUIStore.getState().setBusinessSetting(bId, 'pmfExpectingMyData', null);
+              useUIStore.getState().setBusinessSetting(bId, 'pmfLastSubmission', null);
+            }
+          }}>
+              {t("OK")}
+            </Button>
+          </div>
+        </Modal.Body>
+      </Modal>
+    </div>;
+};
 const StyleSheet = () => (
   <style>{`
     .insight-list {
@@ -234,8 +265,7 @@ const StyleSheet = () => (
     .icon-box:hover {
       transform: scale(1.1);
     }
-    
-    /* Ensure subtle badges look premium and are available */
+
     .bg-success-subtle {
       background-color: #d1fae5 !important;
       color: #065f46 !important;
@@ -256,11 +286,99 @@ const StyleSheet = () => (
       background-color: #f3f4f6 !important;
       color: #374151 !important;
     }
-    
+
     .text-success { color: #065f46 !important; }
     .text-warning { color: #92400e !important; }
     .text-danger { color: #991b1b !important; }
     .text-primary { color: #1e40af !important; }
+
+    .pmf-overwrite-modal .modal-content {
+      border-radius: 12px;
+      border: none;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+      width: 100%;
+      margin: 0 auto;
+    }
+
+    @media (min-width: 576px) {
+      .pmf-overwrite-modal .modal-dialog {
+        max-width: 380px;
+      }
+    }
+
+.pmf-overwrite-modal .modal-dialog {
+  max-width: 380px;
+}
+
+.pmf-overwrite-modal .modal-content {
+  border-radius: 12px;
+  border: none;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+  overflow: hidden;
+}
+
+.pmf-overwrite-modal .modal-body {
+  height: auto !important;
+  min-height: unset !important;
+}
+
+.pmf-overwrite-modal .modal-header {
+  padding-bottom: 0.5rem;
+}
+
+.pmf-overwrite-modal .modal-body p {
+  margin-bottom: 0;
+}
+
+    [data-theme="dark"] .bg-light {
+      background-color: var(--color-bg-primary) !important;
+    }
+    
+    [data-theme="dark"] .card {
+      background-color: var(--color-bg-card) !important;
+      color: var(--color-text-primary) !important;
+    }
+    
+    [data-theme="dark"] h2, [data-theme="dark"] h3, [data-theme="dark"] h6 {
+      color: var(--color-text-primary) !important;
+    }
+    
+    [data-theme="dark"] p, [data-theme="dark"] .text-muted {
+      color: var(--color-text-secondary) !important;
+    }
+    
+    [data-theme="dark"] .insight-list {
+      color: var(--color-text-secondary);
+    }
+    
+    [data-theme="dark"] .icon-box {
+      background-color: rgba(37, 99, 235, 0.2) !important;
+    }
+    
+    [data-theme="dark"] .pmf-overwrite-modal .modal-content {
+      background-color: var(--color-bg-card) !important;
+      color: var(--color-text-primary) !important;
+    }
+    
+    [data-theme="dark"] .bg-success-subtle {
+      background-color: var(--color-status-active-bg) !important;
+      color: var(--color-status-active-text) !important;
+    }
+    
+    [data-theme="dark"] .bg-warning-subtle {
+      background-color: var(--color-status-pending-bg) !important;
+      color: var(--color-status-pending-text) !important;
+    }
+    
+    [data-theme="dark"] .bg-danger-subtle {
+      background-color: var(--color-status-killed-bg) !important;
+      color: var(--color-status-killed-text) !important;
+    }
+    
+    [data-theme="dark"] .bg-primary-subtle {
+      background-color: rgba(37, 99, 235, 0.2) !important;
+      color: #6366f1 !important;
+    }
   `}</style>
 );
 

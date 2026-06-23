@@ -1,13 +1,35 @@
 import React from 'react';
 import { Modal, Button } from 'react-bootstrap';
 import { AlertTriangle } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from '../hooks/useTranslation';
 import '../styles/PlanLimitModal.css';
 
-const PlanLimitModal = ({ show, onHide, title, message, subMessage }) => {
+const PlanLimitModal = ({ show, onHide, onAction, title, message, subMessage, plan = '', limit = 1, isAdmin = true }) => {
     const { t } = useTranslation();
     const navigate = useNavigate();
+    const location = useLocation();
+
+    const handleAction = () => {
+        const currentPath = location.pathname;
+        const targetPath = currentPath.includes('/super-admin') ? '/super-admin' : '/admin';
+
+        onHide();
+        if (onAction) onAction();
+
+        if (isAdmin) {
+            setTimeout(() => {
+                navigate(`${targetPath}?tab=subscription`);
+            }, 300);
+        }
+    };
+
+    const displayTitle = title || (isAdmin ? (t('plan_limit_reached') || "Plan Limit Reached") : (t('Action Restricted') || "Action Restricted"));
+    const displayMessage = message || (isAdmin ? (t('upgrade_to_create_more') || "Upgrade Plan to Create More") : (t('company_business_limit_reached') || "Business Limit Reached"));
+    const displaySubMessage = subMessage || (isAdmin
+        ? t('plan_workspace_limit_msg', { plan, limit })
+        : (t('contact_admin_to_upgrade') || "Please contact your administrator to upgrade the plan."));
+    const displayButtonText = isAdmin ? (t('upgrade_plan') || "Upgrade Plan") : (t('ok') || "OK");
 
     return (
         <Modal
@@ -25,17 +47,17 @@ const PlanLimitModal = ({ show, onHide, title, message, subMessage }) => {
                         </div>
                     </div>
                     <h4 className="plan-limit-title mb-2">
-                        {title || t('plan_limit_reached') || "Plan Limit Reached"}
+                        {displayTitle}
                     </h4>
                     <div className="plan-limit-divider mx-auto my-3"></div>
                 </div>
 
                 <div className="plan-limit-modal-body px-4 pb-4 text-center">
                     <h5 className="mb-3">
-                        {message || t('upgrade_to_create_more') || "Upgrade to Create More Businesses"}
+                        {displayMessage}
                     </h5>
                     <p className="text-muted mb-4">
-                        {subMessage || t('essential_plan_limit_msg') || "You have reached the limit of 1 business on the Essential plan. Please upgrade your plan to create more businesses."}
+                        {displaySubMessage}
                     </p>
 
                     <div className="d-grid gap-2 mb-3">
@@ -43,12 +65,9 @@ const PlanLimitModal = ({ show, onHide, title, message, subMessage }) => {
                             variant="primary"
                             size="lg"
                             className="upgrade-btn-premium"
-                            onClick={() => {
-                                onHide();
-                                navigate('/admin?tab=subscription');
-                            }}
+                            onClick={handleAction}
                         >
-                            {t('upgrade_plan') || "Upgrade Plan"}
+                            {displayButtonText}
                         </Button>
                         <Button
                             variant="link"

@@ -1,4 +1,3 @@
-/* Emergency fix for App.css */
 .App {
   text-align: left !important;
 }
@@ -10,7 +9,6 @@
   transition: none !important;
 }
 
-/* Disable all smooth scrolling */
 * {
   scroll-behavior: auto !important;
 }
@@ -53,7 +51,7 @@
 
 html,
 body {
-  overflow-x: hidden;
+  overflow-x: clip;
   max-width: 100vw;
 }
 

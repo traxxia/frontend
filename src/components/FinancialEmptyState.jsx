@@ -1,79 +1,69 @@
 import React from 'react';
-import { FileX, Upload, AlertCircle, TrendingUp, MessageCircle, Edit } from 'lucide-react';
-import { useTranslation } from "../hooks/useTranslation";
-import MissingMetricsDisplay from './MissingMetricsDisplay';
+import { TrendingUp, AlertTriangle } from 'lucide-react';
+import AnalysisEmptyState from './AnalysisEmptyState';
+import '../styles/AnalysisEmptyState.css';
 
 const FinancialEmptyState = ({
-  analysisType = "financial",
-  analysisDisplayName = "Financial Analysis",
-  icon: IconComponent = TrendingUp,
-  onFileUpload,
-  onRegenerate,
+  analysisType,
+  analysisDisplayName,
+  icon,
   onImproveAnswers,
-  isRegenerating = false,
-  canRegenerate = true,
-  showFileUpload = true,
-  uploadedFile = null,
-  onRemoveFile,
-  isUploading = false,
-  fileUploadMessage = "Upload Excel or CSV files for detailed financial analysis",
-  acceptedFileTypes = ".xlsx,.xls,.csv",
-  customMessage = null,
-  showImproveAnswersButton = true,
-  minimumAnswersRequired = 3,
+  onRegenerate,
+  isRegenerating,
+  canRegenerate,
   userAnswers = {},
-  onRedirectToChat,
-  isMobile = false,
-  setActiveTab,
-  hasUploadedDocument = false,
-  readOnly = false,
-  documentInfo = null // New prop for document information
+  minimumAnswersRequired = 3
 }) => {
-  const { t } = useTranslation();
-
-  const answeredCount = Object.keys(userAnswers || {}).length;
-  const hasMinimumAnswers = answeredCount >= minimumAnswersRequired;
-
-  const defaultMessage = `No ${analysisDisplayName.toLowerCase()} results found. The uploaded financial document doesn't contain the required data or proper values for analysis.`;
-
-  const handleRedirectToFileManagement = () => {
-    // Don't redirect in read-only mode
-    if (readOnly) return;
-
-    if (isMobile && setActiveTab) {
-      setActiveTab('chat');
-    }
-
-    if (onRedirectToChat) {
-      onRedirectToChat({ scrollToUploadCard: true });
-    } else {
-      const chatSection = document.querySelector('.chat-section');
-      if (chatSection) {
-        chatSection.scrollIntoView({ behavior: 'smooth' });
-      }
+  const getDisplayName = () => {
+    if (analysisDisplayName) return analysisDisplayName;
+    
+    // Fallback names based on common types
+    switch (analysisType) {
+      case 'growthTracker':
+        return 'Growth Tracker Analysis';
+      case 'investmentPerformance':
+        return 'Investment Performance Analysis';
+      case 'leverageRisk':
+        return 'Leverage & Risk Analysis';
+      case 'liquidityEfficiency':
+        return 'Liquidity & Efficiency Analysis';
+      case 'operationalEfficiency':
+        return 'Operational Efficiency Analysis';
+      case 'profitability':
+        return 'Profitability Analysis';
+      case 'financialPerformance':
+        return 'Financial Performance';
+      case 'costEfficiency':
+        return 'Cost Efficiency Insight';
+      case 'financialBalance':
+        return 'Financial Balance Insight';
+      default:
+        return 'Financial Analysis';
     }
   };
 
-  // Enhanced document detection - check multiple sources
-  const hasDocumentUploaded = uploadedFile || hasUploadedDocument || (documentInfo && documentInfo.has_document);
-  
-  // Create documentInfo object if it doesn't exist but we know a document is uploaded
-  const effectiveDocumentInfo = documentInfo || (hasDocumentUploaded ? {
-    has_document: true,
-    filename: uploadedFile?.name || 'Financial Document',
-    template_name: 'Standard', // Default template type
-    upload_date: new Date().toISOString()
-  } : null);
+  const getIcon = () => {
+    if (icon) return icon;
+    if (analysisType === 'leverageRisk') return AlertTriangle;
+    return TrendingUp;
+  };
 
   return (
-    <div className="financial-empty-state">
-      <div className="financial-empty-content"> 
-         <MissingMetricsDisplay
-            documentInfo={effectiveDocumentInfo}
-            analysisType={analysisType}
-            className="missing-metrics-section"
-          />
-      </div>
+    <div className="porters-container" style={{ width: '100%' }}>
+      <AnalysisEmptyState
+        analysisType={analysisType}
+        analysisDisplayName={getDisplayName()}
+        icon={getIcon()}
+        onImproveAnswers={onImproveAnswers}
+        onRegenerate={onRegenerate}
+        isRegenerating={isRegenerating}
+        canRegenerate={canRegenerate}
+        userAnswers={userAnswers}
+        minimumAnswersRequired={minimumAnswersRequired}
+        customMessage="Financial data is unavailable. Please provide the required financial information to generate insights."
+        showImproveButton={false}
+        showRegenerateButton={false}
+      />
     </div>
   );
 };

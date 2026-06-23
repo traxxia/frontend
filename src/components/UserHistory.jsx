@@ -1,6 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import 'bootstrap/dist/css/bootstrap.min.css';
-import 'bootstrap/dist/js/bootstrap.bundle.min.js';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Table, Badge, Spinner, Form, Button, Modal, Card } from "react-bootstrap";
 import {
   Search,
@@ -27,14 +25,16 @@ import PDFExportButton from './PDFExportButton';
 import '../styles/UserHistory.css';
 import '../styles/AdminTableStyles.css';
 import { useTranslation } from '../hooks/useTranslation';
+import { answerService } from '../services/answerService';
+import { useAuthStore } from '../store';
 
 // Constants
 const ITEMS_PER_PAGE = 10;
-const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
+const API_BASE_URL = import.meta.env.VITE_BACKEND_URL;
 
 // Utility functions
-const getAuthToken = () => sessionStorage.getItem('token');
-const getUserInfo = () => JSON.parse(sessionStorage.getItem('user') || '{}');
+const getAuthToken = () => useAuthStore.getState().token;
+const getUserInfo = () => { const s = useAuthStore.getState(); return { role: s.userRole, name: s.userName }; };
 
 const transformUser = (user) => ({
   _id: user._id,
@@ -62,6 +62,7 @@ const UserHistory = ({ onToast }) => {
   const [isInitialized, setIsInitialized] = useState(false);
   const [userDetails, setUserDetails] = useState({});
   const [isLoadingDetails, setIsLoadingDetails] = useState(false);
+  const [globalQuestions, setGlobalQuestions] = useState([]);
 
   const handleRoleChange = (e) => {
     const value = e.target.value;
@@ -71,12 +72,16 @@ const UserHistory = ({ onToast }) => {
   };
 
 
+  const initializedRef = useRef(false);
+
   // Load Initial Data
   useEffect(() => {
+    if (initializedRef.current) return;
+    initializedRef.current = true;
+
     const init = async () => {
       const userInfo = getUserInfo();
-      const storedRole = sessionStorage.getItem("userRole");
-      setUserRole(storedRole || userInfo.role || '');
+      setUserRole(userInfo.role || '');
 
       const token = getAuthToken();
       try {
@@ -87,7 +92,7 @@ const UserHistory = ({ onToast }) => {
           const data = await companiesResponse.json();
           setCompanies(data.companies || []);
         }
-        await loadUsers();
+        await loadGlobalQuestions();
       } catch (err) {
         console.error(err);
       } finally {
@@ -96,6 +101,21 @@ const UserHistory = ({ onToast }) => {
     };
     init();
   }, []);
+
+  const loadGlobalQuestions = async () => {
+    try {
+      const token = getAuthToken();
+      const response = await fetch(`${API_BASE_URL}/api/questions`, {
+        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setGlobalQuestions(data.questions || []);
+      }
+    } catch (error) {
+      console.error('Error loading questions:', error);
+    }
+  };
 
   const loadUsers = async (companyId = '') => {
     try {
@@ -110,7 +130,12 @@ const UserHistory = ({ onToast }) => {
 
       if (response.ok) {
         const data = await response.json();
-        const transformed = data.users.map(transformUser);
+        const allowedRoles = ['super_admin', 'company_admin', 'user', 'admin'];
+        const filteredRawUsers = (data.users || []).filter(u => {
+          const role = (u.role_name || u.role || '').toLowerCase();
+          return allowedRoles.includes(role);
+        });
+        const transformed = filteredRawUsers.map(transformUser);
         setUsers(transformed);
         setFilteredUsers(transformed);
       }
@@ -121,8 +146,13 @@ const UserHistory = ({ onToast }) => {
     }
   };
 
+  const lastFetchRef = useRef(null);
   useEffect(() => {
-    if (isInitialized) loadUsers(selectedCompany);
+    const fetchKey = `${selectedCompany}_${isInitialized}`;
+    if (isInitialized && lastFetchRef.current !== fetchKey) {
+      lastFetchRef.current = fetchKey;
+      loadUsers(selectedCompany);
+    }
   }, [selectedCompany, isInitialized]);
 
   const applyFilters = (searchValue, roleValue) => {
@@ -145,15 +175,7 @@ const UserHistory = ({ onToast }) => {
 
   const handleSearch = (value) => {
     setSearchTerm(value);
-
-    const search = value.toLowerCase();
-
-    const filtered = users.filter(u =>
-      u.name?.toLowerCase().includes(search) ||
-      u.email?.toLowerCase().includes(search) ||
-      u.company_name?.toLowerCase().includes(search)
-    );
-    setFilteredUsers(filtered);
+    applyFilters(value, selectedRole);
   };
 
   const loadUserHistory = async (userId, businessId = null) => {
@@ -172,6 +194,19 @@ const UserHistory = ({ onToast }) => {
 
       if (response.ok) {
         const data = await response.json();
+
+        // Enhance with direct answers from answers API
+        if (businessId) {
+          try {
+            const answersResponse = await answerService.getAnswersByBusiness(businessId);
+            if (answersResponse && answersResponse.data) {
+              data.rawAnswers = answersResponse.data;
+            }
+          } catch (answerError) {
+            console.warn('Could not fetch raw answers:', answerError);
+          }
+        }
+
         setUserDetails(prev => ({ ...prev, [cacheKey]: data }));
       }
     } catch (error) {
@@ -242,7 +277,10 @@ const UserHistory = ({ onToast }) => {
   ];
 
   const totalPages = Math.ceil(filteredUsers.length / ITEMS_PER_PAGE);
-  const paginatedUsers = filteredUsers.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
+  // Visual clamping: if current page is out of bounds due to filters, show the last page
+  // but keep the state variable high so it restores when filter is cleared.
+  const displayPage = Math.max(1, Math.min(currentPage, totalPages || 1));
+  const paginatedUsers = filteredUsers.slice((displayPage - 1) * ITEMS_PER_PAGE, displayPage * ITEMS_PER_PAGE);
 
   return (
     <div className="user-history-redesign">
@@ -258,27 +296,12 @@ const UserHistory = ({ onToast }) => {
         onSearchChange={handleSearch}
         searchPlaceholder={t('search_by_name_email_company')}
         searchTooltip={t('search_user_history_tooltip')}
-        currentPage={currentPage}
+        currentPage={displayPage}
         totalPages={totalPages}
         onPageChange={setCurrentPage}
         totalItems={filteredUsers.length}
         itemsPerPage={ITEMS_PER_PAGE}
         loading={isLoading}
-        // toolbarContent={
-        //   companies.length > 0 && userRole === 'super_admin' && (
-        //     <Form.Select
-        //       className="role-select"
-        //       style={{ width: '220px' }}
-        //       value={selectedCompany}
-        //       onChange={(e) => setSelectedCompany(e.target.value)}
-        //     >
-        //       <option value="">{t('all_companies')}</option>
-        //       {companies.map(c => (
-        //         <option key={c._id} value={c._id}>{c.company_name}</option>
-        //       ))}
-        //     </Form.Select>
-        //   )
-        // }
         toolbarContent={
           <Form.Select
             className="role-select"
@@ -288,9 +311,7 @@ const UserHistory = ({ onToast }) => {
           >
             <option value="All Roles">{t("All_Roles")}</option>
             <option value="Org Admin">{t("Org_Admin")}</option>
-            <option value="Collaborator">{t("Collaborator")}</option>
             <option value="User">{t("User")}</option>
-            <option value="Viewer">{t("Viewer")}</option>
           </Form.Select>
         }
       />
@@ -304,6 +325,7 @@ const UserHistory = ({ onToast }) => {
           onExport={handleExport}
           onToast={onToast}
           loadUserHistory={loadUserHistory}
+          globalQuestions={globalQuestions}
         />
       )}
     </div>
@@ -311,15 +333,13 @@ const UserHistory = ({ onToast }) => {
 };
 
 // Sorting and filtering utilities
-const parseAnalysisData = (userDetails, user) => {
+const parseAnalysisData = (userDetails, user, globalQuestions = []) => {
   if (!userDetails) return null;
 
   const analysisData = {
     // Initial Phase Components
     swot: null,
-    purchaseCriteria: null,
     channelHeatmap: null,
-    loyaltyNPS: null,
     capabilityHeatmap: null,
     porters: null,
     pestel: null,
@@ -358,17 +378,73 @@ const parseAnalysisData = (userDetails, user) => {
   if (userDetails.conversation?.length > 0) {
     userDetails.conversation.forEach(phase => {
       phase.questions?.forEach(qa => {
-        const questionId = qa.question || `q_${Math.random()}`;
+        const questionId = qa.question_id || qa.question || `q_${Math.random()}`;
         analysisData.questions.push({
           _id: questionId,
           question_id: questionId,
+          question: qa.question, // UI expects 'question'
           question_text: qa.question,
+          answer: qa.answer, // UI expects 'answer'
           phase: phase.phase,
-          severity: phase.severity
+          severity: phase.severity,
+          order: qa.order || 0,
+          conversation_flow: qa.conversation_flow
         });
         analysisData.userAnswers[questionId] = qa.answer;
       });
     });
+  }
+
+  // Inject raw answers from Advanced Tab (mapped to question text)
+  if (userDetails.rawAnswers?.length > 0 && globalQuestions.length > 0) {
+    const questionMap = new Map(globalQuestions.map(q => [q._id.toString(), q]));
+
+    // Create a virtual phase for Advanced Tab answers if they aren't already represented
+    const advancedPhaseData = {
+      phase: 'Advanced Tab Edits',
+      severity: 'mandatory',
+      questions: []
+    };
+
+    userDetails.rawAnswers.forEach(ans => {
+      const qId = ans.question_id?.toString();
+      const questionObj = questionMap.get(qId);
+
+      if (questionObj) {
+        // Update userAnswers map
+        analysisData.userAnswers[qId] = ans.answer;
+
+        // Add to questions list for history view if not already there
+        const existingQuestion = analysisData.questions.find(q => q.question_id === qId);
+        if (!existingQuestion) {
+          analysisData.questions.push({
+            _id: qId,
+            question_id: qId,
+            question: questionObj.question_text, // UI expects 'question'
+            question_text: questionObj.question_text,
+            answer: ans.answer, // UI expects 'answer'
+            phase: questionObj.phase || 'advanced',
+            severity: questionObj.severity || 'mandatory',
+            order: questionObj.order || 99,
+            last_updated: ans.updated_at
+          });
+        } else {
+          // Update the answer of the existing question to reflect Advanced Tab edit
+          existingQuestion.answer = ans.answer;
+          existingQuestion.last_updated = ans.updated_at;
+
+          // Ensure 'question' field is populated for UI components
+          if (!existingQuestion.question) {
+            existingQuestion.question = existingQuestion.question_text || questionObj.question_text;
+          }
+        }
+      }
+    });
+
+    if (advancedPhaseData.questions.length > 0) {
+      // Ensure we have a place for them in conversation structure if needed
+      // but parseAnalysisData's conversation processing is mostly for the questions[] array
+    }
   }
 
   // Process ALL analysis types from system data - SIMPLIFIED LOGIC
@@ -388,18 +464,9 @@ const parseAnalysisData = (userDetails, user) => {
         case 'swot':
           analysisData.swot = analysisResult;
           break;
-        case 'purchasecriteria':
-        case 'purchase_criteria':
-          analysisData.purchaseCriteria = analysisResult;
-          break;
         case 'channelheatmap':
         case 'channel_heatmap':
           analysisData.channelHeatmap = analysisResult;
-          break;
-        case 'loyaltynps':
-        case 'loyalty_nps':
-        case 'loyalty_metrics':
-          analysisData.loyaltyNPS = analysisResult;
           break;
         case 'capabilityheatmap':
         case 'capability_heatmap':
@@ -584,8 +651,8 @@ const hasAnalysisData = (analysisData) => {
 
   // Check if any analysis exists
   return !!(
-    analysisData.swot || analysisData.purchaseCriteria ||
-    analysisData.channelHeatmap || analysisData.loyaltyNPS ||
+    analysisData.swot ||
+    analysisData.channelHeatmap ||
     analysisData.capabilityHeatmap || analysisData.porters ||
     analysisData.pestel || analysisData.strategic ||
     analysisData.fullSwot || analysisData.customerSegmentation ||
@@ -605,8 +672,6 @@ const createSimplePhaseManager = (analysisData, userDetails) => {
   // Simplified logic - similar to AnalysisContentManager
   const hasInitial = !!(
     analysisData?.swot ||
-    analysisData?.purchaseCriteria ||
-    analysisData?.loyaltyNPS ||
     analysisData?.porters ||
     analysisData?.pestel
   );
@@ -729,7 +794,7 @@ const exportUserData = async (user, userDetails, onToast) => {
   }
 };
 
-const UserHistoryModal = ({ user, userDetails, isLoading, onClose, onExport, onToast, loadUserHistory }) => {
+const UserHistoryModal = ({ user, userDetails, isLoading, onClose, onExport, onToast, loadUserHistory, globalQuestions }) => {
   useEffect(() => {
     // Lock body scroll
     document.body.style.overflow = 'hidden';
@@ -752,6 +817,7 @@ const UserHistoryModal = ({ user, userDetails, isLoading, onClose, onExport, onT
           onExport={onExport}
           onToast={onToast}
           loadUserHistory={loadUserHistory}
+          globalQuestions={globalQuestions}
         />
       </div>
     </div>
@@ -759,7 +825,7 @@ const UserHistoryModal = ({ user, userDetails, isLoading, onClose, onExport, onT
 };
 
 // Enhanced UserDetailsPanel with Strategic Analysis Tab
-const UserDetailsPanel = ({ user, userDetails, isLoading, onClose, onExport, onToast, loadUserHistory }) => {
+const UserDetailsPanel = ({ user, userDetails, isLoading, onClose, onExport, onToast, loadUserHistory, globalQuestions }) => {
   const [activeTab, setActiveTab] = useState('businesses');
   const [selectedBusiness, setSelectedBusiness] = useState('');
   const [isLoadingBusiness, setIsLoadingBusiness] = useState(false);
@@ -798,7 +864,7 @@ const UserDetailsPanel = ({ user, userDetails, isLoading, onClose, onExport, onT
   };
 
   const currentUserDetails = getCurrentUserDetails();
-  const analysisData = parseAnalysisData(currentUserDetails, user);
+  const analysisData = parseAnalysisData(currentUserDetails, user, globalQuestions);
   const phaseManager = createSimplePhaseManager(analysisData, currentUserDetails);
 
   if (businesses.length === 0 && !isLoading) {
@@ -817,7 +883,7 @@ const UserDetailsPanel = ({ user, userDetails, isLoading, onClose, onExport, onT
             businesses={businesses}
           />
 
-          <div className="tab-content">
+          <div className="tab-content tab-content-user-history">
             {isLoadingBusiness ? (
               <LoadingState message="Loading business data..." />
             ) : (
@@ -968,6 +1034,7 @@ const TabContent = ({
       return (
         <ConversationTab
           conversation={currentUserDetails?.conversation || []}
+          enrichedQuestions={analysisData?.questions || []}
           totalQuestions={currentUserDetails?.stats?.total_questions || 0}
           completedQuestions={currentUserDetails?.stats?.completed_questions || 0}
           selectedBusiness={getSelectedBusinessName()}
@@ -1193,9 +1260,9 @@ const StatsRow = ({
   );
 };
 
-// ConversationTab Component - Updated to show all questions sequentially
 const ConversationTab = ({
   conversation,
+  enrichedQuestions = [],
   totalQuestions = 0,
   completedQuestions = 0,
   selectedBusiness = 'Select a Business',
@@ -1206,14 +1273,16 @@ const ConversationTab = ({
 }) => {
   const { t } = useTranslation();
   // Flatten all questions from all phases into a single array
-  const allQuestions = conversation.reduce((questions, phase) => {
-    const phaseQuestions = phase.questions?.map(qa => ({
-      ...qa,
-      phase: phase.phase,
-      severity: phase.severity
-    })) || [];
-    return [...questions, ...phaseQuestions];
-  }, []).sort((a, b) => (a.order || 0) - (b.order || 0));
+  const allQuestions = enrichedQuestions.length > 0
+    ? [...enrichedQuestions].sort((a, b) => (a.order || 0) - (b.order || 0))
+    : conversation.reduce((questions, phase) => {
+      const phaseQuestions = phase.questions?.map(qa => ({
+        ...qa,
+        phase: phase.phase,
+        severity: phase.severity
+      })) || [];
+      return [...questions, ...phaseQuestions];
+    }, []).sort((a, b) => (a.order || 0) - (b.order || 0));
 
   const totalCompletedQuestions = allQuestions.length;
 
@@ -1366,10 +1435,9 @@ const AnalysisTab = ({
           userAnswers={analysisData.userAnswers}
           selectedBusinessId={selectedBusinessId}
           swotAnalysisResult={analysisData.swot}
+          hasInsightAccess={true}
           customerSegmentationData={analysisData.customerSegmentation}
-          purchaseCriteriaData={analysisData.purchaseCriteria}
           channelHeatmapData={analysisData.channelHeatmap}
-          loyaltyNPSData={analysisData.loyaltyNPS}
           capabilityHeatmapData={analysisData.capabilityHeatmap}
           strategicData={analysisData.strategic}
           portersData={analysisData.porters}
@@ -1396,9 +1464,7 @@ const AnalysisTab = ({
           coreAdjacencyData={analysisData.coreAdjacencyData}
           setSwotAnalysisResult={() => { }}
           setCustomerSegmentationData={() => { }}
-          setPurchaseCriteriaData={() => { }}
           setChannelHeatmapData={() => { }}
-          setLoyaltyNPSData={() => { }}
           setCapabilityHeatmapData={() => { }}
           setPortersData={() => { }}
           setPestelData={() => { }}
@@ -1422,9 +1488,7 @@ const AnalysisTab = ({
           setLeverageRiskData={() => { }}
           isSwotAnalysisRegenerating={false}
           isCustomerSegmentationRegenerating={false}
-          isPurchaseCriteriaRegenerating={false}
           isChannelHeatmapRegenerating={false}
-          isLoyaltyNPSRegenerating={false}
           isCapabilityHeatmapRegenerating={false}
           isPortersRegenerating={false}
           isPestelRegenerating={false}
@@ -1454,9 +1518,7 @@ const AnalysisTab = ({
           apiLoadingStates={{}}
           swotRef={{ current: null }}
           customerSegmentationRef={{ current: null }}
-          purchaseCriteriaRef={{ current: null }}
           channelHeatmapRef={{ current: null }}
-          loyaltyNpsRef={{ current: null }}
           capabilityHeatmapRef={{ current: null }}
           portersRef={{ current: null }}
           pestelRef={{ current: null }}
@@ -1497,6 +1559,7 @@ const AnalysisTab = ({
           readOnly={true}
           hideImproveButton={true}
           showImproveButton={false}
+          questionsLoaded={true}
         />
       </div>
     </div>
@@ -1570,6 +1633,9 @@ const StrategicTab = ({
           userAnswers={analysisData.userAnswers}
           businessName={analysisData.businessName}
           strategicData={analysisData.strategic}
+          portersData={analysisData.porters}
+          pestelData={analysisData.pestel}
+          selectedBusinessId={selectedBusinessId}
           phaseAnalysisArray={analysisData.phaseAnalysisArray || []}
           onRegenerate={null}
           isRegenerating={false}
@@ -1578,6 +1644,8 @@ const StrategicTab = ({
           hideDownload={true}
           hideImproveButton={true}
           hideKickstart={true}
+          isExpanded={true}
+          questionsLoaded={true}
         />
       </div>
     </div>

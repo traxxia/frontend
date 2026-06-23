@@ -1,34 +1,9 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Search, SlidersHorizontal, ArrowUpDown, ArrowLeft, ArrowRight, Building2, HelpCircle } from 'lucide-react';
 import { OverlayTrigger, Popover } from "react-bootstrap";
-import { Tooltip } from "react-bootstrap";
 import '../styles/AdminTableStyles.css';
 import { useTranslation } from "../hooks/useTranslation";
 
-/**
- * AdminTable — reusable premium table for admin panels.
- *
- * Props:
- *  title            {string}    Table heading
- *  count            {number}    Optional count shown in badge next to title
- *  countLabel       {string}    Label for count badge, e.g. "Companies" (defaults to "Records")
- *  columns          {Array}     [{ key, label, render? }]
- *                               render(value, row) => ReactNode — optional custom cell renderer
- *  data             {Array}     Array of row objects
- *  searchTerm       {string}    Controlled search value
- *  onSearchChange   {Function}  Called with new search string
- *  searchPlaceholder{string}
- *  currentPage      {number}
- *  totalPages       {number}
- *  onPageChange     {Function}
- *  totalItems       {number}
- *  itemsPerPage     {number}
- *  emptyMessage     {string}
- *  emptySubMessage  {string}
- *  loading          {boolean}
- *  showFilter       {boolean}   Show Filter button (default true)
- *  showSort         {boolean}   Show Sort button (default true)
- */
 const AdminTable = ({
     title,
     count,
@@ -53,9 +28,6 @@ const AdminTable = ({
     searchTooltip = '',
 }) => {
     const { t } = useTranslation();
-    const [showHelp, setShowHelp] = useState(false);
-
-    // ---- Pagination helpers ----
     const getPageNumbers = () => {
         if (totalPages <= 7) {
             return Array.from({ length: totalPages }, (_, i) => i + 1);
@@ -80,7 +52,7 @@ const AdminTable = ({
 
     return (
         <div className="admin-table-wrapper">
-            {/* ---- Header Bar ---- */}
+            {}
             {(title || (count !== undefined && count !== null) || onSearchChange || showFilter || showSort || toolbarContent) && (
                 <div className="admin-table-header">
                     <div className="admin-table-title-group">
@@ -106,7 +78,7 @@ const AdminTable = ({
                                 />
                                 {searchTooltip && (
                                     <OverlayTrigger
-                                        trigger="hover"
+                                        trigger={["hover", "focus"]}
                                         placement="top"
                                         rootClose
                                         popperConfig={{
@@ -114,7 +86,7 @@ const AdminTable = ({
                                                 {
                                                     name: "offset",
                                                     options: {
-                                                        offset: [0, 12] // moves popover 12px away from the icon
+                                                        offset: [0, 12]
                                                     }
                                                 }
                                             ]
@@ -153,7 +125,14 @@ const AdminTable = ({
                 </div>
             )}
 
-            {/* ---- Table Body ---- */}
+            {}
+            {loading && (
+                <div className="admin-loading-bar-container">
+                    <div className="admin-loading-bar" />
+                </div>
+            )}
+
+            {}
             {loading ? (
                 <div className="admin-table-loading">
                     <div className="admin-spinner" />
@@ -178,7 +157,12 @@ const AdminTable = ({
                                             width: col.width || 'auto'
                                         }}
                                     >
-                                        <div className="th-inner" style={{ justifyContent: col.align === 'right' ? 'flex-end' : 'flex-start' }}>
+                                        <div
+                                            className="th-inner"
+                                            style={{
+                                                justifyContent: col.align === 'right' ? 'flex-end' : col.align === 'center' ? 'center' : 'flex-start'
+                                            }}
+                                        >
                                             {t(col.label)}
                                         </div>
                                     </th>
@@ -201,7 +185,7 @@ const AdminTable = ({
                                                 <div
                                                     className="td-inner"
                                                     style={{
-                                                        justifyContent: col.align === 'right' ? 'flex-end' : 'flex-start'
+                                                        justifyContent: col.align === 'right' ? 'flex-end' : col.align === 'center' ? 'center' : 'flex-start'
                                                     }}
                                                 >
                                                     {col.render
@@ -218,7 +202,7 @@ const AdminTable = ({
                 </div>
             )}
 
-            {/* ---- Pagination ---- */}
+            {}
             {!loading && totalPages > 1 && (
                 <div className="admin-pagination">
                     <span className="admin-pagination-info">

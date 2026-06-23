@@ -1,895 +1,525 @@
-import React, { useState, useEffect, useRef } from 'react';
-import {
-    Loader, TrendingUp, Target, Lightbulb, AlertTriangle, Award,
-    ChevronDown, ChevronRight, Shield, Users, BarChart3, Map,
-    DollarSign, Activity, Zap, Package, Globe, ArrowRight
-} from 'lucide-react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { Loader, TrendingUp, Target, Lightbulb, AlertTriangle, ChevronDown, ChevronRight, Shield } from 'lucide-react';
+import { useAuthStore, useAnalysisStore } from "../store";
 import '../styles/EssentialPhase.css';
 import AnalysisEmptyState from './AnalysisEmptyState';
-import AnalysisError from './AnalysisError';
 import { checkMissingQuestionsAndRedirect, ANALYSIS_TYPES } from '../services/missingQuestionsService';
 import { StreamingRow } from './StreamingManager';
 import { useAutoScroll } from '../hooks/useAutoScroll';
 import { STREAMING_CONFIG } from '../hooks/streamingConfig';
 import { useTranslation } from '@/hooks/useTranslation';
-
 const CoreAdjacency = ({
-    questions = [],
-    userAnswers = {},
-    businessName = '',
-    onRegenerate,
-    isRegenerating = false,
-    canRegenerate = true,
-    coreAdjacencyData = null,
-    selectedBusinessId,
-    onRedirectToBrief,
-    isExpanded = true,
-    streamingManager,
-    cardId,
-    hideImproveButton = false,
+  userAnswers = {},
+  questions = [],
+  onRegenerate,
+  isRegenerating: propIsRegenerating = false,
+  canRegenerate = true,
+  coreAdjacencyData: propCoreAdjacencyData = null,
+  selectedBusinessId,
+  onRedirectToBrief,
+  isExpanded = true,
+  streamingManager,
+  cardId
 }) => {
-    const [data, setData] = useState(coreAdjacencyData);
-    const [hasGenerated, setHasGenerated] = useState(false);
-    const [error, setError] = useState(null);
-    const [expandedSections, setExpandedSections] = useState({
-        coreBusinessDefinition: true,
-        growthOpportunities: true,
-        growthVectorCategorization: true,
-        missingInformation: true,
-        recommendedNextSteps: true
+  const {
+    coreAdjacencyData: storeCoreAdjacencyData,
+    isRegenerating: isTypeRegenerating,
+    regenerateIndividualAnalysis
+  } = useAnalysisStore();
+  const rawCoreAdjacencyData = propCoreAdjacencyData || storeCoreAdjacencyData;
+  const isRegenerating = propIsRegenerating || isTypeRegenerating('coreAdjacency');
+  const [expandedSections, setExpandedSections] = useState({
+    coreBusinessDefinition: false,
+    growthOpportunities: false,
+    growthVectorCategorization: false,
+    missingInformation: false,
+    recommendedNextSteps: false
+  });
+  const [visibleRows, setVisibleRows] = useState(0);
+  const [typingTexts, setTypingTexts] = useState({});
+  const streamingIntervalRef = useRef(null);
+  const {
+    t
+  } = useTranslation();
+  const {
+    lastRowRef,
+    setUserHasScrolled
+  } = useAutoScroll(streamingManager, cardId, isExpanded, visibleRows);
+  const data = useMemo(() => {
+    if (!rawCoreAdjacencyData) return null;
+    return rawCoreAdjacencyData.coreAdjacency || rawCoreAdjacencyData.core_adjacency || rawCoreAdjacencyData.CoreAdjacency || (rawCoreAdjacencyData.coreBusinessDefinition || rawCoreAdjacencyData.growthOpportunities ? rawCoreAdjacencyData : null);
+  }, [rawCoreAdjacencyData]);
+  const handleRedirectToBrief = useCallback((missingQuestionsData = null) => {
+    if (onRedirectToBrief) {
+      onRedirectToBrief(missingQuestionsData);
+    }
+  }, [onRedirectToBrief]);
+  const handleMissingQuestionsCheck = useCallback(async () => {
+    const analysisConfig = ANALYSIS_TYPES.coreAdjacency || {
+      displayName: 'Core vs. Adjacency Analysis',
+      customMessage: 'Complete your business brief to generate a comprehensive Core vs. Adjacency analysis.'
+    };
+    await checkMissingQuestionsAndRedirect('coreAdjacency', selectedBusinessId, handleRedirectToBrief, {
+      displayName: analysisConfig.displayName,
+      customMessage: analysisConfig.customMessage
     });
-
-    const [visibleRows, setVisibleRows] = useState(0);
-    const [typingTexts, setTypingTexts] = useState({});
-    const streamingIntervalRef = useRef(null);
-    const { t } = useTranslation();
-
-    const { lastRowRef, userHasScrolled, setUserHasScrolled } = useAutoScroll(streamingManager, cardId, isExpanded, visibleRows);
-
-    const handleRedirectToBrief = (missingQuestionsData = null) => {
-        if (onRedirectToBrief) {
-            onRedirectToBrief(missingQuestionsData);
-        }
-    };
-
-    const handleMissingQuestionsCheck = async () => {
-        const analysisConfig = ANALYSIS_TYPES.coreAdjacency || {
-            displayName: 'Core vs. Adjacency Analysis',
-            customMessage: 'Complete your business brief to generate a comprehensive Core vs. Adjacency analysis.'
-        };
-
-        await checkMissingQuestionsAndRedirect(
-            'coreAdjacency',
-            selectedBusinessId,
-            handleRedirectToBrief,
-            {
-                displayName: analysisConfig.displayName,
-                customMessage: analysisConfig.customMessage
-            }
-        );
-    };
-
-    const handleRegenerate = async () => {
-        if (onRegenerate) {
-            streamingManager?.resetCard(cardId);
-            onRegenerate();
-        }
-    };
-
-    const handleRetry = () => {
-        setError(null);
-        if (onRegenerate) {
-            onRegenerate();
-        }
-    };
-
-    const isCoreAdjacencyDataIncomplete = (data) => {
-        if (!data) return true;
-
-        const normalized = data.coreAdjacency || data.core_adjacency || data.CoreAdjacency || (data.coreBusinessDefinition || data.growthOpportunities ? data : null);
-        if (!normalized) return true;
-
-        const hasCore = normalized.coreBusinessDefinition &&
-            (normalized.coreBusinessDefinition.keySegments?.length > 0 ||
-                normalized.coreBusinessDefinition.primaryCapabilities?.length > 0 ||
-                normalized.coreBusinessDefinition.profitDrivers?.length > 0);
-
-        const hasGrowth = normalized.growthOpportunities &&
-            (normalized.growthOpportunities.withinCore?.length > 0 ||
-                normalized.growthOpportunities.adjacent?.length > 0 ||
-                normalized.growthOpportunities.nonAdjacent?.length > 0);
-
-        const hasVectors = normalized.growthVectorCategorization &&
-            Object.values(normalized.growthVectorCategorization).some(arr => arr?.length > 0);
-
-        const sectionsWithData = [hasCore, hasGrowth, hasVectors].filter(Boolean).length;
-        return sectionsWithData < 2;
-    };
-
-    const calculateTotalRows = (data) => {
-        if (!data || isCoreAdjacencyDataIncomplete(data)) {
-            return 0;
-        }
-
-        const normalized = data.coreAdjacency || data.core_adjacency || data.CoreAdjacency || (data.coreBusinessDefinition || data.growthOpportunities ? data : null);
-        if (!normalized) return 0;
-
-        let total = 0;
-
-        if (normalized.coreBusinessDefinition) {
-            if (normalized.coreBusinessDefinition.keySegments && Array.isArray(normalized.coreBusinessDefinition.keySegments)) {
-                total += normalized.coreBusinessDefinition.keySegments.length;
-            }
-            if (normalized.coreBusinessDefinition.primaryCapabilities && Array.isArray(normalized.coreBusinessDefinition.primaryCapabilities)) {
-                total += normalized.coreBusinessDefinition.primaryCapabilities.length;
-            }
-            if (normalized.coreBusinessDefinition.profitDrivers && Array.isArray(normalized.coreBusinessDefinition.profitDrivers)) {
-                total += normalized.coreBusinessDefinition.profitDrivers.length;
-            }
-        }
-
-        if (normalized.growthOpportunities) {
-            if (normalized.growthOpportunities.withinCore && Array.isArray(normalized.growthOpportunities.withinCore)) {
-                total += normalized.growthOpportunities.withinCore.length;
-            }
-            if (normalized.growthOpportunities.adjacent && Array.isArray(normalized.growthOpportunities.adjacent)) {
-                total += normalized.growthOpportunities.adjacent.length;
-            }
-            if (normalized.growthOpportunities.nonAdjacent && Array.isArray(normalized.growthOpportunities.nonAdjacent)) {
-                total += normalized.growthOpportunities.nonAdjacent.length;
-            }
-        }
-
-        if (normalized.growthVectorCategorization) {
-            Object.values(normalized.growthVectorCategorization).forEach(arr => {
-                if (Array.isArray(arr)) total += arr.length;
-            });
-        }
-
-        if (normalized.missingInformation && Array.isArray(normalized.missingInformation)) {
-            total += normalized.missingInformation.length;
-        }
-
-        if (normalized.recommendedNextSteps && Array.isArray(normalized.recommendedNextSteps)) {
-            total += normalized.recommendedNextSteps.length;
-        }
-
-        return total;
-    };
-
-    const typeText = (text, rowIndex, field, delay = 0) => {
-        if (text === null || text === undefined) return;
-
-        const textStr = typeof text === 'string' ? text : String(text);
-
-        setTimeout(() => {
-            let currentIndex = 0;
-            const key = `${rowIndex}-${field}`;
-
-            const interval = setInterval(() => {
-                if (currentIndex <= textStr.length) {
-                    setTypingTexts(prev => ({
-                        ...prev,
-                        [key]: textStr.substring(0, currentIndex)
-                    }));
-                    currentIndex++;
-                } else {
-                    clearInterval(interval);
-                }
-            }, STREAMING_CONFIG.TYPING_SPEED);
-        }, delay);
-    };
-
-    useEffect(() => {
-        const totalRows = calculateTotalRows(coreAdjacencyData);
-
-        if (totalRows === 0) {
-            return;
-        }
-
-        if (!streamingManager?.shouldStream(cardId)) {
-            setVisibleRows(totalRows);
-        }
-    }, [coreAdjacencyData, cardId, streamingManager]);
-
-    useEffect(() => {
-        if (!streamingManager?.shouldStream(cardId)) {
-            return;
-        }
-
-        if (!coreAdjacencyData || isRegenerating || isCoreAdjacencyDataIncomplete(coreAdjacencyData)) {
-            return;
-        }
-
-        if (streamingIntervalRef.current) {
-            clearInterval(streamingIntervalRef.current);
-        }
-
-        setVisibleRows(0);
-        setTypingTexts({});
-        setUserHasScrolled(false);
-
-        const totalItems = calculateTotalRows(coreAdjacencyData);
-        let currentRow = 0;
-
-        streamingIntervalRef.current = setInterval(() => {
-            if (currentRow < totalItems) {
-                setVisibleRows(currentRow + 1);
-
-                let rowsProcessed = 0;
-                const normalized = coreAdjacencyData.coreAdjacency || coreAdjacencyData.core_adjacency || coreAdjacencyData.CoreAdjacency || (coreAdjacencyData.coreBusinessDefinition || coreAdjacencyData.growthOpportunities ? coreAdjacencyData : null);
-                if (!normalized) return;
-
-                if (normalized.coreBusinessDefinition) {
-                    const cbd = normalized.coreBusinessDefinition;
-
-                    if (cbd.keySegments && Array.isArray(cbd.keySegments) && cbd.keySegments.length > 0) {
-                        const segmentIndex = currentRow - rowsProcessed;
-                        if (segmentIndex >= 0 && segmentIndex < cbd.keySegments.length) {
-                            typeText(cbd.keySegments[segmentIndex], currentRow, 'content', 0);
-                            currentRow++;
-                            return;
-                        }
-                        rowsProcessed += cbd.keySegments.length;
-                    }
-
-                    if (cbd.primaryCapabilities && Array.isArray(cbd.primaryCapabilities) && cbd.primaryCapabilities.length > 0) {
-                        const capabilityIndex = currentRow - rowsProcessed;
-                        if (capabilityIndex >= 0 && capabilityIndex < cbd.primaryCapabilities.length) {
-                            typeText(cbd.primaryCapabilities[capabilityIndex], currentRow, 'content', 0);
-                            currentRow++;
-                            return;
-                        }
-                        rowsProcessed += cbd.primaryCapabilities.length;
-                    }
-
-                    if (cbd.profitDrivers && Array.isArray(cbd.profitDrivers) && cbd.profitDrivers.length > 0) {
-                        const driverIndex = currentRow - rowsProcessed;
-                        if (driverIndex >= 0 && driverIndex < cbd.profitDrivers.length) {
-                            typeText(cbd.profitDrivers[driverIndex], currentRow, 'content', 0);
-                            currentRow++;
-                            return;
-                        }
-                        rowsProcessed += cbd.profitDrivers.length;
-                    }
-                }
-
-                if (normalized.growthOpportunities) {
-                    const go = normalized.growthOpportunities;
-
-                    if (go.withinCore && Array.isArray(go.withinCore) && go.withinCore.length > 0) {
-                        const index = currentRow - rowsProcessed;
-                        if (index >= 0 && index < go.withinCore.length) {
-                            const item = go.withinCore[index];
-                            typeText(item.opportunity || item.description || item, currentRow, 'opportunity', 0);
-                            if (item.rationale) typeText(item.rationale, currentRow, 'rationale', 200);
-                            currentRow++;
-                            return;
-                        }
-                        rowsProcessed += go.withinCore.length;
-                    }
-
-                    if (go.adjacent && Array.isArray(go.adjacent) && go.adjacent.length > 0) {
-                        const index = currentRow - rowsProcessed;
-                        if (index >= 0 && index < go.adjacent.length) {
-                            const item = go.adjacent[index];
-                            typeText(item.opportunity || item.description || item, currentRow, 'opportunity', 0);
-                            if (item.rationale) typeText(item.rationale, currentRow, 'rationale', 200);
-                            currentRow++;
-                            return;
-                        }
-                        rowsProcessed += go.adjacent.length;
-                    }
-
-                    if (go.nonAdjacent && Array.isArray(go.nonAdjacent) && go.nonAdjacent.length > 0) {
-                        const index = currentRow - rowsProcessed;
-                        if (index >= 0 && index < go.nonAdjacent.length) {
-                            const item = go.nonAdjacent[index];
-                            typeText(item.opportunity || item.description || item, currentRow, 'opportunity', 0);
-                            if (item.rationale) typeText(item.rationale, currentRow, 'rationale', 200);
-                            currentRow++;
-                            return;
-                        }
-                        rowsProcessed += go.nonAdjacent.length;
-                    }
-                }
-
-                if (normalized.growthVectorCategorization) {
-                    const gvc = normalized.growthVectorCategorization;
-                    const allVectors = Object.entries(gvc).flatMap(([key, items]) =>
-                        (Array.isArray(items) ? items : []).map(item => ({ ...item, category: key }))
-                    );
-
-                    const vectorIndex = currentRow - rowsProcessed;
-                    if (vectorIndex >= 0 && vectorIndex < allVectors.length) {
-                        const item = allVectors[vectorIndex];
-                        typeText(item.vector || item, currentRow, 'vector', 0);
-                        if (item.description) typeText(item.description, currentRow, 'description', 200);
-                        currentRow++;
-                        return;
-                    }
-                    rowsProcessed += allVectors.length;
-                }
-
-                if (normalized.missingInformation && Array.isArray(normalized.missingInformation) && normalized.missingInformation.length > 0) {
-                    const index = currentRow - rowsProcessed;
-                    if (index >= 0 && index < normalized.missingInformation.length) {
-                        typeText(normalized.missingInformation[index], currentRow, 'content', 0);
-                        currentRow++;
-                        return;
-                    }
-                    rowsProcessed += normalized.missingInformation.length;
-                }
-
-                if (normalized.recommendedNextSteps && Array.isArray(normalized.recommendedNextSteps) && normalized.recommendedNextSteps.length > 0) {
-                    const index = currentRow - rowsProcessed;
-                    if (index >= 0 && index < normalized.recommendedNextSteps.length) {
-                        typeText(normalized.recommendedNextSteps[index], currentRow, 'content', 0);
-                        currentRow++;
-                        return;
-                    }
-                }
-
-                currentRow++;
-            } else {
-                clearInterval(streamingIntervalRef.current);
-                setVisibleRows(totalItems);
-                streamingManager.stopStreaming(cardId);
-                setUserHasScrolled(false);
-            }
-        }, STREAMING_CONFIG.ROW_INTERVAL);
-
-        return () => {
-            if (streamingIntervalRef.current) {
-                clearInterval(streamingIntervalRef.current);
-            }
-        };
-    }, [cardId, coreAdjacencyData, isRegenerating, streamingManager, setUserHasScrolled]);
-
-    useEffect(() => {
-        return () => {
-            if (streamingIntervalRef.current) {
-                clearInterval(streamingIntervalRef.current);
-            }
-        };
-    }, []);
-
-    const toggleSection = (sectionKey) => {
-        setExpandedSections(prev => ({
+  }, [selectedBusinessId, handleRedirectToBrief]);
+  const handleRegenerate = useCallback(async () => {
+    if (onRegenerate) {
+      streamingManager?.resetCard(cardId);
+      await onRegenerate();
+    } else {
+      streamingManager?.resetCard(cardId);
+      await regenerateIndividualAnalysis('coreAdjacency', questions, userAnswers, selectedBusinessId);
+    }
+  }, [onRegenerate, streamingManager, cardId, regenerateIndividualAnalysis, questions, userAnswers, selectedBusinessId]);
+  const isCoreAdjacencyDataIncomplete = useCallback(data => {
+    if (!data) return true;
+    const normalized = data.coreAdjacency || data.core_adjacency || data.CoreAdjacency || (data.coreBusinessDefinition || data.growthOpportunities ? data : null);
+    if (!normalized) return true;
+    const hasCore = normalized.coreBusinessDefinition && (normalized.coreBusinessDefinition.keySegments?.length > 0 || normalized.coreBusinessDefinition.primaryCapabilities?.length > 0 || normalized.coreBusinessDefinition.profitDrivers?.length > 0);
+    const hasGrowth = normalized.growthOpportunities && (normalized.growthOpportunities.withinCore?.length > 0 || normalized.growthOpportunities.adjacent?.length > 0 || normalized.growthOpportunities.nonAdjacent?.length > 0);
+    const hasVectors = normalized.growthVectorCategorization && Object.values(normalized.growthVectorCategorization).some(arr => arr?.length > 0);
+    return [hasCore, hasGrowth, hasVectors].filter(Boolean).length < 2;
+  }, []);
+  const opportunityMap = useMemo(() => {
+    if (!data?.growthOpportunities) return {};
+    const map = {};
+    Object.values(data.growthOpportunities).forEach(list => {
+      if (Array.isArray(list)) {
+        list.forEach(item => {
+          if (item.id) map[item.id] = item.description || item.opportunity || item;
+        });
+      }
+    });
+    return map;
+  }, [data]);
+  const resolveOpportunity = useCallback(id => {
+    if (!id) return '';
+    if (typeof id !== 'string') return String(id);
+    return opportunityMap[id] || id;
+  }, [opportunityMap]);
+  const calculateTotalRows = useCallback(data => {
+    if (!data || isCoreAdjacencyDataIncomplete(data)) return 0;
+    const normalized = data.coreAdjacency || data.core_adjacency || data.CoreAdjacency || (data.coreBusinessDefinition || data.growthOpportunities ? data : null);
+    if (!normalized) return 0;
+    let total = 0;
+    if (normalized.coreBusinessDefinition) {
+      ['keySegments', 'primaryCapabilities', 'profitDrivers'].forEach(key => {
+        if (Array.isArray(normalized.coreBusinessDefinition[key])) total += normalized.coreBusinessDefinition[key].length;
+      });
+    }
+    if (normalized.growthOpportunities) {
+      ['withinCore', 'adjacent', 'nonAdjacent'].forEach(key => {
+        if (Array.isArray(normalized.growthOpportunities[key])) total += normalized.growthOpportunities[key].length;
+      });
+    }
+    if (normalized.growthVectorCategorization) {
+      Object.values(normalized.growthVectorCategorization).forEach(arr => {
+        if (Array.isArray(arr)) total += arr.length;
+      });
+    }
+    if (normalized.missingInformation) {
+      if (Array.isArray(normalized.missingInformation)) {
+        total += normalized.missingInformation.length;
+      } else if (typeof normalized.missingInformation === 'object') {
+        Object.values(normalized.missingInformation).forEach(arr => {
+          if (Array.isArray(arr)) total += arr.length;
+        });
+      }
+    }
+    if (Array.isArray(normalized.recommendedNextSteps)) total += normalized.recommendedNextSteps.length;
+    return total;
+  }, [isCoreAdjacencyDataIncomplete]);
+  const typeText = useCallback((text, rowIndex, field, delay = 0) => {
+    if (text === null || text === undefined) return;
+    const textStr = typeof text === 'string' ? text : String(text);
+    setTimeout(() => {
+      let currentIndex = 0;
+      const key = `${rowIndex}-${field}`;
+      const interval = setInterval(() => {
+        if (currentIndex <= textStr.length) {
+          setTypingTexts(prev => ({
             ...prev,
-            [sectionKey]: !prev[sectionKey]
-        }));
-    };
-
-    useEffect(() => {
-        if (coreAdjacencyData) {
-            const normalized = coreAdjacencyData.coreAdjacency || coreAdjacencyData.core_adjacency || coreAdjacencyData.CoreAdjacency || (coreAdjacencyData.coreBusinessDefinition || coreAdjacencyData.growthOpportunities ? coreAdjacencyData : null);
-
-            if (normalized && (normalized.coreBusinessDefinition || normalized.growthOpportunities)) {
-                setData(normalized);
-                setHasGenerated(true);
-                setError(null);
-            } else {
-                setData(null);
-                setHasGenerated(false);
-            }
+            [key]: textStr.substring(0, currentIndex)
+          }));
+          currentIndex++;
         } else {
-            setData(null);
-            setHasGenerated(false);
+          clearInterval(interval);
         }
-    }, [coreAdjacencyData]);
-
-    const formatLabel = (key) => {
-        return key
-            .replace(/([A-Z])/g, ' $1')
-            .replace(/^./, str => str.toUpperCase())
-            .trim();
-    };
-
-    const getSectionIcon = (sectionKey) => {
-        const keyLower = sectionKey.toLowerCase();
-        if (keyLower.includes('core') || keyLower.includes('definition')) return Shield;
-        if (keyLower.includes('growth') && keyLower.includes('opportunit')) return TrendingUp;
-        if (keyLower.includes('vector') || keyLower.includes('categori')) return Target;
-        if (keyLower.includes('missing') || keyLower.includes('gap')) return AlertTriangle;
-        if (keyLower.includes('recommend') || keyLower.includes('next')) return Lightbulb;
-        return Activity;
-    };
-
-    if (isRegenerating) {
-        return (
-            <div className="porters-container">
-                <div className="loading-state">
-                    <Loader size={24} className="loading-spinner" />
-                    <span>
-                        {isRegenerating
-                            ? "Regenerating Core vs. Adjacency Analysis..."
-                            : "Generating Core vs. Adjacency Analysis..."
-                        }
-                    </span>
-                </div>
-            </div>
-        );
+      }, STREAMING_CONFIG.TYPING_SPEED);
+    }, delay);
+  }, []);
+  useEffect(() => {
+    const totalRows = calculateTotalRows(rawCoreAdjacencyData);
+    if (totalRows === 0) return;
+    if (!streamingManager?.shouldStream(cardId)) {
+      setVisibleRows(totalRows);
     }
-
-    if (error || (!hasGenerated && !data && Object.keys(userAnswers).length > 0)) {
-        return (
-            <div className="porters-container">
-                <AnalysisEmptyState
-                    analysisType="coreAdjacency"
-                    analysisDisplayName="Core vs. Adjacency Analysis"
-                    icon={Target}
-                    onImproveAnswers={handleMissingQuestionsCheck}
-                    onRegenerate={handleRegenerate}
-                    isRegenerating={isRegenerating}
-                    canRegenerate={canRegenerate}
-                    userAnswers={userAnswers}
-                    minimumAnswersRequired={3}
-                    showImproveButton={false}
-                    showRegenerateButton={false}
-                />
-            </div>
-        );
-    }
-
-    if (!coreAdjacencyData || isCoreAdjacencyDataIncomplete(coreAdjacencyData)) {
-        return (
-            <div className="porters-container">
-                <AnalysisEmptyState
-                    analysisType="coreAdjacency"
-                    analysisDisplayName="Core vs. Adjacency Analysis"
-                    icon={Target}
-                    onImproveAnswers={handleMissingQuestionsCheck}
-                    onRegenerate={handleRegenerate}
-                    isRegenerating={isRegenerating}
-                    canRegenerate={canRegenerate}
-                    userAnswers={userAnswers}
-                    minimumAnswersRequired={3}
-                    showImproveButton={false}
-                    showRegenerateButton={false}
-                />
-            </div>
-        );
-    }
-
-    let currentRowIndex = 0;
-    const keySegmentsIndices = {};
-    const primaryCapabilitiesIndices = {};
-    const profitDriversIndices = {};
-    const withinCoreIndices = {};
-    const adjacentIndices = {};
-    const nonAdjacentIndices = {};
-    const vectorIndices = {};
-    const missingInfoIndices = {};
-    const nextStepsIndices = {};
-
-    if (data.coreBusinessDefinition) {
-        if (data.coreBusinessDefinition.keySegments && Array.isArray(data.coreBusinessDefinition.keySegments)) {
-            data.coreBusinessDefinition.keySegments.forEach((_, index) => {
-                keySegmentsIndices[index] = currentRowIndex++;
-            });
-        }
-        if (data.coreBusinessDefinition.primaryCapabilities && Array.isArray(data.coreBusinessDefinition.primaryCapabilities)) {
-            data.coreBusinessDefinition.primaryCapabilities.forEach((_, index) => {
-                primaryCapabilitiesIndices[index] = currentRowIndex++;
-            });
-        }
-        if (data.coreBusinessDefinition.profitDrivers && Array.isArray(data.coreBusinessDefinition.profitDrivers)) {
-            data.coreBusinessDefinition.profitDrivers.forEach((_, index) => {
-                profitDriversIndices[index] = currentRowIndex++;
-            });
-        }
-    }
-
-    if (data.growthOpportunities) {
-        if (data.growthOpportunities.withinCore && Array.isArray(data.growthOpportunities.withinCore)) {
-            data.growthOpportunities.withinCore.forEach((_, index) => {
-                withinCoreIndices[index] = currentRowIndex++;
-            });
-        }
-        if (data.growthOpportunities.adjacent && Array.isArray(data.growthOpportunities.adjacent)) {
-            data.growthOpportunities.adjacent.forEach((_, index) => {
-                adjacentIndices[index] = currentRowIndex++;
-            });
-        }
-        if (data.growthOpportunities.nonAdjacent && Array.isArray(data.growthOpportunities.nonAdjacent)) {
-            data.growthOpportunities.nonAdjacent.forEach((_, index) => {
-                nonAdjacentIndices[index] = currentRowIndex++;
-            });
-        }
-    }
-
-    if (data.growthVectorCategorization) {
-        Object.entries(data.growthVectorCategorization).forEach(([category, items]) => {
-            if (Array.isArray(items)) {
-                items.forEach((_, index) => {
-                    if (!vectorIndices[category]) vectorIndices[category] = {};
-                    vectorIndices[category][index] = currentRowIndex++;
-                });
+  }, [rawCoreAdjacencyData, cardId, streamingManager, calculateTotalRows]);
+  useEffect(() => {
+    if (!streamingManager?.shouldStream(cardId)) return;
+    if (!rawCoreAdjacencyData || isRegenerating || isCoreAdjacencyDataIncomplete(rawCoreAdjacencyData)) return;
+    if (streamingIntervalRef.current) clearInterval(streamingIntervalRef.current);
+    setVisibleRows(0);
+    setTypingTexts({});
+    setUserHasScrolled(false);
+    const totalItems = calculateTotalRows(rawCoreAdjacencyData);
+    let currentRow = 0;
+    streamingIntervalRef.current = setInterval(() => {
+      if (currentRow < totalItems) {
+        setVisibleRows(currentRow + 1);
+        let rowsProcessed = 0;
+        const normalized = rawCoreAdjacencyData.coreAdjacency || rawCoreAdjacencyData.core_adjacency || rawCoreAdjacencyData.CoreAdjacency || (rawCoreAdjacencyData.coreBusinessDefinition || rawCoreAdjacencyData.growthOpportunities ? rawCoreAdjacencyData : null);
+        if (!normalized) return;
+        if (normalized.coreBusinessDefinition) {
+          const cbd = normalized.coreBusinessDefinition;
+          for (const key of ['keySegments', 'primaryCapabilities', 'profitDrivers']) {
+            if (Array.isArray(cbd[key]) && cbd[key].length > 0) {
+              const index = currentRow - rowsProcessed;
+              if (index >= 0 && index < cbd[key].length) {
+                typeText(cbd[key][index], currentRow, 'content', 0);
+                currentRow++;
+                return;
+              }
+              rowsProcessed += cbd[key].length;
             }
-        });
+          }
+        }
+        if (normalized.growthOpportunities) {
+          const go = normalized.growthOpportunities;
+          for (const key of ['withinCore', 'adjacent', 'nonAdjacent']) {
+            if (Array.isArray(go[key]) && go[key].length > 0) {
+              const index = currentRow - rowsProcessed;
+              if (index >= 0 && index < go[key].length) {
+                const item = go[key][index];
+                typeText(item.opportunity || item.description || item, currentRow, 'opportunity', 0);
+                if (item.rationale) typeText(item.rationale, currentRow, 'rationale', 200);
+                currentRow++;
+                return;
+              }
+              rowsProcessed += go[key].length;
+            }
+          }
+        }
+        if (normalized.growthVectorCategorization) {
+          const gvc = normalized.growthVectorCategorization;
+          const allVectors = Object.entries(gvc).flatMap(([key, items]) => (Array.isArray(items) ? items : []).map(item => typeof item === 'string' ? {
+            vector: item,
+            category: key
+          } : {
+            ...item,
+            category: key
+          }));
+          const index = currentRow - rowsProcessed;
+          if (index >= 0 && index < allVectors.length) {
+            const item = allVectors[index];
+            const vecInput = item.vector || item.opportunity || (typeof item === 'string' ? item : '');
+            const resolvedVec = resolveOpportunity(vecInput);
+            typeText(resolvedVec, currentRow, 'vector', 0);
+            if (item.description) typeText(item.description, currentRow, 'description', 200);
+            currentRow++;
+            return;
+          }
+          rowsProcessed += allVectors.length;
+        }
+        if (normalized.missingInformation) {
+          const mi = normalized.missingInformation;
+          if (Array.isArray(mi)) {
+            const index = currentRow - rowsProcessed;
+            if (index >= 0 && index < mi.length) {
+              typeText(mi[index], currentRow, 'content', 0);
+              currentRow++;
+              return;
+            }
+            rowsProcessed += mi.length;
+          } else if (typeof mi === 'object') {
+            const categories = Object.keys(mi);
+            for (const cat of categories) {
+              if (Array.isArray(mi[cat]) && mi[cat].length > 0) {
+                const index = currentRow - rowsProcessed;
+                if (index >= 0 && index < mi[cat].length) {
+                  typeText(mi[cat][index], currentRow, 'content', 0);
+                  currentRow++;
+                  return;
+                }
+                rowsProcessed += mi[cat].length;
+              }
+            }
+          }
+        }
+        if (Array.isArray(normalized.recommendedNextSteps) && normalized.recommendedNextSteps.length > 0) {
+          const index = currentRow - rowsProcessed;
+          if (index >= 0 && index < normalized.recommendedNextSteps.length) {
+            typeText(normalized.recommendedNextSteps[index], currentRow, 'content', 0);
+            currentRow++;
+            return;
+          }
+          rowsProcessed += normalized.recommendedNextSteps.length;
+        }
+        currentRow++;
+      } else {
+        clearInterval(streamingIntervalRef.current);
+        setVisibleRows(totalItems);
+        streamingManager?.stopStreaming(cardId);
+        setUserHasScrolled(false);
+      }
+    }, STREAMING_CONFIG.ROW_INTERVAL);
+    return () => {
+      if (streamingIntervalRef.current) clearInterval(streamingIntervalRef.current);
+    };
+  }, [cardId, rawCoreAdjacencyData, isRegenerating, streamingManager, setUserHasScrolled, calculateTotalRows, isCoreAdjacencyDataIncomplete, typeText, resolveOpportunity]);
+  const toggleSection = sectionKey => {
+    setExpandedSections(prev => ({
+      ...prev,
+      [sectionKey]: !prev[sectionKey]
+    }));
+  };
+  const formatLabel = key => {
+    return key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase()).trim();
+  };
+  if (isRegenerating) {
+    return <div className="porters-container">
+      <div className="loading-state">
+        <Loader size={24} className="loading-spinner" />
+        <span>Regenerating Core vs. Adjacency Analysis...</span>
+      </div>
+    </div>;
+  }
+  if (!data || isCoreAdjacencyDataIncomplete(rawCoreAdjacencyData)) {
+    return <div className="porters-container">
+      <AnalysisEmptyState analysisType="coreAdjacency" analysisDisplayName="Core vs. Adjacency Analysis" icon={Target} onImproveAnswers={handleMissingQuestionsCheck} onRegenerate={handleRegenerate} isRegenerating={isRegenerating} canRegenerate={canRegenerate} userAnswers={userAnswers} minimumAnswersRequired={3} showImproveButton={false} showRegenerateButton={false} />
+    </div>;
+  }
+  let currentRowIndex = 0;
+  const indices = {
+    keySegments: [],
+    primaryCapabilities: [],
+    profitDrivers: [],
+    withinCore: [],
+    adjacent: [],
+    nonAdjacent: [],
+    vectors: {},
+    missingInfo: [],
+    nextSteps: []
+  };
+  if (data.coreBusinessDefinition) {
+    ['keySegments', 'primaryCapabilities', 'profitDrivers'].forEach(key => {
+      if (Array.isArray(data.coreBusinessDefinition[key])) data.coreBusinessDefinition[key].forEach(() => indices[key].push(currentRowIndex++));
+    });
+  }
+  if (data.growthOpportunities) {
+    ['withinCore', 'adjacent', 'nonAdjacent'].forEach(key => {
+      if (Array.isArray(data.growthOpportunities[key])) data.growthOpportunities[key].forEach(() => indices[key].push(currentRowIndex++));
+    });
+  }
+  if (data.growthVectorCategorization) {
+    Object.entries(data.growthVectorCategorization).forEach(([cat, items]) => {
+      if (Array.isArray(items)) {
+        indices.vectors[cat] = [];
+        items.forEach(() => indices.vectors[cat].push(currentRowIndex++));
+      }
+    });
+  }
+  if (data.missingInformation) {
+    if (Array.isArray(data.missingInformation)) {
+      data.missingInformation.forEach(() => indices.missingInfo.push(currentRowIndex++));
+    } else if (typeof data.missingInformation === 'object') {
+      Object.entries(data.missingInformation).forEach(([cat, items]) => {
+        if (Array.isArray(items)) {
+          indices.missingInfo.push(...items.map(() => currentRowIndex++));
+        }
+      });
     }
-
-    if (data.missingInformation && Array.isArray(data.missingInformation)) {
-        data.missingInformation.forEach((_, index) => {
-            missingInfoIndices[index] = currentRowIndex++;
-        });
-    }
-
-    if (data.recommendedNextSteps && Array.isArray(data.recommendedNextSteps)) {
-        data.recommendedNextSteps.forEach((_, index) => {
-            nextStepsIndices[index] = currentRowIndex++;
-        });
-    }
-
-    const isStreaming = streamingManager?.shouldStream(cardId);
-    const hasStreamed = streamingManager?.hasStreamed(cardId);
-
-    return (
-        <div className="porters-container full-swot-container"
-            data-analysis-type="coreAdjacency"
-            data-analysis-name="Core vs. Adjacency"
-            data-analysis-order="10">
-
-            {data.coreBusinessDefinition && (
-                <div className="section-container">
-                    <div className="section-header" onClick={() => toggleSection('coreBusinessDefinition')}>
-                        <h5>
-                            <Shield size={20} style={{ marginRight: '8px' }} />
-                            {t('Core_Business_Definition')}
-                        </h5>
-                        {expandedSections.coreBusinessDefinition ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
-                    </div>
-
-                    {expandedSections.coreBusinessDefinition && (
-                        <div className="table-container">
-                            {data.coreBusinessDefinition.description && (
-                                <div className="coreBusinessDefinition" style={{ padding: '1rem', background: '#f8f9fa', borderRadius: '8px', marginBottom: '1rem' }}>
-                                    <p style={{ margin: 0, lineHeight: '1.6' }}>{data.coreBusinessDefinition.description}</p>
-                                </div>
-                            )}
-
-                            <table className="data-table">
-                                <tbody>
-                                    {data.coreBusinessDefinition.keySegments && data.coreBusinessDefinition.keySegments.length > 0 && (
-                                        <tr>
-                                            <td style={{ width: '30%' }}>
-                                                <span className="status-badge high-intensity">
-                                                    {t('Key_Segments')}
-                                                </span>
-                                            </td>
-                                            <td>
-                                                <ul style={{ margin: 0, paddingLeft: '1.5rem' }}>
-                                                    {data.coreBusinessDefinition.keySegments.map((item, idx) => {
-                                                        const rowIndex = keySegmentsIndices[idx];
-                                                        const isVisible = rowIndex < visibleRows;
-                                                        const isLast = rowIndex === visibleRows - 1;
-
-                                                        return (
-                                                            <li
-                                                                key={idx}
-                                                                ref={isLast && isStreaming ? lastRowRef : null}
-                                                                style={{ opacity: isVisible ? 1 : 0, transition: !isStreaming ? 'none' : 'opacity 0.3s' }}
-                                                            >
-                                                                {hasStreamed ? item : (typingTexts[`${rowIndex}-content`] || item)}
-                                                            </li>
-                                                        );
-                                                    })}
-                                                </ul>
-                                            </td>
-                                        </tr>
-                                    )}
-                                    {data.coreBusinessDefinition.primaryCapabilities && data.coreBusinessDefinition.primaryCapabilities.length > 0 && (
-                                        <tr>
-                                            <td style={{ width: '30%' }}>
-                                                <span className="status-badge high-intensity">
-                                                    {t('Primary_Capabilities')}
-                                                </span>
-                                            </td>
-                                            <td>
-                                                <ul style={{ margin: 0, paddingLeft: '1.5rem' }}>
-                                                    {data.coreBusinessDefinition.primaryCapabilities.map((item, idx) => {
-                                                        const rowIndex = primaryCapabilitiesIndices[idx];
-                                                        const isVisible = rowIndex < visibleRows;
-                                                        const isLast = rowIndex === visibleRows - 1;
-
-                                                        return (
-                                                            <li
-                                                                key={idx}
-                                                                ref={isLast && isStreaming ? lastRowRef : null}
-                                                                style={{ opacity: isVisible ? 1 : 0, transition: !isStreaming ? 'none' : 'opacity 0.3s' }}
-                                                            >
-                                                                {hasStreamed ? item : (typingTexts[`${rowIndex}-content`] || item)}
-                                                            </li>
-                                                        );
-                                                    })}
-                                                </ul>
-                                            </td>
-                                        </tr>
-                                    )}
-                                    {data.coreBusinessDefinition.profitDrivers && data.coreBusinessDefinition.profitDrivers.length > 0 && (
-                                        <tr>
-                                            <td style={{ width: '30%' }}>
-                                                <span className="status-badge high-intensity">
-                                                    {t('Profit_Drivers')}
-                                                </span>
-                                            </td>
-                                            <td>
-                                                <ul style={{ margin: 0, paddingLeft: '1.5rem' }}>
-                                                    {data.coreBusinessDefinition.profitDrivers.map((item, idx) => {
-                                                        const rowIndex = profitDriversIndices[idx];
-                                                        const isVisible = rowIndex < visibleRows;
-                                                        const isLast = rowIndex === visibleRows - 1;
-
-                                                        return (
-                                                            <li
-                                                                key={idx}
-                                                                ref={isLast && isStreaming ? lastRowRef : null}
-                                                                style={{ opacity: isVisible ? 1 : 0, transition: !isStreaming ? 'none' : 'opacity 0.3s' }}
-                                                            >
-                                                                {hasStreamed ? item : (typingTexts[`${rowIndex}-content`] || item)}
-                                                            </li>
-                                                        );
-                                                    })}
-                                                </ul>
-                                            </td>
-                                        </tr>
-                                    )}
-                                </tbody>
-                            </table>
-                        </div>
-                    )}
-                </div>
-            )}
-
-            {data.growthOpportunities && (
-                <div className="section-container">
-                    <div className="section-header" onClick={() => toggleSection('growthOpportunities')}>
-                        <h5>
-                            <TrendingUp size={20} style={{ marginRight: '8px' }} />
-                            {t('Growth_Opportunities')}
-                        </h5>
-                        {expandedSections.growthOpportunities ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
-                    </div>
-
-                    {expandedSections.growthOpportunities && (
-                        <div className="table-container">
-                            {data.growthOpportunities.withinCore && data.growthOpportunities.withinCore.length > 0 && (
-                                <>
-                                    <h6 style={{ margin: '1rem 0 0.5rem 0', color: '#2c5282' }}>{t('Within_Core')}</h6>
-                                    <table className="data-table">
-                                        <tbody>
-                                            {data.growthOpportunities.withinCore.map((item, idx) => {
-                                                const rowIndex = withinCoreIndices[idx];
-                                                const isVisible = rowIndex < visibleRows;
-                                                const isLast = rowIndex === visibleRows - 1;
-                                                const opportunity = typeof item === 'string' ? item : (item.opportunity || item.description || '');
-                                                const rationale = typeof item === 'object' ? item.rationale : '';
-
-                                                return (
-                                                    <StreamingRow
-                                                        key={idx}
-                                                        isVisible={isVisible}
-                                                        isLast={isLast && isStreaming}
-                                                        lastRowRef={lastRowRef}
-                                                        isStreaming={isStreaming}
-
-                                                    >
-                                                        <td>
-                                                            {hasStreamed ? opportunity : (typingTexts[`${rowIndex}-opportunity`] || opportunity)}
-                                                        </td>
-                                                        {rationale && (
-                                                            <td style={{ opacity: isVisible ? 1 : 0, transition: !isStreaming ? 'none' : 'opacity 0.3s 0.2s' }}>
-                                                                {hasStreamed ? rationale : (typingTexts[`${rowIndex}-rationale`] || rationale)}
-                                                            </td>
-                                                        )}
-                                                    </StreamingRow>
-                                                );
-                                            })}
-                                        </tbody>
-                                    </table>
-                                </>
-                            )}
-
-                            {data.growthOpportunities.adjacent && data.growthOpportunities.adjacent.length > 0 && (
-                                <>
-                                    <h6 style={{ margin: '1rem 0 0.5rem 0', color: '#2c5282' }}>{t('Adjacent')}</h6>
-                                    <table className="data-table">
-                                        <tbody>
-                                            {data.growthOpportunities.adjacent.map((item, idx) => {
-                                                const rowIndex = adjacentIndices[idx];
-                                                const isVisible = rowIndex < visibleRows;
-                                                const isLast = rowIndex === visibleRows - 1;
-                                                const opportunity = typeof item === 'string' ? item : (item.opportunity || item.description || '');
-                                                const rationale = typeof item === 'object' ? item.rationale : '';
-
-                                                return (
-                                                    <StreamingRow
-                                                        key={idx}
-                                                        isVisible={isVisible}
-                                                        isLast={isLast && isStreaming}
-                                                        lastRowRef={lastRowRef}
-                                                        isStreaming={isStreaming}
-                                                    >
-                                                        <td>
-                                                            {hasStreamed ? opportunity : (typingTexts[`${rowIndex}-opportunity`] || opportunity)}
-                                                        </td>
-                                                        {rationale && (
-                                                            <td style={{ opacity: isVisible ? 1 : 0, transition: !isStreaming ? 'none' : 'opacity 0.3s 0.2s' }}>
-                                                                {hasStreamed ? rationale : (typingTexts[`${rowIndex}-rationale`] || rationale)}
-                                                            </td>
-                                                        )}
-                                                    </StreamingRow>
-                                                );
-                                            })}
-                                        </tbody>
-                                    </table>
-                                </>
-                            )}
-
-                            {data.growthOpportunities.nonAdjacent && data.growthOpportunities.nonAdjacent.length > 0 && (
-                                <>
-                                    <h6 style={{ margin: '1rem 0 0.5rem 0', color: '#2c5282' }}>{t('Non-Adjacent')}</h6>
-                                    <table className="data-table">
-                                        <tbody>
-                                            {data.growthOpportunities.nonAdjacent.map((item, idx) => {
-                                                const rowIndex = nonAdjacentIndices[idx];
-                                                const isVisible = rowIndex < visibleRows;
-                                                const isLast = rowIndex === visibleRows - 1;
-                                                const opportunity = typeof item === 'string' ? item : (item.opportunity || item.description || '');
-                                                const rationale = typeof item === 'object' ? item.rationale : '';
-
-                                                return (
-                                                    <StreamingRow
-                                                        key={idx}
-                                                        isVisible={isVisible}
-                                                        isLast={isLast && isStreaming}
-                                                        lastRowRef={lastRowRef}
-                                                        isStreaming={isStreaming}
-                                                    >
-                                                        <td> {hasStreamed ? opportunity : (typingTexts[`${rowIndex}-opportunity`] || opportunity)}
-                                                        </td>
-                                                        {rationale && (
-                                                            <td style={{ opacity: isVisible ? 1 : 0, transition: !isStreaming ? 'none' : 'opacity 0.3s 0.2s' }}>
-                                                                {hasStreamed ? rationale : (typingTexts[`${rowIndex}-rationale`] || rationale)}
-                                                            </td>
-                                                        )}
-                                                    </StreamingRow>
-                                                );
-                                            })}
-                                        </tbody>
-                                    </table>
-                                </>
-                            )}
-                        </div>
-                    )}
-                </div>
-            )}
-
-            {data.growthVectorCategorization && Object.keys(data.growthVectorCategorization).length > 0 && (
-                <div className="section-container">
-                    <div className="section-header" onClick={() => toggleSection('growthVectorCategorization')}>
-                        <h5>
-                            <Target size={20} style={{ marginRight: '8px' }} />
-                            {t('Growth_Vector_Categorization')}
-                        </h5>
-                        {expandedSections.growthVectorCategorization ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
-                    </div>
-
-                    {expandedSections.growthVectorCategorization && (
-                        <div className="table-container">
-                            {Object.entries(data.growthVectorCategorization).map(([category, items]) => {
-                                if (!items || items.length === 0) return null;
-
-                                return (
-                                    <div key={category}>
-                                        <h6 style={{ margin: '1rem 0 0.5rem 0', color: '#2c5282' }}>{formatLabel(category)}</h6>
-                                        <table className="data-table">
-                                            <tbody>
-                                                {items.map((item, idx) => {
-                                                    const rowIndex = vectorIndices[category]?.[idx];
-                                                    const isVisible = rowIndex < visibleRows;
-                                                    const isLast = rowIndex === visibleRows - 1;
-                                                    const vector = typeof item === 'string' ? item : item.vector || '';
-                                                    const description = typeof item === 'object' ? item.description : '';
-
-                                                    return (
-                                                        <StreamingRow
-                                                            key={idx}
-                                                            isVisible={isVisible}
-                                                            isLast={isLast && isStreaming}
-                                                            lastRowRef={lastRowRef}
-                                                            isStreaming={isStreaming}
-                                                        >
-                                                            <td style={{ width: '40%' }}> {hasStreamed ? vector : (typingTexts[`${rowIndex}-vector`] || vector)}
-                                                            </td>
-                                                            {description && (
-                                                                <td style={{ opacity: isVisible ? 1 : 0, transition: !isStreaming ? 'none' : 'opacity 0.3s 0.2s' }}>
-                                                                    {hasStreamed ? description : (typingTexts[`${rowIndex}-description`] || description)}
-                                                                </td>
-                                                            )}
-                                                        </StreamingRow>
-                                                    );
-                                                })}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    )}
-                </div>
-            )}
-
-            {data.missingInformation && data.missingInformation.length > 0 && (
-                <div className="section-container">
-                    <div className="section-header" onClick={() => toggleSection('missingInformation')}>
-                        <h5>
-                            <AlertTriangle size={20} style={{ marginRight: '8px' }} />
-                            {t('Missing_Information')}
-                        </h5>
-                        {expandedSections.missingInformation ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
-                    </div>
-
-                    {expandedSections.missingInformation && (
-                        <div className="table-container">
-                            <ul style={{ margin: 0, paddingLeft: '1.5rem' }}>
-                                {data.missingInformation.map((item, idx) => {
-                                    const rowIndex = missingInfoIndices[idx];
-                                    const isVisible = rowIndex < visibleRows;
-                                    const isLast = rowIndex === visibleRows - 1;
-
-                                    return (
-                                        <li
-                                            key={idx}
-                                            ref={isLast && isStreaming ? lastRowRef : null}
-                                            style={{ opacity: isVisible ? 1 : 0, transition: !isStreaming ? 'none' : 'opacity 0.3s' }}
-                                        >
-                                            {hasStreamed ? item : (typingTexts[`${rowIndex}-content`] || item)}
-                                        </li>
-                                    );
-                                })}
-                            </ul>
-                        </div>
-                    )}
-                </div>
-            )}
-
-            {data.recommendedNextSteps && data.recommendedNextSteps.length > 0 && (
-                <div className="section-container">
-                    <div className="section-header" onClick={() => toggleSection('recommendedNextSteps')}>
-                        <h5>
-                            <Lightbulb size={20} style={{ marginRight: '8px' }} />
-                            {t('Recommended_Next_Steps')}
-                        </h5>
-                        {expandedSections.recommendedNextSteps ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
-                    </div>
-
-                    {expandedSections.recommendedNextSteps && (
-                        <div className="table-container">
-                            <ul style={{ margin: 0, paddingLeft: '1.5rem' }}>
-                                {data.recommendedNextSteps.map((item, idx) => {
-                                    const rowIndex = nextStepsIndices[idx];
-                                    const isVisible = rowIndex < visibleRows;
-                                    const isLast = rowIndex === visibleRows - 1;
-
-                                    return (
-                                        <li
-                                            key={idx}
-                                            ref={isLast && isStreaming ? lastRowRef : null}
-                                            style={{ opacity: isVisible ? 1 : 0, transition: !isStreaming ? 'none' : 'opacity 0.3s' }}
-                                        >
-                                            {hasStreamed ? item : (typingTexts[`${rowIndex}-content`] || item)}
-                                        </li>
-                                    );
-                                })}
-                            </ul>
-                        </div>
-                    )}
-                </div>
-            )}
+  }
+  if (Array.isArray(data.recommendedNextSteps)) data.recommendedNextSteps.forEach(() => indices.nextSteps.push(currentRowIndex++));
+  const isStreaming = streamingManager?.shouldStream(cardId);
+  const hasStreamed = streamingManager?.hasStreamed(cardId);
+  const getBadgeClass = value => {
+    const val = value?.toLowerCase();
+    if (['high', 'large'].includes(val)) return 'priority-badge high';
+    if (['medium'].includes(val)) return 'priority-badge medium';
+    if (['low', 'small'].includes(val)) return 'priority-badge low';
+    return 'priority-badge';
+  };
+  return <div className="porters-container full-swot-container" data-component="core-adjacency" data-analysis-type="coreAdjacency" data-analysis-name="Core vs. Adjacency" data-analysis-order="10">
+    {data.coreBusinessDefinition && <div className="section-container">
+      <div className="section-header" onClick={() => toggleSection('coreBusinessDefinition')}>
+        <h5><Shield size={20} className="core-adjacency--s1" />{t('Core_Business_Definition')}</h5>
+        {expandedSections.coreBusinessDefinition ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
+      </div>
+      <div className={`section-container ${expandedSections.coreBusinessDefinition === true ? 'expanded' : 'collapsed'}`}>
+        <div className="table-container">
+          {data.coreBusinessDefinition.description && <div className="coreBusinessDefinition core-adjacency--s2">
+            <p className="core-adjacency--s3">{data.coreBusinessDefinition.description}</p>
+          </div>}
+          <table className="data-table">
+            <tbody>
+              {[{
+                key: 'keySegments',
+                label: 'Key_Segments'
+              }, {
+                key: 'primaryCapabilities',
+                label: 'Primary_Capabilities'
+              }, {
+                key: 'profitDrivers',
+                label: 'Profit_Drivers'
+              }].map(conf => data.coreBusinessDefinition[conf.key]?.length > 0 && <tr key={conf.key}>
+                <td className="core-adjacency--s4"><span className="status-badge high-intensity">{t(conf.label)}</span></td>
+                <td>
+                  <ul className="core-adjacency--s5">
+                    {data.coreBusinessDefinition[conf.key].map((item, idx) => {
+                      const rIdx = indices[conf.key][idx];
+                      return <li key={idx} ref={rIdx === visibleRows - 1 && isStreaming ? lastRowRef : null} style={{
+                        opacity: rIdx < visibleRows ? 1 : 0,
+                        transition: !isStreaming ? 'none' : 'opacity 0.3s'
+                      }}>
+                        {hasStreamed ? item : typingTexts[`${rIdx}-content`] || item}
+                      </li>;
+                    })}
+                  </ul>
+                </td>
+              </tr>)}
+            </tbody>
+          </table>
         </div>
-    );
-};
+      </div>
+    </div>}
 
+    {data.growthOpportunities && <div className="section-container">
+      <div className="section-header" onClick={() => toggleSection('growthOpportunities')}>
+        <h5><TrendingUp size={20} className="core-adjacency--s1" />{t('Growth_Opportunities')}</h5>
+        {expandedSections.growthOpportunities ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
+      </div>
+      <div className={`section-container ${expandedSections.growthOpportunities === true ? 'expanded' : 'collapsed'}`}>
+        <div className="table-container">
+          {[{
+            key: 'withinCore',
+            label: 'Within_Core'
+          }, {
+            key: 'adjacent',
+            label: 'Adjacent'
+          }, {
+            key: 'nonAdjacent',
+            label: 'Non-Adjacent'
+          }].map(conf => data.growthOpportunities[conf.key]?.length > 0 && <React.Fragment key={conf.key}>
+            <h6 className="core-adjacency--s6">{t(conf.label)}</h6>
+            <table className="data-table">
+              <tbody>
+                {data.growthOpportunities[conf.key].map((item, idx) => {
+                  const rIdx = indices[conf.key][idx];
+                  const opp = typeof item === 'string' ? item : item.opportunity || item.description || '';
+                  const rat = typeof item === 'object' ? item.rationale : '';
+                  return <StreamingRow key={idx} isVisible={rIdx < visibleRows} isLast={rIdx === visibleRows - 1 && isStreaming} lastRowRef={lastRowRef} isStreaming={isStreaming}>
+                    <td>
+                      <div className="core-adjacency--s7">{hasStreamed ? opp : typingTexts[`${rIdx}-opportunity`] || opp}</div>
+                      {typeof item === 'object' && <div className="item-meta core-adjacency--s8">
+                        {item.proximityToCore && <span className={`${getBadgeClass(item.proximityToCore)}`}>{t('Proximity')}: {item.proximityToCore}</span>}
+                        {item.profitPoolSize && <span className={`${getBadgeClass(item.profitPoolSize)}`}>{t('Profit_Pool')}: {item.profitPoolSize}</span>}
+                        {item.competitiveness && <span className={`${getBadgeClass(item.competitiveness)}`}>{t('Competitiveness')}: {item.competitiveness}</span>}
+                      </div>}
+                    </td>
+                    {rat && <td style={{
+                      opacity: rIdx < visibleRows ? 1 : 0,
+                      transition: !isStreaming ? 'none' : 'opacity 0.3s 0.2s'
+                    }}>{hasStreamed ? rat : typingTexts[`${rIdx}-rationale`] || rat}</td>}
+                  </StreamingRow>;
+                })}
+              </tbody>
+            </table>
+          </React.Fragment>)}
+        </div>
+      </div>
+    </div>}
+
+    {data.growthVectorCategorization && Object.keys(data.growthVectorCategorization).length > 0 && <div className="section-container">
+      <div className="section-header" onClick={() => toggleSection('growthVectorCategorization')}>
+        <h5><Target size={20} className="core-adjacency--s1" />{t('Growth_Vector_Categorization')}</h5>
+        {expandedSections.growthVectorCategorization ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
+      </div>
+      <div className={`section-container ${expandedSections.growthVectorCategorization === true ? 'expanded' : 'collapsed'}`}>
+        <div className="table-container">
+          <table className="data-table">
+            <tbody>
+              {Object.entries(data.growthVectorCategorization).map(([cat, items]) => {
+                if (!items?.length) return null;
+                return <tr key={cat}>
+                  <td className="core-adjacency--s4"><span className="status-badge high-intensity">{formatLabel(cat)}</span></td>
+                  <td>
+                    <ul className="core-adjacency--s5">
+                      {items.map((item, idx) => {
+                        const rIdx = indices.vectors[cat][idx];
+                        const vec = typeof item === 'string' ? item : item.vector || '';
+                        const desc = typeof item === 'object' ? item.description : '';
+                        return <li key={idx} ref={rIdx === visibleRows - 1 && isStreaming ? lastRowRef : null} style={{
+                          opacity: rIdx < visibleRows ? 1 : 0,
+                          transition: !isStreaming ? 'none' : 'opacity 0.3s'
+                        }}>
+                          <span>{hasStreamed ? resolveOpportunity(vec) : typingTexts[`${rIdx}-vector`] || resolveOpportunity(vec)}</span>
+                          {desc && <span className="core-adjacency--s9">
+                            {hasStreamed ? desc : typingTexts[`${rIdx}-description`] || desc}
+                          </span>}
+                        </li>;
+                      })}
+                    </ul>
+                  </td>
+                </tr>;
+              })}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>}
+
+    {[{
+      key: 'missingInformation',
+      label: 'Missing_Information',
+      icon: AlertTriangle,
+      iKey: 'missingInfo'
+    }, {
+      key: 'recommendedNextSteps',
+      label: 'Recommended_Next_Steps',
+      icon: Lightbulb,
+      iKey: 'nextSteps'
+    }].map(conf => data[conf.key] && (Array.isArray(data[conf.key]) ? data[conf.key].length > 0 : Object.values(data[conf.key]).some(arr => arr?.length > 0)) && <div className="section-container" key={conf.key}>
+      <div className="section-header" onClick={() => toggleSection(conf.key)}>
+        <h5><conf.icon size={20} className="core-adjacency--s1" />{t(conf.label)}</h5>
+        {expandedSections[conf.key] ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
+      </div>
+      <div className={`section-container ${expandedSections[conf.key] === true ? 'expanded' : 'collapsed'}`}>
+        <div className="table-container">
+          <table className="data-table">
+            <tbody>
+              {(() => {
+                const items = [];
+                if (Array.isArray(data[conf.key])) {
+                  data[conf.key].forEach((item, idx) => {
+                    const rIdx = indices[conf.iKey][idx];
+                    items.push(<StreamingRow key={idx} isVisible={rIdx < visibleRows} isLast={rIdx === visibleRows - 1 && isStreaming} lastRowRef={lastRowRef} isStreaming={isStreaming}>
+                      <td>{hasStreamed ? item : typingTexts[`${rIdx}-content`] || item}</td>
+                    </StreamingRow>);
+                  });
+                } else if (typeof data[conf.key] === 'object') {
+                  let offset = 0;
+                  Object.entries(data[conf.key]).forEach(([cat, catItems]) => {
+                    if (Array.isArray(catItems)) {
+                      catItems.forEach((item, idx) => {
+                        const rIdx = indices[conf.iKey][offset + idx];
+                        items.push(<StreamingRow key={`${cat}-${idx}`} isVisible={rIdx < visibleRows} isLast={rIdx === visibleRows - 1 && isStreaming} lastRowRef={lastRowRef} isStreaming={isStreaming}>
+                          <td><strong>{formatLabel(cat)}:</strong> {hasStreamed ? item : typingTexts[`${rIdx}-content`] || item}</td>
+                        </StreamingRow>);
+                      });
+                      offset += catItems.length;
+                    }
+                  });
+                }
+                return items;
+              })()}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>)}
+  </div>;
+};
 export default CoreAdjacency;

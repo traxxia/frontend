@@ -22,6 +22,6 @@ The "Kickstart" process automates the creation of your execution plan based on t
 4.  **Refinement**: You can then open these drafts in the Project Management section to define owners, timelines, and success metrics.
 
 > [!TIP]
-> Kickstarting is a premium feature. Users on the Advanced plans can use this to rapidly move from strategy to execution with AI-powered draft initialization.
+> Kickstarting is a premium feature. Users on expansion plans can use this to rapidly move from strategy to execution with AI-powered draft initialization.
  
  

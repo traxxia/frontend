@@ -1,63 +1,68 @@
-import { useState } from 'react';
-
+import { useState, useMemo } from 'react';
 export const useStreamingManager = () => {
   const [activeStreamingCard, setActiveStreamingCard] = useState(null);
   const [streamingStates, setStreamingStates] = useState({});
-
-  const startStreaming = (cardId) => {
+  const startStreaming = cardId => {
     setActiveStreamingCard(cardId);
     setStreamingStates(prev => ({
       ...prev,
-      [cardId]: { isStreaming: true, hasStreamed: false }
+      [cardId]: {
+        isStreaming: true,
+        hasStreamed: false
+      }
     }));
   };
-
-  const stopStreaming = (cardId) => {
+  const stopStreaming = cardId => {
     setStreamingStates(prev => ({
       ...prev,
-      [cardId]: { isStreaming: false, hasStreamed: true }
+      [cardId]: {
+        isStreaming: false,
+        hasStreamed: true
+      }
     }));
     if (activeStreamingCard === cardId) {
       setActiveStreamingCard(null);
     }
   };
-
-  const shouldStream = (cardId) => {
-    return activeStreamingCard === cardId;
+  const shouldStream = cardId => {
+    return false;
   };
-
-  const hasStreamed = (cardId) => {
-    return streamingStates[cardId]?.hasStreamed || false;
+  const hasStreamed = cardId => {
+    return true;
   };
-
-  const resetCard = (cardId) => {
+  const resetCard = cardId => {
     setStreamingStates(prev => ({
       ...prev,
-      [cardId]: { isStreaming: false, hasStreamed: false }
+      [cardId]: {
+        isStreaming: false,
+        hasStreamed: true
+      }
     }));
   };
-
-  return {
+  const isStreamingFinished = cardId => {
+    return true;
+  };
+  return useMemo(() => ({
     startStreaming,
     stopStreaming,
     shouldStream,
     hasStreamed,
     resetCard,
+    isStreamingFinished,
     activeStreamingCard
-  };
+  }), [activeStreamingCard, streamingStates]);
 };
-
-export const StreamingRow = ({ children, isVisible, isLast, lastRowRef, isStreaming }) => {
-  return (
-    <tr 
-      ref={isLast ? lastRowRef : null}
-      style={{
-        opacity: isVisible ? 1 : 0,
-        transform: isVisible ? 'translateY(0)' : 'translateY(20px)',
-        transition: isStreaming ? 'opacity 0.5s ease, transform 0.5s ease' : 'none'
-      }}
-    >
+export const StreamingRow = ({
+  children,
+  isVisible,
+  isLast,
+  lastRowRef,
+  isStreaming,
+  tag: Tag = 'tr'
+}) => {
+  return <Tag ref={isLast ? lastRowRef : null} style={{
+    opacity: isVisible ? 1 : 1
+  }} className="streaming-manager--s1">
       {children}
-    </tr>
-  );
+    </Tag>;
 };

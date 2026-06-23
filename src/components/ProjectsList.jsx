@@ -1,9 +1,10 @@
 import React, { useMemo, useState, useEffect } from "react";
-import { Row, Col } from "react-bootstrap";
-import ProjectCard from "./ProjectCard";
+import { Spinner } from "react-bootstrap";
+import ProjectsTable from "./ProjectsTable";
 import { useTranslation } from '../hooks/useTranslation';
-
+import { useAuthStore } from '../store';
 const ProjectsList = ({
+  isLoading,
   sortedProjects,
   rankMap,
   finalizeCompleted,
@@ -17,25 +18,30 @@ const ProjectsList = ({
   onEdit,
   onView,
   onDelete,
-  selectedCategory,
+  selectedCategories,
   isArchived,
   isAdmin,
   selectedProjectIds = [],
   onToggleSelection,
+  selectionDisabled = false,
+  onPerformReview,
+  onAdhocUpdate,
+  onDirectUpdate,
+  canReviewProject,
+  myUserId
 }) => {
-  const { t } = useTranslation();
+  const {
+    t
+  } = useTranslation();
+  const userPlan = useAuthStore(state => state.userPlan);
   const [showMenuId, setShowMenuId] = useState(null);
-
-  // Close menu when clicking outside
   useEffect(() => {
-    const handleClickOutside = (event) => {
-      // If the click is inside a menu-button or menu-dropdown, ignore
-      if (event.target.closest(".menu-button") || event.target.closest(".menu-dropdown")) {
+    const handleClickOutside = event => {
+      if (event.target.closest(".menu-button") || event.target.closest(".menu-dropdown") || event.target.closest(".actions-dropdown-btn")) {
         return;
       }
       setShowMenuId(null);
     };
-
     if (showMenuId) {
       document.addEventListener("click", handleClickOutside);
     }
@@ -43,102 +49,54 @@ const ProjectsList = ({
       document.removeEventListener("click", handleClickOutside);
     };
   }, [showMenuId]);
-
-  // Group projects by v2 Status (case-insensitive)
-  const groupedProjects = useMemo(() => {
-    const groups = {
-      "Draft": [],
-      "Active": [],
-      "At Risk": [],
-      "Paused": [],
-      "Killed": [],
-      "Scaled": []
-    };
-
-    sortedProjects.forEach(p => {
-      const statusValue = (p.status || "Draft").toLowerCase();
-      if (statusValue === "active") {
-        groups["Active"].push(p);
-      } else if (statusValue === "at risk" || statusValue === "at_risk") {
-        groups["At Risk"].push(p);
-      } else if (statusValue === "paused") {
-        groups["Paused"].push(p);
-      } else if (statusValue === "killed") {
-        groups["Killed"].push(p);
-      } else if (statusValue === "scaled") {
-        groups["Scaled"].push(p);
-      } else {
-        // Includes 'draft', 'launched', and any unknown fallback
-        groups["Draft"].push(p);
-      }
-    });
-
-    return groups;
-  }, [sortedProjects]);
-
-  const renderProjectGrid = (projects) => {
-    if (!projects || projects.length === 0) return null;
-    return (
-      <Row className="g-4">
-        {projects.map((project, index) => (
-          <Col
-            xs={12}
-            sm={12}
-            md={isFinalizedView ? 12 : 6}
-            lg={4}
-            key={project._id}
-          >
-            <ProjectCard
-              project={project}
-              index={index}
-              rankMap={rankMap}
-              finalizeCompleted={finalizeCompleted}
-              launched={launched}
-              isViewer={isViewer}
-              isEditor={isEditor}
-              isDraft={isDraft}
-              projectCreationLocked={projectCreationLocked}
-              canEditProject={canEditProject}
-              onEdit={onEdit}
-              onView={onView}
-              onDelete={onDelete}
-              showMenuId={showMenuId}
-              setShowMenuId={setShowMenuId}
-              isArchived={isArchived}
-              isAdmin={isAdmin}
-              isSelected={selectedProjectIds.includes(project._id)}
-              onToggleSelection={onToggleSelection}
-              isCheckboxDisabled={isArchived || sessionStorage.getItem("userPlan") === 'essential'}
-            />
-          </Col>
-        ))}
-      </Row>
-    );
-  };
-
-  const getFilteredGroups = () => {
-    // Show flat rank-ordered list for "All"
-    if (!selectedCategory || selectedCategory === "All") {
-      return renderProjectGrid(sortedProjects);
-    }
-
-    // Show filtered group for specific status
-    const projects = groupedProjects[selectedCategory] || [];
-    if (projects.length === 0) {
+  const renderProjectTable = projects => {
+    if (!projects || projects.length === 0) {
       return (
-        <div className="empty-category-message text-center py-5">
-          <p className="text-muted">{t("No projects found in")} "{selectedCategory}" {t("category")}.</p>
+        <div className="w-100 d-flex flex-column align-items-center justify-content-center" style={{ minHeight: '350px' }}>
+          <div className="mb-3" style={{ opacity: 0.5 }}>
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+              <line x1="9" y1="3" x2="9" y2="21"></line>
+            </svg>
+          </div>
+          <h5 className="text-secondary fw-bold mb-2">{t("No bets found")}</h5>
+          <p className="text-muted" style={{ maxWidth: '400px', textAlign: 'center' }}>
+            {t("There are currently no bets or initiatives to display.")}
+          </p>
         </div>
       );
     }
-    return renderProjectGrid(projects);
+    return <ProjectsTable projects={projects} rankMap={rankMap} onEdit={onEdit} onView={onView} onDelete={onDelete} onPerformReview={onPerformReview} onAdhocUpdate={onAdhocUpdate} onDirectUpdate={onDirectUpdate} showMenuId={showMenuId} setShowMenuId={setShowMenuId} selectedProjectIds={selectedProjectIds} onToggleSelection={onToggleSelection} isAdmin={isAdmin} isArchived={isArchived} isViewer={isViewer} canReviewProject={canReviewProject} canEditProject={canEditProject} myUserId={myUserId} />;
   };
-
-  return (
-    <div className={`projects-list-wrapper ${isFinalizedView ? "finalized-view" : ""}`}>
+  const getFilteredGroups = () => {
+    if (isLoading) {
+      return <div className="d-flex justify-content-center align-items-center py-5 projects-list--s1">
+          <div className="text-center">
+            <Spinner animation="border" variant="primary" size="lg" />
+            <p className="mt-3 text-muted fw-500">{t("Loading projects...")}</p>
+          </div>
+        </div>;
+    }
+    if (!selectedCategories || selectedCategories.includes("All")) {
+      return renderProjectTable(sortedProjects);
+    }
+    const filteredProjects = sortedProjects.filter(p => {
+      const statusValue = (p.status || "Draft").toLowerCase();
+      return selectedCategories.some(catId => {
+        if (catId === "At Risk" && (statusValue === "at risk" || statusValue === "at_risk")) return true;
+        return statusValue === catId.toLowerCase();
+      });
+    });
+    if (filteredProjects.length === 0) {
+      const labels = selectedCategories.map(id => t(id)).join(", ");
+      return <div className="empty-category-message text-center py-5">
+          <p className="text-muted">{t("No projects found in selected categories")}: {labels}.</p>
+        </div>;
+    }
+    return renderProjectTable(filteredProjects);
+  };
+  return <div className={`projects-list-wrapper ${isFinalizedView ? "finalized-view" : ""}`}>
       {getFilteredGroups()}
-    </div>
-  );
+    </div>;
 };
-
 export default ProjectsList;

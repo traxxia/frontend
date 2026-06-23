@@ -1,51 +1,45 @@
 import React, { useState, useEffect } from 'react';
 import AnalysisDataModal from './AnalysisDataModal';
 import AdminTable from './AdminTable';
-import MetricCard from './MetricCard';
-import { Form, Row, Col, Modal, Button as RBButton } from 'react-bootstrap';
-import {
-  Activity,
-  Clock,
-  Shield,
-  LogIn,
-  BarChart3,
-  Eye,
-  Settings,
-  Search,
-  Filter,
-  RefreshCw,
-  LogIn as LogInIcon,
-  LogOut,
-  Edit,
-  Plus,
-  X,
-  Info
-} from 'lucide-react';
+import { Modal, Button as RBButton } from 'react-bootstrap';
+import { Shield, LogIn, BarChart3, Eye, Settings, RefreshCw, LogOut, Edit, Plus, X } from 'lucide-react';
 import "../styles/audittrail.css";
 import { useTranslation } from '@/hooks/useTranslation';
-
-const AuditTrail = ({ onToast }) => {
-  const [auditEntries, setAuditEntries] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [filters, setFilters] = useState({
+import { useAuthStore } from '../store/authStore';
+import { useAuditTrailQuery } from '../hooks/useQueries';
+const AuditTrail = ({
+  onToast
+}) => {
+  const [filters] = useState({
     event_type: '',
     start_date: '',
     end_date: '',
     include_analysis_data: false
   });
   const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [lastPageBeforeSearch, setLastPageBeforeSearch] = useState(1);
   const itemsPerPage = 10;
-  const [pagination, setPagination] = useState({});
-  const [initialLoad, setInitialLoad] = useState(true);
-  const [expandedAnalysis, setExpandedAnalysis] = useState({});
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+  const {
+    data,
+    isLoading: loading
+  } = useAuditTrailQuery(currentPage, itemsPerPage, {
+    ...filters,
+    search_term: debouncedSearchTerm
+  });
+  const auditEntries = data?.audit_entries || [];
+  const pagination = data?.pagination || {};
   const [loadingAnalysisData, setLoadingAnalysisData] = useState({});
-  const [analysisStats, setAnalysisStats] = useState([]);
-  const [currentUserRole, setCurrentUserRole] = useState('user'); // Track current user role
-  const { t } = useTranslation();
-
-  // Modal state
+  const {
+    t
+  } = useTranslation();
   const [modalData, setModalData] = useState({
     isOpen: false,
     analysisType: '',
@@ -54,104 +48,8 @@ const AuditTrail = ({ onToast }) => {
     auditId: '',
     phaseAnalysisArray: []
   });
-
   const [selectedEntry, setSelectedEntry] = useState(null);
-
-  const REACT_APP_BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
-
-
-  // Get current user role from session/token
-  useEffect(() => {
-    const token = sessionStorage.getItem('token') || sessionStorage.getItem('authToken');
-    if (token) {
-      try {
-        const payload = JSON.parse(atob(token.split('.')[1]));
-        setCurrentUserRole(payload.role || 'user');
-      } catch (error) {
-        console.error('Error parsing token:', error);
-      }
-    }
-  }, []);
-
-  // Initial load effect
-  useEffect(() => {
-    const initializeData = async () => {
-      try {
-        fetchAuditTrail();
-      } catch (error) {
-        onToast('Error initializing data', 'error');
-      } finally {
-        setInitialLoad(false);
-      }
-    };
-
-    if (initialLoad && currentUserRole) {
-      initializeData();
-    }
-  }, [initialLoad, currentUserRole]);
-
-
-  // Consolidated fetch effect for all filters
-  useEffect(() => {
-    if (!initialLoad) {
-      fetchAuditTrail();
-    }
-  }, [
-    filters.event_type,
-    filters.start_date,
-    filters.end_date,
-    filters.include_analysis_data
-  ]);
-
-
-  const fetchAuditTrail = async () => {
-    try {
-      setLoading(true);
-      const token = sessionStorage.getItem('token') || sessionStorage.getItem('authToken');
-
-      if (!token || token === 'undefined' || token === 'null') {
-        onToast('Session expired. Please login again.', 'error');
-        return;
-      }
-
-      const params = new URLSearchParams();
-      // Fetch up to 500 entries for local filtering/pagination
-      params.append('limit', '500');
-
-      Object.keys(filters).forEach(key => {
-        const value = filters[key];
-        if (value && key !== 'quick_date') {
-          params.append(key, value);
-        }
-      });
-
-      const response = await fetch(`${REACT_APP_BACKEND_URL}/api/admin/audit-trail?${params}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setAuditEntries(data.audit_entries);
-        setPagination(data.pagination);
-        setAnalysisStats(data.analysis_statistics || []);
-      } else {
-        const errorData = await response.json();
-        if (response.status === 401 || response.status === 403) {
-          onToast('Session expired. Please login again.', 'error');
-        } else {
-          onToast(`Failed to fetch audit trail: ${errorData.error}`, 'error');
-        }
-      }
-    } catch (error) {
-      onToast('Error fetching audit trail', 'error');
-    } finally {
-      setLoading(false);
-    }
-  };
-
+  const VITE_BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
   const closeModal = () => {
     setModalData({
       isOpen: false,
@@ -162,25 +60,13 @@ const AuditTrail = ({ onToast }) => {
       auditId: ''
     });
   };
-
-  const handleFilterChange = (key, value) => {
-    setFilters(prev => ({
-      ...prev,
-      [key]: value,
-    }));
-    setCurrentPage(1);
-  };
-
-  const handleSearch = (value) => {
+  const handleSearch = value => {
     if (searchTerm === "" && value !== "") setLastPageBeforeSearch(currentPage);
     if (searchTerm !== "" && value === "") setCurrentPage(lastPageBeforeSearch);
     if (value !== searchTerm) setCurrentPage(1);
     setSearchTerm(value);
   };
-
-
-
-  const getEventIcon = (eventType) => {
+  const getEventIcon = eventType => {
     const iconMap = {
       login_success: <LogIn size={16} className="text-green-600" />,
       login_failed: <LogIn size={16} className="text-red-600" />,
@@ -194,8 +80,7 @@ const AuditTrail = ({ onToast }) => {
     };
     return iconMap[eventType] || <Shield size={16} className="text-gray-600" />;
   };
-
-  const getEventColor = (eventType) => {
+  const getEventColor = eventType => {
     const colorMap = {
       login_success: 'bg-green-50 border-green-200',
       login_failed: 'bg-red-50 border-red-200',
@@ -209,11 +94,8 @@ const AuditTrail = ({ onToast }) => {
     };
     return colorMap[eventType] || 'bg-gray-50 border-gray-200';
   };
-
   const formatEventData = (eventType, eventData, eventDataSummary, row) => {
-    // Use summary for analysis_generated if available
-    const data = eventType === 'analysis_generated' && eventDataSummary ? eventDataSummary : (eventData || {});
-
+    const data = eventType === 'analysis_generated' && eventDataSummary ? eventDataSummary : eventData || {};
     const formatMap = {
       login_success: `Successful login as ${data.role || ''}${data.company ? ` at ${data.company}` : ''}`,
       login_failed: `Failed login attempt for ${data.email || ''}`,
@@ -228,59 +110,46 @@ const AuditTrail = ({ onToast }) => {
     };
     return formatMap[eventType] || (eventType ? eventType.replace('_', ' ') : '');
   };
-
-  const filteredEntries = auditEntries.filter((entry) => {
-    if (!searchTerm) return true;
-
-    // Split the search term into separate words
-    const searchTerms = searchTerm.toLowerCase().split(' ').filter(word => word.length > 0);
-
-    // Evaluate description explicitly to support searching by visible description
-    const descriptionText = formatEventData(entry.event_type, entry.event_data, entry.event_data_summary, entry).toLowerCase();
-
-    const dataString = JSON.stringify(entry.event_data || {}).toLowerCase();
-    const summaryString = JSON.stringify(entry.event_data_summary || {}).toLowerCase();
-    const infoString = JSON.stringify(entry.additional_info || {}).toLowerCase();
-
-    // Combine all relevant strings
-    const combinableString = [
-      entry.user_name || '',
-      entry.user_email || '',
-      entry.event_type || '',
-      entry.event_type ? entry.event_type.replace(/_/g, ' ') : '',
-      entry.company_name || '',
-      entry.business_name || '',
-      descriptionText,
-      dataString,
-      summaryString,
-      infoString
-    ].join(' ').toLowerCase();
-
-    // Ensure every word in the search term is found somewhere in the combined string
-    return searchTerms.every(word => combinableString.includes(word));
-  });
-
-  const totalItems = filteredEntries.length;
-  const totalPages = Math.ceil(totalItems / itemsPerPage);
-  const paginatedEntries = filteredEntries.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
-
-  const getEventStatusInfo = (eventType) => {
+  const totalItems = pagination.total || 0;
+  const totalPages = pagination.total_pages || 1;
+  const paginatedEntries = auditEntries;
+  const getEventStatusInfo = eventType => {
     if (eventType.includes('success') || eventType.includes('created') || eventType === 'analysis_generated') {
-      return { label: t('success'), color: 'emerald', bg: 'bg-emerald-50', text: 'text-emerald-700', border: 'border-emerald-200' };
+      return {
+        label: t('success'),
+        color: 'emerald',
+        bg: 'bg-emerald-50',
+        text: 'text-emerald-700',
+        border: 'border-emerald-200'
+      };
     }
     if (eventType.includes('failed') || eventType.includes('deleted')) {
-      return { label: eventType.includes('failed') ? t('failed') : t('deleted'), color: 'red', bg: 'bg-red-50', text: 'text-red-700', border: 'border-red-200' };
+      return {
+        label: eventType.includes('failed') ? t('failed') : t('deleted'),
+        color: 'red',
+        bg: 'bg-red-50',
+        text: 'text-red-700',
+        border: 'border-red-200'
+      };
     }
     if (eventType.includes('skipped') || eventType.includes('skipped')) {
-      return { label: t('skipped'), color: 'yellow', bg: 'bg-yellow-50', text: 'text-yellow-700', border: 'border-yellow-200' };
+      return {
+        label: t('skipped'),
+        color: 'yellow',
+        bg: 'bg-yellow-50',
+        text: 'text-yellow-700',
+        border: 'border-yellow-200'
+      };
     }
-    return { label: t('info'), color: 'blue', bg: 'bg-blue-50', text: 'text-blue-700', border: 'border-blue-200' };
+    return {
+      label: t('info'),
+      color: 'blue',
+      bg: 'bg-blue-50',
+      text: 'text-blue-700',
+      border: 'border-blue-200'
+    };
   };
-
-  const formatTimestamp = (timestamp) => {
+  const formatTimestamp = timestamp => {
     return new Date(timestamp).toLocaleString('en-US', {
       year: 'numeric',
       month: 'short',
@@ -290,84 +159,56 @@ const AuditTrail = ({ onToast }) => {
       second: '2-digit'
     });
   };
-
-  const renderEventDetails = (data) => {
+  const renderEventDetails = data => {
     if (!data || typeof data !== 'object') return null;
-
     const excludedKeys = ['has_location', 'conversations_deleted', 'business_purpose'];
-
-    return Object.entries(data)
-      .filter(([key]) => !excludedKeys.includes(key.toLowerCase()))
-      .map(([key, value]) => {
-        // Skip IDs and internal fields if needed, or format them
-        const label = key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-        let displayValue = value;
-
-        if (value === null || value === undefined || value === "") displayValue = '-';
-        else if (typeof value === 'boolean') displayValue = value ? 'Yes' : 'No';
-        else if (typeof value === 'object' && value !== null) {
-          if (key.toLowerCase() === 'location' || key.toLowerCase() === 'additional_info') {
-            const parts = [];
-            if (value.city) parts.push(value.city);
-            if (value.country) parts.push(value.country);
-            displayValue = parts.length > 0 ? parts.join(', ') : '-';
-          } else {
-            displayValue = Object.entries(value)
-              .filter(([_, v]) => v !== null && v !== undefined && v !== "")
-              .map(([k, v]) => `${k.replace(/_/g, ' ')}: ${typeof v === 'object' ? JSON.stringify(v) : v}`)
-              .join(' | ') || '-';
-          }
+    return Object.entries(data).filter(([key]) => !excludedKeys.includes(key.toLowerCase())).map(([key, value]) => {
+      const label = key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+      let displayValue = value;
+      if (value === null || value === undefined || value === "") displayValue = '-';else if (typeof value === 'boolean') displayValue = value ? 'Yes' : 'No';else if (typeof value === 'object' && value !== null) {
+        if (key.toLowerCase() === 'location' || key.toLowerCase() === 'additional_info') {
+          const parts = [];
+          if (value.city) parts.push(value.city);
+          if (value.country) parts.push(value.country);
+          displayValue = parts.length > 0 ? parts.join(', ') : '-';
+        } else {
+          displayValue = Object.entries(value).filter(([_, v]) => v !== null && v !== undefined && v !== "").map(([k, v]) => `${k.replace(/_/g, ' ')}: ${typeof v === 'object' ? JSON.stringify(v) : v}`).join(' | ') || '-';
         }
-        else if (key.endsWith('_at') || key.endsWith('At') || key.includes('timestamp')) {
-          try {
-            const parsedDate = new Date(value);
-            if (!isNaN(parsedDate.getTime()) && (typeof value === 'string' || typeof value === 'number')) {
-              displayValue = parsedDate.toLocaleString();
-            } else {
-              displayValue = value;
-            }
-          } catch (e) {
+      } else if (key.endsWith('_at') || key.endsWith('At') || key.includes('timestamp')) {
+        try {
+          const parsedDate = new Date(value);
+          if (!isNaN(parsedDate.getTime()) && (typeof value === 'string' || typeof value === 'number')) {
+            displayValue = parsedDate.toLocaleString();
+          } else {
             displayValue = value;
           }
+        } catch (e) {
+          displayValue = value;
         }
-
-        const isLongText = String(displayValue).length > 60;
-
-        return (
-          <div className={isLongText ? "col-12 mb-3" : "col-md-6 mb-3"} key={key}>
+      }
+      const isLongText = String(displayValue).length > 60;
+      return <div className={isLongText ? "col-12 mb-3" : "col-md-6 mb-3"} key={key}>
             <label className="text-muted tiny-label text-uppercase d-block mb-1">{label}</label>
-            <div className={`fw-500 text-dark ${isLongText ? 'bg-white p-2 border rounded-1' : ''}`} style={{ wordBreak: 'break-word', whiteSpace: 'pre-wrap' }}>{String(displayValue)}</div>
-          </div>
-        );
-      });
+            <div className={`fw-500 text-dark ${isLongText ? 'bg-white p-2 border rounded-1' : ''} audit-trail--s1`}>{String(displayValue)}</div>
+          </div>;
+    });
   };
-
-  const downloadAnalysisData = (auditId, analysisType, analysisResult) => {
-    const dataStr = JSON.stringify(analysisResult, null, 2);
-    const blob = new Blob([dataStr], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `${analysisType}_analysis_${auditId}.json`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-  };
-
-  const openAnalysisModal = async (entry) => {
+  const openAnalysisModal = async entry => {
     const eventData = entry.event_data_summary || entry.event_data || {};
     let analysisData = entry.event_data?.analysis_result;
     let businessName = eventData.business_name || entry.business_name || 'Business';
-
     if (!analysisData) {
       try {
-        setLoadingAnalysisData(prev => ({ ...prev, [entry._id]: true }));
-        const token = sessionStorage.getItem('token') || sessionStorage.getItem('authToken');
-        const response = await fetch(`${REACT_APP_BACKEND_URL}/api/admin/audit-trail/${entry._id}/analysis-data`, {
-          headers: { 'Authorization': `Bearer ${token}` }
+        setLoadingAnalysisData(prev => ({
+          ...prev,
+          [entry._id]: true
+        }));
+        const token = useAuthStore.getState().token;
+        const response = await fetch(`${VITE_BACKEND_URL}/api/admin/audit-trail/${entry._id}/analysis-data`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
         });
-
         if (response.ok) {
           const data = await response.json();
           analysisData = data.analysis_result;
@@ -381,10 +222,12 @@ const AuditTrail = ({ onToast }) => {
         onToast('Error loading analysis data', 'error');
         return;
       } finally {
-        setLoadingAnalysisData(prev => ({ ...prev, [entry._id]: false }));
+        setLoadingAnalysisData(prev => ({
+          ...prev,
+          [entry._id]: false
+        }));
       }
     }
-
     if (analysisData) {
       setModalData({
         isOpen: true,
@@ -397,131 +240,62 @@ const AuditTrail = ({ onToast }) => {
       });
     }
   };
-
-  const columns = [
-    {
-      label: t('event'),
-      key: 'event_type',
-      render: (val, row) => (
-        <div className="d-flex align-items-center gap-2">
+  const columns = [{
+    label: t('event'),
+    key: 'event_type',
+    render: (val, row) => <div className="d-flex align-items-center gap-2">
           {getEventIcon(val)}
-          <span className="text-uppercase fw-600" style={{ fontSize: '0.75rem' }}>{val.replace('_', ' ')}</span>
+          <span className="text-uppercase fw-600 audit-trail--s2">{val.replace('_', ' ')}</span>
         </div>
-      )
-    },
-    {
-      label: t('timestamp'),
-      key: 'timestamp',
-      render: (val) => (
-        <div className="text-muted" style={{ fontSize: '0.85rem' }}>
+  }, {
+    label: t('timestamp'),
+    key: 'timestamp',
+    render: val => <div className="text-muted audit-trail--s3">
           {formatTimestamp(val)}
         </div>
-      )
-    },
-    {
-      label: t('user'),
-      key: 'user_name',
-      render: (_, row) => (
-        <div className="user-info">
+  }, {
+    label: t('user'),
+    key: 'user_name',
+    render: (_, row) => <div className="user-info">
           <div className="fw-600 text-dark">{row.user_name}</div>
           <div className="text-muted small">{row.user_email}</div>
           {row.company_name && <div className="text-primary tiny-label">@ {row.company_name}</div>}
         </div>
-      )
-    },
-    {
-      label: t('description'),
-      key: 'description',
-      width: '35%',
-      render: (_, row) => (
-        <div className="text-wrap" style={{ fontSize: '0.85rem', lineHeight: '1.4' }}>
+  }, {
+    label: t('description'),
+    key: 'description',
+    width: '35%',
+    render: (_, row) => <div className="text-wrap audit-trail--s4">
           {formatEventData(row.event_type, row.event_data, row.event_data_summary, row)}
         </div>
-      )
-    },
-    {
-      label: t('details'),
-      key: 'actions',
-      align: 'left',
-      render: (_, row) => (
-        <div className="details-cell">
-          {row.event_data && Object.keys(row.event_data).length > 0 && row.event_type !== 'analysis_generated' && (
-            <button
-              className="view-button btn-sm"
-              onClick={() => setSelectedEntry(row)}
-            >
+  }, {
+    label: t('details'),
+    key: 'actions',
+    align: 'left',
+    render: (_, row) => <div className="details-cell">
+          {row.event_data && Object.keys(row.event_data).length > 0 && row.event_type !== 'analysis_generated' && <button className="view-button btn-sm" onClick={() => setSelectedEntry(row)}>
               <Eye size={14} /> {t('view')}
-            </button>
-          )}
-          {row.event_type === 'analysis_generated' && (
-            <div className="analysis-details">
-              <button
-                className="btn btn-primary btn-sm d-flex align-items-center gap-2 rounded-pill px-3"
-                onClick={() => openAnalysisModal(row)}
-                disabled={loadingAnalysisData[row._id]}
-                style={{ fontSize: '0.75rem' }}
-              >
-                {loadingAnalysisData[row._id] ? (
-                  <>
-                    <RefreshCw size={12} className="animate-spin" />
+            </button>}
+          {row.event_type === 'analysis_generated' && <div className="analysis-details">
+              <button className="btn btn-primary btn-sm d-flex align-items-center gap-2 rounded-pill px-3 audit-trail--s2" onClick={() => openAnalysisModal(row)} disabled={loadingAnalysisData[row._id]}>
+                {loadingAnalysisData[row._id] ? <>
+                    <RefreshCw size={12} className="antigravity-rotating" />
                     {t('Loading...')}
-                  </>
-                ) : (
-                  <>
+                  </> : <>
                     <BarChart3 size={14} />
                     {t("audit_analysis")}
-                  </>
-                )}
+                  </>}
               </button>
-            </div>
-          )}
+            </div>}
         </div>
-      )
-    }
-  ];
+  }];
+  return <div className="admin-container">
+      <AdminTable title={t('audit_trail')} count={totalItems} countLabel={t('events')} columns={columns} data={paginatedEntries} searchTerm={searchTerm} onSearchChange={handleSearch} searchPlaceholder={t('search_events')} searchTooltip={t('search_audit_trail_tooltip')} currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} totalItems={totalItems} itemsPerPage={itemsPerPage} loading={loading} toolbarContent={<div className="d-flex gap-3 align-items-center flex-wrap">
+          </div>} />
 
-  return (
-    <div className="admin-container">
-      <AdminTable
-        title={t('audit_trail')}
-        count={totalItems}
-        countLabel={t('events')}
-        columns={columns}
-        data={paginatedEntries}
-        searchTerm={searchTerm}
-        onSearchChange={handleSearch}
-        searchPlaceholder={t('search_events')}
-        searchTooltip={t('search_audit_trail_tooltip')}
-        currentPage={currentPage}
-        totalPages={totalPages}
-        onPageChange={setCurrentPage}
-        totalItems={totalItems}
-        itemsPerPage={itemsPerPage}
-        loading={loading}
-        toolbarContent={
-          <div className="d-flex gap-3 align-items-center flex-wrap">
-          </div>
-        }
-      />
+      <AnalysisDataModal isOpen={modalData.isOpen} onClose={closeModal} analysisType={modalData.analysisType} analysisData={modalData.analysisData} analysisName={modalData.analysisName} businessName={modalData.businessName} auditId={modalData.auditId} phaseAnalysisArray={modalData.phaseAnalysisArray} />
 
-      <AnalysisDataModal
-        isOpen={modalData.isOpen}
-        onClose={closeModal}
-        analysisType={modalData.analysisType}
-        analysisData={modalData.analysisData}
-        analysisName={modalData.analysisName}
-        businessName={modalData.businessName}
-        auditId={modalData.auditId}
-        phaseAnalysisArray={modalData.phaseAnalysisArray}
-      />
-
-      <Modal
-        show={!!selectedEntry}
-        onHide={() => setSelectedEntry(null)}
-        centered
-        size="lg"
-        className="admin-modal"
-      >
+      <Modal show={!!selectedEntry} onHide={() => setSelectedEntry(null)} centered size="lg" className="admin-modal">
         <Modal.Header closeButton className="border-0 px-4 pt-4">
           <Modal.Title className="fw-bold d-flex align-items-center gap-3">
             <div className={`p-2 rounded-3 ${selectedEntry ? getEventColor(selectedEntry.event_type) : ''}`}>
@@ -554,21 +328,17 @@ const AuditTrail = ({ onToast }) => {
           <div className="detail-section mb-0">
             <div className="d-flex align-items-center justify-content-between mb-3">
               <h6 className="fw-bold text-muted small text-uppercase mb-0">{t('event_data')}</h6>
-              {selectedEntry && (
-                <span className={`badge rounded-pill ${getEventStatusInfo(selectedEntry.event_type).bg} ${getEventStatusInfo(selectedEntry.event_type).text} border ${getEventStatusInfo(selectedEntry.event_type).border} px-2 py-1`} style={{ fontSize: '0.65rem' }}>
+              {selectedEntry && <span className={`badge rounded-pill ${getEventStatusInfo(selectedEntry.event_type).bg} ${getEventStatusInfo(selectedEntry.event_type).text} border ${getEventStatusInfo(selectedEntry.event_type).border}px-2 py-1 audit-trail--s5`}>
                   {getEventStatusInfo(selectedEntry.event_type).label.toUpperCase()}
-                </span>
-              )}
+                </span>}
             </div>
             <div className={`${selectedEntry ? getEventStatusInfo(selectedEntry.event_type).bg : 'bg-light'} p-3 rounded-3 border ${selectedEntry ? getEventStatusInfo(selectedEntry.event_type).border : ''}`}>
               <div className="row">
                 {selectedEntry && renderEventDetails(selectedEntry.event_data)}
                 {selectedEntry && renderEventDetails(selectedEntry.additional_info)}
-                {!selectedEntry?.event_data && !selectedEntry?.additional_info && (
-                  <div className="col-12 text-center py-3 text-muted">
+                {!selectedEntry?.event_data && !selectedEntry?.additional_info && <div className="col-12 text-center py-3 text-muted">
                     {t('no_details_available')}
-                  </div>
-                )}
+                  </div>}
               </div>
             </div>
           </div>
@@ -579,8 +349,6 @@ const AuditTrail = ({ onToast }) => {
           </RBButton>
         </Modal.Footer>
       </Modal>
-    </div>
-  );
+    </div>;
 };
-
 export default AuditTrail;

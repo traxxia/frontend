@@ -1,0 +1,299 @@
+import { useQuery } from '@tanstack/react-query';
+import axios from 'axios';
+import { useAuthStore } from '@/store';
+
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
+
+export const useBusinesses = () => {
+  const token = useAuthStore((state) => state.token);
+
+  return useQuery({
+    queryKey: ['businesses'],
+    queryFn: async () => {
+      const res = await axios.get(`${BACKEND_URL}/api/businesses`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (Array.isArray(res.data)) {
+        return { businesses: res.data, collaborating_businesses: [] };
+      }
+
+      const filterActive = (list) =>
+        (list || []).filter(
+          (b) =>
+            (b.status || '').toLowerCase() !== 'deleted'
+        );
+
+      return {
+        businesses: filterActive(res.data.businesses),
+        collaborating_businesses: filterActive(res.data.collaborating_businesses),
+        deleted_businesses: res.data.deleted_businesses || [],
+        overall_stats: res.data.overall_stats,
+      };
+    },
+    enabled: !!token,
+    staleTime: 0,
+    refetchOnMount: 'always',
+  });
+};
+
+export const usePlanDetails = () => {
+  const token = useAuthStore((state) => state.token);
+
+  return useQuery({
+    queryKey: ['planDetails'],
+    queryFn: async () => {
+      const res = await axios.get(`${BACKEND_URL}/api/subscription/plan-details`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.data?.plan_limits) {
+        useAuthStore.getState().updateUser({ userLimits: res.data.plan_limits });
+      }
+
+      return res.data;
+    },
+    enabled: !!token,
+    staleTime: 0,
+  });
+};
+
+export const useAccessControlQuery = (businessId) => {
+  const token = useAuthStore((state) => state.token);
+
+  return useQuery({
+    queryKey: ['accessControl', businessId],
+    queryFn: async () => {
+      const res = await axios.get(`${BACKEND_URL}/api/access-control`, {
+        params: { business_id: businessId },
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      return res.data;
+    },
+    enabled: !!token && !!businessId,
+    staleTime: 0,
+  });
+};
+
+export const useGlobalQuestions = () => {
+  const token = useAuthStore((state) => state.token);
+
+  return useQuery({
+    queryKey: ['globalQuestions'],
+    queryFn: async () => {
+      const res = await axios.get(`${BACKEND_URL}/api/questions`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      return res.data.questions || [];
+    },
+    enabled: !!token,
+    staleTime: 10 * 60 * 1000,
+  });
+};
+
+export const useConversations = (businessId) => {
+  const token = useAuthStore((state) => state.token);
+
+  return useQuery({
+    queryKey: ['conversations', businessId],
+    queryFn: async () => {
+      const res = await axios.get(`${BACKEND_URL}/api/conversations${businessId ? `?business_id=${businessId}` : ''}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      return res.data;
+    },
+    enabled: !!token,
+    staleTime: 30 * 1000,
+  });
+};
+
+export const useProjects = (businessId) => {
+  const token = useAuthStore((state) => state.token);
+
+  return useQuery({
+    queryKey: ['projects', businessId],
+    queryFn: async () => {
+      const { useProjectStore } = await import('../store');
+      const data = await useProjectStore.getState().fetchProjects(businessId, { silent: true });
+      return data.projects || [];
+    },
+    enabled: !!token && !!businessId,
+    staleTime: 0,
+    refetchOnMount: 'always',
+  });
+};
+
+export const useRankingsSummary = (businessId) => {
+  const token = useAuthStore((state) => state.token);
+
+  return useQuery({
+    queryKey: ['rankingsSummary', businessId],
+    queryFn: async () => {
+      const res = await axios.get(`${BACKEND_URL}/api/rankings/summary`, {
+        params: { business_id: businessId },
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      return res.data;
+    },
+    enabled: !!token && !!businessId,
+    staleTime: 0,
+    refetchOnMount: 'always',
+  });
+};
+
+export const useTeamRankings = (businessId) => {
+  const token = useAuthStore((state) => state.token);
+
+  return useQuery({
+    queryKey: ['teamRankings', businessId],
+    queryFn: async () => {
+      const res = await axios.get(`${BACKEND_URL}/api/projects/collaborator-consensus`, {
+        params: { business_id: businessId },
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      return res.data;
+    },
+    enabled: !!token && !!businessId,
+  });
+};
+
+export const useAcademyArticle = (articlePath) => {
+  return useQuery({
+    queryKey: ['academy', articlePath],
+    queryFn: async () => {
+      const res = await fetch(`/academy-content/${articlePath}`);
+      if (!res.ok) {
+        throw new Error(`Failed to load article: ${res.statusText}`);
+      }
+      return await res.text();
+    },
+    enabled: !!articlePath,
+    staleTime: 5 * 60 * 1000,
+  });
+};
+
+export const usePlans = (includeInactive = false) => {
+  const token = useAuthStore((state) => state.token);
+
+  return useQuery({
+    queryKey: ['plans', includeInactive],
+    queryFn: async () => {
+      const config = {
+        params: includeInactive ? { include_inactive: true } : {},
+        headers: token ? { Authorization: `Bearer ${token}` } : {}
+      };
+      const res = await axios.get(`${BACKEND_URL}/api/plans`, config);
+      return res.data.plans || [];
+    },
+    staleTime: 10 * 60 * 1000,
+  });
+};
+
+export const useCompanies = () => {
+  return useQuery({
+    queryKey: ['companies'],
+    queryFn: async () => {
+      const res = await axios.get(`${BACKEND_URL}/api/companies`);
+      return res.data.companies || [];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+};
+
+export const useAdminUsers = (companyId = null) => {
+  const token = useAuthStore((state) => state.token);
+
+  return useQuery({
+    queryKey: ['adminUsers', companyId],
+    queryFn: async () => {
+      const res = await axios.get(`${BACKEND_URL}/api/admin/users`, {
+        params: companyId ? { company_id: companyId } : {},
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      return res.data.users || [];
+    },
+    enabled: !!token,
+    staleTime: 30 * 1000,
+  });
+};
+
+export const useAdminBusinesses = () => {
+  const token = useAuthStore((state) => state.token);
+
+  return useQuery({
+    queryKey: ['adminBusinesses'],
+    queryFn: async () => {
+      const res = await axios.get(`${BACKEND_URL}/api/admin/businesses`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      return res.data.businesses || [];
+    },
+    enabled: !!token,
+    staleTime: 0,
+    refetchOnMount: 'always',
+  });
+};
+
+export const useStaleProjects = () => {
+  const token = useAuthStore((state) => state.token);
+
+  return useQuery({
+    queryKey: ['staleProjects'],
+    queryFn: async () => {
+      const res = await axios.get(`${BACKEND_URL}/api/admin/stale-projects`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      return res.data.staleProjects || [];
+    },
+    enabled: !!token,
+    staleTime: 60 * 1000,
+  });
+};
+
+export const useCompanyCollaborators = (businessId) => {
+  const token = useAuthStore((state) => state.token);
+
+  return useQuery({
+    queryKey: ['collaborators', businessId],
+    queryFn: async () => {
+      const res = await axios.get(`${BACKEND_URL}/api/businesses/${businessId}/collaborators`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      return res.data.collaborators || [];
+    },
+    enabled: !!token && !!businessId,
+    staleTime: 60 * 1000,
+  });
+};
+
+export const useAllDecisionLogsQuery = (page = 1, limit = 20, filters = {}) => {
+  const token = useAuthStore((state) => state.token);
+
+  return useQuery({
+    queryKey: ['allDecisionLogs', page, limit, filters],
+    queryFn: async () => {
+      const res = await axios.get(`${BACKEND_URL}/api/decision-logs`, {
+        params: { page, limit, ...filters },
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      return res.data;
+    },
+    enabled: !!token,
+    staleTime: 30 * 1000,
+  });
+};
+
+export const useAuditTrailQuery = (page = 1, limit = 10, filters = {}) => {
+  const token = useAuthStore((state) => state.token);
+
+  return useQuery({
+    queryKey: ['auditTrail', page, limit, filters],
+    queryFn: async () => {
+      const res = await axios.get(`${BACKEND_URL}/api/admin/audit-trail`, {
+        params: { page, limit, ...filters },
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      return res.data;
+    },
+    enabled: !!token,
+    staleTime: 30 * 1000,
+  });
+};

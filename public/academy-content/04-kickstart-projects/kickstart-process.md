@@ -14,7 +14,7 @@ In the **Priorities** tab, each strategic initiative is presented as a card. The
 
 ### **Kickstart Checkpoints**
 -   **Admin Only**: Only Company Admins can initiate a kickstart.
--   **Plan Required**: Full project execution is an **Advanced** tier feature.
+-   **Plan Required**: Full project execution is a premium feature available on specific plans.
 -   **One-Time Action**: Once a priority is kickstarted, it is marked as such and cannot be re-kickstarted. This ensures your project list remains clean and organized.
 
 ![Kickstart Overview](/academy-screenshots/projects/kickstart-overview-banner.png)

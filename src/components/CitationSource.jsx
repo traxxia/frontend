@@ -12,7 +12,6 @@ const CitationSource = ({
     cursor: 'pointer'
   }
 }) => {
-  // Helper function to format URL for display
   const formatUrlForDisplay = (url) => {
     if (!url) return '';
     try {

@@ -16,7 +16,7 @@ The Companies dashboard displays a table containing important company informatio
 - Total Users
 - Created Date
 
-![Companies Management](/academy-screenshots/admin-panel/companies.png)
+![Companies Management](/academy-screenshots/admin-panel/companies1.png)
  
 
 ## Company Status

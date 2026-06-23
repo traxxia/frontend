@@ -12,8 +12,8 @@ To act on these priorities, navigate to the **Priorities** tab. Here, you can:
 - **Kickstart** the creation of actual projects.
 
 ## 3. Plan & Role Constraints
-- **Advanced Users**: Have full access to the "Kickstart Projects" rocket button.
-- **Essential Users**: Will see an "Upgrade to Kickstart" prompt.
+- **Users with Kickstart Access**: Have full access to the "Kickstart Projects" rocket button.
+- **Users without Kickstart Access**: Will see an "Upgrade to Kickstart" prompt.
 - **Admins**: Are the only ones who can trigger the project creation flow.
 
 ![Strategic to Execution Flow](/academy-screenshots/projects/strategic-flow.png)

@@ -21,7 +21,7 @@ While the Executive Summary provides the overview, the **Priorities** tab is whe
 - **State Awareness**: The system tracks which priorities have already been converted into projects.
 
 ## 3. The Kickstart Flow
-The Kickstart process is designed for **Advanced Plan** users with **Admin** privileges (Company Admin or Super Admin).
+The Kickstart process is designed for **users with execution access** and **Admin** privileges (Company Admin or Super Admin).
 
 ### **Step 1: Selection**
 Use the checkboxes on the left of each priority card to select the initiatives you are ready to execute. You can select a single priority or multiple items for bulk kickstarting.
@@ -45,7 +45,7 @@ Once a priority is kickstarted:
 *Screenshot: A priority card showing the "Kickstarted" status*
 
 ## 4. Access & Plan Restrictions
-- **Essential Plan**: You can view all priorities and projects but cannot kickstart them. Clicking the button will prompt an **Upgrade Required** modal.
+- **Plans without Kickstart Access**: You can view all priorities and projects but cannot kickstart them. Clicking the button will prompt an **Upgrade Required** modal.
 - **Collaborators**: Can view the priorities but do not have the selection or kickstart buttons visible.
 
 > [!IMPORTANT]
