@@ -299,32 +299,32 @@ const Aiassistant = ({ businessId: propBusinessId, projectId, pageContext, isDis
 
   return (
     <>
-      { }
+
       <button
         className={`ai-fab${open ? " ai-fab--hidden" : ""}`}
         onClick={() => !isDisabled && setOpen(true)}
         disabled={isDisabled}
         title={isDisabled ? "Complete onboarding to use AI Assistant" : "AI Assistant"}
       >
-        <span className="ai-fab-text">TX</span>
+        <span className="ai-fab-text notranslate" translate="no">TX</span>
         <span className="ai-fab-dot-green"></span>
         <span className="ai-fab-dot-orange">!</span>
       </button>
 
-      { }
+
       {open && <div className="ai-backdrop" onClick={() => setOpen(false)} />}
 
-      { }
+
       <div className={`ai-panel ${open ? "ai-panel--open" : ""}`}>
-        { }
+
         <div className="ai-header">
           <div className="ai-header__left">
-            <div className="ai-header__icon">
-              <span className="ai-header-icon-text">TX</span>
+            <div className="ai-header__icon notranslate" translate="no">
+              <span className="ai-header-icon-text" translate="no">TX</span>
               <span className="ai-header-dot-green"></span>
             </div>
             <div className="ai-header__content">
-              <div className="ai-header__title">Trax</div>
+              <div className="ai-header__title notranslate" translate="no">Trax</div>
               <div className="ai-header__subtitle">1 thing flagged</div>
             </div>
           </div>
@@ -342,11 +342,11 @@ const Aiassistant = ({ businessId: propBusinessId, projectId, pageContext, isDis
           </div>
         </div>
 
-        { }
+
         <div className="ai-messages">
           {messages.map((m, idx) => (
             <div key={idx} className={`ai-msg ai-msg--${m.role}`}>
-              <div className={`ai-msg__avatar ai-msg__avatar--${m.role}`}>
+              <div className={`ai-msg__avatar ai-msg__avatar--${m.role} notranslate`}>
                 {m.role === "assistant" ? "TX" : (userName?.charAt(0)?.toUpperCase() || "U")}
               </div>
               <AiMessageRenderer text={m.text} role={m.role} />
@@ -427,7 +427,7 @@ const Aiassistant = ({ businessId: propBusinessId, projectId, pageContext, isDis
         </div>
       </div>
 
-      { }
+
       {showClearConfirm && (
         <div className="ai-modal-overlay">
           <div className="ai-modal">

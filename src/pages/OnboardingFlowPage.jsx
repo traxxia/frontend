@@ -428,7 +428,7 @@ const OnboardingFlowPage = () => {
             onClick={handleBackToDashboard}
             className="ob-flow-back-btn"
           >
-            &larr; Back to Dashboard
+            <span>&larr; Back to Dashboard</span>
           </button>
           <span className="ob-flow-breadcrumb-sep">/</span>
           <span className="business-header-name ob-flow-business-name">
@@ -805,7 +805,7 @@ const OnboardingFlowPage = () => {
               >
                 {isSubmitting ? (
                   <span style={{ display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'center', width: '100%' }}>
-                    Generating
+                    <span>Generating</span>
                     <div className="typing-indicator" style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
                       <span style={{ width: '4px', height: '4px', backgroundColor: '#94a3b8', borderRadius: '50%', animation: 'blink 1.4s infinite both', animationDelay: '0s' }}></span>
                       <span style={{ width: '4px', height: '4px', backgroundColor: '#94a3b8', borderRadius: '50%', animation: 'blink 1.4s infinite both', animationDelay: '0.2s' }}></span>
@@ -813,7 +813,7 @@ const OnboardingFlowPage = () => {
                     </div>
                   </span>
                 ) : (
-                  <>Generate Insights <ArrowRight size={18} /></>
+                  <><span>Generate Insights</span> <ArrowRight size={18} /></>
                 )}
               </button>
               <p className="ob-flow-generate-subtext">Answer every question to generate your strategy draft.</p>

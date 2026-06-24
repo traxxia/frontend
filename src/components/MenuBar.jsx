@@ -50,129 +50,129 @@ const MenuBar = () => {
   const handleAuditTrailClick = () => navigate("/audit-trail");
   const handleDecisionLogsClick = () => navigate("/decision-logs");
   return <Navbar className="traxia-navbar p-0" id="main-menu-bar">
-      <Container fluid className="px-3 py-2">
-        <div className="d-flex align-items-center justify-content-between w-100">
-          {}
-          <div className="navbar-left">
-            {companyLogo && <div className="company-logo-container" onClick={() => navigate("/dashboard")}>
-                <img src={companyLogo && companyLogo.startsWith("/") ? `${VITE_BACKEND_URL}${companyLogo}` : companyLogo} alt={companyName ? `${companyName} Logo` : t("company_logo_alt") || "Company Logo"} className="header-company-logo" onError={e => {
+    <Container fluid className="px-3 py-2">
+      <div className="d-flex align-items-center justify-content-between w-100">
+        { }
+        <div className="navbar-left">
+          {companyLogo && <div className="company-logo-container" onClick={() => navigate("/dashboard")}>
+            <img src={companyLogo && companyLogo.startsWith("/") ? `${VITE_BACKEND_URL}${companyLogo}` : companyLogo} alt={companyName ? `${companyName} Logo` : t("company_logo_alt") || "Company Logo"} className="header-company-logo" onError={e => {
               e.target.style.display = "none";
             }} />
-              </div>}
-          </div>
+          </div>}
+        </div>
 
-          {}
-          <div className="navbar-center">
-            <Navbar.Brand className="traxia-logo" onClick={!isSuperAdmin ? () => navigate("/dashboard") : undefined} style={{
+        { }
+        <div className="navbar-center">
+          <Navbar.Brand className="traxia-logo notranslate" onClick={!isSuperAdmin ? () => navigate("/dashboard") : undefined} style={{
             cursor: isSuperAdmin ? "default" : "pointer"
           }}>
-              <img src="/traxxia-logo.png" alt={t("traxia_logo_alt") || "Traxia Logo"} className="menu-bar--s1" />
-            </Navbar.Brand>
-          </div>
+            <img src="/traxxia-logo.png" alt={t("traxia_logo_alt") || "Traxia Logo"} className="menu-bar--s1" />
+          </Navbar.Brand>
+        </div>
 
-          {}
-          <div className="navbar-right d-flex align-items-center menu-bar--s2">
-            {}
-            {isObservatory && <div onClick={handleObservatoryClick} style={{
+        { }
+        <div className="navbar-right d-flex align-items-center menu-bar--s2">
+          { }
+          {isObservatory && <div onClick={handleObservatoryClick} style={{
             background: isCurrentPage("/super-admin/observatory") ? "#1e1b4b" : "transparent",
             color: isCurrentPage("/super-admin/observatory") ? "#a5b4fc" : "#495057"
           }} className="menu-bar--s3">
-                <ScanSearch size={18} className="me-2" />
-                AI Observatory
-              </div>}
+            <ScanSearch size={18} className="me-2" />
+            AI Observatory
+          </div>}
 
-            {!isSuperAdmin && <NotificationBell />}
+          {!isSuperAdmin && <NotificationBell />}
 
-            <Dropdown>
-              <Dropdown.Toggle variant="link" id="dropdown-user" className="user-menu p-0 border-0 shadow-none d-flex align-items-center justify-content-center">
-                <div className="user-initial-avatar menu-bar--s5">
-                  {userName ? userName.charAt(0).toUpperCase() : "U"}
-                </div>
-              </Dropdown.Toggle>
-              <Dropdown.Menu align="end" className="traxia-dropdown">
-                <Dropdown.Header className="pt-3 pb-3 px-3 mb-2">
-                  <div className="d-flex flex-column gap-2">
+          <Dropdown>
+            <Dropdown.Toggle variant="link" id="dropdown-user" className="user-menu p-0 border-0 shadow-none d-flex align-items-center justify-content-center">
+              <div className="user-initial-avatar menu-bar--s5">
+                {userName ? userName.charAt(0).toUpperCase() : "U"}
+              </div>
+            </Dropdown.Toggle>
+            <Dropdown.Menu align="end" className="traxia-dropdown">
+              <Dropdown.Header className="pt-3 pb-3 px-3 mb-2">
+                <div className="d-flex flex-column gap-2">
 
-                    {}
-                    <div className="d-flex align-items-center">
-                      <div className="d-flex align-items-center justify-content-center rounded me-3 menu-bar--s6">
-                        <User size={16} className="menu-bar--s7" />
-                      </div>
-                      <div className="d-flex flex-column">
-                        <span className="text-uppercase text-muted fw-bold menu-bar--s8">User Name</span>
-                        <span className="fw-semibold text-secondary menu-bar--s9">{userName}</span>
-                      </div>
+                  { }
+                  <div className="d-flex align-items-center">
+                    <div className="d-flex align-items-center justify-content-center rounded me-3 menu-bar--s6">
+                      <User size={16} className="menu-bar--s7" />
                     </div>
-
-                    {}
-                    {userRole && <div className="d-flex align-items-center">
-                        <div className="d-flex align-items-center justify-content-center rounded me-3 menu-bar--s6">
-                          <Briefcase size={16} className="menu-bar--s7" />
-                        </div>
-                        <div className="d-flex flex-column">
-                          <span className="text-uppercase text-muted fw-bold menu-bar--s8">Role</span>
-                          <span className="fw-semibold text-secondary menu-bar--s9">
-                            {userRole.replace("_", " ").replace(/\b\w/g, l => l.toUpperCase())}
-                          </span>
-                        </div>
-                      </div>}
-
-                    {}
-                    {companyName && <div className="d-flex align-items-center">
-                        <div className="d-flex align-items-center justify-content-center rounded me-3 menu-bar--s6">
-                          <Building size={16} className="menu-bar--s7" />
-                        </div>
-                        <div className="d-flex flex-column">
-                          <span className="text-uppercase text-muted fw-bold menu-bar--s8">Company</span>
-                          <span className="fw-semibold text-secondary menu-bar--s9">{companyName}</span>
-                        </div>
-                      </div>}
+                    <div className="d-flex flex-column">
+                      <span className="text-uppercase text-muted fw-bold menu-bar--s8">{t("User Name")}</span>
+                      <span className="fw-semibold text-secondary menu-bar--s9">{userName}</span>
+                    </div>
                   </div>
-                </Dropdown.Header>
-                <Dropdown.Divider />
 
-                {}
-                {!isSuperAdmin && <Dropdown.Item onClick={handleDashboardClick} className={`dropdown-item-traxia ${isCurrentPage("/dashboard") ? "active" : ""}`}>
-                    <Home size={16} className="me-2" />
-                    {t("dashboard")}
-                  </Dropdown.Item>}
+                  { }
+                  {userRole && <div className="d-flex align-items-center">
+                    <div className="d-flex align-items-center justify-content-center rounded me-3 menu-bar--s6">
+                      <Briefcase size={16} className="menu-bar--s7" />
+                    </div>
+                    <div className="d-flex flex-column">
+                      <span className="text-uppercase text-muted fw-bold menu-bar--s8">{t("Role")}</span>
+                      <span className="fw-semibold text-secondary menu-bar--s9">
+                        {userRole.replace("_", " ").replace(/\b\w/g, l => l.toUpperCase())}
+                      </span>
+                    </div>
+                  </div>}
 
-                {}
-                <Dropdown.Item onClick={handleAcademyClick} className={`dropdown-item-traxia ${isCurrentPage("/academy") || location.pathname.startsWith("/academy/") ? "active" : ""}`}>
-                  <BookOpen size={16} className="me-2" />
-                  {t("traxxia_academy")}
-                </Dropdown.Item>
+                  { }
+                  {companyName && <div className="d-flex align-items-center">
+                    <div className="d-flex align-items-center justify-content-center rounded me-3 menu-bar--s6">
+                      <Building size={16} className="menu-bar--s7" />
+                    </div>
+                    <div className="d-flex flex-column">
+                      <span className="text-uppercase text-muted fw-bold menu-bar--s8">{t("Company")}</span>
+                      <span className="fw-semibold text-secondary menu-bar--s9">{companyName}</span>
+                    </div>
+                  </div>}
+                </div>
+              </Dropdown.Header>
+              <Dropdown.Divider />
 
-                {}
-                {isSuperAdmin && <Dropdown.Item onClick={handleSuperAdminClick} className={`dropdown-item-traxia ${isCurrentPage("/super-admin") ? "active" : ""}`} style={{
+              { }
+              {!isSuperAdmin && <Dropdown.Item onClick={handleDashboardClick} className={`dropdown-item-traxia ${isCurrentPage("/dashboard") ? "active" : ""}`}>
+                <Home size={16} className="me-2" />
+                {t("dashboard")}
+              </Dropdown.Item>}
+
+              { }
+              <Dropdown.Item onClick={handleAcademyClick} className={`dropdown-item-traxia ${isCurrentPage("/academy") || location.pathname.startsWith("/academy/") ? "active" : ""}`}>
+                <BookOpen size={16} className="me-2" />
+                {t("traxxia_academy")}
+              </Dropdown.Item>
+
+              { }
+              {isSuperAdmin && <Dropdown.Item onClick={handleSuperAdminClick} className={`dropdown-item-traxia ${isCurrentPage("/super-admin") ? "active" : ""}`} style={{
                 background: isCurrentPage("/super-admin") ? "#fef3c7" : "transparent",
                 color: isCurrentPage("/super-admin") ? "#92400e" : "#495057"
               }}>
-                    <Shield size={16} className="me-2 menu-bar--s10" />
-                    {t("super_admin_panel")}
-                  </Dropdown.Item>}
+                <Shield size={16} className="me-2 menu-bar--s10" />
+                {t("super_admin_panel")}
+              </Dropdown.Item>}
 
-                {}
-                {isAdmin && !isSuperAdmin && <Dropdown.Item onClick={handleAdminClick} className={`dropdown-item-traxia ${isCurrentPage("/admin") ? "active" : ""}`}>
-                    <Settings size={16} className="me-2" />
-                    {t("admin")}
-                  </Dropdown.Item>}
+              { }
+              {isAdmin && !isSuperAdmin && <Dropdown.Item onClick={handleAdminClick} className={`dropdown-item-traxia ${isCurrentPage("/admin") ? "active" : ""}`}>
+                <Settings size={16} className="me-2" />
+                {t("admin")}
+              </Dropdown.Item>}
 
-                {}
-                {}
+              { }
+              { }
 
-                <Dropdown.Divider />
+              <Dropdown.Divider />
 
-                {}
-                <Dropdown.Item onClick={handleLogout} className="dropdown-item-traxia text-danger">
-                  <LogOut size={16} className="me-2" />
-                  {t("logout")}
-                </Dropdown.Item>
-              </Dropdown.Menu>
-            </Dropdown>
-          </div>
+              { }
+              <Dropdown.Item onClick={handleLogout} className="dropdown-item-traxia text-danger">
+                <LogOut size={16} className="me-2" />
+                {t("logout")}
+              </Dropdown.Item>
+            </Dropdown.Menu>
+          </Dropdown>
         </div>
-      </Container>
-    </Navbar>;
+      </div>
+    </Container>
+  </Navbar>;
 };
 export default MenuBar;

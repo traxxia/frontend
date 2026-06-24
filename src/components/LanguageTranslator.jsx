@@ -9,6 +9,14 @@ const LanguageTranslator = ({ disabled }) => {
   const handleLanguageChange = (e) => {
     const selectedLanguage = e.target.value;
     setLanguage(selectedLanguage);
+    
+    setTimeout(() => {
+      const selectField = document.querySelector('.goog-te-combo');
+      if (selectField) {
+        selectField.value = selectedLanguage;
+        selectField.dispatchEvent(new Event('change'));
+      }
+    }, 100);
   };
 
   return (

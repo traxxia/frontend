@@ -183,7 +183,7 @@ const SimpleQuestionCard = ({
         {/* Center: question label + answer preview */}
         <div className="sqc-center" style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
           <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
-            <span className="sqc-question-text" style={{ fontSize: '15px', color: '#0f172a', fontWeight: '600' }}>{field.label}</span>
+            <span className="sqc-question-text notranslate" style={{ fontSize: '15px', color: '#0f172a', fontWeight: '600' }}>{field.label}</span>
             {hasValue && isAI && !effectiveExpanded && !isEditing && (
               <span style={{ fontSize: '11px', background: '#e0f2fe', color: '#0369a1', padding: '2px 8px', borderRadius: '12px', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '4px' }}>
                 <Sparkles size={10} /> auto-filled

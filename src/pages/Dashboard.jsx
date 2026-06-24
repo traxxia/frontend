@@ -56,7 +56,7 @@ const getStepKeys = (index) => {
 
 const Dashboard = () => {
   const navigate = useNavigate();
-  const { t } = useTranslation();
+  const { t, currentLanguage } = useTranslation();
   const ENABLE_PMF = getUserLimits().pmf;
   const regenerating = useAnalysisStore(state => state.regenerating);
   const {
@@ -178,7 +178,7 @@ const Dashboard = () => {
       setFilePageCounts(prev => ({ ...prev, [fileKey(file)]: info }));
     });
     return () => { cancelled = true; };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedFiles]);
 
   const [accessModalMessage, setAccessModalMessage] = useState('');
@@ -226,7 +226,7 @@ const Dashboard = () => {
         </div>
         <p className="hiw-description">
           {t('hiw_diagnosis_from_docs_desc') || 'Trax reads everything and gives you a structured report at two depths.'}
-        </p> 
+        </p>
         {/* <hr className="hiw-divider" /> */}
         <div className="hiw-list">
           <div className="hiw-list-item">
@@ -248,7 +248,7 @@ const Dashboard = () => {
         </div>
         <p className="hiw-description">
           {t('hiw_priorities_turn_commitment_desc') || 'Each priority becomes a tracked bet — owner, hypothesis, expected results. Anchored to the rituals that move the business forward.'}
-        </p> 
+        </p>
         {/* <hr className="hiw-divider" /> */}
         <div className="hiw-list">
           <div className="hiw-list-item">
@@ -280,7 +280,7 @@ const Dashboard = () => {
       setIsProcessingDelete(true);
       clearErrors();
       await deleteBusinessAction(businessId);
-      
+
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['businesses'] }),
         queryClient.invalidateQueries({ queryKey: ['planDetails'] })
@@ -315,7 +315,7 @@ const Dashboard = () => {
             }
           }
         }
-        
+
         try {
           const mlBackendUrl = import.meta.env.VITE_ML_BACKEND_URL || 'http://localhost:8000';
           const formData = new FormData();
@@ -325,7 +325,8 @@ const Dashboard = () => {
           if (businessFormData.website && !businessFormData.has_no_website) {
             formData.append('url', businessFormData.website);
           }
-          
+          formData.append('language', currentLanguage || 'en');
+
           const mlResponse = await fetch(`${mlBackendUrl}/pmf-analysis`, {
             method: 'POST',
             headers: {
@@ -333,7 +334,7 @@ const Dashboard = () => {
             },
             body: formData
           });
-          
+
           const mlResult = await mlResponse.json();
           if (mlResult.success && mlResult.data) {
             pmfData = mlResult.data;
@@ -455,7 +456,7 @@ const Dashboard = () => {
       const files = Array.from(e.target.files);
       const validFiles = [];
       const invalidFiles = [];
-      
+
       files.forEach(file => {
         const ext = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
         if (allowedExtensions.includes(ext)) {
@@ -464,11 +465,11 @@ const Dashboard = () => {
           invalidFiles.push(file);
         }
       });
-      
+
       if (invalidFiles.length > 0) {
         addToast({ message: 'this is not supported file format', type: 'error' });
       }
-      
+
       if (validFiles.length > 0) {
         setSelectedFiles(prev => [...prev, ...validFiles]);
       }
@@ -520,7 +521,7 @@ const Dashboard = () => {
 
   const handleInsightsClick = useCallback(async (business) => {
     if (business.status === 'deleted') return;
-  
+
     selectBusiness(business);
 
     let hasAdvancedAnalysis = false;
@@ -534,35 +535,35 @@ const Dashboard = () => {
         console.log(`[DEBUG] handleInsightsClick: Fetching PMF for businessId=${businessId}`);
         const result = await analysisService.getPMFAnalysis(businessId, true);
         console.log(`[DEBUG] handleInsightsClick: result from getPMFAnalysis=`, result);
-        
+
         const analysisData = await analysisService.fetchAnalysisDataThroughBackend(businessId, true);
         hasAdvancedAnalysis = analysisData && analysisData.length > 0;
-        
-        const hasOnboarding = (result?.onboarding_data && Object.keys(result.onboarding_data).length > 0) || 
-                              (result?.onboarding && Object.keys(result.onboarding).length > 0);
+
+        const hasOnboarding = (result?.onboarding_data && Object.keys(result.onboarding_data).length > 0) ||
+          (result?.onboarding && Object.keys(result.onboarding).length > 0);
         console.log(`[DEBUG] handleInsightsClick: hasOnboarding=${hasOnboarding}`);
-        
+
         let hasInsights = false;
         let hasExecSummary = false;
 
         const insightsContent = result?.insights;
-          hasInsights = !!insightsContent && (typeof insightsContent === 'string' ? insightsContent.trim().length > 0 : Object.keys(insightsContent).length > 0);
-        
+        hasInsights = !!insightsContent && (typeof insightsContent === 'string' ? insightsContent.trim().length > 0 : Object.keys(insightsContent).length > 0);
+
         try {
           const execResult = await analysisService.getPMFExecutiveSummary(businessId);
           const summaryContent = execResult?.summary || execResult;
           hasExecSummary = !!summaryContent && (typeof summaryContent === 'string' ? summaryContent.trim().length > 0 : Object.keys(summaryContent).length > 0);
-} catch (err) {
+        } catch (err) {
           console.warn("Failed to check Executive Summary status:", err);
         }
 
         if (!hasOnboarding || !hasInsights || !hasExecSummary) {
           console.warn("Missing onboarding, insights, or exec summary. Navigating to onboarding page.");
-          navigate(`/onboarding/${businessId}`, { 
-            state: { 
-              business, 
-              pmfData: result?.onboarding_data || result?.onboarding || null 
-            } 
+          navigate(`/onboarding/${businessId}`, {
+            state: {
+              business,
+              pmfData: result?.onboarding_data || result?.onboarding || null
+            }
           });
           return;
         }
@@ -577,7 +578,7 @@ const Dashboard = () => {
     const userPlan = useAuthStore.getState().userPlan;
     const isPaidPlan = userPlan && userPlan.toLowerCase() !== 'explorer' && userPlan.toLowerCase() !== 'free' && userPlan.toLowerCase() !== 'none';
     const limits = getUserLimits();
-    
+
     const isTypeRegenerating = (type) => regenerating[`${businessId}_${type}`] || false;
     const isAnalysisRegenerating = isTypeRegenerating('swot') || isTypeRegenerating('porters') || isTypeRegenerating('pestel') || isTypeRegenerating('initial') || isTypeRegenerating('essential') || isTypeRegenerating('advanced');
 
@@ -592,8 +593,8 @@ const Dashboard = () => {
     }
 
     const businessSlug = toSlug(business?.business_name || '');
-    navigate(`/businesspage?business=${businessSlug}&tab=${initialTab}`, { 
-      state: { business, initialTab } 
+    navigate(`/businesspage?business=${businessSlug}&tab=${initialTab}`, {
+      state: { business, initialTab }
     });
   }, [selectBusiness, navigate, t, userRole, openModal, regenerating]);
 
@@ -614,8 +615,8 @@ const Dashboard = () => {
     selectBusiness(business);
 
     const initialTab = 'bets';
-    navigate(`/businesspage?business=${businessSlug}&tab=${initialTab}`, { 
-      state: { business, initialTab } 
+    navigate(`/businesspage?business=${businessSlug}&tab=${initialTab}`, {
+      state: { business, initialTab }
     });
   }, [selectBusiness, navigate, t, userRole, openModal]);
 
@@ -656,7 +657,7 @@ const Dashboard = () => {
             <div className="dashboard-content">
               <div className="welcome-section">
                 <h1 className="welcome-title">
-                  {t('welcome')} <span>{userName}</span>
+                  {t('welcome')} <span>{userName}!</span>
                 </h1>
                 <p className="welcome-description">
                   {t('dashboard_description_redesign') || "Strategy as an operating system. Traxxia gives you a strategic diagnosis of your business in minutes, then turns each priority into a tracked bet your team actually executes."}
@@ -677,14 +678,14 @@ const Dashboard = () => {
                 <>
                   {/* Collapsible Accordion */}
                   <div className="how-it-works-accordion">
-                    <div 
+                    <div
                       className="how-it-works-header"
                       onClick={() => setIsHowItWorksExpanded(!isHowItWorksExpanded)}
                     >
                       <span>{t('how_it_works') || 'HOW IT WORKS'}</span>
-                      <ChevronDown 
-                        size={18} 
-                        className={`how-it-works-icon ${isHowItWorksExpanded ? 'expanded' : ''}`} 
+                      <ChevronDown
+                        size={18}
+                        className={`how-it-works-icon ${isHowItWorksExpanded ? 'expanded' : ''}`}
                       />
                     </div>
                     {isHowItWorksExpanded && (
@@ -697,8 +698,8 @@ const Dashboard = () => {
                   {/* Businesses Table */}
                   <div className="businesses-container">
                     <div className="businesses-header d-flex justify-content-between align-items-center gap-3">
-                      <span class="biz-table-title"><b>{t('your_businesses_all_states')}</b> — all states</span>
-                      
+                      <span class="biz-table-title"><b>{t('your_businesses_all_states')}</b></span>
+
                       <div className="d-flex align-items-center gap-3">
                         <div className="status-filter-wrapper">
                           <button className="status-filter-btn" onClick={() => setIsFilterOpen(!isFilterOpen)}>
@@ -713,15 +714,15 @@ const Dashboard = () => {
                             <>
                               <div className="status-filter-overlay" onClick={() => setIsFilterOpen(false)} />
                               <div className="status-dropdown">
-                              {['ALL', 'EXECUTION', 'CREATED', 'DELETED'].map(status => (
-                                <div key={status} className="dropdown-item" onClick={() => toggleStatusFilter(status)}>
-                                  <div className={`custom-checkbox ${statusFilter.includes(status) ? 'checked' : ''}`}>
-                                    {statusFilter.includes(status) && <Check size={12} color="white" />}
+                                {['ALL', 'EXECUTION', 'CREATED', 'DELETED'].map(status => (
+                                  <div key={status} className="dropdown-item" onClick={() => toggleStatusFilter(status)}>
+                                    <div className={`custom-checkbox ${statusFilter.includes(status) ? 'checked' : ''}`}>
+                                      {statusFilter.includes(status) && <Check size={12} color="white" />}
+                                    </div>
+                                    <span className="status-name">{status === 'ALL' ? t('ALL') : t(status)}</span>
+                                    <span className="status-count">{statusCounts[status]}</span>
                                   </div>
-                                  <span className="status-name">{status === 'ALL' ? t('ALL') : t(status)}</span>
-                                  <span className="status-count">{statusCounts[status]}</span>
-                                </div>
-                              ))}
+                                ))}
                               </div>
                             </>
                           )}
@@ -758,10 +759,10 @@ const Dashboard = () => {
                             filteredBusinesses.map((business) => {
                               const isDeleted = business.status === 'deleted';
                               const state = isDeleted ? 'DELETED' : (business.has_projects ? 'EXECUTION' : 'CREATED');
-                              const date = business.created_at ? new Date(business.created_at).toLocaleDateString('en-US', { 
-                                month: 'short', day: '2-digit', year: 'numeric' 
+                              const date = business.created_at ? new Date(business.created_at).toLocaleDateString('en-US', {
+                                month: 'short', day: '2-digit', year: 'numeric'
                               }) : 'N/A';
-                              
+
                               const activeBets = business.project_count || business.question_statistics?.total_projects || 0;
                               const collaborators = business.collaborators_count ?? (business.company_admin_id?.length || 1);
 
@@ -778,27 +779,27 @@ const Dashboard = () => {
                                   <td className="stats-cell text-center">{collaborators}</td>
                                   <td className="actions-cell">
                                     <div className="d-flex align-items-center gap-2 justify-content-end" onClick={(e) => e.stopPropagation()}>
-                                      <button 
-                                        className="btn-insights-outline" 
+                                      <button
+                                        className="btn-insights-outline"
                                         onClick={() => handleInsightsClick(business)}
                                         disabled={isDeleted}
                                         style={isDeleted ? { opacity: 0.5, cursor: 'not-allowed' } : {}}
                                       >
-                                        <Zap size={14} className="me-2" /> {t('insights') || 'Insights'} 
+                                        <Zap size={14} className="me-2" /> {t('insights') || 'Insights'}
                                       </button>
-                                      <button 
-                                        className="btn-execution-outline" 
+                                      <button
+                                        className="btn-execution-outline"
                                         onClick={() => handleExecutionClick(business)}
                                         disabled={isDeleted}
                                         style={isDeleted ? { opacity: 0.5, cursor: 'not-allowed' } : {}}
                                       >
-                                        <CheckSquare size={14} className="me-2" /> {t('Execution') || 'Execution'} 
+                                        <CheckSquare size={14} className="me-2" /> {t('Execution') || 'Execution'}
                                         {!hasProjectAccess && <span className="ms-1" style={{ fontSize: '10px' }}>🔒</span>}
                                       </button>
                                       {!isCollaborator && !isViewer && (
-                                        <button 
-                                          className="btn-delete-business-inline" 
-                                          onClick={!isDeleted ? () => handleShowDeleteModal(business) : undefined} 
+                                        <button
+                                          className="btn-delete-business-inline"
+                                          onClick={!isDeleted ? () => handleShowDeleteModal(business) : undefined}
                                           title={!isDeleted ? t('delete_business') : undefined}
                                           style={{ visibility: isDeleted ? 'hidden' : 'visible' }}
                                           disabled={isDeleted}
@@ -860,14 +861,14 @@ const Dashboard = () => {
             />
           )}
 
-          <Modal 
-            show={isModalOpen('createBusiness')} 
+          <Modal
+            show={isModalOpen('createBusiness')}
             onHide={() => {
               if (isCreatingBusiness || isUploadingFiles) return;
               handleCloseCreateModal();
-            }} 
-            centered 
-            dialogClassName="create-business-modal" 
+            }}
+            centered
+            dialogClassName="create-business-modal"
             backdrop="static"
           >
             <Modal.Header closeButton={!(isCreatingBusiness || isUploadingFiles)}>
@@ -878,14 +879,14 @@ const Dashboard = () => {
                 <Modal.Body>
                   <Form.Group className="mb-3">
                     <Form.Label>{t('business_name', 'Business Name')} <span>*</span></Form.Label>
-                    <Form.Control 
-                      type="text" 
-                      name="business_name" 
-                      value={businessFormData.business_name} 
-                      onChange={handleFormChange} 
-                      placeholder="e.g. Atlas CPG" 
-                      isInvalid={!!formErrors.business_name} 
-                      maxLength={100} 
+                    <Form.Control
+                      type="text"
+                      name="business_name"
+                      value={businessFormData.business_name}
+                      onChange={handleFormChange}
+                      placeholder="e.g. Atlas CPG"
+                      isInvalid={!!formErrors.business_name}
+                      maxLength={100}
                     />
                     {formErrors.business_name && (
                       <Form.Text className="text-danger mt-1 d-block">{formErrors.business_name}</Form.Text>
@@ -893,12 +894,12 @@ const Dashboard = () => {
                   </Form.Group>
                   <Form.Group className="mb-3">
                     <Form.Label>{t('website', 'Website')}</Form.Label>
-                    <Form.Control 
-                      type="text" 
-                      name="website" 
-                      value={businessFormData.website} 
-                      onChange={handleFormChange} 
-                      placeholder="e.g. atlascpg.com" 
+                    <Form.Control
+                      type="text"
+                      name="website"
+                      value={businessFormData.website}
+                      onChange={handleFormChange}
+                      placeholder="e.g. atlascpg.com"
                       isInvalid={!!formErrors.website}
                       disabled={businessFormData.has_no_website}
                     />
@@ -938,7 +939,7 @@ const Dashboard = () => {
 
                   <div className="create-business-doc-upload mt-2">
                     <div className="doc-upload-header d-flex justify-content-between align-items-center">
-                      <div className="d-flex align-items-center gap-2"> 
+                      <div className="d-flex align-items-center gap-2">
                         <span className="doc-upload-title">{t('add_documents_optional', 'Add documents (optional)')}</span>
                         {selectedFiles.length > 0 && (
                           <span className="files-count-badge">
@@ -947,12 +948,12 @@ const Dashboard = () => {
                         )}
                       </div>
                     </div>
-                    
+
                     <div className="doc-upload-body mt-2">
                       <div className="info-box-blue mb-3">
                         Upload your annual plan, board deck, or financials and Trax will auto-fill the questions below — the more it has, the sharper the diagnosis.
                       </div>
-                      
+
                       {selectedFiles.length > 0 && (
                         <div className="d-flex flex-column gap-2 mb-3">
                           {selectedFiles.map((file, idx) => {
@@ -972,9 +973,9 @@ const Dashboard = () => {
                                     </span>
                                   </div>
                                 </div>
-                                <button 
-                                  type="button" 
-                                  className="btn-remove-selected-file p-1 border-0 bg-transparent text-secondary d-flex align-items-center" 
+                                <button
+                                  type="button"
+                                  className="btn-remove-selected-file p-1 border-0 bg-transparent text-secondary d-flex align-items-center"
                                   onClick={() => handleRemoveFile(idx)}
                                 >
                                   <X size={16} />
@@ -992,7 +993,7 @@ const Dashboard = () => {
                       >
                         <span>+ Add file</span>
                       </button>
-                      <input 
+                      <input
                         type="file"
                         multiple
                         ref={fileInputRef}
@@ -1040,7 +1041,7 @@ const Dashboard = () => {
             </Modal.Body>
             <Modal.Footer>
               <Button variant="secondary" onClick={handleCloseDeleteModal} disabled={isDeletingBusiness || isProcessingDelete}>{t('cancel')}</Button>
-              <Button variant="danger" onClick={handleConfirmDelete} disabled={isDeletingBusiness || isProcessingDelete}>{isDeletingBusiness || isProcessingDelete ? <Spinner size="sm" /> : t('delete_business')}</Button>
+              <Button variant="danger" onClick={handleConfirmDelete} disabled={isDeletingBusiness || isProcessingDelete}>{isDeletingBusiness || isProcessingDelete ? <Spinner size="sm" /> : <span>{t('delete_business')}</span>}</Button>
             </Modal.Footer>
           </Modal>
 

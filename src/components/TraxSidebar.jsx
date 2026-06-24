@@ -15,7 +15,7 @@ const TraxSidebar = ({
   currentPageContext = 'Business Setup Onboarding',
   pageDescriptionContext = 'User is filling out the 5-step PMF onboarding form to generate insights.'
 }) => {
-  const { t } = useTranslation();
+  const { t, currentLanguage } = useTranslation();
   const answersDetails = useAnalysisStore(state => state.answersDetails);
   const [chatInput, setChatInput] = useState('');
   const [chatMessages, setChatMessages] = useState([]);
@@ -118,7 +118,8 @@ const TraxSidebar = ({
           message: userMessage,
           current_page: currentPageContext,
           page_description: pageDescriptionContext,
-          page_content: userAnswers || {}
+          page_content: userAnswers || {},
+          language: currentLanguage || 'en'
         })
       });
       
@@ -146,8 +147,8 @@ const TraxSidebar = ({
     const countStr = totalAIFilled > 0 ? ` ${Math.max(1, Math.floor(totalAIFilled / analyzedDocs.length))} answers` : ' answers';
     
     return analyzedDocs.map((doc, idx) => (
-      <div key={`doc-msg-${idx}`} className="onboarding-chat-message">
-        <div className="bubble-avatar">TX</div>
+      <div key={`doc-msg-${idx}`} className="onboarding-chat-message notranslate">
+        <div className="bubble-avatar notranslate" translate="no">TX</div>
         <div className="bubble-content" style={{ wordBreak: 'break-word', overflowWrap: 'break-word' }}>
           Read <strong>{doc.original_name || doc.filename || 'Document'}</strong>. I auto-filled{countStr} across the sections below — please review.
         </div>
@@ -159,42 +160,42 @@ const TraxSidebar = ({
     <div className="docked-onboarding-chat">
       <div className="onboarding-chat-header">
         <div className="avatar-wrapper">
-          <div className="avatar-circle">TX</div>
+          <div className="avatar-circle notranslate" translate="no">TX</div>
         </div>
         <div className="header-info">
-          <h3 className="header-title">Trax</h3>
+          <h3 className="header-title notranslate" translate="no">Trax</h3>
         </div>
       </div>
       <div className="docked-chat-body">
         {currentPageContext === 'Advanced Insights' ? (
           <>
-            <div className="onboarding-chat-message">
-              <div className="bubble-avatar">TX</div>
+            <div className="onboarding-chat-message notranslate">
+              <div className="bubble-avatar notranslate" translate="no">TX</div>
               <div className="bubble-content">
                 Advanced is unlocked. A few more questions and I'll build the full picture — the 6 C's and the S.T.R.A.T.E.G.I.C. scorecard.
               </div>
             </div>
-            <div className="onboarding-chat-message">
-              <div className="bubble-avatar">TX</div>
+            <div className="onboarding-chat-message notranslate">
+              <div className="bubble-avatar notranslate" translate="no">TX</div>
               <div className="bubble-content">
                 Answer in any order. Initial and Essential set the context; Advanced and Financial Data add the depth.
               </div>
             </div>
-            <div className="onboarding-chat-highlight-card" style={{ background: '#f0f9ff', border: '1px solid #bae6fd', color: '#0369a1', padding: '12px 16px', borderRadius: '12px', fontSize: '13px', lineHeight: '1.5', margin: '0 0 16px 0' }}>
+            <div className="onboarding-chat-highlight-card notranslate" style={{ background: '#f0f9ff', border: '1px solid #bae6fd', color: '#0369a1', padding: '12px 16px', borderRadius: '12px', fontSize: '13px', lineHeight: '1.5', margin: '0 0 16px 0' }}>
               <strong>This is what your Bets are built from.</strong> The sharper your inputs, the sharper the diagnosis.
             </div>
             {renderDocumentMessages()}
           </>
         ) : (
           <>
-            <div className="onboarding-chat-message">
-              <div className="bubble-avatar">TX</div>
+            <div className="onboarding-chat-message notranslate">
+              <div className="bubble-avatar notranslate" translate="no">TX</div>
               <div className="bubble-content">
                 Hi {userName} — I'm Trax, your strategy consultant. To draft a real diagnosis for <strong>{selectedBusinessName}</strong>, I'll need a feel for the business.
               </div>
             </div>
-            <div className="onboarding-chat-message">
-              <div className="bubble-avatar">TX</div>
+            <div className="onboarding-chat-message notranslate">
+              <div className="bubble-avatar notranslate" translate="no">TX</div>
               <div className="bubble-content">
                 You can fill out the questions yourself — or add documents (annual plan, board deck, financials) and I'll read them and auto-fill what I can.
               </div>
@@ -203,7 +204,7 @@ const TraxSidebar = ({
               <strong>I value context.</strong> The more you share, the sharper the diagnosis. Upload anything you have.
             </div>
             <div className="onboarding-chat-message">
-              <div className="bubble-avatar">TX</div>
+              <div className="bubble-avatar notranslate" translate="no">TX</div>
               <div className="bubble-content">
                 Great. Here are the {questions?.length || 6} questions I need to draft your diagnosis. Answer in any order — or add documents and I'll auto-fill what I can.
               </div>
@@ -212,8 +213,8 @@ const TraxSidebar = ({
           </>
         )}
         {chatMessages.map((msg, idx) => (
-            <div key={idx} className={`onboarding-chat-message ${msg.role === 'user' ? 'user-message' : ''}`}>
-              <div className="bubble-avatar">
+            <div key={idx} className={`onboarding-chat-message notranslate ${msg.role === 'user' ? 'user-message' : ''}`}>
+              <div className="bubble-avatar notranslate" translate="no">
                 {msg.role === 'user' ? (userName?.charAt(0)?.toUpperCase() || 'U') : 'TX'}
               </div>
               <div className="bubble-content">
@@ -227,7 +228,7 @@ const TraxSidebar = ({
         ))}
         {isChatLoading && (
           <div className="onboarding-chat-message">
-            <div className="bubble-avatar">TX</div>
+            <div className="bubble-avatar notranslate" translate="no">TX</div>
             <div className="bubble-content">
               <div className="typing-indicator" style={{ display: 'flex', gap: '4px', alignItems: 'center', height: '100%', padding: '4px 0' }}>
                 <span style={{ width: '6px', height: '6px', backgroundColor: '#94a3b8', borderRadius: '50%', animation: 'blink 1.4s infinite both', animationDelay: '0s' }}></span>
