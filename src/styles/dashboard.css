@@ -319,7 +319,7 @@
   letter-spacing: 0.05em;
   color: #9ca3af;
   border-bottom: 1px solid #f3f4f6;
-  white-space: nowrap;
+  white-space: normal;
 }
 
 .businesses-table td {

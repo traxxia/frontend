@@ -99,7 +99,7 @@ const MenuBar = () => {
                       <User size={16} className="menu-bar--s7" />
                     </div>
                     <div className="d-flex flex-column">
-                      <span className="text-uppercase text-muted fw-bold menu-bar--s8">{t("User Name")}</span>
+                      <span className="text-uppercase text-muted fw-bold menu-bar--s8 notranslate">{t("User Name")}</span>
                       <span className="fw-semibold text-secondary menu-bar--s9">{userName}</span>
                     </div>
                   </div>
@@ -110,7 +110,7 @@ const MenuBar = () => {
                       <Briefcase size={16} className="menu-bar--s7" />
                     </div>
                     <div className="d-flex flex-column">
-                      <span className="text-uppercase text-muted fw-bold menu-bar--s8">{t("Role")}</span>
+                      <span className="text-uppercase text-muted fw-bold menu-bar--s8 notranslate">{t("Role")}</span>
                       <span className="fw-semibold text-secondary menu-bar--s9">
                         {userRole.replace("_", " ").replace(/\b\w/g, l => l.toUpperCase())}
                       </span>
@@ -123,7 +123,7 @@ const MenuBar = () => {
                       <Building size={16} className="menu-bar--s7" />
                     </div>
                     <div className="d-flex flex-column">
-                      <span className="text-uppercase text-muted fw-bold menu-bar--s8">{t("Company")}</span>
+                      <span className="text-uppercase text-muted fw-bold menu-bar--s8 notranslate">{t("Company")}</span>
                       <span className="fw-semibold text-secondary menu-bar--s9">{companyName}</span>
                     </div>
                   </div>}

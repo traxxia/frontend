@@ -991,7 +991,7 @@ const Dashboard = () => {
                         className={`btn-add-file-dashed py-2 d-flex align-items-center justify-content-center gap-2 ${selectedFiles.length > 0 ? 'btn-add-file-small' : 'w-100'}`}
                         onClick={() => fileInputRef.current?.click()}
                       >
-                        <span>+ Add file</span>
+                        <span>+ {t('add_file', 'Add file')}</span>
                       </button>
                       <input
                         type="file"

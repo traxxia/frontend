@@ -3,6 +3,7 @@ import { BusinessService } from './BusinessService';
 import { ProjectService } from './ProjectService';
 import { PmfService } from './PmfService';
 import { MlApiService } from './MlApiService';
+import { useLanguageStore } from '../store/languageStore';
 
 export const PHASE_API_CONFIG = {
   initial: [
@@ -67,7 +68,7 @@ export const API_ENDPOINTS = {
   executiveSummary: 'executive-summary',
   answerQuestionsWithEnrichment: 'answer-questions-with-enrichment'
 };
-const EXCEL_ANALYSIS_METRIC_TYPES = {
+export const EXCEL_ANALYSIS_METRIC_TYPES = {
   profitabilityAnalysis: 'profitability',
   growthTracker: 'growth_trends',
   liquidityEfficiency: 'liquidity',
@@ -491,7 +492,15 @@ export class AnalysisApiService {
           'Accept': 'application/json',
           ...obsHeaders
         };
-        response = await fetch(`${this.ML_API_BASE_URL}/${endpoint}`, {
+        let url = `${this.ML_API_BASE_URL}/${endpoint}`;
+        try {
+          const currentLanguage = useLanguageStore.getState().currentLanguage;
+          if (currentLanguage && currentLanguage !== 'en') {
+            url += `?language=${encodeURIComponent(currentLanguage)}`;
+          }
+        } catch (e) {}
+
+        response = await fetch(url, {
           method: 'POST',
           headers
         });
@@ -510,7 +519,15 @@ export class AnalysisApiService {
           answers: answersArray,
         };
 
-        response = await fetch(`${this.ML_API_BASE_URL}/${endpoint}?stream=true`, {
+        let url = `${this.ML_API_BASE_URL}/${endpoint}?stream=true`;
+        try {
+          const currentLanguage = useLanguageStore.getState().currentLanguage;
+          if (currentLanguage && currentLanguage !== 'en') {
+            url += `&language=${encodeURIComponent(currentLanguage)}`;
+          }
+        } catch (e) {}
+
+        response = await fetch(url, {
           method: 'POST',
           headers,
           body: JSON.stringify(payload)

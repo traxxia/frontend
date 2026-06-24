@@ -264,7 +264,7 @@ const ExecutiveSummary = ({ hideNextStep }) => {
                   <Zap size={20} />
                 </div>
                 <div>
-                  <h3 className="exc-section-title">{t("AHA Insights")}</h3>
+                  <h3 className="exc-section-title notranslate">{t("AHA Insights")}</h3>
                   <p className="exc-section-subtitle">
                     {t("Key strategic insights based on your onboarding")}
                   </p>
@@ -310,7 +310,7 @@ const ExecutiveSummary = ({ hideNextStep }) => {
                   className="exc-discuss-btn"
                   onClick={() => window.dispatchEvent(new CustomEvent('open_ai_assistant'))}
                 >
-                  <span className="exc-tx-icon">TX</span>
+                  <span className="exc-tx-icon notranslate" translate="no">TX</span>
                   {t("Discuss with Trax") || "Discuss with Trax"}
                 </button>
               </div>
@@ -420,7 +420,7 @@ const ExecutiveSummary = ({ hideNextStep }) => {
                   className="exc-discuss-btn"
                   onClick={() => window.dispatchEvent(new CustomEvent('open_ai_assistant'))}
                 >
-                  <span className="exc-tx-icon">TX</span>
+                  <span className="exc-tx-icon notranslate" translate="no">TX</span>
                   {t("Discuss with Trax") || "Discuss with Trax"}
                 </button>
               </div>
@@ -534,7 +534,7 @@ const ExecutiveSummary = ({ hideNextStep }) => {
                 className="exc-discuss-btn"
                 onClick={() => window.dispatchEvent(new CustomEvent('open_ai_assistant'))}
               >
-                <span className="exc-tx-icon">TX</span>
+                <span className="exc-tx-icon notranslate" translate="no">TX</span>
                 {t("Discuss with Trax") || "Discuss with Trax"}
               </button>
             </div>
@@ -614,7 +614,7 @@ const ExecutiveSummary = ({ hideNextStep }) => {
                 className="exc-discuss-btn"
                 onClick={() => window.dispatchEvent(new CustomEvent('open_ai_assistant'))}
               >
-                <span className="exc-tx-icon">TX</span>
+                <span className="exc-tx-icon notranslate" translate="no">TX</span>
                 {t("Discuss with Trax") || "Discuss with Trax"}
               </button>
             </div>

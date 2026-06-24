@@ -204,7 +204,7 @@
   "step_strategic_pillars": "Pilares Estratégicos",
   "regeneration_step_insights": "Paso 1: Regenerando perspectivas principales (SWOT, Porters, etc.)...",
   "regeneration_step_strategic": "Paso 2: Construyendo pilares estratégicos y planes de ejecución...",
-  "AHA Insights": "Perspectivas AHA",
+  "AHA Insights": "Insights Clave",
   "Key strategic insights based on your onboarding": "Perspectivas estratégicas clave basadas en tu incorporación",
   "Confidence": "Confianza",
   "welcome": "¡Bienvenido",
@@ -415,7 +415,7 @@
   "first_name": "Nombre",
   "password": "Contraseña",
   "confirm_password": "Confirmar Contraseña",
-  "company": "Empresa",
+  "company": "Compa��a",
   "Adding_User": "Añadiendo Usuario...",
   "Select_Collaborator": "Seleccionar Colaborador",
   "Select_Collaborators": "Seleccionar Colaboradores",
@@ -1440,7 +1440,6 @@
   "events": "Eventos",
   "User": "Usuario",
   "Users": "Usuarios",
-  "Company": "Empresa",
   "Companies": "Empresas",
   "total_questions": "Preguntas totales",
   "initial_phase": "Fase inicial",
@@ -1784,7 +1783,7 @@
   "trax_will_read_your_website_bold": "Trax leerá su sitio web",
   "trax_will_read_your_website_rest": "y solo pedirá lo que falte.",
   "your_documents_stay_private_bold": "Sus documentos se mantienen privados.",
-  "your_documents_stay_private_rest": "Cifrados en reposo e aislados en su espacio de trabajo.",
+  "your_documents_stay_private_rest": "Cifrados en reposo y aislados en su espacio de trabajo.",
   "i_dont_have_website": "Aún no tengo un sitio web",
   "continue_with_trax": "Continuar con Trax",
   "file": "archivo",
@@ -1898,5 +1897,6 @@
   "hi": "Hola",
   "im_trax_consultant": "Soy Trax, su consultor de estrategia. Para redactar un diagnóstico real para",
   "need_feel_for_business": "Necesitaré sentir el negocio.",
-  "fill_out_questions_yourself": "Puede completar las preguntas usted mismo o agregar documentos (plan anual, presentación para la junta, finanzas) y los leeré y autocompletaré lo que pueda."
+  "fill_out_questions_yourself": "Puede completar las preguntas usted mismo o agregar documentos (plan anual, presentación para la junta, finanzas) y los leeré y autocompletaré lo que pueda.",
+  "Company": "Compañía"
 }

@@ -108,7 +108,7 @@ const PMFInsights = ({
       <StyleSheet />
       <Container className="p-m-f-insights--s1">
         <div className="text-center mb-5">
-          <Badge bg="primary-subtle" text="primary" className="px-3 py-2 rounded-pill fw-semibold">
+          <Badge bg="primary-subtle" text="primary" className="px-3 py-2 rounded-pill fw-semibold notranslate">
             ✨ {t("AHA Insights")}
           </Badge>
 
