@@ -75,6 +75,7 @@ const AdvancedInsightsPage = React.lazy(() => import('./pages/AdvancedInsightsPa
 const UpgradePlanPage = React.lazy(() => import('./pages/UpgradePlanPage'));
 const ExecutionPage = React.lazy(() => import('./pages/ExecutionPage'));
 const CadenceMomentPage = React.lazy(() => import('./pages/CadenceMomentPage'));
+const CadenceMomentOpenPage = React.lazy(() => import('./pages/CadenceMomentOpenPage'));
 const HistoryPage = React.lazy(() => import('./pages/HistoryPage'));
 
 const App = () => {
@@ -163,6 +164,16 @@ const App = () => {
                 <ProtectedRoute>
                   <React.Suspense fallback={<div className="p-5 text-center"><div className="spinner-border text-primary" role="status"><span className="visually-hidden">Loading...</span></div></div>}>
                     <CadenceMomentPage />
+                  </React.Suspense>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/business/:businessId/cadence/:cadenceId/moment/:momentId/open"
+              element={
+                <ProtectedRoute>
+                  <React.Suspense fallback={<div className="p-5 text-center"><div className="spinner-border text-primary" role="status"><span className="visually-hidden">Loading...</span></div></div>}>
+                    <CadenceMomentOpenPage />
                   </React.Suspense>
                 </ProtectedRoute>
               }

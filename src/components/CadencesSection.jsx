@@ -188,6 +188,7 @@ const CadencesSection = ({ businessId }) => {
       if (bets.length === 0) return; // No bets, nothing to close
 
       c.scheduleDates.forEach(moment => {
+        if (moment.closed) return;
         const mDate = new Date(moment.date);
         if (mDate <= now) {
           // Check if there are any bets not completed
@@ -210,6 +211,38 @@ const CadencesSection = ({ businessId }) => {
 
   const staleMoments = getStaleMoments();
 
+  // Find upcoming moments (dates in the future with bets on agenda)
+  const getUpcomingMoments = () => {
+    const upcomingList = [];
+    const now = new Date();
+
+    cadences.forEach(c => {
+      if (!c.scheduleDates) return;
+      const bets = getBetsForCadence(c.name);
+      if (bets.length === 0) return;
+
+      c.scheduleDates.forEach(moment => {
+        if (moment.closed) return;
+        const mDate = new Date(moment.date);
+        if (mDate > now) {
+          // Count bets with no learning state
+          const noLearningState = bets.filter(b => !b.learning_state || b.learning_state === '' || b.learning_state === 'Not Started').length;
+          upcomingList.push({
+            cadence: c,
+            moment,
+            betsCount: bets.length,
+            noLearningStateCount: noLearningState,
+            daysUntil: Math.ceil((mDate - now) / (1000 * 60 * 60 * 24))
+          });
+        }
+      });
+    });
+
+    return upcomingList.sort((a, b) => new Date(a.moment.date) - new Date(b.moment.date));
+  };
+
+  const upcomingMoments = getUpcomingMoments();
+
   // For the Evolution table
   const allMoments = [];
   cadences.forEach(c => {
@@ -225,8 +258,8 @@ const CadencesSection = ({ businessId }) => {
     <div className="cadences-section">
       {/* AWAITING CLOSE SECTION */}
       {staleMoments.length > 0 && (
-        <div className="awaiting-close-container mb-5">
-          {staleMoments.map((sm, idx) => (
+        <div className="awaiting-close-container mb-3">
+          {staleMoments.map((sm) => (
             <div key={`${sm.cadence._id}-${sm.moment._id}`} className="awaiting-close-card">
               <div className="awaiting-info">
                 <span className="awaiting-badge">
@@ -243,7 +276,36 @@ const CadencesSection = ({ businessId }) => {
                 style={{ backgroundColor: '#0c71b9', color: '#fff', border: 'none', padding: '8px 16px', borderRadius: '6px' }}
                 onClick={() => navigate(`/business/${businessId}/cadence/${sm.cadence._id}/moment/${sm.moment._id}`)}
               >
-                Close & capture
+                Close &amp; capture
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* UPCOMING MOMENTS SECTION */}
+      {upcomingMoments.length > 0 && (
+        <div className="upcoming-moments-container mb-5">
+          {upcomingMoments.map((um) => (
+            <div key={`${um.cadence._id}-${um.moment._id}`} className="upcoming-moment-card">
+              <div className="upcoming-info">
+                <span className="upcoming-badge">
+                  <span className="upcoming-dot"></span>
+                  UPCOMING — OPEN TO UPDATE
+                </span>
+                <span className="upcoming-title">{um.moment.name}</span>
+                <span className="upcoming-meta">
+                  {new Date(um.moment.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' })}
+                  {' · in '}{um.daysUntil} {um.daysUntil === 1 ? 'day' : 'days'}
+                  {' · '}{um.betsCount} {um.betsCount === 1 ? 'bet' : 'bets'} on the agenda
+                  {um.noLearningStateCount > 0 && ` · ${um.noLearningStateCount} with no learning state yet`}
+                </span>
+              </div>
+              <button
+                className="btn-open-moment fw-bold"
+                onClick={() => navigate(`/business/${businessId}/cadence/${um.cadence._id}/moment/${um.moment._id}/open`)}
+              >
+                Open
               </button>
             </div>
           ))}
@@ -290,10 +352,10 @@ const CadencesSection = ({ businessId }) => {
                 const betsCount = getBetsForCadence(cadence.name).length;
                 const isStale = staleMoments.some(sm => sm.cadence._id === cadence._id);
                 // hasSchedule is true only when there is an upcoming date OR a stale moment to close
-                const hasSchedule = isStale || nextMoment != null;
+                const isUpcoming = !isStale && nextMoment != null;
                   
                 return (
-                <tr key={cadence._id || index} style={{ borderLeft: isStale ? '4px solid #ef4444' : (nextMoment ? '4px solid #0c71b9' : '4px solid transparent') }}>
+                <tr key={cadence._id || index} style={{ borderLeft: isStale ? '4px solid #ef4444' : (isUpcoming ? '4px solid #0c71b9' : '4px solid transparent') }}>
                   <td>
                     <div className="cadence-info-cell">
                       <div className={`cadence-icon-wrapper ${getIconColorClass(cadence.frequency)}`}>
@@ -301,7 +363,7 @@ const CadencesSection = ({ businessId }) => {
                       </div>
                       <div>
                         <div className="cadence-name text-dark fw-bold">{cadence.name}</div>
-                        <div className="cadence-frequency">{cadence.frequency}</div>
+                        <div className="cadence-frequency">{cadence.frequency?.toUpperCase()}</div>
                       </div>
                     </div>
                   </td>
@@ -320,11 +382,11 @@ const CadencesSection = ({ businessId }) => {
                   </td>
                   <td>
                     {isStale ? (
-                      <span className="badge bg-danger bg-opacity-10 text-danger fw-bold rounded-pill px-2">NEEDS CLOSE</span>
-                    ) : nextMoment ? (
-                      <span className="badge bg-primary bg-opacity-10 text-primary fw-bold rounded-pill px-2">SCHEDULED</span>
+                      <span className="cadence-status-pill needs-close">NEEDS CLOSE</span>
+                    ) : isUpcoming ? (
+                      <span className="cadence-status-pill upcoming">UPCOMING</span>
                     ) : (
-                      <span className="badge bg-secondary bg-opacity-10 text-secondary fw-bold rounded-pill px-2">NOT SCHEDULED</span>
+                      <span className="cadence-status-pill not-scheduled">NOT SCHEDULED</span>
                     )}
                   </td>
                   <td>
@@ -332,24 +394,25 @@ const CadencesSection = ({ businessId }) => {
                       <Button
                         variant="primary"
                         size="sm"
-                        className="me-2 fw-medium px-3 text-white rounded-pill"
-                        style={{ backgroundColor: '#0c71b9', border: 'none' }}
+                        className="me-2 fw-medium px-3 text-white"
+                        style={{
+                          backgroundColor: '#0c71b9',
+                          border: 'none',
+                          borderRadius: '6px',
+                          fontSize: '13px',
+                        }}
                         onClick={() => {
-                          if (!hasSchedule) {
-                            openScheduleModal(cadence);
+                          const thisCadenceStale = staleMoments.find(sm => sm.cadence._id === cadence._id);
+                          if (thisCadenceStale) {
+                            navigate(`/business/${businessId}/cadence/${cadence._id}/moment/${thisCadenceStale.moment._id}`);
+                          } else if (nextMoment) {
+                            navigate(`/business/${businessId}/cadence/${cadence._id}/moment/${nextMoment._id}/open`);
                           } else {
-                            const thisCadenceStale = staleMoments.find(sm => sm.cadence._id === cadence._id);
-                            if (thisCadenceStale) {
-                              navigate(`/business/${businessId}/cadence/${cadence._id}/moment/${thisCadenceStale.moment._id}`);
-                            } else if (nextMoment) {
-                              navigate(`/business/${businessId}/cadence/${cadence._id}/moment/${nextMoment._id}`);
-                            } else {
-                              openScheduleModal(cadence);
-                            }
+                            openScheduleModal(cadence);
                           }
                         }}
                       >
-                        {hasSchedule ? 'Close & capture' : 'Schedule dates'}
+                        {isStale ? 'Close & capture' : isUpcoming ? 'Open' : 'Schedule dates'}
                       </Button>
                       
                       <Dropdown align="end" className="d-inline cadence-dropdown">
@@ -414,15 +477,23 @@ const CadencesSection = ({ businessId }) => {
               <thead className="bg-light text-center" style={{ fontSize: '12px' }}>
                 <tr>
                   <th className="text-start align-bottom p-3" style={{ minWidth: '250px' }}>BET</th>
-                  {allMoments.map((col, i) => (
-                    <th key={i} className="p-3" style={{ minWidth: '120px' }}>
-                      <div className="fw-bold text-dark">{col.cadence.name}</div>
-                      <div className="text-muted">{col.moment.name}</div>
-                      <div className="text-muted" style={{ fontSize: '10px' }}>
-                        {new Date(col.moment.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' })}
-                      </div>
-                    </th>
-                  ))}
+                  {allMoments.map((col, i) => {
+                    const mDate = new Date(col.moment.date);
+                    const now = new Date();
+                    const needsClose = !col.moment.closed && mDate <= now;
+                    return (
+                      <th key={i} className="p-3" style={{ minWidth: '120px' }}>
+                        <div className="fw-bold text-dark">{col.cadence.name}</div>
+                        <div className="text-muted">{col.moment.name}</div>
+                        <div className="text-muted mb-1" style={{ fontSize: '10px' }}>
+                          {mDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' })}
+                        </div>
+                        {needsClose && (
+                          <span className="cadence-status-pill needs-close d-inline-block mt-1" style={{ fontSize: '9px', padding: '2px 6px' }}>NEEDS CLOSE</span>
+                        )}
+                      </th>
+                    );
+                  })}
                 </tr>
               </thead>
               <tbody className="text-center" style={{ fontSize: '13px' }}>
@@ -439,6 +510,10 @@ const CadencesSection = ({ businessId }) => {
                         
                         if (!isAssociated) {
                           return <td key={i} className="bg-light text-muted">—</td>;
+                        }
+                        
+                        if (!col.moment.closed) {
+                          return <td key={i} className="text-muted"><span style={{ fontStyle: 'italic', fontSize: '13px' }}>TBD</span></td>;
                         }
 
                         // Check if completed update exists
@@ -491,19 +566,9 @@ const CadencesSection = ({ businessId }) => {
                           );
                         }
 
-                        // Not completed. Is it past or future?
-                        const now = new Date();
-                        const isPast = new Date(col.moment.date) <= now;
-                        
-                        if (isPast) {
-                          return (
-                            <td key={i} className="p-3 text-muted">—</td>
-                          );
-                        } else {
-                          return (
-                            <td key={i} className="p-3 text-muted">TBD</td>
-                          );
-                        }
+                        return (
+                          <td key={i} className="p-3 text-muted">TBD</td>
+                        );
                       })}
                     </tr>
                   );

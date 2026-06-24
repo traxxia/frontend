@@ -15,7 +15,25 @@
   margin-bottom: 12px;
 }
 
+/* ── Upcoming moment card ── */
+.upcoming-moment-card {
+  background: #f0f7ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 8px;
+  padding: 16px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
 .awaiting-info {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.upcoming-info {
   display: flex;
   align-items: center;
   gap: 16px;
@@ -39,7 +57,33 @@
   border-radius: 50%;
 }
 
+.upcoming-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  font-weight: 700;
+  color: #0c71b9;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+
+.upcoming-dot {
+  width: 8px;
+  height: 8px;
+  background-color: #0c71b9;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
 .awaiting-title {
+  font-weight: 700;
+  font-size: 15px;
+  color: #0f172a;
+}
+
+.upcoming-title {
   font-weight: 700;
   font-size: 15px;
   color: #0f172a;
@@ -48,6 +92,11 @@
 .awaiting-meta {
   font-size: 13px;
   color: #64748b;
+}
+
+.upcoming-meta {
+  font-size: 13px;
+  color: #475569;
 }
 
 .cadences-header {
@@ -167,8 +216,24 @@
   font-weight: 700;
   letter-spacing: 0.5px;
   text-transform: uppercase;
-  background: #fef3c7;
-  color: #d97706;
+}
+
+.cadence-status-pill.needs-close {
+  background: #fee2e2;
+  color: #dc2626;
+  border: 1px solid #fca5a5;
+}
+
+.cadence-status-pill.upcoming {
+  background: #dbeafe;
+  color: #0c71b9;
+  border: 1px solid #93c5fd;
+}
+
+.cadence-status-pill.not-scheduled {
+  background: #f1f5f9;
+  color: #64748b;
+  border: 1px solid #e2e8f0;
 }
 
 .cadence-actions {
@@ -191,6 +256,23 @@
 
 .btn-schedule:hover {
   background: #025aa5;
+}
+
+.btn-open-moment {
+  background: #0c71b9;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 20px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.btn-open-moment:hover {
+  background: #0a5fa0;
 }
 
 .btn-open {

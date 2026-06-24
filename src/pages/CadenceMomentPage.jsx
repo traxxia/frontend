@@ -273,10 +273,10 @@ const BetReviewCard = ({ bet, isCompleted, updateInfo, onSave, index, legacyComm
                     >
                       {c.checked && <Check size={12} color="#ffffff" strokeWidth={3} />}
                     </button>
-                    <span style={{ fontSize: '13px', flex: 1, textDecoration: c.checked ? 'line-through' : 'none', color: c.checked ? '#94a3b8' : '#0f172a' }}>{c.text}</span>
+                    <span style={{ fontSize: '13px', flex: 1, color: '#334155' }}>{c.text}</span>
                     <div className="d-flex align-items-center gap-2">
-                      <span className="badge bg-light border" style={{ fontSize: '11px', fontWeight: '500', color: '#475569' }}>{c.owner}</span>
-                      <span className="badge bg-light border" style={{ fontSize: '11px', fontWeight: '500', color: '#475569' }}>{c.date ? new Date(c.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : ''}</span>
+                      <span className="badge" style={{ fontSize: '11.5px', fontWeight: '500', color: '#64748b', backgroundColor: '#f1f5f9', border: 'none', padding: '5px 10px', borderRadius: '100px' }}>{c.owner}</span>
+                      <span className="badge" style={{ fontSize: '11.5px', fontWeight: '500', color: '#64748b', backgroundColor: '#f1f5f9', border: 'none', padding: '5px 10px', borderRadius: '100px' }}>{c.date ? new Date(c.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : ''}</span>
                     </div>
                   </div>
                 ))}
@@ -463,11 +463,14 @@ const CadenceMomentPage = () => {
       try {
         const token = useAuthStore.getState().token;
         const baseUrl = import.meta.env.VITE_BACKEND_URL || "http://localhost:5000";
-        // Optionally update moment status via cadence API if supported
-        // Redirect to cadences
+        const headers = { Authorization: `Bearer ${token}` };
+        
+        await axios.post(`${baseUrl}/api/cadences/${cadenceId}/moment/${momentId}/close`, {}, { headers });
+        
         navigate('/businesspage?tab=cadences');
       } catch (err) {
         console.error("Failed to close moment", err);
+        useNotificationStore.getState().addNotification("Failed to close the moment. Please try again.", "error");
       }
     } else {
       alert("Please confirm all bets before signing and closing this moment.");
@@ -626,13 +629,31 @@ const CadenceMomentPage = () => {
             // Extract previous commitments from allCompletedUpdates for this bet
             const legacyCommitments = allCompletedUpdates
               .filter(cu => cu.bet_id === bet._id && cu.moment_id !== momentId && cu.new_commitments)
-              .map(cu => ({ 
-                id: cu._id,
-                text: cu.new_commitments, 
-                date: cu.created_at,
-                owner: bet.accountable_owner || 'Unassigned',
-                checked: false 
-              }));
+              .flatMap(cu => {
+                let parsed = [];
+                try {
+                  parsed = JSON.parse(cu.new_commitments);
+                } catch (e) {
+                  if (cu.new_commitments.trim() !== "" && cu.new_commitments !== "[]") {
+                    parsed = [cu.new_commitments];
+                  }
+                }
+                
+                if (Array.isArray(parsed) && parsed.length > 0) {
+                  return parsed.map((text, i) => {
+                    // Try to preserve checked status if it exists in bet.commitments
+                    const existing = (bet.commitments || []).find(c => c.text === text);
+                    return {
+                      id: `${cu._id}_${i}`,
+                      text: text, 
+                      date: cu.created_at,
+                      owner: bet.accountable_owner || 'Unassigned',
+                      checked: existing ? !!existing.checked : false 
+                    };
+                  });
+                }
+                return [];
+              });
 
             return (
               <BetReviewCard 
