@@ -111,7 +111,7 @@ const CadenceModal = ({ show, onHide, onSave, businessId, existingCadence = null
 
         <Form.Group className="mb-2">
           <Form.Label className="text-uppercase text-muted" style={{ fontSize: '11px', letterSpacing: '1px', fontWeight: 'bold' }}>Default Audience</Form.Label>
-          <div className="border rounded px-3 py-2" style={{ maxHeight: '180px', overflowY: 'auto', borderColor: '#cbd5e1' }}>
+          <div className="border rounded px-2 py-1" style={{ maxHeight: '180px', overflowY: 'auto', borderColor: '#cbd5e1' }}>
             {eligibleUsers.map((user) => (
               <div key={user._id} className="d-flex justify-content-between align-items-center py-2" style={{ borderColor: '#f1f5f9' }}>
                 <Form.Check 
@@ -134,10 +134,10 @@ const CadenceModal = ({ show, onHide, onSave, businessId, existingCadence = null
       </Modal.Body>
       
       <Modal.Footer className="border-0 px-4 pb-4 pt-2">
-        <Button variant="outline-secondary" className="border shadow-sm bg-white text-dark fw-bold px-4 rounded-pill" onClick={onHide}>
+        <Button variant="outline-secondary"  style={{fontSize: '14px' }} className="border shadow-sm bg-white text-dark fw-bold px-2" onClick={onHide}>
           Cancel
         </Button>
-        <Button variant="primary" className="text-white fw-bold px-4 rounded-pill border-0" disabled={!name.trim() || isSubmitting} onClick={handleSave}>
+        <Button variant="primary" style={{fontSize: '14px' }} className="text-white fw-bold px-2 border-0" disabled={!name.trim() || isSubmitting} onClick={handleSave}>
           {existingCadence ? t("Save changes") : t("Add cadence")}
         </Button>
       </Modal.Footer>
