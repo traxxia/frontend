@@ -56,7 +56,7 @@ const getStepKeys = (index) => {
 
 const Dashboard = () => {
   const navigate = useNavigate();
-  const { t } = useTranslation();
+  const { t, currentLanguage } = useTranslation();
   const ENABLE_PMF = getUserLimits().pmf;
   const regenerating = useAnalysisStore(state => state.regenerating);
   const {
@@ -325,6 +325,7 @@ const Dashboard = () => {
           if (businessFormData.website && !businessFormData.has_no_website) {
             formData.append('url', businessFormData.website);
           }
+          formData.append('language', currentLanguage || 'en');
 
           const mlResponse = await fetch(`${mlBackendUrl}/pmf-analysis`, {
             method: 'POST',
@@ -1040,7 +1041,7 @@ const Dashboard = () => {
             </Modal.Body>
             <Modal.Footer>
               <Button variant="secondary" onClick={handleCloseDeleteModal} disabled={isDeletingBusiness || isProcessingDelete}>{t('cancel')}</Button>
-              <Button variant="danger" onClick={handleConfirmDelete} disabled={isDeletingBusiness || isProcessingDelete}>{isDeletingBusiness || isProcessingDelete ? <Spinner size="sm" /> : t('delete_business')}</Button>
+              <Button variant="danger" onClick={handleConfirmDelete} disabled={isDeletingBusiness || isProcessingDelete}>{isDeletingBusiness || isProcessingDelete ? <Spinner size="sm" /> : <span>{t('delete_business')}</span>}</Button>
             </Modal.Footer>
           </Modal>
 

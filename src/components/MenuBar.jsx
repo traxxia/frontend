@@ -63,7 +63,7 @@ const MenuBar = () => {
 
         { }
         <div className="navbar-center">
-          <Navbar.Brand className="traxia-logo" onClick={!isSuperAdmin ? () => navigate("/dashboard") : undefined} style={{
+          <Navbar.Brand className="traxia-logo notranslate" onClick={!isSuperAdmin ? () => navigate("/dashboard") : undefined} style={{
             cursor: isSuperAdmin ? "default" : "pointer"
           }}>
             <img src="/traxxia-logo.png" alt={t("traxia_logo_alt") || "Traxia Logo"} className="menu-bar--s1" />

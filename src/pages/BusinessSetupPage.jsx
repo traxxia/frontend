@@ -102,7 +102,7 @@ const BusinessSetupPage = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const { t } = useTranslation();
+  const { t, currentLanguage } = useTranslation();
   const limits = getUserLimits();
   const hasPmfAccess = true;
   const hasInsightAccess = true;
@@ -565,7 +565,7 @@ const BusinessSetupPage = () => {
     }
 
     // Guard: don't re-run if already loaded for this business
-    const loadKey = `${selectedBusinessId}-${activeTab}`;
+    const loadKey = `${selectedBusinessId}-${activeTab}-${currentLanguage}`;
     if (hasLoadedQuestionsRef.current === loadKey) return;
 
     const loadQuestions = async () => {
@@ -577,7 +577,7 @@ const BusinessSetupPage = () => {
         hasLoadedQuestionsRef.current = loadKey;
 
         // Use the enhanced Answers API universally for all tabs to get questions and answers
-        const responseData = await answerService.getAnswersByBusiness(selectedBusinessId);
+        const responseData = await answerService.getAnswersByBusiness(selectedBusinessId, currentLanguage || 'en');
 
         if (responseData) {
           // 1. Handle Document Info
@@ -659,7 +659,7 @@ const BusinessSetupPage = () => {
     };
 
     loadQuestions();
-  }, [selectedBusinessId, API_BASE_URL, activeTab, token, setQuestions, setUserAnswer, setAnswerIds]);
+  }, [selectedBusinessId, API_BASE_URL, activeTab, token, setQuestions, setUserAnswer, setAnswerIds, currentLanguage]);
 
   useEffect(() => {
     if (uploadedFileForAnalysis) {

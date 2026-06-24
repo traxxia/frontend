@@ -3,6 +3,7 @@ import axios from "axios";
 import { useNavigate, Link } from "react-router-dom";
 import "../styles/Login.css";
 import { Eye, EyeOff, Sun, Moon } from "lucide-react";
+import { Lock, Mail, AlertCircle, Building2 } from "lucide-react";
 import logo from '../assets/traxxia-logo.png';
 import LanguageTranslator from "../components/LanguageTranslator";
 import { useTranslation } from "../hooks/useTranslation";

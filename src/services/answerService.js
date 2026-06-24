@@ -66,17 +66,18 @@ export const answerService = {
         }
     },
 
-    async getAnswersByBusiness(business_id) {
+    async getAnswersByBusiness(business_id, language = 'en') {
         if (!business_id) return null;
-        let answersPromise = answersCache.get(business_id);
+        let cacheKey = `${business_id}_${language}`;
+        let answersPromise = answersCache.get(cacheKey);
         if (!answersPromise) {
-            answersPromise = axios.get(`${API_BASE_URL}/api/answers/business/${business_id}`, {
+            answersPromise = axios.get(`${API_BASE_URL}/api/answers/business/${business_id}?language=${language}`, {
                 headers: getAuthHeaders()
             }).then(response => response.data).catch(error => {
-                answersCache.delete(business_id);
+                answersCache.delete(cacheKey);
                 throw error;
             });
-            answersCache.set(business_id, answersPromise);
+            answersCache.set(cacheKey, answersPromise);
         }
         return answersPromise;
     },
