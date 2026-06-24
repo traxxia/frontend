@@ -17,7 +17,7 @@ const ResetPassword = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
-  
+
   // Status Modal State
   const [showStatusModal, setShowStatusModal] = useState(false);
   const [statusConfig, setStatusConfig] = useState({ title: '', message: '', type: 'success' });
@@ -127,18 +127,18 @@ const ResetPassword = () => {
                   {t("new_password") || "New Password"}
                 </label>
                 <div className="input-container">
-                  <input 
-                    type={showPassword ? "text" : "password"} 
-                    className={error && !confirmPassword ? "error" : ""} 
-                    value={password} 
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    className={error && !confirmPassword ? "error" : ""}
+                    value={password}
                     onChange={e => {
                       setPassword(e.target.value);
                       if (error) setError("");
-                    }} 
+                    }}
                     onFocus={() => setIsPasswordFocused(true)}
                     onBlur={() => setIsPasswordFocused(false)}
-                    placeholder={t("new_password") || "New Password"} 
-                    disabled={isLoading} 
+                    placeholder={t("new_password") || "New Password"}
+                    disabled={isLoading}
                   />
                   <button type="button" className="toggle-password" onClick={() => setShowPassword(!showPassword)} disabled={isLoading}>
                     {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
@@ -152,16 +152,16 @@ const ResetPassword = () => {
                   {t("confirm_new_password") || "Confirm New Password"}
                 </label>
                 <div className="input-container">
-                  <input 
-                    type={showConfirmPassword ? "text" : "password"} 
-                    className={error && confirmPassword ? "error" : ""} 
-                    value={confirmPassword} 
+                  <input
+                    type={showConfirmPassword ? "text" : "password"}
+                    className={error && confirmPassword ? "error" : ""}
+                    value={confirmPassword}
                     onChange={e => {
                       setConfirmPassword(e.target.value);
                       if (error) setError("");
-                    }} 
-                    placeholder={t("confirm_new_password") || "Confirm New Password"} 
-                    disabled={isLoading} 
+                    }}
+                    placeholder={t("confirm_new_password") || "Confirm New Password"}
+                    disabled={isLoading}
                   />
                   <button type="button" className="toggle-password" onClick={() => setShowConfirmPassword(!showConfirmPassword)} disabled={isLoading}>
                     {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
@@ -177,7 +177,7 @@ const ResetPassword = () => {
           )}
 
           <div className="login-footer">
-            <p><Link to="/login">{t("back_to_login") || "Back to Login"}</Link></p>
+            <p><Link to="/login">{t("back_to_login")}</Link></p>
           </div>
         </div>
       </div>
@@ -191,7 +191,7 @@ const ResetPassword = () => {
             </div>
             <h3 className="status-modal-title">{statusConfig.title}</h3>
             <p className="status-modal-message">{statusConfig.message}</p>
-            <button 
+            <button
               className={`status-modal-button ${statusConfig.type}`}
               onClick={handleModalClose}
             >

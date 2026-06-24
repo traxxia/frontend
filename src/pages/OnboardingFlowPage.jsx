@@ -9,6 +9,7 @@ import { AnalysisApiService } from '../services/analysisApiService';
 import { ChevronDown, ChevronUp, Lock, File, ArrowRight, Check } from 'lucide-react';
 import OnboardingChat from '../components/OnboardingChat';
 import AiMessageRenderer from '../components/AiMessageRenderer';
+import { useTranslation } from '../hooks/useTranslation';
 
 const OnboardingFlowPage = () => {
   const { businessId } = useParams();
@@ -18,6 +19,7 @@ const OnboardingFlowPage = () => {
   const addToast = useUIStore(state => state.addToast);
 
   const userName = useAuthStore(state => state.userName) || 'User';
+  const { t } = useTranslation();
   const businessName = business?.business_name || 'your business';
 
   const pmfData = location.state?.pmfData;
@@ -114,6 +116,33 @@ const OnboardingFlowPage = () => {
   const chatEndRef = useRef(null);
 
   const historyFetchedRef = useRef(false);
+
+  const [uploadedDocs, setUploadedDocs] = useState(location.state?.uploadedFiles || []);
+
+  useEffect(() => {
+    let active = true;
+    if (!uploadedDocs || uploadedDocs.length === 0) {
+      const fetchStrategicDocs = async () => {
+        const targetBusinessId = business?._id || business?.id || businessId;
+        if (!targetBusinessId) return;
+        const token = useAuthStore.getState().token;
+        if (!token) return;
+        try {
+          const response = await axios.get(
+            `${import.meta.env.VITE_BACKEND_URL}/api/businesses/${targetBusinessId}/strategic-documents`,
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+          if (active && response.data && response.data.documents && response.data.documents.length > 0) {
+            setUploadedDocs(response.data.documents);
+          }
+        } catch (err) {
+          console.error("Error fetching documents:", err);
+        }
+      };
+      fetchStrategicDocs();
+    }
+    return () => { active = false; };
+  }, [business, businessId, uploadedDocs.length]);
 
   useEffect(() => {
     if (!historyFetchedRef.current) {
@@ -428,7 +457,7 @@ const OnboardingFlowPage = () => {
             onClick={handleBackToDashboard}
             className="ob-flow-back-btn"
           >
-            &larr; Back to Dashboard
+            <span>&larr; Back to Dashboard</span>
           </button>
           <span className="ob-flow-breadcrumb-sep">/</span>
           <span className="business-header-name ob-flow-business-name">
@@ -442,29 +471,29 @@ const OnboardingFlowPage = () => {
           <div className="docked-onboarding-chat">
             <div className="onboarding-chat-header">
               <div className="avatar-wrapper">
-                <div className="avatar-circle">TX</div>
+                <div className="avatar-circle notranslate" translate="no">TX</div>
               </div>
               <div className="header-info">
-                <h2 className="header-title">Trax</h2>
+                <h2 className="header-title notranslate" translate="no">Trax</h2>
               </div>
             </div>
 
             <div className="docked-chat-body">
               <div className="onboarding-chat-message">
-                <div className="bubble-avatar">TX</div>
+                <div className="bubble-avatar notranslate" translate="no">TX</div>
                 <div className="bubble-content">
                   Hi {userName} — I'm Trax, your strategy consultant. To draft a real diagnosis for <strong>{businessName}</strong>, I'll need a feel for the business.
                 </div>
               </div>
 
-              {location.state?.uploadedFiles && location.state.uploadedFiles.length > 0 && (
+              {uploadedDocs && uploadedDocs.length > 0 && (
                 <div className="onboarding-chat-message">
-                  <div className="bubble-avatar">TX</div>
+                  <div className="bubble-avatar notranslate" translate="no">TX</div>
                   <div className="bubble-content">
                     <div style={{ marginBottom: '8px' }}>I've received your documents and gone through them.</div>
-                    {location.state.uploadedFiles.map((fileObj, idx) => {
+                    {uploadedDocs.map((fileObj, idx) => {
                       const isString = typeof fileObj === 'string';
-                      const fileName = isString ? fileObj : fileObj.name;
+                      const fileName = isString ? fileObj : (fileObj.original_name || fileObj.name || fileObj.filename);
                       const fileMeta = isString ? null : fileObj.meta;
                       return (
                         <div key={idx} style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', marginTop: '6px', color: '#0f172a', fontWeight: '500', fontSize: '13px', width: '100%' }}>
@@ -487,7 +516,7 @@ const OnboardingFlowPage = () => {
               )}
 
               <div className="onboarding-chat-message">
-                <div className="bubble-avatar">TX</div>
+                <div className="bubble-avatar notranslate" translate="no">TX</div>
                 <div className="bubble-content">
                   Here are the 5 questions I need to draft your diagnosis. Take a look and review them in any order.
                 </div>
@@ -496,14 +525,14 @@ const OnboardingFlowPage = () => {
                 <strong>I value context.</strong> The more you share, the sharper the diagnosis. Upload anything you have.
               </div>
               <div className="onboarding-chat-message">
-                <div className="bubble-avatar">TX</div>
+                <div className="bubble-avatar notranslate" translate="no">TX</div>
                 <div className="bubble-content">
                   Great. Here are the 5 questions I need to draft your diagnosis. Answer in any order — or add documents and I'll auto-fill what I can.
                 </div>
               </div> */}
               {chatMessages.map((msg, idx) => (
                 <div key={idx} className={`onboarding-chat-message ${msg.role === 'user' ? 'user-message' : ''}`}>
-                  <div className="bubble-avatar">
+                  <div className="bubble-avatar notranslate" translate="no">
                     {msg.role === 'user' ? (userName?.charAt(0)?.toUpperCase() || 'U') : 'TX'}
                   </div>
                   <div className="bubble-content">
@@ -517,7 +546,7 @@ const OnboardingFlowPage = () => {
               ))}
               {isChatLoading && (
                 <div className="onboarding-chat-message">
-                  <div className="bubble-avatar">TX</div>
+                  <div className="bubble-avatar notranslate" translate="no">TX</div>
                   <div className="bubble-content">
                     <div className="typing-indicator" style={{ display: 'flex', gap: '4px', alignItems: 'center', height: '100%', padding: '4px 0' }}>
                       <span style={{ width: '6px', height: '6px', backgroundColor: '#94a3b8', borderRadius: '50%', animation: 'blink 1.4s infinite both', animationDelay: '0s' }}></span>
@@ -779,7 +808,7 @@ const OnboardingFlowPage = () => {
                                 <input
                                   type="text"
                                   className="ob-flow-other-input"
-                                  placeholder="Please specify"
+                                  placeholder={t("please_specify") || "Please specify"}
                                   value={otherCompeteValue}
                                   onChange={(e) => setOtherCompeteValue(e.target.value)}
                                   required={selectedCount === 1}
@@ -805,7 +834,7 @@ const OnboardingFlowPage = () => {
               >
                 {isSubmitting ? (
                   <span style={{ display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'center', width: '100%' }}>
-                    Generating
+                    <span>Generating</span>
                     <div className="typing-indicator" style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
                       <span style={{ width: '4px', height: '4px', backgroundColor: '#94a3b8', borderRadius: '50%', animation: 'blink 1.4s infinite both', animationDelay: '0s' }}></span>
                       <span style={{ width: '4px', height: '4px', backgroundColor: '#94a3b8', borderRadius: '50%', animation: 'blink 1.4s infinite both', animationDelay: '0.2s' }}></span>
@@ -813,7 +842,7 @@ const OnboardingFlowPage = () => {
                     </div>
                   </span>
                 ) : (
-                  <>Generate Insights <ArrowRight size={18} /></>
+                  <><span>Generate Insights</span> <ArrowRight size={18} /></>
                 )}
               </button>
               <p className="ob-flow-generate-subtext">Answer every question to generate your strategy draft.</p>

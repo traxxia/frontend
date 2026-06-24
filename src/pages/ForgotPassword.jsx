@@ -20,7 +20,7 @@ const ForgotPassword = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
-  
+
   // Status Modal State
   const [showStatusModal, setShowStatusModal] = useState(false);
   const [statusConfig, setStatusConfig] = useState({ title: '', message: '', type: 'success' });
@@ -197,14 +197,14 @@ const ForgotPassword = () => {
         </div>
         <div className="login-box">
           <Link to="/login" className="back-link" style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '20px', color: 'var(--text-secondary)', textDecoration: 'none' }}>
-            <ArrowLeft size={16} /> {t("back_to_login") || "Back to Login"}
+            <ArrowLeft size={16} /> {t("back_to_login")}
           </Link>
-          
-          <h2>{step === 1 ? (t("forgot_password_title") || "Forgot Password?") : step === 2 ? "Verify OTP" : "Reset Password"}</h2>
+
+          <h2>{step === 1 ? (t("forgot_password_title")) : step === 2 ? "Verify OTP" : "Reset Password"}</h2>
           <p className="login-subtitle" style={{ marginBottom: step > 1 ? '12px' : '20px' }}>
-            {step === 1 ? (t("forgot_password_subtitle") || "Enter your email address and we'll send you an OTP.") : 
-             step === 2 ? "Enter the 6-digit verification code below." : 
-             "Enter your new password below."}
+            {step === 1 ? (t("forgot_password_subtitle") || "Enter your email address and we'll send you an OTP.") :
+              step === 2 ? "Enter the 6-digit verification code below." :
+                "Enter your new password below."}
           </p>
 
           {step > 1 && (
@@ -225,16 +225,16 @@ const ForgotPassword = () => {
             <form onSubmit={handleSendOtp} noValidate>
               <div className="form-group">
                 <div className="input-container">
-                  <input 
-                    type="email" 
-                    className={error ? "error" : ""} 
-                    value={email} 
+                  <input
+                    type="email"
+                    className={error ? "error" : ""}
+                    value={email}
                     onChange={e => {
                       setEmail(e.target.value);
                       if (error) setError("");
-                    }} 
-                    placeholder={t("email_address")} 
-                    disabled={isLoading} 
+                    }}
+                    placeholder={t("email_address")}
+                    disabled={isLoading}
                   />
                 </div>
                 {error && <span className="error-message">{error}</span>}
@@ -282,18 +282,18 @@ const ForgotPassword = () => {
                   New Password
                 </label>
                 <div className="input-container">
-                  <input 
-                    type={showPassword ? "text" : "password"} 
-                    className={error && !confirmPassword ? "error" : ""} 
-                    value={password} 
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    className={error && !confirmPassword ? "error" : ""}
+                    value={password}
                     onChange={e => {
                       setPassword(e.target.value);
                       if (error) setError("");
-                    }} 
+                    }}
                     onFocus={() => setIsPasswordFocused(true)}
                     onBlur={() => setIsPasswordFocused(false)}
-                    placeholder="New Password" 
-                    disabled={isLoading} 
+                    placeholder="New Password"
+                    disabled={isLoading}
                   />
                   <button type="button" className="toggle-password" onClick={() => setShowPassword(!showPassword)} disabled={isLoading}>
                     {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
@@ -306,16 +306,16 @@ const ForgotPassword = () => {
                   Confirm New Password
                 </label>
                 <div className="input-container">
-                  <input 
-                    type={showConfirmPassword ? "text" : "password"} 
-                    className={error && confirmPassword ? "error" : ""} 
-                    value={confirmPassword} 
+                  <input
+                    type={showConfirmPassword ? "text" : "password"}
+                    className={error && confirmPassword ? "error" : ""}
+                    value={confirmPassword}
                     onChange={e => {
                       setConfirmPassword(e.target.value);
                       if (error) setError("");
-                    }} 
-                    placeholder="Confirm New Password" 
-                    disabled={isLoading} 
+                    }}
+                    placeholder="Confirm New Password"
+                    disabled={isLoading}
                   />
                   <button type="button" className="toggle-password" onClick={() => setShowConfirmPassword(!showConfirmPassword)} disabled={isLoading}>
                     {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
@@ -344,7 +344,7 @@ const ForgotPassword = () => {
             </div>
             <h3 className="status-modal-title">{statusConfig.title}</h3>
             <p className="status-modal-message">{statusConfig.message}</p>
-            <button 
+            <button
               className={`status-modal-button ${statusConfig.type}`}
               onClick={handleModalClose}
             >

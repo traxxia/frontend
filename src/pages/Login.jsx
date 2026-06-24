@@ -3,6 +3,7 @@ import axios from "axios";
 import { useNavigate, Link } from "react-router-dom";
 import "../styles/Login.css";
 import { Eye, EyeOff, Sun, Moon } from "lucide-react";
+import { Lock, Mail, AlertCircle, Building2 } from "lucide-react";
 import logo from '../assets/traxxia-logo.png';
 import LanguageTranslator from "../components/LanguageTranslator";
 import { useTranslation } from "../hooks/useTranslation";
@@ -90,16 +91,16 @@ const Login = () => {
           <form onSubmit={handleSubmit} noValidate>
             <div className="form-group">
               <div className="input-container">
-                <input 
-                  type="email" 
-                  className={errors.email ? "error" : ""} 
-                  value={email} 
+                <input
+                  type="email"
+                  className={errors.email ? "error" : ""}
+                  value={email}
                   onChange={e => {
                     setEmail(e.target.value);
                     if (errors.email) setErrors(prev => ({ ...prev, email: "" }));
-                  }} 
-                  placeholder={t("email_address")} 
-                  disabled={isLoading} 
+                  }}
+                  placeholder={t("email_address")}
+                  disabled={isLoading}
                 />
               </div>
               {errors.email && <span className="error-message">{errors.email}</span>}
@@ -107,16 +108,16 @@ const Login = () => {
 
             <div className="form-group">
               <div className="input-container">
-                <input 
-                  type={showPassword ? "text" : "password"} 
-                  className={errors.password ? "error" : ""} 
-                  value={password} 
+                <input
+                  type={showPassword ? "text" : "password"}
+                  className={errors.password ? "error" : ""}
+                  value={password}
                   onChange={e => {
                     setPassword(e.target.value);
                     if (errors.password) setErrors(prev => ({ ...prev, password: "" }));
-                  }} 
-                  placeholder={t("password")} 
-                  disabled={isLoading} 
+                  }}
+                  placeholder={t("password")}
+                  disabled={isLoading}
                 />
                 <button type="button" className="toggle-password" onClick={togglePasswordVisibility} disabled={isLoading} aria-label={showPassword ? t("hide_password") : t("show_password")}>
                   {showPassword ? <EyeOff size={18} className="eye-icon login--s2" /> : <Eye size={18} className="eye-icon login--s2" />}
@@ -125,7 +126,7 @@ const Login = () => {
               {errors.password && <span className="error-message">{errors.password}</span>}
               <div className="forgot-password-link">
                 <Link to="/forgot-password" className={isLoading ? "disabled-link" : ""}>
-                  {t("forgot_password_link") || "Forgot Password?"}
+                  {t("forgot_password_link")}
                 </Link>
               </div>
             </div>

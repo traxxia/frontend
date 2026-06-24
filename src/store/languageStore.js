@@ -18,7 +18,7 @@ export const useLanguageStore = create(
     }),
     {
       name: 'language-storage',
-      storage: createJSONStorage(() => localStorage),
+      storage: createJSONStorage(() => sessionStorage),
       partialize: (state) => ({ currentLanguage: state.currentLanguage }),
     }
   )

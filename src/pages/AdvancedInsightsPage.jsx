@@ -39,13 +39,7 @@ const AdvancedInsightsPage = () => {
           <span className="adv-breadcrumb-separator">/</span>
           <span className="adv-breadcrumb-active fw-bold">Insights</span>
         </div>
-        <button 
-          className="adv-export-btn-icon-only" 
-          title="Export PDF"
-          onClick={() => addToast({ message: "You can download the PDF only if you upgrade the plan.", type: "info" })}
-        >
-          <FileDown size={20} color="#fff" />
-        </button>
+
       </div>
       </div>
 
