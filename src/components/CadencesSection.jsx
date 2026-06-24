@@ -31,6 +31,28 @@ const getLearningSeverity = (learning) => {
   return 0;
 };
 
+const getStatusBadgeStyle = (status) => {
+  const s = (status || '').toUpperCase();
+  if (s === 'ACTIVE')     return { backgroundColor: '#dcfce7', color: '#15803d', border: '1px solid #86efac' };
+  if (s === 'AT RISK')    return { backgroundColor: '#fee2e2', color: '#dc2626', border: '1px solid #fca5a5' };
+  if (s === 'PAUSED')     return { backgroundColor: '#fef9c3', color: '#a16207', border: '1px solid #fde047' };
+  if (s === 'KILLED')     return { backgroundColor: '#f1f5f9', color: '#64748b', border: '1px solid #cbd5e1', textDecoration: 'line-through' };
+  if (s === 'STALLED')    return { backgroundColor: '#f1f5f9', color: '#64748b', border: '1px solid #cbd5e1' };
+  if (s === 'COMPLETED')  return { backgroundColor: '#dbeafe', color: '#1d4ed8', border: '1px solid #93c5fd' };
+  if (s === 'SCALED')     return { backgroundColor: '#ede9fe', color: '#6d28d9', border: '1px solid #c4b5fd' };
+  if (s === 'DRAFT')      return { backgroundColor: '#f8fafc', color: '#94a3b8', border: '1px solid #e2e8f0' };
+  return { backgroundColor: '#f1f5f9', color: '#64748b', border: '1px solid #e2e8f0' };
+};
+
+const getLearningBadgeStyle = (learning) => {
+  const l = (learning || '').toUpperCase();
+  if (l === 'VALIDATED')    return { backgroundColor: '#dcfce7', color: '#15803d', border: '1px solid #86efac' };
+  if (l === 'TESTING')      return { backgroundColor: '#dbeafe', color: '#1d4ed8', border: '1px solid #93c5fd' };
+  if (l === 'INVALIDATED')  return { backgroundColor: '#fee2e2', color: '#dc2626', border: '1px solid #fca5a5' };
+  if (l === 'NOT STARTED')  return { backgroundColor: '#f1f5f9', color: '#64748b', border: '1px solid #e2e8f0' };
+  return { backgroundColor: '#f1f5f9', color: '#64748b', border: '1px solid #e2e8f0' };
+};
+
 const CadencesSection = ({ businessId }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -267,7 +289,8 @@ const CadencesSection = ({ businessId }) => {
                 
                 const betsCount = getBetsForCadence(cadence.name).length;
                 const isStale = staleMoments.some(sm => sm.cadence._id === cadence._id);
-                const hasSchedule = cadence.scheduleDates && cadence.scheduleDates.length > 0;
+                // hasSchedule is true only when there is an upcoming date OR a stale moment to close
+                const hasSchedule = isStale || nextMoment != null;
                   
                 return (
                 <tr key={cadence._id || index} style={{ borderLeft: isStale ? '4px solid #ef4444' : (nextMoment ? '4px solid #0c71b9' : '4px solid transparent') }}>
@@ -312,12 +335,17 @@ const CadencesSection = ({ businessId }) => {
                         className="me-2 fw-medium px-3 text-white rounded-pill"
                         style={{ backgroundColor: '#0c71b9', border: 'none' }}
                         onClick={() => {
-                          if (staleMoments.length > 0) {
-                            navigate(`/business/${businessId}/cadence/${cadence._id}/moment/${staleMoments[0].moment._id}`);
-                          } else if (nextMoment) {
-                            navigate(`/business/${businessId}/cadence/${cadence._id}/moment/${nextMoment._id}`);
-                          } else {
+                          if (!hasSchedule) {
                             openScheduleModal(cadence);
+                          } else {
+                            const thisCadenceStale = staleMoments.find(sm => sm.cadence._id === cadence._id);
+                            if (thisCadenceStale) {
+                              navigate(`/business/${businessId}/cadence/${cadence._id}/moment/${thisCadenceStale.moment._id}`);
+                            } else if (nextMoment) {
+                              navigate(`/business/${businessId}/cadence/${cadence._id}/moment/${nextMoment._id}`);
+                            } else {
+                              openScheduleModal(cadence);
+                            }
                           }
                         }}
                       >
@@ -441,15 +469,23 @@ const CadencesSection = ({ businessId }) => {
 
                           return (
                             <td key={i} className="p-3">
-                              {evolutionTab === 'Status' ? (
-                                <span className="badge bg-success bg-opacity-10 text-success border border-success fw-bold px-2 py-1">
-                                  {updateRecord.status?.toUpperCase() || "ACTIVE"}
-                                </span>
-                              ) : (
-                                <span className="badge bg-info bg-opacity-10 text-info border border-info fw-bold px-2 py-1">
-                                  {updateRecord.learning_state?.toUpperCase() || "TESTING"}
-                                </span>
-                              )}
+                              {evolutionTab === 'Status' ? (() => {
+                                const s = updateRecord.status?.toUpperCase() || 'ACTIVE';
+                                const badgeStyle = getStatusBadgeStyle(s);
+                                return (
+                                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '11px', fontWeight: '800', letterSpacing: '0.4px', borderRadius: '4px', padding: '3px 8px', ...badgeStyle }}>
+                                    {s}
+                                  </span>
+                                );
+                              })() : (() => {
+                                const l = updateRecord.learning_state?.toUpperCase() || '';
+                                const badgeStyle = getLearningBadgeStyle(l);
+                                return (
+                                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '11px', fontWeight: '800', letterSpacing: '0.4px', borderRadius: '4px', padding: '3px 8px', ...badgeStyle }}>
+                                    {l || '—'}
+                                  </span>
+                                );
+                              })()}
                               {arrow}
                             </td>
                           );
