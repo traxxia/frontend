@@ -727,9 +727,13 @@ const ProjectsSection = ({
         return statusValue === catId.toLowerCase();
       });
     }).length;
+    const draftCount = projects.filter(p => {
+      const s = (p.status || "").toLowerCase();
+      return s === "draft" || s === "";
+    }).length;
     const kickstartedCount = projects.filter(p => {
       const s = (p.status || "").toLowerCase();
-      return s === "active" || s === "completed" || s === "scaled";
+      return s !== "draft" && s !== "";
     }).length;
     return <>
       { }
@@ -787,15 +791,17 @@ const ProjectsSection = ({
           </div>
         </div>
 
-        <div className="kickstarted-banner-wrapper">
-          <div className="kickstarted-banner">
-            <Clock size={20} color="#0c71b9" className="kickstarted-banner-icon" />
-            <div>
-              <h6 className="kickstarted-banner-title">{kickstartedCount} of {projects.length} kickstarted</h6>
-              <p className="kickstarted-banner-text">{projects.length - kickstartedCount} bets still in Draft. A bet is kickstarted once its required sections are complete.</p>
+        {draftCount > 0 && (
+          <div className="kickstarted-banner-wrapper">
+            <div className="kickstarted-banner">
+              <Clock size={20} color="#0c71b9" className="kickstarted-banner-icon" />
+              <div>
+                <h6 className="kickstarted-banner-title">{kickstartedCount} of {projects.length} kickstarted</h6>
+                <p className="kickstarted-banner-text">{draftCount} bets still in Draft. A bet is kickstarted once its required sections are complete.</p>
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
         <ProjectsList isLoading={isLoadingProjects} sortedProjects={sortedProjects} rankMap={rankMap} finalizeCompleted={finalizeCompleted} launched={launched} isViewer={isViewer} isAdmin={isSuperAdmin} isEditor={isEditor} isDraft={isDraft} projectCreationLocked={projectCreationLocked} isFinalizedView={isFinalizedView} canEditProject={project => canEditProject(project, isEditor, myUserId, businessStatus, apiIsArchived, isSuperAdmin)} onEdit={project => handleEditProject(project, "edit")} onView={project => handleEditProject(project, "view")} onDelete={handleDelete} onPerformReview={handlePerformReview} onAdhocUpdate={handleAdhocUpdate} onDirectUpdate={handleDirectUpdate} canReviewProject={canReviewProject} myUserId={myUserId} selectedCategories={selectedCategories} isArchived={apiIsArchived} selectedProjectIds={selectedProjectIds} onToggleSelection={toggleProjectSelection} selectionDisabled={isGeneratingAIRankings || businessStatus !== "draft"} />
       </div>

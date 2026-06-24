@@ -398,7 +398,7 @@ body {
 }
 
 .text-muted {
-  color: black !important;
+  color: var(--color-text-muted) !important;
 }
 
 .text-muted ol {
