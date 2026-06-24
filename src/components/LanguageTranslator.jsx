@@ -1,14 +1,18 @@
 import React from 'react';
 import { useLanguageStore } from '../store/languageStore';
+import { useTranslation } from '../hooks/useTranslation';
 import '../styles/LanguageTranslator.css';
 
 const LanguageTranslator = ({ disabled }) => {
   const currentLanguage = useLanguageStore(state => state.currentLanguage);
   const setLanguage = useLanguageStore(state => state.setLanguage);
 
+  const { i18n } = useTranslation();
+
   const handleLanguageChange = (e) => {
     const selectedLanguage = e.target.value;
     setLanguage(selectedLanguage);
+    i18n.changeLanguage(selectedLanguage);
     
     setTimeout(() => {
       const selectField = document.querySelector('.goog-te-combo');

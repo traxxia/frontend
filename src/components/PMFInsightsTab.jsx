@@ -175,7 +175,7 @@ const PMFInsightsTab = ({
       <StyleSheet />
       <Container className="p-m-f-insights-tab--s1">
         <div className="text-center mb-3">
-          <Badge bg="primary-subtle" text="primary" className="px-4 py-2 rounded-pill fw-bold fs-5">
+          <Badge bg="primary-subtle" text="primary" className="px-4 py-2 rounded-pill fw-bold fs-5 notranslate">
             {t("AHA Insights")}
           </Badge>
 

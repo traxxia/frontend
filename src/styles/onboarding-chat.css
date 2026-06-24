@@ -202,6 +202,9 @@
 
 .onboarding-chat-input-field::placeholder {
   color: #9ca3af;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .onboarding-chat-input-field:focus {

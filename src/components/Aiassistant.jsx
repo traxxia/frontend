@@ -320,7 +320,7 @@ const Aiassistant = ({ businessId: propBusinessId, projectId, pageContext, isDis
         <div className="ai-header">
           <div className="ai-header__left">
             <div className="ai-header__icon notranslate" translate="no">
-              <span className="ai-header-icon-text" translate="no">TX</span>
+              <span className="ai-header-icon-text notranslate" translate="no">TX</span>
               <span className="ai-header-dot-green"></span>
             </div>
             <div className="ai-header__content">
