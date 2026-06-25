@@ -63,7 +63,7 @@ const Login = () => {
   const togglePasswordVisibility = () => setShowPassword(!showPassword);
 
   return (
-    <div className="login-container">
+    <div className="login-container notranslate">
       <LanguageTranslator disabled={isLoading} />
       <div className="login-left-section">
         <div className="company-branding">
@@ -79,13 +79,13 @@ const Login = () => {
       </div>
 
       <div className="login-right-section">
-        <div className="theme-icon-toggle">
+        {/* <div className="theme-icon-toggle">
           <button onClick={toggleTheme} className="theme-toggle-button" disabled={isLoading}>
             {theme === "dark" ? <Sun size={20} className="login--s1" /> : <Moon size={20} className="login--s1" />}
           </button>
-        </div>
+        </div> */}
         <div className="login-box">
-          <h2>{t("welcome")}</h2>
+          <h2>{t("welcome!")}</h2>
           <p className="login-subtitle">{t("login_subtitle")}</p>
 
           <form onSubmit={handleSubmit} noValidate>

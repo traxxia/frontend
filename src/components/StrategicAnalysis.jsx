@@ -513,7 +513,7 @@ const StrategicAnalysis = ({
         {isStrategicDataIncomplete(displayStrategicData) ? (
           <AnalysisEmptyState
             analysisType="strategic"
-            analysisDisplayName={t("STRATEGIC_LABEL") || "S.T.R.A.T.E.G.I.C."}
+            analysisDisplayName={<span className="notranslate">{t("STRATEGIC_LABEL") || "S.T.R.A.T.E.G.I.C."}</span>}
             icon={Target}
             onImproveAnswers={onRedirectToBrief}
             onRegenerate={handleRegenerate}

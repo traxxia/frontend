@@ -233,7 +233,7 @@ const Dashboard = () => {
             <strong>{t('hiw_basic') || 'Basic'}:</strong> {t('hiw_basic_details') || 'AHA insights, Where & How to compete, Top 5 priorities'}
           </div>
           <div className="hiw-list-item">
-            <strong>{t('hiw_advanced') || 'Advanced'}:</strong> {t('hiw_advanced_details') || "PESTEL, Porter's Five Forces, NPS, BCG, S.T.R.A.T.E.G.I.C. scorecard"}
+            <strong>{t('hiw_advanced') || 'Advanced'}:</strong> <>{t('hiw_advanced_details_pre') || "PESTEL, Porter's Five Forces, NPS, BCG, "} <span className="notranslate">S.T.R.A.T.E.G.I.C.</span> {t('hiw_advanced_details_post') || " scorecard"}</>
           </div>
         </div>
       </div>
@@ -657,10 +657,10 @@ const Dashboard = () => {
             <div className="dashboard-content">
               <div className="welcome-section">
                 <h1 className="welcome-title">
-                  {t('welcome')} <span>{userName}!</span>
+                  {t('welcome')} <span className="notranslate">{userName}!</span>
                 </h1>
                 <p className="welcome-description">
-                  {t('dashboard_description_redesign') || "Strategy as an operating system. Traxxia gives you a strategic diagnosis of your business in minutes, then turns each priority into a tracked bet your team actually executes."}
+                  <>{t('dashboard_description_p1') || "Create business plans step by step with the "} <span className="notranslate">S.T.R.A.T.E.G.I.C.</span> {t('dashboard_description_p2') || " framework. Activate AI capabilities for analysis, prediction, and decision-making."}</>
                 </p>
               </div>
 

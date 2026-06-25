@@ -12,6 +12,29 @@ code {
     monospace;
 }
 
+/* Disable Google Translate tooltip and hover highlighting */
+.goog-te-banner-frame.skiptranslate,
+#goog-gt-tt {
+  display: none !important;
+}
+.goog-tooltip,
+.goog-tooltip:hover {
+  display: none !important;
+}
+.goog-text-highlight {
+  background-color: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+font.goog-text-highlight,
+font:hover {
+  background-color: transparent !important;
+  box-shadow: none !important;
+}
+body {
+  top: 0 !important;
+}
+
 @keyframes antigravity-spin {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }

@@ -54,7 +54,8 @@ const OnboardingFlowPage = () => {
 
   // Step 5
   const [competeOptions, setCompeteOptions] = useState(() => {
-    const selected = pmfData?.competitiveDimensions?.selected || pmfData?.differentiation || [];
+    const rawSelected = pmfData?.competitiveDimensions?.selected || pmfData?.differentiation || [];
+    const selected = (Array.isArray(rawSelected) ? rawSelected : []).slice(0, 3);
     const labelToKeyMap = {
       'price': 'price',
       'quality': 'quality',
@@ -99,7 +100,8 @@ const OnboardingFlowPage = () => {
   });
 
   const [otherCompeteValue, setOtherCompeteValue] = useState(() => {
-    const selected = pmfData?.competitiveDimensions?.selected || pmfData?.differentiation || [];
+    const rawSelected = pmfData?.competitiveDimensions?.selected || pmfData?.differentiation || [];
+    const selected = (Array.isArray(rawSelected) ? rawSelected : []).slice(0, 3);
     const labelToKeyMap = ['price', 'quality', 'speed', 'relationships', 'customization', 'scale', 'brand', 'other'];
     let unmapped = [];
     selected.forEach(val => {
@@ -482,7 +484,7 @@ const OnboardingFlowPage = () => {
               <div className="onboarding-chat-message">
                 <div className="bubble-avatar notranslate" translate="no">TX</div>
                 <div className="bubble-content">
-                  Hi {userName} — I'm Trax, your strategy consultant. To draft a real diagnosis for <strong>{businessName}</strong>, I'll need a feel for the business.
+                  Hi <span className="notranslate">{userName}</span> - I'm Trax, your strategy consultant. To draft a real diagnosis for <strong>{businessName}</strong>, I'll need a feel for the business.
                 </div>
               </div>
 
