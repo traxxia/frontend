@@ -1920,7 +1920,7 @@
   "resend_otp": "Reenviar OTP",
   "continue": "Continuar",
   "dashboard_description_p1": "Crea planes de negocio paso a paso con el marco ",
-  "dashboard_description_p2": " . Activa las capacidades de IA para análisis, predicción y toma de decisiones.",
+  "dashboard_description_p2": "  Activa las capacidades de IA para análisis, predicción y toma de decisiones.",
   "hiw_advanced_details_pre": "PESTEL, 5 Fuerzas de Porter, NPS, BCG, ",
   "hiw_advanced_details_post": " scorecard",
   "audit_login_success_company": "Inicio de sesión exitoso como {{role}} en la empresa {{company}}",
