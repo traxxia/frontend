@@ -172,7 +172,7 @@ const AdvancedInsightsPage = () => {
             <div className="adv-grid-card">
               <div className="adv-grid-icon"><Target size={18} /></div>
               <div>
-                <h5>S.T.R.A.T.E.G.I.C. Scorecard</h5>
+                <h5><span className="notranslate">S.T.R.A.T.E.G.I.C.</span> Scorecard</h5>
                 <p>Our proprietary framework — the spine of every Bet you'll commit to.</p>
               </div>
             </div>

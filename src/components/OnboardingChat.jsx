@@ -57,7 +57,7 @@ const OnboardingChat = ({ userName, businessName, onBack, onStart }) => {
               TX
             </div>
             <div className="bubble-content">
-              Hi {userName} — I'm Trax, your strategy consultant. To draft a real diagnosis for <strong>{businessName}</strong>, I'll need a feel for the business.
+              Hi <span className="notranslate">{userName}</span> - I'm Trax, your strategy consultant. To draft a real diagnosis for <strong>{businessName}</strong>, I'll need a feel for the business.
             </div>
           </div>
 

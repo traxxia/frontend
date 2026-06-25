@@ -7,12 +7,12 @@ const LanguageTranslator = ({ disabled }) => {
   const currentLanguage = useLanguageStore(state => state.currentLanguage);
   const setLanguage = useLanguageStore(state => state.setLanguage);
 
-  const { i18n } = useTranslation();
+  const { changeLanguage } = useTranslation();
 
   const handleLanguageChange = (e) => {
     const selectedLanguage = e.target.value;
     setLanguage(selectedLanguage);
-    i18n.changeLanguage(selectedLanguage);
+    changeLanguage(selectedLanguage);
     
     setTimeout(() => {
       const selectField = document.querySelector('.goog-te-combo');
@@ -28,7 +28,7 @@ const LanguageTranslator = ({ disabled }) => {
       <select
         value={currentLanguage}
         onChange={handleLanguageChange}
-        className="language-dropdown"
+        className="language-dropdown notranslate"
         aria-label="Select Language"
         disabled={disabled}
       >

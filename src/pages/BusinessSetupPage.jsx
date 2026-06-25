@@ -869,7 +869,7 @@ const BusinessSetupPage = () => {
     } else {
       triggerConfirmation(
         t("Regenerate Strategic Analysis?"),
-        t("Are you sure you want to regenerate the S.T.R.A.T.E.G.I.C. analysis? Your existing strategic insights will be permanently overwritten. This action cannot be undone as version history is not maintained."),
+        <>{t("Are you sure you want to regenerate the")} <span className="notranslate">S.T.R.A.T.E.G.I.C.</span> {t("analysis? Your existing strategic insights will be permanently overwritten. This action cannot be undone as version history is not maintained.")}</>,
         performStrategicRegeneration
       );
     }
@@ -1530,7 +1530,7 @@ const BusinessSetupPage = () => {
                   </h5>
                   <h2 style={{ fontSize: '24px', fontWeight: '700', color: '#0f172a', margin: '0 0 8px 0' }}>Go <span style={{ color: '#0ea5e9' }}>deeper</span> before you commit</h2>
                   <p style={{ fontSize: '14px', color: '#475569', margin: '0', lineHeight: '1.5', maxWidth: '800px' }}>
-                    A few more questions let Trax build the full picture — the 6 C's and the S.T.R.A.T.E.G.I.C. scorecard your Bets are built from.
+                    A few more questions let Trax build the full picture — the 6 C's and the <span className="notranslate">S.T.R.A.T.E.G.I.C.</span> scorecard your Bets are built from.
                   </p>
                 </div>
               )}
@@ -1724,13 +1724,13 @@ const BusinessSetupPage = () => {
                           </CustomTooltip>
                         )}
                         {unlockedFeatures.analysis && hasStrategicAccess && (
-                          <CustomTooltip align="right" message={t("regenerate_strategic_tooltip") || "Re-generate the S.T.R.A.T.E.G.I.C. analysis."}>
+                          <CustomTooltip align="right" message={<>Re-generate the <span className="notranslate">S.T.R.A.T.E.G.I.C.</span> analysis.</>}>
                             <button
                               onClick={() => {
                                 if (!canRegenerate) return;
                                 triggerConfirmation(
-                                  t("confirm_regeneration_title", { section: 'S.T.R.A.T.E.G.I.C.' }),
-                                  t("confirm_regeneration_message", { section: 'S.T.R.A.T.E.G.I.C.' }),
+                                  t("confirm_regeneration_title", { section: 'Strategic' }),
+                                  <>{t("Are you sure you want to regenerate the")} <span className="notranslate">S.T.R.A.T.E.G.I.C.</span> {t("analysis? Your existing strategic insights will be permanently overwritten. This action cannot be undone as version history is not maintained.")}</>,
                                   () => handleStrategicAnalysisRegenerate()
                                 );
                               }}
@@ -1927,7 +1927,7 @@ const BusinessSetupPage = () => {
                                 </CustomTooltip>
                               )}
                               {unlockedFeatures.analysis && hasStrategicAccess && (
-                                <CustomTooltip align="right" message={t("regenerate_strategic_tooltip") || "Re-generate the S.T.R.A.T.E.G.I.C. analysis."}>
+                                <CustomTooltip align="right" message={<>Re-generate the <span className="notranslate">S.T.R.A.T.E.G.I.C.</span> analysis.</>}>
                                   <button
                                     onClick={() => canRegenerate && handleStrategicAnalysisRegenerate()}
                                     disabled={isStrategicRegenerating || isAnalysisRegenerating || !canRegenerate || !unlockedFeatures.analysis || !hasStrategicAccess}
@@ -2037,7 +2037,7 @@ const BusinessSetupPage = () => {
                                     }}
                                   >
                                     <span className="toggle-label">DIRECTION • WHERE TO GO</span>
-                                    <span className="toggle-title">S.T.R.A.T.E.G.I.C. Scorecard</span>
+                                    <span className="toggle-title"><span className="notranslate">S.T.R.A.T.E.G.I.C.</span> Scorecard</span>
                                     {!hasStrategicAccess && <Lock size={14} className="ml-2" />}
                                   </div>
                                 </div>
@@ -2221,7 +2221,7 @@ const BusinessSetupPage = () => {
                     {activeTab === "strategic" && unlockedFeatures.analysis && (
                       <div className="desktop-tabs-buttons">
                         {canShowRegenerateButtons && hasStrategicAccess && (
-                          <CustomTooltip align="right" message={t("regenerate_strategic_tooltip") || "Re-generate the S.T.R.A.T.E.G.I.C. analysis."}>
+                          <CustomTooltip align="right" message={<>Re-generate the <span className="notranslate">S.T.R.A.T.E.G.I.C.</span> analysis.</>}>
                             <button
                               onClick={() => canRegenerate && handleStrategicAnalysisRegenerate()}
                               disabled={isStrategicRegenerating || isAnalysisRegenerating || !canRegenerate || !unlockedFeatures.analysis || !hasStrategicAccess}
@@ -2326,7 +2326,7 @@ const BusinessSetupPage = () => {
                                 }}
                               >
                                 <span className="toggle-label">DIRECTION • WHERE TO GO</span>
-                                <span className="toggle-title">S.T.R.A.T.E.G.I.C. Scorecard</span>
+                                <span className="toggle-title"><span className="notranslate">S.T.R.A.T.E.G.I.C.</span> Scorecard</span>
                                 {!hasStrategicAccess && <Lock size={14} className="ml-2" />}
                               </div>
                             </div>
@@ -2490,7 +2490,7 @@ const BusinessSetupPage = () => {
                               }}
                             >
                               <span className="toggle-label">DIRECTION • WHERE TO GO</span>
-                              <span className="toggle-title">S.T.R.A.T.E.G.I.C. Scorecard</span>
+                              <span className="toggle-title"><span className="notranslate">S.T.R.A.T.E.G.I.C.</span> Scorecard</span>
                               {!hasStrategicAccess && <Lock size={14} className="ml-2" />}
                             </div>
                           </div>

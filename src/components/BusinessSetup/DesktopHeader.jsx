@@ -83,7 +83,7 @@ const DesktopHeader = () => {
                 if (activeTab === "executive") return t("Executive Summary");
                 if (activeTab === "advanced") return t("Answers/Brief");
                 if (activeTab === "insights") return t("Insights");
-                if (activeTab === "strategic") return t("STRATEGIC_LABEL") || "S.T.R.A.T.E.G.I.C.";
+                if (activeTab === "strategic") return <span className="notranslate">S.T.R.A.T.E.G.I.C.</span>;
                 return t("Insights & Recommendations");
               })()}
               <ChevronDown size={14} className={`chevron-icon ${activeNavDropdown === 'insights' ? 'rotated' : ''}`} />
@@ -131,7 +131,7 @@ const DesktopHeader = () => {
                     onClick={() => { setActiveTab('strategic'); setActiveNavDropdown(null); }}
                   >
                     <Target size={14} />
-                    <span>{t("STRATEGIC_LABEL") || "S.T.R.A.T.E.G.I.C."}</span>
+                    <span className="notranslate">S.T.R.A.T.E.G.I.C.</span>
                   </button>
                 )}
               </div>
@@ -305,7 +305,7 @@ const DesktopHeader = () => {
               </CustomTooltip>
             )}
             {unlockedFeatures.analysis && hasStrategicAccess && (
-              <CustomTooltip align="right" message={t("regenerate_strategic_tooltip") || "Re-generate the S.T.R.A.T.E.G.I.C. analysis."}>
+              <CustomTooltip align="right" message={<>Re-generate the <span className="notranslate">S.T.R.A.T.E.G.I.C.</span> analysis.</>}>
                 <button
                   onClick={() => canRegenerate && handleStrategicAnalysisRegenerate()}
                   disabled={isStrategicRegenerating || isAnalysisRegenerating || !canRegenerate || !unlockedFeatures.analysis || !hasStrategicAccess}

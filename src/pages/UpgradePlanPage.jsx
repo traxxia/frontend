@@ -426,7 +426,7 @@ const UpgradePlanPage = () => {
                   <td><span className="feature-check">✓</span></td>
                 </tr>
                 <tr>
-                  <td>S.T.R.A.T.E.G.I.C. diagnostic</td>
+                  <td><span className="notranslate">S.T.R.A.T.E.G.I.C.</span> diagnostic</td>
                   <td><span className="feature-check">✓</span></td>
                   <td className="pro-col"><span className="feature-check">✓</span></td>
                   <td><span className="feature-check">✓</span></td>
