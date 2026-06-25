@@ -915,7 +915,7 @@ const EmptyBusinessState = ({ user, onClose }) => {
       <div className="panel-header">
         <div className="user-header-info">
           <div>
-            <h3>{user?.name}</h3>
+            <h3 className="notranslate">{user?.name}</h3>
             <p>{user?.email}</p>
           </div>
         </div>
@@ -945,7 +945,7 @@ const PanelHeader = ({ user, currentUserDetails, onClose, onExport }) => {
     <div className="panel-header">
       <div className="header-row">
         <div className="header-left">
-          <h3 className="user-name-header">{t("User Name")}: {user?.name}</h3>
+          <h3 className="user-name-header">{t("User Name")}: <span className="notranslate">{user?.name}</span></h3>
         </div>
         <div className="header-right">
           <button onClick={onClose} className="close-button">

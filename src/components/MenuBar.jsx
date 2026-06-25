@@ -85,7 +85,7 @@ const MenuBar = () => {
 
           <Dropdown>
             <Dropdown.Toggle variant="link" id="dropdown-user" className="user-menu p-0 border-0 shadow-none d-flex align-items-center justify-content-center">
-              <div className="user-initial-avatar menu-bar--s5">
+              <div className="user-initial-avatar menu-bar--s5 notranslate">
                 {userName ? userName.charAt(0).toUpperCase() : "U"}
               </div>
             </Dropdown.Toggle>
@@ -100,7 +100,7 @@ const MenuBar = () => {
                     </div>
                     <div className="d-flex flex-column">
                       <span className="text-uppercase text-muted fw-bold menu-bar--s8 notranslate">{t("User Name")}</span>
-                      <span className="fw-semibold text-secondary menu-bar--s9">{userName}</span>
+                      <span className="fw-semibold text-secondary menu-bar--s9 notranslate">{userName}</span>
                     </div>
                   </div>
 

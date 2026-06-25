@@ -96,19 +96,36 @@ const AuditTrail = ({
   };
   const formatEventData = (eventType, eventData, eventDataSummary, row) => {
     const data = eventType === 'analysis_generated' && eventDataSummary ? eventDataSummary : eventData || {};
-    const formatMap = {
-      login_success: `Successful login as ${data.role || ''}${data.company ? ` at ${data.company}` : ''}`,
-      login_failed: `Failed login attempt for ${data.email || ''}`,
-      logout: 'User logged out',
-      question_answered: `Answered Question ${row.business_name ? ` for business: ${row.business_name}` : ''}`,
-      question_skipped: `Skipped Question ${row.business_name ? ` for business: ${row.business_name}` : ''}`,
-      question_edited: `Edited Question ${row.business_name ? ` for business: ${row.business_name}` : ''}`,
-      analysis_generated: `Generated ${data.analysis_type || 'analysis'}: ${data.analysis_name || ''} `,
-      business_created: `Created business: ${data.business_name || ''}`,
-      business_deleted: `Deleted business: ${data.business_name || ''}${data.conversations_deleted ? ` (${data.conversations_deleted} conversations removed)` : ''}`,
-      collaborator_assigned: `Assigned collaborator to business: ${row.business_name || 'Business'}`
-    };
-    return formatMap[eventType] || (eventType ? eventType.replace('_', ' ') : '');
+    const rawRole = data.role || '';
+    const tRole = rawRole ? t(`role_${rawRole}`, rawRole) : '';
+    switch (eventType) {
+      case 'login_success':
+        return data.company 
+          ? t('audit_login_success_company', { role: tRole, company: data.company })
+          : t('audit_login_success', { role: tRole });
+      case 'login_failed':
+        return t('audit_login_failed', { email: data.email || '' });
+      case 'logout':
+        return t('audit_logout');
+      case 'question_answered':
+        return row.business_name ? t('audit_question_answered_business', { business: row.business_name }) : t('audit_question_answered');
+      case 'question_skipped':
+        return row.business_name ? t('audit_question_skipped_business', { business: row.business_name }) : t('audit_question_skipped');
+      case 'question_edited':
+        return row.business_name ? t('audit_question_edited_business', { business: row.business_name }) : t('audit_question_edited');
+      case 'analysis_generated':
+        return t('audit_analysis_generated', { type: data.analysis_type || 'analysis', name: data.analysis_name || '' });
+      case 'business_created':
+        return t('audit_business_created', { business: data.business_name || '' });
+      case 'business_deleted':
+        return data.conversations_deleted 
+          ? t('audit_business_deleted_convs', { business: data.business_name || '', count: data.conversations_deleted })
+          : t('audit_business_deleted', { business: data.business_name || '' });
+      case 'collaborator_assigned':
+        return t('audit_collaborator_assigned', { business: row.business_name || 'Business' });
+      default:
+        return eventType ? eventType.replace('_', ' ') : '';
+    }
   };
   const totalItems = pagination.total || 0;
   const totalPages = pagination.total_pages || 1;
@@ -163,9 +180,17 @@ const AuditTrail = ({
     if (!data || typeof data !== 'object') return null;
     const excludedKeys = ['has_location', 'conversations_deleted', 'business_purpose'];
     return Object.entries(data).filter(([key]) => !excludedKeys.includes(key.toLowerCase())).map(([key, value]) => {
-      const label = key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+      const defaultLabel = key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+      const label = t(key.toLowerCase(), defaultLabel);
+      
       let displayValue = value;
-      if (value === null || value === undefined || value === "") displayValue = '-';else if (typeof value === 'boolean') displayValue = value ? 'Yes' : 'No';else if (typeof value === 'object' && value !== null) {
+      if (key.toLowerCase() === 'role' && typeof value === 'string') {
+        displayValue = t(`role_${value}`, value);
+      } else if (value === null || value === undefined || value === "") {
+        displayValue = '-';
+      } else if (typeof value === 'boolean') {
+        displayValue = value ? 'Yes' : 'No';
+      } else if (typeof value === 'object' && value !== null) {
         if (key.toLowerCase() === 'location' || key.toLowerCase() === 'additional_info') {
           const parts = [];
           if (value.city) parts.push(value.city);

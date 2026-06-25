@@ -627,7 +627,7 @@ const ExecutiveSummary = ({ hideNextStep }) => {
           <p className="fw-bold text-uppercase mb-2 cta-path-eyebrow">{t("Next step")}</p>
           <h3 className="exc-section-title mb-3 next-step" style={{ fontSize: '19px', textTransform: 'none' }}>{t("Go deeper with Advanced Insights")}</h3>
           <p className="exc-content-text mb-4" style={{ fontSize: '14px' }}>
-            {t("Your Basic diagnosis is the quick read. Advanced asks a few more questions to build the full picture — the 6 C's and the S.T.R.A.T.E.G.I.C. scorecard — and that sharper analysis is what your Bets are built from.")}
+            <>{t("Your Basic diagnosis is the quick read. Advanced asks a few more questions to build the full picture - the 6 C's and the")} <span className="notranslate">S.T.R.A.T.E.G.I.C.</span> {t("scorecard - and that sharper analysis is what your Bets are built from.")}</>
           </p>
           
           <div className="d-flex align-items-center mb-4 flex-wrap gap-2" style={{ fontSize: '0.9rem', fontWeight: '500' }}>

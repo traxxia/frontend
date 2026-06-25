@@ -76,7 +76,7 @@ const ForgotPassword = () => {
       setMessage(res.data.message);
       setStep(2);
     } catch (err) {
-      setError(err.response?.data?.error || "Failed to send OTP.");
+      setError(err.response?.data?.error || t("failed_to_send_otp"));
     } finally {
       setIsLoading(false);
     }
@@ -86,7 +86,7 @@ const ForgotPassword = () => {
     e.preventDefault();
     const otpString = otpArray.join('');
     if (otpString.length < 6) {
-      setError("Please enter the full 6-digit OTP");
+      setError(t("enter_full_otp"));
       return;
     }
     setIsLoading(true);
@@ -94,17 +94,17 @@ const ForgotPassword = () => {
     try {
       await axios.post(`${API_BASE_URL}/api/verify-otp`, { email, otp: otpString });
       setStatusConfig({
-        title: "OTP Verified",
-        message: "Your OTP has been successfully verified. You can now reset your password.",
+        title: t("otp_verified"),
+        message: t("otp_verified_msg"),
         type: 'success'
       });
       setShowStatusModal(true);
       setError("");
     } catch (err) {
-      const errMsg = err.response?.data?.error || "Invalid or expired OTP.";
+      const errMsg = err.response?.data?.error || t("invalid_otp");
       setError(errMsg);
       setStatusConfig({
-        title: "Verification Failed",
+        title: t("verification_failed"),
         message: errMsg,
         type: 'error'
       });
@@ -138,7 +138,7 @@ const ForgotPassword = () => {
       !/(?=.*\d)/.test(password) ||
       !/(?=.*[^A-Za-z0-9])/.test(password)
     ) {
-      setError(t("password_rule_missing") || "Password rule is missing");
+      setError(t("password_rule_missing"));
       return;
     }
     if (!confirmPassword) {
@@ -155,16 +155,16 @@ const ForgotPassword = () => {
       const otpString = otpArray.join('');
       const res = await axios.post(`${API_BASE_URL}/api/reset-password`, { email, otp: otpString, password });
       setStatusConfig({
-        title: "Success!",
-        message: res.data.message || "Your password has been reset successfully.",
+        title: t("success"),
+        message: res.data.message || t("password_reset_success"),
         type: 'success'
       });
       setShowStatusModal(true);
     } catch (err) {
-      const errMsg = err.response?.data?.error || "Failed to reset password.";
+      const errMsg = err.response?.data?.error || t("password_reset_failed");
       setError(errMsg);
       setStatusConfig({
-        title: "Reset Failed",
+        title: t("reset_failed"),
         message: errMsg,
         type: 'error'
       });
@@ -175,7 +175,7 @@ const ForgotPassword = () => {
   };
 
   return (
-    <div className="login-container">
+    <div className="login-container notranslate">
       <div className="login-left-section">
         <div className="company-branding">
           <div className="logo-container">
@@ -200,11 +200,11 @@ const ForgotPassword = () => {
             <ArrowLeft size={16} /> {t("back_to_login")}
           </Link>
 
-          <h2>{step === 1 ? (t("forgot_password_title")) : step === 2 ? "Verify OTP" : "Reset Password"}</h2>
+          <h2>{step === 1 ? (t("forgot_password_title")) : step === 2 ? t("verify_otp") : t("reset_password")}</h2>
           <p className="login-subtitle" style={{ marginBottom: step > 1 ? '12px' : '20px' }}>
-            {step === 1 ? (t("forgot_password_subtitle") || "Enter your email address and we'll send you an OTP.") :
-              step === 2 ? "Enter the 6-digit verification code below." :
-                "Enter your new password below."}
+            {step === 1 ? t("enter_email_for_otp") :
+              step === 2 ? t("enter_otp_below") :
+                t("enter_new_password_below")}
           </p>
 
           {step > 1 && (
@@ -240,7 +240,7 @@ const ForgotPassword = () => {
                 {error && <span className="error-message">{error}</span>}
               </div>
               <button type="submit" className={`login-button ${isLoading ? "loading" : ""}`} disabled={isLoading}>
-                {isLoading ? "Sending..." : "Send OTP"}
+                {isLoading ? t("sending") : t("send_otp")}
               </button>
             </form>
           )}
@@ -267,10 +267,10 @@ const ForgotPassword = () => {
                 {error && <span className="error-message" style={{ textAlign: 'center' }}>{error}</span>}
               </div>
               <button type="submit" className={`login-button ${isLoading ? "loading" : ""}`} disabled={isLoading}>
-                {isLoading ? "Verifying..." : "Verify OTP"}
+                {isLoading ? t("verifying") : t("verify_otp")}
               </button>
               <p style={{ marginTop: '15px', textAlign: 'center', fontSize: '14px' }}>
-                Didn't receive the code? <button type="button" onClick={handleSendOtp} style={{ background: 'none', border: 'none', color: 'var(--primary-color)', cursor: 'pointer', padding: 0 }}>Resend OTP</button>
+                {t("did_not_receive_code")} <button type="button" onClick={handleSendOtp} style={{ background: 'none', border: 'none', color: 'var(--primary-color)', cursor: 'pointer', padding: 0 }}>{t("resend_otp")}</button>
               </p>
             </form>
           )}
@@ -279,7 +279,7 @@ const ForgotPassword = () => {
             <form onSubmit={handleResetPassword} noValidate>
               <div className="form-group">
                 <label style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', marginBottom: '8px', fontSize: 'var(--font-size-sm)', fontWeight: 'var(--font-weight-semibold)', color: 'var(--color-text-primary)' }}>
-                  New Password
+                  {t("new_password")}
                 </label>
                 <div className="input-container">
                   <input
@@ -292,7 +292,7 @@ const ForgotPassword = () => {
                     }}
                     onFocus={() => setIsPasswordFocused(true)}
                     onBlur={() => setIsPasswordFocused(false)}
-                    placeholder="New Password"
+                    placeholder={t("new_password")}
                     disabled={isLoading}
                   />
                   <button type="button" className="toggle-password" onClick={() => setShowPassword(!showPassword)} disabled={isLoading}>
@@ -303,7 +303,7 @@ const ForgotPassword = () => {
               </div>
               <div className="form-group">
                 <label style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', marginBottom: '8px', fontSize: 'var(--font-size-sm)', fontWeight: 'var(--font-weight-semibold)', color: 'var(--color-text-primary)' }}>
-                  Confirm New Password
+                  {t("confirm_new_password")}
                 </label>
                 <div className="input-container">
                   <input
@@ -314,7 +314,7 @@ const ForgotPassword = () => {
                       setConfirmPassword(e.target.value);
                       if (error) setError("");
                     }}
-                    placeholder="Confirm New Password"
+                    placeholder={t("confirm_new_password")}
                     disabled={isLoading}
                   />
                   <button type="button" className="toggle-password" onClick={() => setShowConfirmPassword(!showConfirmPassword)} disabled={isLoading}>
@@ -324,13 +324,13 @@ const ForgotPassword = () => {
                 {error && <span className="error-message">{error}</span>}
               </div>
               <button type="submit" className={`login-button ${isLoading ? "loading" : ""}`} disabled={isLoading}>
-                {isLoading ? "Resetting..." : "Reset Password"}
+                {isLoading ? t("resetting") : t("reset_password")}
               </button>
             </form>
           )}
 
           <div className="login-footer">
-            <p>{t("remember_password") || "Remember your password?"} <Link to="/login">{t("login")}</Link></p>
+            <p>{t("remember_password")} <Link to="/login">{t("login")}</Link></p>
           </div>
         </div>
       </div>
@@ -348,7 +348,7 @@ const ForgotPassword = () => {
               className={`status-modal-button ${statusConfig.type}`}
               onClick={handleModalClose}
             >
-              {statusConfig.type === 'success' ? 'Continue' : 'Try Again'}
+              {statusConfig.type === 'success' ? t("continue") : t("try_again")}
             </button>
           </div>
         </div>

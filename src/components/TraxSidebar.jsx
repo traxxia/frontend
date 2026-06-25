@@ -172,7 +172,7 @@ const TraxSidebar = ({
             <div className="onboarding-chat-message notranslate">
               <div className="bubble-avatar notranslate" translate="no">TX</div>
               <div className="bubble-content">
-                Advanced is unlocked. A few more questions and I'll build the full picture — the 6 C's and the S.T.R.A.T.E.G.I.C. scorecard.
+                Advanced is unlocked. A few more questions and I'll build the full picture — the 6 C's and the <span className="notranslate">S.T.R.A.T.E.G.I.C.</span> scorecard.
               </div>
             </div>
             <div className="onboarding-chat-message notranslate">
@@ -191,7 +191,7 @@ const TraxSidebar = ({
             <div className="onboarding-chat-message notranslate">
               <div className="bubble-avatar notranslate" translate="no">TX</div>
               <div className="bubble-content">
-                Hi {userName} — I'm Trax, your strategy consultant. To draft a real diagnosis for <strong>{selectedBusinessName}</strong>, I'll need a feel for the business.
+                Hi <span className="notranslate">{userName}</span> — I'm Trax, your strategy consultant. To draft a real diagnosis for <strong>{selectedBusinessName}</strong>, I'll need a feel for the business.
               </div>
             </div>
             <div className="onboarding-chat-message notranslate">

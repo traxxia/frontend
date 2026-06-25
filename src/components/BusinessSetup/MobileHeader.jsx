@@ -92,7 +92,7 @@ const MobileHeader = () => {
                   {activeTab === "priorities" && t("Priorities")}
                   {activeTab === "advanced" && (hasInsightAccess || hasStrategicAccess) && t("Answers/Brief")}
                   {activeTab === "insights" && (hasPmfAccess ? t("insights") : "Insights")}
-                  {activeTab === "strategic" && (hasPmfAccess ? t("strategic") : "S.T.R.A.T.E.G.I.C")}
+                  {activeTab === "strategic" && (hasPmfAccess ? t("strategic") : <span className="notranslate">S.T.R.A.T.E.G.I.C.</span>)}
                   {(activeTab === "bets" || activeTab === "ranking") && t("Bets")}
                   {activeTab === "decision-logs" && (t("Decision_Logs") || "Decision Logs")}
                 </span>
@@ -105,7 +105,7 @@ const MobileHeader = () => {
               {activeTab === "priorities" && t("Priorities & Projects")}
               {activeTab === "advanced" && (hasInsightAccess || hasStrategicAccess) && t("Questions and Answers")}
               {activeTab === "insights" && (hasPmfAccess ? t("Insights") : "Insights")}
-              {activeTab === "strategic" && (hasPmfAccess ? t("strategic") : "S.T.R.A.T.E.G.I.C")}
+              {activeTab === "strategic" && (hasPmfAccess ? t("strategic") : <span className="notranslate">S.T.R.A.T.E.G.I.C.</span>)}
               {(activeTab === "bets" || activeTab === "ranking") && t("Bets")}
               {activeTab === "decision-logs" && (t("Decision_Logs") || "Decision Logs")}
             </>
@@ -200,7 +200,7 @@ const MobileHeader = () => {
                 </CustomTooltip>
               )}
               {unlockedFeatures.analysis && hasStrategicAccess && (
-                <CustomTooltip align="right" message={t("regenerate_strategic_tooltip") || "Re-generate the S.T.R.A.T.E.G.I.C. analysis."}>
+                <CustomTooltip align="right" message={<>Re-generate the <span className="notranslate">S.T.R.A.T.E.G.I.C.</span> analysis.</>}>
                   <button
                     onClick={() => {
                       if (!canRegenerate) return;
@@ -282,7 +282,7 @@ const MobileHeader = () => {
                       onClick={() => { handleStrategicTabClick(); closeModal('mobileMenu'); }}
                     >
                       <Target size={18} />
-                      <span>{t("STRATEGIC_LABEL") || "S.T.R.A.T.E.G.I.C."}</span>
+                      <span className="notranslate">S.T.R.A.T.E.G.I.C.</span>
                     </button>
                   )}
                 </div>
