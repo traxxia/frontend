@@ -14,7 +14,7 @@ const UserStep = ({ form, handleChange, errors, isCheckingEmail, isSubmitting, s
       exit={{ opacity: 0, x: 20 }}
       className="tab-content"
     >
-      <form onSubmit={(e) => { e.preventDefault(); handleNext(); }} className="register-form">
+      <form onSubmit={(e) => { e.preventDefault(); handleNext(); }} className="register-form" noValidate>
         <div className="form-grid">
           <div className="form-group">
             <label>

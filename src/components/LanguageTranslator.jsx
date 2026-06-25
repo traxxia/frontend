@@ -32,8 +32,8 @@ const LanguageTranslator = ({ disabled }) => {
         aria-label="Select Language"
         disabled={disabled}
       >
-        <option value="en">English</option>
         <option value="es">Español</option>
+        <option value="en">English</option>
       </select>
     </div>
   );
