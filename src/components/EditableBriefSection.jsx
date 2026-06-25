@@ -602,15 +602,15 @@ const EditableBriefSection = ({
         }
       }
 
-      // /financial-summary-extract supports: .pdf, .xlsx, .xls, .docx, .doc only
-      const SUPPORTED_EXTS = ['pdf', 'xlsx', 'xls', 'docx', 'doc'];
+      // /financial-summary-extract supports: .pdf, .xlsx, .xls, .csv, .docx, .doc
+      const SUPPORTED_EXTS = ['pdf', 'xlsx', 'xls', 'csv', 'docx', 'doc'];
       filesToAnalyze = filesToAnalyze.filter(f => {
         const ext = (f.name || '').toLowerCase().split('.').pop();
         return SUPPORTED_EXTS.includes(ext);
       });
 
       if (filesToAnalyze.length === 0) {
-        console.warn('[triggerSSEAnalysis] No supported financial files (pdf/xlsx/xls/docx/doc) found — skipping financial extraction.');
+        console.warn('[triggerSSEAnalysis] No supported financial files (pdf/xlsx/xls/csv/docx/doc) found — skipping financial extraction.');
         setIsAnalyzingFinancial(false);
         return false;
       }
