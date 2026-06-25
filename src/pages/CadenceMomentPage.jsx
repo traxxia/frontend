@@ -327,7 +327,7 @@ const BetReviewCard = ({ bet, isCompleted, updateInfo, onSave, index, legacyComm
               ))}
 
               <button 
-                className="btn btn-sm d-flex align-items-center gap-1 mt-1"
+                className="btn btn-sm d-flex align-items-center gap-1 mt-3"
                 style={{ fontSize: '12px', fontWeight: '600', color: '#475569', border: '1px dashed #cbd5e1', borderRadius: '4px', padding: '5px 12px', backgroundColor: 'transparent' }}
                 onClick={addNewCommitment}
               >

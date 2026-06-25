@@ -4,7 +4,7 @@ import { ChevronDown, ChevronRight, Info, AlertTriangle, Clock, Eye, Edit2, Tras
 import { useTranslation } from "../hooks/useTranslation";
 import ReviewCadencesModal from "./ReviewCadencesModal";
 import AssignDeciderModal from "./AssignDeciderModal";
-import { useProjectStore } from "../store";
+import { useProjectStore, useBusinessStore } from "../store";
 import "../styles/ProjectsTable.css";
 const ProjectsTable = ({
   projects,
@@ -30,7 +30,7 @@ const ProjectsTable = ({
     t
   } = useTranslation();
 
-  const selectedBusinessId = useProjectStore(state => state.selectedBusinessId);
+  const selectedBusinessId = useBusinessStore(state => state.selectedBusinessId);
   const [showCadencesModal, setShowCadencesModal] = React.useState(false);
   const [cadenceProject, setCadenceProject] = React.useState(null);
 

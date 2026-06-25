@@ -593,7 +593,7 @@ const ProjectsSection = ({
     try {
       const userId = useAuthStore.getState().userId;
       const payload = getPayload(userId, selectedBusinessId);
-      if (statusOverride || isKickstart) payload.status = statusOverride || "Active";
+      if (statusOverride) payload.status = statusOverride;
 
       const oldStatus = isDraft ? "draft" : (currentProject.status || "Draft").toLowerCase();
       const newStatus = (payload.status || "Draft").toLowerCase();
