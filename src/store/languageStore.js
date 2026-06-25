@@ -5,7 +5,7 @@ import i18n from '../i18n';
 export const useLanguageStore = create(
   persist(
     (set) => ({
-      currentLanguage: 'en',
+      currentLanguage: 'es',
 
       setLanguage: async (lang) => {
         await i18n.changeLanguage(lang);
