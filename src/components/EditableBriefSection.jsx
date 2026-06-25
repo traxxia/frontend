@@ -773,7 +773,6 @@ const EditableBriefSection = ({
 
   // Sync to Core Product
   const handleSyncFinancial = async () => {
-    
     try {
       setIsAnalyzingFinancial(true);
       showToastMessage("Syncing Document Intelligence financial data...", "info");
@@ -1106,12 +1105,12 @@ const EditableBriefSection = ({
 
     for (const file of files) {
       const fileExt = file.name.split('.').pop().toLowerCase();
-      const isSpreadsheet = ['xlsx', 'xls'].includes(fileExt);
+      const isSpreadsheet = ['xlsx', 'xls', 'csv'].includes(fileExt);
       const isDoc = ['pdf', 'docx', 'doc'].includes(fileExt);
       const isPresentation = ['pptx', 'ppt'].includes(fileExt);
 
       if (!isSpreadsheet && !isDoc && !isPresentation) {
-        showToastMessage(`File "${file.name}" format is unsupported. Please upload Excel, PDF, Word, or PowerPoint files.`, 'error');
+        showToastMessage(`File "${file.name}" format is unsupported. Please upload Excel, CSV, PDF, Word, or PowerPoint files.`, 'error');
         continue;
       }
 
@@ -1208,13 +1207,15 @@ const EditableBriefSection = ({
 
     const hasSpreadsheet = filesToAnalyze.some(f => f.type === 'spreadsheet' || f.name.endsWith('.xlsx') || 
     f.name.endsWith('.xls') || f.name.endsWith('.csv'));
-    
-    const apiPromises = [handleAnalyzeDocuments(filesToAnalyze)];
-    if (hasSpreadsheet) {
-      apiPromises.push(handleSyncFinancial());
-    }
 
-    await Promise.all(apiPromises);
+    // Wait for document analysis to fully complete (and persist to DB) before
+    // calling syncFinancial — running them in parallel caused a 404 because
+    // the session had no financial data yet when the sync request arrived.
+    await handleAnalyzeDocuments(filesToAnalyze);
+
+    if (hasSpreadsheet) {
+      await handleSyncFinancial();
+    }
 
     // Finally set to success
     setUploadedFiles(prev =>
@@ -2161,7 +2162,16 @@ const EditableBriefSection = ({
                     </span>
                     <button 
                       className="btn-sync-ledger"
-                      onClick={handleSyncFinancial}
+                      onClick={() => {
+                        // Guard: block manual sync while any document is still being analyzed.
+                        // (Programmatic calls from handleAnalyzeFilesBulk bypass this check.)
+                        const isStillAnalyzing = uploadedFiles.some(f => f.status === 'analyzing');
+                        if (isStillAnalyzing) {
+                          showToastMessage("Documents are still being analyzed. Please wait before syncing.", "warning");
+                          return;
+                        }
+                        handleSyncFinancial();
+                      }}
                       disabled={!canEdit || isAnyApiActive}
                     > 
                       <span>Save Financial Data</span>
