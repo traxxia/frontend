@@ -65,6 +65,31 @@ const CadencesSection = ({ businessId }) => {
   const [showScheduleModal, setShowScheduleModal] = useState(false);
   const [selectedCadence, setSelectedCadence] = useState(null);
 
+  const [evolutionCadences, setEvolutionCadences] = useState([]);
+  const [selectedEvolutionCadence, setSelectedEvolutionCadence] = useState('all');
+  const [selectedTimeRange, setSelectedTimeRange] = useState('all');
+
+  const fetchEvolutionData = async () => {
+    if (!businessId) return;
+    try {
+      const token = useAuthStore.getState().token;
+      const headers = { Authorization: `Bearer ${token}` };
+      const baseUrl = import.meta.env.VITE_BACKEND_URL || "http://localhost:5000";
+      
+      const res = await axios.get(`${baseUrl}/api/cadences?business_id=${businessId}&cadence_id=${selectedEvolutionCadence}&time_range=${selectedTimeRange}`, { headers });
+      setEvolutionCadences(res.data);
+    } catch (err) {
+      console.error("Failed to fetch evolution cadences:", err);
+    }
+  };
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      fetchEvolutionData();
+    }, 50);
+    return () => clearTimeout(timer);
+  }, [businessId, selectedEvolutionCadence, selectedTimeRange]);
+
   const fetchData = async () => {
     if (!businessId) return;
     setIsLoading(true);
@@ -252,7 +277,7 @@ const CadencesSection = ({ businessId }) => {
 
   // For the Evolution table
   const allMoments = [];
-  cadences.forEach(c => {
+  evolutionCadences.forEach(c => {
     if (c.scheduleDates) {
       c.scheduleDates.forEach(m => {
         allMoments.push({ cadence: c, moment: m });
@@ -458,10 +483,34 @@ const CadencesSection = ({ businessId }) => {
       </div>
 
       <div className="evolution-section mt-5">
-        <div className="evolution-header mb-2">
+        <div className="evolution-header mb-2 d-flex justify-content-between align-items-center">
           <div>
             <div className="cadences-subtitle" style={{ fontSize: '9px' }}>EVOLUTION</div>
-            <h2 className="cadences-title" style={{ fontSize: '15px' }}>How every bet has moved, review by review</h2>
+            <h2 className="cadences-title m-0" style={{ fontSize: '15px' }}>How every bet has moved, review by review</h2>
+          </div>
+          <div className="d-flex gap-2">
+            <select 
+              className="form-select form-select-sm" 
+              style={{ width: 'auto', fontSize: '12px', borderColor: '#e2e8f0', color: '#0f172a', fontWeight: '500' }}
+              value={selectedTimeRange}
+              onChange={(e) => setSelectedTimeRange(e.target.value)}
+            >
+              <option value="all">All time</option>
+              <option value="last_3_months">Last 3 months</option>
+              <option value="last_6_months">Last 6 months</option>
+              <option value="last_12_months">Last 12 months</option>
+            </select>
+            <select 
+              className="form-select form-select-sm" 
+              style={{ width: 'auto', fontSize: '12px', borderColor: '#e2e8f0', color: '#0f172a', fontWeight: '500' }}
+              value={selectedEvolutionCadence}
+              onChange={(e) => setSelectedEvolutionCadence(e.target.value)}
+            >
+              <option value="all">All cadences</option>
+              {cadences.map(c => (
+                <option key={c._id} value={c._id}>{c.name}</option>
+              ))}
+            </select>
           </div>
         </div>
 
@@ -477,7 +526,7 @@ const CadencesSection = ({ businessId }) => {
           ))}
         </div>
 
-        {allMoments.length === 0 || cadences.every(c => getBetsForCadence(c.name).length === 0) ? (
+        {allMoments.length === 0 || evolutionCadences.every(c => getBetsForCadence(c.name).length === 0) ? (
           <div className="evolution-empty-state">
             <LineChart size={32} className="empty-state-icon" />
             <p className="empty-state-text">No history yet</p>
