@@ -302,7 +302,28 @@ const CadenceMomentOpenPage = () => {
     ? Math.max(0, Math.ceil((new Date(moment.date) - new Date()) / (1000 * 60 * 60 * 24)))
     : null;
 
-  const flaggedBets = bets.filter(b => ['AT RISK', 'STALLED', 'PAUSED'].includes((b.status || '').toUpperCase()));
+  const flaggedBets = bets.map(b => {
+    let severity = b.flag_severity;
+    if (!severity) {
+      const status = (b.status || '').toUpperCase();
+      if (status === 'AT RISK' || status === 'STALLED') severity = 1;
+      else if (status === 'PAUSED') severity = 2;
+      else if (b.top_flag_insight) severity = 3;
+    }
+    let dotColor = '#98a2b3';
+    if (severity === 1 || severity === '1' || severity === 'red') dotColor = '#d92d20';
+    else if (severity === 2 || severity === '2' || severity === 'orange') dotColor = '#f79009';
+    else if (severity === 3 || severity === '3' || severity === 'green') dotColor = '#12b76a';
+    else dotColor = '#98a2b3';
+    
+    return { ...b, computed_severity: severity, dotColor };
+  }).filter(b => b.computed_severity || b.top_flag_insight || ['AT RISK', 'STALLED', 'PAUSED'].includes((b.status || '').toUpperCase()))
+  .sort((a, b) => {
+    const sevA = a.computed_severity ? parseInt(a.computed_severity) || 99 : 99;
+    const sevB = b.computed_severity ? parseInt(b.computed_severity) || 99 : 99;
+    return sevA - sevB;
+  });
+
   const noLearningBets = bets.filter(b => !b.learning_state || b.learning_state === '' || b.learning_state?.toLowerCase() === 'not started');
   
   const totalOpenCommitments = bets.reduce((acc, bet) => {
@@ -394,65 +415,63 @@ const CadenceMomentOpenPage = () => {
         </div>
 
         {/* ── TOP FLAGS TO REVIEW ──────────────────────────────── */}
-        <div className="card shadow-sm mb-4" style={{ borderColor: '#e2e8f0', borderRadius: '10px' }}>
-          <div className="card-header bg-white border-0 pt-4 pb-2 px-4">
-            <h5 className="mb-0 fw-bold text-dark" style={{ fontSize: '15px' }}>Top flags to review</h5>
+        <div className="card mb-4" style={{ borderColor: '#eaecf0', borderRadius: '8px', boxShadow: '0px 1px 2px rgba(16, 24, 40, 0.05)' }}>
+          <div className="card-header bg-white border-0 pt-4 pb-0 px-4">
+            <h5 className="mb-0" style={{ fontSize: '16px', fontWeight: '600', color: '#101828' }}>Top flags to review</h5>
           </div>
           <div className="card-body px-4 pb-4">
             {flaggedBets.length > 0 || totalOpenCommitments > 0 ? (
               <>
-                <ul className="list-unstyled mb-0">
+                <ul className="list-unstyled mb-0 mt-3">
                   {flaggedBets.map(bet => {
-                    const status = (bet.status || '').toUpperCase();
-                    const dotColor = (status === 'AT RISK' || status === 'STALLED') ? '#dc2626' : '#f59e0b';
                     return (
-                      <li key={bet._id} className="d-flex align-items-center justify-content-between mb-3 pb-3" style={{ borderBottom: '1px solid #f1f5f9' }}>
-                        <div className="d-flex align-items-start pe-3">
-                          <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: dotColor, marginTop: '8px', marginRight: '12px', flexShrink: 0 }}></span>
+                      <li key={bet._id} className="d-flex align-items-center justify-content-between mb-3 pb-3" style={{ borderBottom: '1px solid #eaecf0' }}>
+                        <div className="d-flex align-items-center pe-3">
+                          <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: bet.dotColor, marginRight: '12px', flexShrink: 0 }}></span>
                           <div style={{ lineHeight: '1.4' }}>
-                            <span className="fw-bold text-dark" style={{ fontSize: '13px' }}>
+                            <span style={{ fontSize: '14px', fontWeight: '600', color: '#344054' }}>
                               #{bet.globalIndex} {bet.project_name || bet.initiative_name || bet.name}
                             </span>
-                            <span className="text-muted mx-1">—</span>
-                            <span className="text-muted" style={{ fontSize: '13px' }}>
-                              {bet.description || `This bet is currently ${bet.status}.`}
+                            <span style={{ color: '#98a2b3', fontSize: '14px', margin: '0 8px' }}>—</span>
+                            <span style={{ fontSize: '14px', color: '#667085' }}>
+                              {bet.top_flag_insight || bet.description || `This bet is currently ${bet.status}.`}
                             </span>
                           </div>
                         </div>
                         <span
                           className="flex-shrink-0"
                           style={{
-                            fontSize: '12px', fontWeight: '600', color: '#0c71b9',
+                            fontSize: '13px', fontWeight: '600', color: '#0073ea',
                             cursor: 'pointer',
                           }}
                         >
-                          Open →
+                          Open &rarr;
                         </span>
                       </li>
                     );
                   })}
 
                   {totalOpenCommitments > 0 && (
-                    <li className="d-flex align-items-center justify-content-between mb-3 pb-3" style={{ borderBottom: '1px solid #f1f5f9' }}>
-                      <div className="d-flex align-items-start pe-3">
-                        <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#94a3b8', marginTop: '8px', marginRight: '12px', flexShrink: 0 }}></span>
+                    <li className="d-flex align-items-center justify-content-between mb-3 pb-3" style={{ borderBottom: '1px solid #eaecf0' }}>
+                      <div className="d-flex align-items-center pe-3">
+                        <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#98a2b3', marginRight: '12px', flexShrink: 0 }}></span>
                         <div style={{ lineHeight: '1.4' }}>
-                          <span className="text-muted" style={{ fontSize: '13px' }}>
-                            {totalOpenCommitments} commitment{totalOpenCommitments !== 1 ? 's' : ''} from previous reviews still open.
+                          <span style={{ fontSize: '14px', color: '#667085' }}>
+                            {totalOpenCommitments} {totalOpenCommitments === 1 ? 'commitment' : 'commitments'} from previous reviews still open.
                           </span>
                         </div>
                       </div>
                     </li>
                   )}
                 </ul>
-                <div style={{ fontSize: '12px', color: '#94a3b8', fontStyle: 'italic', marginTop: '8px' }}>
+                <div style={{ fontSize: '13px', color: '#98a2b3', fontStyle: 'italic', marginTop: '8px' }}>
                   Ranked by severity. Open any bet below for its full set of insights.
                 </div>
               </>
             ) : (
-              <div className="d-flex align-items-center" style={{ color: '#15803d', backgroundColor: '#f0fdf4', border: '1px solid #bbf7d0', padding: '12px 16px', borderRadius: '6px' }}>
+              <div className="d-flex align-items-center mt-3" style={{ color: '#027a48', backgroundColor: '#ecfdf3', border: '1px solid #a6f4c5', padding: '12px 16px', borderRadius: '8px' }}>
                 <CheckCircle2 className="me-2" size={18} />
-                <span style={{ fontSize: '13px', fontWeight: '500' }}>Nothing flagged this cycle — the agenda looks clean.</span>
+                <span style={{ fontSize: '14px', fontWeight: '500' }}>Nothing flagged this cycle — the agenda looks clean.</span>
               </div>
             )}
           </div>

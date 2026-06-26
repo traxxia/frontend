@@ -734,7 +734,8 @@ setSuccessMetrics,
                       {t("Cancel")}
                     </button>
                     <button type="button" className="d-flex align-items-center gap-2" onClick={(e) => handleSubmit(e, false)} disabled={isSubmitting || isTerminal} style={{ backgroundColor: '#0c71b9', color: '#ffffff', border: 'none', borderRadius: '6px', fontSize: '13px', fontWeight: '600', padding: '6px 16px', cursor: 'pointer', opacity: (isSubmitting || isTerminal) ? 0.6 : 1 }}>
-                      <Check size={14} strokeWidth={2.5} /> Save changes
+                      {isSubmitting ? <span className="spinner-border spinner-border-sm" /> : <Check size={14} strokeWidth={2.5} />}
+                      {isSubmitting ? 'Saving...' : 'Save changes'}
                     </button>
                   </>
                 )}
@@ -757,7 +758,7 @@ setSuccessMetrics,
           </div>
           <div className="project-custom-header-meta" style={{ display: 'flex', gap: '48px', marginTop: '16px', marginBottom: '24px' }}>
             <div className="meta-item" style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-              <span className="meta-label" style={{ fontSize: '11px', fontWeight: '700', color: '#64748b', letterSpacing: '0.5px' }}>DECIDER</span>
+              <span className="meta-label">DECIDER</span>
               <span className="meta-value text-dark" style={{ fontSize: '15px' }}>
                 {(() => {
                   if (!accountableOwnerId) return "Not assigned";
@@ -770,7 +771,7 @@ setSuccessMetrics,
               </span>
             </div>
             <div className="meta-item" style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-              <span className="meta-label" style={{ fontSize: '11px', fontWeight: '700', color: '#64748b', letterSpacing: '0.5px' }}>CADENCE</span>
+              <span className="meta-label" >CADENCE</span>
               <span className="meta-value text-dark" style={{ fontSize: '15px', fontWeight: '500' }}>{reviewCadence || "Not set"}</span>
             </div>
           </div>
@@ -781,7 +782,7 @@ setSuccessMetrics,
       <fieldset disabled={isSubmitting || isReadOnly} style={{ border: 'none', padding: 0, margin: 0 }}>
 
       {!isLaunched && initialStatusLower === "draft" && hasDecider && (
-        <div className="decider-info-banner mt-4 mb-3" style={{ backgroundColor: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '8px', padding: '16px', color: '#1e3a8a', fontSize: '15px' }}>
+        <div className="decider-info-banner mt-0 mb-3" style={{ backgroundColor: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '8px', padding: '16px', color: '#1e3a8a', fontSize: '15px' }}>
           <strong style={{ color: '#1d4ed8' }}>Awaiting {accountableOwner}.</strong> <span style={{ color: '#475569' }}>The fields below will be completed by the assigned decider. You'll see them here once filled.</span>
         </div>
       )}
@@ -811,9 +812,10 @@ setSuccessMetrics,
             </div>
             <div className="flex-shrink-0 ms-4 d-flex align-items-center justify-content-end" style={{ width: '220px' }}>
               {canKickstart ? (
-                <button className={`btn-kickstart active`} onClick={handleKickstart} style={{ backgroundColor: '#10b981', color: 'white', padding: '10px 20px', borderRadius: '8px', border: 'none', fontWeight: '600' }}>
-                  Kickstart Bet &rarr;
-                </button>
+                  <button className={`btn-kickstart active d-flex align-items-center justify-content-center gap-2`} onClick={handleKickstart} disabled={isSubmitting} style={{ backgroundColor: '#10b981', color: 'white', padding: '10px 20px', borderRadius: '8px', border: 'none', fontWeight: '600' }}>
+                    {isSubmitting ? <span className="spinner-border spinner-border-sm" /> : null}
+                    {isSubmitting ? 'Kickstarting...' : 'Kickstart Bet →'}
+                  </button>
               ) : (
                 <div style={{ color: '#94a3b8', fontStyle: 'italic', fontSize: '15px', textAlign: 'right', lineHeight: '1.4' }}>
                   Awaiting the decider to complete and kickstart this bet.

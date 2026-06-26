@@ -551,7 +551,6 @@ const ProjectsSection = ({
     }
   }, [validateForm, getPayload, selectedBusinessId, createProject, currentProject?._id, refreshAllData, handleBackToList, handleShowToast]);
   const executeSave = useCallback(async (payload, justification = null) => {
-    setIsSubmitting(true);
     try {
       if (justification) {
         payload.justification = justification;
@@ -571,14 +570,17 @@ const ProjectsSection = ({
           queryKey: ["teamRankings", selectedBusinessId]
         });
         await refreshAllData();
-        handleBackToList();
+        return true;
       } else {
         handleShowToast(error || "Failed to update project.", "error");
+        return false;
       }
-    } finally {
-      setIsSubmitting(false);
+    } catch (err) {
+      console.error("Save error:", err);
+      handleShowToast("Failed to update project.", "error");
+      return false;
     }
-  }, [updateProject, currentProject?._id, refreshAllData, handleBackToList, handleShowToast]);
+  }, [updateProject, currentProject?._id, refreshAllData, handleShowToast, clearCache, queryClient]);
   const handleSave = useCallback(async (options = {}) => {
     const { statusOverride, isKickstart } = options;
     if (!canEditProject(currentProject, isEditor, myUserId, businessStatus, apiIsArchived)) {
@@ -590,6 +592,8 @@ const ProjectsSection = ({
     const skipStrict = !isKickstart && isDraft;
     const validation = validateForm({ isNew: false, skipStrictRequired: skipStrict });
     if (!validation.isValid) return;
+    
+    setIsSubmitting(true);
     try {
       const userId = useAuthStore.getState().userId;
       const payload = getPayload(userId, selectedBusinessId);
@@ -622,21 +626,24 @@ const ProjectsSection = ({
         setPendingSavePayload(payload);
         setPendingStateChanges(changes);
         openModal('stateChange');
-        if (isKickstart) {
-          await launchProjects([currentProject._id]);
-        }
         setIsSubmitting(false);
         return;
       }
-      await executeSave(payload);
-      if (isKickstart) {
-        await launchProjects([currentProject._id]);
+      
+      const success = await executeSave(payload);
+      if (success) {
+        if (isKickstart) {
+          await launchProjects([currentProject._id]);
+        }
+        handleBackToList();
       }
     } catch (err) {
       console.error("Error in prepare save:", err);
+      handleShowToast("Error saving project", "error");
+    } finally {
       setIsSubmitting(false);
     }
-  }, [canEditProject, currentProject, isEditor, myUserId, businessStatus, apiIsArchived, validateForm, getPayload, selectedBusinessId, executeSave, handleShowToast, t]);
+  }, [canEditProject, currentProject, isEditor, myUserId, businessStatus, apiIsArchived, validateForm, getPayload, selectedBusinessId, executeSave, handleShowToast, t, launchProjects, handleBackToList]);
   const submitReview = useCallback(async data => {
     if (!selectedReviewProject?._id) return;
     try {
@@ -814,10 +821,16 @@ const ProjectsSection = ({
       closeModal('stateChange');
       setPendingSavePayload(null);
       setPendingStateChanges([]);
-    }} onConfirm={justification => {
+    }} onConfirm={async justification => {
       closeModal('stateChange');
       if (pendingSavePayload) {
-        executeSave(pendingSavePayload, justification);
+        setIsSubmitting(true);
+        try {
+          const success = await executeSave(pendingSavePayload, justification);
+          if (success) handleBackToList();
+        } finally {
+          setIsSubmitting(false);
+        }
       }
       setPendingStateChanges([]);
     }} changes={pendingStateChanges} />

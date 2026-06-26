@@ -177,35 +177,42 @@ const CadencesSection = ({ businessId }) => {
     });
   };
 
-  // Find stale moments (dates in the past that have pending updates)
+  // Find stale moments (past dates that have NOT been officially closed via Sign & Close)
+  // A notification stays visible until moment.closed === true — which is only set by Sign & Close.
+  // completed_bet_cadences records alone do NOT remove the notification.
   const getStaleMoments = () => {
     const staleList = [];
     const now = new Date();
-    
+
     cadences.forEach(c => {
       if (!c.scheduleDates) return;
       const bets = getBetsForCadence(c.name);
-      if (bets.length === 0) return; // No bets, nothing to close
+      if (bets.length === 0) return;
 
       c.scheduleDates.forEach(moment => {
+        // Only show notification if the moment has NOT been officially closed
         if (moment.closed) return;
+
         const mDate = new Date(moment.date);
         if (mDate <= now) {
-          // Check if there are any bets not completed
-          const momentCompleted = completedUpdates.filter(cu => cu.cadence_id === c._id && cu.moment_id === moment._id);
-          const pendingBets = bets.length - momentCompleted.length;
-          
-          if (pendingBets > 0) {
-            staleList.push({
-              cadence: c,
-              moment,
-              pendingCount: pendingBets
-            });
-          }
+          // pendingCount = how many bets still have no snapshot for this moment
+          // (used purely for the progress label, NOT for dismissing the notification)
+          const momentSnapshots = completedUpdates.filter(
+            cu => cu.cadence_id?.toString() === c._id?.toString()
+              && cu.moment_id === moment._id
+          );
+          const pendingCount = bets.length - momentSnapshots.length;
+
+          staleList.push({
+            cadence: c,
+            moment,
+            // Show max(0, pending) — once all are filled it shows 0 but notification still stays
+            pendingCount: Math.max(0, pendingCount)
+          });
         }
       });
     });
-    
+
     return staleList.sort((a, b) => new Date(a.moment.date) - new Date(b.moment.date));
   };
 
@@ -268,7 +275,11 @@ const CadencesSection = ({ businessId }) => {
                 <span className="awaiting-title">{sm.cadence.name} · {sm.moment.name}</span>
                 <span className="awaiting-meta">
                   {new Date(sm.moment.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' })} 
-                  {' · '}{sm.pendingCount} bets to update
+                  {' · '}
+                  {sm.pendingCount > 0
+                    ? `${sm.pendingCount} bet${sm.pendingCount !== 1 ? 's' : ''} to update`
+                    : 'All bets updated — ready to sign & close'
+                  }
                 </span>
               </div>
               <button 
@@ -466,7 +477,7 @@ const CadencesSection = ({ businessId }) => {
           ))}
         </div>
 
-        {projects.filter(bet => completedUpdates.some(cu => cu.bet_id === bet._id)).length === 0 || allMoments.length === 0 ? (
+        {allMoments.length === 0 || cadences.every(c => getBetsForCadence(c.name).length === 0) ? (
           <div className="evolution-empty-state">
             <LineChart size={32} className="empty-state-icon" />
             <p className="empty-state-text">No history yet</p>
@@ -497,7 +508,12 @@ const CadencesSection = ({ businessId }) => {
                 </tr>
               </thead>
               <tbody className="text-center" style={{ fontSize: '13px' }}>
-                {projects.filter(bet => completedUpdates.some(cu => cu.bet_id === bet._id)).map(bet => {
+                {projects.filter(bet =>
+                  // Show any bet that is assigned to at least one cadence that has a moment
+                  allMoments.some(col =>
+                    getBetsForCadence(col.cadence.name).some(b => b._id === bet._id)
+                  )
+                ).map(bet => {
                   return (
                     <tr key={bet._id}>
                       <td className="text-start p-3 fw-medium">
