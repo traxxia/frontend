@@ -33,24 +33,24 @@ const getLearningSeverity = (learning) => {
 
 const getStatusBadgeStyle = (status) => {
   const s = (status || '').toUpperCase();
-  if (s === 'ACTIVE')     return { backgroundColor: '#dcfce7', color: '#15803d', border: '1px solid #86efac' };
-  if (s === 'AT RISK')    return { backgroundColor: '#fee2e2', color: '#dc2626', border: '1px solid #fca5a5' };
-  if (s === 'PAUSED')     return { backgroundColor: '#fef9c3', color: '#a16207', border: '1px solid #fde047' };
-  if (s === 'KILLED')     return { backgroundColor: '#f1f5f9', color: '#64748b', border: '1px solid #cbd5e1', textDecoration: 'line-through' };
-  if (s === 'STALLED')    return { backgroundColor: '#f1f5f9', color: '#64748b', border: '1px solid #cbd5e1' };
-  if (s === 'COMPLETED')  return { backgroundColor: '#dbeafe', color: '#1d4ed8', border: '1px solid #93c5fd' };
-  if (s === 'SCALED')     return { backgroundColor: '#ede9fe', color: '#6d28d9', border: '1px solid #c4b5fd' };
-  if (s === 'DRAFT')      return { backgroundColor: '#f8fafc', color: '#94a3b8', border: '1px solid #e2e8f0' };
-  return { backgroundColor: '#f1f5f9', color: '#64748b', border: '1px solid #e2e8f0' };
+  if (s === 'ACTIVE')     return { backgroundColor: '#ffffff', color: '#10b981', border: '1px solid #10b981' };
+  if (s === 'AT RISK')    return { backgroundColor: '#ffffff', color: '#ef4444', border: '1px solid #ef4444' };
+  if (s === 'PAUSED')     return { backgroundColor: '#ffffff', color: '#f59e0b', border: '1px solid #f59e0b' };
+  if (s === 'KILLED')     return { backgroundColor: '#ffffff', color: '#64748b', border: '1px solid #cbd5e1', textDecoration: 'line-through' };
+  if (s === 'STALLED')    return { backgroundColor: '#ffffff', color: '#64748b', border: '1px solid #cbd5e1' };
+  if (s === 'COMPLETED')  return { backgroundColor: '#ffffff', color: '#0ea5e9', border: '1px solid #0ea5e9' };
+  if (s === 'SCALED')     return { backgroundColor: '#ffffff', color: '#8b5cf6', border: '1px solid #8b5cf6' };
+  if (s === 'DRAFT')      return { backgroundColor: '#ffffff', color: '#94a3b8', border: '1px solid #e2e8f0' };
+  return { backgroundColor: '#ffffff', color: '#64748b', border: '1px solid #e2e8f0' };
 };
 
 const getLearningBadgeStyle = (learning) => {
   const l = (learning || '').toUpperCase();
-  if (l === 'VALIDATED')    return { backgroundColor: '#dcfce7', color: '#15803d', border: '1px solid #86efac' };
-  if (l === 'TESTING')      return { backgroundColor: '#dbeafe', color: '#1d4ed8', border: '1px solid #93c5fd' };
-  if (l === 'INVALIDATED')  return { backgroundColor: '#fee2e2', color: '#dc2626', border: '1px solid #fca5a5' };
-  if (l === 'NOT STARTED')  return { backgroundColor: '#f1f5f9', color: '#64748b', border: '1px solid #e2e8f0' };
-  return { backgroundColor: '#f1f5f9', color: '#64748b', border: '1px solid #e2e8f0' };
+  if (l === 'VALIDATED')    return { backgroundColor: '#ffffff', color: '#10b981', border: '1px solid #10b981' };
+  if (l === 'TESTING')      return { backgroundColor: '#ffffff', color: '#0ea5e9', border: '1px solid #0ea5e9' };
+  if (l === 'INVALIDATED')  return { backgroundColor: '#ffffff', color: '#ef4444', border: '1px solid #ef4444' };
+  if (l === 'NOT STARTED')  return { backgroundColor: '#ffffff', color: '#64748b', border: '1px solid #cbd5e1' };
+  return { backgroundColor: '#ffffff', color: '#64748b', border: '1px solid #e2e8f0' };
 };
 
 const CadencesSection = ({ businessId }) => {
@@ -458,10 +458,10 @@ const CadencesSection = ({ businessId }) => {
       </div>
 
       <div className="evolution-section mt-5">
-        <div className="evolution-header">
+        <div className="evolution-header mb-2">
           <div>
-            <div className="cadences-subtitle">EVOLUTION</div>
-            <h2 className="cadences-title" style={{ fontSize: '18px' }}>How every bet has moved, review by review</h2>
+            <div className="cadences-subtitle" style={{ fontSize: '9px' }}>EVOLUTION</div>
+            <h2 className="cadences-title" style={{ fontSize: '15px' }}>How every bet has moved, review by review</h2>
           </div>
         </div>
 
@@ -483,41 +483,45 @@ const CadencesSection = ({ businessId }) => {
             <p className="empty-state-text">No history yet</p>
           </div>
         ) : (
-          <div className="table-responsive mt-3">
-            <table className="table table-bordered align-middle">
-              <thead className="bg-light text-center" style={{ fontSize: '12px' }}>
+          <>
+            <div className="table-responsive mt-2" style={{ border: '1px solid #e2e8f0', borderRadius: '8px', overflow: 'hidden !important' }}>
+            <table className="table align-middle mb-0" style={{ borderCollapse: 'separate', borderSpacing: 0 }}>
+              <thead className="bg-white text-center" style={{ fontSize: '10px' }}>
                 <tr>
-                  <th className="text-start align-bottom p-3" style={{ minWidth: '250px' }}>BET</th>
+                  <th className="text-start align-bottom px-3 py-3" style={{ minWidth: '160px', borderBottom: '1px solid #e2e8f0', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>BET</th>
                   {allMoments.map((col, i) => {
                     const mDate = new Date(col.moment.date);
                     const now = new Date();
                     const needsClose = !col.moment.closed && mDate <= now;
                     return (
-                      <th key={i} className="p-3" style={{ minWidth: '120px' }}>
-                        <div className="fw-bold text-dark">{col.cadence.name}</div>
-                        <div className="text-muted">{col.moment.name}</div>
-                        <div className="text-muted mb-1" style={{ fontSize: '10px' }}>
-                          {mDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' })}
+                      <th key={i} className="px-2 py-3" style={{ minWidth: '100px', borderBottom: '1px solid #e2e8f0', borderLeft: '1px solid #f1f5f9' }}>
+                        <div className="fw-bold text-dark" style={{ fontSize: '11px' }}>
+                          {col.cadence.name === col.moment.name ? col.moment.name : `${col.cadence.name} · ${col.moment.name}`}
                         </div>
-                        {needsClose && (
-                          <span className="cadence-status-pill needs-close d-inline-block mt-1" style={{ fontSize: '9px', padding: '2px 6px' }}>NEEDS CLOSE</span>
-                        )}
+                        <div className="text-muted mb-2" style={{ fontSize: '10px', fontWeight: '500' }}>
+                          {mDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' })}
+                        </div>
+                        {needsClose ? (
+                          <span className="d-inline-block" style={{ fontSize: '9px', padding: '2px 8px', borderRadius: '12px', background: '#fff7ed', color: '#ea580c', fontWeight: 'bold' }}>NEEDS CLOSE</span>
+                        ) : col.moment.closed ? (
+                          <button className="btn btn-sm d-inline-block px-3 py-0" style={{ fontSize: '10px', borderRadius: '4px', background: '#ffffff', color: '#0ea5e9', border: '1px solid #bae6fd', fontWeight: '600' }} onClick={() => navigate(`/business/${businessId}/cadence/${col.cadence._id}/moment/${col.moment._id}`)}>View</button>
+                        ) : null}
                       </th>
                     );
                   })}
                 </tr>
               </thead>
-              <tbody className="text-center" style={{ fontSize: '13px' }}>
+              <tbody className="text-center bg-white" style={{ fontSize: '13px' }}>
                 {projects.filter(bet =>
                   // Show any bet that is assigned to at least one cadence that has a moment
                   allMoments.some(col =>
                     getBetsForCadence(col.cadence.name).some(b => b._id === bet._id)
                   )
-                ).map(bet => {
+                ).map((bet, betIndex) => {
                   return (
-                    <tr key={bet._id}>
-                      <td className="text-start p-3 fw-medium">
-                        {bet.project_name || bet.initiative_name || bet.name || "Unnamed Bet"}
+                    <tr key={bet._id} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                      <td className="text-start px-3 py-3 fw-medium" style={{ color: '#475569', fontSize: '12px' }}>
+                        <span style={{ color: '#94a3b8' }}>#{betIndex + 1}</span> {bet.project_name || bet.initiative_name || bet.name || "Unnamed Bet"}
                       </td>
                       {allMoments.map((col, i) => {
                         // Is this bet associated with this cadence?
@@ -525,11 +529,11 @@ const CadencesSection = ({ businessId }) => {
                         const isAssociated = betsForCadence.some(b => b._id === bet._id);
                         
                         if (!isAssociated) {
-                          return <td key={i} className="bg-light text-muted">—</td>;
+                          return <td key={i} className="text-muted" style={{ borderLeft: '1px solid #f1f5f9' }}>—</td>;
                         }
                         
                         if (!col.moment.closed) {
-                          return <td key={i} className="text-muted"><span style={{ fontStyle: 'italic', fontSize: '13px' }}>TBD</span></td>;
+                          return <td key={i} className="text-muted px-2 py-3" style={{ borderLeft: '1px solid #f1f5f9' }}><span style={{ fontStyle: 'italic', fontSize: '12px' }}>TBD</span></td>;
                         }
 
                         // Check if completed update exists
@@ -559,12 +563,12 @@ const CadencesSection = ({ businessId }) => {
                           }
 
                           return (
-                            <td key={i} className="p-3">
+                            <td key={i} className="px-2 py-3" style={{ borderLeft: '1px solid #f1f5f9' }}>
                               {evolutionTab === 'Status' ? (() => {
                                 const s = updateRecord.status?.toUpperCase() || 'ACTIVE';
                                 const badgeStyle = getStatusBadgeStyle(s);
                                 return (
-                                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '11px', fontWeight: '800', letterSpacing: '0.4px', borderRadius: '4px', padding: '3px 8px', ...badgeStyle }}>
+                                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '2px', fontSize: '10px', fontWeight: '800', letterSpacing: '0.4px', borderRadius: '4px', padding: '2px 6px', ...badgeStyle }}>
                                     {s}
                                   </span>
                                 );
@@ -572,7 +576,7 @@ const CadencesSection = ({ businessId }) => {
                                 const l = updateRecord.learning_state?.toUpperCase() || '';
                                 const badgeStyle = getLearningBadgeStyle(l);
                                 return (
-                                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '11px', fontWeight: '800', letterSpacing: '0.4px', borderRadius: '4px', padding: '3px 8px', ...badgeStyle }}>
+                                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '2px', fontSize: '10px', fontWeight: '800', letterSpacing: '0.4px', borderRadius: '4px', padding: '2px 6px', ...badgeStyle }}>
                                     {l || '—'}
                                   </span>
                                 );
@@ -583,7 +587,7 @@ const CadencesSection = ({ businessId }) => {
                         }
 
                         return (
-                          <td key={i} className="p-3 text-muted">TBD</td>
+                          <td key={i} className="px-2 py-3 text-muted" style={{ borderLeft: '1px solid #f1f5f9' }}>TBD</td>
                         );
                       })}
                     </tr>
@@ -592,6 +596,20 @@ const CadencesSection = ({ businessId }) => {
               </tbody>
             </table>
           </div>
+            
+          <div className="d-flex align-items-center gap-4 mt-3 ms-2" style={{ fontSize: '13px', color: '#64748b' }}>
+            <div className="d-flex align-items-center gap-2">
+              <span style={{ fontSize: '12px' }}>
+                <span className="text-success">▲</span> / <span className="text-danger">▼</span>
+              </span>
+              <span>Moved at this review</span>
+            </div>
+            <div className="d-flex align-items-center gap-2">
+              <span style={{ border: '1px dashed #cbd5e1', padding: '2px 8px', borderRadius: '4px', fontStyle: 'italic', fontSize: '11px', color: '#64748b', backgroundColor: '#ffffff' }}>TBD</span>
+              <span>Upcoming — not captured yet</span>
+            </div>
+          </div>
+          </>
         )}
       </div>
 

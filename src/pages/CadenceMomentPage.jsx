@@ -120,84 +120,84 @@ const BetReviewCard = ({ bet, isCompleted, updateInfo, onSave, index, legacyComm
   const prevCommitments = commitments.filter(c => c.moment_id !== momentId && c.text && c.text.trim() !== '');
 
   return (
-    <div id={`bet-card-${bet._id}`} className="card shadow-sm border-1 mb-4" style={{ borderColor: '#e2e8f0', borderRadius: '8px', scrollMarginTop: '100px' }}>
-      <div className="card-header bg-white border-bottom-0 py-3 px-4 d-flex justify-content-between align-items-center">
+    <div id={`bet-card-${bet._id}`} className="card shadow-sm border-1 mb-3" style={{ borderColor: '#e2e8f0', borderRadius: '8px', scrollMarginTop: '100px' }}>
+      <div className="card-header bg-white border-bottom-0 py-2 px-3 d-flex justify-content-between align-items-center">
         <div className="d-flex align-items-center">
-          <span className="fw-bold me-2 text-muted" style={{ fontSize: '13px' }}>#{index + 1}</span> 
-          <span className="fw-bold text-dark" style={{ fontSize: '15px' }}>{bet.project_name || bet.initiative_name || bet.name || "Unnamed Bet"}</span>
+          <span className="fw-bold me-2 text-muted" style={{ fontSize: '12px' }}>#{index + 1}</span> 
+          <span className="fw-bold text-dark" style={{ fontSize: '14px' }}>{bet.project_name || bet.initiative_name || bet.name || "Unnamed Bet"}</span>
         </div>
-        <div className="d-flex align-items-center gap-3 text-dark fw-medium" style={{ fontSize: '13px' }}>
-          <span className="text-dark" style={{ fontSize: '12px', fontWeight: '500' }}>You</span>
+        <div className="d-flex align-items-center gap-2 text-dark fw-medium" style={{ fontSize: '12px' }}>
+          <span className="text-dark" style={{ fontSize: '11px', fontWeight: '500' }}>You</span>
           {isConfirmedLocal ? (
-            <button className="btn btn-sm text-success fw-bold d-flex align-items-center bg-white border-success rounded px-3 py-1" style={{ fontSize: '11px', letterSpacing: '0.5px' }}>
+            <button className="btn btn-sm text-success fw-bold d-flex align-items-center bg-white border-success rounded px-2 py-1" style={{ fontSize: '10px', letterSpacing: '0.5px' }}>
               CONFIRMED
             </button>
           ) : (
-            <button className="btn btn-sm text-warning fw-bold d-flex align-items-center bg-white rounded px-3 py-1" style={{ fontSize: '11px', letterSpacing: '0.5px', color: '#d97706', border: '1px solid #fcd34d' }}>
+            <button className="btn btn-sm text-warning fw-bold d-flex align-items-center bg-white rounded px-2 py-1" style={{ fontSize: '10px', letterSpacing: '0.5px', color: '#d97706', border: '1px solid #fcd34d' }}>
               <span className="me-1">○</span> TO CONFIRM
             </button>
           )}
         </div>
       </div>
       
-      <div className="card-body px-4 pb-4 pt-0">
+      <div className="card-body px-3 pb-3 pt-0">
         
         {/* WHAT YOU BROUGHT */}
-        <div className="mb-4 rounded" style={{ padding: '16px', backgroundColor: '#f8fafc', border: '1px solid #e2e8f0' }}>
-          <div className="d-flex align-items-center mb-3">
-            <span style={{ fontSize: '11px', fontWeight: '800', letterSpacing: '0.5px', color: '#0f172a', marginRight: '8px' }}>WHAT YOU BROUGHT</span>
-            <span style={{ fontSize: '12px', color: '#64748b', marginRight: '8px' }}>proposes</span>
-            <span className="d-inline-flex align-items-center justify-content-center" style={{ fontSize: '11px', border: '1px solid', borderRadius: '4px', padding: '2px 8px', marginRight: '8px', ...getStatusStyles(bet.status || "ACTIVE", true) }}>
+        <div className="mb-3 rounded" style={{ padding: '12px', backgroundColor: '#f8fafc', border: '1px solid #e2e8f0' }}>
+          <div className="d-flex align-items-center mb-2">
+            <span style={{ fontSize: '10px', fontWeight: '800', letterSpacing: '0.5px', color: '#0f172a', marginRight: '8px' }}>WHAT YOU BROUGHT</span>
+            <span style={{ fontSize: '11px', color: '#64748b', marginRight: '8px' }}>proposes</span>
+            <span className="d-inline-flex align-items-center justify-content-center" style={{ fontSize: '10px', border: '1px solid', borderRadius: '4px', padding: '2px 6px', marginRight: '8px', ...getStatusStyles(bet.status || "ACTIVE", true) }}>
               {(bet.status || "ACTIVE").toUpperCase()}
             </span>
-            <span style={{ fontSize: '12px', color: '#64748b' }}>- {bet.learning_state || "Not started"}</span>
+            <span style={{ fontSize: '11px', color: '#64748b' }}>- {bet.learning_state || "Not started"}</span>
           </div>
           <div className="row">
             <div className="col-md-6">
-              <div style={{ fontSize: '10px', fontWeight: '800', letterSpacing: '0.5px', color: '#475569', marginBottom: '4px' }}>WHAT CHANGED</div>
-              <div style={{ fontSize: '12px', fontStyle: 'italic', color: '#94a3b8' }}>{whatChanged.length > 0 ? whatChanged[0] : "No update from the decider yet."}</div>
+              <div style={{ fontSize: '9px', fontWeight: '800', letterSpacing: '0.5px', color: '#475569', marginBottom: '2px' }}>WHAT CHANGED</div>
+              <div style={{ fontSize: '11px', fontStyle: 'italic', color: '#94a3b8' }}>{whatChanged.length > 0 ? whatChanged[0] : "No update from the decider yet."}</div>
             </div>
             <div className="col-md-6">
-              <div style={{ fontSize: '10px', fontWeight: '800', letterSpacing: '0.5px', color: '#475569', marginBottom: '4px' }}>RISKS & BLOCKERS</div>
-              <div style={{ fontSize: '12px', fontStyle: 'italic', color: '#94a3b8' }}>None flagged yet.</div>
+              <div style={{ fontSize: '9px', fontWeight: '800', letterSpacing: '0.5px', color: '#475569', marginBottom: '2px' }}>RISKS & BLOCKERS</div>
+              <div style={{ fontSize: '11px', fontStyle: 'italic', color: '#94a3b8' }}>None flagged yet.</div>
             </div>
           </div>
         </div>
 
         {/* INSIGHTS */}
-        <div className="mb-4">
+        <div className="mb-3">
           <div className="d-flex align-items-center gap-2 mb-2">
-            <div style={{ width: '6px', height: '6px', backgroundColor: '#0ea5e9', borderRadius: '50%' }}></div>
-            <span style={{ fontSize: '11px', fontWeight: '800', letterSpacing: '0.5px', color: '#0f172a' }}>INSIGHTS</span>
-            <span style={{ fontSize: '11px', color: '#64748b' }}>- what the history says</span>
+            <div style={{ width: '5px', height: '5px', backgroundColor: '#0ea5e9', borderRadius: '50%' }}></div>
+            <span style={{ fontSize: '10px', fontWeight: '800', letterSpacing: '0.5px', color: '#0f172a' }}>INSIGHTS</span>
+            <span style={{ fontSize: '10px', color: '#64748b' }}>- what the history says</span>
           </div>
-          <div className="d-flex align-items-center" style={{ fontSize: '13px', fontWeight: '600', color: '#059669' }}>
-            <CheckCircle2 size={16} className="me-2" fill="#22c55e" color="#ffffff" />
+          <div className="d-flex align-items-center" style={{ fontSize: '12px', fontWeight: '600', color: '#059669' }}>
+            <CheckCircle2 size={14} className="me-2" fill="#22c55e" color="#ffffff" />
             No flags — thesis holds, risks under control.
           </div>
         </div>
 
         {/* OUTCOME */}
-        <div className="mt-4 pt-3" style={{ borderTop: '1px solid #e2e8f0' }}>
-          <div className="d-flex align-items-center gap-2 mb-3">
-            <div style={{ width: '6px', height: '6px', backgroundColor: '#0ea5e9', borderRadius: '50%' }}></div>
-            <span style={{ fontSize: '11px', fontWeight: '800', letterSpacing: '0.5px', color: '#0f172a' }}>OUTCOME</span>
-            <span style={{ fontSize: '11px', color: '#64748b' }}>- captured by CEO</span>
+        <div className="mt-3 pt-3" style={{ borderTop: '1px solid #e2e8f0' }}>
+          <div className="d-flex align-items-center gap-2 mb-2">
+            <div style={{ width: '5px', height: '5px', backgroundColor: '#0ea5e9', borderRadius: '50%' }}></div>
+            <span style={{ fontSize: '10px', fontWeight: '800', letterSpacing: '0.5px', color: '#0f172a' }}>OUTCOME</span>
+            <span style={{ fontSize: '10px', color: '#64748b' }}>- captured by CEO</span>
           </div>
           
-          <div className="d-flex flex-column gap-3">
+          <div className="d-flex flex-column gap-2">
             {/* Box 1: CONFIRMED STATUS */}
-            <div className="rounded bg-white" style={{ padding: '16px', border: '1px solid #e2e8f0' }}>
-              <div style={{ fontSize: '10px', fontWeight: '800', letterSpacing: '0.5px', color: '#475569', marginBottom: '12px' }}>CONFIRMED STATUS</div>
-              <div className="d-flex flex-wrap gap-2 mb-3">
+            <div className="rounded bg-white" style={{ padding: '12px', border: '1px solid #e2e8f0' }}>
+              <div style={{ fontSize: '9px', fontWeight: '800', letterSpacing: '0.5px', color: '#475569', marginBottom: '8px' }}>CONFIRMED STATUS</div>
+              <div className="d-flex flex-wrap gap-2 mb-2">
                 {STATUS_OPTIONS.map(opt => (
                   <button 
                     key={opt}
                     className="btn btn-sm"
                     style={{ 
-                      fontSize: '11px', 
+                      fontSize: '10px', 
                       fontWeight: '600',
-                      padding: '4px 16px',
+                      padding: '3px 12px',
                       borderRadius: '100px',
                       border: '1px solid',
                       opacity: isReadOnly ? 0.6 : 1,
@@ -212,39 +212,39 @@ const BetReviewCard = ({ bet, isCompleted, updateInfo, onSave, index, legacyComm
                 ))}
               </div>
               {status && status !== originalBetStatus && (
-                <div className="d-flex align-items-center mt-2 mb-3 px-3 py-2" style={{ backgroundColor: '#fffbeb', border: '1px solid #fcd34d', borderRadius: '4px', color: '#b45309', fontSize: '13px', fontWeight: '500' }}>
-                  <AlertTriangle size={14} className="me-2" />
+                <div className="d-flex align-items-center mt-2 mb-2 px-2 py-1" style={{ backgroundColor: '#fffbeb', border: '1px solid #fcd34d', borderRadius: '4px', color: '#b45309', fontSize: '11px', fontWeight: '500' }}>
+                  <AlertTriangle size={12} className="me-2" />
                   Committee moved from <span className="fw-bold mx-1">{originalBetStatus.charAt(0).toUpperCase() + originalBetStatus.slice(1).toLowerCase()}</span> to <span className="fw-bold mx-1">{status.charAt(0).toUpperCase() + status.slice(1).toLowerCase()}</span>
                 </div>
               )}
-              <hr style={{ borderColor: '#e2e8f0', margin: '0 -16px 12px -16px' }} />
+              <hr style={{ borderColor: '#e2e8f0', margin: '0 -12px 10px -12px' }} />
               <div>
-                <div style={{ fontSize: '10px', fontWeight: '800', letterSpacing: '0.5px', color: '#475569', marginBottom: '8px' }}>WHY THIS CALL?</div>
+                <div style={{ fontSize: '9px', fontWeight: '800', letterSpacing: '0.5px', color: '#475569', marginBottom: '6px' }}>WHY THIS CALL?</div>
                 <textarea 
-                  className="form-control" 
+                  className="form-control form-control-sm" 
                   rows="2" 
                   value={statusReason}
                   onChange={(e) => { setStatusReason(e.target.value); setHasStatusUpdated(true); }}
                   onBlur={() => { if (hasStatusUpdated || hasLearningUpdated) handleSave(); }}
                   placeholder="Why this status call? The reasoning the committee will want to remember."
                   disabled={isReadOnly}
-                  style={{ fontSize: '13px', resize: 'none', borderRadius: '4px', border: '1px solid #e2e8f0', color: '#334155', opacity: isReadOnly ? 0.6 : 1 }}
+                  style={{ fontSize: '12px', resize: 'none', borderRadius: '4px', border: '1px solid #e2e8f0', color: '#334155', opacity: isReadOnly ? 0.6 : 1 }}
                 />
               </div>
             </div>
 
             {/* Box 2: CONFIRMED LEARNING */}
-            <div className="rounded bg-white" style={{ padding: '16px', border: '1px solid #e2e8f0' }}>
-              <div style={{ fontSize: '10px', fontWeight: '800', letterSpacing: '0.5px', color: '#475569', marginBottom: '12px' }}>CONFIRMED LEARNING</div>
-              <div className="d-flex flex-wrap gap-2 mb-3">
+            <div className="rounded bg-white" style={{ padding: '12px', border: '1px solid #e2e8f0' }}>
+              <div style={{ fontSize: '9px', fontWeight: '800', letterSpacing: '0.5px', color: '#475569', marginBottom: '8px' }}>CONFIRMED LEARNING</div>
+              <div className="d-flex flex-wrap gap-2 mb-2">
                 {LEARNING_OPTIONS.map(opt => (
                   <button 
                     key={opt}
                     className="btn btn-sm"
                     style={{ 
-                      fontSize: '11px', 
+                      fontSize: '10px', 
                       fontWeight: '600',
-                      padding: '4px 16px',
+                      padding: '3px 12px',
                       borderRadius: '100px',
                       border: '1px solid',
                       opacity: isReadOnly ? 0.6 : 1,
@@ -260,42 +260,42 @@ const BetReviewCard = ({ bet, isCompleted, updateInfo, onSave, index, legacyComm
                   </button>
                 ))}
               </div>
-              <hr style={{ borderColor: '#e2e8f0', margin: '0 -16px 12px -16px' }} />
+              <hr style={{ borderColor: '#e2e8f0', margin: '0 -12px 10px -12px' }} />
               <div>
-                <div style={{ fontSize: '10px', fontWeight: '800', letterSpacing: '0.5px', color: '#475569', marginBottom: '8px' }}>WHY THIS CALL?</div>
+                <div style={{ fontSize: '9px', fontWeight: '800', letterSpacing: '0.5px', color: '#475569', marginBottom: '6px' }}>WHY THIS CALL?</div>
                 <textarea 
-                  className="form-control" 
+                  className="form-control form-control-sm" 
                   rows="2" 
                   value={learningReason}
                   onChange={(e) => { setLearningReason(e.target.value); setHasLearningUpdated(true); }}
                   onBlur={() => { if (hasStatusUpdated || hasLearningUpdated) handleSave(); }}
                   placeholder="Why this learning call? What did this review actually prove or disprove?"
                   disabled={isReadOnly}
-                  style={{ fontSize: '13px', resize: 'none', borderRadius: '4px', border: '1px solid #e2e8f0', color: '#334155', opacity: isReadOnly ? 0.6 : 1 }}
+                  style={{ fontSize: '12px', resize: 'none', borderRadius: '4px', border: '1px solid #e2e8f0', color: '#334155', opacity: isReadOnly ? 0.6 : 1 }}
                 />
               </div>
             </div>
 
             {/* Box 3: PREVIOUS COMMITMENTS */}
             {prevCommitments.length > 0 && (
-              <div className="rounded bg-white mb-3" style={{ padding: '16px', border: '1px solid #e2e8f0' }}>
-                <div style={{ fontSize: '10px', fontWeight: '800', letterSpacing: '0.5px', color: '#475569', marginBottom: '12px', textTransform: 'uppercase' }}>
+              <div className="rounded bg-white mb-2" style={{ padding: '12px', border: '1px solid #e2e8f0' }}>
+                <div style={{ fontSize: '9px', fontWeight: '800', letterSpacing: '0.5px', color: '#475569', marginBottom: '8px', textTransform: 'uppercase' }}>
                   PREVIOUS COMMITMENTS <span style={{ fontWeight: '400', textTransform: 'none', color: '#64748b' }}>· CONFIRM WHAT GOT DONE</span>
                 </div>
                 {prevCommitments.map(c => (
                   <div key={c.id} className="d-flex align-items-center mb-2">
                     <button 
                       className="btn p-0 me-2 d-flex align-items-center justify-content-center flex-shrink-0" 
-                      style={{ width: '16px', height: '16px', borderRadius: '4px', backgroundColor: c.checked ? '#16a34a' : '#ffffff', border: c.checked ? '1px solid #16a34a' : '1px solid #cbd5e1', opacity: isReadOnly ? 0.6 : 1, cursor: isReadOnly ? 'not-allowed' : 'pointer' }}
+                      style={{ width: '14px', height: '14px', borderRadius: '3px', backgroundColor: c.checked ? '#16a34a' : '#ffffff', border: c.checked ? '1px solid #16a34a' : '1px solid #cbd5e1', opacity: isReadOnly ? 0.6 : 1, cursor: isReadOnly ? 'not-allowed' : 'pointer' }}
                       onClick={() => toggleCommitment(c.id)}
                       disabled={isReadOnly}
                     >
-                      {c.checked && <Check size={12} color="#ffffff" strokeWidth={3} />}
+                      {c.checked && <Check size={10} color="#ffffff" strokeWidth={3} />}
                     </button>
-                    <span style={{ fontSize: '13px', flex: 1, color: '#334155' }}>{c.text}</span>
+                    <span style={{ fontSize: '12px', flex: 1, color: '#334155' }}>{c.text}</span>
                     <div className="d-flex align-items-center gap-2">
-                      <span className="badge" style={{ fontSize: '11.5px', fontWeight: '500', color: '#64748b', backgroundColor: '#f1f5f9', border: 'none', padding: '5px 10px', borderRadius: '100px' }}>{c.owner}</span>
-                      <span className="badge" style={{ fontSize: '11.5px', fontWeight: '500', color: '#64748b', backgroundColor: '#f1f5f9', border: 'none', padding: '5px 10px', borderRadius: '100px' }}>{c.date ? new Date(c.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : ''}</span>
+                      <span className="badge" style={{ fontSize: '10px', fontWeight: '500', color: '#64748b', backgroundColor: '#f1f5f9', border: 'none', padding: '4px 8px', borderRadius: '100px' }}>{c.owner}</span>
+                      <span className="badge" style={{ fontSize: '10px', fontWeight: '500', color: '#64748b', backgroundColor: '#f1f5f9', border: 'none', padding: '4px 8px', borderRadius: '100px' }}>{c.date ? new Date(c.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : ''}</span>
                     </div>
                   </div>
                 ))}
@@ -303,8 +303,8 @@ const BetReviewCard = ({ bet, isCompleted, updateInfo, onSave, index, legacyComm
             )}
 
             {/* Box 4: NEW COMMITMENTS */}
-            <div className="rounded bg-white" style={{ padding: '16px', border: '1px solid #e2e8f0' }}>
-              <div style={{ fontSize: '10px', fontWeight: '800', letterSpacing: '0.5px', color: '#475569', marginBottom: '12px', textTransform: 'uppercase' }}>
+            <div className="rounded bg-white" style={{ padding: '12px', border: '1px solid #e2e8f0' }}>
+              <div style={{ fontSize: '9px', fontWeight: '800', letterSpacing: '0.5px', color: '#475569', marginBottom: '8px', textTransform: 'uppercase' }}>
                 NEW COMMITMENTS <span style={{ fontWeight: '400', textTransform: 'none', color: '#64748b' }}>· DECISIONS WITH AN OWNER</span>
               </div>
               
@@ -312,16 +312,16 @@ const BetReviewCard = ({ bet, isCompleted, updateInfo, onSave, index, legacyComm
                 <div key={c.id} className="d-flex align-items-center gap-2 mb-2">
                   <input 
                     type="text"
-                    className="form-control"
+                    className="form-control form-control-sm"
                     placeholder="What needs to happen?"
                     value={c.text}
                     onChange={(e) => updateCommitmentField(c.id, 'text', e.target.value)}
                     disabled={isReadOnly}
-                    style={{ fontSize: '13px', flex: 1, color: '#0f172a', border: '1px solid #e2e8f0', opacity: isReadOnly ? 0.6 : 1 }}
+                    style={{ fontSize: '12px', flex: 1, color: '#0f172a', border: '1px solid #e2e8f0', opacity: isReadOnly ? 0.6 : 1 }}
                   />
                   <select 
-                    className="form-select" 
-                    style={{ width: '140px', fontSize: '13px', color: c.owner ? '#0f172a' : '#94a3b8', border: '1px solid #e2e8f0', height: '38px', padding: '6px 12px', opacity: isReadOnly ? 0.6 : 1 }}
+                    className="form-select form-select-sm" 
+                    style={{ width: '130px', fontSize: '12px', color: c.owner ? '#0f172a' : '#94a3b8', border: '1px solid #e2e8f0', opacity: isReadOnly ? 0.6 : 1 }}
                     value={c.owner}
                     onChange={(e) => updateCommitmentField(c.id, 'owner', e.target.value)}
                     disabled={isReadOnly}
@@ -333,15 +333,15 @@ const BetReviewCard = ({ bet, isCompleted, updateInfo, onSave, index, legacyComm
                   </select>
                   <input 
                     type="date" 
-                    className="form-control" 
-                    style={{ width: '140px', fontSize: '13px', color: c.date ? '#0f172a' : '#94a3b8', border: '1px solid #e2e8f0', opacity: isReadOnly ? 0.6 : 1 }}
+                    className="form-control form-control-sm" 
+                    style={{ width: '130px', fontSize: '12px', color: c.date ? '#0f172a' : '#94a3b8', border: '1px solid #e2e8f0', opacity: isReadOnly ? 0.6 : 1 }}
                     value={c.date ? c.date.substring(0, 10) : ''}
                     onChange={(e) => updateCommitmentField(c.id, 'date', e.target.value)}
                     disabled={isReadOnly}
                   />
                   <button 
                     className="btn btn-link text-muted p-0 d-flex align-items-center"
-                    style={{ fontSize: '18px', lineHeight: 1, textDecoration: 'none', opacity: isReadOnly ? 0.4 : 1, cursor: isReadOnly ? 'not-allowed' : 'pointer' }}
+                    style={{ fontSize: '16px', lineHeight: 1, textDecoration: 'none', opacity: isReadOnly ? 0.4 : 1, cursor: isReadOnly ? 'not-allowed' : 'pointer' }}
                     onClick={() => removeCommitment(c.id)}
                     disabled={isReadOnly}
                   >×</button>
@@ -349,12 +349,12 @@ const BetReviewCard = ({ bet, isCompleted, updateInfo, onSave, index, legacyComm
               ))}
 
               <button 
-                className="btn btn-sm d-flex align-items-center gap-1 mt-3"
-                style={{ fontSize: '12px', fontWeight: '600', color: isReadOnly ? '#94a3b8' : '#475569', border: '1px dashed #cbd5e1', borderRadius: '4px', padding: '5px 12px', backgroundColor: 'transparent', cursor: isReadOnly ? 'not-allowed' : 'pointer' }}
+                className="btn btn-sm d-flex align-items-center gap-1 mt-2"
+                style={{ fontSize: '11px', fontWeight: '600', color: isReadOnly ? '#94a3b8' : '#475569', border: '1px dashed #cbd5e1', borderRadius: '4px', padding: '4px 10px', backgroundColor: 'transparent', cursor: isReadOnly ? 'not-allowed' : 'pointer' }}
                 onClick={addNewCommitment}
                 disabled={isReadOnly}
               >
-                <Plus size={13} strokeWidth={3} /> Add a commitment
+                <Plus size={12} strokeWidth={3} /> Add a commitment
               </button>
             </div>
           </div>
@@ -398,80 +398,83 @@ const MeetingSetupPanel = ({
   };
 
   return (
-    <div className="card shadow-sm border-1 mb-4" style={{ borderColor: '#e2e8f0', borderRadius: '8px' }}>
-      <div className="card-body p-4 p-md-5">
-        <div className="row">
-          {/* Left Column: Audience */}
-          <div className="col-md-6 pe-md-5" style={{ borderRight: '1px solid #f1f5f9' }}>
-            <div className="d-flex justify-content-between align-items-center mb-4">
-              <span style={{ fontSize: '12px', fontWeight: '800', letterSpacing: '0.5px', color: '#1e3a8a', textTransform: 'uppercase' }}>
+    <div className="mb-3 p-3" style={{ backgroundColor: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+      <div className="row g-3">
+        {/* Left Column: Audience */}
+        <div className="col-md-6">
+          <div className="bg-white rounded p-3 p-md-4 h-100 shadow-sm d-flex flex-column" style={{ border: '1px solid #e2e8f0' }}>
+            <div className="d-flex justify-content-between align-items-center mb-3">
+              <span style={{ fontSize: '11px', fontWeight: '800', letterSpacing: '0.5px', color: '#1e3a8a', textTransform: 'uppercase' }}>
                 Audience
               </span>
-              <button className="btn btn-link p-0 text-decoration-none fw-bold" style={{ fontSize: '14px', color: '#0c71b9' }} onClick={handleDone}>
+              <button className="btn btn-link p-0 text-decoration-none fw-bold" style={{ fontSize: '13px', color: '#0c71b9' }} onClick={handleDone}>
                 Close
               </button>
             </div>
             
-            <div className="d-flex flex-wrap gap-2 mb-4">
+            <div className="d-flex flex-wrap align-items-center gap-2 mb-3 pb-3" style={{ borderBottom: '1px solid #f1f5f9' }}>
               {audience.map(ownerId => {
                 const owner = eligibleOwners.find(o => (o._id || o.id) === ownerId);
                 if (!owner) return null;
                 return (
-                  <span key={ownerId} className="d-inline-flex align-items-center rounded-pill px-3 py-1 bg-white" style={{ fontSize: '14px', color: '#0f172a', border: '1px solid #e2e8f0' }}>
+                  <span key={ownerId} className="d-inline-flex align-items-center rounded-pill px-2 py-1 bg-white" style={{ fontSize: '13px', color: '#0f172a', border: '1px solid #e2e8f0' }}>
                     {owner.name}
                   </span>
                 );
               })}
-              {audience.length === 0 && <span className="text-muted" style={{ fontSize: '14px', color: '#94a3b8' }}>No one selected</span>}
+              {audience.length === 0 && <span className="text-muted" style={{ fontSize: '13px', color: '#94a3b8' }}>No one selected</span>}
+              {audience.length > 0 && <span style={{ fontSize: '12px', fontStyle: 'italic', color: '#94a3b8', marginLeft: '4px' }}>Series default</span>}
             </div>
 
-            <div className="mb-5" style={{ maxHeight: '200px', overflowY: 'auto' }}>
+            <div className="mb-4 flex-grow-1" style={{ maxHeight: '200px', overflowY: 'auto' }}>
               {eligibleOwners.map(owner => {
                 const id = owner._id || owner.id;
                 return (
-                  <div key={id} className="d-flex align-items-center justify-content-between mb-3">
+                  <div key={id} className="d-flex align-items-center justify-content-between mb-2">
                     <div className="d-flex align-items-center">
                       <input 
                         type="checkbox" 
-                        className="form-check-input me-3 mt-0 shadow-none" 
+                        className="form-check-input me-2 mt-0 shadow-none" 
                         checked={audience.includes(id)}
                         onChange={() => toggleAudience(id)}
-                        style={{ cursor: 'pointer', width: '18px', height: '18px', borderColor: '#cbd5e1' }}
+                        style={{ cursor: 'pointer', width: '16px', height: '16px', borderColor: '#cbd5e1' }}
                       />
-                      <span style={{ fontSize: '14px', fontWeight: '500', color: '#1e293b' }}>{owner.name}</span>
+                      <span style={{ fontSize: '13px', fontWeight: '500', color: '#1e293b' }}>{owner.name}</span>
                     </div>
-                    <span style={{ fontSize: '13px', color: '#94a3b8' }}>{owner.email || owner.role}</span>
+                    <span style={{ fontSize: '12px', color: '#94a3b8' }}>{owner.email || owner.role}</span>
                   </div>
                 );
               })}
             </div>
 
             <div className="d-flex justify-content-between align-items-center mt-auto pt-2">
-              <button className="btn btn-link p-0 text-decoration-none" style={{ fontSize: '14px', color: '#0c71b9', fontWeight: '500' }} onClick={handleSetDefault}>
+              <button className="btn btn-link p-0 text-decoration-none" style={{ fontSize: '13px', color: '#0c71b9', fontWeight: '500' }} onClick={handleSetDefault}>
                 Set as default for all {cadence?.name}
               </button>
-              <button className="btn fw-bold" style={{ backgroundColor: '#0c71b9', color: '#ffffff', fontSize: '14px', padding: '8px 20px', borderRadius: '6px' }} onClick={handleDone}>
+              <button className="btn fw-bold btn-sm" style={{ backgroundColor: '#0c71b9', color: '#ffffff', fontSize: '13px', padding: '6px 16px', borderRadius: '6px' }} onClick={handleDone}>
                 Done
               </button>
             </div>
           </div>
+        </div>
 
-          {/* Right Column: Agenda */}
-          <div className="col-md-6 ps-md-5">
-            <div className="mb-4 d-flex align-items-center">
-              <span style={{ fontSize: '12px', fontWeight: '800', letterSpacing: '0.5px', color: '#1e3a8a', textTransform: 'uppercase' }}>
+        {/* Right Column: Agenda */}
+        <div className="col-md-6">
+          <div className="bg-white rounded p-3 p-md-4 h-100 shadow-sm d-flex flex-column" style={{ border: '1px solid #e2e8f0' }}>
+            <div className="mb-3 d-flex align-items-center">
+              <span style={{ fontSize: '11px', fontWeight: '800', letterSpacing: '0.5px', color: '#1e3a8a', textTransform: 'uppercase' }}>
                 Other Agenda Items <span style={{ fontWeight: '400', textTransform: 'none', color: '#94a3b8' }}>(optional)</span>
               </span>
             </div>
-            <p className="mb-4" style={{ fontSize: '14px', color: '#64748b', lineHeight: '1.5' }}>
+            <p className="mb-3" style={{ fontSize: '13px', color: '#64748b', lineHeight: '1.5' }}>
               The {betsCount} bet{betsCount !== 1 ? 's' : ''} below are on the agenda automatically. Add anything extra here.
             </p>
 
             {agenda.map((item, idx) => (
-              <div key={idx} className="d-flex align-items-center gap-2 mb-3">
+              <div key={idx} className="d-flex align-items-center gap-2 mb-2">
                 <input 
                   type="text"
-                  className="form-control shadow-none"
+                  className="form-control form-control-sm shadow-none"
                   value={item}
                   onChange={(e) => {
                     const newAgenda = [...agenda];
@@ -479,11 +482,11 @@ const MeetingSetupPanel = ({
                     setAgenda(newAgenda);
                   }}
                   onBlur={() => onSave(audience, agenda, false)}
-                  style={{ fontSize: '14px', flex: 1, color: '#334155', border: '1px solid #e2e8f0', borderRadius: '6px', padding: '8px 12px' }}
+                  style={{ fontSize: '13px', flex: 1, color: '#334155', border: '1px solid #e2e8f0', borderRadius: '6px', padding: '6px 10px' }}
                 />
                 <button 
                   className="btn btn-link p-0 d-flex align-items-center justify-content-center"
-                  style={{ fontSize: '18px', width: '24px', height: '24px', lineHeight: 1, textDecoration: 'none', color: '#64748b' }}
+                  style={{ fontSize: '16px', width: '20px', height: '20px', lineHeight: 1, textDecoration: 'none', color: '#64748b' }}
                   onClick={() => {
                     const newAgenda = agenda.filter((_, i) => i !== idx);
                     setAgenda(newAgenda);
@@ -494,11 +497,11 @@ const MeetingSetupPanel = ({
             ))}
 
             <button 
-              className="btn btn-sm d-flex align-items-center gap-1 mt-2"
-              style={{ fontSize: '14px', fontWeight: '600', color: '#0c71b9', border: '1px dashed #cbd5e1', borderRadius: '6px', padding: '8px 16px', backgroundColor: '#ffffff' }}
+              className="btn btn-sm d-flex align-items-center gap-1 mt-2 align-self-start"
+              style={{ fontSize: '13px', fontWeight: '600', color: '#0c71b9', border: '1px dashed #cbd5e1', borderRadius: '6px', padding: '6px 12px', backgroundColor: '#ffffff' }}
               onClick={() => setAgenda([...agenda, ''])}
             >
-              <Plus size={15} strokeWidth={2.5} /> Add item
+              <Plus size={14} strokeWidth={2.5} /> Add item
             </button>
           </div>
         </div>
@@ -776,20 +779,20 @@ const CadenceMomentPage = () => {
         <MenuBar />
       </div>
 
-      <div className="container py-4" style={{ maxWidth: '1000px' }}>
-        <Link to={`/businesspage?tab=cadences`} className="d-inline-flex align-items-center text-decoration-none mb-4" style={{ fontSize: '13px', color: '#475569', fontWeight: '600' }}>
-          <ChevronLeft size={16} className="me-1" strokeWidth={3} /> Back to Cadences
+      <div className="container py-3" style={{ maxWidth: '1000px' }}>
+        <Link to={`/businesspage?tab=cadences`} className="d-inline-flex align-items-center text-decoration-none mb-3" style={{ fontSize: '12px', color: '#475569', fontWeight: '600' }}>
+          <ChevronLeft size={14} className="me-1" strokeWidth={3} /> Back to Cadences
         </Link>
 
         {/* HEADER */}
-        <div className="d-flex justify-content-between align-items-end pb-3 mb-4" style={{ borderBottom: '1px solid #fde047' }}>
+        <div className="d-flex justify-content-between align-items-end pb-2 mb-3" style={{ borderBottom: '1px solid #fde047' }}>
           <div>
-            <h1 className="fw-bold mb-2" style={{ color: '#0f172a', fontSize: '24px', letterSpacing: '-0.5px', fontWeight: '900' }}>{moment ? moment.name : 'Loading...'}</h1>
+            <h1 className="fw-bold mb-1" style={{ color: '#0f172a', fontSize: '22px', letterSpacing: '-0.5px', fontWeight: '900' }}>{moment ? moment.name : 'Loading...'}</h1>
             <div className="d-flex align-items-center gap-2">
-              <span className="d-inline-flex align-items-center justify-content-center text-uppercase" style={{ fontSize: '9.5px', fontWeight: '700', letterSpacing: '0.5px', color: '#b45309', backgroundColor: '#fef3c7', borderRadius: '100px', padding: '3px 8px' }}>
+              <span className="d-inline-flex align-items-center justify-content-center text-uppercase" style={{ fontSize: '9px', fontWeight: '700', letterSpacing: '0.5px', color: '#b45309', backgroundColor: '#fef3c7', borderRadius: '100px', padding: '2px 6px' }}>
                 Needs close
               </span>
-              <span style={{ fontSize: '13px', color: '#64748b' }}>
+              <span style={{ fontSize: '12px', color: '#64748b' }}>
                 {moment?.date ? new Date(moment.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' }) : ''} · {moment?.date ? Math.max(0, Math.floor((new Date() - new Date(moment.date)) / (1000 * 60 * 60 * 24))) : 0} days ago · {bets.length} bet{bets.length !== 1 ? 's' : ''} · {Object.values(confirmedBetsMap).filter(Boolean).length}/{bets.length} outcomes
               </span>
             </div>
@@ -812,12 +815,12 @@ const CadenceMomentPage = () => {
                  </div>
                ))}
             </div>
-            <button 
-              className="btn d-flex align-items-center gap-2" 
-              style={{ fontSize: '13px', fontWeight: '500', color: showMeetingSetup ? '#0c71b9' : '#475569', backgroundColor: '#ffffff', border: showMeetingSetup ? '1px solid #0c71b9' : '1px solid #e2e8f0', padding: '6px 12px', borderRadius: '6px', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}
+             <button 
+              className="btn btn-sm d-flex align-items-center gap-2" 
+              style={{ fontSize: '12px', fontWeight: '500', color: showMeetingSetup ? '#0c71b9' : '#475569', backgroundColor: '#ffffff', border: showMeetingSetup ? '1px solid #0c71b9' : '1px solid #e2e8f0', padding: '5px 10px', borderRadius: '6px', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}
               onClick={() => setShowMeetingSetup(!showMeetingSetup)}
             >
-              Meeting setup <ChevronDown size={14} style={{ transform: showMeetingSetup ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
+              Meeting setup <ChevronDown size={13} style={{ transform: showMeetingSetup ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
             </button>
           </div>
         </div>
@@ -841,7 +844,7 @@ const CadenceMomentPage = () => {
           const allConfirmed = bets.length > 0 && confirmedCount === bets.length;
           return (
             <div
-              className="card shadow-sm border-1 mb-4"
+              className="card shadow-sm border-1 mb-3"
               style={{
                 borderColor: allConfirmed ? '#86efac' : '#e2e8f0',
                 borderRadius: '8px',
@@ -849,18 +852,18 @@ const CadenceMomentPage = () => {
                 transition: 'background-color 0.3s ease, border-color 0.3s ease'
               }}
             >
-              <div className="card-body d-flex justify-content-between align-items-center">
+              <div className="card-body py-2 px-3 d-flex justify-content-between align-items-center">
                 <div className="w-100">
                   <div className="d-flex justify-content-between align-items-center mb-1">
-                    <h5 className="fw-bold mb-0" style={{ color: '#0f172a', fontSize: '15px' }}>Close this Moment</h5>
+                    <h5 className="fw-bold mb-0" style={{ color: '#0f172a', fontSize: '14px' }}>Close this Moment</h5>
                     <button
-                      className="btn fw-bold d-flex align-items-center"
+                      className="btn btn-sm fw-bold d-flex align-items-center"
                       style={{
                         backgroundColor: allConfirmed ? '#0c71b9' : '#f1f5f9',
                         color: allConfirmed ? '#ffffff' : '#6b7280',
-                        fontSize: '13.5px',
-                        padding: '8px 20px',
-                        minWidth: '140px',
+                        fontSize: '12px',
+                        padding: '6px 16px',
+                        minWidth: '120px',
                         justifyContent: 'center'
                       }}
                       onClick={handleSignAndClose}
@@ -878,11 +881,11 @@ const CadenceMomentPage = () => {
                   </div>
 
                   {allConfirmed ? (
-                    <p className="mb-0" style={{ fontSize: '12.5px', color: '#15803d', fontWeight: '500' }}>
+                    <p className="mb-0" style={{ fontSize: '11px', color: '#15803d', fontWeight: '500' }}>
                       Every bet is confirmed — sign to lock the snapshot.
                     </p>
                   ) : (
-                    <p className="text-muted mb-0" style={{ fontSize: '12.5px', color: '#64748b' }}>
+                    <p className="text-muted mb-0" style={{ fontSize: '11px', color: '#64748b' }}>
                       Confirm each bet's outcome — Status, Learning, and prior commitments.{' '}
                       <span style={{ fontWeight: '700', color: '#0c71b9' }}>
                         {confirmedCount} of {bets.length} confirmed.
@@ -933,32 +936,32 @@ const CadenceMomentPage = () => {
         })()}
 
         {/* ── TOP FLAGS TO REVIEW ──────────────────────────────── */}
-        <div className="card shadow-sm mb-4" style={{ borderColor: '#eaecf0', borderRadius: '8px', boxShadow: '0px 1px 2px rgba(16, 24, 40, 0.05)' }}>
-          <div className="card-header bg-white border-0 pt-4 pb-0 px-4">
-            <h5 className="mb-0" style={{ fontSize: '16px', fontWeight: '600', color: '#101828' }}>Top flags to review</h5>
+        <div className="card shadow-sm mb-3" style={{ borderColor: '#eaecf0', borderRadius: '8px', boxShadow: '0px 1px 2px rgba(16, 24, 40, 0.05)' }}>
+          <div className="card-header bg-white border-0 pt-3 pb-0 px-3">
+            <h5 className="mb-0" style={{ fontSize: '14px', fontWeight: '600', color: '#101828' }}>Top flags to review</h5>
           </div>
-          <div className="card-body px-4 pb-3">
+          <div className="card-body px-3 pb-2">
             {flaggedBets.length > 0 || totalOpenCommitments > 0 ? (
               <>
                 <ul className="list-unstyled mb-0">
                   {flaggedBets.map(bet => {
                     return (
-                      <li key={bet._id} className="d-flex align-items-center justify-content-between mb-3 pb-3" style={{ borderBottom: '1px solid #eaecf0' }}>
+                      <li key={bet._id} className="d-flex align-items-center justify-content-between mb-2 pb-2" style={{ borderBottom: '1px solid #eaecf0' }}>
                         <div className="d-flex align-items-center pe-3">
                           <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: bet.dotColor, marginRight: '12px', flexShrink: 0 }}></span>
                           <div style={{ lineHeight: '1.4' }}>
-                            <span style={{ fontSize: '14px', fontWeight: '600', color: '#344054' }}>
+                            <span style={{ fontSize: '13px', fontWeight: '600', color: '#344054' }}>
                               #{bet.globalIndex} {bet.project_name || bet.initiative_name || bet.name}
                             </span>
-                            <span style={{ color: '#98a2b3', fontSize: '14px', margin: '0 8px' }}>—</span>
-                            <span style={{ fontSize: '14px', color: '#667085' }}>
+                            <span style={{ color: '#98a2b3', fontSize: '13px', margin: '0 6px' }}>—</span>
+                            <span style={{ fontSize: '13px', color: '#667085' }}>
                               {bet.insightText}
                             </span>
                           </div>
                         </div>
                         <button 
                           className="btn btn-link p-0 text-decoration-none d-flex align-items-center flex-shrink-0" 
-                          style={{ fontSize: '13px', fontWeight: '600', color: '#0073ea' }}
+                          style={{ fontSize: '12px', fontWeight: '600', color: '#0073ea' }}
                           onClick={() => {
                             const el = document.getElementById(`bet-card-${bet._id}`);
                             if (el) {
@@ -973,11 +976,11 @@ const CadenceMomentPage = () => {
                   })}
 
                   {totalOpenCommitments > 0 && (
-                    <li className="d-flex align-items-center justify-content-between mb-3 pb-3" style={{ borderBottom: '1px solid #eaecf0' }}>
+                    <li className="d-flex align-items-center justify-content-between mb-2 pb-2" style={{ borderBottom: '1px solid #eaecf0' }}>
                       <div className="d-flex align-items-center pe-3">
                         <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#98a2b3', marginRight: '12px', flexShrink: 0 }}></span>
                         <div style={{ lineHeight: '1.4' }}>
-                          <span style={{ fontSize: '14px', color: '#667085' }}>
+                          <span style={{ fontSize: '13px', color: '#667085' }}>
                             {totalOpenCommitments} {totalOpenCommitments === 1 ? 'commitment' : 'commitments'} from previous reviews still open.
                           </span>
                         </div>
@@ -985,14 +988,14 @@ const CadenceMomentPage = () => {
                     </li>
                   )}
                 </ul>
-                <div style={{ fontSize: '13px', color: '#98a2b3', fontStyle: 'italic', marginTop: '8px' }}>
+                <div style={{ fontSize: '11px', color: '#98a2b3', fontStyle: 'italic', marginTop: '6px' }}>
                   Ranked by severity. Open any bet below for its full set of insights.
                 </div>
               </>
             ) : (
-              <div className="d-flex align-items-center mt-3" style={{ color: '#027a48', backgroundColor: '#ecfdf3', border: '1px solid #a6f4c5', padding: '12px 16px', borderRadius: '8px' }}>
-                <CheckCircle2 className="me-2" size={18} />
-                <span style={{ fontSize: '14px', fontWeight: '500' }}>Nothing flagged this cycle — the agenda looks clean.</span>
+              <div className="d-flex align-items-center mt-2" style={{ color: '#027a48', backgroundColor: '#ecfdf3', border: '1px solid #a6f4c5', padding: '8px 12px', borderRadius: '8px' }}>
+                <CheckCircle2 className="me-2" size={16} />
+                <span style={{ fontSize: '13px', fontWeight: '500' }}>Nothing flagged this cycle — the agenda looks clean.</span>
               </div>
             )}
           </div>

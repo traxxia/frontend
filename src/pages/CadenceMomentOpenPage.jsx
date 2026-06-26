@@ -75,50 +75,50 @@ const BetPreviewCard = ({ bet, index, allCompletedUpdates, momentId }) => {
   const isAtRisk = (bet.status || '').toUpperCase() === 'AT RISK' || (bet.status || '').toUpperCase() === 'STALLED';
 
   return (
-    <div className="card shadow-sm mb-4" style={{ borderColor: isAtRisk ? '#fca5a5' : '#e2e8f0', borderRadius: '10px', overflow: 'hidden' }}>
+    <div className="card shadow-sm mb-3" style={{ borderColor: isAtRisk ? '#fca5a5' : '#e2e8f0', borderRadius: '8px', overflow: 'hidden' }}>
 
       {/* Card header */}
       <div
-        className="card-header bg-white d-flex justify-content-between align-items-center py-3 px-4"
+        className="card-header bg-white d-flex justify-content-between align-items-center py-2 px-3"
         style={{ cursor: 'pointer', borderBottom: expanded ? '1px solid #f1f5f9' : 'none' }}
         onClick={() => setExpanded(v => !v)}
       >
-        <div className="d-flex align-items-center gap-3">
-          <span style={{ fontSize: '12px', fontWeight: '700', color: '#94a3b8' }}>#{index}</span>
-          <span style={{ fontSize: '15px', fontWeight: '700', color: '#0f172a' }}>
+        <div className="d-flex align-items-center gap-2">
+          <span style={{ fontSize: '11px', fontWeight: '700', color: '#94a3b8' }}>#{index}</span>
+          <span style={{ fontSize: '14px', fontWeight: '700', color: '#0f172a' }}>
             {bet.project_name || bet.initiative_name || bet.name || 'Unnamed Bet'}
           </span>
         </div>
-        <div className="d-flex align-items-center gap-3">
-          <span style={{ fontSize: '12px', color: '#64748b' }}>{bet.accountable_owner || '—'}</span>
+        <div className="d-flex align-items-center gap-2">
+          <span style={{ fontSize: '11px', color: '#64748b' }}>{bet.accountable_owner || '—'}</span>
           <StatusPill value={bet.status} />
           <LearningPill value={bet.learning_state} />
-          <ChevronDown size={16} color="#94a3b8" style={{ transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }} />
+          <ChevronDown size={14} color="#94a3b8" style={{ transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }} />
         </div>
       </div>
 
       {expanded && (
-        <div className="card-body px-4 py-3">
+        <div className="card-body px-3 py-2">
 
           {/* ── ON THE BET ─────────────────────────────────────── */}
-          <div className="mb-4" style={{ padding: '14px 16px', backgroundColor: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
-            <div className="d-flex align-items-center gap-2 mb-3">
-              <span style={{ fontSize: '10px', fontWeight: '800', letterSpacing: '0.5px', color: '#0f172a' }}>ON THE BET</span>
-              <span style={{ fontSize: '12px', color: '#64748b' }}>Refer to the</span>
-              <a href="#" style={{ fontSize: '12px', color: '#0c71b9', fontWeight: '600', textDecoration: 'none' }}>Bet Target</a>
+          <div className="mb-3" style={{ padding: '10px 14px', backgroundColor: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+            <div className="d-flex align-items-center gap-2 mb-2">
+              <span style={{ fontSize: '9px', fontWeight: '800', letterSpacing: '0.5px', color: '#0f172a' }}>ON THE BET</span>
+              <span style={{ fontSize: '11px', color: '#64748b' }}>Refer to the</span>
+              <a href="#" style={{ fontSize: '11px', color: '#0c71b9', fontWeight: '600', textDecoration: 'none' }}>Bet Target</a>
             </div>
 
             {/* Hypotheses */}
             {hypotheses.length > 0 && (
-              <div className="mb-3">
-                <div style={{ fontSize: '10px', fontWeight: '800', letterSpacing: '0.5px', color: '#475569', marginBottom: '8px' }}>
+              <div className="mb-2">
+                <div style={{ fontSize: '9px', fontWeight: '800', letterSpacing: '0.5px', color: '#475569', marginBottom: '6px' }}>
                   HYPOTHESES TESTED
                 </div>
                 <ul className="list-unstyled mb-0" style={{ paddingLeft: '4px' }}>
                   {hypotheses.map((h, i) => (
                     <li key={i} className="d-flex align-items-start gap-2 mb-1">
-                      <span style={{ color: '#94a3b8', marginTop: '2px', fontSize: '14px' }}>•</span>
-                      <span style={{ fontSize: '13px', color: '#334155' }}>{h}</span>
+                      <span style={{ color: '#94a3b8', marginTop: '2px', fontSize: '12px' }}>•</span>
+                      <span style={{ fontSize: '12px', color: '#334155' }}>{h}</span>
                     </li>
                   ))}
                 </ul>
@@ -127,17 +127,17 @@ const BetPreviewCard = ({ bet, index, allCompletedUpdates, momentId }) => {
 
             {/* Continue if / Stop if */}
             {(continueIf || stopIf) && (
-              <div className="row g-3">
+              <div className="row g-2">
                 {continueIf && (
                   <div className="col-md-6">
-                    <div style={{ fontSize: '10px', fontWeight: '800', letterSpacing: '0.5px', color: '#16a34a', marginBottom: '4px' }}>CONTINUE IF</div>
-                    <div style={{ fontSize: '12px', color: '#334155' }}>{continueIf}</div>
+                    <div style={{ fontSize: '9px', fontWeight: '800', letterSpacing: '0.5px', color: '#16a34a', marginBottom: '4px' }}>CONTINUE IF</div>
+                    <div style={{ fontSize: '11px', color: '#334155' }}>{continueIf}</div>
                   </div>
                 )}
                 {stopIf && (
                   <div className="col-md-6">
-                    <div style={{ fontSize: '10px', fontWeight: '800', letterSpacing: '0.5px', color: '#dc2626', marginBottom: '4px' }}>STOP IF</div>
-                    <div style={{ fontSize: '12px', color: '#334155' }}>{stopIf}</div>
+                    <div style={{ fontSize: '9px', fontWeight: '800', letterSpacing: '0.5px', color: '#dc2626', marginBottom: '4px' }}>STOP IF</div>
+                    <div style={{ fontSize: '11px', color: '#334155' }}>{stopIf}</div>
                   </div>
                 )}
               </div>
@@ -145,76 +145,76 @@ const BetPreviewCard = ({ bet, index, allCompletedUpdates, momentId }) => {
           </div>
 
           {/* ── INSIGHTS ───────────────────────────────────────── */}
-          <div className="mb-4">
+          <div className="mb-3">
             <div className="d-flex align-items-center gap-2 mb-2">
-              <span style={{ width: '6px', height: '6px', backgroundColor: '#0ea5e9', borderRadius: '50%', display: 'inline-block', flexShrink: 0 }} />
-              <span style={{ fontSize: '10px', fontWeight: '800', letterSpacing: '0.5px', color: '#0f172a' }}>INSIGHTS</span>
-              <span style={{ fontSize: '11px', color: '#64748b' }}>- what the history says</span>
+              <span style={{ width: '5px', height: '5px', backgroundColor: '#0ea5e9', borderRadius: '50%', display: 'inline-block', flexShrink: 0 }} />
+              <span style={{ fontSize: '9px', fontWeight: '800', letterSpacing: '0.5px', color: '#0f172a' }}>INSIGHTS</span>
+              <span style={{ fontSize: '10px', color: '#64748b' }}>- what the history says</span>
             </div>
             {latestUpdate ? (
-              <div style={{ fontSize: '13px', color: '#334155', padding: '10px 14px', backgroundColor: '#f0f9ff', border: '1px solid #bae6fd', borderRadius: '6px' }}>
+              <div style={{ fontSize: '12px', color: '#334155', padding: '8px 12px', backgroundColor: '#f0f9ff', border: '1px solid #bae6fd', borderRadius: '6px' }}>
                 {latestUpdate.status_reason || latestUpdate.learning_reason || 'No notes from last review.'}
               </div>
             ) : (
-              <div className="d-flex align-items-center gap-2" style={{ fontSize: '13px', color: '#059669', fontWeight: '600' }}>
-                <CheckCircle2 size={16} fill="#22c55e" color="#ffffff" />
+              <div className="d-flex align-items-center gap-2" style={{ fontSize: '12px', color: '#059669', fontWeight: '600' }}>
+                <CheckCircle2 size={14} fill="#22c55e" color="#ffffff" />
                 No flags — thesis holds, risks under control.
               </div>
             )}
           </div>
 
           {/* ── WHAT CHANGED SINCE LAST REVIEW ─────────────────── */}
-          <div className="mb-4" style={{ padding: '14px 16px', borderRadius: '8px', border: '1px solid #e2e8f0', backgroundColor: '#fff' }}>
-            <div style={{ fontSize: '10px', fontWeight: '800', letterSpacing: '0.5px', color: '#475569', marginBottom: '8px' }}>
+          <div className="mb-3" style={{ padding: '10px 14px', borderRadius: '8px', border: '1px solid #e2e8f0', backgroundColor: '#fff' }}>
+            <div style={{ fontSize: '9px', fontWeight: '800', letterSpacing: '0.5px', color: '#475569', marginBottom: '6px' }}>
               WHAT CHANGED SINCE LAST REVIEW
             </div>
             {bet.description ? (
-              <p style={{ fontSize: '13px', color: '#334155', margin: 0 }}>{bet.description}</p>
+              <p style={{ fontSize: '12px', color: '#334155', margin: 0 }}>{bet.description}</p>
             ) : (
-              <p style={{ fontSize: '13px', color: '#94a3b8', fontStyle: 'italic', margin: 0 }}>
+              <p style={{ fontSize: '12px', color: '#94a3b8', fontStyle: 'italic', margin: 0 }}>
                 No changes logged yet. Updates will appear after the first review.
               </p>
             )}
           </div>
 
           {/* ── RISKS & BLOCKERS ───────────────────────────────── */}
-          <div className="mb-4" style={{ padding: '14px 16px', borderRadius: '8px', border: '1px solid #e2e8f0', backgroundColor: '#fff' }}>
-            <div style={{ fontSize: '10px', fontWeight: '800', letterSpacing: '0.5px', color: '#475569', marginBottom: '8px' }}>
+          <div className="mb-3" style={{ padding: '10px 14px', borderRadius: '8px', border: '1px solid #e2e8f0', backgroundColor: '#fff' }}>
+            <div style={{ fontSize: '9px', fontWeight: '800', letterSpacing: '0.5px', color: '#475569', marginBottom: '6px' }}>
               RISKS &amp; BLOCKERS
             </div>
             {bet.risks && bet.risks.length > 0 ? (
               <ul className="list-unstyled mb-0">
                 {bet.risks.map((r, i) => (
                   <li key={i} className="d-flex align-items-start gap-2 mb-1">
-                    <AlertTriangle size={13} color="#f59e0b" className="mt-1 flex-shrink-0" />
-                    <span style={{ fontSize: '13px', color: '#334155' }}>{r}</span>
+                    <AlertTriangle size={12} color="#f59e0b" className="mt-1 flex-shrink-0" />
+                    <span style={{ fontSize: '12px', color: '#334155' }}>{r}</span>
                   </li>
                 ))}
               </ul>
             ) : (
-              <div style={{ fontSize: '13px', color: '#94a3b8', fontStyle: 'italic' }}>No risks or blockers flagged.</div>
+              <div style={{ fontSize: '12px', color: '#94a3b8', fontStyle: 'italic' }}>No risks or blockers flagged.</div>
             )}
           </div>
 
           {/* ── PREVIOUS COMMITMENTS ───────────────────────────── */}
           {prevCommitments.length > 0 && (
-            <div className="mb-4" style={{ padding: '14px 16px', borderRadius: '8px', border: '1px solid #e2e8f0', backgroundColor: '#fff' }}>
-              <div style={{ fontSize: '10px', fontWeight: '800', letterSpacing: '0.5px', color: '#475569', marginBottom: '12px' }}>
+            <div className="mb-3" style={{ padding: '10px 14px', borderRadius: '8px', border: '1px solid #e2e8f0', backgroundColor: '#fff' }}>
+              <div style={{ fontSize: '9px', fontWeight: '800', letterSpacing: '0.5px', color: '#475569', marginBottom: '10px' }}>
                 PREVIOUS COMMITMENTS
               </div>
               {prevCommitments.map((c, i) => (
-                <div key={i} className="d-flex align-items-center gap-3 mb-2">
+                <div key={i} className="d-flex align-items-center gap-2 mb-2">
                   <div style={{
-                    width: '15px', height: '15px', borderRadius: '3px', flexShrink: 0,
+                    width: '14px', height: '14px', borderRadius: '3px', flexShrink: 0,
                     border: c.checked ? '1px solid #16a34a' : '1px solid #cbd5e1',
                     backgroundColor: c.checked ? '#16a34a' : '#fff',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                   }}>
-                    {c.checked && <svg width="9" height="7" viewBox="0 0 9 7"><path d="M1 3L3.5 5.5L8 1" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                    {c.checked && <svg width="8" height="6" viewBox="0 0 9 7"><path d="M1 3L3.5 5.5L8 1" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}
                   </div>
-                  <span style={{ fontSize: '13px', flex: 1, color: '#0f172a', textDecoration: c.checked ? 'line-through' : 'none' }}>{c.text}</span>
-                  <span style={{ fontSize: '11px', color: '#64748b', fontWeight: '500' }}>{c.owner}</span>
-                  <span style={{ fontSize: '11px', color: '#94a3b8' }}>
+                  <span style={{ fontSize: '12px', flex: 1, color: '#0f172a', textDecoration: c.checked ? 'line-through' : 'none' }}>{c.text}</span>
+                  <span style={{ fontSize: '10px', color: '#64748b', fontWeight: '500' }}>{c.owner}</span>
+                  <span style={{ fontSize: '10px', color: '#94a3b8' }}>
                     {c.date ? new Date(c.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : ''}
                   </span>
                 </div>
@@ -223,17 +223,17 @@ const BetPreviewCard = ({ bet, index, allCompletedUpdates, momentId }) => {
           )}
 
           {/* ── WHERE THE BET STANDS ───────────────────────────── */}
-          <div style={{ padding: '14px 16px', borderRadius: '8px', border: '1px solid #e2e8f0', backgroundColor: '#fff' }}>
-            <div style={{ fontSize: '10px', fontWeight: '800', letterSpacing: '0.5px', color: '#475569', marginBottom: '14px' }}>
+          <div style={{ padding: '10px 14px', borderRadius: '8px', border: '1px solid #e2e8f0', backgroundColor: '#fff' }}>
+            <div style={{ fontSize: '9px', fontWeight: '800', letterSpacing: '0.5px', color: '#475569', marginBottom: '10px' }}>
               WHERE THE BET STANDS · AS IN THE TABLE ABOVE
             </div>
-            <div className="row g-3">
+            <div className="row g-2">
               <div className="col-md-6">
-                <div style={{ fontSize: '10px', fontWeight: '700', color: '#64748b', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Status · Commit · Killed</div>
+                <div style={{ fontSize: '9px', fontWeight: '700', color: '#64748b', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Status · Commit · Killed</div>
                 <StatusPill value={bet.status || 'ACTIVE'} />
               </div>
               <div className="col-md-6">
-                <div style={{ fontSize: '10px', fontWeight: '700', color: '#64748b', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Learning State</div>
+                <div style={{ fontSize: '9px', fontWeight: '700', color: '#64748b', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Learning State</div>
                 <LearningPill value={bet.learning_state || 'Not Started'} />
               </div>
             </div>
@@ -337,40 +337,40 @@ const CadenceMomentOpenPage = () => {
         <MenuBar />
       </div>
 
-      <div className="container py-4" style={{ maxWidth: '1000px' }}>
+      <div className="container py-3" style={{ maxWidth: '1000px' }}>
 
         {/* Back link */}
         <Link
           to="/businesspage?tab=cadences"
-          className="d-inline-flex align-items-center text-decoration-none mb-4"
-          style={{ fontSize: '13px', color: '#475569', fontWeight: '600' }}
+          className="d-inline-flex align-items-center text-decoration-none mb-3"
+          style={{ fontSize: '12px', color: '#475569', fontWeight: '600' }}
         >
-          <ChevronLeft size={16} className="me-1" strokeWidth={3} />
+          <ChevronLeft size={14} className="me-1" strokeWidth={3} />
           Back to Cadences
         </Link>
 
         {/* ── PAGE HEADER ──────────────────────────────────────── */}
         <div
-          className="d-flex justify-content-between align-items-end pb-3 mb-4"
+          className="d-flex justify-content-between align-items-end pb-2 mb-3"
           style={{ borderBottom: '3px solid #0c71b9' }}
         >
           <div>
             <h1
-              className="fw-bold mb-2"
-              style={{ color: '#0f172a', fontSize: '26px', fontWeight: '900', letterSpacing: '-0.5px' }}
+              className="fw-bold mb-1"
+              style={{ color: '#0f172a', fontSize: '24px', fontWeight: '900', letterSpacing: '-0.5px' }}
             >
               {moment ? moment.name : 'Loading…'}
             </h1>
             <div className="d-flex align-items-center gap-2 flex-wrap">
               <span style={{
-                fontSize: '9.5px', fontWeight: '700', letterSpacing: '0.5px',
+                fontSize: '9px', fontWeight: '700', letterSpacing: '0.5px',
                 color: '#0c71b9', backgroundColor: '#dbeafe',
-                borderRadius: '100px', padding: '3px 10px', textTransform: 'uppercase',
+                borderRadius: '100px', padding: '2px 8px', textTransform: 'uppercase',
                 border: '1px solid #93c5fd',
               }}>
                 Upcoming
               </span>
-              <span style={{ fontSize: '13px', color: '#64748b' }}>
+              <span style={{ fontSize: '12px', color: '#64748b' }}>
                 {moment?.date
                   ? new Date(moment.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' })
                   : ''}
@@ -391,9 +391,10 @@ const CadenceMomentOpenPage = () => {
                   style={{
                     width: '32px', height: '32px',
                     zIndex: 4 - idx, marginLeft: idx > 0 ? '-10px' : '0',
-                    fontSize: '11px', fontWeight: '700',
-                    backgroundColor: '#f0f9ff', color: '#0ea5e9',
-                    border: '2px solid #bae6fd',
+                    fontSize: '11px', fontWeight: '800',
+                    backgroundColor: '#f0f9ff', color: '#0c71b9',
+                    border: '2px solid #ffffff',
+                    boxShadow: '0 0 0 1px #e2e8f0'
                   }}
                 >
                   {owner.substring(0, 2).toUpperCase()}
@@ -402,38 +403,37 @@ const CadenceMomentOpenPage = () => {
             </div>
             <button
               style={{
-                fontSize: '13px', fontWeight: '500', color: '#475569',
-                backgroundColor: '#ffffff', border: '1px solid #e2e8f0',
-                padding: '6px 12px', borderRadius: '6px',
-                boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
+                fontSize: '13px', fontWeight: '600', color: '#0c71b9',
+                backgroundColor: '#f0f9ff', border: '1px solid #0c71b9',
+                padding: '5px 12px', borderRadius: '6px',
                 display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer',
               }}
             >
-              Meeting setup <ChevronDown size={14} />
+              Meeting setup <ChevronDown size={14} color="#0c71b9" strokeWidth={2.5} />
             </button>
           </div>
         </div>
 
         {/* ── TOP FLAGS TO REVIEW ──────────────────────────────── */}
-        <div className="card mb-4" style={{ borderColor: '#eaecf0', borderRadius: '8px', boxShadow: '0px 1px 2px rgba(16, 24, 40, 0.05)' }}>
-          <div className="card-header bg-white border-0 pt-4 pb-0 px-4">
-            <h5 className="mb-0" style={{ fontSize: '16px', fontWeight: '600', color: '#101828' }}>Top flags to review</h5>
+        <div className="card mb-3" style={{ borderColor: '#eaecf0', borderRadius: '8px', boxShadow: '0px 1px 2px rgba(16, 24, 40, 0.05)' }}>
+          <div className="card-header bg-white border-0 pt-3 pb-0 px-3">
+            <h5 className="mb-0" style={{ fontSize: '14px', fontWeight: '600', color: '#101828' }}>Top flags to review</h5>
           </div>
-          <div className="card-body px-4 pb-4">
+          <div className="card-body px-3 pb-3">
             {flaggedBets.length > 0 || totalOpenCommitments > 0 ? (
               <>
-                <ul className="list-unstyled mb-0 mt-3">
+                <ul className="list-unstyled mb-0 mt-2">
                   {flaggedBets.map(bet => {
                     return (
-                      <li key={bet._id} className="d-flex align-items-center justify-content-between mb-3 pb-3" style={{ borderBottom: '1px solid #eaecf0' }}>
+                      <li key={bet._id} className="d-flex align-items-center justify-content-between mb-2 pb-2" style={{ borderBottom: '1px solid #eaecf0' }}>
                         <div className="d-flex align-items-center pe-3">
                           <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: bet.dotColor, marginRight: '12px', flexShrink: 0 }}></span>
                           <div style={{ lineHeight: '1.4' }}>
-                            <span style={{ fontSize: '14px', fontWeight: '600', color: '#344054' }}>
+                            <span style={{ fontSize: '13px', fontWeight: '600', color: '#344054' }}>
                               #{bet.globalIndex} {bet.project_name || bet.initiative_name || bet.name}
                             </span>
-                            <span style={{ color: '#98a2b3', fontSize: '14px', margin: '0 8px' }}>—</span>
-                            <span style={{ fontSize: '14px', color: '#667085' }}>
+                            <span style={{ color: '#98a2b3', fontSize: '13px', margin: '0 6px' }}>—</span>
+                            <span style={{ fontSize: '13px', color: '#667085' }}>
                               {bet.top_flag_insight || bet.description || `This bet is currently ${bet.status}.`}
                             </span>
                           </div>
@@ -441,7 +441,7 @@ const CadenceMomentOpenPage = () => {
                         <span
                           className="flex-shrink-0"
                           style={{
-                            fontSize: '13px', fontWeight: '600', color: '#0073ea',
+                            fontSize: '12px', fontWeight: '600', color: '#0073ea',
                             cursor: 'pointer',
                           }}
                         >
@@ -452,11 +452,11 @@ const CadenceMomentOpenPage = () => {
                   })}
 
                   {totalOpenCommitments > 0 && (
-                    <li className="d-flex align-items-center justify-content-between mb-3 pb-3" style={{ borderBottom: '1px solid #eaecf0' }}>
+                    <li className="d-flex align-items-center justify-content-between mb-2 pb-2" style={{ borderBottom: '1px solid #eaecf0' }}>
                       <div className="d-flex align-items-center pe-3">
                         <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#98a2b3', marginRight: '12px', flexShrink: 0 }}></span>
                         <div style={{ lineHeight: '1.4' }}>
-                          <span style={{ fontSize: '14px', color: '#667085' }}>
+                          <span style={{ fontSize: '13px', color: '#667085' }}>
                             {totalOpenCommitments} {totalOpenCommitments === 1 ? 'commitment' : 'commitments'} from previous reviews still open.
                           </span>
                         </div>
@@ -464,22 +464,22 @@ const CadenceMomentOpenPage = () => {
                     </li>
                   )}
                 </ul>
-                <div style={{ fontSize: '13px', color: '#98a2b3', fontStyle: 'italic', marginTop: '8px' }}>
+                <div style={{ fontSize: '11px', color: '#98a2b3', fontStyle: 'italic', marginTop: '6px' }}>
                   Ranked by severity. Open any bet below for its full set of insights.
                 </div>
               </>
             ) : (
-              <div className="d-flex align-items-center mt-3" style={{ color: '#027a48', backgroundColor: '#ecfdf3', border: '1px solid #a6f4c5', padding: '12px 16px', borderRadius: '8px' }}>
-                <CheckCircle2 className="me-2" size={18} />
-                <span style={{ fontSize: '14px', fontWeight: '500' }}>Nothing flagged this cycle — the agenda looks clean.</span>
+              <div className="d-flex align-items-center mt-2" style={{ color: '#027a48', backgroundColor: '#ecfdf3', border: '1px solid #a6f4c5', padding: '8px 12px', borderRadius: '8px' }}>
+                <CheckCircle2 className="me-2" size={16} />
+                <span style={{ fontSize: '13px', fontWeight: '500' }}>Nothing flagged this cycle — the agenda looks clean.</span>
               </div>
             )}
           </div>
         </div>
 
         {/* ── BETS TO REVIEW ─────────────────────────────────────── */}
-        <div className="mb-3 mt-4">
-          <span style={{ fontSize: '11px', fontWeight: '800', letterSpacing: '1px', color: '#64748b', textTransform: 'uppercase' }}>
+        <div className="mb-2 mt-3">
+          <span style={{ fontSize: '10px', fontWeight: '800', letterSpacing: '1px', color: '#64748b', textTransform: 'uppercase' }}>
             BETS TO REVIEW
           </span>
         </div>
