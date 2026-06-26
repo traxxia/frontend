@@ -158,7 +158,15 @@ const ProjectsTable = ({
                   style={{ cursor: 'pointer', borderBottom: '1px dashed #cbd5e1' }}
                   onClick={(e) => canEditProject && canEditProject(project) ? handleOpenCadences(e, project) : null}
                 >
-                  {t(project.cadence || project.review_cadence)}
+                  {(() => {
+                    const cStr = project.cadence || project.review_cadence;
+                    if (!cStr) return "";
+                    const parts = cStr.split(",").map(s => s.trim()).filter(s => s);
+                    if (parts.length > 1) {
+                      return `Multiple (${parts.length})`;
+                    }
+                    return t(cStr);
+                  })()}
                 </span>
               ) : (
                 <span className="text-cadence-blue fw-bold d-inline-flex align-items-center gap-1 text-nowrap" style={{ fontSize: '13px', cursor: 'pointer', whiteSpace: 'nowrap' }} onClick={(e) => canEditProject && canEditProject(project) ? handleOpenCadences(e, project) : null}>

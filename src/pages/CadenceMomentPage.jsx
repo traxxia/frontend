@@ -317,11 +317,11 @@ const BetReviewCard = ({ bet, isCompleted, updateInfo, onSave, index, legacyComm
                     value={c.text}
                     onChange={(e) => updateCommitmentField(c.id, 'text', e.target.value)}
                     disabled={isReadOnly}
-                    style={{ fontSize: '12px', flex: 1, color: '#0f172a', border: '1px solid #e2e8f0', opacity: isReadOnly ? 0.6 : 1 }}
+                    style={{ fontSize: '12px', flex: 1, color: '#0f172a', border: '1px solid #e2e8f0', opacity: isReadOnly ? 0.6 : 1, height: '32px' }}
                   />
                   <select 
                     className="form-select form-select-sm" 
-                    style={{ width: '130px', fontSize: '12px', color: c.owner ? '#0f172a' : '#94a3b8', border: '1px solid #e2e8f0', opacity: isReadOnly ? 0.6 : 1 }}
+                    style={{ width: '130px', fontSize: '12px', color: c.owner ? '#0f172a' : '#94a3b8', border: '1px solid #e2e8f0', opacity: isReadOnly ? 0.6 : 1, height: '32px', paddingTop: '2px', paddingBottom: '2px' }}
                     value={c.owner}
                     onChange={(e) => updateCommitmentField(c.id, 'owner', e.target.value)}
                     disabled={isReadOnly}
@@ -334,7 +334,7 @@ const BetReviewCard = ({ bet, isCompleted, updateInfo, onSave, index, legacyComm
                   <input 
                     type="date" 
                     className="form-control form-control-sm" 
-                    style={{ width: '130px', fontSize: '12px', color: c.date ? '#0f172a' : '#94a3b8', border: '1px solid #e2e8f0', opacity: isReadOnly ? 0.6 : 1 }}
+                    style={{ width: '130px', fontSize: '12px', color: c.date ? '#0f172a' : '#94a3b8', border: '1px solid #e2e8f0', opacity: isReadOnly ? 0.6 : 1, height: '32px' }}
                     value={c.date ? c.date.substring(0, 10) : ''}
                     onChange={(e) => updateCommitmentField(c.id, 'date', e.target.value)}
                     disabled={isReadOnly}
