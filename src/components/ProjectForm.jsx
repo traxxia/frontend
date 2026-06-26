@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect, forwardRef } from "react";
 import { useTranslation } from "../hooks/useTranslation";
+import { useNavigate } from "react-router-dom";
 import { Breadcrumb, Accordion } from "react-bootstrap";
 import { TrendingUp, Zap, AlertTriangle, Circle, Diamond, Rocket, Bolt, Lightbulb, Heart, Shield, Boxes, Clock, DollarSign, Lock, CheckCircle, XCircle, Edit2, ShieldCheck, Users, Info, ChevronLeft, Check } from "lucide-react";
 import { validateField } from "../utils/validation";
@@ -284,19 +285,15 @@ setSuccessMetrics,
   const {
     t
   } = useTranslation();
+  const navigate = useNavigate();
   const isReadOnly = mode === "view" || readOnly;
   const [fieldErrors, setFieldErrors] = useState({});
   const [showErrors, setShowErrors] = useState(false);
   const [eligibleOwners, setEligibleOwners] = useState([]);
+  const [pendingCadences, setPendingCadences] = useState([]);
   const breadcrumbRef = useRef(null);
   useEffect(() => {
     const timer = setTimeout(() => {
-      if (breadcrumbRef.current) {
-        breadcrumbRef.current.scrollIntoView({
-          behavior: 'auto',
-          block: 'start'
-        });
-      }
       window.scrollTo(0, 0);
       const parent = document.querySelector('.info-panel-content');
       if (parent) {
@@ -338,6 +335,28 @@ setSuccessMetrics,
       fetchOwners();
     }
   }, [selectedBusinessId, mode]);
+
+  useEffect(() => {
+    if (projectId && reviewCadence) {
+      const fetchPending = async () => {
+        try {
+          const response = await fetch(`${import.meta.env.VITE_BACKEND_URL || "http://localhost:5000"}/api/cadences/pending-for-bet/${projectId}`, {
+            headers: {
+              "Authorization": `Bearer ${useAuthStore.getState().token}`
+            }
+          });
+          const data = await response.json();
+          if (Array.isArray(data)) {
+             setPendingCadences(data);
+          }
+        } catch (error) {
+          console.error("Failed to fetch pending cadences", error);
+        }
+      };
+      fetchPending();
+    }
+  }, [projectId, reviewCadence]);
+
   useEffect(() => {
     if (!accountableOwnerId && eligibleOwners.length > 0) {
       const existingMatch = accountableOwner ? eligibleOwners.find(o => o.name === accountableOwner || o.email === accountableOwner) : null;
@@ -703,7 +722,7 @@ setSuccessMetrics,
 
       { }
       <div className="project-custom-header-wrapper" ref={breadcrumbRef}>
-        <div className="d-flex justify-content-between align-items-center mb-4 pb-2">
+        <div className="d-flex justify-content-between align-items-center pb-2">
           <button type="button" className="d-flex align-items-center gap-2" onClick={onBack} style={{ border: '1px solid #0c71b9', color: '#0c71b9', fontSize: '13px', fontWeight: '600', padding: '6px 14px', borderRadius: '8px', backgroundColor: '#ffffff', cursor: 'pointer' }}>
             <ChevronLeft size={14} strokeWidth={2.5} /> Back to Bets
           </button>
@@ -754,12 +773,12 @@ setSuccessMetrics,
             <span className="project-custom-header-bet" style={{ color: '#0c71b9', fontWeight: 'bold', fontSize: '12px', letterSpacing: '0.5px' }}>BET {sNo ? `#${sNo}` : '#NEW'}</span>
           </div>
           <div className="project-custom-header-title-row">
-            <h1 className="project-custom-header-title" style={{ fontSize: '28px', fontWeight: 'bold', color: '#0f172a', margin: '8px 0' }}>{projectName || "New bet"}</h1>
+            <h1 className="project-custom-header-title" style={{ fontSize: '18px', fontWeight: 'bold', color: '#0f172a', margin: '4px 0' }}>{projectName || "New bet"}</h1>
           </div>
-          <div className="project-custom-header-meta" style={{ display: 'flex', gap: '48px', marginTop: '16px', marginBottom: '24px' }}>
+          <div className="project-custom-header-meta" style={{ display: 'flex', gap: '24px', marginTop: '12px', marginBottom: '16px' }}>
             <div className="meta-item" style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
               <span className="meta-label">DECIDER</span>
-              <span className="meta-value text-dark" style={{ fontSize: '15px' }}>
+              <span className="meta-value text-dark" style={{ fontSize: '13px' }}>
                 {(() => {
                   if (!accountableOwnerId) return "Not assigned";
                   const owner = eligibleOwners.find(o => o._id === accountableOwnerId);
@@ -772,7 +791,7 @@ setSuccessMetrics,
             </div>
             <div className="meta-item" style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
               <span className="meta-label" >CADENCE</span>
-              <span className="meta-value text-dark" style={{ fontSize: '15px', fontWeight: '500' }}>{reviewCadence || "Not set"}</span>
+              <span className="meta-value text-dark" style={{ fontSize: '13px', fontWeight: '500' }}>{reviewCadence || "Not set"}</span>
             </div>
           </div>
         </div>
@@ -782,20 +801,20 @@ setSuccessMetrics,
       <fieldset disabled={isSubmitting || isReadOnly} style={{ border: 'none', padding: 0, margin: 0 }}>
 
       {!isLaunched && initialStatusLower === "draft" && hasDecider && (
-        <div className="decider-info-banner mt-0 mb-3" style={{ backgroundColor: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '8px', padding: '16px', color: '#1e3a8a', fontSize: '15px' }}>
+        <div className="decider-info-banner mt-0 mb-3" style={{ backgroundColor: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '8px', padding: '16px', color: '#1e3a8a', fontSize: '13px' }}>
           <strong style={{ color: '#1d4ed8' }}>Awaiting {accountableOwner}.</strong> <span style={{ color: '#475569' }}>The fields below will be completed by the assigned decider. You'll see them here once filled.</span>
         </div>
       )}
 
       {!isLaunched && initialStatusLower === "draft" && (
-        <div className="kickstart-banner" style={{ backgroundColor: '#fffbeb', border: '1px solid #fde68a', borderRadius: '12px', padding: '24px', marginBottom: '24px' }}>
+        <div className="kickstart-banner" style={{ backgroundColor: '#fffbeb', border: '1px solid #fde68a', borderRadius: '12px', padding: '16px', marginBottom: '16px' }}>
           <div className="d-flex justify-content-between align-items-center">
             <div style={{ flex: 1 }}>
-              <div className="kickstart-header" style={{ marginBottom: '8px' }}>
-                <span className="kickstart-badge" style={{ color: '#d97706', fontSize: '12px', fontWeight: '700', letterSpacing: '0.5px' }}>DRAFT · NOT IN PLAY YET</span>
+              <div className="kickstart-header" style={{ marginBottom: '4px' }}>
+                <span className="kickstart-badge" style={{ color: '#d97706', fontSize: '11px', fontWeight: '700', letterSpacing: '0.5px' }}>DRAFT · NOT IN PLAY YET</span>
               </div>
-              <h2 className="kickstart-title" style={{ fontSize: '18px', fontWeight: 'bold', color: '#0f172a', margin: '0 0 4px 0' }}>Complete the essentials to kickstart · {kickstartCompleted}/{kickstartItems.length}</h2>
-              <p className="kickstart-subtitle" style={{ color: '#64748b', fontSize: '14px', margin: 0 }}>A bet joins its Cadences for review only once it's kickstarted to Active.</p>
+              <h2 className="kickstart-title" style={{ fontSize: '14px', fontWeight: 'bold', color: '#0f172a', margin: '0 0 4px 0' }}>Complete the essentials to kickstart · {kickstartCompleted}/{kickstartItems.length}</h2>
+              <p className="kickstart-subtitle" style={{ color: '#64748b', fontSize: '12px', margin: 0 }}>A bet joins its Cadences for review only once it's kickstarted to Active.</p>
               
               <div className="kickstart-items" style={{ marginTop: '20px', display: 'flex', flexWrap: 'wrap', gap: '16px 24px' }}>
                 {kickstartItems.map((item, index) => (
@@ -805,7 +824,7 @@ setSuccessMetrics,
                     ) : (
                       <Circle size={18} color="#cbd5e0" fill="#cbd5e0" />
                     )}
-                    <span style={{ color: item.done ? '#1f2937' : '#64748b', fontWeight: item.done ? '600' : '500', fontSize: '14px' }}>{item.label}</span>
+                    <span style={{ color: item.done ? '#1f2937' : '#64748b', fontWeight: item.done ? '600' : '500', fontSize: '13px' }}>{item.label}</span>
                   </div>
                 ))}
               </div>
@@ -817,7 +836,7 @@ setSuccessMetrics,
                     {isSubmitting ? 'Kickstarting...' : 'Kickstart Bet →'}
                   </button>
               ) : (
-                <div style={{ color: '#94a3b8', fontStyle: 'italic', fontSize: '15px', textAlign: 'right', lineHeight: '1.4' }}>
+                <div style={{ color: '#94a3b8', fontStyle: 'italic', fontSize: '13px', textAlign: 'right', lineHeight: '1.4' }}>
                   Awaiting the decider to complete and kickstart this bet.
                 </div>
               )}
@@ -846,11 +865,54 @@ setSuccessMetrics,
         </div>
       )}
 
-      <Accordion alwaysOpen defaultActiveKey={['0', '1', '2', '3', '4']} className="mt-4 form-accordion">
+      {pendingCadences.length > 0 && (
+        <div className="pending-updates-banner" style={{ backgroundColor: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '12px', padding: '16px', marginTop: '0px' }}>
+          <div className="pending-header" style={{ marginBottom: '16px' }}>
+            <span className="bet-pending-eyebrow">PENDING UPDATES</span>
+            <h3 style={{ fontSize: '13px', fontWeight: '700', color: '#0f172a', margin: '4px 0 0 0' }}>Cadences where this bet is up for review</h3>
+          </div>
+          <div className="pending-items" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            {pendingCadences.map((pc, idx) => {
+              const diffTime = Math.abs(new Date() - new Date(pc.moment.date));
+              const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+              const isPast = new Date(pc.moment.date) < new Date();
+              const dayText = isPast ? `${diffDays} days ago` : `in ${diffDays} days`;
+              const formattedDate = new Date(pc.moment.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+              
+              return (
+              <div key={idx} className="pending-item" style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
+                    <span style={{ backgroundColor: '#fef3c7', color: '#b45309', fontSize: '10px', fontWeight: '800', padding: '3px 8px', borderRadius: '4px' }}>NEEDS CLOSE</span>
+                    <span style={{ fontSize: '13px', fontWeight: '700', color: '#0f172a' }}>{pc.cadenceName}</span>
+                  </div>
+                  <div style={{ fontSize: '12px', color: '#64748b', display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '12px' }}>
+                    <span>{formattedDate} · <span style={{ color: isPast ? '#d97706' : '#64748b', fontWeight: '600' }}>{dayText}</span></span>
+                    <span>·</span>
+                    <span>{pc.cadenceName}</span>
+                  </div>
+                  <div>
+                    <span style={{ backgroundColor: '#dcfce7', color: '#16a34a', fontSize: '10px', fontWeight: '700', padding: '3px 8px', borderRadius: '4px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                      <Check size={12} strokeWidth={3} /> PRE-READ COMPLETE
+                    </span>
+                  </div>
+                </div>
+                <div>
+                  <button type="button" onClick={() => navigate(`/business/${selectedBusinessId}/cadence/${pc.cadenceId}/moment/${pc.moment._id}`)} style={{ backgroundColor: '#0c71b9', color: '#ffffff', border: 'none', borderRadius: '6px', fontSize: '13px', fontWeight: '600', padding: '8px 16px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    Open · Capture &rarr;
+                  </button>
+                </div>
+              </div>
+            )})}
+          </div>
+        </div>
+      )}
+
+      <Accordion alwaysOpen defaultActiveKey={['0']} className="mt-4 form-accordion">
         <Accordion.Item eventKey="0" className="mb-2 border rounded form-accordion-item">
           <Accordion.Header>
             <div className="d-flex justify-content-between align-items-center w-100 pe-3">
-              <span className="fw-bold text-dark" style={{ fontSize: '16px' }}>1. Bet Overview</span>
+              <span className="fw-bold text-dark" style={{ fontSize: '13px' }}>1. Bet Overview</span>
               <span className="badge-required" style={{ color: '#ef4444', border: '1px solid #fca5a5', backgroundColor: '#fef2f2', padding: '4px 8px', borderRadius: '4px', fontSize: '10px', fontWeight: 'bold', letterSpacing: '0.5px' }}>REQUIRED</span>
             </div>
           </Accordion.Header>
@@ -879,13 +941,13 @@ setSuccessMetrics,
 
             <div className="field-row" style={{ margin: '0 0 16px 0' }}>
               <div className="field-label-row" style={{ marginBottom: '2px' }}>
-                <label className="field-label" style={{ fontWeight: 'bold', color: '#334155', fontSize: '14px', margin: 0 }}>
+                <label className="field-label" style={{ fontWeight: 'bold', color: '#334155', fontSize: '13px', margin: 0 }}>
                   What this bet is about <span className="required" style={{ color: '#ef4444' }}>*</span>
                 </label>
                 {renderLockBadge("project_description")}
               </div>
               <p className="text-muted small mb-2 project-form--s17" style={{ color: '#64748b', fontSize: '13px', margin: '0 0 8px 0' }}>A clear paragraph describing what this bet is and what it sets out to do.</p>
-              <textarea ref={descriptionRef} value={description || ""} onChange={handleDescriptionChange} placeholder="Launch digital wallet product and achieve market penetration..." rows={3} className={`field-textarea ${showErrors && fieldErrors.description ? "error" : ""}`} readOnly={isFieldDisabled("project_description")} onFocus={() => handleFieldFocus("project_description")} maxLength={500} style={{ backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '12px', width: '100%', outline: 'none' }} />
+              <textarea ref={descriptionRef} value={description || ""} onChange={handleDescriptionChange} placeholder="Launch digital wallet product and achieve market penetration..." rows={3} className={`field-textarea ${showErrors && fieldErrors.description ? "error" : ""}`} readOnly={isFieldDisabled("project_description")} onFocus={() => handleFieldFocus("project_description")} maxLength={500} style={{ backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '8px', width: '100%', outline: 'none' }} />
               <div className="project-form--s16">
                 {showErrors && fieldErrors.description && <small className="error-text">{fieldErrors.description}</small>}
               </div>
@@ -893,13 +955,13 @@ setSuccessMetrics,
 
             <div className="field-row" style={{ margin: '0' }}>
               <div className="field-label-row" style={{ marginBottom: '2px' }}>
-                <label className="field-label" style={{ fontWeight: 'bold', color: '#334155', fontSize: '14px', margin: 0 }}>
+                <label className="field-label" style={{ fontWeight: 'bold', color: '#334155', fontSize: '13px', margin: 0 }}>
                   Why this matters <span className="required" style={{ color: '#ef4444' }}>*</span>
                 </label>
                 {renderLockBadge("why_this_matters")}
               </div>
               <p className="text-muted small mb-2 project-form--s17" style={{ color: '#64748b', fontSize: '13px', margin: '0 0 8px 0' }}>The strategic importance — why this bet earns a slot in your top 5.</p>
-              <textarea ref={importanceRef} value={importance || ""} onChange={handleImportanceChange} placeholder="Explain the strategic importance..." rows={3} className={`field-textarea ${showErrors && fieldErrors.importance ? "error" : ""}`} readOnly={isFieldDisabled("why_this_matters")} onFocus={() => handleFieldFocus("why_this_matters")} style={{ backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '12px', width: '100%', outline: 'none' }} />
+              <textarea ref={importanceRef} value={importance || ""} onChange={handleImportanceChange} placeholder="Explain the strategic importance..." rows={3} className={`field-textarea ${showErrors && fieldErrors.importance ? "error" : ""}`} readOnly={isFieldDisabled("why_this_matters")} onFocus={() => handleFieldFocus("why_this_matters")} style={{ backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '8px', width: '100%', outline: 'none' }} />
               <div className="project-form--s16">
                 {showErrors && fieldErrors.importance && <small className="error-text">{fieldErrors.importance}</small>}
               </div>
@@ -909,7 +971,7 @@ setSuccessMetrics,
           <Accordion.Item eventKey="1" className="mb-2 border rounded form-accordion-item">
             <Accordion.Header>
               <div className="d-flex justify-content-between align-items-center w-100 pe-3">
-                <span className="fw-bold text-dark" style={{ fontSize: '16px' }}>2. Key Assumptions</span>
+                <span className="fw-bold text-dark" style={{ fontSize: '13px' }}>2. Key Assumptions</span>
                 <span className="badge-required" style={{ color: '#ef4444', border: '1px solid #fca5a5', backgroundColor: '#fef2f2', padding: '4px 8px', borderRadius: '4px', fontSize: '10px', fontWeight: 'bold', letterSpacing: '0.5px' }}>REQUIRED</span>
               </div>
             </Accordion.Header>
@@ -940,7 +1002,7 @@ setSuccessMetrics,
           <Accordion.Item eventKey="2" className="mb-2 border rounded form-accordion-item">
             <Accordion.Header>
               <div className="d-flex justify-content-between align-items-center w-100 pe-3">
-                <span className="fw-bold text-dark" style={{ fontSize: '16px' }}>3. Strategic Context</span>
+                <span className="fw-bold text-dark" style={{ fontSize: '13px' }}>3. Strategic Context</span>
                 <span className="badge-required" style={{ color: '#ef4444', border: '1px solid #fca5a5', backgroundColor: '#fef2f2', padding: '4px 8px', borderRadius: '4px', fontSize: '10px', fontWeight: 'bold', letterSpacing: '0.5px' }}>REQUIRED</span>
               </div>
             </Accordion.Header>
@@ -1172,7 +1234,7 @@ setSuccessMetrics,
           <Accordion.Item eventKey="3" className="mb-2 border rounded form-accordion-item">
             <Accordion.Header>
               <div className="d-flex justify-content-between align-items-center w-100 pe-3">
-                <span className="fw-bold text-dark" style={{ fontSize: '16px' }}>4. RAPID roles</span>
+                <span className="fw-bold text-dark" style={{ fontSize: '13px' }}>4. RAPID roles</span>
                 <span className="badge-optional" style={{ color: '#64748b', border: '1px solid #e2e8f0', backgroundColor: '#f8fafc', padding: '4px 8px', borderRadius: '4px', fontSize: '10px', fontWeight: 'bold', letterSpacing: '0.5px' }}>OPTIONAL</span>
               </div>
             </Accordion.Header>
@@ -1393,7 +1455,7 @@ setSuccessMetrics,
           <Accordion.Item eventKey="4" className="mb-2 border rounded form-accordion-item">
           <Accordion.Header>
             <div className="d-flex justify-content-between align-items-center w-100 pe-3">
-              <span className="fw-bold text-dark" style={{ fontSize: '16px' }}>5. Detailed Planning</span>
+              <span className="fw-bold text-dark" style={{ fontSize: '13px' }}>5. Detailed Planning</span>
               <span className="badge-optional" style={{ color: '#64748b', border: '1px solid #e2e8f0', backgroundColor: '#f8fafc', padding: '4px 8px', borderRadius: '4px', fontSize: '10px', fontWeight: 'bold', letterSpacing: '0.5px' }}>OPTIONAL</span>
             </div>
           </Accordion.Header>
