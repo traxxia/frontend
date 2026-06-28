@@ -56,6 +56,9 @@ const getLearningBadgeStyle = (learning) => {
 const CadencesSection = ({ businessId }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const userRole = useAuthStore(state => state.userRole);
+  const myUserId = useAuthStore(state => state.userId);
+  const userName = useAuthStore(state => state.userName);
   const [evolutionTab, setEvolutionTab] = useState('Status');
   const [cadences, setCadences] = useState([]);
   const [projects, setProjects] = useState([]);
@@ -198,7 +201,15 @@ const CadencesSection = ({ businessId }) => {
     return projects.filter(p => {
       const cStr = p.review_cadence || p.cadence || "";
       const names = cStr.split(",").map(s => s.trim()).filter(Boolean);
-      return names.includes(cadenceName);
+      const isAssociated = names.includes(cadenceName);
+      if (!isAssociated) return false;
+
+      if (userRole === 'collaborator') {
+        const isOwner = String(p.accountable_owner_id) === String(myUserId) ||
+                        (p.accountable_owner && userName && String(p.accountable_owner).trim().toLowerCase() === String(userName).trim().toLowerCase());
+        return isOwner;
+      }
+      return true;
     });
   };
 
@@ -278,6 +289,9 @@ const CadencesSection = ({ businessId }) => {
   // For the Evolution table
   const allMoments = [];
   evolutionCadences.forEach(c => {
+    if (userRole === 'collaborator' && getBetsForCadence(c.name).length === 0) {
+      return;
+    }
     if (c.scheduleDates) {
       c.scheduleDates.forEach(m => {
         allMoments.push({ cadence: c, moment: m });
@@ -285,6 +299,10 @@ const CadencesSection = ({ businessId }) => {
     }
   });
   allMoments.sort((a, b) => new Date(a.moment.date) - new Date(b.moment.date));
+
+  const displayedCadences = userRole === 'collaborator' 
+    ? cadences.filter(c => getBetsForCadence(c.name).length > 0)
+    : cadences;
 
   return (
     <div className="cadences-section">
@@ -353,13 +371,15 @@ const CadencesSection = ({ businessId }) => {
           <div className="cadences-subtitle">CADENCES</div>
           <h2 className="cadences-title">Recurring cadences — the rhythm of the business</h2>
         </div>
-        <button 
-          className="btn btn-outline-primary d-flex align-items-center gap-2 px-3 py-1 bg-white"
-          onClick={openCreateModal}
-          style={{ borderColor: '#cbd5e1', color: '#0c71b9', borderRadius: '6px', fontWeight: '600', fontSize: '13px' }}
-        >
-          <Plus size={16} /> New cadence
-        </button>
+        {userRole !== 'collaborator' && (
+          <button 
+            className="btn btn-outline-primary d-flex align-items-center gap-2 px-3 py-1 bg-white"
+            onClick={openCreateModal}
+            style={{ borderColor: '#cbd5e1', color: '#0c71b9', borderRadius: '6px', fontWeight: '600', fontSize: '13px' }}
+          >
+            <Plus size={16} /> New cadence
+          </button>
+        )}
       </div>
 
       <div className="cadences-card">
@@ -378,8 +398,8 @@ const CadencesSection = ({ businessId }) => {
               <tr>
                 <td colSpan="5" className="text-center py-5 text-muted">Loading cadences...</td>
               </tr>
-            ) : cadences.length > 0 ? (
-              cadences.map((cadence, index) => {
+            ) : displayedCadences.length > 0 ? (
+              displayedCadences.map((cadence, index) => {
                 const now = new Date();
                 const nextMoment = cadence.scheduleDates && cadence.scheduleDates.length > 0 
                   ? cadence.scheduleDates.slice().sort((a, b) => new Date(a.date) - new Date(b.date)).find(d => new Date(d.date) >= now) 
@@ -474,7 +494,7 @@ const CadencesSection = ({ businessId }) => {
             ) : (
               <tr>
                 <td colSpan="5" className="text-center py-5 text-muted">
-                  No cadences found. Click "New cadence" to get started.
+                  {userRole === 'collaborator' ? 'No cadences found.' : 'No cadences found. Click "New cadence" to get started.'}
                 </td>
               </tr>
             )}
@@ -507,7 +527,7 @@ const CadencesSection = ({ businessId }) => {
               onChange={(e) => setSelectedEvolutionCadence(e.target.value)}
             >
               <option value="all">All cadences</option>
-              {cadences.map(c => (
+              {displayedCadences.map(c => (
                 <option key={c._id} value={c._id}>{c.name}</option>
               ))}
             </select>

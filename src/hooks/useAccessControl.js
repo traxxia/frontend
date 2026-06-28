@@ -4,6 +4,8 @@ import { useProjectStore, useAuthStore } from "../store";
 export const useAccessControl = (selectedBusinessId) => {
   const accessControl = useProjectStore(state => state.accessControl);
   const userLimits = useAuthStore(state => state.userLimits) || { project: true };
+  const userRole = useAuthStore(state => state.userRole);
+  const userName = useAuthStore(state => state.userName);
   const checkAllAccessStable = useCallback(
     (bizId) => useProjectStore.getState().checkAllAccess(bizId),
     []
@@ -29,23 +31,62 @@ export const useAccessControl = (selectedBusinessId) => {
 
       const status = project.status?.toLowerCase();
       if (['completed', 'scaled', 'killed'].includes(status)) return false;
-      const pid = String(project._id || project.id || "");
-      if (pid && accessControl.projectsEditAccess && Object.prototype.hasOwnProperty.call(accessControl.projectsEditAccess, pid)) {
-        return accessControl.projectsEditAccess[pid] === true;
-      }
 
+      const isProjectDraft = !project.status || project.status.toLowerCase() === 'draft';
+      const isProjectActive = project.status?.toLowerCase() === 'active';
       const isProjectLaunched =
         project.launch_status?.toLowerCase() === 'launched' ||
         project.launch_status?.toLowerCase() === 'pending_launch' ||
         project.status?.toLowerCase() === 'launched';
 
-      const isProjectActive = project.status?.toLowerCase() === 'active';
+      const isOwner = String(project.accountable_owner_id) === String(myUserId) ||
+                      (project.accountable_owner && userName && String(project.accountable_owner).trim().toLowerCase() === String(userName).trim().toLowerCase());
+      const isCollaborator = userRole === "collaborator";
+
+      console.log(`[canEditProject Debug] Project: "${project.name || project.title}"`, {
+        accountable_owner_id: project.accountable_owner_id,
+        accountable_owner: project.accountable_owner,
+        myUserId,
+        userName,
+        userRole,
+        isOwner,
+        isCollaborator,
+        isProjectDraft,
+        isProjectActive,
+        businessStatus,
+        isProjectLaunched
+      });
+
+      // Collaborator Access Rules:
+      // Only the owner of the bet can edit (before/after kickstart).
+      // Unassigned collaborators cannot edit anything.
+      if (isCollaborator) {
+        if (!isOwner) return false;
+        if (businessStatus === "launched" || isProjectLaunched) return false;
+        return isProjectDraft || isProjectActive;
+      }
+
+      // If the bet is assigned to someone else, no one else (not even admins) can edit it.
+      if ((project.accountable_owner_id || project.accountable_owner) && !isOwner) {
+        return false;
+      }
+
+      // Backend access override checks (mainly for Admins / Viewers):
+      const pid = String(project._id || project.id || "");
+      if (pid && accessControl.projectsEditAccess && Object.prototype.hasOwnProperty.call(accessControl.projectsEditAccess, pid)) {
+        return accessControl.projectsEditAccess[pid] === true;
+      }
+
+      // Non-collaborator / Admin fall-back logic:
+      if (isOwner) {
+        if (businessStatus === "launched" || isProjectLaunched) return false;
+        return isProjectDraft || isProjectActive;
+      }
 
       if (businessStatus === "launched" || isProjectLaunched || isProjectActive) {
         return false;
       }
 
-      const isProjectDraft = !project.status || project.status.toLowerCase() === 'draft';
       if (isEditor && (businessStatus !== "launched" || isProjectDraft)) return true;
 
       if (businessStatus === "reprioritizing") {
@@ -57,7 +98,7 @@ export const useAccessControl = (selectedBusinessId) => {
 
       return false;
     },
-    [accessControl.projectsEditAccess, userLimits]
+    [accessControl.projectsEditAccess, userLimits, userRole, userName]
   );
 
   const isReadOnlyMode = useCallback((isArchived) => {

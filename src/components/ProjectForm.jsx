@@ -112,7 +112,7 @@ const SelectField = forwardRef(({
     if (typeof ref === "function") ref(node); else if (ref) ref.current = node;
   }} tabIndex={-1}>
     {label && <label className="sf-label">
-      {label} {required && <span className="required">*</span>}
+      {label} {required && !disabled && <span className="required">*</span>}
     </label>}
     <div className="sf-dropdown-wrapper">
       <div className={`sf-dropdown-header ${error ? "error" : ""}`} onClick={() => {
@@ -166,7 +166,7 @@ const InputField = forwardRef(({
   return <div className="field-row">
     <div className="field-label-row">
       <label className="field-label">
-        {label} {required && <span className="required">*</span>}
+        {label} {required && !readOnly && <span className="required">*</span>}
         {subLabel && <small className="field-sub-label project-form--s4">{subLabel}</small>}
       </label>
       {maxLength && <small className="text-muted project-form--s5">
@@ -195,7 +195,7 @@ const TextAreaField = forwardRef(({
   return <div className="field-row">
     <div className="field-label-row">
       <label className="field-label">
-        {label} {required && <span className="required">*</span>}
+        {label} {required && !readOnly && <span className="required">*</span>}
         {subLabel && <small className="field-sub-label project-form--s4">{subLabel}</small>}
       </label>
       {maxLength && <small className="text-muted project-form--s5">
@@ -806,7 +806,7 @@ setSuccessMetrics,
         </div>
       )}
 
-      {!isLaunched && initialStatusLower === "draft" && (
+      {!isLaunched && initialStatusLower === "draft" && !isReadOnly && (
         <div className="kickstart-banner" style={{ backgroundColor: '#fffbeb', border: '1px solid #fde68a', borderRadius: '12px', padding: '16px', marginBottom: '16px' }}>
           <div className="d-flex justify-content-between align-items-center">
             <div style={{ flex: 1 }}>
@@ -972,14 +972,14 @@ setSuccessMetrics,
             <Accordion.Header>
               <div className="d-flex justify-content-between align-items-center w-100 pe-3">
                 <span className="fw-bold text-dark" style={{ fontSize: '13px' }}>2. Key Assumptions</span>
-                <span className="badge-required" style={{ color: '#ef4444', border: '1px solid #fca5a5', backgroundColor: '#fef2f2', padding: '4px 8px', borderRadius: '4px', fontSize: '10px', fontWeight: 'bold', letterSpacing: '0.5px' }}>REQUIRED</span>
+                {!isReadOnly && <span className="badge-required" style={{ color: '#ef4444', border: '1px solid #fca5a5', backgroundColor: '#fef2f2', padding: '4px 8px', borderRadius: '4px', fontSize: '10px', fontWeight: 'bold', letterSpacing: '0.5px' }}>REQUIRED</span>}
               </div>
             </Accordion.Header>
             <Accordion.Body className="bg-white">
             <div className="field-row">
               <div className="field-label-row">
                 <label className="field-label">
-                  {t("Key_Assumptions_Tested")} <span className="required">*</span>
+                  {t("Key_Assumptions_Tested")} {!isReadOnly && <span className="required">*</span>}
                 </label>
               </div>
               <p className="text-muted small mb-2 project-form--s17">The beliefs this bet is testing — at least one. If any turns out false, the bet's case weakens.</p>
@@ -1003,7 +1003,7 @@ setSuccessMetrics,
             <Accordion.Header>
               <div className="d-flex justify-content-between align-items-center w-100 pe-3">
                 <span className="fw-bold text-dark" style={{ fontSize: '13px' }}>3. Strategic Context</span>
-                <span className="badge-required" style={{ color: '#ef4444', border: '1px solid #fca5a5', backgroundColor: '#fef2f2', padding: '4px 8px', borderRadius: '4px', fontSize: '10px', fontWeight: 'bold', letterSpacing: '0.5px' }}>REQUIRED</span>
+                {!isReadOnly && <span className="badge-required" style={{ color: '#ef4444', border: '1px solid #fca5a5', backgroundColor: '#fef2f2', padding: '4px 8px', borderRadius: '4px', fontSize: '10px', fontWeight: 'bold', letterSpacing: '0.5px' }}>REQUIRED</span>}
               </div>
             </Accordion.Header>
             <Accordion.Body className="bg-white">
@@ -1148,7 +1148,7 @@ setSuccessMetrics,
 
               <div className="field-row">
                 <div className="field-label-row">
-                  <label className="field-label">{t("Dependencies")} <span className="required">*</span></label>
+                  <label className="field-label">{t("Dependencies")} {!isReadOnly && <span className="required">*</span>}</label>
                   {renderLockBadge("dependencies")}
                 </div>
                 <p className="text-muted small mb-2 project-form--s17">Bets, decisions, or external events this one depends on. Add at least one — or check "No external dependencies" if there are none.</p>

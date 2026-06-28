@@ -244,6 +244,7 @@ const ProjectsSection = ({
     validateForm
   } = useProjectForm();
   const isViewer = userRole === "viewer";
+  const isCollaborator = userRole === "collaborator";
   const isEditor = userRole === "super_admin" || userRole === "company_admin" || userRole === "collaborator" || userRole === "user";
   const isSuperAdmin = userRole === "super_admin" || userRole === "company_admin" || userRole === "admin";
   const allCollaboratorsLocked = lockSummary.locked_users_count === lockSummary.total_users;
@@ -786,7 +787,7 @@ const ProjectsSection = ({
               </div>}
             </div>
 
-            {!isViewer && !isArchived && getUserLimits().project && <button onClick={handleNewProject} className="btn-new-project-premium">
+            {!isViewer && !isCollaborator && !isArchived && getUserLimits().project && <button onClick={handleNewProject} className="btn-new-project-premium">
               <Plus size={18} />
               {t("New Bet")}
             </button>}
