@@ -305,7 +305,7 @@ const ProjectsSection = ({
       const rA = rankMap[idA] !== undefined ? rankMap[idA] : Infinity;
       const rB = rankMap[idB] !== undefined ? rankMap[idB] : Infinity;
       if (rA === rB) {
-        return new Date(b.created_at) - new Date(a.created_at);
+        return new Date(a.created_at) - new Date(b.created_at);
       }
       return rA - rB;
     });

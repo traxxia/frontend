@@ -3,8 +3,10 @@ import { Modal, Button } from "react-bootstrap";
 import { ChevronDown, ChevronUp, Plus } from "lucide-react";
 import { useTranslation } from "../hooks/useTranslation";
 import { useAuthStore } from "../store";
+import { useUIStore } from "../store/uiStore";
 
 const AssignDeciderModal = ({ show, onHide, project, onSave, businessId }) => {
+  const addToast = useUIStore(state => state.addToast);
   const { t } = useTranslation();
   const { userId } = useAuthStore();
 
@@ -15,7 +17,46 @@ const AssignDeciderModal = ({ show, onHide, project, onSave, businessId }) => {
   const [newCollaboratorName, setNewCollaboratorName] = useState("");
   const [newCollaboratorEmail, setNewCollaboratorEmail] = useState("");
   const [loadingOwners, setLoadingOwners] = useState(false);
+  const [isInviting, setIsInviting] = useState(false);
   const dropdownRef = useRef(null);
+
+  const handleInviteCollaborator = async () => {
+    if (!businessId || !newCollaboratorEmail) return;
+    setIsInviting(true);
+    try {
+      const token = useAuthStore.getState().token;
+      const url = `${import.meta.env.VITE_BACKEND_URL || "http://localhost:5000"}/api/businesses/${businessId}/invite-collaborator`;
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          name: newCollaboratorName,
+          email: newCollaboratorEmail
+        })
+      });
+      const data = await response.json();
+      if (response.ok) {
+        if (data.user) {
+          setEligibleOwners(prev => [...prev, data.user]);
+          setSelectedOwnerId(data.user._id);
+        }
+        setIsCollaboratorFormOpen(false);
+        setNewCollaboratorName("");
+        setNewCollaboratorEmail("");
+        addToast({ message: t("Invitation sent successfully. Once they accept the invitation, they will be able to participate in this collaboration."), type: "success" });
+      } else {
+        alert(data.error || "Failed to invite collaborator");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("An error occurred while sending the invitation.");
+    } finally {
+      setIsInviting(false);
+    }
+  };
 
   /* ── Fetch eligible owners ───────────────────────────────────── */
   useEffect(() => {
@@ -367,14 +408,11 @@ const AssignDeciderModal = ({ show, onHide, project, onSave, businessId }) => {
                   onChange={(e) => setNewCollaboratorEmail(e.target.value)}
                 />
                 <button
-                  className={`ad-create-btn ${canCreateAndSelect ? "enabled" : "disabled"}`}
-                  disabled={!canCreateAndSelect}
-                  onClick={() => {
-                    alert("Collaborator invitation will be implemented soon.");
-                    setIsCollaboratorFormOpen(false);
-                  }}
+                  className={`ad-create-btn ${canCreateAndSelect && !isInviting ? "enabled" : "disabled"}`}
+                  disabled={!canCreateAndSelect || isInviting}
+                  onClick={handleInviteCollaborator}
                 >
-                  {t("Create & select")}
+                  {isInviting ? t("Inviting...") : t("Create & select")}
                 </button>
               </div>
             )}

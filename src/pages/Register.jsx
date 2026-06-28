@@ -26,7 +26,7 @@ const Register = () => {
     errors, setErrors, isSubmitting, showPassword, setShowPassword, showConfirmPassword, setShowConfirmPassword,
     showSuccessModal, setShowSuccessModal, modalMessage, isError, isCheckingEmail, companySearch, setCompanySearch,
     submitError, setSubmitError, isCompanyDropdownOpen, setIsCompanyDropdownOpen, isRoleDropdownOpen, setIsRoleDropdownOpen,
-    plans, loadingPlans, companies, loadingCompanies, filteredCompanies, handleChange, handleNext, handleBack, handleSubmit, t
+    plans, loadingPlans, companies, loadingCompanies, filteredCompanies, handleChange, handleNext, handleBack, handleSubmit, t, hasInviteToken
   } = useRegister();
 
   const companyErrorRef = useRef(null);
@@ -116,6 +116,7 @@ const Register = () => {
                   showPassword={showPassword} setShowPassword={setShowPassword}
                   showConfirmPassword={showConfirmPassword} setShowConfirmPassword={setShowConfirmPassword}
                   handleNext={handleNext} onBackToLogin={() => navigate('/login')} t={t}
+                  hasInviteToken={hasInviteToken}
                 />
               </AnimatePresence>
             </motion.div>

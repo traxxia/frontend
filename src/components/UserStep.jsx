@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { ChevronLeft, ChevronRight, Loader, Eye, EyeOff } from 'lucide-react';
 import PasswordStrengthTooltip from './PasswordStrengthTooltip';
 
-const UserStep = ({ form, handleChange, errors, isCheckingEmail, isSubmitting, showPassword, setShowPassword, showConfirmPassword, setShowConfirmPassword, handleNext, onBackToLogin, t }) => {
+const UserStep = ({ form, handleChange, errors, isCheckingEmail, isSubmitting, showPassword, setShowPassword, showConfirmPassword, setShowConfirmPassword, handleNext, onBackToLogin, t, hasInviteToken }) => {
   const [isPasswordFocused, setIsPasswordFocused] = useState(false);
 
   return (
@@ -44,6 +44,8 @@ const UserStep = ({ form, handleChange, errors, isCheckingEmail, isSubmitting, s
                 placeholder={t('email_placeholder')}
                 value={form.email}
                 onChange={handleChange}
+                readOnly={hasInviteToken}
+                disabled={hasInviteToken}
                 className={errors.email ? 'input-error' : ''}
               />
             </div>

@@ -1,16 +1,20 @@
 import { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
+import jwt_decode from 'jwt-decode';
 import { useTranslation } from './useTranslation';
 import { usePlans, useCompanies } from './useQueries';
 import { useAuthStore } from '../store/authStore';
 
 export const useRegister = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { t } = useTranslation();
   const API_BASE_URL = import.meta.env.VITE_BACKEND_URL;
 
   const [activeTab, setActiveTab] = useState(1);
+  const hasInviteToken = !!new URLSearchParams(location.search).get('invite_token');
+
   const [form, setForm] = useState({
     name: '',
     email: '',
@@ -46,6 +50,26 @@ export const useRegister = () => {
       c.company_name.toLowerCase().includes(companySearch.toLowerCase())
     );
   }, [companies, companySearch]);
+
+  useEffect(() => {
+    const searchParams = new URLSearchParams(location.search);
+    const token = searchParams.get('invite_token');
+    
+    if (token) {
+      try {
+        const decoded = jwt_decode(token);
+        if (decoded.email || decoded.name) {
+          setForm(prev => ({
+            ...prev,
+            email: decoded.email || prev.email,
+            name: decoded.name || prev.name
+          }));
+        }
+      } catch (error) {
+        console.error("Invalid invite token", error);
+      }
+    }
+  }, [location.search]);
 
   useEffect(() => {
     if (plans.length > 0 && !selectedPlanId) {
@@ -135,7 +159,8 @@ export const useRegister = () => {
       const userData = {
         name: form.name.trim(),
         email: form.email.trim(),
-        password: form.password
+        password: form.password,
+        invite_token: hasInviteToken ? new URLSearchParams(location.search).get('invite_token') : undefined
       };
 
       const response = await axios.post(`${API_BASE_URL}/api/register`, userData);
@@ -178,6 +203,7 @@ export const useRegister = () => {
     handleNext,
     handleBack,
     handleSubmit,
-    t
+    t,
+    hasInviteToken
   };
 };
