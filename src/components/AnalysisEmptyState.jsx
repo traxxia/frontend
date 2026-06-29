@@ -45,10 +45,25 @@ const AnalysisEmptyState = ({
       return customMessage;
     }
 
-    return t("insufficient_analysis_depth", {
-    analysis: analysisDisplayName.toLowerCase()
-    });
+    let analysisString = "";
+    if (typeof analysisDisplayName === "string") {
+      analysisString = analysisDisplayName.toLowerCase();
+    } else if (analysisDisplayName && typeof analysisDisplayName === "object" && analysisDisplayName.props && analysisDisplayName.props.children) {
+      const children = analysisDisplayName.props.children;
+      if (typeof children === "string") {
+        analysisString = children.toLowerCase();
+      } else if (Array.isArray(children)) {
+        analysisString = children.join("").toLowerCase();
+      } else {
+        analysisString = String(analysisType || "").toLowerCase();
+      }
+    } else {
+      analysisString = String(analysisType || "").toLowerCase();
+    }
 
+    return t("insufficient_analysis_depth", {
+      analysis: analysisString
+    });
   };
 
   const shouldShowButtons = (hasEnoughAnswers && (effectiveShowImproveButton || effectiveShowRegenerateButton)) || (customMessage && (onRegenerate || onImproveAnswers));
@@ -57,7 +72,7 @@ const AnalysisEmptyState = ({
     <div className="empty-state-container">
 
       <h3 className="empty-state-title">
-        {isRegenerating ? 'Generating Insights...' : `${analysisDisplayName}`}
+        {isRegenerating ? 'Generating Insights...' : analysisDisplayName}
       </h3>
 
       <p className="empty-state-message">

@@ -93,9 +93,14 @@ const TraxSidebar = ({
     }
   };
 
-  useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [chatMessages, isChatLoading]);
+    useEffect(() => {
+      if (chatEndRef.current) {
+        const parent = chatEndRef.current.parentElement;
+        if (parent) {
+          parent.scrollTo({ top: parent.scrollHeight, behavior: 'smooth' });
+        }
+      }
+    }, [chatMessages, isChatLoading]);
 
   const handleSendMessage = async (e) => {
     if (e) e.preventDefault();

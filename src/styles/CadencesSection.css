@@ -1,5 +1,5 @@
 .cadences-section {
-  padding: 24px;
+  padding: 12px 16px;
   max-width: 1200px;
   margin: 0 auto;
 }
@@ -7,18 +7,36 @@
 .awaiting-close-card {
   background: #fffdf5;
   border: 1px solid #fef3c7;
-  border-radius: 8px;
-  padding: 16px 24px;
+  border-radius: 6px;
+  padding: 8px 12px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 12px;
+  margin-bottom: 6px;
+}
+
+/* ── Upcoming moment card ── */
+.upcoming-moment-card {
+  background: #f0f7ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 6px;
+  padding: 8px 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
 }
 
 .awaiting-info {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 8px;
+}
+
+.upcoming-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .awaiting-badge {
@@ -39,24 +57,55 @@
   border-radius: 50%;
 }
 
+.upcoming-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  font-weight: 700;
+  color: #0c71b9;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+
+.upcoming-dot {
+  width: 8px;
+  height: 8px;
+  background-color: #0c71b9;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
 .awaiting-title {
   font-weight: 700;
-  font-size: 15px;
+  font-size: 14px;
+  color: #0f172a;
+}
+
+.upcoming-title {
+  font-weight: 700;
+  font-size: 14px;
   color: #0f172a;
 }
 
 .awaiting-meta {
-  font-size: 13px;
+  font-size: 12px;
   color: #64748b;
 }
 
+.upcoming-meta {
+  font-size: 12px;
+  color: #475569;
+}
+
 .cadences-header {
-  margin-top: 32px;
-  margin-bottom: 24px;
+  margin-top: 30px;
+  margin-bottom: 8px;
 }
 
 .cadences-subtitle {
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 700;
   letter-spacing: 1px;
   color: #64748b;
@@ -65,7 +114,7 @@
 }
 
 .cadences-title {
-  font-size: 20px;
+  font-size: 16px;
   font-weight: 700;
   color: #0f172a;
   margin: 0;
@@ -73,10 +122,10 @@
 
 .cadences-card {
   background: white;
-  border-radius: 12px;
+  border-radius: 8px;
   border: 1px solid #e2e8f0;
   overflow: hidden;
-  margin-bottom: 40px;
+  margin-bottom: 16px;
 }
 
 .cadences-table {
@@ -86,7 +135,7 @@
 
 .cadences-table th {
   text-align: left;
-  padding: 12px 24px;
+  padding: 8px 12px;
   font-size: 10px;
   font-weight: 700;
   color: #64748b;
@@ -97,7 +146,7 @@
 }
 
 .cadences-table td {
-  padding: 16px 24px;
+  padding: 8px 12px;
   border-bottom: 1px solid #f1f5f9;
   vertical-align: middle;
 }
@@ -109,13 +158,13 @@
 .cadence-info-cell {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 8px;
 }
 
 .cadence-icon-wrapper {
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -128,13 +177,13 @@
 
 .cadence-name {
   font-weight: 700;
-  font-size: 14px;
+  font-size: 13px;
   color: #0f172a;
   margin-bottom: 2px;
 }
 
 .cadence-frequency {
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 700;
   color: #94a3b8;
   text-transform: uppercase;
@@ -143,7 +192,7 @@
 
 .cadence-bets-count {
   font-weight: 700;
-  font-size: 13px;
+  font-size: 12px;
   color: #0f172a;
 }
 
@@ -167,8 +216,24 @@
   font-weight: 700;
   letter-spacing: 0.5px;
   text-transform: uppercase;
-  background: #fef3c7;
-  color: #d97706;
+}
+
+.cadence-status-pill.needs-close {
+  background: #fee2e2;
+  color: #dc2626;
+  border: 1px solid #fca5a5;
+}
+
+.cadence-status-pill.upcoming {
+  background: #dbeafe;
+  color: #0c71b9;
+  border: 1px solid #93c5fd;
+}
+
+.cadence-status-pill.not-scheduled {
+  background: #f1f5f9;
+  color: #64748b;
+  border: 1px solid #e2e8f0;
 }
 
 .cadence-actions {
@@ -191,6 +256,23 @@
 
 .btn-schedule:hover {
   background: #025aa5;
+}
+
+.btn-open-moment {
+  background: #0c71b9;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 20px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.btn-open-moment:hover {
+  background: #0a5fa0;
 }
 
 .btn-open {
@@ -258,7 +340,7 @@
   border: 1px solid #e2e8f0;
   border-radius: 6px;
   padding: 4px;
-  margin-bottom: 24px;
+  margin-bottom: 10px;
 }
 
 .evolution-toggle-btn {

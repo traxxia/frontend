@@ -641,6 +641,9 @@ const EditableBriefSection = ({
         // Latest period's derived metrics → backward-compat flat financialMetrics
         const sortedTimeline = [...financialTimeline].sort((a, b) => a.period.localeCompare(b.period));
         financialMetrics = sortedTimeline[sortedTimeline.length - 1] || null;
+        if (financialMetrics && mlResponse.meta) {
+          financialMetrics.meta = mlResponse.meta;
+        }
       } else {
         // Legacy flat metrics shape
         financialMetrics = mlResponse;
@@ -718,7 +721,8 @@ const EditableBriefSection = ({
     const currentMetrics = (() => {
       if (!docIntelSession?.financialMetrics) return defaultFinancialMetrics;
       const merged = JSON.parse(JSON.stringify(defaultFinancialMetrics));
-      if (docIntelSession.financialMetrics.meta) merged.meta = { ...merged.meta, ...docIntelSession.financialMetrics.meta };
+      if (docIntelSession.financialMeta) merged.meta = { ...merged.meta, ...docIntelSession.financialMeta };
+      else if (docIntelSession.financialMetrics.meta) merged.meta = { ...merged.meta, ...docIntelSession.financialMetrics.meta };
       const cats = ["financial_performance", "financial_health", "operational_efficiency", "cost_efficiency"];
       cats.forEach(cat => {
         if (docIntelSession.financialMetrics[cat]) {
@@ -1802,14 +1806,17 @@ const EditableBriefSection = ({
 
   const strategyFiles = uploadedFiles.filter(f => f.section === 'strategic');
 
-  const initialCountStr = `${initialFields.filter(f => cleanValue(f.value).trim() !== '').length}/${initialFields.length}`;
+  const initialCompletedCount = initialFields.filter(f => cleanValue(f.value).trim() !== '').length;
+  const isInitialPhaseCompleted = initialFields.length === 0 || initialCompletedCount === initialFields.length;
+  const initialCountStr = `${initialCompletedCount}/${initialFields.length}`;
   const essentialCountStr = `${essentialFields.filter(f => cleanValue(f.value).trim() !== '').length}/${essentialFields.length}`;
   const advancedCountStr = `${advancedFields.filter(f => cleanValue(f.value).trim() !== '').length}/${advancedFields.length}`;
 
   const displayFinancialMetrics = (() => {
     if (!docIntelSession?.financialMetrics) return defaultFinancialMetrics;
     const merged = JSON.parse(JSON.stringify(defaultFinancialMetrics));
-    if (docIntelSession.financialMetrics.meta) merged.meta = { ...merged.meta, ...docIntelSession.financialMetrics.meta };
+    if (docIntelSession.financialMeta) merged.meta = { ...merged.meta, ...docIntelSession.financialMeta };
+    else if (docIntelSession.financialMetrics.meta) merged.meta = { ...merged.meta, ...docIntelSession.financialMetrics.meta };
     const cats = ["financial_performance", "financial_health", "operational_efficiency", "cost_efficiency"];
     cats.forEach(cat => {
       if (docIntelSession.financialMetrics[cat]) {
@@ -2202,6 +2209,10 @@ const EditableBriefSection = ({
                     "financial_health": { icon: "🏦", label: "Financial Health" },
                     "operational_efficiency": { icon: "⚙️", label: "Operational Efficiency" },
                     "cost_efficiency": { icon: "💰", label: "Cost & CAPEX Efficiency" }
+                    // "profitability": { icon: "💹", label: "Profitability" },
+                    // "liquidity": { icon: "💧", label: "Liquidity" },
+                    // "leverage": { icon: "⚖️", label: "Leverage" },
+                    // "investment": { icon: "🚀", label: "Investment" }
                   }).map(([catKey, catInfo]) => {
                     const metricsMap = displayFinancialMetrics[catKey] || {};
                     const metricsEntries = Object.entries(metricsMap).filter(([k]) => k !== "meta");
@@ -2436,9 +2447,9 @@ const EditableBriefSection = ({
                   });
                   setShowConfirmModal(true);
                 }}
-                disabled={isAnyApiActive || !canEdit || !hasAnyValidData}
+                disabled={isAnyApiActive || !canEdit || !hasAnyValidData || !isInitialPhaseCompleted}
                 className="btn-refine-action"
-                style={{ width: 'auto', padding: '12px 32px', background: (isAnyApiActive || !canEdit || !hasAnyValidData) ? '#93c5fd' : '#0c71b9', color: '#fff', fontSize: '15px', fontWeight: '600', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '8px', border: 'none', cursor: (isAnyApiActive || !canEdit || !hasAnyValidData) ? 'not-allowed' : 'pointer', opacity: (isAnyApiActive || !canEdit || !hasAnyValidData) ? 0.6 : 1 }}
+                style={{ width: 'auto', padding: '12px 32px', background: (isAnyApiActive || !canEdit || !hasAnyValidData || !isInitialPhaseCompleted) ? '#93c5fd' : '#0c71b9', color: '#fff', fontSize: '15px', fontWeight: '600', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '8px', border: 'none', cursor: (isAnyApiActive || !canEdit || !hasAnyValidData || !isInitialPhaseCompleted) ? 'not-allowed' : 'pointer', opacity: (isAnyApiActive || !canEdit || !hasAnyValidData || !isInitialPhaseCompleted) ? 0.6 : 1 }}
               >
                 {(isAnalysisRegenerating || isStrategicRegenerating) ? (
                   <>
@@ -2453,7 +2464,7 @@ const EditableBriefSection = ({
                 )}
               </button>
               <p style={{ marginTop: '16px', marginBottom: '0', color: '#94a3b8', fontSize: '13px' }}>
-                All sections complete — generate your Advanced analysis.
+                {isInitialPhaseCompleted ? 'All sections complete — generate your Advanced analysis.' : 'Please answer all Initial Phase questions before generating insights.'}
               </p>
             </div>
           )}
