@@ -34,11 +34,27 @@ const BetReviewCard = ({ bet, isCompleted, updateInfo, onSave, index, legacyComm
   const [learningReason, setLearningReason] = useState(updateInfo?.learning_reason || "");
   
   const [commitments, setCommitments] = useState(() => {
-    const base = bet.commitments && bet.commitments.length > 0
+    let base = bet.commitments && bet.commitments.length > 0
       ? bet.commitments
       : (legacyCommitments || []).map(c => ({ ...c, moment_id: 'legacy' }));
-    // Always start with one blank new commitment row for the current moment
-    const hasCurrentRow = base.some(c => c.moment_id === momentId && !c.text?.trim());
+      
+    if (updateInfo && updateInfo.new_commitments) {
+      try {
+        const parsed = JSON.parse(updateInfo.new_commitments);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          const currentSaved = parsed.map((item, i) => {
+            if (typeof item === 'string') {
+              return { id: 'saved-' + i + '-' + Date.now(), text: item, owner: '', date: '', checked: false, moment_id: momentId };
+            }
+            return { ...item, id: item.id || ('saved-' + i + '-' + Date.now()), moment_id: momentId };
+          });
+          base = base.filter(c => c.moment_id !== momentId || (c.text && c.text.trim() !== ''));
+          base = [...base, ...currentSaved];
+        }
+      } catch (e) {}
+    }
+
+    const hasCurrentRow = base.some(c => c.moment_id === momentId && (!c.text || !c.text.trim()));
     if (!hasCurrentRow) {
       return [...base, { id: 'new-' + Date.now(), text: '', owner: '', date: '', checked: false, moment_id: momentId }];
     }
@@ -48,6 +64,19 @@ const BetReviewCard = ({ bet, isCompleted, updateInfo, onSave, index, legacyComm
   const [hasStatusUpdated, setHasStatusUpdated] = useState(false);
   const [hasLearningUpdated, setHasLearningUpdated] = useState(false);
   
+  useEffect(() => {
+    if (updateInfo) {
+      if (!hasStatusUpdated && updateInfo.status) {
+        setStatus(updateInfo.status.toUpperCase());
+      }
+      if (!hasLearningUpdated && updateInfo.learning_state) {
+        setLearningState(updateInfo.learning_state.toLowerCase());
+      }
+      if (updateInfo.status_reason && !hasStatusUpdated) setStatusReason(updateInfo.status_reason);
+      if (updateInfo.learning_reason && !hasLearningUpdated) setLearningReason(updateInfo.learning_reason);
+    }
+  }, [updateInfo, hasStatusUpdated, hasLearningUpdated]);
+
   const hasValidStatus = status && status.trim() !== "";
   const hasValidLearning = learningState && learningState.trim() !== "";
   const isConfirmedLocal = isCompleted || (hasValidStatus && hasValidLearning && hasStatusUpdated && hasLearningUpdated);
@@ -657,7 +686,7 @@ const CadenceMomentPage = () => {
         status_reason: updateData.status_reason,
         learning_reason: updateData.learning_reason,
         new_commitments: JSON.stringify(
-          updateData.commitments.filter(c => c.moment_id === momentId).map(c => c.text)
+          updateData.commitments.filter(c => c.moment_id === momentId)
         )
       };
 
@@ -821,13 +850,13 @@ const CadenceMomentPage = () => {
                  </div>
                ))}
             </div>
-             <button 
+             {/* <button 
               className="btn btn-sm d-flex align-items-center gap-2" 
               style={{ fontSize: '12px', fontWeight: '500', color: showMeetingSetup ? '#0c71b9' : '#475569', backgroundColor: '#ffffff', border: showMeetingSetup ? '1px solid #0c71b9' : '1px solid #e2e8f0', padding: '5px 10px', borderRadius: '6px', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}
               onClick={() => setShowMeetingSetup(!showMeetingSetup)}
             >
               Meeting setup <ChevronDown size={13} style={{ transform: showMeetingSetup ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
-            </button>
+            </button> */}
           </div>
         </div>
 
@@ -1041,14 +1070,17 @@ const CadenceMomentPage = () => {
                 }
                 
                 if (Array.isArray(parsed) && parsed.length > 0) {
-                  return parsed.map((text, i) => {
-                    // Try to preserve checked status if it exists in bet.commitments
+                  return parsed.map((item, i) => {
+                    const text = typeof item === 'string' ? item : (item.text || '');
+                    const owner = typeof item === 'string' ? (bet.accountable_owner || 'Unassigned') : (item.owner || bet.accountable_owner || 'Unassigned');
+                    const date = typeof item === 'string' ? cu.created_at : (item.date || cu.created_at);
+                    
                     const existing = (bet.commitments || []).find(c => c.text === text);
                     return {
                       id: `${cu._id}_${i}`,
                       text: text, 
-                      date: cu.created_at,
-                      owner: bet.accountable_owner || 'Unassigned',
+                      date: date,
+                      owner: owner,
                       checked: existing ? !!existing.checked : false 
                     };
                   });
