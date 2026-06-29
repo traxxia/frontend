@@ -924,7 +924,7 @@ setSuccessMetrics,
         </div>
       )}
 
-      <fieldset disabled={isSubmitting || isReadOnly} style={{ border: 'none', padding: 0, margin: 0 }}>
+      <fieldset style={{ border: 'none', padding: 0, margin: 0 }}>
       <Accordion alwaysOpen defaultActiveKey={['0']} className="mt-4 form-accordion">
         <Accordion.Item eventKey="0" className="mb-2 border rounded form-accordion-item">
           <Accordion.Header>
@@ -989,7 +989,7 @@ setSuccessMetrics,
             <Accordion.Header>
               <div className="d-flex justify-content-between align-items-center w-100 pe-3">
                 <span className="fw-bold text-dark" style={{ fontSize: '13px' }}>2. Key Assumptions</span>
-                {!isReadOnly && <span className="badge-required" style={{ color: '#ef4444', border: '1px solid #fca5a5', backgroundColor: '#fef2f2', padding: '4px 8px', borderRadius: '4px', fontSize: '10px', fontWeight: 'bold', letterSpacing: '0.5px' }}>REQUIRED</span>}
+                <span className="badge-required" style={{ color: '#ef4444', border: '1px solid #fca5a5', backgroundColor: '#fef2f2', padding: '4px 8px', borderRadius: '4px', fontSize: '10px', fontWeight: 'bold', letterSpacing: '0.5px' }}>REQUIRED</span>
               </div>
             </Accordion.Header>
             <Accordion.Body className="bg-white">
@@ -1020,7 +1020,7 @@ setSuccessMetrics,
             <Accordion.Header>
               <div className="d-flex justify-content-between align-items-center w-100 pe-3">
                 <span className="fw-bold text-dark" style={{ fontSize: '13px' }}>3. Strategic Context</span>
-                {!isReadOnly && <span className="badge-required" style={{ color: '#ef4444', border: '1px solid #fca5a5', backgroundColor: '#fef2f2', padding: '4px 8px', borderRadius: '4px', fontSize: '10px', fontWeight: 'bold', letterSpacing: '0.5px' }}>REQUIRED</span>}
+                <span className="badge-required" style={{ color: '#ef4444', border: '1px solid #fca5a5', backgroundColor: '#fef2f2', padding: '4px 8px', borderRadius: '4px', fontSize: '10px', fontWeight: 'bold', letterSpacing: '0.5px' }}>REQUIRED</span>
               </div>
             </Accordion.Header>
             <Accordion.Body className="bg-white">

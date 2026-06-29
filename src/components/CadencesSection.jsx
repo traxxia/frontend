@@ -224,28 +224,27 @@ const CadencesSection = ({ businessId }) => {
       const bets = getBetsForCadence(c.name);
       if (bets.length === 0) return;
 
-      c.scheduleDates.forEach(moment => {
-        // Only show notification if the moment has NOT been officially closed
-        if (moment.closed) return;
+      const unclosedMoments = c.scheduleDates.filter(m => !m.closed).sort((a, b) => new Date(a.date) - new Date(b.date));
+      if (unclosedMoments.length === 0) return;
 
-        const mDate = new Date(moment.date);
-        if (mDate <= now) {
-          // pendingCount = how many bets still have no snapshot for this moment
-          // (used purely for the progress label, NOT for dismissing the notification)
-          const momentSnapshots = completedUpdates.filter(
-            cu => cu.cadence_id?.toString() === c._id?.toString()
-              && cu.moment_id === moment._id
-          );
-          const pendingCount = bets.length - momentSnapshots.length;
+      const moment = unclosedMoments[0];
+      const mDate = new Date(moment.date);
+      if (mDate <= now) {
+        // pendingCount = how many bets still have no snapshot for this moment
+        // (used purely for the progress label, NOT for dismissing the notification)
+        const momentSnapshots = completedUpdates.filter(
+          cu => cu.cadence_id?.toString() === c._id?.toString()
+            && cu.moment_id === moment._id
+        );
+        const pendingCount = bets.length - momentSnapshots.length;
 
-          staleList.push({
-            cadence: c,
-            moment,
-            // Show max(0, pending) — once all are filled it shows 0 but notification still stays
-            pendingCount: Math.max(0, pendingCount)
-          });
-        }
-      });
+        staleList.push({
+          cadence: c,
+          moment,
+          // Show max(0, pending) — once all are filled it shows 0 but notification still stays
+          pendingCount: Math.max(0, pendingCount)
+        });
+      }
     });
 
     return staleList.sort((a, b) => new Date(a.moment.date) - new Date(b.moment.date));
@@ -263,21 +262,22 @@ const CadencesSection = ({ businessId }) => {
       const bets = getBetsForCadence(c.name);
       if (bets.length === 0) return;
 
-      c.scheduleDates.forEach(moment => {
-        if (moment.closed) return;
-        const mDate = new Date(moment.date);
-        if (mDate > now) {
-          // Count bets with no learning state
-          const noLearningState = bets.filter(b => !b.learning_state || b.learning_state === '' || b.learning_state === 'Not Started').length;
-          upcomingList.push({
-            cadence: c,
-            moment,
-            betsCount: bets.length,
-            noLearningStateCount: noLearningState,
-            daysUntil: Math.ceil((mDate - now) / (1000 * 60 * 60 * 24))
-          });
-        }
-      });
+      const unclosedMoments = c.scheduleDates.filter(m => !m.closed).sort((a, b) => new Date(a.date) - new Date(b.date));
+      if (unclosedMoments.length === 0) return;
+
+      const moment = unclosedMoments[0];
+      const mDate = new Date(moment.date);
+      if (mDate > now) {
+        // Count bets with no learning state
+        const noLearningState = bets.filter(b => !b.learning_state || b.learning_state === '' || b.learning_state === 'Not Started').length;
+        upcomingList.push({
+          cadence: c,
+          moment,
+          betsCount: bets.length,
+          noLearningStateCount: noLearningState,
+          daysUntil: Math.ceil((mDate - now) / (1000 * 60 * 60 * 24))
+        });
+      }
     });
 
     return upcomingList.sort((a, b) => new Date(a.moment.date) - new Date(b.moment.date));

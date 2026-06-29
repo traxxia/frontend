@@ -158,9 +158,9 @@ const ProjectsTable = ({
             <td>
               {project.cadence || project.review_cadence ? (
                 <span
-                  className="text-dark fw-medium"
-                  style={{ cursor: canManageBet ? 'pointer' : 'default', borderBottom: canManageBet ? '1px dashed #cbd5e1' : 'none' }}
-                  onClick={(e) => canManageBet && canEditProject && canEditProject(project) ? handleOpenCadences(e, project) : null}
+                  className="text-dark"
+                  style={{ cursor: isAdmin ? 'pointer' : 'default', borderBottom: isAdmin ? '1px dashed #cbd5e1' : 'none', fontWeight: '600', fontSize: '13px', whiteSpace: 'nowrap' }}
+                  onClick={(e) => isAdmin ? handleOpenCadences(e, project) : null}
                 >
                   {(() => {
                     const cStr = project.cadence || project.review_cadence;
@@ -173,8 +173,8 @@ const ProjectsTable = ({
                   })()}
                 </span>
               ) : (
-                canManageBet ? (
-                  <span className="text-cadence-blue fw-bold d-inline-flex align-items-center gap-1 text-nowrap" style={{ fontSize: '13px', cursor: 'pointer', whiteSpace: 'nowrap' }} onClick={(e) => canEditProject && canEditProject(project) ? handleOpenCadences(e, project) : null}>
+                isAdmin ? (
+                  <span className="text-cadence-blue fw-bold d-inline-flex align-items-center gap-1 text-nowrap" style={{ fontSize: '13px', cursor: 'pointer', whiteSpace: 'nowrap' }} onClick={(e) => isAdmin ? handleOpenCadences(e, project) : null}>
                     + {t("Set cadence")} <ChevronDown size={14} className="text-muted" />
                   </span>
                 ) : (
@@ -185,15 +185,15 @@ const ProjectsTable = ({
             <td className="col-owner">
               {project.accountable_owner ? (
                 <span
-                  className="text-dark fw-medium"
-                  style={{ cursor: isAdmin ? 'pointer' : 'default', borderBottom: isAdmin ? '1px dashed #cbd5e1' : 'none' }}
-                  onClick={(e) => isAdmin && canEditProject && canEditProject(project) ? handleOpenDecider(e, project) : null}
+                  className="text-dark"
+                  style={{ cursor: isAdmin ? 'pointer' : 'default', borderBottom: isAdmin ? '1px dashed #cbd5e1' : 'none', fontWeight: '600', fontSize: '13px', whiteSpace: 'nowrap' }}
+                  onClick={(e) => isAdmin ? handleOpenDecider(e, project) : null}
                 >
                   {project.accountable_owner}
                 </span>
               ) : (
                 isAdmin ? (
-                  <span className="text-cadence-blue fw-bold d-inline-flex align-items-center gap-1 text-nowrap" style={{ fontSize: '13px', cursor: 'pointer', whiteSpace: 'nowrap' }} onClick={(e) => canEditProject && canEditProject(project) ? handleOpenDecider(e, project) : null}>
+                  <span className="text-cadence-blue fw-bold d-inline-flex align-items-center gap-1 text-nowrap" style={{ fontSize: '13px', cursor: 'pointer', whiteSpace: 'nowrap' }} onClick={(e) => isAdmin ? handleOpenDecider(e, project) : null}>
                     + {t("Assign decider")} <ChevronDown size={14} className="text-muted" />
                   </span>
                 ) : (
