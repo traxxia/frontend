@@ -641,6 +641,9 @@ const EditableBriefSection = ({
         // Latest period's derived metrics → backward-compat flat financialMetrics
         const sortedTimeline = [...financialTimeline].sort((a, b) => a.period.localeCompare(b.period));
         financialMetrics = sortedTimeline[sortedTimeline.length - 1] || null;
+        if (financialMetrics && mlResponse.meta) {
+          financialMetrics.meta = mlResponse.meta;
+        }
       } else {
         // Legacy flat metrics shape
         financialMetrics = mlResponse;
@@ -718,7 +721,8 @@ const EditableBriefSection = ({
     const currentMetrics = (() => {
       if (!docIntelSession?.financialMetrics) return defaultFinancialMetrics;
       const merged = JSON.parse(JSON.stringify(defaultFinancialMetrics));
-      if (docIntelSession.financialMetrics.meta) merged.meta = { ...merged.meta, ...docIntelSession.financialMetrics.meta };
+      if (docIntelSession.financialMeta) merged.meta = { ...merged.meta, ...docIntelSession.financialMeta };
+      else if (docIntelSession.financialMetrics.meta) merged.meta = { ...merged.meta, ...docIntelSession.financialMetrics.meta };
       const cats = ["financial_performance", "financial_health", "operational_efficiency", "cost_efficiency"];
       cats.forEach(cat => {
         if (docIntelSession.financialMetrics[cat]) {
@@ -1811,7 +1815,8 @@ const EditableBriefSection = ({
   const displayFinancialMetrics = (() => {
     if (!docIntelSession?.financialMetrics) return defaultFinancialMetrics;
     const merged = JSON.parse(JSON.stringify(defaultFinancialMetrics));
-    if (docIntelSession.financialMetrics.meta) merged.meta = { ...merged.meta, ...docIntelSession.financialMetrics.meta };
+    if (docIntelSession.financialMeta) merged.meta = { ...merged.meta, ...docIntelSession.financialMeta };
+    else if (docIntelSession.financialMetrics.meta) merged.meta = { ...merged.meta, ...docIntelSession.financialMetrics.meta };
     const cats = ["financial_performance", "financial_health", "operational_efficiency", "cost_efficiency"];
     cats.forEach(cat => {
       if (docIntelSession.financialMetrics[cat]) {
@@ -2204,6 +2209,10 @@ const EditableBriefSection = ({
                     "financial_health": { icon: "🏦", label: "Financial Health" },
                     "operational_efficiency": { icon: "⚙️", label: "Operational Efficiency" },
                     "cost_efficiency": { icon: "💰", label: "Cost & CAPEX Efficiency" }
+                    // "profitability": { icon: "💹", label: "Profitability" },
+                    // "liquidity": { icon: "💧", label: "Liquidity" },
+                    // "leverage": { icon: "⚖️", label: "Leverage" },
+                    // "investment": { icon: "🚀", label: "Investment" }
                   }).map(([catKey, catInfo]) => {
                     const metricsMap = displayFinancialMetrics[catKey] || {};
                     const metricsEntries = Object.entries(metricsMap).filter(([k]) => k !== "meta");
