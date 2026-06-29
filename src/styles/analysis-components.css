@@ -398,7 +398,7 @@ body {
 }
 
 .text-muted {
-  color: black !important;
+  color: var(--color-text-muted) !important;
 }
 
 .text-muted ol {
@@ -947,7 +947,7 @@ body {
 }
 
 .p-3 {
-  padding: 10px 1rem !important
+  padding: 8px 10px !important
 }
 
 [data-theme="dark"] .p-3 {

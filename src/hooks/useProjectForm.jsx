@@ -89,7 +89,7 @@ export const useProjectForm = () => {
     setTimeline(project.estimated_timeline || "");
     setBudget(project.budget_estimate || "");
     setStrategicDecision(project.strategic_decision || project.project_name || "");
-    setAccountableOwner(project.accountable_owner || project.created_by || "");
+    setAccountableOwner(project.accountable_owner === "Unassigned" ? "" : (project.accountable_owner || ""));
     setAccountableOwnerId(project.accountable_owner_id || "");
     setKeyAssumptions(project.key_assumptions && project.key_assumptions.length > 0 ? project.key_assumptions : ["", "", ""]);
     setSuccessCriteria(project.success_criteria || "");

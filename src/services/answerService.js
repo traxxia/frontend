@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { useAuthStore } from '../store/authStore';
+import { useBusinessStore } from '../store/businessStore';
 
 const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || '';
 
@@ -143,7 +144,7 @@ export const answerService = {
         }
     },
 
-    async analyzeStrategicDocumentsML(files, businessId = null) {
+    async analyzeStrategicDocumentsML(files, businessId = null, businessName = null, selectedModel = null) {
         try {
             const formData = new FormData();
             files.forEach(file => {
@@ -160,9 +161,30 @@ export const answerService = {
                 );
                 const isObservatory = authState?.state?.isObservatory === true;
                 customHeaders['x-is-observatory'] = isObservatory ? 'true' : 'false';
+                
                 if (businessId) {
-                    customHeaders['x-business-id'] = String(businessId);
+                    customHeaders['X-Business-Id'] = String(businessId);
+                    
+                    if (businessName) {
+                        customHeaders['X-Business-Name'] = String(businessName);
+                    } else {
+                        const businessState = useBusinessStore.getState();
+                        const allBusinesses = [...(businessState.businesses || []), ...(businessState.collaboratingBusinesses || [])];
+                        const business = allBusinesses.find(b => String(b._id) === String(businessId)) || businessState.selectedBusiness;
+                        
+                        if (business) {
+                            const foundName = business.business_name || business.name;
+                            if (foundName) {
+                                customHeaders['X-Business-Name'] = String(foundName);
+                            }
+                        }
+                    }
                 }
+
+                if (selectedModel) {
+                    customHeaders['X-Selected-Model'] = selectedModel.startsWith('openai/') ? selectedModel : `openai/${selectedModel}`;
+                }
+
             } catch (_) {}
 
             const mlUrl = import.meta.env.VITE_ML_BACKEND_URL || 'https://trax-qa1-ml-b4e6gmc4hjdncdg2.centralus-01.azurewebsites.net';

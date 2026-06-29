@@ -332,7 +332,7 @@ const PrioritiesProjects = ({
                 onStayOnPriorities();
               }
             }} className="text-muted text-decoration-none">
-              {t("Stay on Priorities")}
+              {t("Stay on this page")}
             </Button>
           </div>
         </Modal.Body>

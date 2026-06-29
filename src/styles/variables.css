@@ -36,7 +36,7 @@
 
   --color-primary-dark: #0B62A1;
 
-  --color-primary-light: #9D96E8;
+  --color-primary-light: #E9F5FC;
 
   --color-secondary: #7209b7;
 
@@ -110,7 +110,8 @@
   --color-email-border: #C5C6CC;
 
   --color-password-border: #C5C6CC;
-
+  --bg-soft:#f8f9fe;
+  
   --spacing-xs: 4px;
   --spacing-sm: 8px;
   --spacing-md: 12px;
@@ -262,8 +263,8 @@
 
   --color-primary-dark: #0B62A1;
 
-  --color-primary-light: #b3ade8;
-
+  --color-primary-light: #E9F5FC;
+  --color-border-strong : #d1d5db;
   --color-secondary: #9b59b6;
 
   --color-success: #27ae60;

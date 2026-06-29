@@ -5,13 +5,16 @@
 }
 
 .adv-sticky-header {
-  position: sticky;
-  top: 0;
-  z-index: 1000;
+  /* Reverted to let MenuBar do its own sticking */
   background-color: #fff;
 }
 
 .adv-header-bar {
+  position: sticky;
+  top: 68px; /* MenuBar height */
+  left: 0;
+  width: 100%;
+  z-index: 990;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -78,7 +81,7 @@
 
 .adv-content-wrapper { 
   margin: 0 auto;
-  padding: 20px 32px;
+  padding: 70px 32px 20px 32px; /* 50px extra top padding for fixed breadcrumb + 20px original */
   max-width: 1200px;
 }
 

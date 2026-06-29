@@ -23,22 +23,6 @@ const StateChangeModal = ({
   }] : [];
   const handleConfirm = useCallback(() => {
     const text = justification.trim();
-    if (!text) {
-      setError(t("Justification is required to change project state"));
-      return;
-    }
-    if (text.length < 10) {
-      setError(t("Justification must be at least 10 characters long"));
-      return;
-    }
-    if (!JUSTIFICATION_REGEX.test(text)) {
-      setError(t("Invalid characters in justification"));
-      return;
-    }
-    if (!JUSTIFICATION_REGEX.test(text)) {
-      setError(t("Invalid characters in justification. Use only letters and standard punctuation."));
-      return;
-    }
     setError("");
     onConfirm(text);
     setJustification("");

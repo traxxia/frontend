@@ -5,12 +5,16 @@ import { useAuthStore, useProjectStore } from "../store";
 import { useQueryClient } from "@tanstack/react-query";
 import { X, ChevronDown, ChevronUp } from "lucide-react";
 import axios from "axios";
+import { useUIStore } from "../store/uiStore";
 
 const NewBetModal = ({ show, onHide, selectedBusinessId, onSuccess }) => {
+  const addToast = useUIStore(state => state.addToast);
   const { t } = useTranslation();
   const { createProject } = useProjectStore();
   const queryClient = useQueryClient();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isInvitingCollaborator, setIsInvitingCollaborator] = useState(false);
+  const [isCreatingCadence, setIsCreatingCadence] = useState(false);
 
   const [projectName, setProjectName] = useState("");
   const [eligibleOwners, setEligibleOwners] = useState([]);
@@ -66,8 +70,43 @@ const NewBetModal = ({ show, onHide, selectedBusinessId, onSuccess }) => {
     }
   }, [show, selectedBusinessId]);
 
+  const handleInviteCollaborator = async () => {
+    if (!newCollaboratorName.trim() || !newCollaboratorEmail.trim()) return;
+    setIsInvitingCollaborator(true);
+    try {
+      const token = useAuthStore.getState().token;
+      const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL || "http://localhost:5000"}/api/businesses/${selectedBusinessId}/invite-collaborator`, {
+        name: newCollaboratorName.trim(),
+        email: newCollaboratorEmail.trim(),
+        role: "collaborator"
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      const newOwner = {
+        _id: response.data.collaborator?._id || newCollaboratorEmail.trim(), // Provide a fallback if backend does not return full user object
+        name: newCollaboratorName.trim(),
+        email: newCollaboratorEmail.trim()
+      };
+      
+      setEligibleOwners(prev => [...prev, newOwner]);
+      setSelectedOwnerId(newOwner._id);
+      
+      setNewCollaboratorName("");
+      setNewCollaboratorEmail("");
+      setIsCollaboratorFormExpanded(false);
+      addToast({ message: "Collaborator invited successfully.", type: "success" });
+    } catch (err) {
+      console.error("Failed to invite collaborator:", err);
+      addToast({ message: err.response?.data?.error || "Failed to invite collaborator", type: "warning" });
+    } finally {
+      setIsInvitingCollaborator(false);
+    }
+  };
+
   const handleCreateCadence = async () => {
     if (!newCadenceName.trim()) return;
+    setIsCreatingCadence(true);
     try {
       const token = useAuthStore.getState().token;
       const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL || "http://localhost:5000"}/api/cadences`, {
@@ -85,6 +124,9 @@ const NewBetModal = ({ show, onHide, selectedBusinessId, onSuccess }) => {
       setIsNewCadenceFormExpanded(false);
     } catch (err) {
       console.error("Failed to create cadence:", err);
+      addToast({ message: "Failed to create cadence", type: "warning" });
+    } finally {
+      setIsCreatingCadence(false);
     }
   };
 
@@ -115,14 +157,15 @@ const NewBetModal = ({ show, onHide, selectedBusinessId, onSuccess }) => {
       const { success, error, data } = await createProject(payload);
       if (success) {
         queryClient.invalidateQueries({ queryKey: ["projects", selectedBusinessId] });
+        addToast({ message: "Bet created successfully.", type: "success" });
         if (onSuccess) onSuccess(data);
         onHide();
       } else {
-        alert(error || "Failed to create bet");
+        addToast({ message: error || "Failed to create bet", type: "warning" });
       }
     } catch (err) {
       console.error(err);
-      alert("An error occurred");
+      addToast({ message: "An error occurred", type: "warning" });
     } finally {
       setIsSubmitting(false);
     }
@@ -286,17 +329,14 @@ const NewBetModal = ({ show, onHide, selectedBusinessId, onSuccess }) => {
                     <button 
                       style={{
                         width: '100%', padding: '10px', border: 'none', borderRadius: '8px',
-                        background: newCollaboratorName.trim() && newCollaboratorEmail.trim() ? '#C7D2FE' : '#E5E7EB',
+                        background: newCollaboratorName.trim() && newCollaboratorEmail.trim() ? '#2563EB' : '#E5E7EB',
                         color: newCollaboratorName.trim() && newCollaboratorEmail.trim() ? '#FFFFFF' : '#9CA3AF',
                         fontWeight: '600', fontSize: '14px', cursor: newCollaboratorName.trim() && newCollaboratorEmail.trim() ? 'pointer' : 'not-allowed'
                       }}
-                      onClick={() => {
-                        alert("Collaborator invitation functionality will be implemented soon.");
-                        setIsCollaboratorFormExpanded(false);
-                      }}
-                      disabled={!newCollaboratorName.trim() || !newCollaboratorEmail.trim()}
+                      onClick={handleInviteCollaborator}
+                      disabled={isInvitingCollaborator || !newCollaboratorName.trim() || !newCollaboratorEmail.trim()}
                     >
-                      Create & assign
+                      {isInvitingCollaborator ? <Spinner size="sm" /> : "Create & assign"}
                     </button>
                   </div>
                 )}
@@ -385,15 +425,16 @@ const NewBetModal = ({ show, onHide, selectedBusinessId, onSuccess }) => {
                       </button>
                       <button 
                         onClick={handleCreateCadence}
-                        disabled={!newCadenceName.trim()}
+                        disabled={isCreatingCadence || !newCadenceName.trim()}
                         style={{ 
                           padding: '8px 16px', border: 'none', borderRadius: '8px',
-                          background: newCadenceName.trim() ? '#D1D5DB' : '#E5E7EB',
-                          color: '#FFFFFF', fontWeight: '600', fontSize: '14px',
-                          cursor: newCadenceName.trim() ? 'pointer' : 'not-allowed'
+                          background: newCadenceName.trim() ? '#2563EB' : '#E5E7EB',
+                          color: newCadenceName.trim() ? '#FFFFFF' : '#9CA3AF', fontWeight: '600', fontSize: '14px',
+                          cursor: newCadenceName.trim() && !isCreatingCadence ? 'pointer' : 'not-allowed',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center'
                         }}
                       >
-                        Create & select
+                        {isCreatingCadence ? <Spinner size="sm" /> : "Create & select"}
                       </button>
                     </div>
                   </div>
