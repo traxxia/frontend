@@ -18,6 +18,7 @@ const AssignDeciderModal = ({ show, onHide, project, onSave, businessId }) => {
   const [newCollaboratorEmail, setNewCollaboratorEmail] = useState("");
   const [loadingOwners, setLoadingOwners] = useState(false);
   const [isInviting, setIsInviting] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const dropdownRef = useRef(null);
 
   const handleInviteCollaborator = async () => {
@@ -132,11 +133,16 @@ const AssignDeciderModal = ({ show, onHide, project, onSave, businessId }) => {
     setIsDropdownOpen(false);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     const owner = eligibleOwners.find((o) => String(o._id) === String(selectedOwnerId));
     console.log("[AssignDecider] Saving. selectedOwnerId:", selectedOwnerId, "resolved owner:", owner);
     if (owner) {
-      onSave(project, owner._id, owner.name);
+      setIsSaving(true);
+      try {
+        await onSave(project, owner._id, owner.name);
+      } finally {
+        setIsSaving(false);
+      }
     } else {
       onHide();
     }
@@ -435,10 +441,10 @@ const AssignDeciderModal = ({ show, onHide, project, onSave, businessId }) => {
           <Button
             variant="primary"
             className="fw-bold px-4"
-            disabled={!selectedOwnerId}
+            disabled={!selectedOwnerId || isSaving}
             onClick={handleSave}
           >
-            {t("Save")}
+            {isSaving ? t("Saving...") : t("Save")}
           </Button>
         </div>
       </Modal.Footer>

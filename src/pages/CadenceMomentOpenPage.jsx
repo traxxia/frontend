@@ -14,8 +14,7 @@ const getStatusStyle = (status) => {
     case 'PAUSED':    return { color: '#b45309', bg: '#fffbeb', border: '#f59e0b' };
     case 'KILLED':    return { color: '#334155', bg: '#f8fafc', border: '#64748b' };
     case 'COMPLETED': return { color: '#1d4ed8', bg: '#eff6ff', border: '#3b82f6' };
-    case 'SCALED':
-    case 'STALLED':   return { color: '#6d28d9', bg: '#f5f3ff', border: '#8b5cf6' };
+    case 'SCALED':    return { color: '#6d28d9', bg: '#f5f3ff', border: '#8b5cf6' };
     default:          return { color: '#475569', bg: '#f1f5f9', border: '#94a3b8' };
   }
 };
@@ -72,7 +71,7 @@ const BetPreviewCard = ({ bet, index, allCompletedUpdates, momentId }) => {
   const hypotheses = bet.hypotheses || [];
   const continueIf = bet.continue_if || bet.continueIf || '';
   const stopIf = bet.stop_if || bet.stopIf || '';
-  const isAtRisk = (bet.status || '').toUpperCase() === 'AT RISK' || (bet.status || '').toUpperCase() === 'STALLED';
+  const isAtRisk = (bet.status || '').toUpperCase() === 'AT RISK';
 
   return (
     <div className="card shadow-sm mb-3" style={{ borderColor: isAtRisk ? '#fca5a5' : '#e2e8f0', borderRadius: '8px', overflow: 'hidden' }}>
@@ -306,7 +305,7 @@ const CadenceMomentOpenPage = () => {
     let severity = b.flag_severity;
     if (!severity) {
       const status = (b.status || '').toUpperCase();
-      if (status === 'AT RISK' || status === 'STALLED') severity = 1;
+      if (status === 'AT RISK') severity = 1;
       else if (status === 'PAUSED') severity = 2;
       else if (b.top_flag_insight) severity = 3;
     }
@@ -317,7 +316,7 @@ const CadenceMomentOpenPage = () => {
     else dotColor = '#98a2b3';
     
     return { ...b, computed_severity: severity, dotColor };
-  }).filter(b => b.computed_severity || b.top_flag_insight || ['AT RISK', 'STALLED', 'PAUSED'].includes((b.status || '').toUpperCase()))
+  }).filter(b => b.computed_severity || b.top_flag_insight || ['AT RISK', 'PAUSED'].includes((b.status || '').toUpperCase()))
   .sort((a, b) => {
     const sevA = a.computed_severity ? parseInt(a.computed_severity) || 99 : 99;
     const sevB = b.computed_severity ? parseInt(b.computed_severity) || 99 : 99;

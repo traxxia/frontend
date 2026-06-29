@@ -393,12 +393,9 @@ const ProjectsSection = ({
         });
         if (data && data.projects) {
           queryClient.setQueryData(["projects", selectedBusinessId], (oldProjects = []) => {
-            return data.projects.map(newProj => {
-              const existingProj = oldProjects.find(p => String(p._id) === String(newProj._id));
-              return existingProj ? {
-                ...existingProj,
-                ...newProj
-              } : newProj;
+            return oldProjects.map(p => {
+              const updatedProj = data.projects.find(newProj => String(newProj._id) === String(p._id));
+              return updatedProj ? { ...p, ...updatedProj } : p;
             });
           });
         }
@@ -635,6 +632,7 @@ const ProjectsSection = ({
       if (success) {
         if (isKickstart) {
           await launchProjects([currentProject._id]);
+          await refreshAllData(); // Ensure UI gets the post-launch status
         }
         handleBackToList();
       }

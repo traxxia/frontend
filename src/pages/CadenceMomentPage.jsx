@@ -6,12 +6,12 @@ import MenuBar from '../components/MenuBar';
 import { useAuthStore, useBusinessStore, useNotificationStore } from '../store';
 import '../styles/execution.css';
 
-const STATUS_OPTIONS = ['ACTIVE', 'AT RISK', 'PAUSED', 'KILLED', 'COMPLETED', 'STALLED'];
+const STATUS_OPTIONS = ['ACTIVE', 'AT RISK', 'PAUSED', 'KILLED', 'COMPLETED', 'SCALED'];
 const LEARNING_OPTIONS = ['Not started', 'testing', 'validated', 'invalidated'];
 
 const getStatusStyles = (opt, isSelected) => {
   if (!isSelected) {
-    return { color: '#64748b', backgroundColor: '#ffffff', borderColor: '#cbd5e1', fontWeight: '400' };
+    return { color: '#64748b', backgroundColor: '#ffffff', borderColor: '#cbd5e1', fontWeight: '600' };
   }
   switch(opt?.toUpperCase()) {
     case 'ACTIVE': return { color: '#059669', backgroundColor: '#ecfdf5', borderColor: '#10b981', fontWeight: '600' };
@@ -19,7 +19,6 @@ const getStatusStyles = (opt, isSelected) => {
     case 'PAUSED': return { color: '#b45309', backgroundColor: '#fffbeb', borderColor: '#f59e0b', fontWeight: '600' };
     case 'KILLED': return { color: '#334155', backgroundColor: '#f8fafc', borderColor: '#64748b', fontWeight: '600' };
     case 'COMPLETED': return { color: '#1d4ed8', backgroundColor: '#eff6ff', borderColor: '#3b82f6', fontWeight: '600' };
-    case 'STALLED': 
     case 'SCALED': return { color: '#6d28d9', backgroundColor: '#f5f3ff', borderColor: '#8b5cf6', fontWeight: '600' };
     default: return { color: '#0f172a', backgroundColor: '#f1f5f9', borderColor: '#94a3b8', fontWeight: '600' };
   }
@@ -195,7 +194,7 @@ const BetReviewCard = ({ bet, isCompleted, updateInfo, onSave, index, legacyComm
                     key={opt}
                     className="btn btn-sm"
                     style={{ 
-                      fontSize: '10px', 
+                      fontSize: '12.5px', 
                       fontWeight: '600',
                       padding: '3px 12px',
                       borderRadius: '100px',
@@ -242,7 +241,7 @@ const BetReviewCard = ({ bet, isCompleted, updateInfo, onSave, index, legacyComm
                     key={opt}
                     className="btn btn-sm"
                     style={{ 
-                      fontSize: '10px', 
+                      fontSize: '12.5px', 
                       fontWeight: '600',
                       padding: '3px 12px',
                       borderRadius: '100px',
@@ -734,7 +733,7 @@ const CadenceMomentPage = () => {
     let severity = b.flag_severity;
     if (!severity) {
       const status = (b.status || '').toUpperCase();
-      if (status === 'AT RISK' || status === 'STALLED') severity = 1;
+      if (status === 'AT RISK') severity = 1;
       else if (status === 'PAUSED') severity = 2;
       else severity = 3;
     }
@@ -861,7 +860,7 @@ const CadenceMomentPage = () => {
                       style={{
                         backgroundColor: allConfirmed ? '#0c71b9' : '#f1f5f9',
                         color: allConfirmed ? '#ffffff' : '#6b7280',
-                        fontSize: '12px',
+                        fontSize: '13.5px',
                         padding: '6px 16px',
                         minWidth: '120px',
                         justifyContent: 'center'

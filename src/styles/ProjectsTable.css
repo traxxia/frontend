@@ -611,3 +611,15 @@
 .footer-status-premium svg {
   flex-shrink: 0;
 }
+.mom-bet-table thead tr th {
+    text-align: left;
+    padding: 12px 14px;
+    background: var(--bg-soft) !important;
+    font-family: 'Geist Mono', ui-monospace, monospace;
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+    border-bottom: 1px solid var(--border);
+}

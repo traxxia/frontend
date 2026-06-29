@@ -43,20 +43,6 @@ export const useAccessControl = (selectedBusinessId) => {
                       (project.accountable_owner && userName && String(project.accountable_owner).trim().toLowerCase() === String(userName).trim().toLowerCase());
       const isCollaborator = userRole === "collaborator";
 
-      console.log(`[canEditProject Debug] Project: "${project.name || project.title}"`, {
-        accountable_owner_id: project.accountable_owner_id,
-        accountable_owner: project.accountable_owner,
-        myUserId,
-        userName,
-        userRole,
-        isOwner,
-        isCollaborator,
-        isProjectDraft,
-        isProjectActive,
-        businessStatus,
-        isProjectLaunched
-      });
-
       // Collaborator Access Rules:
       // Only the owner of the bet can edit (before/after kickstart).
       // Unassigned collaborators cannot edit anything.

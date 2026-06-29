@@ -573,7 +573,13 @@ const CadencesSection = ({ businessId }) => {
                         {needsClose ? (
                           <span className="d-inline-block" style={{ fontSize: '9px', padding: '2px 8px', borderRadius: '12px', background: '#fff7ed', color: '#ea580c', fontWeight: 'bold' }}>NEEDS CLOSE</span>
                         ) : col.moment.closed ? (
-                          <button className="btn btn-sm d-inline-block px-3 py-0" style={{ fontSize: '10px', borderRadius: '4px', background: '#ffffff', color: '#0ea5e9', border: '1px solid #bae6fd', fontWeight: '600' }} onClick={() => navigate(`/business/${businessId}/cadence/${col.cadence._id}/moment/${col.moment._id}`)}>View</button>
+                          <button 
+                            className="btn btn-sm d-inline-block px-3 py-0" 
+                            style={{ fontSize: '10px', borderRadius: '4px', background: '#ffffff', color: '#0ea5e9', border: '1px solid #bae6fd', fontWeight: '600' }} 
+                            onClick={() => navigate(`/business/${businessId}/cadence/${col.cadence._id}/moment/${col.moment._id}/closed`)}
+                          >
+                            View
+                          </button>
                         ) : null}
                       </th>
                     );

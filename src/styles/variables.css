@@ -110,7 +110,8 @@
   --color-email-border: #C5C6CC;
 
   --color-password-border: #C5C6CC;
-
+  --bg-soft:#f8f9fe;
+  
   --spacing-xs: 4px;
   --spacing-sm: 8px;
   --spacing-md: 12px;
