@@ -291,7 +291,7 @@
   background: #ffffff;
   border-bottom: 1px solid #e2e8f0;
   position: sticky;
-  top: 0;
+  top: 46px; /* Offset for MenuBar */
   z-index: 10;
   flex-shrink: 0;
 }
@@ -353,7 +353,7 @@
   box-shadow: 0 1px 4px rgba(0,0,0,0.07);
   background: #ffffff;
   position: sticky;
-  top: 24px;
+  top: 130px; /* Offset for MenuBar + breadcrumb */
 }
 
 /* Docked header */
@@ -448,7 +448,7 @@
   padding: 18px 0 12px 0;
   border-bottom: 1px solid #e2e8f0;
   position: sticky;
-  top: 0;
+  top: 130px; /* Offset for MenuBar + breadcrumb */
   background: #ffffff;
   z-index: 5;
 }

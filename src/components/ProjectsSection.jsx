@@ -772,8 +772,8 @@ const ProjectsSection = ({
                       toggleCategory(cat.id);
                     }}>
                       <div className="status-menu-left">
-                        <div className={`status-checkbox ${selectedCategories.includes(cat.id) ? "checked" : ""}`}>
-                          {selectedCategories.includes(cat.id) && <Check size={12} color="white" style={{ strokeWidth: 3 }} />}
+                        <div className={`status-checkbox ${selectedCategories.includes(cat.id) || selectedCategories.includes("All") ? "checked" : ""}`}>
+                          {(selectedCategories.includes(cat.id) || selectedCategories.includes("All")) && <Check size={12} color="white" style={{ strokeWidth: 3 }} />}
                         </div>
                         <span className="status-name-text">{t(cat.label)}</span>
                       </div>

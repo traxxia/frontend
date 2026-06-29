@@ -1802,7 +1802,9 @@ const EditableBriefSection = ({
 
   const strategyFiles = uploadedFiles.filter(f => f.section === 'strategic');
 
-  const initialCountStr = `${initialFields.filter(f => cleanValue(f.value).trim() !== '').length}/${initialFields.length}`;
+  const initialCompletedCount = initialFields.filter(f => cleanValue(f.value).trim() !== '').length;
+  const isInitialPhaseCompleted = initialFields.length === 0 || initialCompletedCount === initialFields.length;
+  const initialCountStr = `${initialCompletedCount}/${initialFields.length}`;
   const essentialCountStr = `${essentialFields.filter(f => cleanValue(f.value).trim() !== '').length}/${essentialFields.length}`;
   const advancedCountStr = `${advancedFields.filter(f => cleanValue(f.value).trim() !== '').length}/${advancedFields.length}`;
 
@@ -2436,9 +2438,9 @@ const EditableBriefSection = ({
                   });
                   setShowConfirmModal(true);
                 }}
-                disabled={isAnyApiActive || !canEdit || !hasAnyValidData}
+                disabled={isAnyApiActive || !canEdit || !hasAnyValidData || !isInitialPhaseCompleted}
                 className="btn-refine-action"
-                style={{ width: 'auto', padding: '12px 32px', background: (isAnyApiActive || !canEdit || !hasAnyValidData) ? '#93c5fd' : '#0c71b9', color: '#fff', fontSize: '15px', fontWeight: '600', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '8px', border: 'none', cursor: (isAnyApiActive || !canEdit || !hasAnyValidData) ? 'not-allowed' : 'pointer', opacity: (isAnyApiActive || !canEdit || !hasAnyValidData) ? 0.6 : 1 }}
+                style={{ width: 'auto', padding: '12px 32px', background: (isAnyApiActive || !canEdit || !hasAnyValidData || !isInitialPhaseCompleted) ? '#93c5fd' : '#0c71b9', color: '#fff', fontSize: '15px', fontWeight: '600', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '8px', border: 'none', cursor: (isAnyApiActive || !canEdit || !hasAnyValidData || !isInitialPhaseCompleted) ? 'not-allowed' : 'pointer', opacity: (isAnyApiActive || !canEdit || !hasAnyValidData || !isInitialPhaseCompleted) ? 0.6 : 1 }}
               >
                 {(isAnalysisRegenerating || isStrategicRegenerating) ? (
                   <>
@@ -2453,7 +2455,7 @@ const EditableBriefSection = ({
                 )}
               </button>
               <p style={{ marginTop: '16px', marginBottom: '0', color: '#94a3b8', fontSize: '13px' }}>
-                All sections complete — generate your Advanced analysis.
+                {isInitialPhaseCompleted ? 'All sections complete — generate your Advanced analysis.' : 'Please answer all Initial Phase questions before generating insights.'}
               </p>
             </div>
           )}

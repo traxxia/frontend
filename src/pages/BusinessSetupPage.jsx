@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useCallback, useMemo } from "react";
+import React, { useEffect, useRef, useState, useCallback, useMemo, useLayoutEffect } from "react";
 import axios from "axios";
 import {
   ArrowLeft,
@@ -154,7 +154,7 @@ const BusinessSetupPage = () => {
   const getLoggedInRole = () => (userRole || "").toLowerCase();
   const loggedInRole = getLoggedInRole();
 
-  const canRegenerate = !["viewer"].includes(loggedInRole);
+
   const businessStatus = currentBusiness?.status || "";
   const isLaunchedStatus = businessStatus === "launched";
   const [uploadedFileForAnalysis, setUploadedFileForAnalysis] = useState(null);
@@ -239,6 +239,27 @@ const BusinessSetupPage = () => {
     initializeBusinessData: state.initializeBusinessData,
     resetAnalysis: state.resetAnalysis,
   })));
+
+  const isInitialPhaseCompleted = useMemo(() => {
+    if (!questions || questions.length === 0) return true;
+    
+    // Exactly match EditableBriefSection filtering
+    const filteredQuestions = questions.filter(q => q.phase && !['good'].includes(q.phase.toLowerCase()));
+    const initialFields = filteredQuestions.filter(q => q.phase.toLowerCase() === 'initial');
+    
+    if (initialFields.length === 0) return true;
+
+    const result = initialFields.every(q => {
+      const qId = q._id || q.question_id;
+      const ans = userAnswers[qId] || userAnswers[String(qId)] || '';
+      const cleanAns = typeof ans === 'string' ? ans.replace(/^\[AI Extraction\]\s*/i, '').trim() : '';
+      return cleanAns !== '' && cleanAns !== '[Question Skipped]';
+    });
+    console.log("DEBUG: isInitialPhaseCompleted evaluation:", result, "initialFields length:", initialFields.length, "userAnswers length:", Object.keys(userAnswers).length);
+    return result;
+  }, [questions, userAnswers]);
+
+  const canRegenerate = !["viewer"].includes(loggedInRole) && isInitialPhaseCompleted;
 
   // Regenerating flag aliases
   const isTypeRegenerating = (type) => regenerating[`${selectedBusinessId}_${type}`] || false;
@@ -427,6 +448,13 @@ const BusinessSetupPage = () => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams, location.key, location.state, hasPmfAccess, hasProjectAccess]); // location.key firmly triggers this on any navigation
+
+  useLayoutEffect(() => {
+    if ('scrollRestoration' in window.history) {
+      window.history.scrollRestoration = 'manual';
+    }
+    window.scrollTo(0, 0);
+  }, [activeTab]);
 
   // 2. Sync State -> URL (When user clicks UI buttons)
   useEffect(() => {
@@ -1517,7 +1545,14 @@ const BusinessSetupPage = () => {
                 </button>
                 <div className="business-breadcrumb">
                   <span className="breadcrumb-separator">/</span>
-                  <span className="business-header-name">{selectedBusinessName}</span>
+                  <span
+                    className="business-header-name"
+                    onClick={() => setActiveTab('insights')}
+                    style={{ cursor: 'pointer' }}
+                    title="Go to Insights"
+                  >
+                    {selectedBusinessName}
+                  </span>
                   <span className="breadcrumb-separator">/</span>
                   <span className="business-header-name">{activeTab === 'advanced' ? 'Advanced Insights' : 'Onboarding'}</span>
                 </div>
@@ -1694,7 +1729,7 @@ const BusinessSetupPage = () => {
                         {canShowRegenerateButtons && unlockedFeatures.analysis && hasInsightAccess && (
                           <CustomTooltip align="right" message={t("regenerate_all_tooltip") || "Re-generate all insights."}>
                             <button
-                              onClick={() => canRegenerate && handleRegenerateAllAnalysis({ includeFinancial: hasUploadedDocument })}
+                              onClick={() => canRegenerate && handleRegenerateAllAnalysis({ includeFinancial: hasUploadedDocument, alsoRegenerateStrategic: true })}
                               disabled={isAnalysisRegenerating || !unlockedFeatures.analysis || !canRegenerate || !hasInsightAccess}
                               className={`regenerate-button ${isAnalysisRegenerating ? 'disabled' : ''}`}
                             >
@@ -1895,9 +1930,9 @@ const BusinessSetupPage = () => {
                               </CustomTooltip>
 
                               {canShowRegenerateButtons && unlockedFeatures.analysis && hasInsightAccess && (
-                                <CustomTooltip align="right" message={t("regenerate_all_tooltip") || "Re-generate all insights."}>
+                                <CustomTooltip align="right" message={insightsSubTab === 'direction' ? (t("regenerate_strategic_tooltip") || "Re-generate strategic insights.") : (t("regenerate_all_tooltip") || "Re-generate all insights.")}>
                                   <button
-                                    onClick={() => canRegenerate && handleRegenerateAllAnalysis({ includeFinancial: hasUploadedDocument })}
+                                    onClick={() => canRegenerate && (insightsSubTab === 'direction' ? handleStrategicAnalysisRegenerate() : handleRegenerateAllAnalysis({ includeFinancial: hasUploadedDocument, alsoRegenerateStrategic: true }))}
                                     disabled={isAnalysisRegenerating || !unlockedFeatures.analysis || !canRegenerate || !hasInsightAccess}
                                     className={`regenerate-button ${isAnalysisRegenerating ? 'disabled' : ''}`}
                                   >
@@ -2202,7 +2237,7 @@ const BusinessSetupPage = () => {
                           {canShowRegenerateButtons && unlockedFeatures.analysis && hasInsightAccess && (
                             <CustomTooltip align="right" message={t("regenerate_all_tooltip") || "Re-generate all insights."}>
                               <button
-                                onClick={() => canRegenerate && handleRegenerateAllAnalysis({ includeFinancial: hasUploadedDocument })}
+                                onClick={() => canRegenerate && handleRegenerateAllAnalysis({ includeFinancial: hasUploadedDocument, alsoRegenerateStrategic: true })}
                                 disabled={isAnalysisRegenerating || !unlockedFeatures.analysis || !canRegenerate || !hasInsightAccess}
                                 className={`regenerate-button ${isAnalysisRegenerating ? 'disabled' : ''}`}
                               >
