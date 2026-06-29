@@ -183,7 +183,7 @@ const ProjectsTable = ({
               )}
             </td>
             <td className="col-owner">
-              {project.accountable_owner ? (
+              {project.accountable_owner_id ? (
                 <span
                   className="text-dark"
                   style={{ cursor: isAdmin ? 'pointer' : 'default', borderBottom: isAdmin ? '1px dashed #cbd5e1' : 'none', fontWeight: '600', fontSize: '13px', whiteSpace: 'nowrap' }}
@@ -192,13 +192,9 @@ const ProjectsTable = ({
                   {project.accountable_owner}
                 </span>
               ) : (
-                isAdmin ? (
-                  <span className="text-cadence-blue fw-bold d-inline-flex align-items-center gap-1 text-nowrap" style={{ fontSize: '13px', cursor: 'pointer', whiteSpace: 'nowrap' }} onClick={(e) => isAdmin ? handleOpenDecider(e, project) : null}>
-                    + {t("Assign decider")} <ChevronDown size={14} className="text-muted" />
-                  </span>
-                ) : (
-                  <span className="text-muted" style={{ fontSize: '13px' }}>-</span>
-                )
+                <span className="text-cadence-blue fw-bold d-inline-flex align-items-center gap-1 text-nowrap" style={{ fontSize: '13px', cursor: 'pointer', whiteSpace: 'nowrap' }} onClick={(e) => handleOpenDecider(e, project)}>
+                  + {t("Assign decider")} <ChevronDown size={14} className="text-muted" />
+                </span>
               )}
             </td>
             <td>

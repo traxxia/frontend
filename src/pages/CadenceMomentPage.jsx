@@ -1010,7 +1010,7 @@ const CadenceMomentPage = () => {
                     );
                   })}
 
-                  {totalOpenCommitments > 0 && (
+                  {/* {totalOpenCommitments > 0 && (
                     <li className="d-flex align-items-center justify-content-between mb-2 pb-2" style={{ borderBottom: '1px solid #eaecf0' }}>
                       <div className="d-flex align-items-center pe-3">
                         <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#98a2b3', marginRight: '12px', flexShrink: 0 }}></span>
@@ -1021,7 +1021,7 @@ const CadenceMomentPage = () => {
                         </div>
                       </div>
                     </li>
-                  )}
+                  )} */}
                 </ul>
                 <div style={{ fontSize: '11px', color: '#98a2b3', fontStyle: 'italic', marginTop: '6px' }}>
                   Ranked by severity. Open any bet below for its full set of insights.
