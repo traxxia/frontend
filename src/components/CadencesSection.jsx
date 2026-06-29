@@ -14,11 +14,9 @@ import '../styles/EvolutionTable.css';
 const getStatusSeverity = (status) => {
   if (!status) return 0;
   const s = status.toUpperCase();
-  if (['COMPLETED', 'SCALED'].includes(s)) return 5;
-  if (s === 'ACTIVE') return 4;
-  if (s === 'PAUSED') return 3;
-  if (s === 'AT RISK') return 2;
-  if (['KILLED', 'STALLED'].includes(s)) return 1;
+  if (['COMPLETED', 'SCALED'].includes(s)) return 3;
+  if (s === 'ACTIVE') return 2;
+  if (['AT RISK', 'PAUSED', 'KILLED', 'STALLED'].includes(s)) return 1;
   return 0;
 };
 
@@ -592,7 +590,7 @@ const CadencesSection = ({ businessId }) => {
                 ).map((bet, betIndex) => {
                   return (
                     <tr key={bet._id} className="evolution-bet-row">
-                      <td className="text-start px-3 py-3 fw-medium evolution-bet-name">
+                      <td className="text-start px-3 py-1 fw-medium evolution-bet-name">
                         <span className="evolution-bet-index">#{betIndex + 1}</span> {bet.project_name || bet.initiative_name || bet.name || "Unnamed Bet"}
                       </td>
                       {allMoments.map((col, i) => {
@@ -613,24 +611,29 @@ const CadencesSection = ({ businessId }) => {
                         
                         if (updateRecord) {
                           let arrow = null;
+                          let prevRecord = null;
                           if (i > 0) {
-                            let prevRecord = null;
                             for (let j = i - 1; j >= 0; j--) {
                               prevRecord = completedUpdates.find(cu => cu.bet_id === bet._id && cu.moment_id === allMoments[j].moment._id);
                               if (prevRecord) break;
                             }
-                            if (prevRecord) {
-                              if (evolutionTab === 'Status') {
-                                const currSev = getStatusSeverity(updateRecord.status);
-                                const prevSev = getStatusSeverity(prevRecord.status);
-                                if (currSev > prevSev) arrow = <span className="ms-1 text-success evolution-arrow-up">▲</span>;
-                                if (currSev < prevSev) arrow = <span className="ms-1 text-danger evolution-arrow-down">▼</span>;
-                              } else {
-                                const currSev = getLearningSeverity(updateRecord.learning_state);
-                                const prevSev = getLearningSeverity(prevRecord.learning_state);
-                                if (currSev > prevSev) arrow = <span className="ms-1 text-success evolution-arrow-up">▲</span>;
-                                if (currSev < prevSev) arrow = <span className="ms-1 text-danger evolution-arrow-down">▼</span>;
-                              }
+                          }
+                          
+                          if (!prevRecord) {
+                            prevRecord = { status: 'ACTIVE', learning_state: 'TESTING' };
+                          }
+
+                          if (prevRecord) {
+                            if (evolutionTab === 'Status') {
+                              const currSev = getStatusSeverity(updateRecord.status);
+                              const prevSev = getStatusSeverity(prevRecord.status);
+                              if (currSev > prevSev) arrow = <span className="ms-1 text-success evolution-arrow-up">▲</span>;
+                              if (currSev < prevSev) arrow = <span className="ms-1 text-danger evolution-arrow-down">▼</span>;
+                            } else {
+                              const currSev = getLearningSeverity(updateRecord.learning_state);
+                              const prevSev = getLearningSeverity(prevRecord.learning_state);
+                              if (currSev > prevSev) arrow = <span className="ms-1 text-success evolution-arrow-up">▲</span>;
+                              if (currSev < prevSev) arrow = <span className="ms-1 text-danger evolution-arrow-down">▼</span>;
                             }
                           }
 

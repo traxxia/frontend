@@ -122,7 +122,7 @@ const ClosedMomentPage = () => {
   const mDate = new Date(moment.date);
   const formattedDate = mDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
 
-  const uniqueDeciders = Array.from(new Set(closedBets.map(b => getOwnerDetails(b, myUserId).ownerInitials).filter(i => i !== "?")));
+  const uniqueDeciders = Array.from(new Set(closedBets.map(b => b.accountable_owner).filter(Boolean))).slice(0, 4);
 
   return (
     <div className="d-flex flex-column min-vh-100" style={{ backgroundColor: '#ffffff' }}>
@@ -136,7 +136,7 @@ const ClosedMomentPage = () => {
         </button>
       </div>
 
-      <div className="flex-grow-1 mx-auto w-100 p-5" style={{ maxWidth: '1200px', backgroundColor: '#ffffff' }}>
+      <div className="flex-grow-1 mx-auto w-100 px-5 py-4" style={{ maxWidth: '1200px', backgroundColor: '#ffffff' }}>
         
         {/* Top Title Section */}
         <div className="d-flex justify-content-between align-items-start mb-5">
@@ -158,13 +158,13 @@ const ClosedMomentPage = () => {
           
           {/* Decider circles */}
           <div className="d-flex align-items-center" style={{ gap: '-8px' }}>
-            {uniqueDeciders.map((initials, idx) => (
+            {uniqueDeciders.map((owner, idx) => (
               <div 
                 key={idx} 
                 className="rounded-circle d-flex align-items-center justify-content-center border border-2 border-white shadow-sm"
                 style={{ width: '32px', height: '32px', backgroundColor: '#f1f5f9', color: '#0c71b9', fontSize: '12px', fontWeight: 'bold', marginLeft: idx > 0 ? '-8px' : '0' }}
               >
-                {initials}
+                {owner.substring(0, 2).toUpperCase()}
               </div>
             ))}
           </div>

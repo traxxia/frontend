@@ -3,7 +3,7 @@ import { useNavigate, useParams, Link } from 'react-router-dom';
 import { ArrowLeft, ChevronLeft, Clock, CheckCircle2, ChevronDown, Flag, AlertTriangle, User, Check, Trash2, Plus, CheckSquare } from 'lucide-react';
 import axios from 'axios';
 import MenuBar from '../components/MenuBar';
-import { useAuthStore, useBusinessStore, useNotificationStore } from '../store';
+import { useAuthStore, useBusinessStore, useNotificationStore, useUIStore } from '../store';
 import '../styles/execution.css';
 
 const STATUS_OPTIONS = ['ACTIVE', 'AT RISK', 'PAUSED', 'KILLED', 'COMPLETED', 'SCALED'];
@@ -704,7 +704,7 @@ const CadenceMomentPage = () => {
     } catch (err) {
       console.error("Error saving cadence update:", err);
       const errMsg = err.response?.data?.error || "Failed to save the bet update. Please try again.";
-      useNotificationStore.getState().addNotification(errMsg, 'error');
+      useUIStore.getState().addToast({ message: errMsg, type: 'error' });
     }
   };
 
@@ -759,9 +759,9 @@ const CadenceMomentPage = () => {
       navigate('/businesspage?tab=cadences');
     } catch (err) {
       console.error("Failed to sign and close moment:", err);
-      const errMsg = err.response?.data?.error || "Failed to close the moment. Please try again.";
-      useNotificationStore.getState().addNotification(errMsg, 'error');
       setIsSigningAndClosing(false);
+      const errMsg = err.response?.data?.error || "Failed to close the moment. Please try again.";
+      useUIStore.getState().addToast({ message: errMsg, type: 'error' });
     }
   };
 
@@ -814,7 +814,7 @@ const CadenceMomentPage = () => {
         <MenuBar />
       </div>
 
-      <div className="container py-3" style={{ maxWidth: '1000px' }}>
+      <div className="container pt-4 pb-3" style={{ maxWidth: '1000px' }}>
         <Link to={`/businesspage?tab=cadences`} className="d-inline-flex align-items-center text-decoration-none mb-3" style={{ fontSize: '12px', color: '#475569', fontWeight: '600' }}>
           <ChevronLeft size={14} className="me-1" strokeWidth={3} /> Back to Cadences
         </Link>
