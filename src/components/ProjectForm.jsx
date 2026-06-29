@@ -286,9 +286,11 @@ setSuccessMetrics,
     t
   } = useTranslation();
   const navigate = useNavigate();
+  const currentUserId = useAuthStore(state => state.userId);
   const isReadOnly = mode === "view" || readOnly;
   const [fieldErrors, setFieldErrors] = useState({});
   const [showErrors, setShowErrors] = useState(false);
+  const [submitAction, setSubmitAction] = useState(null);
   const [eligibleOwners, setEligibleOwners] = useState([]);
   const [pendingCadences, setPendingCadences] = useState([]);
   const breadcrumbRef = useRef(null);
@@ -699,6 +701,7 @@ setSuccessMetrics,
     handleFieldEdit("key_assumptions");
   };
   const handleSubmit = (e, isKickstart = false) => {
+    setSubmitAction(isKickstart ? "kickstart" : "save");
     if (e && e.preventDefault) e.preventDefault();
     const skipStrict = !isKickstart && initialStatusLower === "draft";
     const validation = validateForm({
@@ -753,8 +756,8 @@ setSuccessMetrics,
                       {t("Cancel")}
                     </button>
                     <button type="button" className="d-flex align-items-center gap-2" onClick={(e) => handleSubmit(e, false)} disabled={isSubmitting || isTerminal} style={{ backgroundColor: '#0c71b9', color: '#ffffff', border: 'none', borderRadius: '6px', fontSize: '13px', fontWeight: '600', padding: '6px 16px', cursor: 'pointer', opacity: (isSubmitting || isTerminal) ? 0.6 : 1 }}>
-                      {isSubmitting ? <span className="spinner-border spinner-border-sm" /> : <Check size={14} strokeWidth={2.5} />}
-                      {isSubmitting ? 'Saving...' : 'Save changes'}
+                      {isSubmitting && submitAction === "save" ? <span className="spinner-border spinner-border-sm" /> : <Check size={14} strokeWidth={2.5} />}
+                      {isSubmitting && submitAction === "save" ? 'Saving...' : 'Save changes'}
                     </button>
                   </>
                 )}
@@ -798,10 +801,8 @@ setSuccessMetrics,
  
       </div>
       
-      <fieldset disabled={isSubmitting || isReadOnly} style={{ border: 'none', padding: 0, margin: 0 }}>
-
       {!isLaunched && initialStatusLower === "draft" && hasDecider && (
-        <div className="decider-info-banner mt-0 mb-3" style={{ backgroundColor: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '8px', padding: '16px', color: '#1e3a8a', fontSize: '13px' }}>
+        <div className="decider-info-banner mt-0 mb-3" style={{border: '1px solid #bfdbfe', borderRadius: '8px', padding: '16px', color: '#1e3a8a', fontSize: '13px' }}>
           <strong style={{ color: '#1d4ed8' }}>Awaiting {accountableOwner}.</strong> <span style={{ color: '#475569' }}>The fields below will be completed by the assigned decider. You'll see them here once filled.</span>
         </div>
       )}
@@ -831,9 +832,9 @@ setSuccessMetrics,
             </div>
             <div className="flex-shrink-0 ms-4 d-flex align-items-center justify-content-end" style={{ width: '220px' }}>
               {canKickstart ? (
-                  <button className={`btn-kickstart active d-flex align-items-center justify-content-center gap-2`} onClick={handleKickstart} disabled={isSubmitting} style={{ backgroundColor: '#10b981', color: 'white', padding: '10px 20px', borderRadius: '8px', border: 'none', fontWeight: '600' }}>
-                    {isSubmitting ? <span className="spinner-border spinner-border-sm" /> : null}
-                    {isSubmitting ? 'Kickstarting...' : 'Kickstart Bet →'}
+                  <button className={`btn-kickstart active d-flex align-items-center justify-content-center gap-2`} onClick={handleKickstart} disabled={isSubmitting} style={{ backgroundColor: '#10b981', color: 'white', padding: '10px 20px', borderRadius: '8px', border: 'none', fontWeight: '600', opacity: isSubmitting ? 0.6 : 1, cursor: isSubmitting ? 'not-allowed' : 'pointer' }}>
+                    {isSubmitting && submitAction === "kickstart" ? <span className="spinner-border spinner-border-sm" /> : null}
+                    {isSubmitting && submitAction === "kickstart" ? 'Kickstarting...' : 'Kickstart Bet →'}
                   </button>
               ) : (
                 <div style={{ color: '#94a3b8', fontStyle: 'italic', fontSize: '13px', textAlign: 'right', lineHeight: '1.4' }}>
@@ -898,9 +899,24 @@ setSuccessMetrics,
                   </div>
                 </div>
                 <div>
-                  <button type="button" onClick={() => navigate(`/business/${selectedBusinessId}/cadence/${pc.cadenceId}/moment/${pc.moment._id}`)} style={{ backgroundColor: '#0c71b9', color: '#ffffff', border: 'none', borderRadius: '6px', fontSize: '13px', fontWeight: '600', padding: '8px 16px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    Open · Capture &rarr;
-                  </button>
+                  {(() => {
+                    const isCaptureDisabled = !isAdmin && (!currentUserId || currentUserId !== accountableOwnerId);
+                    return (
+                      <button type="button" disabled={isCaptureDisabled} onClick={(e) => {
+                        if (isCaptureDisabled) return;
+                        e.preventDefault();
+                        e.stopPropagation();
+                        console.log("[DEBUG] Open Capture Button Clicked!");
+                        console.log("[DEBUG] pc object:", pc);
+                        console.log("[DEBUG] selectedBusinessId:", selectedBusinessId);
+                        const targetUrl = `/business/${selectedBusinessId}/cadence/${pc.cadenceId}/moment/${pc.moment._id || pc.moment.id}`;
+                        console.log("[DEBUG] targetUrl:", targetUrl);
+                        navigate(targetUrl);
+                      }} style={{ backgroundColor: isCaptureDisabled ? '#94a3b8' : '#0c71b9', color: '#ffffff', border: 'none', borderRadius: '6px', fontSize: '13px', fontWeight: '600', padding: '8px 16px', cursor: isCaptureDisabled ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', gap: '6px', opacity: isCaptureDisabled ? 0.8 : 1 }}>
+                        Open · Capture &rarr;
+                      </button>
+                    );
+                  })()}
                 </div>
               </div>
             )})}
@@ -908,6 +924,7 @@ setSuccessMetrics,
         </div>
       )}
 
+      <fieldset disabled={isSubmitting || isReadOnly} style={{ border: 'none', padding: 0, margin: 0 }}>
       <Accordion alwaysOpen defaultActiveKey={['0']} className="mt-4 form-accordion">
         <Accordion.Item eventKey="0" className="mb-2 border rounded form-accordion-item">
           <Accordion.Header>
@@ -947,7 +964,7 @@ setSuccessMetrics,
                 {renderLockBadge("project_description")}
               </div>
               <p className="text-muted small mb-2 project-form--s17" style={{ color: '#64748b', fontSize: '13px', margin: '0 0 8px 0' }}>A clear paragraph describing what this bet is and what it sets out to do.</p>
-              <textarea ref={descriptionRef} value={description || ""} onChange={handleDescriptionChange} placeholder="Launch digital wallet product and achieve market penetration..." rows={3} className={`field-textarea ${showErrors && fieldErrors.description ? "error" : ""}`} readOnly={isFieldDisabled("project_description")} onFocus={() => handleFieldFocus("project_description")} maxLength={500} style={{ backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '8px', width: '100%', outline: 'none' }} />
+              <textarea ref={descriptionRef} value={description || ""} onChange={handleDescriptionChange} placeholder="Launch digital wallet product and achieve market penetration..." rows={3} className={`field-textarea ${showErrors && fieldErrors.description ? "error" : ""}`} readOnly={isFieldDisabled("project_description")} onFocus={() => handleFieldFocus("project_description")} maxLength={500} style={{ border: '1px solid #e2e8f0', borderRadius: '8px', padding: '8px', width: '100%', outline: 'none' }} />
               <div className="project-form--s16">
                 {showErrors && fieldErrors.description && <small className="error-text">{fieldErrors.description}</small>}
               </div>
@@ -961,7 +978,7 @@ setSuccessMetrics,
                 {renderLockBadge("why_this_matters")}
               </div>
               <p className="text-muted small mb-2 project-form--s17" style={{ color: '#64748b', fontSize: '13px', margin: '0 0 8px 0' }}>The strategic importance — why this bet earns a slot in your top 5.</p>
-              <textarea ref={importanceRef} value={importance || ""} onChange={handleImportanceChange} placeholder="Explain the strategic importance..." rows={3} className={`field-textarea ${showErrors && fieldErrors.importance ? "error" : ""}`} readOnly={isFieldDisabled("why_this_matters")} onFocus={() => handleFieldFocus("why_this_matters")} style={{ backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '8px', width: '100%', outline: 'none' }} />
+              <textarea ref={importanceRef} value={importance || ""} onChange={handleImportanceChange} placeholder="Explain the strategic importance..." rows={3} className={`field-textarea ${showErrors && fieldErrors.importance ? "error" : ""}`} readOnly={isFieldDisabled("why_this_matters")} onFocus={() => handleFieldFocus("why_this_matters")} style={{ border: '1px solid #e2e8f0', borderRadius: '8px', padding: '8px', width: '100%', outline: 'none' }} />
               <div className="project-form--s16">
                 {showErrors && fieldErrors.importance && <small className="error-text">{fieldErrors.importance}</small>}
               </div>

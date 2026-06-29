@@ -515,6 +515,8 @@ const CadenceMomentPage = () => {
   const { selectedBusiness } = useBusinessStore();
   const businessName = selectedBusiness?.business_name || "Business";
   const userRole = useAuthStore(state => state.userRole);
+  const userId = useAuthStore(state => state.userId);
+  const isAdmin = useAuthStore(state => state.isAdmin);
   
   const [cadence, setCadence] = useState(null);
   const [moment, setMoment] = useState(null);
@@ -593,7 +595,11 @@ const CadenceMomentPage = () => {
           const names = cStr.split(",").map(s => s.trim()).filter(Boolean);
           const isAssigned = names.includes(fetchedCadence.name);
           const isNotDraft = p.status?.toUpperCase() !== "DRAFT";
-          return isAssigned && isNotDraft;
+          
+          if (!isAssigned || !isNotDraft) return false;
+          if (isAdmin) return true;
+          
+          return String(p.accountable_owner_id) === String(userId) || String(p.user_id) === String(userId);
         });
         
         // Use global index from allProjects to maintain true bet numbering
