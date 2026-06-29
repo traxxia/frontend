@@ -103,7 +103,7 @@ const AssignDeciderModal = ({ show, onHide, project, onSave, businessId }) => {
       setNewCollaboratorName("");
       setNewCollaboratorEmail("");
     }
-  }, [show, project]);
+  }, [show, project?._id, project?.accountable_owner_id]);
 
   /* ── Helpers ─────────────────────────────────────────────────── */
   const getRoleLabel = (owner) => {

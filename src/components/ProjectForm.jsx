@@ -280,7 +280,8 @@ setSuccessMetrics,
   decisionLog,
   errors: hookErrors,
   validateForm,
-  sNo
+  sNo,
+  onAssignDeciderClick
 }) => {
   const {
     t
@@ -293,6 +294,7 @@ setSuccessMetrics,
   const [submitAction, setSubmitAction] = useState(null);
   const [eligibleOwners, setEligibleOwners] = useState([]);
   const [pendingCadences, setPendingCadences] = useState([]);
+
   const breadcrumbRef = useRef(null);
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -365,12 +367,6 @@ setSuccessMetrics,
       if (existingMatch) {
         setAccountableOwnerId(String(existingMatch._id));
         setAccountableOwner(existingMatch.name || existingMatch.email);
-      } else {
-        const admin = eligibleOwners.find(o => o.is_company_admin) || eligibleOwners.find(o => o.is_business_owner);
-        if (admin) {
-          setAccountableOwnerId(String(admin._id));
-          setAccountableOwner(admin.name || admin.email);
-        }
       }
     }
   }, [accountableOwnerId, accountableOwner, eligibleOwners, setAccountableOwnerId, setAccountableOwner]);
@@ -471,13 +467,20 @@ setSuccessMetrics,
   };
   const scrollToError = ref => {
     if (ref?.current) {
-      ref.current.scrollIntoView({
-        behavior: "smooth",
-        block: "center"
-      });
+      const item = ref.current.closest('.accordion-item');
+      const btn = item?.querySelector('.accordion-header button.collapsed');
+      if (btn) {
+        btn.click();
+      }
       setTimeout(() => {
-        ref.current.focus();
-      }, 500);
+        ref.current.scrollIntoView({
+          behavior: "smooth",
+          block: "center"
+        });
+        setTimeout(() => {
+          ref.current.focus();
+        }, 300);
+      }, 100);
     }
   };
   const handleProjectNameChange = e => {
@@ -807,7 +810,7 @@ setSuccessMetrics,
         </div>
       )}
 
-      {!isLaunched && initialStatusLower === "draft" && !isReadOnly && (
+      {!isLaunched && accountableOwnerId && initialStatusLower === "draft" && !isReadOnly && (
         <div className="kickstart-banner" style={{ backgroundColor: '#fffbeb', border: '1px solid #fde68a', borderRadius: '12px', padding: '16px', marginBottom: '16px' }}>
           <div className="d-flex justify-content-between align-items-center">
             <div style={{ flex: 1 }}>
@@ -831,16 +834,10 @@ setSuccessMetrics,
               </div>
             </div>
             <div className="flex-shrink-0 ms-4 d-flex align-items-center justify-content-end" style={{ width: '220px' }}>
-              {canKickstart ? (
-                  <button className={`btn-kickstart active d-flex align-items-center justify-content-center gap-2`} onClick={handleKickstart} disabled={isSubmitting} style={{ backgroundColor: '#10b981', color: 'white', padding: '10px 20px', borderRadius: '8px', border: 'none', fontWeight: '600', opacity: isSubmitting ? 0.6 : 1, cursor: isSubmitting ? 'not-allowed' : 'pointer' }}>
-                    {isSubmitting && submitAction === "kickstart" ? <span className="spinner-border spinner-border-sm" /> : null}
-                    {isSubmitting && submitAction === "kickstart" ? 'Kickstarting...' : 'Kickstart Bet →'}
-                  </button>
-              ) : (
-                <div style={{ color: '#94a3b8', fontStyle: 'italic', fontSize: '13px', textAlign: 'right', lineHeight: '1.4' }}>
-                  Awaiting the decider to complete and kickstart this bet.
-                </div>
-              )}
+              <button className={`btn-kickstart active d-flex align-items-center justify-content-center gap-2`} onClick={handleKickstart} disabled={isSubmitting} style={{ backgroundColor: '#10b981', color: 'white', padding: '10px 20px', borderRadius: '8px', border: 'none', fontWeight: '600', opacity: isSubmitting ? 0.6 : 1, cursor: isSubmitting ? 'not-allowed' : 'pointer' }}>
+                {isSubmitting && submitAction === "kickstart" ? <span className="spinner-border spinner-border-sm" /> : null}
+                {isSubmitting && submitAction === "kickstart" ? 'Kickstarting...' : 'Kickstart Bet →'}
+              </button>
             </div>
           </div>
         </div>
@@ -854,12 +851,17 @@ setSuccessMetrics,
             </div>
             <div className="decider-warning-main">Pick a decider to start configuring this bet</div>
             <div className="decider-warning-sub">Only the decider can fill in the bet's details. Until one is assigned, the form below is locked.</div>
-            <button className="btn btn-primary mt-3 btn-assign-decider" style={{ backgroundColor: '#0c71b9', border: 'none' }} onClick={(e) => {
-              e.preventDefault();
-              if (accountableOwnerRef.current) {
-                accountableOwnerRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
-              }
-            }}>
+            <button
+              className="btn btn-primary mt-3 btn-assign-decider"
+              style={{ backgroundColor: '#0c71b9', border: 'none' }}
+              onClick={(e) => {
+                e.preventDefault();
+                if (isReadOnly && (canEdit || isAdmin)) {
+                  onEdit?.();
+                }
+                onAssignDeciderClick?.();
+              }}
+            >
               Assign decider &rarr;
             </button>
           </div>

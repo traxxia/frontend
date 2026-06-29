@@ -23,6 +23,7 @@ import ConfirmationModal from "../components/ConfirmationModal";
 import "../styles/ProjectsSection.css";
 import "../styles/ProjectReviewModal.css";
 import NewBetModal from "../components/NewBetModal";
+import AssignDeciderModal from "../components/AssignDeciderModal";
 const CATEGORIES = [{
   id: "All",
   label: "all"
@@ -129,6 +130,21 @@ const ProjectsSection = ({
     isModalOpen
   } = useUIStore();
   const [activeView, setActiveView] = useState("list");
+  const [showAssignModal, setShowAssignModal] = useState(false);
+  const handleAssignDeciderSave = async (proj, ownerId, ownerName) => {
+    formSetters.setAccountableOwnerId(ownerId);
+    formSetters.setAccountableOwner(ownerName);
+    handleFieldEdit?.("accountable_owner");
+    
+    if (proj?._id && activeView !== "new") {
+      await handleDirectUpdate(proj._id, {
+        accountable_owner_id: ownerId,
+        accountable_owner: ownerName
+      });
+    }
+    
+    setShowAssignModal(false);
+  };
   const [isRankingsLoading] = useState(false);
   const [isGeneratingAIRankings] = useState(false);
   const containerRef = useRef(null);
@@ -697,7 +713,7 @@ const ProjectsSection = ({
       }
     }
 
-    return <ProjectForm mode={activeView} readOnly={activeView === "view" || currentProject && !canEditProject(currentProject, isEditor, myUserId, businessStatus, apiIsArchived, isSuperAdmin)} canEdit={currentProject && canEditProject(currentProject, isEditor, myUserId, businessStatus, apiIsArchived)} onEdit={() => handleEditProject(currentProject, "edit")} {...formState} {...formSetters} accountableOwnerId={formState.accountableOwnerId} setAccountableOwnerId={formSetters.setAccountableOwnerId} onBack={handleBackToList} onSubmit={activeView === "new" ? handleCreate : handleSave} isLockedByOther={isLockedByOther} getLockOwnerForField={getLockOwnerForField} onFieldFocus={handleFieldFocus} onFieldEdit={handleFieldEdit} isSubmitting={isSubmitting} selectedBusinessId={selectedBusinessId} projectId={currentProject?._id} sNo={sNo} launchStatus={currentProject?.launch_status} initialStatus={currentProject?.status} decisionLog={currentProject?.decision_log} isAdmin={isSuperAdmin} validateForm={validateForm} />;
+    return <ProjectForm mode={activeView} readOnly={activeView === "view" || currentProject && !canEditProject(currentProject, isEditor, myUserId, businessStatus, apiIsArchived, isSuperAdmin)} canEdit={currentProject && canEditProject(currentProject, isEditor, myUserId, businessStatus, apiIsArchived)} onEdit={() => handleEditProject(currentProject, "edit")} {...formState} {...formSetters} accountableOwnerId={formState.accountableOwnerId} setAccountableOwnerId={formSetters.setAccountableOwnerId} onBack={handleBackToList} onSubmit={activeView === "new" ? handleCreate : handleSave} isLockedByOther={isLockedByOther} getLockOwnerForField={getLockOwnerForField} onFieldFocus={handleFieldFocus} onFieldEdit={handleFieldEdit} isSubmitting={isSubmitting} selectedBusinessId={selectedBusinessId} projectId={currentProject?._id} sNo={sNo} launchStatus={currentProject?.launch_status} initialStatus={currentProject?.status} decisionLog={currentProject?.decision_log} isAdmin={isSuperAdmin} validateForm={validateForm} onAssignDeciderClick={() => setShowAssignModal(true)} />;
   };
   const [isStatusDropdownOpen, setIsStatusDropdownOpen] = useState(false);
   useEffect(() => {
@@ -850,6 +866,13 @@ const ProjectsSection = ({
 
     <ProjectReviewModal isOpen={isModalOpen('projectReview')} onClose={() => closeModal('projectReview')} project={selectedReviewProject} type={reviewType} onSubmit={submitReview} />
     <NewBetModal show={isNewBetModalOpen} onHide={() => setIsNewBetModalOpen(false)} selectedBusinessId={selectedBusinessId} onSuccess={() => refreshAllData()} />
+    <AssignDeciderModal
+      show={showAssignModal}
+      onHide={() => setShowAssignModal(false)}
+      project={{ _id: currentProject?._id, accountable_owner_id: formState.accountableOwnerId }}
+      onSave={handleAssignDeciderSave}
+      businessId={selectedBusinessId}
+    />
   </>;
 };
 export default ProjectsSection;

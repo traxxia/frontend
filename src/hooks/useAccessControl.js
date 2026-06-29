@@ -53,7 +53,7 @@ export const useAccessControl = (selectedBusinessId) => {
       }
 
       // If the bet is assigned to someone else, no one else (not even admins) can edit it.
-      if ((project.accountable_owner_id || project.accountable_owner) && !isOwner) {
+      if ((project.accountable_owner_id || (project.accountable_owner && project.accountable_owner !== "Unassigned")) && !isOwner) {
         return false;
       }
 
