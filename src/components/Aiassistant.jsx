@@ -12,6 +12,16 @@ const Aiassistant = ({ businessId: propBusinessId, projectId, pageContext, isDis
   const userName = useAuthStore((state) => state.userName);
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
+  const [hasUnread, setHasUnread] = useState(false);
+  const openRef = useRef(open);
+
+  useEffect(() => {
+    openRef.current = open;
+    if (open) {
+      setHasUnread(false);
+    }
+  }, [open]);
+
   const [query, setQuery] = useState("");
   const [messages, setMessages] = useState([
     {
@@ -193,9 +203,6 @@ const Aiassistant = ({ businessId: propBusinessId, projectId, pageContext, isDis
           ? new Date(usageData.quotaResetAt).toLocaleDateString()
           : "soon";
         assistantText = `⚠️ You have reached the AI token limit for your plan. Your quota will reset on ${resetDate}.`;
-        setIsLoading(false);
-        setMessages((prev) => [...prev, { role: "assistant", text: assistantText }]);
-        await saveMessageToHistory("assistant", assistantText);
         return;
       }
       const requestBody = { message: userText };
@@ -264,6 +271,9 @@ const Aiassistant = ({ businessId: propBusinessId, projectId, pageContext, isDis
       if (assistantText) {
         setMessages((prev) => [...prev, { role: "assistant", text: assistantText }]);
         await saveMessageToHistory("assistant", assistantText);
+        if (!openRef.current) {
+          setHasUnread(true);
+        }
         axios.post(
           `${import.meta.env.VITE_BACKEND_URL}/ai-chat/log-turn`,
           {
@@ -308,7 +318,7 @@ const Aiassistant = ({ businessId: propBusinessId, projectId, pageContext, isDis
       >
         <span className="ai-fab-text notranslate" translate="no">TX</span>
         <span className="ai-fab-dot-green"></span>
-        <span className="ai-fab-dot-orange">!</span>
+        {hasUnread && <span className="ai-fab-dot-orange">!</span>}
       </button>
 
 
@@ -325,7 +335,7 @@ const Aiassistant = ({ businessId: propBusinessId, projectId, pageContext, isDis
             </div>
             <div className="ai-header__content">
               <div className="ai-header__title notranslate" translate="no">Trax</div>
-              <div className="ai-header__subtitle">1 thing flagged</div>
+              {hasUnread && <div className="ai-header__subtitle">New message</div>}
             </div>
           </div>
           <div className="ai-header__actions">
