@@ -1,0 +1,214 @@
+/* EvolutionTable.css */
+
+.evolution-table-container {
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  overflow: hidden !important;
+}
+
+.evolution-table {
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.evolution-table-head {
+  font-size: 10px;
+}
+
+.evolution-bet-col {
+  min-width: 160px;
+  border-bottom: 1px solid #e2e8f0;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.evolution-moment-col {
+  min-width: 100px;
+  border-bottom: 1px solid #e2e8f0;
+  border-left: 1px solid #f1f5f9;
+}
+
+.evolution-moment-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+
+.evolution-moment-date {
+  font-size: 10.5px;
+  color: var(--color-text-muted);
+  margin-top: 2px;
+}
+
+.evolution-needs-close {
+  font-size: 9px;
+  padding: 2px 8px;
+  border-radius: 12px;
+  background: #fff7ed;
+  color: #ea580c;
+  font-weight: bold;
+}
+
+.evolution-table-body {
+  font-size: 13px;
+}
+
+.evolution-bet-row {
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.evolution-bet-name {
+  color: #475569;
+  font-size: 12px;
+}
+
+.evolution-bet-index {
+  color: #94a3b8;
+}
+
+.evolution-cell-empty {
+  border-left: 1px solid #f1f5f9;
+}
+
+.evolution-cell {
+  border-left: 1px solid #f1f5f9;
+}
+
+.evolution-tbd {
+  color: var(--color-text-muted);
+    font-weight: 600;
+    font-style: italic;
+    background: #fbfdff;
+}
+
+.evolution-arrow-up,
+.evolution-arrow-down {
+  font-size: 10px;
+}
+
+.evolution-badge {
+  display: inline-block;
+  padding: 4px 11px;
+  border-radius: 2px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border: 1px solid transparent;
+}
+
+.evolution-legend {
+  font-size: 13px;
+  color: #64748b;
+}
+
+.evolution-legend-arrows {
+  font-size: 12px;
+}
+
+.evolution-legend-tbd {
+  border: 1px dashed #cbd5e1;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-style: italic;
+  font-size: 11px;
+  color: #64748b;
+  background-color: #ffffff;
+}
+
+/* Header styles */
+.evolution-subtitle {
+  font-size: 9px;
+}
+
+.evolution-title {
+  font-size: 15px;
+}
+
+.evolution-select {
+  width: auto;
+  font-size: 12px;
+  border-color: #e2e8f0;
+  color: #0f172a;
+  font-weight: 500;
+}
+
+.evolution-badge-status-active {
+  background: #dcfce7;
+  color: #15803d;
+  border-color: #86efac;
+}
+
+.evolution-badge-status-at-risk {
+  background: #fff1f2;
+  color: #be123c;
+  border-color: #fecdd3;
+}
+
+.evolution-badge-status-paused {
+  background: #fef3c7;
+  color: #b45309;
+  border-color: #fde68a;
+}
+
+.evolution-badge-status-killed {
+  background: #f1f5f9;
+  color: #475569;
+  border-color: #cbd5e1;
+  text-decoration: line-through;
+}
+
+.evolution-badge-status-stalled {
+  background-color: #ffffff;
+  color: #64748b;
+  border: 1px solid #cbd5e1;
+}
+
+.evolution-badge-status-completed {
+  background: #eff6ff;
+  color: #1d4ed8;
+  border-color: #bfdbfe;
+}
+
+.evolution-badge-status-scaled {
+  background: #f5f3ff;
+  color: #6d28d9;
+  border-color: #ddd6fe;
+}
+
+.evolution-badge-status-draft {
+  background-color: #ffffff;
+  color: #94a3b8;
+  border: 1px solid #e2e8f0;
+}
+
+/* .evolution-badge-learning-validated {
+  background-color: #ffffff;
+  color: #10b981;
+  border: 1px solid #10b981;
+}
+
+.evolution-badge-learning-testing {
+  background-color: #ffffff;
+  color: #0ea5e9;
+  border: 1px solid #0ea5e9;
+}
+
+.evolution-badge-learning-invalidated {
+  background-color: #ffffff;
+  color: #ef4444;
+  border: 1px solid #ef4444;
+}
+
+.evolution-badge-learning-not-started {
+  background-color: #ffffff;
+  color: #64748b;
+  border: 1px solid #cbd5e1;
+} */
+
+.evolution-badge-default {
+  background-color: #ffffff;
+  color: #64748b;
+  border: 1px solid #e2e8f0;
+}

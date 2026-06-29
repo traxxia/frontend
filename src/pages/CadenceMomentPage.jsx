@@ -514,6 +514,7 @@ const CadenceMomentPage = () => {
   const { businessId, cadenceId, momentId } = useParams();
   const { selectedBusiness } = useBusinessStore();
   const businessName = selectedBusiness?.business_name || "Business";
+  const userRole = useAuthStore(state => state.userRole);
   
   const [cadence, setCadence] = useState(null);
   const [moment, setMoment] = useState(null);
@@ -838,7 +839,7 @@ const CadenceMomentPage = () => {
         )}
 
         {/* Close this moment header */}
-        {(() => {
+        {userRole !== 'collaborator' && (() => {
           const confirmedCount = Object.values(confirmedBetsMap).filter(Boolean).length;
           const allConfirmed = bets.length > 0 && confirmedCount === bets.length;
           return (
