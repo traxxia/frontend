@@ -17,6 +17,7 @@ const ReviewCadencesModal = ({ show, onHide, project, onSave }) => {
   const pendingSelectionNamesRef = React.useRef([]);
   // Prevents re-initialization from overwriting user selections when the cadence list grows
   const initializedRef = React.useRef(false);
+  const [cadencesLoaded, setCadencesLoaded] = useState(false);
 
   const [isCreating, setIsCreating] = useState(false);
   const [newCadenceName, setNewCadenceName] = useState("");
@@ -34,12 +35,15 @@ const ReviewCadencesModal = ({ show, onHide, project, onSave }) => {
       setAvailableCadences(response.data || []);
     } catch (err) {
       console.error("Failed to fetch cadences:", err);
+    } finally {
+      setCadencesLoaded(true);
     }
   };
 
   // Step 1: When modal opens or project changes, record names to pre-select and reset flags
   useEffect(() => {
     if (show) {
+      setCadencesLoaded(false);
       fetchCadences();
     }
     if (show && project) {
@@ -59,8 +63,7 @@ const ReviewCadencesModal = ({ show, onHide, project, onSave }) => {
 
   // Step 2: Once cadences load, resolve pending names to IDs — runs only once per modal open
   useEffect(() => {
-    if (!show || !project || initializedRef.current) return;
-    if (availableCadences.length === 0) return;
+    if (!show || !project || initializedRef.current || !cadencesLoaded) return;
 
     const names = pendingSelectionNamesRef.current;
     const resolvedIds = names
@@ -96,6 +99,7 @@ const ReviewCadencesModal = ({ show, onHide, project, onSave }) => {
       const newCadence = response.data;
       setAvailableCadences(prev => [...prev, newCadence]);
       setSelectedCadences(prev => [...prev, String(newCadence._id)]);
+      initializedRef.current = true;
 
       setIsCreating(false);
       setNewCadenceName("");
