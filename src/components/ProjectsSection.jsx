@@ -244,6 +244,7 @@ const ProjectsSection = ({
     validateForm
   } = useProjectForm();
   const isViewer = userRole === "viewer";
+  const isCollaborator = userRole === "collaborator";
   const isEditor = userRole === "super_admin" || userRole === "company_admin" || userRole === "collaborator" || userRole === "user";
   const isSuperAdmin = userRole === "super_admin" || userRole === "company_admin" || userRole === "admin";
   const allCollaboratorsLocked = lockSummary.locked_users_count === lockSummary.total_users;
@@ -305,7 +306,7 @@ const ProjectsSection = ({
       const rA = rankMap[idA] !== undefined ? rankMap[idA] : Infinity;
       const rB = rankMap[idB] !== undefined ? rankMap[idB] : Infinity;
       if (rA === rB) {
-        return new Date(b.created_at) - new Date(a.created_at);
+        return new Date(a.created_at) - new Date(b.created_at);
       }
       return rA - rB;
     });
@@ -392,12 +393,9 @@ const ProjectsSection = ({
         });
         if (data && data.projects) {
           queryClient.setQueryData(["projects", selectedBusinessId], (oldProjects = []) => {
-            return data.projects.map(newProj => {
-              const existingProj = oldProjects.find(p => String(p._id) === String(newProj._id));
-              return existingProj ? {
-                ...existingProj,
-                ...newProj
-              } : newProj;
+            return oldProjects.map(p => {
+              const updatedProj = data.projects.find(newProj => String(newProj._id) === String(p._id));
+              return updatedProj ? { ...p, ...updatedProj } : p;
             });
           });
         }
@@ -551,7 +549,6 @@ const ProjectsSection = ({
     }
   }, [validateForm, getPayload, selectedBusinessId, createProject, currentProject?._id, refreshAllData, handleBackToList, handleShowToast]);
   const executeSave = useCallback(async (payload, justification = null) => {
-    setIsSubmitting(true);
     try {
       if (justification) {
         payload.justification = justification;
@@ -571,14 +568,17 @@ const ProjectsSection = ({
           queryKey: ["teamRankings", selectedBusinessId]
         });
         await refreshAllData();
-        handleBackToList();
+        return true;
       } else {
         handleShowToast(error || "Failed to update project.", "error");
+        return false;
       }
-    } finally {
-      setIsSubmitting(false);
+    } catch (err) {
+      console.error("Save error:", err);
+      handleShowToast("Failed to update project.", "error");
+      return false;
     }
-  }, [updateProject, currentProject?._id, refreshAllData, handleBackToList, handleShowToast]);
+  }, [updateProject, currentProject?._id, refreshAllData, handleShowToast, clearCache, queryClient]);
   const handleSave = useCallback(async (options = {}) => {
     const { statusOverride, isKickstart } = options;
     if (!canEditProject(currentProject, isEditor, myUserId, businessStatus, apiIsArchived)) {
@@ -590,10 +590,12 @@ const ProjectsSection = ({
     const skipStrict = !isKickstart && isDraft;
     const validation = validateForm({ isNew: false, skipStrictRequired: skipStrict });
     if (!validation.isValid) return;
+    
+    setIsSubmitting(true);
     try {
       const userId = useAuthStore.getState().userId;
       const payload = getPayload(userId, selectedBusinessId);
-      if (statusOverride || isKickstart) payload.status = statusOverride || "Active";
+      if (statusOverride) payload.status = statusOverride;
 
       const oldStatus = isDraft ? "draft" : (currentProject.status || "Draft").toLowerCase();
       const newStatus = (payload.status || "Draft").toLowerCase();
@@ -622,21 +624,25 @@ const ProjectsSection = ({
         setPendingSavePayload(payload);
         setPendingStateChanges(changes);
         openModal('stateChange');
-        if (isKickstart) {
-          await launchProjects([currentProject._id]);
-        }
         setIsSubmitting(false);
         return;
       }
-      await executeSave(payload);
-      if (isKickstart) {
-        await launchProjects([currentProject._id]);
+      
+      const success = await executeSave(payload);
+      if (success) {
+        if (isKickstart) {
+          await launchProjects([currentProject._id]);
+          await refreshAllData(); // Ensure UI gets the post-launch status
+        }
+        handleBackToList();
       }
     } catch (err) {
       console.error("Error in prepare save:", err);
+      handleShowToast("Error saving project", "error");
+    } finally {
       setIsSubmitting(false);
     }
-  }, [canEditProject, currentProject, isEditor, myUserId, businessStatus, apiIsArchived, validateForm, getPayload, selectedBusinessId, executeSave, handleShowToast, t]);
+  }, [canEditProject, currentProject, isEditor, myUserId, businessStatus, apiIsArchived, validateForm, getPayload, selectedBusinessId, executeSave, handleShowToast, t, launchProjects, handleBackToList]);
   const submitReview = useCallback(async data => {
     if (!selectedReviewProject?._id) return;
     try {
@@ -727,9 +733,13 @@ const ProjectsSection = ({
         return statusValue === catId.toLowerCase();
       });
     }).length;
+    const draftCount = projects.filter(p => {
+      const s = (p.status || "").toLowerCase();
+      return s === "draft" || s === "";
+    }).length;
     const kickstartedCount = projects.filter(p => {
       const s = (p.status || "").toLowerCase();
-      return s === "active" || s === "completed" || s === "scaled";
+      return s !== "draft" && s !== "";
     }).length;
     return <>
       { }
@@ -775,7 +785,7 @@ const ProjectsSection = ({
               </div>}
             </div>
 
-            {!isViewer && !isArchived && getUserLimits().project && <button onClick={handleNewProject} className="btn-new-project-premium">
+            {!isViewer && !isCollaborator && !isArchived && getUserLimits().project && <button onClick={handleNewProject} className="btn-new-project-premium">
               <Plus size={18} />
               {t("New Bet")}
             </button>}
@@ -787,15 +797,17 @@ const ProjectsSection = ({
           </div>
         </div>
 
-        <div className="kickstarted-banner-wrapper">
-          <div className="kickstarted-banner">
-            <Clock size={20} color="#0c71b9" className="kickstarted-banner-icon" />
-            <div>
-              <h6 className="kickstarted-banner-title">{kickstartedCount} of {projects.length} kickstarted</h6>
-              <p className="kickstarted-banner-text">{projects.length - kickstartedCount} bets still in Draft. A bet is kickstarted once its required sections are complete.</p>
+        {draftCount > 0 && (
+          <div className="kickstarted-banner-wrapper">
+            <div className="kickstarted-banner">
+              <Clock size={20} color="#0c71b9" className="kickstarted-banner-icon" />
+              <div>
+                <h6 className="kickstarted-banner-title">{kickstartedCount} of {projects.length} kickstarted</h6>
+                <p className="kickstarted-banner-text">{draftCount} bets still in Draft. A bet is kickstarted once its required sections are complete.</p>
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
         <ProjectsList isLoading={isLoadingProjects} sortedProjects={sortedProjects} rankMap={rankMap} finalizeCompleted={finalizeCompleted} launched={launched} isViewer={isViewer} isAdmin={isSuperAdmin} isEditor={isEditor} isDraft={isDraft} projectCreationLocked={projectCreationLocked} isFinalizedView={isFinalizedView} canEditProject={project => canEditProject(project, isEditor, myUserId, businessStatus, apiIsArchived, isSuperAdmin)} onEdit={project => handleEditProject(project, "edit")} onView={project => handleEditProject(project, "view")} onDelete={handleDelete} onPerformReview={handlePerformReview} onAdhocUpdate={handleAdhocUpdate} onDirectUpdate={handleDirectUpdate} canReviewProject={canReviewProject} myUserId={myUserId} selectedCategories={selectedCategories} isArchived={apiIsArchived} selectedProjectIds={selectedProjectIds} onToggleSelection={toggleProjectSelection} selectionDisabled={isGeneratingAIRankings || businessStatus !== "draft"} />
       </div>
@@ -808,10 +820,16 @@ const ProjectsSection = ({
       closeModal('stateChange');
       setPendingSavePayload(null);
       setPendingStateChanges([]);
-    }} onConfirm={justification => {
+    }} onConfirm={async justification => {
       closeModal('stateChange');
       if (pendingSavePayload) {
-        executeSave(pendingSavePayload, justification);
+        setIsSubmitting(true);
+        try {
+          const success = await executeSave(pendingSavePayload, justification);
+          if (success) handleBackToList();
+        } finally {
+          setIsSubmitting(false);
+        }
       }
       setPendingStateChanges([]);
     }} changes={pendingStateChanges} />

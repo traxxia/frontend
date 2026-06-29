@@ -4,7 +4,7 @@ import { ChevronDown, ChevronRight, Info, AlertTriangle, Clock, Eye, Edit2, Tras
 import { useTranslation } from "../hooks/useTranslation";
 import ReviewCadencesModal from "./ReviewCadencesModal";
 import AssignDeciderModal from "./AssignDeciderModal";
-import { useProjectStore } from "../store";
+import { useProjectStore, useBusinessStore, useAuthStore } from "../store";
 import "../styles/ProjectsTable.css";
 const ProjectsTable = ({
   projects,
@@ -26,11 +26,12 @@ const ProjectsTable = ({
   canEditProject,
   myUserId
 }) => {
+  const userName = useAuthStore(state => state.userName);
   const {
     t
   } = useTranslation();
 
-  const selectedBusinessId = useProjectStore(state => state.selectedBusinessId);
+  const selectedBusinessId = useBusinessStore(state => state.selectedBusinessId);
   const [showCadencesModal, setShowCadencesModal] = React.useState(false);
   const [cadenceProject, setCadenceProject] = React.useState(null);
 
@@ -104,6 +105,9 @@ const ProjectsTable = ({
         {projects.map((project, index) => {
           const displayRank = rankMap?.[String(project?._id)] ?? project.rank ?? project.ai_rank;
           const userCanReview = canReviewProject ? canReviewProject(project, isAdmin, myUserId, isArchived) : false;
+          const isOwner = String(project.accountable_owner_id) === String(myUserId) ||
+                          (project.accountable_owner && userName && String(project.accountable_owner).trim().toLowerCase() === String(userName).trim().toLowerCase());
+          const canManageBet = isAdmin || isOwner;
           const isLastTwoRows = projects.length > 2 && index >= projects.length - 2;
           const statusLower = project.status?.toLowerCase();
           const isTerminal = ["completed", "scaled", "killed"].includes(statusLower);
@@ -155,30 +159,46 @@ const ProjectsTable = ({
               {project.cadence || project.review_cadence ? (
                 <span
                   className="text-dark fw-medium"
-                  style={{ cursor: 'pointer', borderBottom: '1px dashed #cbd5e1' }}
-                  onClick={(e) => canEditProject && canEditProject(project) ? handleOpenCadences(e, project) : null}
+                  style={{ cursor: canManageBet ? 'pointer' : 'default', borderBottom: canManageBet ? '1px dashed #cbd5e1' : 'none' }}
+                  onClick={(e) => canManageBet && canEditProject && canEditProject(project) ? handleOpenCadences(e, project) : null}
                 >
-                  {t(project.cadence || project.review_cadence)}
+                  {(() => {
+                    const cStr = project.cadence || project.review_cadence;
+                    if (!cStr) return "";
+                    const parts = cStr.split(",").map(s => s.trim()).filter(s => s);
+                    if (parts.length > 1) {
+                      return `Multiple (${parts.length})`;
+                    }
+                    return t(cStr);
+                  })()}
                 </span>
               ) : (
-                <span className="text-cadence-blue fw-bold d-inline-flex align-items-center gap-1 text-nowrap" style={{ fontSize: '13px', cursor: 'pointer', whiteSpace: 'nowrap' }} onClick={(e) => canEditProject && canEditProject(project) ? handleOpenCadences(e, project) : null}>
-                  + {t("Set cadence")} <ChevronDown size={14} className="text-muted" />
-                </span>
+                canManageBet ? (
+                  <span className="text-cadence-blue fw-bold d-inline-flex align-items-center gap-1 text-nowrap" style={{ fontSize: '13px', cursor: 'pointer', whiteSpace: 'nowrap' }} onClick={(e) => canEditProject && canEditProject(project) ? handleOpenCadences(e, project) : null}>
+                    + {t("Set cadence")} <ChevronDown size={14} className="text-muted" />
+                  </span>
+                ) : (
+                  <span className="text-muted" style={{ fontSize: '13px' }}>-</span>
+                )
               )}
             </td>
             <td className="col-owner">
               {project.accountable_owner ? (
                 <span
                   className="text-dark fw-medium"
-                  style={{ cursor: 'pointer', borderBottom: '1px dashed #cbd5e1' }}
-                  onClick={(e) => canEditProject && canEditProject(project) ? handleOpenDecider(e, project) : null}
+                  style={{ cursor: isAdmin ? 'pointer' : 'default', borderBottom: isAdmin ? '1px dashed #cbd5e1' : 'none' }}
+                  onClick={(e) => isAdmin && canEditProject && canEditProject(project) ? handleOpenDecider(e, project) : null}
                 >
                   {project.accountable_owner}
                 </span>
               ) : (
-                <span className="text-cadence-blue fw-bold d-inline-flex align-items-center gap-1 text-nowrap" style={{ fontSize: '13px', cursor: 'pointer', whiteSpace: 'nowrap' }} onClick={(e) => canEditProject && canEditProject(project) ? handleOpenDecider(e, project) : null}>
-                  + {t("Assign decider")} <ChevronDown size={14} className="text-muted" />
-                </span>
+                isAdmin ? (
+                  <span className="text-cadence-blue fw-bold d-inline-flex align-items-center gap-1 text-nowrap" style={{ fontSize: '13px', cursor: 'pointer', whiteSpace: 'nowrap' }} onClick={(e) => canEditProject && canEditProject(project) ? handleOpenDecider(e, project) : null}>
+                    + {t("Assign decider")} <ChevronDown size={14} className="text-muted" />
+                  </span>
+                ) : (
+                  <span className="text-muted" style={{ fontSize: '13px' }}>-</span>
+                )
               )}
             </td>
             <td>
@@ -205,22 +225,27 @@ const ProjectsTable = ({
             <td className="text-end">
               {(() => {
                 const isDraft = !project.status || project.status.toLowerCase() === "draft";
-                return isDraft ? (
-                  <button
-                    className="btn btn-primary btn-sm rounded px-3 fw-bold actions-setup-btn"
-                    style={{ fontSize: '13px', border: 'none', whiteSpace: 'nowrap' }}
-                    onClick={() => isTerminal ? onView(project) : (canEditProject && canEditProject(project) ? onEdit(project) : onView(project))}
-                  >
-                    {t("Set up")}
-                  </button>
-                ) : (
-                  <button
-                    className="btn btn-sm rounded px-3 fw-bold actions-open-btn"
-                    onClick={() => isTerminal ? onView(project) : (canEditProject && canEditProject(project) ? onEdit(project) : onView(project))}
-                  >
-                    {t("Open")} <ChevronRight size={14} className="text-muted" style={{ marginLeft: '2px' }} />
-                  </button>
-                );
+                const canEditDraft = isDraft && canEditProject && canEditProject(project);
+                if (canEditDraft) {
+                  return (
+                    <button
+                      className="btn btn-primary btn-sm rounded px-3 fw-bold actions-setup-btn"
+                      style={{ fontSize: '13px', border: 'none', whiteSpace: 'nowrap' }}
+                      onClick={() => isTerminal ? onView(project) : onEdit(project)}
+                    >
+                      {t("Set up")}
+                    </button>
+                  );
+                } else {
+                  return (
+                    <button
+                      className="btn btn-sm rounded px-3 fw-bold actions-open-btn"
+                      onClick={() => onView(project)}
+                    >
+                      {t("Open")} <ChevronRight size={14} className="text-muted" style={{ marginLeft: '2px' }} />
+                    </button>
+                  );
+                }
               })()}
             </td>
           </tr>;

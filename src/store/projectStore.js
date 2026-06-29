@@ -231,9 +231,9 @@ export const useProjectStore = create((set, get) => ({
         const bizId = response.data.projects[0]?.business_id || response.data.projects[0]?.businessId;
         if (bizId) get().clearCache(bizId);
         set((state) => ({
-          projects: response.data.projects.map(newProj => {
-            const existingProj = state.projects.find(p => String(p._id) === String(newProj._id));
-            return existingProj ? { ...existingProj, ...newProj } : newProj;
+          projects: state.projects.map(p => {
+            const updatedProj = response.data.projects.find(newProj => String(newProj._id) === String(p._id));
+            return updatedProj ? { ...p, ...updatedProj } : p;
           })
         }));
       }
