@@ -112,7 +112,7 @@ const SelectField = forwardRef(({
     if (typeof ref === "function") ref(node); else if (ref) ref.current = node;
   }} tabIndex={-1}>
     {label && <label className="sf-label">
-      {label} {required && !disabled && <span className="required">*</span>}
+      {label} {required && <span className="required">*</span>}
     </label>}
     <div className="sf-dropdown-wrapper">
       <div className={`sf-dropdown-header ${error ? "error" : ""}`} onClick={() => {
@@ -166,7 +166,7 @@ const InputField = forwardRef(({
   return <div className="field-row">
     <div className="field-label-row">
       <label className="field-label">
-        {label} {required && !readOnly && <span className="required">*</span>}
+        {label} {required && <span className="required">*</span>}
         {subLabel && <small className="field-sub-label project-form--s4">{subLabel}</small>}
       </label>
       {maxLength && <small className="text-muted project-form--s5">
@@ -195,7 +195,7 @@ const TextAreaField = forwardRef(({
   return <div className="field-row">
     <div className="field-label-row">
       <label className="field-label">
-        {label} {required && !readOnly && <span className="required">*</span>}
+        {label} {required && <span className="required">*</span>}
         {subLabel && <small className="field-sub-label project-form--s4">{subLabel}</small>}
       </label>
       {maxLength && <small className="text-muted project-form--s5">
@@ -1000,7 +1000,7 @@ const ProjectForm = ({
                   </label>
                   {mode !== "new" && renderLockBadge("project_name")}
                 </div>
-                {mode === "new" ? <>
+                {(!isReadOnly || mode === "new") ? <>
                   <input ref={projectNameRef} type="text" value={projectName || ""} onChange={handleProjectNameChange} placeholder="Enter project name (minimum 3 characters)" className={`field-input ${showErrors && fieldErrors.projectName ? "error" : ""}`} readOnly={isReadOnly} onFocus={() => handleFieldFocus("project_name")} maxLength={100} disabled={isSubmitting} />
                   <div className="project-form--s16">
                     {showErrors && fieldErrors.projectName && <small className="error-text">{fieldErrors.projectName}</small>}
@@ -1053,7 +1053,7 @@ const ProjectForm = ({
               <div className="field-row">
                 <div className="field-label-row">
                   <label className="field-label">
-                    {t("Key_Assumptions_Tested")} {!isReadOnly && <span className="required">*</span>}
+                    {t("Key_Assumptions_Tested")} <span className="required">*</span>
                   </label>
                 </div>
                 <p className="text-muted small mb-2 project-form--s17">The beliefs this bet is testing — at least one. If any turns out false, the bet's case weakens.</p>
@@ -1222,7 +1222,7 @@ const ProjectForm = ({
 
               <div className="field-row">
                 <div className="field-label-row">
-                  <label className="field-label">{t("Dependencies")} {!isReadOnly && <span className="required">*</span>}</label>
+                  <label className="field-label">{t("Dependencies")} <span className="required">*</span></label>
                   {renderLockBadge("dependencies")}
                 </div>
                 <p className="text-muted small mb-2 project-form--s17">Bets, decisions, or external events this one depends on. Add at least one — or check "No external dependencies" if there are none.</p>
