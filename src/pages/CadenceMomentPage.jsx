@@ -631,11 +631,15 @@ const CadenceMomentPage = () => {
           return String(p.accountable_owner_id) === String(userId) || String(p.user_id) === String(userId);
         });
         
-        // Use global index from allProjects to maintain true bet numbering
+        // Use true rank to match the Projects Table numbering. If missing, use "NaN".
         const betsWithGlobalIndex = cadenceBets.map(b => ({
           ...b,
-          globalIndex: allProjects.findIndex(p => p._id === b._id) + 1
-        }));
+          globalIndex: (b.rank !== null && b.rank !== undefined) ? b.rank : "NaN"
+        })).sort((a, b) => {
+          const rankA = a.globalIndex === "NaN" ? 9999 : a.globalIndex;
+          const rankB = b.globalIndex === "NaN" ? 9999 : b.globalIndex;
+          return rankA - rankB;
+        });
         
         setBets(betsWithGlobalIndex);
 
@@ -788,7 +792,12 @@ const CadenceMomentPage = () => {
   }).sort((a, b) => {
     const sevA = a.computed_severity ? parseInt(a.computed_severity) || 99 : 99;
     const sevB = b.computed_severity ? parseInt(b.computed_severity) || 99 : 99;
-    return sevA - sevB;
+    if (sevA !== sevB) {
+      return sevA - sevB;
+    }
+    const rankA = a.globalIndex === "NaN" ? 9999 : (a.globalIndex || 999);
+    const rankB = b.globalIndex === "NaN" ? 9999 : (b.globalIndex || 999);
+    return rankA - rankB;
   });
 
   const totalOpenCommitments = bets.reduce((acc, bet) => {
