@@ -183,7 +183,10 @@ const SimpleQuestionCard = ({
         {/* Center: question label + answer preview */}
         <div className="sqc-center" style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
           <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
-            <span className="sqc-question-text notranslate" style={{ fontSize: '15px', color: '#0f172a', fontWeight: '600' }}>{field.label}</span>
+            <span className="sqc-question-text notranslate" style={{ fontSize: '15px', color: '#0f172a', fontWeight: '600' }}>
+              {field.label}
+              {field.severity === 'mandatory' && <span style={{ color: '#dc2626', marginLeft: '2px' }} title="Mandatory Question">*</span>}
+            </span>
             {hasValue && isAI && !effectiveExpanded && !isEditing && (
               <span style={{ fontSize: '11px', background: '#e0f2fe', color: '#0369a1', padding: '2px 8px', borderRadius: '12px', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '4px' }}>
                 <Sparkles size={10} /> auto-filled
@@ -565,8 +568,7 @@ const EditableBriefSection = ({
         }
 
         const sData = await sPromise;
-        if (active) {
-          console.log("=== loaded Document Intelligence session ===", sData);
+        if (active) { 
           setDocIntelSession(sData);
         }
       } catch (err) {
@@ -627,9 +629,7 @@ const EditableBriefSection = ({
         formData.append('files', file, file.name);
       });
 
-      const mlResponse = await answerService.extractFinancialSummary(formData, businessId);
-      console.log("=== extracted ML response ===", mlResponse);
-
+      const mlResponse = await answerService.extractFinancialSummary(formData, businessId); 
       // ── Normalise ML response: new shape has { timeline: [...], meta }
       //    Legacy shape is a flat metrics object. Support both.
       let financialTimeline = null;
@@ -689,8 +689,7 @@ const EditableBriefSection = ({
       }]);
 
       // Load latest session state to update local UI State
-      const sData = await answerService.getSessionByBusiness(businessId);
-      console.log("=== session state after sync ===", sData);
+      const sData = await answerService.getSessionByBusiness(businessId); 
       if (sData && sData.hasSession !== false) {
         sessionCache.set(businessId, Promise.resolve(sData));
         setDocIntelSession(sData);
@@ -748,7 +747,6 @@ const EditableBriefSection = ({
     
     // Guard: Only call the API if there is an actual change!
     if (oldValue === parsedNewValue || (parsedNewValue === null && oldValue === null)) {
-      console.log(`[DocIntel] No change detected for ${metricKey} (${oldValue} === ${newValue}). Skipping API call.`);
       return;
     }
     
@@ -1626,7 +1624,6 @@ const EditableBriefSection = ({
       let mlResult = { answers: [] };
       if (fetchedFiles.length > 0) {
         mlResult = await answerService.analyzeStrategicDocumentsML(fetchedFiles, selectedBusinessId);
-        console.log("=== strategic document QA response ===", mlResult);
       }
       
       if (!mlResult || !Array.isArray(mlResult.answers)) {
@@ -1807,7 +1804,10 @@ const EditableBriefSection = ({
   const strategyFiles = uploadedFiles.filter(f => f.section === 'strategic');
 
   const initialCompletedCount = initialFields.filter(f => cleanValue(f.value).trim() !== '').length;
-  const isInitialPhaseCompleted = initialFields.length === 0 || initialCompletedCount === initialFields.length;
+  const isAllMandatoryAnswered = briefFields.filter(f => f.severity === 'mandatory').every(f => {
+    const cleanAns = cleanValue(f.value);
+    return cleanAns && cleanAns !== '[Question Skipped]';
+  });
   const initialCountStr = `${initialCompletedCount}/${initialFields.length}`;
   const essentialCountStr = `${essentialFields.filter(f => cleanValue(f.value).trim() !== '').length}/${essentialFields.length}`;
   const advancedCountStr = `${advancedFields.filter(f => cleanValue(f.value).trim() !== '').length}/${advancedFields.length}`;
@@ -2426,45 +2426,58 @@ const EditableBriefSection = ({
           {/* Generate Advanced Insights Button */}
           {!(activePhaseTab === 'financial' && financialTabMode === 'analysis') && (
             <div style={{ marginTop: '32px', marginBottom: '32px', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '15px 24px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'transparent' }}>
-              <button
-                onClick={() => {
-                  if (!canEdit || isAnyApiActive) return;
-                  setConfirmModalConfig({
-                    title: t('Generate Advanced Insights') || 'Generate Advanced Insights',
-                    message: 'This will regenerate all insights and strategic analysis based on your answers. Are you sure you want to proceed?',
-                    onConfirm: () => {
-                      if (onAnalysisRegenerate) {
-                        onAnalysisRegenerate({
-                          alsoRegenerateStrategic: true,
-                          includeFinancial: true,
-                          skipConfirmation: true
-                        });
-                        if (setActiveTab) {
-                          setActiveTab('insights');
+                <button
+                  className="btn-refine-action"
+                  onClick={() => {
+                    if (!canEdit || isAnyApiActive) return;
+
+                    // Validate mandatory questions
+                    const unansweredMandatory = briefFields.filter(f => {
+                      if (f.severity !== 'mandatory') return false;
+                      const cleanAns = cleanValue(f.value);
+                      return !cleanAns || cleanAns === '[Question Skipped]';
+                    });
+
+                    if (unansweredMandatory.length > 0) {
+                      showToastMessage("Please answer all mandatory questions to unlock Advanced Insights.", "error");
+                      return;
+                    }
+
+                    setConfirmModalConfig({
+                      title: t('Generate Advanced Insights') || 'Generate Advanced Insights',
+                      message: 'This will regenerate all insights and strategic analysis based on your answers. Are you sure you want to proceed?',
+                      onConfirm: () => {
+                        if (onAnalysisRegenerate) {
+                          onAnalysisRegenerate({
+                            alsoRegenerateStrategic: true,
+                            includeFinancial: true,
+                            skipConfirmation: true
+                          });
+                          if (setActiveTab) {
+                            setActiveTab('insights');
+                          }
                         }
                       }
-                    }
-                  });
-                  setShowConfirmModal(true);
-                }}
-                disabled={isAnyApiActive || !canEdit || !hasAnyValidData || !isInitialPhaseCompleted}
-                className="btn-refine-action"
-                style={{ width: 'auto', padding: '12px 32px', background: (isAnyApiActive || !canEdit || !hasAnyValidData || !isInitialPhaseCompleted) ? '#93c5fd' : '#0c71b9', color: '#fff', fontSize: '15px', fontWeight: '600', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '8px', border: 'none', cursor: (isAnyApiActive || !canEdit || !hasAnyValidData || !isInitialPhaseCompleted) ? 'not-allowed' : 'pointer', opacity: (isAnyApiActive || !canEdit || !hasAnyValidData || !isInitialPhaseCompleted) ? 0.6 : 1 }}
-              >
-                {(isAnalysisRegenerating || isStrategicRegenerating) ? (
-                  <>
-                    <Loader size={16} className="animate-spin" />
-                    <span>Generating Insights...</span>
-                  </>
-                ) : (
-                  <>
-                    <span>Generate Advanced Insights</span>
-                    <span style={{ fontSize: '16px' }}>&rarr;</span>
-                  </>
-                )}
-              </button>
+                    });
+                    setShowConfirmModal(true);
+                  }}
+                  disabled={isAnyApiActive || !canEdit || !hasAnyValidData || !isAllMandatoryAnswered}
+                  style={{ width: 'auto', padding: '12px 32px', background: (isAnyApiActive || !canEdit || !hasAnyValidData || !isAllMandatoryAnswered) ? '#93c5fd' : '#0c71b9', color: '#fff', fontSize: '15px', fontWeight: '600', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '8px', border: 'none', cursor: (isAnyApiActive || !canEdit || !hasAnyValidData || !isAllMandatoryAnswered) ? 'not-allowed' : 'pointer', opacity: (isAnyApiActive || !canEdit || !hasAnyValidData || !isAllMandatoryAnswered) ? 0.6 : 1 }}
+                >
+                  {(isAnalysisRegenerating || isStrategicRegenerating) ? (
+                    <>
+                      <Loader size={16} className="animate-spin" />
+                      <span>Generating Insights...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>Generate Advanced Insights</span>
+                      <span style={{ fontSize: '16px' }}>&rarr;</span>
+                    </>
+                  )}
+                </button>
               <p style={{ marginTop: '16px', marginBottom: '0', color: '#94a3b8', fontSize: '13px' }}>
-                {isInitialPhaseCompleted ? 'All sections complete — generate your Advanced analysis.' : 'Please answer all Initial Phase questions before generating insights.'}
+                {isAllMandatoryAnswered ? 'All mandatory sections complete - generate your Advanced analysis.' : 'Please answer all mandatory questions before generating insights.'}
               </p>
             </div>
           )}

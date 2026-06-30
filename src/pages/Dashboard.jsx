@@ -342,7 +342,6 @@ const Dashboard = () => {
               const getAuthToken = () => useAuthStore.getState().token;
               const analysisService = new AnalysisApiService(import.meta.env.VITE_ML_BACKEND_URL, import.meta.env.VITE_BACKEND_URL, getAuthToken);
               await analysisService.savePMFOnboardingData(newBusinessId, pmfData);
-              console.log("Extracted PMF Data saved to DB successfully.");
             } catch (saveErr) {
               console.error("Failed to save extracted PMF data to DB:", saveErr);
             }
@@ -532,16 +531,13 @@ const Dashboard = () => {
         const API_BASE_URL = import.meta.env.VITE_BACKEND_URL;
         const getAuthToken = () => useAuthStore.getState().token;
         const analysisService = new AnalysisApiService(ML_API_BASE_URL, API_BASE_URL, getAuthToken);
-        console.log(`[DEBUG] handleInsightsClick: Fetching PMF for businessId=${businessId}`);
         const result = await analysisService.getPMFAnalysis(businessId, true);
-        console.log(`[DEBUG] handleInsightsClick: result from getPMFAnalysis=`, result);
 
         const analysisData = await analysisService.fetchAnalysisDataThroughBackend(businessId, true);
         hasAdvancedAnalysis = analysisData && analysisData.length > 0;
 
         const hasOnboarding = (result?.onboarding_data && Object.keys(result.onboarding_data).length > 0) ||
           (result?.onboarding && Object.keys(result.onboarding).length > 0);
-        console.log(`[DEBUG] handleInsightsClick: hasOnboarding=${hasOnboarding}`);
 
         let hasInsights = false;
         let hasExecSummary = false;

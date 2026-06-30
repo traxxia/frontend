@@ -112,7 +112,7 @@ const SelectField = forwardRef(({
     if (typeof ref === "function") ref(node); else if (ref) ref.current = node;
   }} tabIndex={-1}>
     {label && <label className="sf-label">
-      {label} {required && !disabled && <span className="required">*</span>}
+      {label} {required && <span className="required">*</span>}
     </label>}
     <div className="sf-dropdown-wrapper">
       <div className={`sf-dropdown-header ${error ? "error" : ""}`} onClick={() => {
@@ -166,7 +166,7 @@ const InputField = forwardRef(({
   return <div className="field-row">
     <div className="field-label-row">
       <label className="field-label">
-        {label} {required && !readOnly && <span className="required">*</span>}
+        {label} {required && <span className="required">*</span>}
         {subLabel && <small className="field-sub-label project-form--s4">{subLabel}</small>}
       </label>
       {maxLength && <small className="text-muted project-form--s5">
@@ -195,7 +195,7 @@ const TextAreaField = forwardRef(({
   return <div className="field-row">
     <div className="field-label-row">
       <label className="field-label">
-        {label} {required && !readOnly && <span className="required">*</span>}
+        {label} {required && <span className="required">*</span>}
         {subLabel && <small className="field-sub-label project-form--s4">{subLabel}</small>}
       </label>
       {maxLength && <small className="text-muted project-form--s5">
@@ -234,7 +234,7 @@ const ProjectForm = ({
   outcome,
   setOutcome,
   successMetrics,
-setSuccessMetrics,
+  setSuccessMetrics,
   timeline,
   setTimeline,
   budget,
@@ -351,7 +351,16 @@ setSuccessMetrics,
           });
           const data = await response.json();
           if (Array.isArray(data)) {
-             setPendingCadences(data);
+            const grouped = {};
+            data.forEach(pc => {
+              if (!pc.moment || !pc.moment.date) return;
+              const pcDate = new Date(pc.moment.date).getTime();
+              if (!grouped[pc.cadenceId] || pcDate < new Date(grouped[pc.cadenceId].moment.date).getTime()) {
+                grouped[pc.cadenceId] = pc;
+              }
+            });
+            const filtered = Object.values(grouped).sort((a, b) => new Date(a.moment.date) - new Date(b.moment.date));
+            setPendingCadences(filtered);
           }
         } catch (error) {
           console.error("Failed to fetch pending cadences", error);
@@ -407,7 +416,7 @@ setSuccessMetrics,
   const isStrategicContext = !!selectedImpact && !!selectedEffort && !!selectedRisk && !!selectedTheme && !!learningState && isDependenciesSet;
 
   const isMomentSet = !!reviewCadence;
-  
+
   const kickstartItems = [
     { label: "Decider assigned", done: isDeciderAssigned },
     { label: "Moment set", done: isMomentSet },
@@ -732,7 +741,7 @@ setSuccessMetrics,
           <button type="button" className="d-flex align-items-center gap-2" onClick={onBack} style={{ border: '1px solid #0c71b9', color: '#0c71b9', fontSize: '13px', fontWeight: '600', padding: '6px 14px', borderRadius: '8px', backgroundColor: '#ffffff', cursor: 'pointer' }}>
             <ChevronLeft size={14} strokeWidth={2.5} /> Back to Bets
           </button>
-          
+
           {(() => {
             const getBadgeStyle = (status) => {
               const s = (status || "draft").toLowerCase();
@@ -801,16 +810,16 @@ setSuccessMetrics,
             </div>
           </div>
         </div>
- 
+
       </div>
-      
-      {!isLaunched && initialStatusLower === "draft" && hasDecider && (
-        <div className="decider-info-banner mt-0 mb-3" style={{border: '1px solid #bfdbfe', borderRadius: '8px', padding: '16px', color: '#1e3a8a', fontSize: '13px' }}>
+
+      {!isLaunched && initialStatusLower === "draft" && hasDecider && currentUserId !== accountableOwnerId && (
+        <div className="decider-info-banner mt-0 mb-3" style={{ border: '1px solid #bfdbfe', borderRadius: '8px', padding: '16px', color: '#1e3a8a', fontSize: '13px' }}>
           <strong style={{ color: '#1d4ed8' }}>Awaiting {accountableOwner}.</strong> <span style={{ color: '#475569' }}>The fields below will be completed by the assigned decider. You'll see them here once filled.</span>
         </div>
       )}
 
-      {!isLaunched && accountableOwnerId && initialStatusLower === "draft" && !isReadOnly && (
+      {!isLaunched && accountableOwnerId && initialStatusLower === "draft" && (
         <div className="kickstart-banner" style={{ backgroundColor: '#fffbeb', border: '1px solid #fde68a', borderRadius: '12px', padding: '16px', marginBottom: '16px' }}>
           <div className="d-flex justify-content-between align-items-center">
             <div style={{ flex: 1 }}>
@@ -819,7 +828,7 @@ setSuccessMetrics,
               </div>
               <h2 className="kickstart-title" style={{ fontSize: '14px', fontWeight: 'bold', color: '#0f172a', margin: '0 0 4px 0' }}>Complete the essentials to kickstart · {kickstartCompleted}/{kickstartItems.length}</h2>
               <p className="kickstart-subtitle" style={{ color: '#64748b', fontSize: '12px', margin: 0 }}>A bet joins its Cadences for review only once it's kickstarted to Active.</p>
-              
+
               <div className="kickstart-items" style={{ marginTop: '20px', display: 'flex', flexWrap: 'wrap', gap: '16px 24px' }}>
                 {kickstartItems.map((item, index) => (
                   <div key={index} className={`kickstart-item ${item.done ? 'done' : ''}`} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -834,10 +843,59 @@ setSuccessMetrics,
               </div>
             </div>
             <div className="flex-shrink-0 ms-4 d-flex align-items-center justify-content-end" style={{ width: '220px' }}>
-              <button className={`btn-kickstart active d-flex align-items-center justify-content-center gap-2`} onClick={handleKickstart} disabled={isSubmitting} style={{ backgroundColor: '#10b981', color: 'white', padding: '10px 20px', borderRadius: '8px', border: 'none', fontWeight: '600', opacity: isSubmitting ? 0.6 : 1, cursor: isSubmitting ? 'not-allowed' : 'pointer' }}>
-                {isSubmitting && submitAction === "kickstart" ? <span className="spinner-border spinner-border-sm" /> : null}
-                {isSubmitting && submitAction === "kickstart" ? 'Kickstarting...' : 'Kickstart Bet →'}
-              </button>
+              {canKickstart && currentUserId == accountableOwnerId ? (
+                <button
+                  className="btn-kickstart active d-flex align-items-center justify-content-center gap-2"
+                  onClick={handleKickstart}
+                  disabled={isSubmitting}
+                  style={{
+                    backgroundColor: '#10b981',
+                    color: 'white',
+                    padding: '10px 20px',
+                    borderRadius: '8px',
+                    border: 'none',
+                    fontWeight: '600',
+                    opacity: isSubmitting ? 0.6 : 1,
+                    cursor: isSubmitting ? 'not-allowed' : 'pointer'
+                  }}
+                >
+                  {isSubmitting && submitAction === "kickstart" ? (
+                    <span className="spinner-border spinner-border-sm" />
+                  ) : null}
+                  {isSubmitting && submitAction === "kickstart"
+                    ? 'Kickstarting...'
+                    : 'Kickstart Bet →'}
+                </button>
+              ) : currentUserId == accountableOwnerId ? (
+                <button
+                  className="btn-kickstart disabled d-flex align-items-center justify-content-center gap-2"
+                  disabled
+                  style={{
+                    backgroundColor: '#f1f5f9',
+                    color: '#6b7280',
+                    padding: '10px 20px',
+                    borderRadius: '8px',
+                    border: 'none',
+                    fontWeight: '600',
+                    opacity: 0.7,
+                    cursor: 'not-allowed'
+                  }}
+                >
+                  Kickstart Bet →
+                </button>
+              ) : (
+                <div
+                  style={{
+                    color: '#94a3b8',
+                    fontStyle: 'italic',
+                    fontSize: '13px',
+                    textAlign: 'right',
+                    lineHeight: '1.4'
+                  }}
+                >
+                  Awaiting the decider to complete and kickstart this bet.
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -881,112 +939,109 @@ setSuccessMetrics,
               const isPast = new Date(pc.moment.date) < new Date();
               const dayText = isPast ? `${diffDays} days ago` : `in ${diffDays} days`;
               const formattedDate = new Date(pc.moment.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-              
+
               return (
-              <div key={idx} className="pending-item" style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
-                    <span style={{ backgroundColor: '#fef3c7', color: '#b45309', fontSize: '10px', fontWeight: '800', padding: '3px 8px', borderRadius: '4px' }}>NEEDS CLOSE</span>
-                    <span style={{ fontSize: '13px', fontWeight: '700', color: '#0f172a' }}>{pc.cadenceName}</span>
-                  </div>
-                  <div style={{ fontSize: '12px', color: '#64748b', display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '12px' }}>
-                    <span>{formattedDate} · <span style={{ color: isPast ? '#d97706' : '#64748b', fontWeight: '600' }}>{dayText}</span></span>
-                    <span>·</span>
-                    <span>{pc.cadenceName}</span>
+                <div key={idx} className="pending-item" style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
+                      <span style={{ backgroundColor: '#fef3c7', color: '#b45309', fontSize: '10px', fontWeight: '800', padding: '3px 8px', borderRadius: '4px' }}>NEEDS CLOSE</span>
+                      <span style={{ fontSize: '13px', fontWeight: '700', color: '#0f172a' }}>{pc.cadenceName}</span>
+                    </div>
+                    <div style={{ fontSize: '12px', color: '#64748b', display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '12px' }}>
+                      <span>{formattedDate} · <span style={{ color: isPast ? '#d97706' : '#64748b', fontWeight: '600' }}>{dayText}</span></span>
+                      <span>·</span>
+                      <span>{pc.cadenceName}</span>
+                    </div>
+                    <div>
+                      <span style={{ backgroundColor: '#dcfce7', color: '#16a34a', fontSize: '10px', fontWeight: '700', padding: '3px 8px', borderRadius: '4px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                        <Check size={12} strokeWidth={3} /> PRE-READ COMPLETE
+                      </span>
+                    </div>
                   </div>
                   <div>
-                    <span style={{ backgroundColor: '#dcfce7', color: '#16a34a', fontSize: '10px', fontWeight: '700', padding: '3px 8px', borderRadius: '4px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                      <Check size={12} strokeWidth={3} /> PRE-READ COMPLETE
-                    </span>
+                    {(() => {
+                      const isCaptureDisabled = !isAdmin && (!currentUserId || currentUserId !== accountableOwnerId);
+                      return (
+                        <button type="button" disabled={isCaptureDisabled} onClick={(e) => {
+                          if (isCaptureDisabled) return;
+                          e.preventDefault();
+                          e.stopPropagation();
+                          const targetUrl = `/business/${selectedBusinessId}/cadence/${pc.cadenceId}/moment/${pc.moment._id || pc.moment.id}`;
+                          navigate(targetUrl);
+                        }} style={{ backgroundColor: isCaptureDisabled ? '#94a3b8' : '#0c71b9', color: '#ffffff', border: 'none', borderRadius: '6px', fontSize: '13px', fontWeight: '600', padding: '8px 16px', cursor: isCaptureDisabled ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', gap: '6px', opacity: isCaptureDisabled ? 0.8 : 1 }}>
+                          Open · Capture &rarr;
+                        </button>
+                      );
+                    })()}
                   </div>
                 </div>
-                <div>
-                  {(() => {
-                    const isCaptureDisabled = !isAdmin && (!currentUserId || currentUserId !== accountableOwnerId);
-                    return (
-                      <button type="button" disabled={isCaptureDisabled} onClick={(e) => {
-                        if (isCaptureDisabled) return;
-                        e.preventDefault();
-                        e.stopPropagation();
-                        console.log("[DEBUG] Open Capture Button Clicked!");
-                        console.log("[DEBUG] pc object:", pc);
-                        console.log("[DEBUG] selectedBusinessId:", selectedBusinessId);
-                        const targetUrl = `/business/${selectedBusinessId}/cadence/${pc.cadenceId}/moment/${pc.moment._id || pc.moment.id}`;
-                        console.log("[DEBUG] targetUrl:", targetUrl);
-                        navigate(targetUrl);
-                      }} style={{ backgroundColor: isCaptureDisabled ? '#94a3b8' : '#0c71b9', color: '#ffffff', border: 'none', borderRadius: '6px', fontSize: '13px', fontWeight: '600', padding: '8px 16px', cursor: isCaptureDisabled ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', gap: '6px', opacity: isCaptureDisabled ? 0.8 : 1 }}>
-                        Open · Capture &rarr;
-                      </button>
-                    );
-                  })()}
-                </div>
-              </div>
-            )})}
+              )
+            })}
           </div>
         </div>
       )}
 
       <fieldset style={{ border: 'none', padding: 0, margin: 0 }}>
-      <Accordion alwaysOpen defaultActiveKey={['0']} className="mt-4 form-accordion">
-        <Accordion.Item eventKey="0" className="mb-2 border rounded form-accordion-item">
-          <Accordion.Header>
-            <div className="d-flex justify-content-between align-items-center w-100 pe-3">
-              <span className="fw-bold text-dark" style={{ fontSize: '13px' }}>1. Bet Overview</span>
-              <span className="badge-required" style={{ color: '#ef4444', border: '1px solid #fca5a5', backgroundColor: '#fef2f2', padding: '4px 8px', borderRadius: '4px', fontSize: '10px', fontWeight: 'bold', letterSpacing: '0.5px' }}>REQUIRED</span>
-            </div>
-          </Accordion.Header>
-          <Accordion.Body className="bg-white" style={{ padding: '12px 16px' }}>
-
-            { }
-            <div className="field-row" style={{ display: 'none' }}>
-              <div className="field-label-row">
-                <label className="field-label">
-                  {t("Project_Name")} <span className="required" style={{ color: '#ef4444' }}>*</span>
-                </label>
-                {mode !== "new" && renderLockBadge("project_name")}
+        <Accordion alwaysOpen defaultActiveKey={['0']} className="mt-4 form-accordion">
+          <Accordion.Item eventKey="0" className="mb-2 border rounded form-accordion-item">
+            <Accordion.Header>
+              <div className="d-flex justify-content-between align-items-center w-100 pe-3">
+                <span className="fw-bold text-dark" style={{ fontSize: '13px' }}>1. Bet Overview</span>
+                <span className="badge-required" style={{ color: '#ef4444', border: '1px solid #fca5a5', backgroundColor: '#fef2f2', padding: '4px 8px', borderRadius: '4px', fontSize: '10px', fontWeight: 'bold', letterSpacing: '0.5px' }}>REQUIRED</span>
               </div>
-              {mode === "new" ? <>
-                <input ref={projectNameRef} type="text" value={projectName || ""} onChange={handleProjectNameChange} placeholder="Enter project name (minimum 3 characters)" className={`field-input ${showErrors && fieldErrors.projectName ? "error" : ""}`} readOnly={isReadOnly} onFocus={() => handleFieldFocus("project_name")} maxLength={100} disabled={isSubmitting} />
-                <div className="project-form--s16">
-                  {showErrors && fieldErrors.projectName && <small className="error-text">{fieldErrors.projectName}</small>}
-                  <small className="text-muted project-form--s17">
-                    {(projectName || '').length}/100 {t("characters")}
-                  </small>
+            </Accordion.Header>
+            <Accordion.Body className="bg-white" style={{ padding: '12px 16px' }}>
+
+              { }
+              <div className="field-row" style={{ display: 'none' }}>
+                <div className="field-label-row">
+                  <label className="field-label">
+                    {t("Project_Name")} <span className="required" style={{ color: '#ef4444' }}>*</span>
+                  </label>
+                  {mode !== "new" && renderLockBadge("project_name")}
                 </div>
-              </> : projectName && <div className="project-name-display-inline">
-                {projectName}
-              </div>}
-            </div>
+                {(!isReadOnly || mode === "new") ? <>
+                  <input ref={projectNameRef} type="text" value={projectName || ""} onChange={handleProjectNameChange} placeholder="Enter project name (minimum 3 characters)" className={`field-input ${showErrors && fieldErrors.projectName ? "error" : ""}`} readOnly={isReadOnly} onFocus={() => handleFieldFocus("project_name")} maxLength={100} disabled={isSubmitting} />
+                  <div className="project-form--s16">
+                    {showErrors && fieldErrors.projectName && <small className="error-text">{fieldErrors.projectName}</small>}
+                    <small className="text-muted project-form--s17">
+                      {(projectName || '').length}/100 {t("characters")}
+                    </small>
+                  </div>
+                </> : projectName && <div className="project-name-display-inline">
+                  {projectName}
+                </div>}
+              </div>
 
-            <div className="field-row" style={{ margin: '0 0 16px 0' }}>
-              <div className="field-label-row" style={{ marginBottom: '2px' }}>
-                <label className="field-label" style={{ fontWeight: 'bold', color: '#334155', fontSize: '13px', margin: 0 }}>
-                  What this bet is about <span className="required" style={{ color: '#ef4444' }}>*</span>
-                </label>
-                {renderLockBadge("project_description")}
+              <div className="field-row" style={{ margin: '0 0 16px 0' }}>
+                <div className="field-label-row" style={{ marginBottom: '2px' }}>
+                  <label className="field-label" style={{ fontWeight: 'bold', color: '#334155', fontSize: '13px', margin: 0 }}>
+                    What this bet is about <span className="required" style={{ color: '#ef4444' }}>*</span>
+                  </label>
+                  {renderLockBadge("project_description")}
+                </div>
+                <p className="text-muted small mb-2 project-form--s17" style={{ color: '#64748b', fontSize: '13px', margin: '0 0 8px 0' }}>A clear paragraph describing what this bet is and what it sets out to do.</p>
+                <textarea ref={descriptionRef} value={description || ""} onChange={handleDescriptionChange} placeholder="Launch digital wallet product and achieve market penetration..." rows={3} className={`field-textarea ${showErrors && fieldErrors.description ? "error" : ""}`} readOnly={isFieldDisabled("project_description")} onFocus={() => handleFieldFocus("project_description")} maxLength={500} style={{ border: '1px solid #e2e8f0', borderRadius: '8px', padding: '8px', width: '100%', outline: 'none' }} />
+                <div className="project-form--s16">
+                  {showErrors && fieldErrors.description && <small className="error-text">{fieldErrors.description}</small>}
+                </div>
               </div>
-              <p className="text-muted small mb-2 project-form--s17" style={{ color: '#64748b', fontSize: '13px', margin: '0 0 8px 0' }}>A clear paragraph describing what this bet is and what it sets out to do.</p>
-              <textarea ref={descriptionRef} value={description || ""} onChange={handleDescriptionChange} placeholder="Launch digital wallet product and achieve market penetration..." rows={3} className={`field-textarea ${showErrors && fieldErrors.description ? "error" : ""}`} readOnly={isFieldDisabled("project_description")} onFocus={() => handleFieldFocus("project_description")} maxLength={500} style={{ border: '1px solid #e2e8f0', borderRadius: '8px', padding: '8px', width: '100%', outline: 'none' }} />
-              <div className="project-form--s16">
-                {showErrors && fieldErrors.description && <small className="error-text">{fieldErrors.description}</small>}
-              </div>
-            </div>
 
-            <div className="field-row" style={{ margin: '0' }}>
-              <div className="field-label-row" style={{ marginBottom: '2px' }}>
-                <label className="field-label" style={{ fontWeight: 'bold', color: '#334155', fontSize: '13px', margin: 0 }}>
-                  Why this matters <span className="required" style={{ color: '#ef4444' }}>*</span>
-                </label>
-                {renderLockBadge("why_this_matters")}
+              <div className="field-row" style={{ margin: '0' }}>
+                <div className="field-label-row" style={{ marginBottom: '2px' }}>
+                  <label className="field-label" style={{ fontWeight: 'bold', color: '#334155', fontSize: '13px', margin: 0 }}>
+                    Why this matters <span className="required" style={{ color: '#ef4444' }}>*</span>
+                  </label>
+                  {renderLockBadge("why_this_matters")}
+                </div>
+                <p className="text-muted small mb-2 project-form--s17" style={{ color: '#64748b', fontSize: '13px', margin: '0 0 8px 0' }}>The strategic importance — why this bet earns a slot in your top 5.</p>
+                <textarea ref={importanceRef} value={importance || ""} onChange={handleImportanceChange} placeholder="Explain the strategic importance..." rows={3} className={`field-textarea ${showErrors && fieldErrors.importance ? "error" : ""}`} readOnly={isFieldDisabled("why_this_matters")} onFocus={() => handleFieldFocus("why_this_matters")} style={{ border: '1px solid #e2e8f0', borderRadius: '8px', padding: '8px', width: '100%', outline: 'none' }} />
+                <div className="project-form--s16">
+                  {showErrors && fieldErrors.importance && <small className="error-text">{fieldErrors.importance}</small>}
+                </div>
               </div>
-              <p className="text-muted small mb-2 project-form--s17" style={{ color: '#64748b', fontSize: '13px', margin: '0 0 8px 0' }}>The strategic importance — why this bet earns a slot in your top 5.</p>
-              <textarea ref={importanceRef} value={importance || ""} onChange={handleImportanceChange} placeholder="Explain the strategic importance..." rows={3} className={`field-textarea ${showErrors && fieldErrors.importance ? "error" : ""}`} readOnly={isFieldDisabled("why_this_matters")} onFocus={() => handleFieldFocus("why_this_matters")} style={{ border: '1px solid #e2e8f0', borderRadius: '8px', padding: '8px', width: '100%', outline: 'none' }} />
-              <div className="project-form--s16">
-                {showErrors && fieldErrors.importance && <small className="error-text">{fieldErrors.importance}</small>}
-              </div>
-            </div>
-          </Accordion.Body>
-        </Accordion.Item>
+            </Accordion.Body>
+          </Accordion.Item>
           <Accordion.Item eventKey="1" className="mb-2 border rounded form-accordion-item">
             <Accordion.Header>
               <div className="d-flex justify-content-between align-items-center w-100 pe-3">
@@ -995,26 +1050,26 @@ setSuccessMetrics,
               </div>
             </Accordion.Header>
             <Accordion.Body className="bg-white">
-            <div className="field-row">
-              <div className="field-label-row">
-                <label className="field-label">
-                  {t("Key_Assumptions_Tested")} {!isReadOnly && <span className="required">*</span>}
-                </label>
+              <div className="field-row">
+                <div className="field-label-row">
+                  <label className="field-label">
+                    {t("Key_Assumptions_Tested")} <span className="required">*</span>
+                  </label>
+                </div>
+                <p className="text-muted small mb-2 project-form--s17">The beliefs this bet is testing — at least one. If any turns out false, the bet's case weakens.</p>
+                <div className="project-form--s18">
+                  {[0, 1, 2].map(idx => <React.Fragment key={idx}>
+                    <input ref={keyAssumptionsRefs[idx]} type="text" value={keyAssumptions[idx] || ""} onChange={e => handleKeyAssumptionChange(idx, e.target.value)} placeholder={`${t("Assumption_Placeholder")} ${idx + 1}...`} className={`field-input ${showErrors && fieldErrors[`keyAssumptions_${idx}`] ? "error" : ""}`} readOnly={isFieldDisabled("key_assumptions")} onFocus={() => handleFieldFocus("key_assumptions")} />
+                    {showErrors && fieldErrors[`keyAssumptions_${idx}`] && <small className="error-text">{fieldErrors[`keyAssumptions_${idx}`]}</small>}
+                  </React.Fragment>)}
+                </div>
               </div>
-              <p className="text-muted small mb-2 project-form--s17">The beliefs this bet is testing — at least one. If any turns out false, the bet's case weakens.</p>
-              <div className="project-form--s18">
-                {[0, 1, 2].map(idx => <React.Fragment key={idx}>
-                  <input ref={keyAssumptionsRefs[idx]} type="text" value={keyAssumptions[idx] || ""} onChange={e => handleKeyAssumptionChange(idx, e.target.value)} placeholder={`${t("Assumption_Placeholder")} ${idx + 1}...`} className={`field-input ${showErrors && fieldErrors[`keyAssumptions_${idx}`] ? "error" : ""}`} readOnly={isFieldDisabled("key_assumptions")} onFocus={() => handleFieldFocus("key_assumptions")} />
-                  {showErrors && fieldErrors[`keyAssumptions_${idx}`] && <small className="error-text">{fieldErrors[`keyAssumptions_${idx}`]}</small>}
-                </React.Fragment>)}
-              </div>
-            </div>
 
-            { }
-            <div className="grid-2">
-              <TextAreaField ref={successCriteriaRef} label={t("Continue_If_Label")} subLabel="Conditions that confirm the bet is working." value={successCriteria} onChange={handleSuccessCriteriaChange} placeholder={t("Success_Criteria_Placeholder")} error={showErrors && fieldErrors.successCriteria} readOnly={isFieldDisabled("success_criteria") || isSubmitting} onFocus={handleFieldFocus} fieldName="success_criteria" required isSubmitting={isSubmitting} />
-              <TextAreaField ref={killCriteriaRef} label={t("Stop_If_Label")} subLabel="Conditions that would make you kill the bet." value={killCriteria} onChange={handleKillCriteriaChange} placeholder={t("Kill_Criteria_Placeholder")} error={showErrors && fieldErrors.killCriteria} readOnly={isFieldDisabled("kill_criteria") || isSubmitting} onFocus={handleFieldFocus} fieldName="kill_criteria" required isSubmitting={isSubmitting} />
-            </div>
+              { }
+              <div className="grid-2">
+                <TextAreaField ref={successCriteriaRef} label={t("Continue_If_Label")} subLabel="Conditions that confirm the bet is working." value={successCriteria} onChange={handleSuccessCriteriaChange} placeholder={t("Success_Criteria_Placeholder")} error={showErrors && fieldErrors.successCriteria} readOnly={isFieldDisabled("success_criteria") || isSubmitting} onFocus={handleFieldFocus} fieldName="success_criteria" required isSubmitting={isSubmitting} />
+                <TextAreaField ref={killCriteriaRef} label={t("Stop_If_Label")} subLabel="Conditions that would make you kill the bet." value={killCriteria} onChange={handleKillCriteriaChange} placeholder={t("Kill_Criteria_Placeholder")} error={showErrors && fieldErrors.killCriteria} readOnly={isFieldDisabled("kill_criteria") || isSubmitting} onFocus={handleFieldFocus} fieldName="kill_criteria" required isSubmitting={isSubmitting} />
+              </div>
             </Accordion.Body>
           </Accordion.Item>
 
@@ -1026,7 +1081,7 @@ setSuccessMetrics,
               </div>
             </Accordion.Header>
             <Accordion.Body className="bg-white">
-              
+
               { }
               <div className="grid-3 project-form--s19 mb-3">
                 {(!isLaunched && (status || "").toLowerCase() === "draft") ? (
@@ -1167,11 +1222,11 @@ setSuccessMetrics,
 
               <div className="field-row">
                 <div className="field-label-row">
-                  <label className="field-label">{t("Dependencies")} {!isReadOnly && <span className="required">*</span>}</label>
+                  <label className="field-label">{t("Dependencies")} <span className="required">*</span></label>
                   {renderLockBadge("dependencies")}
                 </div>
                 <p className="text-muted small mb-2 project-form--s17">Bets, decisions, or external events this one depends on. Add at least one — or check "No external dependencies" if there are none.</p>
-                
+
                 <div className="project-form--s18">
                   {dependencies !== "[NONE]" && (() => {
                     const localDeps = depsArray.length === 0 ? [""] : depsArray;
@@ -1192,8 +1247,8 @@ setSuccessMetrics,
                           readOnly={isFieldDisabled("dependencies")}
                           onFocus={() => handleFieldFocus("dependencies")}
                         />
-                        <button 
-                          type="button" 
+                        <button
+                          type="button"
                           className="btn btn-link text-muted p-0 ms-2"
                           style={{ textDecoration: 'none', fontSize: '18px' }}
                           onClick={() => {
@@ -1210,7 +1265,7 @@ setSuccessMetrics,
                     ));
                   })()}
                 </div>
-                
+
                 {dependencies !== "[NONE]" && (
                   <button
                     type="button"
@@ -1244,7 +1299,7 @@ setSuccessMetrics,
                     No external dependencies
                   </label>
                 </div>
-                
+
                 {showErrors && !isDependenciesSet && <small className="error-text mt-2 d-block">Dependencies are required.</small>}
               </div>
             </Accordion.Body>
@@ -1310,7 +1365,7 @@ setSuccessMetrics,
                 {recommendRoles.map((roleId, idx) => (
                   <div className="d-flex align-items-center mb-2" key={`R-${idx}`}>
                     <div className="flex-grow-1">
-                      <SelectField 
+                      <SelectField
                         options={eligibleOwners.map(o => ({
                           value: o._id,
                           label: o.name,
@@ -1332,8 +1387,8 @@ setSuccessMetrics,
                   </div>
                 ))}
                 {!isFieldDisabled("rapid_roles") && (
-                  <button className="btn btn-sm text-primary p-0 d-flex align-items-center mt-2 fw-semibold" onClick={(e) => { e.preventDefault(); setRecommendRoles([...recommendRoles, ""]); handleFieldEdit("rapid_roles"); }} style={{fontSize: '0.85rem'}}>
-                    <span className="me-1 fw-bold fs-5" style={{lineHeight: '0'}}>+</span> Add a recommender
+                  <button className="btn btn-sm text-primary p-0 d-flex align-items-center mt-2 fw-semibold" onClick={(e) => { e.preventDefault(); setRecommendRoles([...recommendRoles, ""]); handleFieldEdit("rapid_roles"); }} style={{ fontSize: '0.85rem' }}>
+                    <span className="me-1 fw-bold fs-5" style={{ lineHeight: '0' }}>+</span> Add a recommender
                   </button>
                 )}
               </div>
@@ -1353,7 +1408,7 @@ setSuccessMetrics,
                 {agreeRoles.map((roleId, idx) => (
                   <div className="d-flex align-items-center mb-2" key={`A-${idx}`}>
                     <div className="flex-grow-1">
-                      <SelectField 
+                      <SelectField
                         options={eligibleOwners.map(o => ({
                           value: o._id,
                           label: o.name,
@@ -1375,8 +1430,8 @@ setSuccessMetrics,
                   </div>
                 ))}
                 {!isFieldDisabled("rapid_roles") && (
-                  <button className="btn btn-sm text-primary p-0 d-flex align-items-center mt-2 fw-semibold" onClick={(e) => { e.preventDefault(); setAgreeRoles([...agreeRoles, ""]); handleFieldEdit("rapid_roles"); }} style={{fontSize: '0.85rem'}}>
-                    <span className="me-1 fw-bold fs-5" style={{lineHeight: '0'}}>+</span> Add an agree-er
+                  <button className="btn btn-sm text-primary p-0 d-flex align-items-center mt-2 fw-semibold" onClick={(e) => { e.preventDefault(); setAgreeRoles([...agreeRoles, ""]); handleFieldEdit("rapid_roles"); }} style={{ fontSize: '0.85rem' }}>
+                    <span className="me-1 fw-bold fs-5" style={{ lineHeight: '0' }}>+</span> Add an agree-er
                   </button>
                 )}
               </div>
@@ -1397,7 +1452,7 @@ setSuccessMetrics,
                 {inputRoles.map((roleId, idx) => (
                   <div className="d-flex align-items-center mb-2" key={`I-${idx}`}>
                     <div className="flex-grow-1">
-                      <SelectField 
+                      <SelectField
                         options={eligibleOwners.map(o => ({
                           value: o._id,
                           label: o.name,
@@ -1419,8 +1474,8 @@ setSuccessMetrics,
                   </div>
                 ))}
                 {!isFieldDisabled("rapid_roles") && (
-                  <button className="btn btn-sm text-primary p-0 d-flex align-items-center mt-2 fw-semibold" onClick={(e) => { e.preventDefault(); setInputRoles([...inputRoles, ""]); handleFieldEdit("rapid_roles"); }} style={{fontSize: '0.85rem'}}>
-                    <span className="me-1 fw-bold fs-5" style={{lineHeight: '0'}}>+</span> Add an input
+                  <button className="btn btn-sm text-primary p-0 d-flex align-items-center mt-2 fw-semibold" onClick={(e) => { e.preventDefault(); setInputRoles([...inputRoles, ""]); handleFieldEdit("rapid_roles"); }} style={{ fontSize: '0.85rem' }}>
+                    <span className="me-1 fw-bold fs-5" style={{ lineHeight: '0' }}>+</span> Add an input
                   </button>
                 )}
               </div>
@@ -1440,7 +1495,7 @@ setSuccessMetrics,
                 {performRoles.map((roleId, idx) => (
                   <div className="d-flex align-items-center mb-2" key={`P-${idx}`}>
                     <div className="flex-grow-1">
-                      <SelectField 
+                      <SelectField
                         options={eligibleOwners.map(o => ({
                           value: o._id,
                           label: o.name,
@@ -1462,8 +1517,8 @@ setSuccessMetrics,
                   </div>
                 ))}
                 {!isFieldDisabled("rapid_roles") && (
-                  <button className="btn btn-sm text-primary p-0 d-flex align-items-center mt-2 fw-semibold" onClick={(e) => { e.preventDefault(); setPerformRoles([...performRoles, ""]); handleFieldEdit("rapid_roles"); }} style={{fontSize: '0.85rem'}}>
-                    <span className="me-1 fw-bold fs-5" style={{lineHeight: '0'}}>+</span> Add a performer
+                  <button className="btn btn-sm text-primary p-0 d-flex align-items-center mt-2 fw-semibold" onClick={(e) => { e.preventDefault(); setPerformRoles([...performRoles, ""]); handleFieldEdit("rapid_roles"); }} style={{ fontSize: '0.85rem' }}>
+                    <span className="me-1 fw-bold fs-5" style={{ lineHeight: '0' }}>+</span> Add a performer
                   </button>
                 )}
               </div>
@@ -1472,70 +1527,70 @@ setSuccessMetrics,
           </Accordion.Item>
 
           <Accordion.Item eventKey="4" className="mb-2 border rounded form-accordion-item">
-          <Accordion.Header>
-            <div className="d-flex justify-content-between align-items-center w-100 pe-3">
-              <span className="fw-bold text-dark" style={{ fontSize: '13px' }}>5. Detailed Planning</span>
-              <span className="badge-optional" style={{ color: '#64748b', border: '1px solid #e2e8f0', backgroundColor: '#f8fafc', padding: '4px 8px', borderRadius: '4px', fontSize: '10px', fontWeight: 'bold', letterSpacing: '0.5px' }}>OPTIONAL</span>
-            </div>
-          </Accordion.Header>
-          <Accordion.Body className="bg-white">
-
-            <TextAreaField ref={highLevelReqRef} label={t("Constraints_Non_Negotiables")} value={highLevelReq} onChange={e => {
-              setHighLevelReq(e.target.value);
-              handleFieldEdit("high_level_requirements");
-            }} placeholder={t("what_are_the_main_requirements_or_constraints")} error={showErrors && fieldErrors.highLevelReq} readOnly={isFieldDisabled("high_level_requirements")} onFocus={handleFieldFocus} fieldName="high_level_requirements" />
-
-            <TextAreaField ref={scopeRef} label={t("Explicitly_Out_of_Scope")} value={scope} onChange={e => {
-              setScope(e.target.value);
-              handleFieldEdit("scope_definition");
-            }} placeholder={t("define_what_is_not_included_in_this_project")} error={showErrors && fieldErrors.scope} readOnly={isFieldDisabled("scope_definition")} onFocus={handleFieldFocus} fieldName="scope_definition" />
-
-            <TextAreaField ref={outcomeRef} label={t("Expected_Outcome")} value={outcome} onChange={e => {
-              setOutcome(e.target.value);
-              handleFieldEdit("expected_outcome");
-            }} placeholder={t("what_is_the_end_result_use_outcome_based_wording")} error={showErrors && fieldErrors.outcome} readOnly={isFieldDisabled("expected_outcome")} onFocus={handleFieldFocus} fieldName="expected_outcome" />
-
-            <div className="field-row">
-              <div className="field-label-row">
-                <label className="field-label">{t("Success_Metrics")}</label>
-                {renderLockBadge("success_metrics")}
+            <Accordion.Header>
+              <div className="d-flex justify-content-between align-items-center w-100 pe-3">
+                <span className="fw-bold text-dark" style={{ fontSize: '13px' }}>5. Detailed Planning</span>
+                <span className="badge-optional" style={{ color: '#64748b', border: '1px solid #e2e8f0', backgroundColor: '#f8fafc', padding: '4px 8px', borderRadius: '4px', fontSize: '10px', fontWeight: 'bold', letterSpacing: '0.5px' }}>OPTIONAL</span>
               </div>
-              <textarea ref={successMetricsRef} placeholder={t("success_metrics_placeholder")} rows={3} className={`field-textarea ${showErrors && fieldErrors.successMetrics ? "error" : ""}`} value={successMetrics || ""} onChange={e => {
-                setSuccessMetrics(e.target.value);
-                handleFieldEdit("success_metrics");
-              }} readOnly={isFieldDisabled("success_metrics")} onFocus={() => handleFieldFocus("success_metrics")} />
-              {showErrors && fieldErrors.successMetrics && <small className="error-text">{fieldErrors.successMetrics}</small>}
-            </div>
+            </Accordion.Header>
+            <Accordion.Body className="bg-white">
 
-            <div className="grid-2">
-              <div>
+              <TextAreaField ref={highLevelReqRef} label={t("Constraints_Non_Negotiables")} value={highLevelReq} onChange={e => {
+                setHighLevelReq(e.target.value);
+                handleFieldEdit("high_level_requirements");
+              }} placeholder={t("what_are_the_main_requirements_or_constraints")} error={showErrors && fieldErrors.highLevelReq} readOnly={isFieldDisabled("high_level_requirements")} onFocus={handleFieldFocus} fieldName="high_level_requirements" />
+
+              <TextAreaField ref={scopeRef} label={t("Explicitly_Out_of_Scope")} value={scope} onChange={e => {
+                setScope(e.target.value);
+                handleFieldEdit("scope_definition");
+              }} placeholder={t("define_what_is_not_included_in_this_project")} error={showErrors && fieldErrors.scope} readOnly={isFieldDisabled("scope_definition")} onFocus={handleFieldFocus} fieldName="scope_definition" />
+
+              <TextAreaField ref={outcomeRef} label={t("Expected_Outcome")} value={outcome} onChange={e => {
+                setOutcome(e.target.value);
+                handleFieldEdit("expected_outcome");
+              }} placeholder={t("what_is_the_end_result_use_outcome_based_wording")} error={showErrors && fieldErrors.outcome} readOnly={isFieldDisabled("expected_outcome")} onFocus={handleFieldFocus} fieldName="expected_outcome" />
+
+              <div className="field-row">
                 <div className="field-label-row">
-                  <label className="field-label">
-                    {t("Estimated_Timeline")}
-                  </label>
-                  {renderLockBadge("estimated_timeline")}
+                  <label className="field-label">{t("Success_Metrics")}</label>
+                  {renderLockBadge("success_metrics")}
                 </div>
-                <input type="text" placeholder="e.g., 3–6 months" className="field-input" value={timeline || ""} onChange={e => {
-                  setTimeline(e.target.value);
-                  handleFieldEdit("estimated_timeline");
-                }} readOnly={isFieldDisabled("estimated_timeline")} onFocus={() => handleFieldFocus("estimated_timeline")} />
+                <textarea ref={successMetricsRef} placeholder={t("success_metrics_placeholder")} rows={3} className={`field-textarea ${showErrors && fieldErrors.successMetrics ? "error" : ""}`} value={successMetrics || ""} onChange={e => {
+                  setSuccessMetrics(e.target.value);
+                  handleFieldEdit("success_metrics");
+                }} readOnly={isFieldDisabled("success_metrics")} onFocus={() => handleFieldFocus("success_metrics")} />
+                {showErrors && fieldErrors.successMetrics && <small className="error-text">{fieldErrors.successMetrics}</small>}
               </div>
 
-              <div>
-                <div className="field-label-row">
-                  <label className="field-label">
-                    {t("Budget_Estimate")}
-                  </label>
-                  {renderLockBadge("budget_estimate")}
+              <div className="grid-2">
+                <div>
+                  <div className="field-label-row">
+                    <label className="field-label">
+                      {t("Estimated_Timeline")}
+                    </label>
+                    {renderLockBadge("estimated_timeline")}
+                  </div>
+                  <input type="text" placeholder="e.g., 3–6 months" className="field-input" value={timeline || ""} onChange={e => {
+                    setTimeline(e.target.value);
+                    handleFieldEdit("estimated_timeline");
+                  }} readOnly={isFieldDisabled("estimated_timeline")} onFocus={() => handleFieldFocus("estimated_timeline")} />
                 </div>
-                <input ref={budgetRef} type="text" placeholder="e.g., $50K - $100K" className={`field-input ${showErrors && fieldErrors.budget ? "error" : ""}`} value={budget || ""} onChange={handleBudgetChange} onKeyPress={handleBudgetKeyPress} readOnly={isFieldDisabled("budget_estimate")} onFocus={() => handleFieldFocus("budget_estimate")} />
-                {showErrors && fieldErrors.budget && <small className="error-text">{fieldErrors.budget}</small>}
+
+                <div>
+                  <div className="field-label-row">
+                    <label className="field-label">
+                      {t("Budget_Estimate")}
+                    </label>
+                    {renderLockBadge("budget_estimate")}
+                  </div>
+                  <input ref={budgetRef} type="text" placeholder="e.g., $50K - $100K" className={`field-input ${showErrors && fieldErrors.budget ? "error" : ""}`} value={budget || ""} onChange={handleBudgetChange} onKeyPress={handleBudgetKeyPress} readOnly={isFieldDisabled("budget_estimate")} onFocus={() => handleFieldFocus("budget_estimate")} />
+                  {showErrors && fieldErrors.budget && <small className="error-text">{fieldErrors.budget}</small>}
+                </div>
               </div>
-            </div>
-          </Accordion.Body>
-        </Accordion.Item>
-      </Accordion>
-    </fieldset>
+            </Accordion.Body>
+          </Accordion.Item>
+        </Accordion>
+      </fieldset>
     </div>
   </>;
 };

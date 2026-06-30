@@ -5,7 +5,6 @@ const API_BASE_URL = import.meta.env.VITE_BACKEND_URL;
 
 const DEFAULTS = {
   pmfFlow: 'gpt-4o-mini',
-  enrichment: 'gpt-4o-mini',
   documentQa: 'gpt-oss-120b',
   financialExtract: 'gpt-oss-120b',
   simpleSwot: 'gpt-oss-120b',
@@ -18,6 +17,7 @@ const DEFAULTS = {
   strategicPositioning: 'gpt-oss-120b',
   productivityMetrics: 'gpt-oss-120b',
   coreAdjacency: 'gpt-oss-120b',
+  strategicAnalysis: 'gpt-4o',
 };
 
 export const useModelSettingsStore = create((set, get) => ({
@@ -44,7 +44,6 @@ export const useModelSettingsStore = create((set, get) => ({
         if (data.success && data.data) {
           set({
             pmfFlow: data.data.pmfFlow || DEFAULTS.pmfFlow,
-            enrichment: data.data.enrichment || DEFAULTS.enrichment,
             documentQa: data.data.documentQa || DEFAULTS.documentQa,
             financialExtract: data.data.financialExtract || DEFAULTS.financialExtract,
             simpleSwot: data.data.simpleSwot || DEFAULTS.simpleSwot,
@@ -57,6 +56,7 @@ export const useModelSettingsStore = create((set, get) => ({
             strategicPositioning: data.data.strategicPositioning || DEFAULTS.strategicPositioning,
             productivityMetrics: data.data.productivityMetrics || DEFAULTS.productivityMetrics,
             coreAdjacency: data.data.coreAdjacency || DEFAULTS.coreAdjacency,
+            strategicAnalysis: data.data.strategicAnalysis || DEFAULTS.strategicAnalysis,
             isLoaded: true,
             loading: false,
             error: null

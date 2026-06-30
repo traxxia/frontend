@@ -213,185 +213,184 @@ const PlanModal = ({
     onSave(submitData);
   };
   return <Modal show={show} onHide={onClose} size="lg" centered backdrop="static" dialogClassName="plan-modal-dialog">
-            {}
-            <Modal.Header closeButton className="plan-modal-header">
-                <div className="plan-modal-header-inner">
-                    <Modal.Title className="plan-modal-title">
-                        {plan ? t('edit_plan') : t('create_plan')}
-                    </Modal.Title>
-                    <div className="plan-status-toggle-wrap">
-                        <span className="plan-status-label">{t('status')}</span>
-                        <input className="form-check-input plan-status-switch" type="checkbox" role="switch" id="planStatusSwitch" name="isActive" checked={formData.isActive} onChange={handleChange} disabled={!plan && !formData.name.trim()} style={!plan && !formData.name.trim() ? {
+    { }
+    <Modal.Header closeButton className="plan-modal-header">
+      <div className="plan-modal-header-inner">
+        <Modal.Title className="plan-modal-title">
+          {plan ? t('edit_plan') : t('create_plan')}
+        </Modal.Title>
+        <div className="plan-status-toggle-wrap">
+          <span className="plan-status-label">{t('status')}</span>
+          <input className="form-check-input plan-status-switch" type="checkbox" role="switch" id="planStatusSwitch" name="isActive" checked={formData.isActive} onChange={handleChange} disabled={!plan && !formData.name.trim()} style={!plan && !formData.name.trim() ? {
             cursor: 'not-allowed',
             opacity: 0.6
           } : {}} />
-                        <span className={`plan-status-text ${formData.isActive ? 'text-active' : 'text-inactive'}`}>
-                            {formData.isActive ? t('active') : t('inactive')}
-                        </span>
-                    </div>
-                </div>
-            </Modal.Header>
+          <span className={`plan-status-text ${formData.isActive ? 'text-active' : 'text-inactive'}`}>
+            {formData.isActive ? t('active') : t('inactive')}
+          </span>
+        </div>
+      </div>
+    </Modal.Header>
 
-            <form onSubmit={handleSubmit}>
-                <Modal.Body className="plan-modal-body">
+    <form onSubmit={handleSubmit}>
+      <Modal.Body className="plan-modal-body">
+        { }
+        <div className="plan-section">
+          <p className="plan-section-label">{t('basic_info')}</p>
+          <div className="row g-3">
+            <div className="col-md-6">
+              <label className="plan-field-label">{t('plan_name')} <span className="required-star">*</span></label>
+              <input type="text" name="name" className="plan-form-input" value={formData.name} onChange={handleChange} required placeholder="e.g. Starter" />
+            </div>
+            <div className="col-md-6">
+              <label className="plan-field-label">{t('description')} <span className="required-star">*</span></label>
+              <textarea name="description" className="plan-form-input plan-textarea" value={formData.description} onChange={handleChange} required placeholder="Brief description of this plan" rows={3} />
+            </div>
+          </div>
+        </div>
 
-                    {}
-                    <div className="plan-section">
-                        <p className="plan-section-label">{t('basic_info')}</p>
-                        <div className="row g-3">
-                            <div className="col-md-6">
-                                <label className="plan-field-label">{t('plan_name')} <span className="required-star">*</span></label>
-                                <input type="text" name="name" className="plan-form-input" value={formData.name} onChange={handleChange} required placeholder="e.g. Starter" />
-                            </div>
-                            <div className="col-md-6">
-                                <label className="plan-field-label">{t('description')} <span className="required-star">*</span></label>
-                                <textarea name="description" className="plan-form-input plan-textarea" value={formData.description} onChange={handleChange} required placeholder="Brief description of this plan" rows={3} />
-                            </div>
-                        </div>
-                    </div>
-
-                    {}
-                    <div className="plan-section">
-                        <p className="plan-section-label">{t('pricing')}</p>
-                        <div className="row g-3">
-                            <div className="col-md-6">
-                                <label className="plan-field-label">
-                                    {t('Price')} <span className="required-star">*</span> <span className="plan-currency-tag">USD</span>
-                                    {plan && <span className="plan-readonly-note">{t('not_editable')}</span>}
-                                </label>
-                                <div className="plan-price-input-wrap">
-                                    <span className="plan-price-symbol">$</span>
-                                    <input type="number" name="price" className="plan-form-input plan-price-input" value={formData.price} onChange={handleChange} onKeyDown={handleKeyDown} required min="0" step="0.01" readOnly={!!plan} placeholder="0.00" style={plan ? {
+        { }
+        <div className="plan-section">
+          <p className="plan-section-label">{t('pricing')}</p>
+          <div className="row g-3">
+            <div className="col-md-6">
+              <label className="plan-field-label">
+                {t('Price')} <span className="required-star">*</span> <span className="plan-currency-tag">USD</span>
+                {plan && <span className="plan-readonly-note">{t('not_editable')}</span>}
+              </label>
+              <div className="plan-price-input-wrap">
+                <span className="plan-price-symbol">$</span>
+                <input type="number" name="price" className="plan-form-input plan-price-input" value={formData.price} onChange={handleChange} onKeyDown={handleKeyDown} required min="0" step="0.01" readOnly={!!plan} placeholder="0.00" style={plan ? {
                   backgroundColor: '#f3f4f6',
                   cursor: 'not-allowed'
                 } : {}} />
-                                </div>
-                            </div>
-                            <div className="col-md-6">
-                                <label className="plan-field-label">{t('billing_period')} <span className="required-star">*</span></label>
-                                <select name="period" className="plan-form-input" value={formData.period} onChange={handleChange}>
-                                    <option value="month">{t('month')}</option>
-                                    <option value="year">{t('year')}</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
+              </div>
+            </div>
+            <div className="col-md-6">
+              <label className="plan-field-label">{t('billing_period')} <span className="required-star">*</span></label>
+              <select name="period" className="plan-form-input" value={formData.period} onChange={handleChange}>
+                <option value="month">{t('month')}</option>
+                <option value="year">{t('year')}</option>
+              </select>
+            </div>
+          </div>
+        </div>
 
-                    {}
-                    <div className="plan-section">
-                        <p className="plan-section-label">{t('plan_limits')}</p>
-                        <div className="row g-3">
-                            <div className="col-md-3 col-6">
-                                <label className="plan-field-label">{t('workspace_limit')}</label>
-                                <input type="number" name="workspace_limit" className="plan-form-input" value={formData.workspace_limit} onChange={handleChange} onKeyDown={handleKeyDown} placeholder="e.g. 1" min="0" />
-                            </div>
-                            <div className="col-md-3 col-6">
-                                <label className="plan-field-label">{t('users')}</label>
-                                <input type="number" name="limit_users" className="plan-form-input" value={formData.limit_users} onChange={handleChange} onKeyDown={handleKeyDown} placeholder="e.g. 5" min="0" />
-                            </div>
-                            <div className="col-md-3 col-6">
-                                <label className="plan-field-label">{t('collaborators')}</label>
-                                <input type="number" name="limit_collaborators" className="plan-form-input" value={formData.limit_collaborators} onChange={handleChange} onKeyDown={handleKeyDown} placeholder="e.g. 10" min="0" />
-                            </div>
-                            <div className="col-md-3 col-6">
-                                <label className="plan-field-label">{t('viewers')}</label>
-                                <input type="number" name="limit_viewers" className="plan-form-input" value={formData.limit_viewers} onChange={handleChange} onKeyDown={handleKeyDown} placeholder="e.g. 20" min="0" />
-                            </div>
-                        </div>
-                    </div>
+        { }
+        <div className="plan-section">
+          <p className="plan-section-label">{t('plan_limits')}</p>
+          <div className="row g-3">
+            <div className="col-md-3 col-6">
+              <label className="plan-field-label">{t('workspace_limit')}</label>
+              <input type="number" name="workspace_limit" className="plan-form-input" value={formData.workspace_limit} onChange={handleChange} onKeyDown={handleKeyDown} placeholder="e.g. 1" min="0" />
+            </div>
+            <div className="col-md-3 col-6">
+              <label className="plan-field-label">{t('users')}</label>
+              <input type="number" name="limit_users" className="plan-form-input" value={formData.limit_users} onChange={handleChange} onKeyDown={handleKeyDown} placeholder="e.g. 5" min="0" />
+            </div>
+            <div className="col-md-3 col-6">
+              <label className="plan-field-label">{t('collaborators')}</label>
+              <input type="number" name="limit_collaborators" className="plan-form-input" value={formData.limit_collaborators} onChange={handleChange} onKeyDown={handleKeyDown} placeholder="e.g. 10" min="0" />
+            </div>
+            <div className="col-md-3 col-6">
+              <label className="plan-field-label">{t('viewers')}</label>
+              <input type="number" name="limit_viewers" className="plan-form-input" value={formData.limit_viewers} onChange={handleChange} onKeyDown={handleKeyDown} placeholder="e.g. 20" min="0" />
+            </div>
+          </div>
+        </div>
 
-                    {}
-                    <div className="plan-section">
-                        <p className="plan-section-label">{t('feature_access')}</p>
-                        <div className="plan-access-grid">
-                            <label className="plan-access-card">
-                                <input type="checkbox" name="insight" checked={formData.insight} onChange={handleChange} className="plan-access-checkbox" />
-                                <span className="plan-access-indicator" />
-                                <span className="plan-access-name">{t('insight_access')}</span>
-                            </label>
+        { }
+        <div className="plan-section">
+          <p className="plan-section-label">{t('feature_access')}</p>
+          <div className="plan-access-grid">
+            <label className="plan-access-card">
+              <input type="checkbox" name="insight" checked={formData.insight} onChange={handleChange} className="plan-access-checkbox" />
+              <span className="plan-access-indicator" />
+              <span className="plan-access-name">{t('insight_access')}</span>
+            </label>
 
-                            <label className="plan-access-card">
-                                <input type="checkbox" name="strategic" checked={formData.strategic} onChange={handleChange} className="plan-access-checkbox" />
-                                <span className="plan-access-indicator" />
-                                <span className="plan-access-name">{t('strategic_access')}</span>
-                            </label>
+            <label className="plan-access-card">
+              <input type="checkbox" name="strategic" checked={formData.strategic} onChange={handleChange} className="plan-access-checkbox" />
+              <span className="plan-access-indicator" />
+              <span className="plan-access-name">{t('strategic_access')}</span>
+            </label>
 
-                            <label className="plan-access-card">
-                                <input type="checkbox" name="pmf" checked={formData.pmf} onChange={handleChange} className="plan-access-checkbox" />
-                                <span className="plan-access-indicator" />
-                                <span className="plan-access-name">{t('pmf_access')}</span>
-                            </label>
+            <label className="plan-access-card">
+              <input type="checkbox" name="pmf" checked={formData.pmf} onChange={handleChange} className="plan-access-checkbox" />
+              <span className="plan-access-indicator" />
+              <span className="plan-access-name">{t('pmf_access')}</span>
+            </label>
 
-                            {formData.pmf && <label className="plan-access-card plan-access-card--sub">
-                                    <input type="checkbox" name="limit_projects" checked={formData.limit_projects} onChange={handleChange} className="plan-access-checkbox" />
-                                    <span className="plan-access-indicator" />
-                                    <span className="plan-access-name">{t('projects_access')}</span>
-                                </label>}
-                        </div>
-                    </div>
+            {formData.pmf && <label className="plan-access-card plan-access-card--sub">
+              <input type="checkbox" name="limit_projects" checked={formData.limit_projects} onChange={handleChange} className="plan-access-checkbox" />
+              <span className="plan-access-indicator" />
+              <span className="plan-access-name">{t('projects_access')}</span>
+            </label>}
+          </div>
+        </div>
 
-                    {}
-                    <div className="plan-section plan-section--last">
-                        <p className="plan-section-label">{t('features_preview')}</p>
-                        <div className="plan-features-preview">
-                            {formData.features.length > 0 ? <ul className="plan-features-list">
-                                    {formData.features.map((feature, index) => <li key={index} className="plan-features-item">
-                                            <span className="plan-features-dot" />
-                                            {feature}
-                                        </li>)}
-                                </ul> : <p className="plan-features-empty">
-                                    {t('no_features_generated')}
-                                </p>}
-                        </div>
-                    </div>
+        { }
+        <div className="plan-section plan-section--last">
+          <p className="plan-section-label">{t('features_preview')}</p>
+          <div className="plan-features-preview">
+            {formData.features.length > 0 ? <ul className="plan-features-list">
+              {formData.features.map((feature, index) => <li key={index} className="plan-features-item">
+                <span className="plan-features-dot" />
+                {feature}
+              </li>)}
+            </ul> : <p className="plan-features-empty">
+              {t('no_features_generated')}
+            </p>}
+          </div>
+        </div>
 
-                </Modal.Body>
+      </Modal.Body>
 
-                <Modal.Footer className="plan-modal-footer">
-                    <Button variant="secondary" onClick={onClose} disabled={isSubmitting} className="plan-btn-cancel">
-                        {t('cancel')}
-                    </Button>
-                    <Button variant="primary" type="submit" disabled={isSubmitting} className="plan-btn-save d-flex align-items-center gap-2">
-                        {isSubmitting && <Loader size={15} className="spinner" />}
-                        {t('save')}
-                    </Button>
-                </Modal.Footer>
-            </form>
+      <Modal.Footer className="plan-modal-footer">
+        <Button variant="secondary" onClick={onClose} disabled={isSubmitting} className="plan-btn-cancel">
+          {t('cancel')}
+        </Button>
+        <Button variant="primary" type="submit" disabled={isSubmitting} className="plan-btn-save d-flex align-items-center gap-2">
+          {isSubmitting && <Loader size={15} className="spinner" />}
+          {t('save')}
+        </Button>
+      </Modal.Footer>
+    </form>
 
-            {}
-            <Modal show={showStatusConfirm} onHide={cancelStatusChange} centered backdrop="static" size="sm" dialogClassName="status-confirm-modal" className="status-confirm-modal-container">
-                <Modal.Header closeButton className="border-0 pb-0">
-                    <Modal.Title className="status-confirm-title">
-                        {formData.isActive ? t('confirm_plan_update') || 'Confirm Plan Update' : t('Confirm Status Change') || 'Confirm Status Change'}
-                    </Modal.Title>
-                </Modal.Header>
-                <Modal.Body className="pt-2 pb-3">
-                    {formData.isActive ? <>
-                            <p className="status-confirm-text-primary">
-                                {t('plan_update_active_msg')}
-                            </p>
-                            <p className="status-confirm-text-secondary">
-                                {t('plan_update_secondary_msg')}
-                            </p>
-                        </> : <>
-                            <p className="status-confirm-text-primary">
-                                {t('status_change_active_msg')}
-                            </p>
-                            <p className="status-confirm-text-secondary">
-                                {t('status_change_secondary_msg')}
-                            </p>
-                        </>}
-                </Modal.Body>
-                <Modal.Footer className="border-0 pt-0">
-                    <Button variant="light" onClick={cancelStatusChange} className="status-confirm-btn">
-                        {t('cancel')}
-                    </Button>
-                    <Button variant="danger" onClick={confirmStatusChange} className="status-confirm-btn">
-                        {t('proceed')}
-                    </Button>
-                </Modal.Footer>
-            </Modal>
-        </Modal>;
+    { }
+    <Modal show={showStatusConfirm} onHide={cancelStatusChange} centered backdrop="static" size="sm" dialogClassName="status-confirm-modal" className="status-confirm-modal-container">
+      <Modal.Header closeButton className="border-0 pb-0">
+        <Modal.Title className="status-confirm-title">
+          {formData.isActive ? t('confirm_plan_update') || 'Confirm Plan Update' : t('Confirm Status Change') || 'Confirm Status Change'}
+        </Modal.Title>
+      </Modal.Header>
+      <Modal.Body className="pt-2 pb-3">
+        {formData.isActive ? <>
+          <p className="status-confirm-text-primary">
+            {t('plan_update_active_msg')}
+          </p>
+          <p className="status-confirm-text-secondary">
+            {t('plan_update_secondary_msg')}
+          </p>
+        </> : <>
+          <p className="status-confirm-text-primary">
+            {t('status_change_active_msg')}
+          </p>
+          <p className="status-confirm-text-secondary">
+            {t('status_change_secondary_msg')}
+          </p>
+        </>}
+      </Modal.Body>
+      <Modal.Footer className="border-0 pt-0">
+        <Button variant="light" onClick={cancelStatusChange} className="status-confirm-btn">
+          {t('cancel')}
+        </Button>
+        <Button variant="danger" onClick={confirmStatusChange} className="status-confirm-btn">
+          {t('proceed')}
+        </Button>
+      </Modal.Footer>
+    </Modal>
+  </Modal>;
 };
 const PlanManagement = ({
   onToast
@@ -413,7 +412,7 @@ const PlanManagement = ({
     isSubmitting: false
   });
   const getAuthToken = () => useAuthStore.getState().token;
-  const loadPlans = () => {};
+  const loadPlans = () => { };
   const handleSavePlan = async planData => {
     setModalState(prev => ({
       ...prev,
@@ -472,39 +471,39 @@ const PlanManagement = ({
     key: 'description',
     label: t('description') || 'Description',
     render: val => <span className="admin-cell-secondary plan-management--s1">
-                    {val}
-                </span>
+      {val}
+    </span>
   }, {
     key: 'status',
     label: t('status') || 'Status',
     render: (_, row) => <span className={`admin-status-badge ${row.status === 'inactive' ? 'inactive' : 'active'}`}>
-                    {row.status === 'inactive' ? t('inactive') || 'Inactive' : t('active') || 'Active'}
-                </span>
+      {row.status === 'inactive' ? t('inactive') || 'Inactive' : t('active') || 'Active'}
+    </span>
   }, {
     key: 'actions',
     label: t('actions') || 'Actions',
     render: (_, row) => <button className="admin-action-btn edit-plan-btn" onClick={() => handleEditClick(row)}>
-                    <Edit size={15} /> {t('edit') || 'Edit'}
-                </button>
+      <Edit size={15} /> {t('edit') || 'Edit'}
+    </button>
   }];
   return <div className="plan-management-wrapper">
-            <div className="admin-header">
-                <button className="create-plan-btn" onClick={() => setModalState({
+    <div className="admin-header">
+      <button className="create-plan-btn" onClick={() => setModalState({
         show: true,
         plan: null,
         isSubmitting: false
       })}>
-                    <Plus size={16} /> {t('create_plan')}
-                </button>
-            </div>
+        <Plus size={16} /> {t('create_plan')}
+      </button>
+    </div>
 
-            <AdminTable title={t('plan_management')} count={filteredPlans.length} countLabel={t('plans')} columns={columns} data={paginatedPlans} searchTerm={searchTerm} onSearchChange={setSearchTerm} searchPlaceholder={t('search plans')} currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} totalItems={filteredPlans.length} itemsPerPage={pageSize} emptyMessage={t('no_plans_found')} emptySubMessage={t('no_plans_matching_criteria')} loading={loading} />
+    <AdminTable title={t('plan_management')} count={filteredPlans.length} countLabel={t('plans')} columns={columns} data={paginatedPlans} searchTerm={searchTerm} onSearchChange={setSearchTerm} searchPlaceholder={t('search plans')} currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} totalItems={filteredPlans.length} itemsPerPage={pageSize} emptyMessage={t('no_plans_found')} emptySubMessage={t('no_plans_matching_criteria')} loading={loading} />
 
-            <PlanModal show={modalState.show} plan={modalState.plan} isSubmitting={modalState.isSubmitting} onClose={() => setModalState({
+    <PlanModal show={modalState.show} plan={modalState.plan} isSubmitting={modalState.isSubmitting} onClose={() => setModalState({
       show: false,
       plan: null,
       isSubmitting: false
     })} onSave={handleSavePlan} onToast={onToast} />
-        </div>;
+  </div>;
 };
 export default PlanManagement;

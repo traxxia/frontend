@@ -61,20 +61,18 @@ const AssignDeciderModal = ({ show, onHide, project, onSave, businessId }) => {
 
   /* ── Fetch eligible owners ───────────────────────────────────── */
   useEffect(() => {
-    if (show && businessId) {
-      console.log("[AssignDecider] Modal opened. businessId:", businessId);
+    if (show && businessId) { 
       setLoadingOwners(true);
       const fetchOwners = async () => {
         try {
           const token = useAuthStore.getState().token;
           const url = `${import.meta.env.VITE_BACKEND_URL || "http://localhost:5000"}/api/businesses/${businessId}/eligible-owners`;
-          console.log("[AssignDecider] Fetching owners from:", url);
+  
           const response = await fetch(url, {
             headers: { Authorization: `Bearer ${token}` }
           });
           const data = await response.json();
-          console.log("[AssignDecider] API response:", data);
-          console.log("[AssignDecider] eligible_owners count:", (data.eligible_owners || []).length);
+         
           setEligibleOwners(data.eligible_owners || []);
         } catch (err) {
           console.error("[AssignDecider] Failed to fetch eligible owners:", err);
@@ -93,10 +91,7 @@ const AssignDeciderModal = ({ show, onHide, project, onSave, businessId }) => {
   /* ── Reset on open ───────────────────────────────────────────── */
   useEffect(() => {
     if (show) {
-      const ownerId = project?.accountable_owner_id || "";
-      console.log("[AssignDecider] project:", project);
-      console.log("[AssignDecider] pre-selecting accountable_owner_id:", ownerId);
-      console.log("[AssignDecider] current userId from auth:", userId);
+      const ownerId = project?.accountable_owner_id || ""; 
       setSelectedOwnerId(ownerId);
       setIsDropdownOpen(false);
       setIsCollaboratorFormOpen(false);
@@ -127,15 +122,13 @@ const AssignDeciderModal = ({ show, onHide, project, onSave, businessId }) => {
   const selectedOwner = eligibleOwners.find((o) => String(o._id) === String(selectedOwnerId));
   const canCreateAndSelect = newCollaboratorName.trim() && newCollaboratorEmail.trim();
 
-  const handleSelectOwner = (id) => {
-    console.log("[AssignDecider] Owner selected:", id);
+  const handleSelectOwner = (id) => { 
     setSelectedOwnerId(id);
     setIsDropdownOpen(false);
   };
 
   const handleSave = async () => {
-    const owner = eligibleOwners.find((o) => String(o._id) === String(selectedOwnerId));
-    console.log("[AssignDecider] Saving. selectedOwnerId:", selectedOwnerId, "resolved owner:", owner);
+    const owner = eligibleOwners.find((o) => String(o._id) === String(selectedOwnerId)); 
     if (owner) {
       setIsSaving(true);
       try {

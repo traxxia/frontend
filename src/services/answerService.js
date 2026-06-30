@@ -16,7 +16,11 @@ const answersCache = new Map();
 
 const clearAnswersCache = (business_id) => {
     if (business_id) {
-        answersCache.delete(business_id);
+        for (const key of answersCache.keys()) {
+            if (key.startsWith(`${business_id}_`)) {
+                answersCache.delete(key);
+            }
+        }
     } else {
         answersCache.clear();
     }
