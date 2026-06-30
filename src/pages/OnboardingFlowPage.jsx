@@ -212,11 +212,18 @@ const OnboardingFlowPage = () => {
           current_page: 'Onboarding Flow',
           page_description: 'User is filling out the 5-step PMF onboarding form to generate insights.',
           page_content: {
-            purpose, description, country, city, primaryIndustry,
+            question_1: 'What does the business actually do?',
+            purpose, description,
+            question_2: 'Where is the business based?',
+            country, city,
+            question_3: 'What industry is the business in?',
+            primaryIndustry,
+            question_4: 'What is your core?',
             geographies: [geo1, geo2, geo3].filter(Boolean),
             segments: [seg1, seg2, seg3].filter(Boolean),
             products: [prod1, prod2, prod3].filter(Boolean),
             channels: [chan1, chan2, chan3].filter(Boolean),
+            question_5: 'Where do you compete?',
             differentiation: getSelectedDifferentiation()
           }
         })

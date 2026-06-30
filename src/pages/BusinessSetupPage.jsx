@@ -166,6 +166,7 @@ const BusinessSetupPage = () => {
   const isBusinessFetching = useRef(false);
   const isPmfFetching = useRef(false);
   const {
+    addToast,
     getBusinessSetting,
     setBusinessSetting,
     openModal,
@@ -1991,7 +1992,13 @@ const BusinessSetupPage = () => {
                           {(activeTab === "bets" || activeTab === "cadences") && (
                             <div className="execution-segmented-toggle ms-3" style={{ margin: 0 }}>
                               <div className={`toggle-option ${activeTab === 'bets' ? 'active' : ''}`} onClick={() => setActiveTab('bets')}>Bets</div>
-                              <div className={`toggle-option ${activeTab === 'cadences' ? 'active' : ''}`} onClick={() => setActiveTab('cadences')}>Cadences</div>
+                              <div className={`toggle-option ${activeTab === 'cadences' ? 'active' : ''}`} onClick={() => {
+                                if (!currentBusiness?.has_projects) {
+                                  addToast({ message: t("Business not in execution phase") || "Business not in execution phase", type: "error" });
+                                  return;
+                                }
+                                setActiveTab('cadences');
+                              }}>Cadences</div>
                             </div>
                           )}
                         </div>
