@@ -121,6 +121,13 @@ const ReviewCadencesModal = ({ show, onHide, project, onSave }) => {
     setIsSaving(false);
   };
 
+  const activeCadences = availableCadences.filter(c => {
+    if (c.scheduleDates && c.scheduleDates.length > 0 && c.scheduleDates.every(m => m.closed)) {
+      return false;
+    }
+    return true;
+  });
+
   return (
     <Modal show={show} onHide={onHide} centered className="review-cadences-modal" dialogClassName="modal-md">
       <Modal.Header className="border-0 pb-0">
@@ -135,7 +142,7 @@ const ReviewCadencesModal = ({ show, onHide, project, onSave }) => {
 
       <Modal.Body className="pt-4 pb-2">
         <div className="cadences-list d-flex flex-column gap-2 mb-3">
-          {availableCadences.map((cadence) => {
+          {activeCadences.map((cadence) => {
             const isSelected = selectedCadences.includes(String(cadence._id));
             return (
               <div
@@ -189,9 +196,9 @@ const ReviewCadencesModal = ({ show, onHide, project, onSave }) => {
               </div>
             );
           })}
-          {availableCadences.length === 0 && !isCreating && (
+          {activeCadences.length === 0 && !isCreating && (
             <div className="text-center p-3 border rounded border-dashed text-muted">
-              {t("No cadences available. Create a new one below.")}
+              {t("No active cadences available. Create a new one below.")}
             </div>
           )}
         </div>

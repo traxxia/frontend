@@ -143,6 +143,7 @@ const CadencesSection = ({ businessId }) => {
         await axios.post(url, { ...cadenceData, business_id: businessId }, { headers });
       }
       fetchData();
+      fetchEvolutionData();
     } catch (err) {
       console.error("Failed to save cadence:", err);
     }
@@ -157,6 +158,7 @@ const CadencesSection = ({ businessId }) => {
         headers: { Authorization: `Bearer ${token}` }
       });
       fetchData();
+      fetchEvolutionData();
     } catch (err) {
       console.error("Failed to save schedule dates:", err);
     }
@@ -175,6 +177,7 @@ const CadencesSection = ({ businessId }) => {
         headers: { Authorization: `Bearer ${token}` }
       });
       fetchData();
+      fetchEvolutionData();
       setShowDeleteModal(false);
       setCadenceToDelete(null);
     } catch (err) {
@@ -264,7 +267,6 @@ const CadencesSection = ({ businessId }) => {
   };
 
   const staleMoments = getStaleMoments();
-  console.log("Debug: staleMoments", staleMoments);
 
   // Find upcoming moments (dates in the future with bets on agenda)
   const getUpcomingMoments = () => {
@@ -302,17 +304,26 @@ const CadencesSection = ({ businessId }) => {
   };
 
   const upcomingMoments = getUpcomingMoments();
-  console.log("Debug: upcomingMoments", upcomingMoments);
 
   // For the Evolution table
   const allMoments = [];
+  const evToday = new Date();
+  evToday.setHours(0, 0, 0, 0);
+
   evolutionCadences.forEach(c => {
     if (userRole === 'collaborator' && getBetsForCadence(c.name).length === 0) {
       return;
     }
     if (c.scheduleDates) {
       c.scheduleDates.forEach(m => {
-        allMoments.push({ cadence: c, moment: m });
+          const mDate = new Date(m.date);
+          mDate.setHours(0, 0, 0, 0);
+          const daysUntil = Math.ceil((mDate - evToday) / (1000 * 60 * 60 * 24));
+          
+          if (daysUntil > 7) {
+            return;
+          }
+          allMoments.push({ cadence: c, moment: m });
       });
     }
   });
@@ -321,6 +332,14 @@ const CadencesSection = ({ businessId }) => {
   const displayedCadences = userRole === 'collaborator' 
     ? cadences.filter(c => getBetsForCadence(c.name).length > 0)
     : cadences;
+
+  const tableCadences = displayedCadences.filter(c => {
+    // Exclude from table if it has schedule dates and all are closed
+    if (c.scheduleDates && c.scheduleDates.length > 0 && c.scheduleDates.every(m => m.closed)) {
+      return false;
+    }
+    return true;
+  });
 
   return (
     <div className="cadences-section">
@@ -416,15 +435,15 @@ const CadencesSection = ({ businessId }) => {
               <tr>
                 <td colSpan="5" className="text-center py-5 text-muted">Loading cadences...</td>
               </tr>
-            ) : displayedCadences.length > 0 ? (
-              displayedCadences.map((cadence, index) => {
+            ) : tableCadences.length > 0 ? (
+              tableCadences.map((cadence, index) => {
                 const now = new Date();
                 now.setHours(0, 0, 0, 0);
                 const nextMoment = cadence.scheduleDates && cadence.scheduleDates.length > 0 
                   ? cadence.scheduleDates.slice().sort((a, b) => new Date(a.date) - new Date(b.date)).find(d => {
                       const dDate = new Date(d.date);
                       dDate.setHours(0, 0, 0, 0);
-                      return dDate >= now;
+                      return dDate >= now && !d.closed;
                     }) 
                   : null;
                 
@@ -637,7 +656,7 @@ const CadencesSection = ({ businessId }) => {
                           {col.cadence.name === col.moment.name ? col.moment.name : `${col.cadence.name} · ${col.moment.name}`}
                         </div>
                         <div className="text-muted mb-2 evolution-moment-date">
-                          {mDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' })}
+                          {new Date(col.moment.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' })}
                         </div>
                         {needsClose ? (
                           <span className="d-inline-block evolution-needs-close">NEEDS CLOSE</span>
