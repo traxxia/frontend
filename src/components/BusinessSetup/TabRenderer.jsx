@@ -86,6 +86,7 @@ const TabRenderer = () => {
             userAnswers={userAnswers}
             businessData={businessData}
             isLoading={!questionsLoaded}
+            setActiveTab={setActiveTab}
             onBusinessDataUpdate={handleBusinessDataUpdate}
             onAnswerUpdate={async (questionId, newAnswer) => {
               handleAnswerUpdate(questionId, newAnswer);

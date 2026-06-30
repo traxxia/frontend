@@ -71,7 +71,6 @@ const ReviewCadencesModal = ({ show, onHide, project, onSave }) => {
       .filter(Boolean)
       .map(c => String(c._id));
 
-    console.log("[ReviewCadencesModal] Resolving names to IDs:", names, "resolved:", resolvedIds);
     setSelectedCadences(resolvedIds);
     initializedRef.current = true;
   }, [show, project, availableCadences]);

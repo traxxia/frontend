@@ -907,12 +907,8 @@ setSuccessMetrics,
                       <button type="button" disabled={isCaptureDisabled} onClick={(e) => {
                         if (isCaptureDisabled) return;
                         e.preventDefault();
-                        e.stopPropagation();
-                        console.log("[DEBUG] Open Capture Button Clicked!");
-                        console.log("[DEBUG] pc object:", pc);
-                        console.log("[DEBUG] selectedBusinessId:", selectedBusinessId);
+                        e.stopPropagation(); 
                         const targetUrl = `/business/${selectedBusinessId}/cadence/${pc.cadenceId}/moment/${pc.moment._id || pc.moment.id}`;
-                        console.log("[DEBUG] targetUrl:", targetUrl);
                         navigate(targetUrl);
                       }} style={{ backgroundColor: isCaptureDisabled ? '#94a3b8' : '#0c71b9', color: '#ffffff', border: 'none', borderRadius: '6px', fontSize: '13px', fontWeight: '600', padding: '8px 16px', cursor: isCaptureDisabled ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', gap: '6px', opacity: isCaptureDisabled ? 0.8 : 1 }}>
                         Open · Capture &rarr;

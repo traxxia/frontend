@@ -240,26 +240,24 @@ const BusinessSetupPage = () => {
     resetAnalysis: state.resetAnalysis,
   })));
 
-  const isInitialPhaseCompleted = useMemo(() => {
+  const isAllMandatoryAnswered = useMemo(() => {
     if (!questions || questions.length === 0) return true;
     
-    // Exactly match EditableBriefSection filtering
-    const filteredQuestions = questions.filter(q => q.phase && !['good'].includes(q.phase.toLowerCase()));
-    const initialFields = filteredQuestions.filter(q => q.phase.toLowerCase() === 'initial');
+    // Validate all mandatory questions across all phases
+    const mandatoryFields = questions.filter(q => q.severity === 'mandatory' && q.phase && !['good'].includes(q.phase.toLowerCase()));
     
-    if (initialFields.length === 0) return true;
+    if (mandatoryFields.length === 0) return true;
 
-    const result = initialFields.every(q => {
+    const result = mandatoryFields.every(q => {
       const qId = q._id || q.question_id;
       const ans = userAnswers[qId] || userAnswers[String(qId)] || '';
       const cleanAns = typeof ans === 'string' ? ans.replace(/^\[AI Extraction\]\s*/i, '').trim() : '';
       return cleanAns !== '' && cleanAns !== '[Question Skipped]';
     });
-    console.log("DEBUG: isInitialPhaseCompleted evaluation:", result, "initialFields length:", initialFields.length, "userAnswers length:", Object.keys(userAnswers).length);
     return result;
   }, [questions, userAnswers]);
 
-  const canRegenerate = !["viewer"].includes(loggedInRole) && isInitialPhaseCompleted;
+  const canRegenerate = !["viewer"].includes(loggedInRole) && isAllMandatoryAnswered;
 
   // Regenerating flag aliases
   const isTypeRegenerating = (type) => regenerating[`${selectedBusinessId}_${type}`] || false;
@@ -1559,7 +1557,16 @@ const BusinessSetupPage = () => {
               </div>
               {/* Advanced Insights Header - Shared across both panels */}
               {activeTab === 'advanced' && (
-                <div className="advanced-insights-shared-header" style={{ maxWidth: '1200px', margin: '20px auto 24px auto', width: '100%', padding: '0 16px' }}>
+                <div className="advanced-insights-shared-header" style={{ maxWidth: '1200px', margin: '20px auto 24px auto', width: '100%', padding: '0' }}>
+                  <div className="mb-3">
+                    <button
+                      className="btn btn-link text-decoration-none p-0 d-inline-flex align-items-center"
+                      style={{ color: '#475569', fontWeight: '600', fontSize: '15px' }}
+                      onClick={() => setActiveTab('insights')}
+                    >
+                      <ArrowLeft size={18} className="me-2" /> Back to analysis
+                    </button>
+                  </div>
                   <h5 style={{ color: '#4f46e5', fontSize: '11px', fontWeight: '700', letterSpacing: '0.5px', margin: '0 0 8px 0', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '6px' }}>
                     <span style={{ fontSize: '12px', background: '#fef08a', borderRadius: '2px', padding: '1px 3px' }}>🔒</span> ADVANCED INSIGHTS - PRO
                   </h5>

@@ -3853,3 +3853,33 @@ body.modal-open {
   0% { background-position: 0% 50%; }
   100% { background-position: 200% 50%; }
 }
+
+/* Back Button styling in Q&A Page */
+.btn-back-action {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: auto;
+  background: #ffffff;
+  color: #0c71b9;
+  border: 1px solid #0c71b9;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.btn-back-action:hover {
+  background: #f0f7ff;
+  border-color: #0b62a1;
+  color: #0b62a1;
+  box-shadow: 0 2px 8px rgba(12, 113, 185, 0.15);
+}
+
+.btn-back-action:active {
+  background: #e0efff;
+}

@@ -159,20 +159,16 @@ export const computePageCount = async (file) => {
       }
 
       if (ext === 'xlsx' || ext === 'xls') {
-        console.log('[fileUtils] xlsx detected, size=', bytes.length, 'file=', file.name);
 
         // Primary: count xl/worksheets/sheet*.xml files in ZIP central directory
         const zipCount = countZipFilesByPrefix(bytes, 'xl/worksheets/sheet');
-        console.log('[fileUtils] zipCount (xl/worksheets/sheet)=', zipCount);
 
         if (zipCount > 0) return { count: zipCount, unit: zipCount === 1 ? 'sheet' : 'sheets' };
 
         // Fallback: read xl/workbook.xml and count <sheet elements
         const workbookXml = await readZipEntry(bytes, 'xl/workbook.xml');
-        console.log('[fileUtils] workbookXml found=', !!workbookXml, workbookXml ? workbookXml.substring(0, 300) : '');
         if (workbookXml) {
           const sheetMatches = workbookXml.match(/<sheet\b/gi);
-          console.log('[fileUtils] sheetMatches=', sheetMatches);
           if (sheetMatches && sheetMatches.length > 0) {
             const count = sheetMatches.length;
             return { count, unit: count === 1 ? 'sheet' : 'sheets' };
@@ -183,7 +179,6 @@ export const computePageCount = async (file) => {
         const decoder = new TextDecoder('latin1');
         const raw = decoder.decode(bytes);
         const sheetFileMatches = raw.match(/xl\/worksheets\/sheet\d+\.xml/g);
-        console.log('[fileUtils] raw scan sheet files=', sheetFileMatches);
         if (sheetFileMatches) {
           const unique = new Set(sheetFileMatches);
           const count = unique.size;
