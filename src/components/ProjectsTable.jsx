@@ -137,7 +137,7 @@ const ProjectsTable = ({
             <td colSpan="9" className="text-center py-5 text-muted">{t("No bets found.")}</td>
           </tr>
         ) : projects.map((project, index) => {
-          const displayRank = rankMap?.[String(project?._id)] ?? project.rank ?? project.ai_rank;
+          const displayRank = rankMap?.[String(project?._id)] ?? project.rank ?? "NaN";
           const userCanReview = canReviewProject ? canReviewProject(project, isAdmin, myUserId, isArchived) : false;
           const isOwner = String(project.accountable_owner_id) === String(myUserId) ||
                           (project.accountable_owner && userName && String(project.accountable_owner).trim().toLowerCase() === String(userName).trim().toLowerCase());
