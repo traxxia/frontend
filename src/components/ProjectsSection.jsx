@@ -86,7 +86,8 @@ const ProjectsSection = ({
   isArchived
 }) => {
   const {
-    selectedBusinessId
+    selectedBusinessId,
+    selectedBusiness
   } = useBusinessStore();
   const {
     t
@@ -769,39 +770,44 @@ const ProjectsSection = ({
 
           <div className="bet-ledger-actions d-flex align-items-center gap-3">
             {/* Dropdown for STATUS filter */}
-            <div className="status-dropdown-wrapper">
-              <div className="status-dropdown-btn" onClick={() => setIsStatusDropdownOpen(!isStatusDropdownOpen)}>
-                <span className="status-label-prefix">{t("STATUS")}</span>
-                <div className="status-dropdown-inner">
-                  <span className="status-label-current">
-                    {t(selectedCategoryLabel)} · {totalCount}
-                  </span>
-                  <ChevronDown size={14} color="#0c71b9" style={{ strokeWidth: 2.5 }} />
+            {projects.length > 0 && (
+              <div className="status-dropdown-wrapper">
+                <div className="status-dropdown-btn" onClick={() => setIsStatusDropdownOpen(!isStatusDropdownOpen)}>
+                  <span className="status-label-prefix">{t("STATUS")}</span>
+                  <div className="status-dropdown-inner">
+                    <span className="status-label-current">
+                      {t(selectedCategoryLabel)} · {totalCount}
+                    </span>
+                    <ChevronDown size={14} color="#0c71b9" style={{ strokeWidth: 2.5 }} />
+                  </div>
                 </div>
-              </div>
 
-              {isStatusDropdownOpen && <div className="status-dropdown-menu">
-                {CATEGORIES.map(cat => (
-                  <React.Fragment key={cat.id}>
-                    <div className="status-menu-item" onClick={e => {
-                      e.stopPropagation();
-                      toggleCategory(cat.id);
-                    }}>
-                      <div className="status-menu-left">
-                        <div className={`status-checkbox ${selectedCategories.includes(cat.id) || selectedCategories.includes("All") ? "checked" : ""}`}>
-                          {(selectedCategories.includes(cat.id) || selectedCategories.includes("All")) && <Check size={12} color="white" style={{ strokeWidth: 3 }} />}
+                {isStatusDropdownOpen && <div className="status-dropdown-menu">
+                  {CATEGORIES.map(cat => (
+                    <React.Fragment key={cat.id}>
+                      <div className="status-menu-item" onClick={e => {
+                        e.stopPropagation();
+                        toggleCategory(cat.id);
+                      }}>
+                        <div className="status-menu-left">
+                          <div className={`status-checkbox ${selectedCategories.includes(cat.id) || selectedCategories.includes("All") ? "checked" : ""}`}>
+                            {(selectedCategories.includes(cat.id) || selectedCategories.includes("All")) && <Check size={12} color="white" style={{ strokeWidth: 3 }} />}
+                          </div>
+                          <span className="status-name-text">{t(cat.label)}</span>
                         </div>
-                        <span className="status-name-text">{t(cat.label)}</span>
+                        <span className="status-count-text">{categoryCounts[cat.id] || 0}</span>
                       </div>
-                      <span className="status-count-text">{categoryCounts[cat.id] || 0}</span>
-                    </div>
-                    {cat.id === "All" && <div className="status-menu-divider"></div>}
-                  </React.Fragment>
-                ))}
-              </div>}
-            </div>
+                      {cat.id === "All" && <div className="status-menu-divider"></div>}
+                    </React.Fragment>
+                  ))}
+                </div>}
+              </div>
+            )}
 
-            {!isViewer && !isCollaborator && !isArchived && getUserLimits().project && <button onClick={handleNewProject} className="btn-new-project-premium">
+            {!isViewer && !isCollaborator && !isArchived && getUserLimits().project && selectedBusiness?.has_projects && <button 
+              onClick={handleNewProject} 
+              className="btn-new-project-premium"
+            >
               <Plus size={18} />
               {t("New Bet")}
             </button>}

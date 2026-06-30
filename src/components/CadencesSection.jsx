@@ -232,14 +232,17 @@ const CadencesSection = ({ businessId }) => {
     cadences.forEach(c => {
       if (!c.scheduleDates) return;
       const bets = getBetsForCadence(c.name);
-      if (bets.length === 0) return;
+      if (userRole === 'collaborator' && bets.length === 0) return;
 
       const unclosedMoments = c.scheduleDates.filter(m => !m.closed).sort((a, b) => new Date(a.date) - new Date(b.date));
       if (unclosedMoments.length === 0) return;
 
       const moment = unclosedMoments[0];
       const mDate = new Date(moment.date);
-      if (mDate <= now) {
+      mDate.setHours(0, 0, 0, 0);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      if (mDate <= today) {
         // pendingCount = how many bets still have no snapshot for this moment
         // (used purely for the progress label, NOT for dismissing the notification)
         const momentSnapshots = completedUpdates.filter(
@@ -261,6 +264,7 @@ const CadencesSection = ({ businessId }) => {
   };
 
   const staleMoments = getStaleMoments();
+  console.log("Debug: staleMoments", staleMoments);
 
   // Find upcoming moments (dates in the future with bets on agenda)
   const getUpcomingMoments = () => {
@@ -270,14 +274,18 @@ const CadencesSection = ({ businessId }) => {
     cadences.forEach(c => {
       if (!c.scheduleDates) return;
       const bets = getBetsForCadence(c.name);
-      if (bets.length === 0) return;
+      if (userRole === 'collaborator' && bets.length === 0) return;
 
       const unclosedMoments = c.scheduleDates.filter(m => !m.closed).sort((a, b) => new Date(a.date) - new Date(b.date));
       if (unclosedMoments.length === 0) return;
 
       const moment = unclosedMoments[0];
       const mDate = new Date(moment.date);
-      if (mDate > now) {
+      mDate.setHours(0, 0, 0, 0);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const daysUntil = Math.ceil((mDate - today) / (1000 * 60 * 60 * 24));
+      if (daysUntil > 0 && daysUntil <= 7) {
         // Count bets with no learning state
         const noLearningState = bets.filter(b => !b.learning_state || b.learning_state === '' || b.learning_state === 'Not Started').length;
         upcomingList.push({
@@ -285,7 +293,7 @@ const CadencesSection = ({ businessId }) => {
           moment,
           betsCount: bets.length,
           noLearningStateCount: noLearningState,
-          daysUntil: Math.ceil((mDate - now) / (1000 * 60 * 60 * 24))
+          daysUntil
         });
       }
     });
@@ -294,6 +302,7 @@ const CadencesSection = ({ businessId }) => {
   };
 
   const upcomingMoments = getUpcomingMoments();
+  console.log("Debug: upcomingMoments", upcomingMoments);
 
   // For the Evolution table
   const allMoments = [];
@@ -410,8 +419,13 @@ const CadencesSection = ({ businessId }) => {
             ) : displayedCadences.length > 0 ? (
               displayedCadences.map((cadence, index) => {
                 const now = new Date();
+                now.setHours(0, 0, 0, 0);
                 const nextMoment = cadence.scheduleDates && cadence.scheduleDates.length > 0 
-                  ? cadence.scheduleDates.slice().sort((a, b) => new Date(a.date) - new Date(b.date)).find(d => new Date(d.date) >= now) 
+                  ? cadence.scheduleDates.slice().sort((a, b) => new Date(a.date) - new Date(b.date)).find(d => {
+                      const dDate = new Date(d.date);
+                      dDate.setHours(0, 0, 0, 0);
+                      return dDate >= now;
+                    }) 
                   : null;
                 
                 const betsCount = getBetsForCadence(cadence.name).length;
@@ -426,14 +440,14 @@ const CadencesSection = ({ businessId }) => {
                   diffDays = Math.round((targetDate - today) / (1000 * 60 * 60 * 24));
                 }
 
-                // hasSchedule is true only when there is an upcoming date OR a stale moment to close
-                const isUpcoming = !isStale && nextMoment != null && diffDays < 15;
-                const isScheduled = !isStale && nextMoment != null && diffDays >= 15;
+                const isNeedsClose = isStale || (nextMoment != null && diffDays <= 0);
+                const isUpcoming = !isNeedsClose && nextMoment != null && diffDays <= 7;
+                const isScheduled = !isNeedsClose && nextMoment != null && diffDays > 7;
                 
                 const displayMoment = isStale ? staleMomentObj.moment : nextMoment;
                   
                 return (
-                <tr key={cadence._id || index} style={{ borderLeft: isStale ? '4px solid #ef4444' : ((isUpcoming || isScheduled) ? '4px solid #0c71b9' : '4px solid transparent') }}>
+                <tr key={cadence._id || index} style={{ borderLeft: isNeedsClose ? '4px solid #ef4444' : ((isUpcoming || isScheduled) ? '4px solid #0c71b9' : '4px solid transparent') }}>
                   <td>
                     <div className="cadence-info-cell">
                       <div className={`cadence-icon-wrapper ${getIconColorClass(cadence.frequency)}`}>
@@ -459,7 +473,7 @@ const CadencesSection = ({ businessId }) => {
                       )}
                   </td>
                   <td>
-                    {isStale ? (
+                    {isNeedsClose ? (
                       <span className="cadence-status-pill needs-close">NEEDS CLOSE</span>
                     ) : isUpcoming ? (
                       <span className="cadence-status-pill upcoming">UPCOMING</span>
@@ -471,29 +485,56 @@ const CadencesSection = ({ businessId }) => {
                   </td>
                   <td>
                     <div className="cadence-actions">
-                      <Button
-                        variant="primary"
-                        size="sm"
-                        className="me-2 fw-medium px-3 text-white"
-                        style={{
-                          backgroundColor: '#0c71b9',
-                          border: 'none',
-                          borderRadius: '6px',
-                          fontSize: '13px',
-                        }}
-                        onClick={() => {
-                          const thisCadenceStale = staleMoments.find(sm => sm.cadence._id === cadence._id);
-                          if (thisCadenceStale) {
-                            navigate(`/business/${businessId}/cadence/${cadence._id}/moment/${thisCadenceStale.moment._id}`);
-                          } else if (nextMoment) {
-                            navigate(`/business/${businessId}/cadence/${cadence._id}/moment/${nextMoment._id}/open`);
-                          } else {
-                            openScheduleModal(cadence);
-                          }
-                        }}
-                      >
-                        {isStale ? 'Close & capture' : isUpcoming ? 'Open' : 'Schedule dates'}
-                      </Button>
+                      {(() => {
+                        let btnText = 'Schedule dates';
+                        let btnVariant = 'primary';
+                        let btnBg = '#0c71b9';
+                        let btnColor = '#ffffff';
+                        let bColor = 'transparent';
+
+                        if (isNeedsClose) {
+                          btnText = 'Close & capture';
+                        } else if (isUpcoming) {
+                          btnText = 'Open';
+                        } else if (isScheduled) {
+                          btnText = 'Open';
+                          btnVariant = 'outline-primary';
+                          btnBg = '#ffffff';
+                          btnColor = '#0c71b9';
+                          bColor = '#0c71b9';
+                        }
+
+                        return (
+                          <Button
+                            variant={btnVariant}
+                            size="sm"
+                            className="me-2 fw-medium px-3"
+                            style={{
+                              backgroundColor: btnBg,
+                              color: btnColor,
+                              borderWidth: '1px',
+                              borderStyle: 'solid',
+                              borderColor: bColor,
+                              borderRadius: '6px',
+                              fontSize: '13px',
+                            }}
+                            onClick={() => {
+                              const thisCadenceStale = staleMoments.find(sm => sm.cadence._id === cadence._id);
+                              if (thisCadenceStale) {
+                                navigate(`/business/${businessId}/cadence/${cadence._id}/moment/${thisCadenceStale.moment._id}`);
+                              } else if (nextMoment && diffDays <= 0) {
+                                navigate(`/business/${businessId}/cadence/${cadence._id}/moment/${nextMoment._id}`);
+                              } else if (nextMoment) {
+                                navigate(`/business/${businessId}/cadence/${cadence._id}/moment/${nextMoment._id}/open`);
+                              } else {
+                                openScheduleModal(cadence);
+                              }
+                            }}
+                          >
+                            {btnText}
+                          </Button>
+                        );
+                      })()}
                       
                       {isAdmin && (
                         <Dropdown align="end" className="d-inline cadence-dropdown">
@@ -586,8 +627,10 @@ const CadencesSection = ({ businessId }) => {
                   <th className="text-start align-bottom px-3 py-3 evolution-bet-col">BET</th>
                   {allMoments.map((col, i) => {
                     const mDate = new Date(col.moment.date);
-                    const now = new Date();
-                    const needsClose = !col.moment.closed && mDate <= now;
+                    mDate.setHours(0, 0, 0, 0);
+                    const today = new Date();
+                    today.setHours(0, 0, 0, 0);
+                    const needsClose = !col.moment.closed && mDate <= today;
                     return (
                       <th key={i} className="px-2 py-3 evolution-moment-col">
                         <div className="fw-bold text-dark evolution-moment-title">

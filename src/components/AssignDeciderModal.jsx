@@ -434,7 +434,7 @@ const AssignDeciderModal = ({ show, onHide, project, onSave, businessId }) => {
           <Button
             variant="primary"
             className="fw-bold px-4"
-            disabled={!selectedOwnerId || isSaving}
+            disabled={!selectedOwner || isSaving}
             onClick={handleSave}
           >
             {isSaving ? t("Saving...") : t("Save")}
