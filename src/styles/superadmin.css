@@ -624,7 +624,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 1rem !important;
+  padding: 1rem 1rem 0px !important;
   border-bottom: 1px solid #e5e7eb;
   margin-bottom: 0px;
 }

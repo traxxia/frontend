@@ -46,7 +46,7 @@ const CadenceModal = ({ show, onHide, onSave, businessId, existingCadence = null
   }, [show, existingCadence]);
 
   const toggleAudience = (userId) => {
-    setAudience((prev) => 
+    setAudience((prev) =>
       prev.includes(userId) ? prev.filter((id) => id !== userId) : [...prev, userId]
     );
   };
@@ -70,17 +70,17 @@ const CadenceModal = ({ show, onHide, onSave, businessId, existingCadence = null
           {existingCadence ? t("Edit cadence") : t("Add a cadence")}
         </Modal.Title>
       </Modal.Header>
-      
+
       <Modal.Body className="pt-2 pb-2">
-        <p className="text-muted mb-4" style={{ fontSize: '14px', lineHeight: '1.4' }}>
+        <p className="text-muted mb-2" style={{ fontSize: '13px' }}>
           {t("A recurring meeting series with its own audience and frequency — e.g. a product committee, a sales review. You can have several at the same frequency.")}
         </p>
 
-        <Form.Group className="mb-4">
+        <Form.Group className="mb-2">
           <Form.Label className="text-uppercase text-muted" style={{ fontSize: '11px', letterSpacing: '1px', fontWeight: 'bold' }}>Name</Form.Label>
-          <Form.Control 
-            type="text" 
-            placeholder="e.g. Product Committee" 
+          <Form.Control
+            type="text"
+            placeholder="e.g. Product Committee"
             value={name}
             onChange={(e) => setName(e.target.value)}
             className="shadow-none py-2 px-3"
@@ -91,9 +91,9 @@ const CadenceModal = ({ show, onHide, onSave, businessId, existingCadence = null
           </Form.Text>
         </Form.Group>
 
-        <Form.Group className="mb-4">
+        <Form.Group className="mb-2">
           <Form.Label className="text-uppercase text-muted" style={{ fontSize: '11px', letterSpacing: '1px', fontWeight: 'bold' }}>Frequency</Form.Label>
-          <Form.Select 
+          <Form.Select
             value={frequency}
             onChange={(e) => setFrequency(e.target.value)}
             className="shadow-none py-2 px-3"
@@ -113,11 +113,11 @@ const CadenceModal = ({ show, onHide, onSave, businessId, existingCadence = null
           <Form.Label className="text-uppercase text-muted" style={{ fontSize: '11px', letterSpacing: '1px', fontWeight: 'bold' }}>Default Audience</Form.Label>
           <div className="border rounded px-2 py-1" style={{ maxHeight: '180px', overflowY: 'auto', borderColor: '#cbd5e1' }}>
             {eligibleUsers.map((user) => (
-              <div key={user._id} className="d-flex justify-content-between align-items-center py-2" style={{ borderColor: '#f1f5f9' }}>
-                <Form.Check 
+              <div key={user._id} className="d-flex justify-content-between align-items-center py-1" style={{ borderColor: '#f1f5f9' }}>
+                <Form.Check
                   type="checkbox"
                   id={`audience-${user._id}`}
-                  label={<span className="fw-medium text-dark ms-2">{user.name || user.email}</span>}
+                  label={<span className="fw-bold text-dark ms-2">{user.name || user.email}</span>}
                   checked={audience.includes(user._id)}
                   onChange={() => toggleAudience(user._id)}
                   className="mb-0"
@@ -132,7 +132,7 @@ const CadenceModal = ({ show, onHide, onSave, businessId, existingCadence = null
         </Form.Group>
 
       </Modal.Body>
-      
+
       <Modal.Footer className="border-0 px-4 pb-4 pt-2 d-flex justify-content-between align-items-center">
         <div style={{ flex: 1, paddingRight: '1rem' }}>
           {audience.length === 0 && (
@@ -142,18 +142,18 @@ const CadenceModal = ({ show, onHide, onSave, businessId, existingCadence = null
           )}
         </div>
         <div className="d-flex gap-2">
-          <Button variant="outline-secondary"  style={{fontSize: '14px' }} className="border shadow-sm bg-white text-dark fw-bold px-2" onClick={onHide}>
+          <Button variant="outline-secondary" style={{ fontSize: '14px' }} className="border shadow-sm bg-white text-dark fw-bold px-2" onClick={onHide}>
             Cancel
           </Button>
-          <Button 
-            variant="primary" 
+          <Button
+            variant="primary"
             style={{
               fontSize: '14px',
               backgroundColor: (!name.trim() || audience.length === 0 || isSubmitting) ? '#cbd5e1' : '',
               opacity: (!name.trim() || audience.length === 0 || isSubmitting) ? 1 : ''
-            }} 
-            className="text-white fw-bold px-2 border-0" 
-            disabled={!name.trim() || audience.length === 0 || isSubmitting} 
+            }}
+            className="text-white fw-bold px-2 border-0"
+            disabled={!name.trim() || audience.length === 0 || isSubmitting}
             onClick={handleSave}
           >
             {existingCadence ? t("Save changes") : t("Add cadence")}

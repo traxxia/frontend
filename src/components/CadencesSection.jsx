@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Plus, MoreVertical, LineChart, Clock } from 'lucide-react';
-import { Dropdown, Button } from 'react-bootstrap';
+import { Dropdown, Button, Modal } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useAuthStore } from '../store';
@@ -58,6 +58,7 @@ const CadencesSection = ({ businessId }) => {
   const userRole = useAuthStore(state => state.userRole);
   const myUserId = useAuthStore(state => state.userId);
   const userName = useAuthStore(state => state.userName);
+  const isAdmin = ['super_admin', 'company_admin', 'admin'].includes(userRole);
   const [evolutionTab, setEvolutionTab] = useState('Status');
   const [cadences, setCadences] = useState([]);
   const [projects, setProjects] = useState([]);
@@ -66,6 +67,8 @@ const CadencesSection = ({ businessId }) => {
   const [showCadenceModal, setShowCadenceModal] = useState(false);
   const [showScheduleModal, setShowScheduleModal] = useState(false);
   const [selectedCadence, setSelectedCadence] = useState(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [cadenceToDelete, setCadenceToDelete] = useState(null);
 
   const [evolutionCadences, setEvolutionCadences] = useState([]);
   const [selectedEvolutionCadence, setSelectedEvolutionCadence] = useState('all');
@@ -159,14 +162,21 @@ const CadencesSection = ({ businessId }) => {
     }
   };
 
-  const handleDeleteCadence = async (cadenceId) => {
-    if (!window.confirm("Are you sure you want to delete this cadence?")) return;
+  const handleDeleteCadenceClick = (cadenceId) => {
+    setCadenceToDelete(cadenceId);
+    setShowDeleteModal(true);
+  };
+
+  const confirmDeleteCadence = async () => {
+    if (!cadenceToDelete) return;
     try {
       const token = useAuthStore.getState().token;
-      await axios.delete(`${import.meta.env.VITE_BACKEND_URL || "http://localhost:5000"}/api/cadences/${cadenceId}`, {
+      await axios.delete(`${import.meta.env.VITE_BACKEND_URL || "http://localhost:5000"}/api/cadences/${cadenceToDelete}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       fetchData();
+      setShowDeleteModal(false);
+      setCadenceToDelete(null);
     } catch (err) {
       console.error("Failed to delete cadence:", err);
     }
@@ -405,9 +415,12 @@ const CadencesSection = ({ businessId }) => {
                   : null;
                 
                 const betsCount = getBetsForCadence(cadence.name).length;
-                const isStale = staleMoments.some(sm => sm.cadence._id === cadence._id);
+                const staleMomentObj = staleMoments.find(sm => sm.cadence._id === cadence._id);
+                const isStale = !!staleMomentObj;
                 // hasSchedule is true only when there is an upcoming date OR a stale moment to close
                 const isUpcoming = !isStale && nextMoment != null;
+                
+                const displayMoment = isStale ? staleMomentObj.moment : nextMoment;
                   
                 return (
                 <tr key={cadence._id || index} style={{ borderLeft: isStale ? '4px solid #ef4444' : (isUpcoming ? '4px solid #0c71b9' : '4px solid transparent') }}>
@@ -426,10 +439,10 @@ const CadencesSection = ({ businessId }) => {
                     <span className="cadence-bets-count fw-bold text-dark">{betsCount}</span>
                   </td>
                   <td>
-                      {nextMoment ? (
+                      {displayMoment ? (
                         <div>
-                          <div className="fw-bold text-dark" style={{ fontSize: '13px' }}>{new Date(nextMoment.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' })}</div>
-                          <div className="text-muted" style={{ fontSize: '12px' }}>{nextMoment.name}</div>
+                          <div className="fw-bold text-dark" style={{ fontSize: '13px' }}>{new Date(displayMoment.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' })}</div>
+                          <div className="text-muted" style={{ fontSize: '12px' }}>{displayMoment.name}</div>
                         </div>
                       ) : (
                         <div className="text-muted fst-italic">No dates scheduled</div>
@@ -470,22 +483,26 @@ const CadencesSection = ({ businessId }) => {
                         {isStale ? 'Close & capture' : isUpcoming ? 'Open' : 'Schedule dates'}
                       </Button>
                       
-                      <Dropdown align="end" className="d-inline cadence-dropdown">
-                        <Dropdown.Toggle variant="link" className="btn-icon-kebab bg-transparent border-0 m-0 p-0 d-flex align-items-center justify-content-center text-decoration-none shadow-none">
-                          <MoreVertical size={16} color="#64748b" />
-                        </Dropdown.Toggle>
-                        <Dropdown.Menu className="shadow-sm border-0 py-2" style={{ borderRadius: '8px', minWidth: '150px', border: '1px solid #e2e8f0' }}>
-                          <Dropdown.Item onClick={() => openScheduleModal(cadence)} className="py-2 px-3 text-dark fw-medium cadence-dropdown-item">
-                            Manage dates
-                          </Dropdown.Item>
-                          <Dropdown.Item onClick={() => openEditModal(cadence)} className="py-2 px-3 text-dark fw-medium cadence-dropdown-item">
-                            Edit cadence
-                          </Dropdown.Item>
-                          <Dropdown.Item onClick={() => handleDeleteCadence(cadence._id)} className="py-2 px-3 text-danger fw-medium cadence-dropdown-item">
-                            Delete cadence
-                          </Dropdown.Item>
-                        </Dropdown.Menu>
-                      </Dropdown>
+                      {isAdmin && (
+                        <Dropdown align="end" className="d-inline cadence-dropdown">
+                          <Dropdown.Toggle variant="link" className="btn-icon-kebab bg-transparent border-0 m-0 p-0 d-flex align-items-center justify-content-center text-decoration-none shadow-none">
+                            <MoreVertical size={16} color="#64748b" />
+                          </Dropdown.Toggle>
+                          <Dropdown.Menu className="shadow-sm border-0 py-2" style={{ borderRadius: '8px', minWidth: '150px', border: '1px solid #e2e8f0' }}>
+                            {cadence.scheduleDates && cadence.scheduleDates.length > 0 && (
+                              <Dropdown.Item onClick={() => openScheduleModal(cadence)} className="py-2 px-3 text-dark fw-medium cadence-dropdown-item">
+                                Manage dates
+                              </Dropdown.Item>
+                            )}
+                            <Dropdown.Item onClick={() => openEditModal(cadence)} className="py-2 px-3 text-dark fw-medium cadence-dropdown-item">
+                              Edit cadence
+                            </Dropdown.Item>
+                            <Dropdown.Item onClick={() => handleDeleteCadenceClick(cadence._id)} className="py-2 px-3 text-danger fw-medium cadence-dropdown-item">
+                              Delete cadence
+                            </Dropdown.Item>
+                          </Dropdown.Menu>
+                        </Dropdown>
+                      )}
                     </div>
                   </td>
                 </tr>
@@ -702,6 +719,23 @@ const CadencesSection = ({ businessId }) => {
         onSave={handleScheduleDates}
         cadence={selectedCadence}
       />
+
+      <Modal show={showDeleteModal} onHide={() => setShowDeleteModal(false)} centered>
+        <Modal.Header closeButton className="border-0 pb-0">
+          <Modal.Title className="fs-5 fw-bold text-dark">Delete Cadence</Modal.Title>
+        </Modal.Header>
+        <Modal.Body className="py-3 text-secondary">
+          Are you sure you want to delete this cadence? This action cannot be undone.
+        </Modal.Body>
+        <Modal.Footer className="border-0 pt-0">
+          <Button variant="light" onClick={() => setShowDeleteModal(false)} className="fw-medium px-4" style={{ backgroundColor: '#f1f5f9', border: 'none', color: '#475569' }}>
+            Cancel
+          </Button>
+          <Button variant="danger" onClick={confirmDeleteCadence} className="fw-medium px-4">
+            Delete
+          </Button>
+        </Modal.Footer>
+      </Modal>
     </div>
   );
 };
