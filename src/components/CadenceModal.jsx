@@ -135,7 +135,7 @@ const CadenceModal = ({ show, onHide, onSave, businessId, existingCadence = null
 
       <Modal.Footer className="border-0 px-4 pb-4 pt-2 d-flex justify-content-between align-items-center">
         <div style={{ flex: 1, paddingRight: '1rem' }}>
-          {audience.length === 0 && (
+          {name.trim().length > 0 && audience.length === 0 && (
             <span className="fw-bold text-uppercase" style={{ fontSize: '10px', color: '#64748b', letterSpacing: '1px', lineHeight: '1.4' }}>
               {t("Pick at least one person for the room.")}
             </span>

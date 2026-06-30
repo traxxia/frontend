@@ -27,7 +27,33 @@ const ScheduleDatesModal = ({ show, onHide, onSave, cadence }) => {
   };
 
   const handleAddDate = () => {
-    setScheduleDates([...scheduleDates, { date: "", name: cadence?.name || "" }]);
+    let baseDate = new Date();
+    
+    if (scheduleDates.length > 0) {
+      const lastDateStr = scheduleDates[scheduleDates.length - 1].date;
+      if (lastDateStr && !isNaN(new Date(lastDateStr).getTime())) {
+        baseDate = new Date(lastDateStr);
+      }
+    }
+
+    const freq = (cadence?.frequency || "").toLowerCase();
+    
+    if (freq === 'weekly') {
+      baseDate.setDate(baseDate.getDate() + 7);
+    } else if (freq === 'monthly') {
+      baseDate.setMonth(baseDate.getMonth() + 1);
+    } else if (freq === 'quarterly') {
+      baseDate.setMonth(baseDate.getMonth() + 3);
+    } else if (freq === 'annually' || freq === 'annual') {
+      baseDate.setFullYear(baseDate.getFullYear() + 1);
+    } else {
+      // Default fallback
+      baseDate.setMonth(baseDate.getMonth() + 1);
+    }
+
+    const formattedDate = `${baseDate.getFullYear()}-${String(baseDate.getMonth() + 1).padStart(2, '0')}-${String(baseDate.getDate()).padStart(2, '0')}`;
+
+    setScheduleDates([...scheduleDates, { date: formattedDate, name: cadence?.name || "" }]);
   };
 
   const handleUpdateDate = (index, field, value) => {
@@ -75,8 +101,35 @@ const ScheduleDatesModal = ({ show, onHide, onSave, cadence }) => {
             </p>
           )}
           {scheduleDates.map((item, index) => {
-            const daysAway = calculateDaysAway(item.date);
-            const isUpcoming = daysAway && daysAway.includes('in');
+            const isValidYear = item.date && !isNaN(new Date(item.date).getTime()) && new Date(item.date).getFullYear() >= 2000 && new Date(item.date).getFullYear() <= 2100;
+            const daysAway = isValidYear ? calculateDaysAway(item.date) : null;
+            
+            let diffDays = -1;
+            if (isValidYear && item.date) {
+              const targetDate = new Date(item.date);
+              targetDate.setHours(0, 0, 0, 0);
+              const today = new Date();
+              today.setHours(0, 0, 0, 0);
+              diffDays = Math.round((targetDate - today) / (1000 * 60 * 60 * 24));
+            }
+
+            let pillText = null;
+            let pillBg = '';
+            let pillColor = '';
+
+            if (diffDays === 0) {
+              pillText = 'NEEDS CLOSE';
+              pillBg = '#fef3c7';
+              pillColor = '#d97706';
+            } else if (diffDays > 0 && diffDays < 15) {
+              pillText = 'UPCOMING';
+              pillBg = '#ede9fe';
+              pillColor = '#7c3aed';
+            } else if (diffDays >= 15) {
+              pillText = 'SCHEDULED';
+              pillBg = '#e0f2fe';
+              pillColor = '#0284c7';
+            }
             
             return (
               <div key={index} className="border rounded p-3 mb-3 d-flex flex-column gap-2 text-start" style={{ borderColor: '#e2e8f0' }}>
@@ -85,18 +138,28 @@ const ScheduleDatesModal = ({ show, onHide, onSave, cadence }) => {
                     <Form.Control 
                       type="date"
                       value={item.date}
+                      min={`${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}-${String(new Date().getDate()).padStart(2, '0')}`}
                       onChange={(e) => handleUpdateDate(index, 'date', e.target.value)}
                       className="shadow-none py-1"
                       style={{ width: '150px', borderColor: '#cbd5e1', fontSize: '14px' }}
                     />
                     {item.date && (
                       <div className="d-flex align-items-center gap-2">
-                        {isUpcoming && (
-                          <span style={{ fontSize: '10px', fontWeight: 'bold', backgroundColor: '#ede9fe', color: '#7c3aed', padding: '2px 8px', borderRadius: '4px', letterSpacing: '0.5px' }}>
-                            UPCOMING
+                        {pillText && (
+                          <span style={{ fontSize: '10px', fontWeight: 'bold', backgroundColor: pillBg, color: pillColor, padding: '2px 8px', borderRadius: '4px', letterSpacing: '0.5px' }}>
+                            {pillText}
                           </span>
                         )}
-                        <span className="text-muted" style={{ fontSize: '13px' }}>{daysAway}</span>
+                        <span 
+                          className={diffDays !== 0 ? "text-muted" : ""} 
+                          style={{ 
+                            fontSize: '13px', 
+                            color: diffDays === 0 ? '#0284c7' : '',
+                            fontWeight: diffDays === 0 ? '600' : 'normal'
+                          }}
+                        >
+                          {daysAway}
+                        </span>
                       </div>
                     )}
                   </div>
@@ -131,7 +194,12 @@ const ScheduleDatesModal = ({ show, onHide, onSave, cadence }) => {
         <span className="text-muted text-uppercase" style={{ fontSize: '11px', letterSpacing: '1px', fontWeight: 'bold' }}>
           {scheduleDates.length} DATE{scheduleDates.length !== 1 ? 'S' : ''} SCHEDULED
         </span>
-        <Button variant="primary" className="fw-bold px-4 rounded-pill" disabled={isSubmitting} onClick={handleSave}>
+        <Button 
+          variant="primary" 
+          className="fw-bold px-4 rounded-pill" 
+          disabled={isSubmitting} 
+          onClick={handleSave}
+        >
           {t("Done")}
         </Button>
       </Modal.Footer>

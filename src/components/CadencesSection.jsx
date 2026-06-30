@@ -417,13 +417,23 @@ const CadencesSection = ({ businessId }) => {
                 const betsCount = getBetsForCadence(cadence.name).length;
                 const staleMomentObj = staleMoments.find(sm => sm.cadence._id === cadence._id);
                 const isStale = !!staleMomentObj;
+                let diffDays = -1;
+                if (nextMoment) {
+                  const targetDate = new Date(nextMoment.date);
+                  targetDate.setHours(0, 0, 0, 0);
+                  const today = new Date();
+                  today.setHours(0, 0, 0, 0);
+                  diffDays = Math.round((targetDate - today) / (1000 * 60 * 60 * 24));
+                }
+
                 // hasSchedule is true only when there is an upcoming date OR a stale moment to close
-                const isUpcoming = !isStale && nextMoment != null;
+                const isUpcoming = !isStale && nextMoment != null && diffDays < 15;
+                const isScheduled = !isStale && nextMoment != null && diffDays >= 15;
                 
                 const displayMoment = isStale ? staleMomentObj.moment : nextMoment;
                   
                 return (
-                <tr key={cadence._id || index} style={{ borderLeft: isStale ? '4px solid #ef4444' : (isUpcoming ? '4px solid #0c71b9' : '4px solid transparent') }}>
+                <tr key={cadence._id || index} style={{ borderLeft: isStale ? '4px solid #ef4444' : ((isUpcoming || isScheduled) ? '4px solid #0c71b9' : '4px solid transparent') }}>
                   <td>
                     <div className="cadence-info-cell">
                       <div className={`cadence-icon-wrapper ${getIconColorClass(cadence.frequency)}`}>
@@ -453,6 +463,8 @@ const CadencesSection = ({ businessId }) => {
                       <span className="cadence-status-pill needs-close">NEEDS CLOSE</span>
                     ) : isUpcoming ? (
                       <span className="cadence-status-pill upcoming">UPCOMING</span>
+                    ) : isScheduled ? (
+                      <span className="cadence-status-pill scheduled" style={{ backgroundColor: '#e0f2fe', color: '#0284c7', fontSize: '10px', fontWeight: '700', padding: '4px 10px', borderRadius: '4px', letterSpacing: '0.5px' }}>SCHEDULED</span>
                     ) : (
                       <span className="cadence-status-pill not-scheduled">NOT SCHEDULED</span>
                     )}
