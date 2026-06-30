@@ -4,6 +4,7 @@ import { ChevronDown, ChevronRight, Info, AlertTriangle, Clock, Eye, Edit2, Tras
 import { useTranslation } from "../hooks/useTranslation";
 import ReviewCadencesModal from "./ReviewCadencesModal";
 import AssignDeciderModal from "./AssignDeciderModal";
+import axios from "axios";
 import { useProjectStore, useBusinessStore, useAuthStore } from "../store";
 import "../styles/ProjectsTable.css";
 const ProjectsTable = ({
@@ -37,6 +38,26 @@ const ProjectsTable = ({
 
   const [showDeciderModal, setShowDeciderModal] = React.useState(false);
   const [deciderProject, setDeciderProject] = React.useState(null);
+
+  const [activeCadences, setActiveCadences] = React.useState(null);
+
+  React.useEffect(() => {
+    if (!selectedBusinessId) return;
+    const fetchCadences = async () => {
+      try {
+        const token = useAuthStore.getState().token;
+        const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL || "http://localhost:5000"}/api/cadences?business_id=${selectedBusinessId}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const active = (res.data || []).filter(c => c.scheduleDates && c.scheduleDates.some(m => !m.closed));
+        const activeNames = active.map(c => c.name);
+        setActiveCadences(activeNames);
+      } catch (err) {
+        console.error("Failed to fetch cadences in ProjectsTable:", err);
+      }
+    };
+    fetchCadences();
+  }, [selectedBusinessId]);
 
   const handleOpenCadences = (e, project) => {
     e.stopPropagation();
@@ -165,11 +186,26 @@ const ProjectsTable = ({
                   {(() => {
                     const cStr = project.cadence || project.review_cadence;
                     if (!cStr) return "";
-                    const parts = cStr.split(",").map(s => s.trim()).filter(s => s);
+                    let parts = cStr.split(",").map(s => s.trim()).filter(s => s);
+                    
+                    if (activeCadences !== null) {
+                      parts = parts.filter(p => activeCadences.includes(p));
+                    }
+                    
+                    if (parts.length === 0) {
+                      return isAdmin ? (
+                        <span className="text-cadence-blue fw-bold d-inline-flex align-items-center gap-1 text-nowrap" style={{ fontSize: '13px', cursor: 'pointer', whiteSpace: 'nowrap' }} onClick={(e) => isAdmin ? handleOpenCadences(e, project) : null}>
+                          + {t("Set cadence")} <ChevronDown size={14} className="text-muted" />
+                        </span>
+                      ) : (
+                        <span className="text-muted" style={{ fontSize: '13px' }}>-</span>
+                      );
+                    }
+
                     if (parts.length > 1) {
                       return `Multiple (${parts.length})`;
                     }
-                    return t(cStr);
+                    return t(parts[0]);
                   })()}
                 </span>
               ) : (
