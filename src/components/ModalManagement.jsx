@@ -41,7 +41,6 @@ const LLM_MODEL_OPTIONS = [
 
 const DEFAULTS = {
   pmfFlow: 'gpt-4o-mini',
-  enrichment: 'gpt-4o-mini',
   documentQa: 'gpt-oss-120b',
   financialExtract: 'gpt-oss-120b',
   simpleSwot: 'gpt-oss-120b',
@@ -54,20 +53,15 @@ const DEFAULTS = {
   strategicPositioning: 'gpt-oss-120b',
   productivityMetrics: 'gpt-oss-120b',
   coreAdjacency: 'gpt-oss-120b',
+  strategicAnalysis: 'gpt-4o',
 };
 
 const SYSTEM_FLOWS = [
   {
     key: 'pmfFlow',
-    title: 'PMF Flow',
-    description: 'Powers the core Product-Market Fit onboarding and diagnostic generation.',
+    title: 'PMF Analysis ML Backend',
+    description: 'Powers the new PMF analysis ML backend for onboarding and diagnostics.',
     icon: Sparkles,
-  },
-  {
-    key: 'enrichment',
-    title: 'Answer Enrichment',
-    description: 'Enriches and refines questions, business briefs, and user inputs.',
-    icon: Zap,
   },
   {
     key: 'documentQa',
@@ -168,6 +162,12 @@ const FRAMEWORK_FLOWS = [
     description: 'Financial risk assessment with traffic light risk indicators.',
     icon: AlertTriangle,
   },
+  {
+    key: 'strategicAnalysis',
+    title: 'Strategic Analysis API',
+    description: 'Powers detailed strategic analysis insights and planning.',
+    icon: Target,
+  },
 ];
 
 const ModalManagement = ({ onToast }) => {
@@ -175,7 +175,6 @@ const ModalManagement = ({ onToast }) => {
     loadSettings,
     saveSettings,
     pmfFlow,
-    enrichment,
     documentQa,
     financialExtract,
     simpleSwot,
@@ -188,12 +187,12 @@ const ModalManagement = ({ onToast }) => {
     strategicPositioning,
     productivityMetrics,
     coreAdjacency,
+    strategicAnalysis,
     loading
   } = useModelSettingsStore();
 
   const [selections, setSelections] = useState({
     pmfFlow: pmfFlow || DEFAULTS.pmfFlow,
-    enrichment: enrichment || DEFAULTS.enrichment,
     documentQa: documentQa || DEFAULTS.documentQa,
     financialExtract: financialExtract || DEFAULTS.financialExtract,
     simpleSwot: simpleSwot || DEFAULTS.simpleSwot,
@@ -206,6 +205,7 @@ const ModalManagement = ({ onToast }) => {
     strategicPositioning: strategicPositioning || DEFAULTS.strategicPositioning,
     productivityMetrics: productivityMetrics || DEFAULTS.productivityMetrics,
     coreAdjacency: coreAdjacency || DEFAULTS.coreAdjacency,
+    strategicAnalysis: strategicAnalysis || DEFAULTS.strategicAnalysis,
   });
 
   const [bulkModel, setBulkModel] = useState('gpt-4o-mini');
@@ -221,7 +221,6 @@ const ModalManagement = ({ onToast }) => {
   useEffect(() => {
     setSelections({
       pmfFlow: pmfFlow || DEFAULTS.pmfFlow,
-      enrichment: enrichment || DEFAULTS.enrichment,
       documentQa: documentQa || DEFAULTS.documentQa,
       financialExtract: financialExtract || DEFAULTS.financialExtract,
       simpleSwot: simpleSwot || DEFAULTS.simpleSwot,
@@ -234,11 +233,11 @@ const ModalManagement = ({ onToast }) => {
       strategicPositioning: strategicPositioning || DEFAULTS.strategicPositioning,
       productivityMetrics: productivityMetrics || DEFAULTS.productivityMetrics,
       coreAdjacency: coreAdjacency || DEFAULTS.coreAdjacency,
+      strategicAnalysis: strategicAnalysis || DEFAULTS.strategicAnalysis,
     });
     setIsSaved(true);
   }, [
     pmfFlow,
-    enrichment,
     documentQa,
     financialExtract,
     simpleSwot,
@@ -251,6 +250,7 @@ const ModalManagement = ({ onToast }) => {
     strategicPositioning,
     productivityMetrics,
     coreAdjacency,
+    strategicAnalysis,
   ]);
 
   const handleChange = (key, value) => {
