@@ -804,13 +804,13 @@ setSuccessMetrics,
  
       </div>
       
-      {!isLaunched && initialStatusLower === "draft" && hasDecider && (
+      {!isLaunched && initialStatusLower === "draft" && hasDecider && currentUserId !== accountableOwnerId && (
         <div className="decider-info-banner mt-0 mb-3" style={{border: '1px solid #bfdbfe', borderRadius: '8px', padding: '16px', color: '#1e3a8a', fontSize: '13px' }}>
           <strong style={{ color: '#1d4ed8' }}>Awaiting {accountableOwner}.</strong> <span style={{ color: '#475569' }}>The fields below will be completed by the assigned decider. You'll see them here once filled.</span>
         </div>
       )}
 
-      {!isLaunched && accountableOwnerId && initialStatusLower === "draft" && !isReadOnly && (
+      {!isLaunched && accountableOwnerId && initialStatusLower === "draft" && (
         <div className="kickstart-banner" style={{ backgroundColor: '#fffbeb', border: '1px solid #fde68a', borderRadius: '12px', padding: '16px', marginBottom: '16px' }}>
           <div className="d-flex justify-content-between align-items-center">
             <div style={{ flex: 1 }}>
@@ -834,10 +834,16 @@ setSuccessMetrics,
               </div>
             </div>
             <div className="flex-shrink-0 ms-4 d-flex align-items-center justify-content-end" style={{ width: '220px' }}>
-              <button className={`btn-kickstart active d-flex align-items-center justify-content-center gap-2`} onClick={handleKickstart} disabled={isSubmitting} style={{ backgroundColor: '#10b981', color: 'white', padding: '10px 20px', borderRadius: '8px', border: 'none', fontWeight: '600', opacity: isSubmitting ? 0.6 : 1, cursor: isSubmitting ? 'not-allowed' : 'pointer' }}>
-                {isSubmitting && submitAction === "kickstart" ? <span className="spinner-border spinner-border-sm" /> : null}
-                {isSubmitting && submitAction === "kickstart" ? 'Kickstarting...' : 'Kickstart Bet →'}
-              </button>
+              {canKickstart && currentUserId == accountableOwnerId ? (
+                  <button className={`btn-kickstart active d-flex align-items-center justify-content-center gap-2`} onClick={handleKickstart} disabled={isSubmitting} style={{ backgroundColor: '#10b981', color: 'white', padding: '10px 20px', borderRadius: '8px', border: 'none', fontWeight: '600', opacity: isSubmitting ? 0.6 : 1, cursor: isSubmitting ? 'not-allowed' : 'pointer' }}>
+                    {isSubmitting && submitAction === "kickstart" ? <span className="spinner-border spinner-border-sm" /> : null}
+                    {isSubmitting && submitAction === "kickstart" ? 'Kickstarting...' : 'Kickstart Bet →'}
+                  </button>
+              ) : (
+                <div style={{ color: '#94a3b8', fontStyle: 'italic', fontSize: '13px', textAlign: 'right', lineHeight: '1.4' }}>
+                  Awaiting the decider to complete and kickstart this bet.
+                </div>
+              )}
             </div>
           </div>
         </div>

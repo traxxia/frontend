@@ -133,13 +133,32 @@ const CadenceModal = ({ show, onHide, onSave, businessId, existingCadence = null
 
       </Modal.Body>
       
-      <Modal.Footer className="border-0 px-4 pb-4 pt-2">
-        <Button variant="outline-secondary"  style={{fontSize: '14px' }} className="border shadow-sm bg-white text-dark fw-bold px-2" onClick={onHide}>
-          Cancel
-        </Button>
-        <Button variant="primary" style={{fontSize: '14px' }} className="text-white fw-bold px-2 border-0" disabled={!name.trim() || isSubmitting} onClick={handleSave}>
-          {existingCadence ? t("Save changes") : t("Add cadence")}
-        </Button>
+      <Modal.Footer className="border-0 px-4 pb-4 pt-2 d-flex justify-content-between align-items-center">
+        <div style={{ flex: 1, paddingRight: '1rem' }}>
+          {audience.length === 0 && (
+            <span className="fw-bold text-uppercase" style={{ fontSize: '10px', color: '#64748b', letterSpacing: '1px', lineHeight: '1.4' }}>
+              {t("Pick at least one person for the room.")}
+            </span>
+          )}
+        </div>
+        <div className="d-flex gap-2">
+          <Button variant="outline-secondary"  style={{fontSize: '14px' }} className="border shadow-sm bg-white text-dark fw-bold px-2" onClick={onHide}>
+            Cancel
+          </Button>
+          <Button 
+            variant="primary" 
+            style={{
+              fontSize: '14px',
+              backgroundColor: (!name.trim() || audience.length === 0 || isSubmitting) ? '#cbd5e1' : '',
+              opacity: (!name.trim() || audience.length === 0 || isSubmitting) ? 1 : ''
+            }} 
+            className="text-white fw-bold px-2 border-0" 
+            disabled={!name.trim() || audience.length === 0 || isSubmitting} 
+            onClick={handleSave}
+          >
+            {existingCadence ? t("Save changes") : t("Add cadence")}
+          </Button>
+        </div>
       </Modal.Footer>
     </Modal>
   );
