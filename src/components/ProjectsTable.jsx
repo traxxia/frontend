@@ -41,23 +41,24 @@ const ProjectsTable = ({
 
   const [activeCadences, setActiveCadences] = React.useState(null);
 
-  React.useEffect(() => {
+  const fetchCadences = React.useCallback(async () => {
     if (!selectedBusinessId) return;
-    const fetchCadences = async () => {
-      try {
-        const token = useAuthStore.getState().token;
-        const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL || "http://localhost:5000"}/api/cadences?business_id=${selectedBusinessId}`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        const active = (res.data || []).filter(c => c.scheduleDates && c.scheduleDates.some(m => !m.closed));
-        const activeNames = active.map(c => c.name);
-        setActiveCadences(activeNames);
-      } catch (err) {
-        console.error("Failed to fetch cadences in ProjectsTable:", err);
-      }
-    };
-    fetchCadences();
+    try {
+      const token = useAuthStore.getState().token;
+      const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL || "http://localhost:5000"}/api/cadences?business_id=${selectedBusinessId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const active = (res.data || []).filter(c => c.status === "active");
+      const activeNames = active.map(c => c.name);
+      setActiveCadences(activeNames);
+    } catch (err) {
+      console.error("Failed to fetch cadences in ProjectsTable:", err);
+    }
   }, [selectedBusinessId]);
+
+  React.useEffect(() => {
+    fetchCadences();
+  }, [fetchCadences]);
 
   const handleOpenCadences = (e, project) => {
     e.stopPropagation();
@@ -76,6 +77,7 @@ const ProjectsTable = ({
       await onDirectUpdate(project._id, { review_cadence: cadencesString, cadence: cadencesString });
     }
     setShowCadencesModal(false);
+    fetchCadences();
   };
 
   const handleSaveDecider = async (project, ownerId, ownerName) => {
@@ -123,7 +125,18 @@ const ProjectsTable = ({
         </tr>
       </thead>
       <tbody>
-        {projects.map((project, index) => {
+        {activeCadences === null ? (
+          <tr>
+            <td colSpan="9" className="text-center py-5 text-muted">
+              <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+              {t("Loading...")}
+            </td>
+          </tr>
+        ) : projects.length === 0 ? (
+          <tr>
+            <td colSpan="9" className="text-center py-5 text-muted">{t("No bets found.")}</td>
+          </tr>
+        ) : projects.map((project, index) => {
           const displayRank = rankMap?.[String(project?._id)] ?? project.rank ?? project.ai_rank;
           const userCanReview = canReviewProject ? canReviewProject(project, isAdmin, myUserId, isArchived) : false;
           const isOwner = String(project.accountable_owner_id) === String(myUserId) ||
@@ -186,11 +199,9 @@ const ProjectsTable = ({
                   {(() => {
                     const cStr = project.cadence || project.review_cadence;
                     if (!cStr) return "";
+
                     let parts = cStr.split(",").map(s => s.trim()).filter(s => s);
-                    
-                    if (activeCadences !== null) {
-                      parts = parts.filter(p => activeCadences.includes(p));
-                    }
+                    parts = parts.filter(p => activeCadences.includes(p));
                     
                     if (parts.length === 0) {
                       return isAdmin ? (
