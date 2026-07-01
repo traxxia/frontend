@@ -438,6 +438,7 @@ const AnalysisContentManager = (props) => {
   const isAnalysisLoading = useCallback(analysisType => {
     if (isTypeRegenerating(analysisType)) return true;
     const excelAnalysisTypes = ['profitabilityAnalysis', 'growthTracker', 'liquidityEfficiency', 'investmentPerformance', 'leverageRisk'];
+    
     if (excelAnalysisTypes.includes(analysisType)) {
       const apiKeyMap = {
         'profitabilityAnalysis': 'excel-analysis-profitability',
@@ -447,11 +448,15 @@ const AnalysisContentManager = (props) => {
         'leverageRisk': 'excel-analysis-leverage'
       };
       const apiKey = apiKeyMap[analysisType];
-      return apiLoadingStates[apiKey] || false;
+      const prefixedKey = selectedBusinessId ? `${selectedBusinessId}_${apiKey}` : apiKey;
+      return apiLoadingStates[prefixedKey] || apiLoadingStates[apiKey] || false;
     }
     const relevantEndpoints = Object.entries(API_TO_ANALYSIS_MAP).filter(([_, analysis]) => analysis === analysisType).map(([endpoint]) => endpoint);
-    return relevantEndpoints.some(endpoint => apiLoadingStates[endpoint]);
-  }, [apiLoadingStates, isTypeRegenerating, API_TO_ANALYSIS_MAP]);
+    return relevantEndpoints.some(endpoint => {
+      const prefixedKey = selectedBusinessId ? `${selectedBusinessId}_${endpoint}` : endpoint;
+      return apiLoadingStates[prefixedKey] || apiLoadingStates[endpoint];
+    });
+  }, [apiLoadingStates, isTypeRegenerating, API_TO_ANALYSIS_MAP, selectedBusinessId]);
   const toggleCard = useCallback(cardId => {
     setExpandedCards(prev => {
       const newSet = new Set(prev);

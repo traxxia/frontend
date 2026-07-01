@@ -804,7 +804,7 @@ const ProjectsSection = ({
               </div>
             )}
 
-            {!isViewer && !isCollaborator && !isArchived && getUserLimits().project && selectedBusiness?.has_projects && <button 
+            {!isViewer && !isCollaborator && !isArchived && getUserLimits().project && (selectedBusiness?.has_projects || projects.length > 0) && <button 
               onClick={handleNewProject} 
               className="btn-new-project-premium"
             >

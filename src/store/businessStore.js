@@ -101,6 +101,43 @@ export const useBusinessStore = create(
         }
       },
 
+      updatePmfStage: async (businessId, pmf_stage) => {
+        const token = useAuthStore.getState().token;
+        if (!token) { set({ error: 'No authentication token' }); return; }
+        try {
+          const response = await axios.patch(API_BASE_URL + '/api/businesses/' + businessId + '/pmf-stage', { pmf_stage }, {
+            headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' }
+          });
+          // Update local state if the selected business is the one updated
+          const { selectedBusiness, businesses, collaboratingBusinesses } = get();
+          
+          const updatedBusinesses = businesses.map(b => 
+            (b._id === businessId || b.id === businessId) ? { ...b, pmf_stage } : b
+          );
+
+          const updatedCollaborating = (collaboratingBusinesses || []).map(b => 
+            (b._id === businessId || b.id === businessId) ? { ...b, pmf_stage } : b
+          );
+
+          if (selectedBusiness && (selectedBusiness._id === businessId || selectedBusiness.id === businessId)) {
+            set({ 
+              selectedBusiness: { ...selectedBusiness, pmf_stage },
+              businesses: updatedBusinesses,
+              collaboratingBusinesses: updatedCollaborating
+            });
+          } else {
+            set({ 
+              businesses: updatedBusinesses,
+              collaboratingBusinesses: updatedCollaborating
+            });
+          }
+          return response.data;
+        } catch (err) {
+          console.error("Failed to update PMF stage:", err);
+          throw err;
+        }
+      },
+
       selectBusiness: (business) => set({
         selectedBusiness: business,
         selectedBusinessId: business?._id || business?.id || null,

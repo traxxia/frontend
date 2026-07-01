@@ -4,6 +4,17 @@ import { useTranslation } from '../../hooks/useTranslation';
 import DiagnosticBox from './DiagnosticBox';
 import { StreamingRow } from '../StreamingManager';
 
+const renderSafeItem = (item) => {
+  if (!item) return '';
+  if (typeof item === 'string' || typeof item === 'number') return item;
+  if (typeof item === 'object') {
+    if (item.action && item.rationale) return `${item.action}: ${item.rationale}`;
+    if (item.gap && item.impact) return `Gap: ${item.gap} | Impact: ${item.impact}`;
+    return item.action || item.initiative || item.description || item.rationale || item.gap || Object.values(item).join(' - ');
+  }
+  return String(item);
+};
+
 export const ResourcesPillar = ({ resources, isExpanded, onToggle, visibleRows, lastRowRef, streamingManager, cardId, isExportActive = () => false }) => {
   const { t } = useTranslation();
   if (!resources) return null;
@@ -30,13 +41,13 @@ export const ResourcesPillar = ({ resources, isExpanded, onToggle, visibleRows, 
                 return (
                   <tr key={idx}>
                     <td className="table-value">
-                      {isString ? item : (item.metric || item.item || item.role || item.investment || item.area || item.initiative || item.capability)}
+                      {isString ? item : renderSafeItem(item.metric || item.item || item.role || item.investment || item.area || item.initiative || item.capability)}
                     </td>
                     <td className="table-value text-gray-dark">
-                      {!isString ? (item.description || item.rationale || item.allocation || item.details || item.reason) : '-'}
+                      {!isString ? renderSafeItem(item.description || item.rationale || item.allocation || item.details || item.reason) : '-'}
                     </td>
                     <td className="table-value success-metric-text">
-                      {!isString ? (item.current_score || item.score || item.value || item.expected_impact || item.scale || item.impact || item.status || item.priority || item.target) : '-'}
+                      {!isString ? renderSafeItem(item.current_score || item.score || item.value || item.expected_impact || item.scale || item.impact || item.status || item.priority || item.target) : '-'}
                     </td>
                   </tr>
                 );
@@ -100,7 +111,7 @@ export const CulturePillar = ({ culture, isExpanded, onToggle }) => {
                         <span className="badge-purple">{t("to")}: {shift.to}</span>
                       </div>
                       <div className="linkage-kpi text-gray-dark mt-2">
-                        {shift.rationale}
+                        {renderSafeItem(shift.rationale)}
                       </div>
                     </div>
                   ))}
@@ -112,8 +123,8 @@ export const CulturePillar = ({ culture, isExpanded, onToggle }) => {
                <h4 className="subsection-title"><Users size={18} className="icon-blue" /> {t("sustainability_card3_header2")}</h4>
                <ul className="info-list culture">
                   {Array.isArray(culture.change_approach) ? 
-                    culture.change_approach.map((item, idx) => <li key={idx} className="info-list-item">{item}</li>) :
-                    <li className="info-list-item">{culture.change_approach}</li>
+                    culture.change_approach.map((item, idx) => <li key={idx} className="info-list-item">{renderSafeItem(item)}</li>) :
+                    <li className="info-list-item">{renderSafeItem(culture.change_approach)}</li>
                   }
                </ul>
              </div>
@@ -153,9 +164,9 @@ export const AnalysisDataPillar = ({ analysisData, isExpanded, onToggle }) => {
                       const isString = typeof rec === 'string';
                       return (
                         <tr key={idx}>
-                          <td className="table-value">{isString ? rec : (rec.recommendation || rec.item)}</td>
-                          <td className="table-value text-gray-dark">{!isString ? (rec.rationale || rec.details) : '-'}</td>
-                          <td className="table-value"><span className="badge-blue">{!isString ? (rec.impact || rec.priority) : '-'}</span></td>
+                          <td className="table-value">{isString ? rec : renderSafeItem(rec.recommendation || rec.item)}</td>
+                          <td className="table-value text-gray-dark">{!isString ? renderSafeItem(rec.rationale || rec.details) : '-'}</td>
+                          <td className="table-value"><span className="badge-blue">{!isString ? renderSafeItem(rec.impact || rec.priority) : '-'}</span></td>
                         </tr>
                       );
                     })}
@@ -200,13 +211,13 @@ export const TechnologyPillar = ({ tech, isExpanded, onToggle }) => {
                       return (
                         <tr key={idx}>
                           <td className="table-value">
-                            {isString ? item : (item.initiative || item.item || item.metric)}
+                            {isString ? item : renderSafeItem(item.initiative || item.item || item.metric)}
                           </td>
                           <td className="table-value">
-                            {!isString ? (item.timeline || item.duration || item.timing) : '-'}
+                            {!isString ? renderSafeItem(item.timeline || item.duration || item.timing) : '-'}
                           </td>
                           <td className="table-value success-criteria-text">
-                            {!isString ? (item.priority || item.status || item.impact || item.value) : '-'}
+                            {!isString ? renderSafeItem(item.priority || item.status || item.impact || item.value) : '-'}
                           </td>
                         </tr>
                       );
@@ -234,13 +245,13 @@ export const TechnologyPillar = ({ tech, isExpanded, onToggle }) => {
                       return (
                         <tr key={idx}>
                           <td className="table-value">
-                            {isString ? item : (item.platform || item.initiative || item.item)}
+                            {isString ? item : renderSafeItem(item.platform || item.initiative || item.item)}
                           </td>
                           <td className="table-value">
-                            {!isString ? (item.description || item.rationale || item.details) : '-'}
+                            {!isString ? renderSafeItem(item.description || item.rationale || item.details) : '-'}
                           </td>
                           <td className="table-value success-criteria-text">
-                            {!isString ? (item.status || item.priority || item.timeline) : '-'}
+                            {!isString ? renderSafeItem(item.status || item.priority || item.timeline) : '-'}
                           </td>
                         </tr>
                       );
@@ -284,8 +295,8 @@ export const GovernancePillar = ({ governance, isExpanded, onToggle }) => {
                     <tbody>
                       {governance.decision_delegation.map((item, idx) => (
                         <tr key={idx}>
-                          <td className="table-value">{item.decision_type}</td>
-                          <td className="table-value">{item.delegate_to}</td>
+                          <td className="table-value">{renderSafeItem(item.decision_type)}</td>
+                          <td className="table-value">{renderSafeItem(item.delegate_to)}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -298,8 +309,8 @@ export const GovernancePillar = ({ governance, isExpanded, onToggle }) => {
                 <h4 className="subsection-title"><Shield size={18} className="icon-purple" /> {t("sustainability_card1_header1")}</h4>
                 <ul className="info-list governance">
                   {Array.isArray(governance.accountability_framework) ? 
-                    governance.accountability_framework.map((item, idx) => <li key={idx} className="info-list-item">{item}</li>) :
-                    <li className="info-list-item">{governance.accountability_framework}</li>
+                    governance.accountability_framework.map((item, idx) => <li key={idx} className="info-list-item">{renderSafeItem(item)}</li>) :
+                    <li className="info-list-item">{renderSafeItem(governance.accountability_framework)}</li>
                   }
                 </ul>
              </div>
@@ -328,7 +339,7 @@ export const InnovationPillar = ({ innovation, isExpanded, onToggle }) => {
                 <h4 className="subsection-title"><BarChart3 size={18} className="icon-blue" /> {t("sustainability_header1")}</h4>
                 <div className="badge-container flex flex-wrap gap-2 mb-4">
                    {Object.entries(innovation.target_portfolio_mix).map(([key, value]) => (
-                     <span key={key} className="badge-purple">{key}: {value}</span>
+                     <span key={key} className="badge-purple">{key}: {renderSafeItem(value)}</span>
                    ))}
                 </div>
              </div>
@@ -342,11 +353,11 @@ export const InnovationPillar = ({ innovation, isExpanded, onToggle }) => {
                    return (
                     <div key={idx} className="linkage-card innovation">
                       <div className="linkage-objective">
-                        <strong className="text-gray-dark">{isString ? bet : (bet.bet || bet.initiative)}</strong>
+                        <strong className="text-gray-dark">{isString ? bet : renderSafeItem(bet.bet || bet.initiative)}</strong>
                       </div>
                       {!isString && bet.rationale && (
                         <div className="linkage-kpi text-gray-dark mt-2">
-                          {bet.rationale}
+                          {renderSafeItem(bet.rationale)}
                         </div>
                       )}
                     </div>

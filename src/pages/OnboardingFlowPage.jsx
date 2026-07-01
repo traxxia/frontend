@@ -10,6 +10,7 @@ import { ChevronDown, ChevronUp, Lock, File, ArrowRight, Check } from 'lucide-re
 import OnboardingChat from '../components/OnboardingChat';
 import AiMessageRenderer from '../components/AiMessageRenderer';
 import { useTranslation } from '../hooks/useTranslation';
+import { useQueryClient } from '@tanstack/react-query';
 
 const OnboardingFlowPage = () => {
   const { businessId } = useParams();
@@ -17,8 +18,11 @@ const OnboardingFlowPage = () => {
   const location = useLocation();
   const business = location.state?.business || useBusinessStore.getState().selectedBusiness;
   const addToast = useUIStore(state => state.addToast);
+  const queryClient = useQueryClient();
 
   const userName = useAuthStore(state => state.userName) || 'User';
+  const userPlan = useAuthStore(state => state.userPlan) || 'N/A';
+  const userRole = useAuthStore(state => state.userRole) || 'N/A';
   const { t } = useTranslation();
   const businessName = business?.business_name || 'your business';
 
@@ -123,6 +127,86 @@ const OnboardingFlowPage = () => {
 
   useEffect(() => {
     let active = true;
+    const fetchLatestData = async () => {
+      try {
+        const ML_API_BASE_URL = import.meta.env.VITE_ML_BACKEND_URL;
+        const API_BASE_URL = import.meta.env.VITE_BACKEND_URL;
+        const getAuthToken = () => useAuthStore.getState().token;
+        const analysisService = new AnalysisApiService(ML_API_BASE_URL, API_BASE_URL, getAuthToken);
+        const targetBusinessId = business?._id || business?.id || businessId;
+        if (!targetBusinessId) return;
+
+        const result = await analysisService.getPMFAnalysis(targetBusinessId, true);
+        if (active && result) {
+          const freshPmfData = result.onboarding_data || result.onboarding;
+          if (freshPmfData) {
+            setPurpose(freshPmfData.businessPurpose?.purpose || freshPmfData.purpose || '');
+            setDescription(freshPmfData.businessPurpose?.description || freshPmfData.description || '');
+            setCountry(freshPmfData.location?.country || freshPmfData.country || '');
+            setCity(freshPmfData.location?.city || freshPmfData.city || '');
+            setPrimaryIndustry(freshPmfData.industry?.primaryIndustry || freshPmfData.primaryIndustry || '');
+            setGeo1(freshPmfData.core?.geographies?.[0] || freshPmfData.geography1 || '');
+            setGeo2(freshPmfData.core?.geographies?.[1] || freshPmfData.geography2 || '');
+            setGeo3(freshPmfData.core?.geographies?.[2] || freshPmfData.geography3 || '');
+            setSeg1(freshPmfData.core?.customerSegments?.[0] || freshPmfData.customerSegment1 || '');
+            setSeg2(freshPmfData.core?.customerSegments?.[1] || freshPmfData.customerSegment2 || '');
+            setSeg3(freshPmfData.core?.customerSegments?.[2] || freshPmfData.customerSegment3 || '');
+            setProd1(freshPmfData.core?.productsServices?.[0] || freshPmfData.productService1 || '');
+            setProd2(freshPmfData.core?.productsServices?.[1] || freshPmfData.productService2 || '');
+            setProd3(freshPmfData.core?.productsServices?.[2] || freshPmfData.productService3 || '');
+            setChan1(freshPmfData.core?.channels?.[0] || freshPmfData.channel1 || '');
+            setChan2(freshPmfData.core?.channels?.[1] || freshPmfData.channel2 || '');
+            setChan3(freshPmfData.core?.channels?.[2] || freshPmfData.channel3 || '');
+
+            const rawSelected = freshPmfData.competitiveDimensions?.selected || freshPmfData.differentiation || [];
+            const selected = (Array.isArray(rawSelected) ? rawSelected : []).slice(0, 3);
+            const labelToKeyMap = {
+              'price': 'price', 'quality': 'quality', 'speed': 'speed',
+              'relationships': 'relationships', 'customization': 'customization',
+              'scale': 'scale', 'brand': 'brand', 'other': 'other'
+            };
+            let mappedState = {
+              price: false, quality: false, speed: false, relationships: false,
+              customization: false, scale: false, brand: false, other: false
+            };
+            selected.forEach(val => {
+              const lowerVal = val.toLowerCase().trim();
+              let matchedKey = null;
+              for (const [label, key] of Object.entries(labelToKeyMap)) {
+                if (lowerVal.includes(label)) {
+                  matchedKey = key;
+                  break;
+                }
+              }
+              if (matchedKey) mappedState[matchedKey] = true;
+              else mappedState.other = true;
+            });
+            setCompeteOptions(mappedState);
+
+            let unmapped = [];
+            const labelsMap = ['price', 'quality', 'speed', 'relationships', 'customization', 'scale', 'brand', 'other'];
+            selected.forEach(val => {
+              const lowerVal = val.toLowerCase().trim();
+              const matched = labelsMap.some(label => lowerVal.includes(label));
+              if (!matched) unmapped.push(val);
+            });
+            setOtherCompeteValue(unmapped.join(', '));
+          }
+        }
+      } catch (err) {
+        console.error("Error fetching fresh PMF data:", err);
+      }
+    };
+    
+    if (business?._id || business?.id || businessId) {
+      fetchLatestData();
+    }
+    
+    return () => { active = false; };
+  }, [business, businessId]);
+
+  useEffect(() => {
+    let active = true;
     if (!uploadedDocs || uploadedDocs.length === 0) {
       const fetchStrategicDocs = async () => {
         const targetBusinessId = business?._id || business?.id || businessId;
@@ -210,21 +294,43 @@ const OnboardingFlowPage = () => {
         body: JSON.stringify({
           message: userMessage,
           current_page: 'Onboarding Flow',
+          user_plan: userPlan,
+          user_role: userRole,
           page_description: 'User is filling out the 5-step PMF onboarding form to generate insights.',
           page_content: {
-            question_1: 'What does the business actually do?',
-            purpose, description,
-            question_2: 'Where is the business based?',
-            country, city,
-            question_3: 'What industry is the business in?',
-            primaryIndustry,
-            question_4: 'What is your core?',
-            geographies: [geo1, geo2, geo3].filter(Boolean),
-            segments: [seg1, seg2, seg3].filter(Boolean),
-            products: [prod1, prod2, prod3].filter(Boolean),
-            channels: [chan1, chan2, chan3].filter(Boolean),
-            question_5: 'Where do you compete?',
-            differentiation: getSelectedDifferentiation()
+            question_1_business_activity: {
+              business_purpose: {
+                value: purpose || null,
+                is_optional: false
+              },
+              description: {
+                value: description || null,
+                is_optional: true
+              }
+            },
+            question_2_location: {
+              country: {
+                value: country || null,
+                is_optional: false
+              },
+              city: {
+                value: city || null,
+                is_optional: true
+              }
+            },
+            question_3_industry: {
+              primary_industry: {
+                value: primaryIndustry || null,
+                is_optional: false
+              }
+            },
+            question_4_core: {
+              geographies: [geo1, geo2, geo3].filter(Boolean),
+              customer_segments: [seg1, seg2, seg3].filter(Boolean),
+              products_services: [prod1, prod2, prod3].filter(Boolean),
+              channels: [chan1, chan2, chan3].filter(Boolean)
+            },
+            question_5_competition: getFormattedDifferentiation()
           }
         })
       });
@@ -319,6 +425,24 @@ const OnboardingFlowPage = () => {
 
       window.dispatchEvent(new CustomEvent('pmfOnboardingCompleted'));
 
+      try {
+        await useBusinessStore.getState().updatePmfStage(targetBusinessId, 'executive_summary');
+        queryClient.setQueryData(['businesses'], (oldData) => {
+          if (!oldData) return oldData;
+          const updateList = (list) => (list || []).map(b => 
+            (b._id === targetBusinessId || b.id === targetBusinessId) ? { ...b, pmf_stage: 'executive_summary' } : b
+          );
+          return {
+            ...oldData,
+            businesses: updateList(oldData.businesses),
+            collaborating_businesses: updateList(oldData.collaborating_businesses)
+          };
+        });
+        queryClient.invalidateQueries({ queryKey: ['businesses'] });
+      } catch (err) {
+        console.error("Failed to update pmf stage:", err);
+      }
+
       navigate(`/businesspage?business=${business?.business_slug || targetBusinessId}&tab=executive`, {
         state: { business, initialTab: 'executive' }
       });
@@ -344,6 +468,31 @@ const OnboardingFlowPage = () => {
       selected.push(otherCompeteValue.trim());
     }
     return selected;
+  }, [competeOptions, otherCompeteValue]);
+
+  const getFormattedDifferentiation = useCallback(() => {
+    const options = {
+      price: 'Price',
+      quality: 'Quality & expertise',
+      speed: 'Speed & responsiveness',
+      relationships: 'Relationships & trust',
+      customization: 'Customization',
+      scale: 'Scale',
+      brand: 'Brand',
+      other: 'Other'
+    };
+    return Object.entries(options).map(([key, label]) => {
+      if (key === 'other') {
+         return {
+           option_name: competeOptions.other && otherCompeteValue.trim() ? `${label}: ${otherCompeteValue.trim()}` : label,
+           is_selected: !!competeOptions.other
+         };
+      }
+      return {
+        option_name: label,
+        is_selected: !!competeOptions[key]
+      };
+    });
   }, [competeOptions, otherCompeteValue]);
 
   const answeredCount = [
@@ -393,6 +542,9 @@ const OnboardingFlowPage = () => {
     }
   }, [business, businessId, addToast]);
 
+  const isInitialMount = useRef(true);
+  const prevDepsRef = useRef({});
+
   useEffect(() => {
     formDataRef.current = {
       companyName: businessName,
@@ -403,6 +555,37 @@ const OnboardingFlowPage = () => {
       channel1: chan1, channel2: chan2, channel3: chan3,
       differentiation: getSelectedDifferentiation()
     };
+    
+    const currentDeps = {
+      businessName, purpose, description, country, city, primaryIndustry,
+      geo1, geo2, geo3, seg1, seg2, seg3, prod1, prod2, prod3, chan1, chan2, chan3,
+      getSelectedDifferentiation, handleAutoSave
+    };
+
+    if (isInitialMount.current) {
+      console.log("[AutoSave Debug] Initial mount");
+      isInitialMount.current = false;
+      prevDepsRef.current = currentDeps;
+      return;
+    }
+
+    // Debug what changed
+    const changedKeys = [];
+    for (const key in currentDeps) {
+      if (currentDeps[key] !== prevDepsRef.current[key]) {
+        changedKeys.push(key);
+      }
+    }
+    
+    prevDepsRef.current = currentDeps;
+
+    // If multiple fields change at the exact same time, it's a bulk state update 
+    // from the initial server fetch (fetchLatestData). 
+    // We should treat this as the new baseline, not a user edit to be saved!
+    if (changedKeys.length > 2) {
+      lastSavedDataRef.current = JSON.stringify(formDataRef.current);
+      return;
+    }
 
     const timeoutId = setTimeout(() => {
       handleAutoSave();

@@ -41,6 +41,7 @@ const PrioritiesProjects = ({
   const [showNoCollaboratorsModal, setShowNoCollaboratorsModal] = useState(false);
   const businesses = useBusinessStore(state => state.businesses);
   const fetchBusinesses = useBusinessStore(state => state.fetchBusinesses);
+  const setSelectedBusinessId = useBusinessStore(state => state.setSelectedBusinessId);
   const currentBusiness = useMemo(() => businesses.find(b => b._id === selectedBusinessId), [businesses, selectedBusinessId]);
   const {
     data: usageData
@@ -125,7 +126,9 @@ const PrioritiesProjects = ({
       if (!selectedBusinessId) return;
       setLoading(true);
       try {
-        await fetchKickstartData(selectedBusinessId, refreshTrigger > 0);
+        // Always force refresh on mount to get the latest is_bets_built state
+        // This prevents the "Build Bets" button from incorrectly reappearing after navigation
+        await fetchKickstartData(selectedBusinessId, true);
       } catch (error) {
         console.error("Error fetching kickstart data:", error);
       } finally {
@@ -154,6 +157,9 @@ const PrioritiesProjects = ({
       }
       await fetchKickstartData(selectedBusinessId, true);
       await fetchBusinesses();
+      // Update selectedBusiness in store with the fresh data (has_projects: true)
+      // This ensures the "New Bet" button appears immediately without requiring a page refresh
+      setSelectedBusinessId(selectedBusinessId);
       setPriorities(prev => prev.map((p, i) => selected.includes(i) ? { ...p, isKickstarted: true } : p));
       setSelected([]);
       setLastKickstartedCount(totalProjectsCreated);
@@ -170,7 +176,7 @@ const PrioritiesProjects = ({
     } finally {
       setKickstarting(false);
     }
-  }, [selected, hasProjectsAccess, priorities, isAdmin, hasCollaborators, selectedBusinessId, t, onToastMessage, kickstartProject, fetchKickstartData]);
+  }, [selected, hasProjectsAccess, priorities, isAdmin, hasCollaborators, selectedBusinessId, t, onToastMessage, kickstartProject, fetchKickstartData, fetchBusinesses, setSelectedBusinessId]);
   const handleKickstart = useCallback(async () => {
     if (!hasProjectsAccess) {
       setShowPlanLimitModal(true);

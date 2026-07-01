@@ -854,7 +854,7 @@ const ProjectForm = ({
                     padding: '10px 20px',
                     borderRadius: '8px',
                     border: 'none',
-                    fontWeight: '600',
+                    fontWeight: '800',
                     opacity: isSubmitting ? 0.6 : 1,
                     cursor: isSubmitting ? 'not-allowed' : 'pointer'
                   }}
