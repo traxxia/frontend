@@ -10,6 +10,7 @@ import { ChevronDown, ChevronUp, Lock, File, ArrowRight, Check } from 'lucide-re
 import OnboardingChat from '../components/OnboardingChat';
 import AiMessageRenderer from '../components/AiMessageRenderer';
 import { useTranslation } from '../hooks/useTranslation';
+import { useQueryClient } from '@tanstack/react-query';
 
 const OnboardingFlowPage = () => {
   const { businessId } = useParams();
@@ -17,6 +18,7 @@ const OnboardingFlowPage = () => {
   const location = useLocation();
   const business = location.state?.business || useBusinessStore.getState().selectedBusiness;
   const addToast = useUIStore(state => state.addToast);
+  const queryClient = useQueryClient();
 
   const userName = useAuthStore(state => state.userName) || 'User';
   const userPlan = useAuthStore(state => state.userPlan) || 'N/A';
@@ -423,6 +425,24 @@ const OnboardingFlowPage = () => {
 
       window.dispatchEvent(new CustomEvent('pmfOnboardingCompleted'));
 
+      try {
+        await useBusinessStore.getState().updatePmfStage(targetBusinessId, 'executive_summary');
+        queryClient.setQueryData(['businesses'], (oldData) => {
+          if (!oldData) return oldData;
+          const updateList = (list) => (list || []).map(b => 
+            (b._id === targetBusinessId || b.id === targetBusinessId) ? { ...b, pmf_stage: 'executive_summary' } : b
+          );
+          return {
+            ...oldData,
+            businesses: updateList(oldData.businesses),
+            collaborating_businesses: updateList(oldData.collaborating_businesses)
+          };
+        });
+        queryClient.invalidateQueries({ queryKey: ['businesses'] });
+      } catch (err) {
+        console.error("Failed to update pmf stage:", err);
+      }
+
       navigate(`/businesspage?business=${business?.business_slug || targetBusinessId}&tab=executive`, {
         state: { business, initialTab: 'executive' }
       });
@@ -522,6 +542,9 @@ const OnboardingFlowPage = () => {
     }
   }, [business, businessId, addToast]);
 
+  const isInitialMount = useRef(true);
+  const prevDepsRef = useRef({});
+
   useEffect(() => {
     formDataRef.current = {
       companyName: businessName,
@@ -532,6 +555,37 @@ const OnboardingFlowPage = () => {
       channel1: chan1, channel2: chan2, channel3: chan3,
       differentiation: getSelectedDifferentiation()
     };
+    
+    const currentDeps = {
+      businessName, purpose, description, country, city, primaryIndustry,
+      geo1, geo2, geo3, seg1, seg2, seg3, prod1, prod2, prod3, chan1, chan2, chan3,
+      getSelectedDifferentiation, handleAutoSave
+    };
+
+    if (isInitialMount.current) {
+      console.log("[AutoSave Debug] Initial mount");
+      isInitialMount.current = false;
+      prevDepsRef.current = currentDeps;
+      return;
+    }
+
+    // Debug what changed
+    const changedKeys = [];
+    for (const key in currentDeps) {
+      if (currentDeps[key] !== prevDepsRef.current[key]) {
+        changedKeys.push(key);
+      }
+    }
+    
+    prevDepsRef.current = currentDeps;
+
+    // If multiple fields change at the exact same time, it's a bulk state update 
+    // from the initial server fetch (fetchLatestData). 
+    // We should treat this as the new baseline, not a user edit to be saved!
+    if (changedKeys.length > 2) {
+      lastSavedDataRef.current = JSON.stringify(formDataRef.current);
+      return;
+    }
 
     const timeoutId = setTimeout(() => {
       handleAutoSave();

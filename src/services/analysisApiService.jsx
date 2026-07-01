@@ -205,10 +205,10 @@ export class AnalysisApiService {
     if (!businessId) return null;
 
     const cacheKey = `kickstart-${businessId}`;
-    if (!forceRefresh && kickstartRequestCache.has(cacheKey)) {
-      return await kickstartRequestCache.get(cacheKey);
+    if (forceRefresh) {
+      kickstartRequestCache.delete(cacheKey);
     }
-    if (kickstartRequestCache.has(cacheKey)) {
+    if (!forceRefresh && kickstartRequestCache.has(cacheKey)) {
       return await kickstartRequestCache.get(cacheKey);
     }
 
@@ -413,7 +413,8 @@ export class AnalysisApiService {
 
     try {
       if (this.setApiLoading) {
-        this.setApiLoading(loadingKey || endpoint, true);
+        const finalKey = selectedBusinessId ? `${selectedBusinessId}_${loadingKey || endpoint}` : (loadingKey || endpoint);
+        this.setApiLoading(finalKey, true);
       }
 
       const isExcelAnalysis = endpoint === 'excel-analysis';
@@ -567,7 +568,8 @@ export class AnalysisApiService {
       return await response.json();
     } finally {
       if (this.setApiLoading) {
-        this.setApiLoading(loadingKey || endpoint, false);
+        const finalKey = selectedBusinessId ? `${selectedBusinessId}_${loadingKey || endpoint}` : (loadingKey || endpoint);
+        this.setApiLoading(finalKey, false);
       }
     }
   }

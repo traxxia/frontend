@@ -28,4 +28,14 @@ export class BusinessService extends BaseApiService {
       return { eligible_owners: [] };
     }
   }
+
+  async updatePmfStage(businessId, pmfStage) {
+    if (!businessId || !pmfStage) return null;
+    const cacheKey = `business-${businessId}`;
+    businessCache.delete(cacheKey); // invalidate cache
+    return await this.request(`/api/businesses/${businessId}/pmf-stage`, {
+      method: 'PATCH',
+      body: JSON.stringify({ pmf_stage: pmfStage })
+    });
+  }
 }

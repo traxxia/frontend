@@ -4,6 +4,17 @@ import { useTranslation } from '../../hooks/useTranslation';
 import DiagnosticBox from './DiagnosticBox';
 import { StreamingRow } from '../StreamingManager';
 
+const renderSafeItem = (item) => {
+  if (!item) return '';
+  if (typeof item === 'string' || typeof item === 'number') return item;
+  if (typeof item === 'object') {
+    if (item.action && item.rationale) return `${item.action}: ${item.rationale}`;
+    if (item.gap && item.impact) return `Gap: ${item.gap} | Impact: ${item.impact}`;
+    return item.action || item.initiative || item.description || item.rationale || item.gap || Object.values(item).join(' - ');
+  }
+  return String(item);
+};
+
 const TacticsPillar = ({ 
   tactics, 
   isExpanded, 
@@ -48,7 +59,7 @@ const TacticsPillar = ({
                     <tr key={idx}>
                       <td className="table-value">
                         <div className="linkage-objective-title">
-                          {link.strategic_objective || link.objective}
+                          {renderSafeItem(link.strategic_objective || link.objective)}
                         </div>
                       </td>
                       <td className="table-value">
@@ -57,7 +68,7 @@ const TacticsPillar = ({
                             {link.linked_initiatives.map((initiative, initIdx) => (
                               <li key={initIdx} className="flex-center">
                                 <ArrowRight size={10} className="icon-blue" />
-                                {initiative}
+                                {renderSafeItem(initiative)}
                               </li>
                             ))}
                           </ul>
@@ -66,7 +77,7 @@ const TacticsPillar = ({
                       <td className="table-value">
                         <div className="flex-center success-criteria-text">
                           <Target size={12} />
-                          {link.success_criteria || link.success_kpi}
+                          {renderSafeItem(link.success_criteria || link.success_kpi)}
                         </div>
                       </td>
                     </tr>
@@ -131,11 +142,11 @@ const TacticsPillar = ({
                 <tbody>
                   {combinedImmediateActions.map((action, idx) => (
                     <tr key={idx}>
-                      <td className="table-value">{action.action}</td>
-                      <td className="table-value text-gray-dark">{action.rationale}</td>
-                      <td className="table-value"><span className="badge-blue">{action.timeline}</span></td>
+                      <td className="table-value">{renderSafeItem(action.action)}</td>
+                      <td className="table-value text-gray-dark">{renderSafeItem(action.rationale)}</td>
+                      <td className="table-value"><span className="badge-blue">{renderSafeItem(action.timeline)}</span></td>
                       <td className="table-value success-metric-text">
-                        {action.success_metrics?.map((m, midx) => <div key={midx} className="flex-center"><Target size={10} />{m}</div>)}
+                        {action.success_metrics?.map((m, midx) => <div key={midx} className="flex-center"><Target size={10} />{renderSafeItem(m)}</div>)}
                       </td>
                     </tr>
                   ))}
@@ -163,9 +174,9 @@ const TacticsPillar = ({
                 <tbody>
                   {combinedShortTerm.map((init, idx) => (
                     <tr key={idx}>
-                      <td className="table-value">{init.initiative}</td>
-                      <td className="table-value"><span className="badge-purple">{init.strategic_pillar}</span></td>
-                      <td className="table-value text-gray-dark">{init.expected_outcome}</td>
+                      <td className="table-value">{renderSafeItem(init.initiative)}</td>
+                      <td className="table-value"><span className="badge-purple">{renderSafeItem(init.strategic_pillar)}</span></td>
+                      <td className="table-value text-gray-dark">{renderSafeItem(init.expected_outcome)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -193,7 +204,7 @@ const TacticsPillar = ({
           <h4 className="subsection-title">{horizon.icon} {horizon.title}</h4>
           <ul className="info-list tactics">
             {items.map((item, idx) => (
-              <li key={idx} className="info-list-item">{item}</li>
+              <li key={idx} className="info-list-item">{renderSafeItem(item)}</li>
             ))}
           </ul>
         </div>

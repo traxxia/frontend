@@ -2446,7 +2446,29 @@ const EditableBriefSection = ({
                     setConfirmModalConfig({
                       title: t('Generate Advanced Insights') || 'Generate Advanced Insights',
                       message: 'This will regenerate all insights and strategic analysis based on your answers. Are you sure you want to proceed?',
-                      onConfirm: () => {
+                      onConfirm: async () => {
+                        try {
+                          const { useBusinessStore } = await import('../store/businessStore');
+                          const businessId = useBusinessStore.getState().selectedBusinessId;
+                          if (businessId) {
+                            await useBusinessStore.getState().updatePmfStage(businessId, 'insights');
+                            queryClient.setQueryData(['businesses'], (oldData) => {
+                              if (!oldData) return oldData;
+                              const updateList = (list) => (list || []).map(b => 
+                                (b._id === businessId || b.id === businessId) ? { ...b, pmf_stage: 'insights' } : b
+                              );
+                              return {
+                                ...oldData,
+                                businesses: updateList(oldData.businesses),
+                                collaborating_businesses: updateList(oldData.collaborating_businesses)
+                              };
+                            });
+                            queryClient.invalidateQueries({ queryKey: ['businesses'] });
+                          }
+                        } catch (err) {
+                          console.error("Failed to update pmf stage:", err);
+                        }
+
                         if (onAnalysisRegenerate) {
                           onAnalysisRegenerate({
                             alsoRegenerateStrategic: true,

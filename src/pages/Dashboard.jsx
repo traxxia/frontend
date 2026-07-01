@@ -522,73 +522,38 @@ const Dashboard = () => {
     if (business.status === 'deleted') return;
 
     selectBusiness(business);
-
-    let hasAdvancedAnalysis = false;
     const businessId = business?._id || business?.id;
-    if (businessId) {
-      try {
-        const ML_API_BASE_URL = import.meta.env.VITE_ML_BACKEND_URL;
-        const API_BASE_URL = import.meta.env.VITE_BACKEND_URL;
-        const getAuthToken = () => useAuthStore.getState().token;
-        const analysisService = new AnalysisApiService(ML_API_BASE_URL, API_BASE_URL, getAuthToken);
-        const result = await analysisService.getPMFAnalysis(businessId, true);
+    const businessSlug = toSlug(business?.business_name || '');
+    const stage = business?.pmf_stage || 'onboarding';
 
-        const analysisData = await analysisService.fetchAnalysisDataThroughBackend(businessId, true);
-        hasAdvancedAnalysis = analysisData && analysisData.length > 0;
+    const userPlan = useAuthStore.getState().userPlan;
+    const hasPlan = userPlan && userPlan.trim().toLowerCase() !== "no plan" && userPlan.trim().toLowerCase() !== "none";
 
-        const hasOnboarding = (result?.onboarding_data && Object.keys(result.onboarding_data).length > 0) ||
-          (result?.onboarding && Object.keys(result.onboarding).length > 0);
+    if (stage === 'onboarding') {
+      // Still need to pass pmfData if available, but for simplicity, we can fetch it on the onboarding page or just navigate.
+      navigate(`/onboarding/${businessId}`, {
+        state: { business }
+      });
+      return;
+    }
 
-        let hasInsights = false;
-        let hasExecSummary = false;
-
-        const insightsContent = result?.insights;
-        hasInsights = !!insightsContent && (typeof insightsContent === 'string' ? insightsContent.trim().length > 0 : Object.keys(insightsContent).length > 0);
-
-        try {
-          const execResult = await analysisService.getPMFExecutiveSummary(businessId);
-          const summaryContent = execResult?.summary || execResult;
-          hasExecSummary = !!summaryContent && (typeof summaryContent === 'string' ? summaryContent.trim().length > 0 : Object.keys(summaryContent).length > 0);
-        } catch (err) {
-          console.warn("Failed to check Executive Summary status:", err);
-        }
-
-        if (!hasOnboarding || !hasInsights || !hasExecSummary) {
-          console.warn("Missing onboarding, insights, or exec summary. Navigating to onboarding page.");
-          navigate(`/onboarding/${businessId}`, {
-            state: {
-              business,
-              pmfData: result?.onboarding_data || result?.onboarding || null
-            }
-          });
-          return;
-        }
-      } catch (err) {
-        console.error("Unexpected error in handleInsightsClick:", err);
-        navigate(`/onboarding/${businessId}`, { state: { business } });
-        return;
-      }
+    if (!hasPlan) {
+      // Free users can only ever access up to the executive summary tab.
+      navigate(`/businesspage?business=${businessSlug}&tab=executive`, {
+        state: { business, initialTab: 'executive' }
+      });
+      return;
     }
 
     let initialTab = 'executive';
-    const userPlan = useAuthStore.getState().userPlan;
-    const isPaidPlan = userPlan && userPlan.toLowerCase() !== 'explorer' && userPlan.toLowerCase() !== 'free' && userPlan.toLowerCase() !== 'none';
-    const limits = getUserLimits();
-
-    const isTypeRegenerating = (type) => regenerating[`${businessId}_${type}`] || false;
-    const isAnalysisRegenerating = isTypeRegenerating('swot') || isTypeRegenerating('porters') || isTypeRegenerating('pestel') || isTypeRegenerating('initial') || isTypeRegenerating('essential') || isTypeRegenerating('advanced');
-
-    if (isPaidPlan) {
-      initialTab = (hasAdvancedAnalysis || isAnalysisRegenerating) ? 'insights' : 'advanced';
-    } else if (limits.pmf) {
+    if (stage === 'executive_summary') {
       initialTab = 'executive';
-    } else if (limits.insight) {
+    } else if (stage === 'advanced_brief') {
+      initialTab = 'advanced';
+    } else if (stage === 'insights') {
       initialTab = 'insights';
-    } else if (limits.strategic) {
-      initialTab = 'strategic';
     }
 
-    const businessSlug = toSlug(business?.business_name || '');
     navigate(`/businesspage?business=${businessSlug}&tab=${initialTab}`, {
       state: { business, initialTab }
     });

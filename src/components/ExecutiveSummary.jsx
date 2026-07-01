@@ -644,10 +644,34 @@ const ExecutiveSummary = ({ hideNextStep }) => {
             </div>
           </div>
 
-          <button className="exc-create-project-btn mt-4" onClick={() => {
+          <button className="exc-create-project-btn mt-4" onClick={async () => {
             const hasPlan = userPlan && userPlan.trim().toLowerCase() !== "no plan" && userPlan.trim().toLowerCase() !== "none";
+            
+            try {
+              const { useBusinessStore } = await import('../store/businessStore');
+              await useBusinessStore.getState().updatePmfStage(businessId, 'advanced_brief');
+              queryClient.setQueryData(['businesses'], (oldData) => {
+                if (!oldData) return oldData;
+                const updateList = (list) => (list || []).map(b => 
+                  (b._id === businessId || b.id === businessId) ? { ...b, pmf_stage: 'advanced_brief' } : b
+                );
+                return {
+                  ...oldData,
+                  businesses: updateList(oldData.businesses),
+                  collaborating_businesses: updateList(oldData.collaborating_businesses)
+                };
+              });
+              queryClient.invalidateQueries({ queryKey: ['businesses'] });
+            } catch (err) {
+              console.error("Failed to update pmf stage:", err);
+            }
+
             if (hasPlan) {
-              navigate('/businesspage', { state: { businessId: businessId, initialTab: 'advanced' } });
+              if (setActiveTab) {
+                setActiveTab('advanced');
+              } else {
+                navigate('/businesspage', { state: { businessId: businessId, initialTab: 'advanced' } });
+              }
             } else {
               navigate(`/business/${businessId || 'default'}/advanced-insights`);
             }

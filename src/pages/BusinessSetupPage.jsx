@@ -150,6 +150,8 @@ const BusinessSetupPage = () => {
   const token = useAuthStore(state => state.token);
   const userRole = useAuthStore(state => state.userRole);
   const userName = useAuthStore(state => state.userName);
+  const userPlan = useAuthStore(state => state.userPlan);
+  const hasPlan = userPlan && userPlan.trim().toLowerCase() !== "no plan" && userPlan.trim().toLowerCase() !== "none";
   const getAuthToken = useCallback(() => token, [token]);
   const getLoggedInRole = () => (userRole || "").toLowerCase();
   const loggedInRole = getLoggedInRole();
@@ -418,9 +420,34 @@ const BusinessSetupPage = () => {
   // 1. Sync URL -> State (Initial load and Browser Back/Forward)
   useEffect(() => {
     // Prioritize explicit state passed via navigate(), fallback to URL query
-    const targetTab = location.state?.initialTab || searchParams.get('tab');
+    let targetTab = location.state?.initialTab || searchParams.get('tab');
 
     if (!targetTab) return;
+
+    // --- PMF Stage Enforcement ---
+    if (hasPlan) {
+      const stage = currentBusiness?.pmf_stage || 'onboarding';
+      const stageLevels = {
+        'onboarding': 0,
+        'executive_summary': 1,
+        'advanced_brief': 2,
+        'insights': 3
+      };
+      const userStageLevel = stageLevels[stage] || 0;
+
+      if (userStageLevel === 0 && ["executive", "advanced", "insights", "priorities"].includes(targetTab)) {
+        navigate(`/onboarding/${selectedBusinessId || currentBusiness?._id || currentBusiness?.id}`, { replace: true });
+        return;
+      }
+
+      if (targetTab === "insights" && userStageLevel < 3) {
+        targetTab = userStageLevel === 2 ? "advanced" : "executive";
+      }
+      if (targetTab === "advanced" && userStageLevel < 2) {
+        targetTab = "executive";
+      }
+    }
+    // -----------------------------
 
     if (targetTab !== activeTab) {
       // Check access before switching
@@ -446,7 +473,7 @@ const BusinessSetupPage = () => {
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams, location.key, location.state, hasPmfAccess, hasProjectAccess]); // location.key firmly triggers this on any navigation
+  }, [searchParams, location.key, location.state, hasPmfAccess, hasProjectAccess, currentBusiness?.pmf_stage, selectedBusinessId]); // location.key firmly triggers this on any navigation
 
   useLayoutEffect(() => {
     if ('scrollRestoration' in window.history) {
@@ -1546,9 +1573,6 @@ const BusinessSetupPage = () => {
                   <span className="breadcrumb-separator">/</span>
                   <span
                     className="business-header-name"
-                    onClick={() => setActiveTab('insights')}
-                    style={{ cursor: 'pointer' }}
-                    title="Go to Insights"
                   >
                     {selectedBusinessName}
                   </span>
@@ -1559,15 +1583,17 @@ const BusinessSetupPage = () => {
               {/* Advanced Insights Header - Shared across both panels */}
               {activeTab === 'advanced' && (
                 <div className="advanced-insights-shared-header" style={{ maxWidth: '1200px', margin: '20px auto 24px auto', width: '100%', padding: '0' }}>
-                  <div className="mb-3">
-                    <button
-                      className="btn btn-link text-decoration-none p-0 d-inline-flex align-items-center"
-                      style={{ color: '#475569', fontWeight: '600', fontSize: '15px' }}
-                      onClick={() => setActiveTab('insights')}
-                    >
-                      <ArrowLeft size={18} className="me-2" /> Back to analysis
-                    </button>
-                  </div>
+                  {currentBusiness?.pmf_stage === 'insights' && (
+                    <div className="mb-3">
+                      <button
+                        className="btn btn-link text-decoration-none p-0 d-inline-flex align-items-center"
+                        style={{ color: '#475569', fontWeight: '600', fontSize: '15px' }}
+                        onClick={() => setActiveTab('insights')}
+                      >
+                        <ArrowLeft size={18} className="me-2" /> Back to analysis
+                      </button>
+                    </div>
+                  )}
                   <h5 style={{ color: '#4f46e5', fontSize: '11px', fontWeight: '700', letterSpacing: '0.5px', margin: '0 0 8px 0', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '6px' }}>
                     <span style={{ fontSize: '12px', background: '#fef08a', borderRadius: '2px', padding: '1px 3px' }}>🔒</span> ADVANCED INSIGHTS - PRO
                   </h5>
