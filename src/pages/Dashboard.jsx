@@ -327,10 +327,19 @@ const Dashboard = () => {
           }
           formData.append('language', currentLanguage || 'en');
 
+          let isObservatory = false;
+          try {
+            const authState = JSON.parse(
+              sessionStorage.getItem('auth-storage') || localStorage.getItem('auth-storage') || '{}'
+            );
+            isObservatory = authState?.state?.isObservatory === true;
+          } catch (_) {}
+
           const mlResponse = await fetch(`${mlBackendUrl}/pmf-analysis`, {
             method: 'POST',
             headers: {
-              'X-Business-Id': newBusinessId
+              'X-Business-Id': newBusinessId,
+              'x-is-observatory': isObservatory ? 'true' : 'false'
             },
             body: formData
           });
